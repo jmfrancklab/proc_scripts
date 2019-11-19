@@ -3,8 +3,10 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 rcParams['figure.figsize'] = [10,6]
 for date,id_string in [
-    ('191107','echo_DNP'),
-    ('191107','echo_DNP_2'),
+    #('191118','echo_DNP_1'),
+    #('191118','echo_DNP_2'),
+    ('191118','echo_DNP_3'),
+    #('191107','echo_DNP'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -41,54 +43,49 @@ for date,id_string in [
     t2_max = zeros_like(s.getaxis('power'))
     for x in xrange(len(s.getaxis('power'))):
         t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
+    print t2_max
     s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
-    fl.next('signal, time domain shifted')
-    fl.plot(s)
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
-    fl.next('signal, time domain shifted+sliced')
+    fl.next('signal, time domain shifted')
     fl.plot(s)
-    fl.next('signal, freq post-proc')
-    fl.plot(s.C.ft('t2'))
-    # Because the phasing causes us to lose the sign
+    s.ft('t2')
+    #{{{ trick to try and keep sign of enhanced signal
     remember_sign = zeros_like(s.getaxis('power'))
     for x in xrange(len(s.getaxis('power'))):
         if s['power',x].data.real.sum() > 0:
             remember_sign[x] = 1.0
         else:
             remember_sign[x] = -1.0
-    # Preliminary phasing procedure
-    s.ft('t2')
-    ##for x in xrange(len(s.getaxis('power'))):
-    ##    temp = s['power',x].C
-    ##    fl.next('power %f'%s.getaxis('power')[x])
-    ##    fl.plot(temp,label='before')
-    ##    SW = diff(temp.getaxis('t2')[r_[0,-1]]).item()
-    ##    thisph1 = nddata(r_[-6:6:2048j]/SW,'phi1').set_units('phi1','s')
-    ##    phase_test_r = temp * exp(-1j*2*pi*thisph1*temp.fromaxis('t2'))
-    ##    phase_test_rph0 = phase_test_r.C.sum('t2')
-    ##    phase_test_rph0 /= abs(phase_test_rph0)
-    ##    phase_test_r /= phase_test_rph0
-    ##    cost = abs(phase_test_r.real).sum('t2')
-    ##    ph1_opt = cost.argmin('phi1').data
-    ##    temp *= exp(-1j*2*pi*ph1_opt*temp.fromaxis('t2'))
-    ##    ph0 = temp.C.sum('t2')
-    ##    ph0 /= abs(ph0)
-    ##    temp /= ph0
-    ##    fl.next('power %f'%s.getaxis('power')[x])
-    ##    fl.plot(temp,label='after')
-    ##    s['power',x] *= exp(-1j*2*pi*ph1_opt*s.fromaxis('t2'))
-    ##    s['power',x] /= ph0
-    # # Check prelim phasing
-    #{{{ I don't know what the following block of code was doing?
-    #f_max = zeros_like(s.getaxis('power'))
-    #for x in xrange(len(s.getaxis('power'))):
-    #    f_max[x] = s.getaxis('t2')[s['power',x].data.argmax()]
-    #s.setaxis('t2',lambda t: t - f_max.mean())
-    #fl.next('freq, shifted')
-    #fl.plot(s['t2':(-300,300)]*remember_sign)
     #}}}
-    # # Enhancement curve with prelim phasing
+    for x in xrange(len(s.getaxis('power'))):
+        temp = s['power',x].C
+        plot_list = [0,5,10,15]
+        if x in plot_list:
+            fl.next('signal, pre-phasing')
+            fl.plot(temp.real, alpha=0.5, label='index %d real'%x)
+            fl.plot(temp.imag, alpha=0.5, label='index %d imag'%x)
+        SW = diff(temp.getaxis('t2')[r_[0,-1]]).item()
+        thisph1 = nddata(r_[-4:4:2048j]/SW,'phi1').set_units('phi1','s')
+        phase_test_r = temp * exp(-1j*2*pi*thisph1*temp.fromaxis('t2'))
+        phase_test_rph0 = phase_test_r.C.sum('t2')
+        phase_test_rph0 /= abs(phase_test_rph0)
+        phase_test_r /= phase_test_rph0
+        cost = abs(phase_test_r.real).sum('t2')
+        ph1_opt = cost.argmin('phi1').data
+        temp *= exp(-1j*2*pi*ph1_opt*temp.fromaxis('t2'))
+        s['power',x] *= exp(-1j*2*pi*ph1_opt*temp.fromaxis('t2'))
+        ph0 = temp.C.sum('t2')
+        ph0 /= abs(ph0)
+        temp /= ph0
+        s['power',x] /= ph0
+        if x in plot_list:
+            fl.next('signal, post-phasing')
+            fl.plot(temp.real, alpha=0.5, label='index %d real'%x)
+            fl.plot(temp.imag, alpha=0.5, label='index %d imag'%x)
+    s *= remember_sign
+    fl.next('signal, phased')
+    fl.plot(s)
     enhancement = s['t2':(-1e3,1e3)].C
     fl.next('Check slice')
     fl.plot(enhancement.C)
@@ -102,6 +99,7 @@ for date,id_string in [
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     fl.plot(power_axis_W,enhanced,'.')
+fl.show();quit()
 xlabel('power meter reading (W)')
 ylabel('enhancement')
 save_fig = False
