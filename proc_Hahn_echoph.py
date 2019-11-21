@@ -31,7 +31,7 @@ for date,id_string,label_str in [
     fl.next('coherence')
     fl.image(abs(s))
     s = s['ph1',1]['ph2',0].C
-    s = s['nScans',0].C
+    s.mean('nScans',return_error=False)
     slice_f = (-1e3,1e3)
     s = s['t2':slice_f]
     s.ift('t2')
