@@ -15,12 +15,12 @@ s.ft('t2',shift=True)
 clock_correction = 0 # radians per second
 #clock_correction = 1.0829/998.253
 #clock_correction = -0.58434/9.88461 # for IR_1
-clock_correction = -4.33/10.0
+clock_correction = -4.33/9.72
 s *= exp(-1j*s.fromaxis('vd')*clock_correction)
 s.ift('t2')
 fl.next('raw data - clock correction')
 fl.image(s)
-nPoints = 128
+nPoints = 1024*2
 t2_axis = s.getaxis('t2')
 s.setaxis('t2',None)
 s.chunk('t2',['ph2','ph1','t2'],[4,2,-1])
