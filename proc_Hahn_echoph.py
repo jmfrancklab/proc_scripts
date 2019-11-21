@@ -2,7 +2,10 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191121','echo_5_1','gradient off'),
+        ('191121','echo_5','gradient off'),
+        ('191121','echo_g5','gradient on'),
+        ('191121','echo_g5_1','gradient on'),
+        ('191121','echo_g5_2','gradient on'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -32,8 +35,8 @@ for date,id_string,label_str in [
     fl.image(abs(s))
     s = s['ph1',1]['ph2',0].C
     s.mean('nScans',return_error=False)
-    slice_f = (-1e3,1e3)
-    s = s['t2':slice_f]
+    slice_f = (-1e3,4e3)
+    s = s['t2':slice_f].C
     s.ift('t2')
     max_data = abs(s.data).max()
     pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
@@ -46,14 +49,17 @@ for date,id_string,label_str in [
     s_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
     s_ft = s_sliced.C
-    shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
-    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:1000j],'R2'))
+    fl.next('sliced')
+    fl.plot(s_ft)
+    shift_t = nddata(r_[-1:1:100j]*max_shift, 'shift')
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:100j],'R2'))
     s_foropt = s.C
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
     s_foropt /= t2_decay
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
+    print s_foropt.getaxis('t2')
     print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
     if ndshape(s_foropt)['t2'] % 2 == 0:
         s_foropt = s_foropt['t2',:-1]
@@ -75,10 +81,9 @@ for date,id_string,label_str in [
     ph0 = s['t2':0.0]
     ph0 /= abs(ph0)
     s /= ph0
-    fl.next('Spectrum - FT')
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
-    fl.plot(s_sliced.real, alpha=0.5, label='post %s'%label_str)
-    fl.plot(s_ft.real, alpha=0.5, label='pre %s'%label_str)
+    fl.next('Spectrum FT')
+    fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
 fl.show();quit()
