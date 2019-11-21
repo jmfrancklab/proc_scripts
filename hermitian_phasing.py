@@ -8,6 +8,8 @@ W_list = ones_like(dBm_list)
 for x in xrange(4):
     W_list[x] = get_W(dBm_list[x])
 enhancement = []
+find_phase_params = True # phase params found for first dataset will be applied
+                         # to all subsequently processed datasets
 for date,id_string,label_string in [
         ('191031','echo_5_4','no microwaves'),
         ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
@@ -21,6 +23,8 @@ for date,id_string,label_string in [
             directory = getDATADIR(
                 exp_type = 'test_equip'))
     print ndshape(s)
+    print s.get_prop('acq_params')
+    quit()
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
@@ -48,33 +52,34 @@ for date,id_string,label_string in [
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
-    s_ft = s_sliced.C
-    shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
-    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:1000j],'R2'))
-    s_foropt = s.C
-    s_foropt.ft('t2')
-    s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
-    s_foropt.ift('t2')
-    s_foropt /= t2_decay
-    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-    print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
-    if ndshape(s_foropt)['t2'] % 2 == 0:
-        s_foropt = s_foropt['t2',:-1]
-    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
-    ph0 = s_foropt['t2':0.0]
-    ph0 /= abs(ph0)
-    s_foropt /= ph0
-    s_foropt /= max(abs(s_foropt.getaxis('t2')))
-    # }}}
-    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
-    fl.next('cost function')
-    residual.reorder('shift')
-    fl.image(residual)
-    fl.plot(residual.C.argmin('shift').name('shift'),'x')
-    minpoint = residual.argmin()
-    best_shift = minpoint['shift']
-    best_R2 = minpoint['R2']
-    fl.plot(best_R2,best_shift,'o')
+    if find_phase_params:
+        shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
+        t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:1000j],'R2'))
+        s_foropt = s.C
+        s_foropt.ft('t2')
+        s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
+        s_foropt.ift('t2')
+        s_foropt /= t2_decay
+        s_foropt = s_foropt['t2':(-max_shift,max_shift)]
+        print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+        if ndshape(s_foropt)['t2'] % 2 == 0:
+            s_foropt = s_foropt['t2',:-1]
+        assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
+        ph0 = s_foropt['t2':0.0]
+        ph0 /= abs(ph0)
+        s_foropt /= ph0
+        s_foropt /= max(abs(s_foropt.getaxis('t2')))
+        # }}}
+        residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
+        fl.next('cost function')
+        residual.reorder('shift')
+        fl.image(residual)
+        fl.plot(residual.C.argmin('shift').name('shift'),'x')
+        minpoint = residual.argmin()
+        best_shift = minpoint['shift']
+        best_R2 = minpoint['R2']
+        fl.plot(best_R2,best_shift,'o')
+        find_phase_params = False
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
@@ -87,12 +92,6 @@ for date,id_string,label_string in [
     s_sliced.ft('t2')
     fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_string)
     enhancement.append(s_sliced.real.sum('t2').item())
-print W_list
-print enhancement
-print type(W_list)
-print type(enhancement)
-print shape(W_list)
-print shape(enhancement)
 fl.next('E(p)')
 fl.plot(W_list,array(enhancement),'o-')
 fl.show()

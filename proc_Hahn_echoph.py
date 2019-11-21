@@ -2,8 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191113','echo_4','8x sig avg'),
-        ('191113','echo_4_2','1x sig avg'),
+        ('191111','echo_4','gradient off'),
+        ('191111','echo_4_2','gradient off'),
+        ('191111','echo_4_3','gradient off'),
+        ('191111','echo_4_on','gradient on'),
+        ('191111','echo_4_on_2','gradient on'),
+        ('191111','echo_4_on_3','gradient on'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -21,156 +25,55 @@ for date,id_string,label_str in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
-    s.set_units('t2','s')
     s.reorder('t2',first=False)
     s.ft(['ph1','ph2'])
-    show_coherence = False
-    if show_coherence:
-        fl.next(id_string+'raw data - chunking coh')
-        fl.image(s)
-    s.ft('t2',shift=True)
-    if show_coherence:
-        fl.next(id_string+'raw data - FT')
-        fl.image(s)
-    s = s['ph1',1]['ph2',0].C
-    s = s['t2':(-1e3,1e3)].C
-    fl.next('f domain')
-    fl.plot(s)
+    s = s['ph1',1]['ph2',0]
+    s.ft('t2', shift=True)
+    slice_f = (-1e3,1e3)
+    s = s['t2':slice_f]
     s.ift('t2')
-    # Center the time-domain echo at t = 0
     max_data = abs(s.data).max()
     pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
     s.setaxis('t2',lambda x: x-peak_location.mean())
     s.register_axis({'t2':0})
-    s = s['t2':(0,None)]
-    s['t2',0] *= 0.5
-    fl.next('Crude centering - time domain')
-    fl.plot(s,alpha=0.5,label='%s'%label_str)
-    s.ft('t2')#,pad=True)
-    fl.next('Crude centering - ft + filtering + correction')
-    fl.plot(s,alpha=0.5,label='%s'%label_str)
-    abs_val_real = True
-    #{{{ Absolute value of the real phasing procedure 
-    if abs_val_real:
-        print "*** *** ***"
-        print "BEGIN ABSOLUTE VALUE OF THE REAL PHASING..."
-        print "*** *** ***"
-        before = s.C
-        fl.next('(Abs Val Real) Pre-phasing: real and imag (Without Enhancement)')
-        fl.plot(s.real,c='black',alpha=0.8,label='real')
-        fl.plot(s.imag,c='red',alpha=0.8,label='imag')
-        s.ift('t2')
-        temp = s.C
-        temp.ft('t2')
-        SW = diff(temp.getaxis('t2')[r_[0,-1]]).item()
-        thisph1 = nddata(r_[-4:4:2048j]/SW,'phi1').set_units('phi1','s')
-        phase_test_r = temp * exp(-1j*2*pi*thisph1*temp.fromaxis('t2'))
-        phase_test_rph0 = phase_test_r.C.sum('t2')
-        phase_test_rph0 /= abs(phase_test_rph0)
-        phase_test_r /= phase_test_rph0
-        cost = abs(phase_test_r.real).sum('t2')
-        ph1_opt = cost.argmin('phi1').data
-        temp *= exp(-1j*2*pi*ph1_opt*temp.fromaxis('t2'))
-        ph0 = temp.C.sum('t2')
-        ph0 /= abs(ph0)
-        temp /= ph0
-        s.ft('t2')
-        s *= exp(-1j*2*pi*ph1_opt*s.fromaxis('t2'))
-        s /= ph0
-        fl.next('(Abs Val Real) Post-phasing: real and imag (Without Enhancement)')
-        fl.plot(s.real,c='black',alpha=0.8,label='real')
-        fl.plot(s.imag,c='red',alpha=0.8,label='imag')
-        fl.next('Compare before and after - real')
-        fl.plot(before.real,alpha=0.8,label='before',human_units=False)
-        fl.plot(s.real,alpha=0.8,label='after',human_units=False)
-        fl.next('Compare before and after - imag')
-        fl.plot(before.imag,alpha=0.8,label='before',human_units=False)
-        fl.plot(s.imag,alpha=0.8,label='after',human_units=False)
-        print "*** *** ***"
-        print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
-        print "*** *** ***"
-    #}}}
-    hermit_phasing = False
-    #{{{ Hermitian symmetry cost function phasing algorithm
-    if hermit_phasing:
-        print "*** *** ***"
-        print "BEGIN HERMITIAN SYMMETRY PHASING..."
-        print "*** *** ***"
-        fl.next('sliced')
-        fl.plot(s,alpha=0.5)
-        fl.plot(abs(s),alpha=0.5)
-        df = diff(s.getaxis('t2')[r_[0,1]])[0]
-        max_hwidth = 1
-        window_hwidth = 10
-        max_shift = (max_hwidth - window_hwidth)*df
-        print s.getaxis('t2')
-        # the following is for a peak centered at f = 0 Hz
-        on_0 = False
-        if on_0:
-            center_index = where(abs(s.getaxis('t2'))==abs(s.getaxis('t2')).min())[0][0]
-        else:
-            center_index = argmax(s.data)
-        slice_ = s['t2',int(center_index-max_hwidth) : int(center_index+max_hwidth+1)].C
-        if on_0:
-            slice_center_index = where(abs(slice_.getaxis('t2'))==abs(slice_.getaxis('t2')).min())[0][0]
-        else:
-            slice_center_index = argmax(slice_.data)
-            print slice_center_index
-        fl.plot(slice_,':',human_units=False)
-        f_axis = slice_.fromaxis('t2')
-        fl.next('Pre-phasing: real and imag (Without Enhancement)')
-        fl.plot(s.real,c='black',alpha=0.8,label='real')
-        fl.plot(s.imag,c='red',alpha=0.8,label='imag')
-        temp = s.C
-        def hermitian_costfunc(p):
-            zerorder_rad,firstorder = p
-            phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
-            phshift *= exp(-1j*2*pi*zerorder_rad)
-            temp = phshift * slice_
-            deviation = temp['t2',(slice_center_index - window_hwidth):(slice_center_index+window_hwidth+1)].C
-            deviation -= deviation['t2',::-1].C.run(conj)
-            return (abs(deviation.data)**2)[:].sum()
-        iteration = 0
-        def print_func(x,f,accepted):
-            global iteration
-            print(iteration,x,int(accepted))
-            iteration = iteration+1
-
-        sol = basinhopping(hermitian_costfunc, r_[0.,0.],
-                minimizer_kwargs={"method":'L-BFGS-B'},
-                callback=print_func,
-                stepsize=100.,
-                niter=10,
-                T=1000.
-                )
-        zerorder_rad,firstorder = sol.x
-        f_axis = s.getaxis('t2')
-        phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
-        phshift *= exp(-1j*2*pi*zerorder_rad)
-
-        s *= phshift
-        print ndshape(s)
-        quit()
-        # If phasing algorithm gives negative result, correct it here
-        #max_data_index = where(abs(s.data)==abs(s.data).max())
-        #print max_data_index
-        #if s.data[max_data_index] < 0:
-        #    s *= -1.0
-        fl.next('Visualize sliced peak')
-        fl.plot(s,c='black',alpha=0.8,human_units=False)
-        fl.next('Post-phasing: real and imag (Without Enhancement)')
-        fl.plot(s.real,c='black',alpha=0.8,label='real')
-        fl.plot(s.imag,c='red',alpha=0.8,label='imag')
-        print "*** *** ***"
-        print "FINISHED HERMITIAN SYMMETRY PHASING"
-        print "*** *** ***"
-        fl.show();quit()
-    #}}}
-    fl.next('Final plots - f domain')
-    fl.plot(s,alpha=0.5,label='%s'%label_str)
+    max_shift = diff(peak_location).item()/2
+    s_sliced = s['t2':(0,None)].C
+    s_sliced['t2',0] *= 0.5
+    s_sliced.ft('t2')
+    s_ft = s_sliced.C
+    shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:1000j],'R2'))
+    s_foropt = s.C
+    s_foropt.ft('t2')
+    s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
+    s_foropt.ift('t2')
+    s_foropt /= t2_decay
+    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
+    print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+    if ndshape(s_foropt)['t2'] % 2 == 0:
+        s_foropt = s_foropt['t2',:-1]
+    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
+    ph0 = s_foropt['t2':0.0]
+    ph0 /= abs(ph0)
+    s_foropt /= ph0
+    s_foropt /= max(abs(s_foropt.getaxis('t2')))
+    # }}}
+    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
+    residual.reorder('shift')
+    minpoint = residual.argmin()
+    best_shift = minpoint['shift']
+    best_R2 = minpoint['R2']
+    s.ft('t2')
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    fl.next('Final plots - t domain')
-    fl.plot(s,alpha=0.5,label='%s'%label_str)
-fl.show()
+    ph0 = s['t2':0.0]
+    ph0 /= abs(ph0)
+    s /= ph0
+    fl.next('Spectra with Hermitian phasing')
+    s_sliced = s['t2':(0,None)].C
+    s_sliced['t2',0] *= 0.5
+    s_sliced.ft('t2')
+    fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
+fl.show();quit()
