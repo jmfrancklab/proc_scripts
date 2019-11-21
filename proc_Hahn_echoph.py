@@ -2,12 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191111','echo_4','gradient off'),
-        ('191111','echo_4_2','gradient off'),
-        ('191111','echo_4_3','gradient off'),
-        ('191111','echo_4_on','gradient on'),
-        ('191111','echo_4_on_2','gradient on'),
-        ('191111','echo_4_on_3','gradient on'),
+        ('191121','echo_5','gradient off'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -18,6 +13,8 @@ for date,id_string,label_str in [
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nScans = s.get_prop('acq_params')['nScans']
+    print ndshape(s)
     s.reorder('t',first=True)
     t2_axis = s.getaxis('t')[0:nPoints/nPhaseSteps]
     s.setaxis('t',None)
@@ -25,10 +22,16 @@ for date,id_string,label_str in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
+    s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
+    s.ft('t2',shift=True)
+    fl.next('raw data, chunked')
+    fl.image(abs(s))
     s.ft(['ph1','ph2'])
-    s = s['ph1',1]['ph2',0]
-    s.ft('t2', shift=True)
+    fl.next('coherence')
+    fl.image(abs(s))
+    s = s['ph1',1]['ph2',0].C
+    s = s['nScans',0].C
     slice_f = (-1e3,1e3)
     s = s['t2':slice_f]
     s.ift('t2')
@@ -62,6 +65,7 @@ for date,id_string,label_str in [
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     residual.reorder('shift')
+    print ndshape(residual)
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
@@ -71,9 +75,10 @@ for date,id_string,label_str in [
     ph0 = s['t2':0.0]
     ph0 /= abs(ph0)
     s /= ph0
-    fl.next('Spectra with Hermitian phasing')
+    fl.next('Spectrum - FT')
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
-    fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
+    fl.plot(s_sliced.real, alpha=0.5, label='post %s'%label_str)
+    fl.plot(s_ft.real, alpha=0.5, label='pre %s'%label_str)
 fl.show();quit()
