@@ -13,8 +13,6 @@ for date,id_string in [
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     s.set_units('t','s')
-    print s.get_prop('meter_powers')
-    print ndshape(s)
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
     t2_axis = orig_t[nPoints]
@@ -27,19 +25,63 @@ for date,id_string in [
     s.reorder('t2',first=False)
     fl.next('raw data, chunked')
     fl.image(s)
+    s.ft('t2',shift=True)
+    s.ft(['ph1','ph2'])
+    fl.next('coherence levels')
+    fl.image(s)
+    s = s['ph1',1]['ph2',0].C
     s.reorder('t2',first=True)
+    s.ift('t2')
     t2_max = zeros_like(s.getaxis('power'))
     for x in xrange(len(s.getaxis('power'))):
-        t2_max[x] = abs(s['power',x]['ph1',1]['ph2',0]).argmax('t2',raw_index=True).data
-    print t2_max
+        t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
     s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
-    s.ft('t2',shift=True)
-    s.reorder('t2',first=False)
-    fl.next('FID at t=0, then FT')
-    fl.image(s)
-    s.ft(['ph1','ph2'])
-    fl.next('Coherence levels')
-    fl.image(s)
-fl.show()
+    s.ft('t2')
+    fl.next('t=0, FID, then FT')
+    fl.plot(s)
+    remember_sign = zeros_like(s.getaxis('power'))
+    for x in xrange(len(s.getaxis('power'))):
+        if s['power',x].data.real.sum() > 0:
+            remember_sign[x] = 1.0
+        else:
+            remember_sign[x] = -1.0
+    temp = s['power',-1].C
+    fl.next('signal, comparison')
+    fl.plot(temp.real, alpha=0.5, label='real, pre-phasing')
+    fl.plot(temp.imag, alpha=0.5, label='imag, pre-phasing')
+    SW = diff(temp.getaxis('t2')[r_[0,-1]]).item()
+    thisph1 = nddata(r_[-4:4:2048j]/SW,'phi1').set_units('phi1','s')
+    phase_test_r = temp * exp(-1j*2*pi*thisph1*temp.fromaxis('t2'))
+    phase_test_rph0 = phase_test_r.C.sum('t2')
+    phase_test_rph0 /= abs(phase_test_rph0)
+    phase_test_r /= phase_test_rph0
+    cost = abs(phase_test_r.real).sum('t2')
+    ph1_opt = cost.argmin('phi1').data
+    temp *= exp(-1j*2*pi*ph1_opt*temp.fromaxis('t2'))
+    s *= exp(-1j*2*pi*ph1_opt*temp.fromaxis('t2'))
+    ph0 = temp.C.sum('t2')
+    ph0 /= abs(ph0)
+    temp /= ph0
+    s /= ph0
+    fl.next('signal, comparison')
+    fl.plot(temp.real, alpha=0.5, label='real, post-phasing')
+    fl.plot(temp.imag, alpha=0.5, label='imag, post-phasing')
+    # for some reason, signs are exactly inverted when phased this way
+    #s *= remember_sign
+    s *= -1
+    fl.next('signal, phased')
+    fl.plot(s)
+    enhancement = s['t2':(-1e3,1e3)].C
+    enhancement.sum('t2').real
+    enhanced = enhancement.data[1:]
+    enhanced /= max(enhanced)
+    fl.next('150uL TEMPOL enhancement curve')
+    power_axis_dBm = array(s.get_prop('meter_powers'))
+    power_axis_W = zeros_like(power_axis_dBm)
+    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
+    fl.plot(power_axis_W,enhanced,'.')
+    xlabel('Power (W)')
+    ylabel('Enhancement')
+fl.show();quit()
