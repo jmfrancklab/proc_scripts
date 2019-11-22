@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('191122','CPMG_1_8')
+        ('191122','CPMG_2')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -13,8 +13,8 @@ for date,id_string in [
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    nScans = s.get_prop('acq_params')['nScans']
     s.set_units('t','s')
-    print ndshape(s)
     fl.next(id_string+'raw data ')
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
@@ -38,6 +38,10 @@ for date,id_string in [
     s.setaxis('ph1',r_[0.,2.]/4)
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
+    s.setaxis('nScans',r_[0:nScans])
+    print ndshape(s)
+    s.reorder('nScans',first=True)
+    print ndshape(s)
     fl.next(id_string+'raw data - chunking')
     fl.image(s)
     s.ft('t2', shift=True)
@@ -50,8 +54,11 @@ for date,id_string in [
     fl.next(id_string+' image plot coherence ')
     fl.image(s)
     s = s['ph1',1].C
-    echo_center = abs(s)['tE',0].argmax('t2').data.item()
-    s.setaxis('t2', lambda x: x-echo_center)
+    #s.mean('nScans',return_error=False)
+    echo_center = ones_like(s.getaxis('nScans'),dtype=float)
+    for x in xrange(nScans):
+        echo_center[x] = abs(s['nScans',x])['tE',0].argmax('t2').data.item()
+    s.setaxis('t2', lambda x: x-echo_center.mean())
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center')
     fl.image(s)
@@ -77,7 +84,7 @@ for date,id_string in [
             minimizer_kwargs={"method":'L-BFGS-B'},
             callback=print_fun,
             stepsize=100.,
-            niter=100,
+            niter=10,
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
@@ -101,20 +108,26 @@ for date,id_string in [
     s.rename('nEchoes','tE').setaxis('tE',tE_axis)
     data = s.C.sum('t2')
     fl.next('Fit decay')
-    x = tE_axis 
-    ydata = data.data.real
-    ydata /= max(ydata)
-    fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
-    fitfunc = lambda p, x: exp(-x/p[0])
-    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [0.2]
-    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
-    x_fit = linspace(x.min(),x.max(),5000)
-    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
-    xlabel('t (sec)')
-    ylabel('Intensity')
-    T2 = p1[0]
-    print "T2:",T2,"s"
+    x = tE_axis
+    print x
+    print shape(x)
+    print type(x)
+    for scan_num in xrange(nScans):
+        ydata = data['nScans',scan_num].data.real
+        ydata /= max(ydata)
+        print type(ydata)
+        print shape(ydata)
+        fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+        fitfunc = lambda p, x: exp(-x/p[0])
+        errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
+        p0 = [0.2]
+        p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+        x_fit = linspace(x.min(),x.max(),5000)
+        fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
+        xlabel('t (sec)')
+        ylabel('Intensity')
+        T2 = p1[0]
+        print "T2:",T2,"s"
     fl.show();quit()
     s.ift('t2')
     even_echo_center = abs(s)['ph1',1]['tE',0].argmax('t2').data.item()
