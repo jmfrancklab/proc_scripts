@@ -2,7 +2,8 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191121','echo_fd1','SW=3kHz'),
+        ('191121','echo_6_1','gradient off'),
+        ('191121','echo_g6_1','gradient on'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -30,10 +31,9 @@ for date,id_string,label_str in [
     s.ft(['ph1','ph2'])
     fl.next('coherence')
     fl.image(abs(s))
-    fl.show();quit()
     s = s['ph1',1]['ph2',0].C
     s.mean('nScans',return_error=False)
-    slice_f = (-1e3,4e3)
+    slice_f = (-4e3,4e3)
     s = s['t2':slice_f].C
     s.ift('t2')
     max_data = abs(s.data).max()
@@ -49,8 +49,8 @@ for date,id_string,label_str in [
     s_ft = s_sliced.C
     fl.next('sliced')
     fl.plot(s_ft)
-    shift_t = nddata(r_[-1:1:100j]*max_shift, 'shift')
-    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:100j],'R2'))
+    shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:200j],'R2'))
     s_foropt = s.C
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
