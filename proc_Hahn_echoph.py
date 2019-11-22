@@ -2,10 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191121','echo_5','gradient off'),
-        ('191121','echo_g5','gradient on'),
-        ('191121','echo_g5_1','gradient on'),
-        ('191121','echo_g5_2','gradient on'),
+        ('191121','echo_fd1','SW=3kHz'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -33,6 +30,7 @@ for date,id_string,label_str in [
     s.ft(['ph1','ph2'])
     fl.next('coherence')
     fl.image(abs(s))
+    fl.show();quit()
     s = s['ph1',1]['ph2',0].C
     s.mean('nScans',return_error=False)
     slice_f = (-1e3,4e3)
