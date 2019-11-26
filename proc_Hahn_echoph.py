@@ -2,8 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191121','echo_6_1','gradient off'),
-        ('191121','echo_g6_1','gradient on'),
+        ('191122','echo_TEMPOL_1','g'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -81,6 +80,8 @@ for date,id_string,label_str in [
     s /= ph0
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
+    fl.next('time domain')
+    fl.plot(s_sliced)
     s_sliced.ft('t2')
     fl.next('Spectrum FT')
     fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)

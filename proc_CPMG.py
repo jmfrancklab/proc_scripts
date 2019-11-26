@@ -2,8 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('191122','CPMG_5_1'),
-        ('191122','CPMG_5')
+        ('191122','CPMG_TEMPOL_3_1')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -108,7 +107,7 @@ for date,id_string in [
     fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
     fitfunc = lambda p, x: exp(-x/p[0])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [0.2]
+    p0 = [1.0]
     p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
     x_fit = linspace(x.min(),x.max(),5000)
     fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
