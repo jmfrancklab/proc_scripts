@@ -107,6 +107,12 @@ for date,id_string in [
     s_sliced.ft('t2')
     fl.next('Spectrum FT')
     fl.plot(s_sliced.real, alpha=0.5)
+    fl.next('Spectrum FT - imag')
+    fl.plot(s_sliced.imag, alpha=0.5)
+    data = s_sliced['t2':(-0.3e3,0.3e3)]
+    data.real.sum('t2')
+    print data
+    fl.show();quit()
     fl.next('after phased - real ft')
     fl.image(s_sliced.real)
     fl.next('after phased')
@@ -120,7 +126,7 @@ for date,id_string in [
     fl.next('after phased - imag')
     fl.image(s_sliced.imag)
     s_sliced.setaxis('tE',tE_axis)
-    data = s_sliced.C.sum('t2')
+    data = s_sliced['t2':(-0.1e3,0.2e3)].C.sum('t2')
     fl.next('Fit decay')
     x = tE_axis 
     ydata = data.data.real
