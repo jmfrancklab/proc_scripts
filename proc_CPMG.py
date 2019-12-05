@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('191205','CPMG_TEMPOL_2_1')
+        ('191205','CPMG_TEMPOL_11_1')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -61,6 +61,7 @@ for date,id_string in [
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
     print peak_location
+    first_s.setaxis('t2', lambda x: x-peak_location.mean())
     s.setaxis('t2', lambda x: x-peak_location.mean())
     s.register_axis({'t2':0})
     max_shift = diff(peak_location).item()/2
@@ -68,11 +69,11 @@ for date,id_string in [
     s_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
     s_ft = s_sliced.C
-    fl.next('sliced')
-    fl.plot(s_ft)
+    #fl.next('sliced')
+    #fl.plot(s_ft)
     shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
     t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:200j],'R2'))
-    s_foropt = s.C
+    s_foropt = first_s.C
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
@@ -90,7 +91,8 @@ for date,id_string in [
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     residual.reorder('shift')
     print ndshape(residual)
-    minpoint = residual.argmin()
+    print residual
+    minpoint = residual['tE',0].argmin()
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
     s.ft('t2')
@@ -101,37 +103,35 @@ for date,id_string in [
     s /= ph0
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
-    fl.next('time domain')
-    fl.plot(s_sliced)
+    #fl.next('time domain')
+    #fl.plot(s_sliced)
     s.ft('t2')
     s_sliced.ft('t2')
     fl.next('Spectrum FT')
     fl.plot(s_sliced.real, alpha=0.5)
     fl.next('Spectrum FT - imag')
     fl.plot(s_sliced.imag, alpha=0.5)
-    data = s_sliced['t2':(-0.3e3,0.3e3)]
-    data.real.sum('t2')
-    print data
-    fl.show();quit()
-    fl.next('after phased - real ft')
-    fl.image(s_sliced.real)
-    fl.next('after phased')
-    s_sliced.reorder('t2',first=True)
-    fl.plot(s_sliced.real)
-    fl.next('after phased - imag ft')
-    fl.image(s_sliced.imag)
-    s_sliced.ift('t2')
-    fl.next('after phased - real')
-    fl.image(s_sliced.real)
-    fl.next('after phased - imag')
-    fl.image(s_sliced.imag)
-    s_sliced.setaxis('tE',tE_axis)
-    data = s_sliced['t2':(-0.1e3,0.2e3)].C.sum('t2')
+    data = s_sliced['t2':(-0.25e3,0.4e3)].C
+    ydata = data.C.real.sum('t2')
+    ydata = ydata.data
     fl.next('Fit decay')
     x = tE_axis 
-    ydata = data.data.real
     ydata /= max(ydata)
     fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+    #fl.next('after phased - real ft')
+    #fl.image(s_sliced.real)
+    #fl.next('after phased')
+    #s_sliced.reorder('t2',first=True)
+    #fl.plot(s_sliced.real)
+    #fl.next('after phased - imag ft')
+    #fl.image(s_sliced.imag)
+    #s_sliced.ift('t2')
+    #fl.next('after phased - real')
+    #fl.image(s_sliced.real)
+    #fl.next('after phased - imag')
+    #fl.image(s_sliced.imag)
+    s_sliced.setaxis('tE',tE_axis)
+    #data = s_sliced['t2':(-0.1e3,0.2e3)].C.sum('t2')
     fitfunc = lambda p, x: exp(-x/p[0])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
     p0 = [1.0]

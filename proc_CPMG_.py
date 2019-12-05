@@ -2,16 +2,15 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        #('191205','CPMG_TEMPOL_10_0'),
-        #('191205','CPMG_TEMPOL_10_1'),
-        #('191205','CPMG_TEMPOL_10_2'),
-        #('191205','CPMG_TEMPOL_10_3'),
-        #('191205','CPMG_TEMPOL_10_4'),
-        ('191205','CPMG_TEMPOL_10_5'),
-        #('191205','CPMG_TEMPOL_10_6'),
-        #('191205','CPMG_TEMPOL_10_7'),
-        #('191205','CPMG_TEMPOL_10_8'),
-        #('191205','CPMG_TEMPOL_10_9'),
+        ('191205','CPMG_TEMPOL_13_0'),
+        ('191205','CPMG_TEMPOL_13_1'),
+        ('191205','CPMG_TEMPOL_13_2'),
+        ('191205','CPMG_TEMPOL_13_3'),
+        ('191205','CPMG_TEMPOL_13_4'),
+        ('191205','CPMG_TEMPOL_13_5'),
+        ('191205','CPMG_TEMPOL_13_6'),
+        ('191205','CPMG_TEMPOL_13_7'),
+        ('191205','CPMG_TEMPOL_13_8'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -50,6 +49,6 @@ for date,id_string in [
     s.smoosh(['tE','t2'])
     s.setaxis('tE',r_[0:nPoints*nEchoes])
     fl.next('Coherence pathway: smooshed')
-    fl.plot(abs(s),human_units=False,alpha=0.5,
+    fl.plot(abs(s),'.',human_units=False,alpha=0.5,
             label='%s'%id_string)
 fl.show();quit()
