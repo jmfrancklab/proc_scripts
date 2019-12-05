@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('191205','CPMG_TEMPOL_1')
+        ('191205','CPMG_TEMPOL_2_1')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -50,62 +50,77 @@ for date,id_string in [
     fl.next(id_string+' image plot coherence ')
     fl.image(s)
     s = s['ph1',1].C
-    echo_center = abs(s)['tE',0].argmax('t2').data.item()
-    s.setaxis('t2', lambda x: x-echo_center)
-    s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
-    fl.next('check center')
-    fl.image(s)
-    s.ft('t2')
-    fl.next('before phased - real ft')
-    fl.image(s.real)
-    fl.next('before phased - imag ft')
-    fl.image(s.imag)
-    f_axis = s.fromaxis('t2')
-    def costfun(p):
-        zeroorder_rad,firstorder = p
-        phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
-        phshift *= exp(-1j*2*pi*zeroorder_rad)
-        corr_test = phshift * s
-        return (abs(corr_test.data.imag)**2)[:].sum()
-    iteration = 0
-    def print_fun(x, f, accepted):
-        global iteration
-        iteration += 1
-        print (iteration, x, f, int(accepted))
-        return
-    sol = basinhopping(costfun, r_[0.,0.],
-            minimizer_kwargs={"method":'L-BFGS-B'},
-            callback=print_fun,
-            stepsize=100.,
-            niter=100,
-            T=1000.
-            )
-    zeroorder_rad, firstorder = sol.x
-    phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
-    phshift *= exp(-1j*2*pi*zeroorder_rad)
-    s *= phshift
-    print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-            firstorder,angle(zeroorder_rad)/pi*180)
-    if s['nEchoes',0].data[:].sum().real < 0:
-        s *= -1
-    print ndshape(s)
-    fl.next('after phased - real ft')
-    fl.image(s.real)
-    fl.next('after phased')
     s.reorder('t2',first=True)
-    fl.plot(s.real)
-    fl.show();quit()
-    print ndshape(s)
-    quit()
-    fl.next('after phased - imag ft')
-    fl.image(s.imag)
+    s.ft('t2')
+    slice_f = (-4e3,4e3)
+    s = s['t2':slice_f].C
     s.ift('t2')
+    first_s = s['tE',0].C
+    max_data = abs(first_s.data).max()
+    pairs = first_s.contiguous(lambda x: abs(x) > max_data*0.5)
+    longest_pair = diff(pairs).argmax()
+    peak_location = pairs[longest_pair,:]
+    print peak_location
+    s.setaxis('t2', lambda x: x-peak_location.mean())
+    s.register_axis({'t2':0})
+    max_shift = diff(peak_location).item()/2
+    s_sliced = s['t2':(0,None)].C
+    s_sliced['t2',0] *= 0.5
+    s_sliced.ft('t2')
+    s_ft = s_sliced.C
+    fl.next('sliced')
+    fl.plot(s_ft)
+    shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:200j],'R2'))
+    s_foropt = s.C
+    s_foropt.ft('t2')
+    s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
+    s_foropt.ift('t2')
+    s_foropt /= t2_decay
+    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
+    print s_foropt.getaxis('t2')
+    print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+    if ndshape(s_foropt)['t2'] % 2 == 0:
+        s_foropt = s_foropt['t2',:-1]
+    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
+    ph0 = s_foropt['t2':0.0]
+    ph0 /= abs(ph0)
+    s_foropt /= ph0
+    s_foropt /= max(abs(s_foropt.getaxis('t2')))
+    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
+    residual.reorder('shift')
+    print ndshape(residual)
+    minpoint = residual.argmin()
+    best_shift = minpoint['shift']
+    best_R2 = minpoint['R2']
+    s.ft('t2')
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s.ift('t2')
+    ph0 = s['t2':0.0]
+    ph0 /= abs(ph0)
+    s /= ph0
+    s_sliced = s['t2':(0,None)].C
+    s_sliced['t2',0] *= 0.5
+    fl.next('time domain')
+    fl.plot(s_sliced)
+    s.ft('t2')
+    s_sliced.ft('t2')
+    fl.next('Spectrum FT')
+    fl.plot(s_sliced.real, alpha=0.5)
+    fl.next('after phased - real ft')
+    fl.image(s_sliced.real)
+    fl.next('after phased')
+    s_sliced.reorder('t2',first=True)
+    fl.plot(s_sliced.real)
+    fl.next('after phased - imag ft')
+    fl.image(s_sliced.imag)
+    s_sliced.ift('t2')
     fl.next('after phased - real')
-    fl.image(s.real)
+    fl.image(s_sliced.real)
     fl.next('after phased - imag')
-    fl.image(s.imag)
-    s.rename('nEchoes','tE').setaxis('tE',tE_axis)
-    data = s.C.sum('t2')
+    fl.image(s_sliced.imag)
+    s_sliced.setaxis('tE',tE_axis)
+    data = s_sliced.C.sum('t2')
     fl.next('Fit decay')
     x = tE_axis 
     ydata = data.data.real
