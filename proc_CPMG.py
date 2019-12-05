@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('191122','CPMG_TEMPOL_3_1')
+        ('191205','CPMG_TEMPOL_1')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -91,6 +91,12 @@ for date,id_string in [
     print ndshape(s)
     fl.next('after phased - real ft')
     fl.image(s.real)
+    fl.next('after phased')
+    s.reorder('t2',first=True)
+    fl.plot(s.real)
+    fl.show();quit()
+    print ndshape(s)
+    quit()
     fl.next('after phased - imag ft')
     fl.image(s.imag)
     s.ift('t2')
