@@ -3,7 +3,7 @@ from scipy.optimize import minimize
 fl = figlist_var()
 date = '191206'
 for id_string in [
-    'CPMG_calib_1',
+    'CPMG_calib_3',
     ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'nutation'
@@ -43,9 +43,11 @@ for id_string in [
     fl.image(s)
     fl.next(id_string+'image abs')
     fl.image(abs(s))
+    s = s['t2':(-500,500)]
     s.sum('t2')
     s.reorder('tE',first=True)
+    s.setaxis('tE',r_[0:nEchoes])
     fl.next('Coherence pathway: smooshed')
-    fl.plot(abs(s),'.-',human_units=False,alpha=0.5
-            )
+    abs(s).waterfall()
+    fl.show()
 fl.show();quit()
