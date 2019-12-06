@@ -2,15 +2,16 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('191205','CPMG_TEMPOL_13_0'),
-        ('191205','CPMG_TEMPOL_13_1'),
-        ('191205','CPMG_TEMPOL_13_2'),
-        ('191205','CPMG_TEMPOL_13_3'),
-        ('191205','CPMG_TEMPOL_13_4'),
-        ('191205','CPMG_TEMPOL_13_5'),
-        ('191205','CPMG_TEMPOL_13_6'),
-        ('191205','CPMG_TEMPOL_13_7'),
-        ('191205','CPMG_TEMPOL_13_8'),
+        ('191206','CPMG_1_0'),
+        ('191206','CPMG_1_1'),
+        ('191206','CPMG_1_2'),
+        ('191206','CPMG_1_3'),
+        ('191206','CPMG_1_4'),
+        ('191206','CPMG_1_5'),
+        ('191206','CPMG_1_6'),
+        ('191206','CPMG_1_7'),
+        ('191206','CPMG_1_8'),
+        ('191206','CPMG_1_9'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -46,9 +47,10 @@ for date,id_string in [
     s.ift('t2')
     s = s['ph1',1].C
     s.reorder('t2',first=True)
-    s.smoosh(['tE','t2'])
-    s.setaxis('tE',r_[0:nPoints*nEchoes])
+    s.sum('t2')
+    #s.smoosh(['tE','t2'])
+    #s.setaxis('tE',r_[0:nPoints*nEchoes])
     fl.next('Coherence pathway: smooshed')
-    fl.plot(abs(s),'.',human_units=False,alpha=0.5,
+    fl.plot(abs(s),human_units=False,alpha=0.5,
             label='%s'%id_string)
 fl.show();quit()
