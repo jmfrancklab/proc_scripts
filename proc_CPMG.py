@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('191206','CPMG_2')
+        ('191206','CPMG_3')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -13,6 +13,7 @@ for date,id_string in [
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    nScans = s.get_prop('acq_params')['nScans']
     s.set_units('t','s')
     print ndshape(s)
     fl.next(id_string+'raw data ')
@@ -34,6 +35,7 @@ for date,id_string in [
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('t',None)
+    s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
     s.setaxis('tE',tE_axis)
@@ -50,6 +52,7 @@ for date,id_string in [
     fl.next(id_string+' image plot coherence ')
     fl.image(s)
     s = s['ph1',1].C
+    s.mean('nScans',return_error=False)
     s.reorder('t2',first=True)
     s.ft('t2')
     slice_f = (-4e3,4e3)
