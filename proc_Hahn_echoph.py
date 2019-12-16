@@ -37,6 +37,7 @@ for date,id_string,label_str in [
     s = s['t2':slice_f].C
     s.ift('t2')
     max_data = abs(s.data).max()
+    print max_data
     pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
@@ -55,7 +56,6 @@ for date,id_string,label_str in [
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
-    s_foropt /= t2_decay
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
     print s_foropt.getaxis('t2')
     print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
@@ -70,9 +70,10 @@ for date,id_string,label_str in [
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     residual.reorder('shift')
     print ndshape(residual)
+    fl.next('residual')
+    fl.plot(residual)
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
-    best_R2 = minpoint['R2']
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
