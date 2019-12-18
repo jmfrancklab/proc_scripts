@@ -3,6 +3,8 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
     ('191118','echo_DNP_3'),
+    ('191217','echo_DNP_FS_1'),
+    ('191217','echo_DNP_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
