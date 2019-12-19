@@ -2,9 +2,10 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-    ('191118','echo_DNP_3'),
-    ('191217','echo_DNP_FS_1'),
-    ('191217','echo_DNP_1'),
+    #('191118','echo_DNP_3'),
+    #('191217','echo_DNP_FS_1'),
+    #('191217','echo_DNP_1'),
+    ('191218','echo_DNP_FS_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -72,7 +73,7 @@ for date,id_string in [
     fl.plot(temp.imag, alpha=0.5, label='imag, post-phasing')
     # for some reason, signs are exactly inverted when phased this way
     #s *= remember_sign
-    s *= -1
+    #s *= -1
     fl.next('signal, phased')
     fl.plot(s)
     enhancement = s['t2':(-1e3,1e3)].C
