@@ -2,18 +2,30 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200106','echo_off_1','gradient off'),
-        ('200106','echo_off_2','gradient off'),
-        ('200106','echo_off_3','gradient off'),
-        ('200106','echo_on_1','gradient on'),
-        ('200106','echo_on_2','gradient on'),
-        ('200106','echo_on_3','gradient on'),
-        ('200106','echo_on2_1','gradient on'),
-        ('200106','echo_on2_2','gradient on'),
-        ('200106','echo_on2_3','gradient on'),
-        ('200106','echo_off_1_2','gradient off'),
-        ('200106','echo_off_2_2','gradient off'),
-        ('200106','echo_off_3_2','gradient off'),
+        #('200106','echo_off_1','gradient off'),
+        #('200106','echo_off_2','gradient off'),
+        #('200106','echo_off_3','gradient off'),
+        #('200106','echo_on_1','gradient on'),
+        #('200106','echo_on_2','gradient on'),
+        #('200106','echo_on_3','gradient on'),
+        #('200106','echo_on2_1','gradient on'),
+        #('200106','echo_on2_2','gradient on'),
+        #('200106','echo_on2_3','gradient on'),
+        #('200106','echo_off_1_2','gradient off'),
+        #('200106','echo_off_2_2','gradient off'),
+        #('200106','echo_off_3_2','gradient off'),
+        ('200106','echo_off_1_3','gradient off'),
+        ('200106','echo_off_2_3','gradient off'),
+        ('200106','echo_off_3_3','gradient off'),
+        ('200106','echo_on_1_2','gradient on'),
+        ('200106','echo_on_2_2','gradient on'),
+        ('200106','echo_on_3_2','gradient on'),
+        ('200106','echo_on2_1_2','gradient on'),
+        ('200106','echo_on2_2_2','gradient on'),
+        ('200106','echo_on2_3_2','gradient on'),
+        ('200106','echo_off_1_4','gradient off'),
+        ('200106','echo_off_2_4','gradient off'),
+        ('200106','echo_off_3_4','gradient off'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -43,7 +55,7 @@ for date,id_string,label_str in [
     fl.image(abs(s))
     s = s['ph1',1]['ph2',0].C
     s.mean('nScans',return_error=False)
-    slice_f = (-2e3,3e3)
+    slice_f = (-3e3,3e3)
     s = s['t2':slice_f].C
     s.ift('t2')
     max_data = abs(s.data).max()
@@ -71,7 +83,7 @@ for date,id_string,label_str in [
     print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
     if ndshape(s_foropt)['t2'] % 2 == 0:
         s_foropt = s_foropt['t2',:-1]
-    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
+    #assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
     ph0 = s_foropt['t2':0.0]
     ph0 /= abs(ph0)
     s_foropt /= ph0
