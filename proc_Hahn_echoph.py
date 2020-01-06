@@ -2,9 +2,18 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191218','echo_1','Reverse Micelles, 1x'),
-        #('191218','echo_2','Reverse Micelles, 8x'),
-        #('191206','echo_TEMPOL_1','TEMPOL'),
+        ('200106','echo_off_1','gradient off'),
+        ('200106','echo_off_2','gradient off'),
+        ('200106','echo_off_3','gradient off'),
+        ('200106','echo_on_1','gradient on'),
+        ('200106','echo_on_2','gradient on'),
+        ('200106','echo_on_3','gradient on'),
+        ('200106','echo_on2_1','gradient on'),
+        ('200106','echo_on2_2','gradient on'),
+        ('200106','echo_on2_3','gradient on'),
+        ('200106','echo_off_1_2','gradient off'),
+        ('200106','echo_off_2_2','gradient off'),
+        ('200106','echo_off_3_2','gradient off'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -34,13 +43,10 @@ for date,id_string,label_str in [
     fl.image(abs(s))
     s = s['ph1',1]['ph2',0].C
     s.mean('nScans',return_error=False)
-    fl.next('signal')
-    fl.plot(abs(s),label=label_str)
-    slice_f = (-5e3,5e3)
+    slice_f = (-2e3,3e3)
     s = s['t2':slice_f].C
     s.ift('t2')
     max_data = abs(s.data).max()
-    print max_data
     pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
@@ -53,11 +59,13 @@ for date,id_string,label_str in [
     s_ft = s_sliced.C
     fl.next('sliced')
     fl.plot(s_ft)
-    shift_t = nddata(r_[-0.1:0.1:200j]*max_shift, 'shift')
+    shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:200j],'R2'))
     s_foropt = s.C
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
+    s_foropt /= t2_decay
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
     print s_foropt.getaxis('t2')
     print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
@@ -72,10 +80,9 @@ for date,id_string,label_str in [
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     residual.reorder('shift')
     print ndshape(residual)
-    fl.next('residual')
-    fl.plot(residual)
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
+    best_R2 = minpoint['R2']
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
@@ -84,10 +91,7 @@ for date,id_string,label_str in [
     s /= ph0
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
-    fl.next('time domain')
-    fl.plot(s_sliced)
     s_sliced.ft('t2')
     fl.next('Spectrum FT')
-    fl.plot(s_sliced.real, alpha=0.5, label='real - %s'%label_str)
-    fl.plot(s_sliced.imag, alpha=0.5, label='imag - %s'%label_str)
+    fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
 fl.show();quit()
