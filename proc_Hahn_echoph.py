@@ -1,23 +1,31 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
-max_list = []
 for date,id_string,label_str in [
-        ('200106','echo_off_1_5','gradient off'),
-        ('200106','echo_off_2_5','gradient off'),
-        ('200106','echo_off_3_5','gradient off'),
-        ('200106','echo_on5_1','gradient on 0.1 A'),
-        ('200106','echo_on5_2','gradient on 0.1 A'),
-        ('200106','echo_on5_3','gradient on 0.1 A'),
-        ('200106','echo_on6_1','gradient on 0.17 A'),
-        ('200106','echo_on6_2','gradient on 0.17 A'),
-        ('200106','echo_on6_3','gradient on 0.17 A'),
-        ('200106','echo_on4_1','gradient on 0.25 A'),
-        ('200106','echo_on4_2','gradient on 0.25 A'),
-        ('200106','echo_on4_3','gradient on 0.25 A'),
-        ('200106','echo_on3_1','gradient on 0.5 A'),
-        ('200106','echo_on3_2','gradient on 0.5 A'),
-        ('200106','echo_on3_3','gradient on 0.5 A'),
+        ('200106','echo_off_1_7','gradient off'),
+        ('200106','echo_off_2_7','gradient off'),
+        ('200106','echo_off_3_7','gradient off'),
+        #('200106','echo_on6_1_2','gradient off'),
+        #('200106','echo_on6_2_2','gradient off'),
+        #('200106','echo_on6_3_2','gradient off'),
+        #('200106','echo_on6_1_config2','gradient off'),
+        #('200106','echo_on6_2_config2','gradient off'),
+        #('200106','echo_on6_3_config2','gradient off'),
+        #('200106','echo_on4_1_config2','gradient off'),
+        #('200106','echo_on4_2_config2','gradient off'),
+        #('200106','echo_on4_3_config2','gradient off'),
+        ('200106','echo_on3_1_config2','gradient on, 0.5 A'),
+        ('200106','echo_on3_2_config2','gradient on, 0.5 A'),
+        ('200106','echo_on3_3_config2','gradient on, 0.5 A'),
+        #('200106','echo_on7_1_config2','gradient on, 0.75 A'),
+        #('200106','echo_on7_2_config2','gradient on, 0.75 A'),
+        #('200106','echo_on7_3_config2','gradient on, 0.75 A'),
+        ('200106','echo_on8_1_config2','gradient on, 1.56 A'),
+        ('200106','echo_on8_2_config2','gradient on, 1.56 A'),
+        ('200106','echo_on8_3_config2','gradient on, 1.56 A'),
+        ('200106','echo_off_1_8','gradient off'),
+        ('200106','echo_off_2_8','gradient off'),
+        ('200106','echo_off_3_8','gradient off'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -98,13 +106,4 @@ for date,id_string,label_str in [
     s_sliced.ft('t2')
     fl.next('Spectrum FT')
     fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
-    max_list.append(s_sliced.data.max())
-max_list = array(max_list)
-max_list = mean(max_list.reshape(-1,3),axis=1)
-print max_list
-maxima = nddata(array(max_list),['current'])
-maxima.setaxis('current',[0.,0.1,0.17,0.25,0.5])
-fl.next('maxima')
-fl.plot(maxima,'.')
 fl.show();quit()
-#
