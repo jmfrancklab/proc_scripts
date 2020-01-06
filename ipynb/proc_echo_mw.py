@@ -80,11 +80,12 @@ for date,id_string in [
     enhancement.sum('t2').real
     enhanced = enhancement.data[1:]
     enhanced /= max(enhanced)
-    fl.next('150uL TEMPOL enhancement curve')
+    fl.next('TCM118C enhancement curve')
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
-    fl.plot(power_axis_W,enhanced,'.')
+    fl.plot(power_axis_W[:-3],enhanced[:-3],'.',human_units=False)
+    fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
     xlabel('Power (W)')
     ylabel('Enhancement')
 fl.show();quit()
