@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('191206','CPMG_TEMPOL_5')
+        ('200107','CPMG_5_1')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -106,8 +106,10 @@ for date,id_string in [
     #s.rename('nEchoes','tE').setaxis('tE',tE_axis)
     data = s.C.sum('t2')
     fl.next('Fit decay')
-    x = tE_axis[50:] 
-    ydata = (data.data)[50:].real
+    #x = tE_axis[50:] 
+    #ydata = (data.data)[50:].real
+    x = tE_axis
+    ydata = data.data.real
     ydata /= max(ydata)
     fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
     fitfunc = lambda p, x: exp(-x/p[0])

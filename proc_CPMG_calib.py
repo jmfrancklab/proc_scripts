@@ -1,9 +1,9 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '191206'
+date = '200107'
 for id_string in [
-    'CPMG_TEMPOL_calib_3',
+    'CPMG_calib_3',
     ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'nutation'
@@ -44,10 +44,12 @@ for id_string in [
     fl.next(id_string+'image abs')
     fl.image(abs(s))
     s = s['t2':(-500,500)]
-    s.sum('t2')
+    fl.next(id_string+'image abs')
+    fl.image(abs(s['t2':(0,100)]))
+    #s.sum('t2')
     s.reorder('tE',first=True)
     s.setaxis('tE',r_[0:nEchoes])
     fl.next('Coherence pathway: smooshed')
-    abs(s).waterfall()
+    abs(s['t2':(0,100)].sum('t2')).waterfall()
     fl.show()
 fl.show();quit()
