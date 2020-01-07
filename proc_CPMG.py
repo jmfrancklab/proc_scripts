@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('200107','CPMG_5_1')
+        ('200107','CPMG_6_1')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -97,17 +97,8 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    #s = s['t2':(-0.5e3,0.5e3)]
-    #s.ift('t2')
-    #fl.next('after phased - real')
-    #fl.image(s.real)
-    #fl.next('after phased - imag')
-    #fl.image(s.imag)
-    #s.rename('nEchoes','tE').setaxis('tE',tE_axis)
-    data = s.C.sum('t2')
+    data = s['t2':0]
     fl.next('Fit decay')
-    #x = tE_axis[50:] 
-    #ydata = (data.data)[50:].real
     x = tE_axis
     ydata = data.data.real
     ydata /= max(ydata)
