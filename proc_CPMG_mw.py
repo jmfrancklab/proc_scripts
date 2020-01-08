@@ -100,15 +100,28 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    #data = s['t2':0]['nEchoes':0]
-    #fl.next('Fit decay')
-    #x = tE_axis
-    #ydata = data.data.real
-    #ydata /= max(ydata)
-    #fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
-    #fl.show();quit()
+    find_T2 = True
+    if find_T2:
+        data = s['t2':0]['power',0]
+        fl.next('Fit decay')
+        x = tE_axis
+        ydata = data.data.real
+        if ydata[0] < 1:
+            ydata *= -1
+        ydata /= max(ydata)
+        fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+        fitfunc = lambda p, x: exp(-x/p[0])
+        errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
+        p0 = [max(ydata)]
+        p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+        x_fit = linspace(x.min(),x.max(),5000)
+        fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
+        xlabel('t (sec)')
+        ylabel('Intensity')
+        T2 = p1[0]
+        print "T2:",T2,"s"
+    fl.show();quit()
     enhancement = s['t2':0]['nEchoes':0].C
-    #enhanced = enhancement.data[1:]
     enhanced = enhancement.data[1:].real
     enhanced /= max(enhanced)
     fl.next('enhancement curve')
