@@ -100,38 +100,46 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    find_T2 = True
-    if find_T2:
-        data = s['t2':0]['power',0]
-        fl.next('Fit decay')
-        x = tE_axis
-        ydata = data.data.real
-        if ydata[0] < 1:
-            ydata *= -1
-        ydata /= max(ydata)
-        fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
-        fitfunc = lambda p, x: exp(-x/p[0])
-        errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-        p0 = [max(ydata)]
-        p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
-        x_fit = linspace(x.min(),x.max(),5000)
-        fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
-        xlabel('t (sec)')
-        ylabel('Intensity')
-        T2 = p1[0]
-        print "T2:",T2,"s"
-    fl.show();quit()
-    enhancement = s['t2':0]['nEchoes':0].C
-    enhanced = enhancement.data[1:].real
-    enhanced /= max(enhanced)
-    fl.next('enhancement curve')
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
+    T2_values = ones_like(power_axis_W)
+    find_T2 = True
+    if find_T2:
+        for k in xrange(len(power_axis_W)):
+            data = s['t2':0]['power',k]
+            fl.next('Echo decay (power = %f W)'%power_axis_W[0])
+            x = tE_axis
+            ydata = data.data.real
+            if ydata[0] < 1:
+                ydata *= -1
+            ydata /= max(ydata)
+            fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+            fitfunc = lambda p, x: exp(-x/p[0])
+            errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
+            p0 = [max(ydata)]
+            p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+            x_fit = linspace(x.min(),x.max(),5000)
+            fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
+            xlabel('t (sec)')
+            ylabel('Intensity')
+            T2 = p1[0]
+            T2_values[k] = T2
+            print "T2:",T2,"s"
+    fl.next('T2 vs power')
+    fl.plot(power_axis_W[:-3],T2_values[:-3],'.')
+    xlabel('Power (W)')
+    ylabel('T2 (seconds)')
+    fl.show();quit()
+    enhancement = s['t2':0]['nEchoes',0].C
+    enhanced = enhancement.data[1:].real
+    enhanced /= max(enhanced)
+    fl.next('150 uL TEMPOL enhancement (first echo of CPMG train)')
     fl.plot(power_axis_W[:-3],enhanced[:-3],'.',human_units=False)
     #fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
     xlabel('Power (W)')
     ylabel('Enhancement')
+
 fl.show();quit()
 
 

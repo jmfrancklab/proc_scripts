@@ -1,8 +1,10 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
-for date,id_string in [
-        ('200107','CPMG_9')
+for date,id_string,label_str in [
+        ('200107','CPMG_7','trial 1'),
+        ('200107','CPMG_7_1','trial 2'),
+        ('200107','CPMG_7_2','trial 3')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -14,6 +16,7 @@ for date,id_string in [
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     nScans = s.get_prop('acq_params')['nScans']
+    print nScans
     s.set_units('t','s')
     print ndshape(s)
     fl.next(id_string+'raw data ')
@@ -98,11 +101,11 @@ for date,id_string in [
     fl.next('after phased - imag ft')
     fl.image(s.imag)
     data = s['t2':0]
-    fl.next('Fit decay')
+    fl.next('Echo decay')
     x = tE_axis
     ydata = data.data.real
     ydata /= max(ydata)
-    fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+    fl.plot(x,ydata, '.', alpha=0.4, label='%s'%label_str, human_units=False)
     fitfunc = lambda p, x: exp(-x/p[0])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
     p0 = [1.0]
@@ -113,4 +116,11 @@ for date,id_string in [
     ylabel('Intensity')
     T2 = p1[0]
     print "T2:",T2,"s"
+save_fig = False
+if save_fig:
+    savefig('20200108_CPMG_trials.png',
+            transparent=True,
+            bbox_inches='tight',
+            pad_inches=0,
+            legend=True)
 fl.show()
