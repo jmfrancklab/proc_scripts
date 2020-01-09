@@ -5,7 +5,8 @@ for date,id_string,label_str in [
         #('200108','CPMG_1_1','additional pad 100'),
         #('200108','CPMG_2','additional pad 5000'),
         #('200108','CPMG_3','additional pad 10000'),
-        ('200108','CPMG_3_1','additional pad 10000, sig avg'),
+        #('200108','CPMG_3_1','additional pad 10000, sig avg'),
+        ('200108','CPMG_3_2','additional pad 10000, sig avg'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
