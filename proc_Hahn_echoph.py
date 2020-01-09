@@ -2,13 +2,9 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
+        #('200108','echo_1','24 kHz'),
         ('200106','echo_off_1_7','gradient off'),
-        #('200106','echo_on6_1_config2','gradient on, 0.17 A'),
-        #('200106','echo_on4_1_config2','gradient on, 0.25 A'),
-        #('200106','echo_on3_1_config2','gradient on, 0.5 A'),
-        ('200106','echo_on7_1_config2','gradient on, 0.75 A'),
-        #('200106','echo_on8_1_config2','gradient on, 1.56 A'),
-        #('200106','echo_off_1_8','gradient off'),
+        ('200108','echo_2','4 kHz'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -89,4 +85,5 @@ for date,id_string,label_str in [
     s_sliced.ft('t2')
     fl.next('Spectrum - freq domain')
     fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
+    print (s_sliced['t2':(-1800,-1200)]).mean()
 fl.show();quit()
