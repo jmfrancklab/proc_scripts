@@ -3,29 +3,12 @@ from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
         ('200106','echo_off_1_7','gradient off'),
-        ('200106','echo_off_2_7','gradient off'),
-        ('200106','echo_off_3_7','gradient off'),
-        #('200106','echo_on6_1_2','gradient off'),
-        #('200106','echo_on6_2_2','gradient off'),
-        #('200106','echo_on6_3_2','gradient off'),
-        #('200106','echo_on6_1_config2','gradient off'),
-        #('200106','echo_on6_2_config2','gradient off'),
-        #('200106','echo_on6_3_config2','gradient off'),
-        #('200106','echo_on4_1_config2','gradient off'),
-        #('200106','echo_on4_2_config2','gradient off'),
-        #('200106','echo_on4_3_config2','gradient off'),
-        ('200106','echo_on3_1_config2','gradient on, 0.5 A'),
-        ('200106','echo_on3_2_config2','gradient on, 0.5 A'),
-        ('200106','echo_on3_3_config2','gradient on, 0.5 A'),
-        #('200106','echo_on7_1_config2','gradient on, 0.75 A'),
-        #('200106','echo_on7_2_config2','gradient on, 0.75 A'),
-        #('200106','echo_on7_3_config2','gradient on, 0.75 A'),
-        ('200106','echo_on8_1_config2','gradient on, 1.56 A'),
-        ('200106','echo_on8_2_config2','gradient on, 1.56 A'),
-        ('200106','echo_on8_3_config2','gradient on, 1.56 A'),
-        ('200106','echo_off_1_8','gradient off'),
-        ('200106','echo_off_2_8','gradient off'),
-        ('200106','echo_off_3_8','gradient off'),
+        #('200106','echo_on6_1_config2','gradient on, 0.17 A'),
+        #('200106','echo_on4_1_config2','gradient on, 0.25 A'),
+        #('200106','echo_on3_1_config2','gradient on, 0.5 A'),
+        ('200106','echo_on7_1_config2','gradient on, 0.75 A'),
+        #('200106','echo_on8_1_config2','gradient on, 1.56 A'),
+        #('200106','echo_off_1_8','gradient off'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -104,6 +87,6 @@ for date,id_string,label_str in [
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
-    fl.next('Spectrum FT')
+    fl.next('Spectrum - freq domain')
     fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
 fl.show();quit()
