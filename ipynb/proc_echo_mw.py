@@ -5,7 +5,8 @@ for date,id_string in [
     #('191118','echo_DNP_3'),
     #('191217','echo_DNP_FS_1'),
     #('191217','echo_DNP_1'),
-    ('191218','echo_DNP_FS_1'),
+    #('191218','echo_DNP_FS_1'),
+    ('200109','echo_DNP_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -76,7 +77,7 @@ for date,id_string in [
     #s *= -1
     fl.next('signal, phased')
     fl.plot(s)
-    enhancement = s['t2':(-1e3,1e3)].C
+    enhancement = s['t2':(-2.2e3,-1.8e3)].C
     enhancement.sum('t2').real
     enhanced = enhancement.data[1:]
     enhanced /= max(enhanced)
