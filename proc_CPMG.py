@@ -2,9 +2,10 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200107','CPMG_7','trial 1'),
-        ('200107','CPMG_7_1','trial 2'),
-        ('200107','CPMG_7_2','trial 3')
+        #('200108','CPMG_1_1','additional pad 100'),
+        #('200108','CPMG_2','additional pad 5000'),
+        #('200108','CPMG_3','additional pad 10000'),
+        ('200108','CPMG_3_1','additional pad 10000, sig avg'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -106,15 +107,15 @@ for date,id_string,label_str in [
     ydata = data.data.real
     ydata /= max(ydata)
     fl.plot(x,ydata, '.', alpha=0.4, label='%s'%label_str, human_units=False)
-    fitfunc = lambda p, x: exp(-x/p[0])
+    fitfunc = lambda p, x: p[0]*exp(-x/p[1])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [1.0]
+    p0 = [1.0,1.0]
     p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
     x_fit = linspace(x.min(),x.max(),5000)
     fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
     xlabel('t (sec)')
     ylabel('Intensity')
-    T2 = p1[0]
+    T2 = p1[1]
     print "T2:",T2,"s"
 save_fig = False
 if save_fig:
