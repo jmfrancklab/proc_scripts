@@ -2,8 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200108','echo_1','yesterday'),
-        ('200109','echo_14_1','today'),
+        ('200110','echo_off_1_1','gradient off'),
+        ('200110','echo_off_2_1','gradient off'),
+        ('200110','echo_off_3_1','gradient off'),
+        ('200110','echo_on5_config3p_1_1','gradient on'),
+        ('200110','echo_on5_config3p_2_1','gradient on'),
+        ('200110','echo_on5_config3p_3_1','gradient on'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
