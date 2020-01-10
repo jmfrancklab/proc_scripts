@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('200107','CPMG_DNP_1')
+        ('200109','CPMG_DNP_1')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -104,7 +104,7 @@ for date,id_string in [
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     T2_values = ones_like(power_axis_W)
-    find_T2 = True
+    find_T2 = False
     if find_T2:
         for k in xrange(len(power_axis_W)):
             data = s['t2':0]['power',k]
@@ -115,9 +115,9 @@ for date,id_string in [
                 ydata *= -1
             ydata /= max(ydata)
             fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
-            fitfunc = lambda p, x: exp(-x/p[0])
+            fitfunc = lambda p, x: exp(p[0]*-x*p[1])
             errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-            p0 = [max(ydata)]
+            p0 = [max(ydata),0.5]
             p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
             x_fit = linspace(x.min(),x.max(),5000)
             fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
@@ -126,11 +126,10 @@ for date,id_string in [
             T2 = p1[0]
             T2_values[k] = T2
             print "T2:",T2,"s"
-    fl.next('T2 vs power')
-    fl.plot(power_axis_W[:-3],T2_values[:-3],'.')
-    xlabel('Power (W)')
-    ylabel('T2 (seconds)')
-    fl.show();quit()
+        fl.next('T2 vs power')
+        fl.plot(power_axis_W[:-3],T2_values[:-3],'.')
+        xlabel('Power (W)')
+        ylabel('T2 (seconds)')
     enhancement = s['t2':0]['nEchoes',0].C
     enhanced = enhancement.data[1:].real
     enhanced /= max(enhanced)

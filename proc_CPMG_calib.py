@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '200108'
+date = '200109'
 for id_string in [
     'CPMG_calib_1',
     ]:
@@ -13,6 +13,7 @@ for id_string in [
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    nScans = s.get_prop('acq_params')['nScans']
     orig_t = s.getaxis('t')
     p90_s = s.get_prop('acq_params')['p90_us']
     transient_s = s.get_prop('acq_params')['deadtime_us']*1e-6
@@ -26,6 +27,7 @@ for id_string in [
     acq_time_s = orig_t[nPoints]
     t2_axis = linspace(0,acq_time_s,nPoints)
     s.setaxis('t',None)
+    s.setaxis('nScans',r_[0:nScans])
     s.reorder('t',first=True)
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
@@ -36,6 +38,7 @@ for id_string in [
     fl.next('image, raw')
     fl.image(s)
     s.ft(['ph1'])
+    s.mean('nScans',return_error=False)
     fl.next('image, all coherence channels')
     fl.image(s)
     s = s['ph1',1].C

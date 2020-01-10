@@ -2,15 +2,8 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200109','CPMG_3p0','p90 = 3.0'),
-        ('200109','CPMG_3p1','p90 = 3.1'),
-        ('200109','CPMG_3p2','p90 = 3.2'),
-        ('200109','CPMG_3p3','p90 = 3.3'),
-        ('200109','CPMG_3p4','p90 = 3.4'),
-        ('200109','CPMG_3p5','p90 = 3.5'),
-        ('200109','CPMG_3p6','p90 = 3.6'),
-        ('200109','CPMG_3p7','p90 = 3.7'),
-        ('200109','CPMG_3p8','p90 = 3.8'),
+        ('200109','CPMG_3','p90 = 3.5'),
+        #('200109','CPMG_3p5_1','p90 = 3.5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -102,17 +95,17 @@ for date,id_string,label_str in [
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
     print ndshape(s)
-    #fl.next('after phased - real ft')
-    #fl.image(s.real)
-    #fl.next('after phased - imag ft')
-    #fl.image(s.imag)
+    fl.next('after phased - real ft')
+    fl.image(s.real)
+    fl.next('after phased - imag ft')
+    fl.image(s.imag)
     data = s['t2':0]
     #data = s['t2':(-100,100)].C.sum('t2')
     fl.next('Echo decay')
     x = tE_axis
     ydata = data.data.real
     ydata /= max(ydata)
-    fl.plot(x,ydata, '.-', alpha=0.4, label='%s'%label_str, human_units=False)
+    fl.plot(x,ydata, '.', alpha=0.4, label='%s'%label_str, human_units=False)
     fitfunc = lambda p, x: p[0]*exp(-x*p[1])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
     p0 = [0.5,0.360]
@@ -120,7 +113,7 @@ for date,id_string,label_str in [
     T2 = 1./p1[1]
     print T2
     x_fit = linspace(x.min(),x.max(),5000)
-    #fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
+    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
     xlabel('t (sec)')
     ylabel('Intensity')
     print "T2:",T2,"s"
