@@ -1,63 +1,61 @@
 from pyspecdata import *
 from scipy.optimize import minimize
-fl = figlist_var()
 date = '200110'
-for id_string in [
-    'CPMG_calib_1',
-    ]:
-    filename = date+'_'+id_string+'.h5'
-    nodename = 'nutation'
-    s = nddata_hdf5(filename+'/'+nodename,
-            directory = getDATADIR(exp_type = 'test_equip' ))
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
-    nPoints = s.get_prop('acq_params')['nPoints']
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    nScans = s.get_prop('acq_params')['nScans']
-    orig_t = s.getaxis('t')
-    p90_s = s.get_prop('acq_params')['p90_us']
-    transient_s = s.get_prop('acq_params')['deadtime_us']*1e-6
-    deblank = s.get_prop('acq_params')['deblank_us']*1e-6
-    acq_time_s = orig_t[nPoints]
-    tau_s = s.get_prop('acq_params')['tau_us']*1e-6
-    pad_range = zeros_like(p90_s)
-    for x in xrange(len(pad_range)):
-        pad_range[x] = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s[x]*1e-6 - deblank
-    s.set_units('p_90','s')
-    acq_time_s = orig_t[nPoints]
-    t2_axis = linspace(0,acq_time_s,nPoints)
-    s.setaxis('t',None)
-    s.setaxis('nScans',r_[0:nScans])
-    s.reorder('t',first=True)
-    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('t2',t2_axis)
-    s.reorder('t2',first=False)
-    s.reorder('p_90',first=True)
-    s.ft('t2',shift=True)
-    fl.next('image, raw')
-    fl.image(s)
-    s.ft(['ph1'])
-    s.mean('nScans',return_error=False)
-    fl.next('image, all coherence channels')
-    fl.image(s)
-    s = s['ph1',1].C
-    fl.next(id_string+'image')
-    fl.image(s)
-    fl.next(id_string+'image abs')
-    fl.image(abs(s))
-    s.ift('t2')
-    print s.getaxis('t2')
-    fl.show();quit()
-    s = s['t2':(-500,500)]
-    fl.next(id_string+'image abs')
-    fl.image(abs(s['t2':(0,100)]))
-    #s.sum('t2')
-    s.reorder('tE',first=True)
-    s.setaxis('tE',r_[0:nEchoes])
-    print p90_s
-    fl.next('Coherence pathway: smooshed')
-    abs(s['t2':(0,100)].sum('t2')).waterfall()
-    fl.show()
-fl.show();quit()
-
+with figlist_var(filename='CPMG_data.pdf') as fl:
+    for id_string in [
+        'CPMG_calib_1',
+        ]:
+        filename = date+'_'+id_string+'.h5'
+        nodename = 'nutation'
+        s = nddata_hdf5(filename+'/'+nodename,
+                directory = getDATADIR(exp_type = 'test_equip' ))
+        SW_kHz = s.get_prop('acq_params')['SW_kHz']
+        nPoints = s.get_prop('acq_params')['nPoints']
+        nEchoes = s.get_prop('acq_params')['nEchoes']
+        nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+        nScans = s.get_prop('acq_params')['nScans']
+        orig_t = s.getaxis('t')
+        p90_s = s.get_prop('acq_params')['p90_us']
+        transient_s = s.get_prop('acq_params')['deadtime_us']*1e-6
+        deblank = s.get_prop('acq_params')['deblank_us']*1e-6
+        acq_time_s = orig_t[nPoints]
+        tau_s = s.get_prop('acq_params')['tau_us']*1e-6
+        pad_range = zeros_like(p90_s)
+        for x in xrange(len(pad_range)):
+            pad_range[x] = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s[x]*1e-6 - deblank
+        s.set_units('p_90','s')
+        acq_time_s = orig_t[nPoints]
+        t2_axis = linspace(0,acq_time_s,nPoints)
+        s.setaxis('t',None)
+        s.setaxis('nScans',r_[0:nScans])
+        s.reorder('t',first=True)
+        s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
+        s.setaxis('ph1',r_[0.,2.]/4)
+        s.setaxis('t2',t2_axis)
+        s.reorder('t2',first=False)
+        s.reorder('p_90',first=True)
+        s.ft('t2',shift=True)
+        fl.next('image, raw')
+        fl.image(s)
+        s.ft(['ph1'])
+        s.mean('nScans',return_error=False)
+        fl.next('image, all coherence channels')
+        fl.image(s)
+        s = s['ph1',1].C
+        fl.next(id_string+'image')
+        fl.image(s)
+        fl.next(id_string+'image abs')
+        fl.image(abs(s))
+        s.ift('t2')
+        print s.getaxis('t2')
+        fl.show();quit()
+        s = s['t2':(-500,500)]
+        fl.next(id_string+'image abs')
+        fl.image(abs(s['t2':(0,100)]))
+        #s.sum('t2')
+        s.reorder('tE',first=True)
+        s.setaxis('tE',r_[0:nEchoes])
+        print p90_s
+        fl.next('Coherence pathway: smooshed')
+        abs(s['t2':(0,100)].sum('t2')).waterfall()
+        fl.show()
