@@ -6,7 +6,10 @@ for date,id_string in [
     #('191217','echo_DNP_FS_1'),
     #('191217','echo_DNP_1'),
     #('191218','echo_DNP_FS_1'),
-    ('200109','echo_DNP_1'),
+    #('200113','echo_DNP_FS_TCM51C'),
+    #('200113','echo_DNP_FS_TCM51C_2'),
+    #('200113','echo_DNP_FS_TCM51C_3'),
+    ('200113','echo_DNP_FS_TCM51C_4'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -34,6 +37,8 @@ for date,id_string in [
     fl.next('coherence levels')
     fl.image(s)
     s = s['ph1',1]['ph2',0].C
+    fl.next('viz - signal')
+    fl.image(s)
     s.reorder('t2',first=True)
     s.ift('t2')
     t2_max = zeros_like(s.getaxis('power'))
@@ -45,13 +50,15 @@ for date,id_string in [
     s.ft('t2')
     fl.next('t=0, FID, then FT')
     fl.plot(s)
+    fl.next('viz - signal 2')
+    fl.image(s)
     remember_sign = zeros_like(s.getaxis('power'))
     for x in xrange(len(s.getaxis('power'))):
         if s['power',x].data.real.sum() > 0:
             remember_sign[x] = 1.0
         else:
             remember_sign[x] = -1.0
-    temp = s['power',-1].C
+    temp = s['power',-4].C
     fl.next('signal, comparison')
     fl.plot(temp.real, alpha=0.5, label='real, pre-phasing')
     fl.plot(temp.imag, alpha=0.5, label='imag, pre-phasing')
@@ -74,14 +81,14 @@ for date,id_string in [
     fl.plot(temp.imag, alpha=0.5, label='imag, post-phasing')
     # for some reason, signs are exactly inverted when phased this way
     #s *= remember_sign
-    #s *= -1
+    s *= -1
     fl.next('signal, phased')
     fl.plot(s)
-    enhancement = s['t2':(-2.2e3,-1.8e3)].C
+    enhancement = s['t2':(-0.5e3,0.5e3)].C
     enhancement.sum('t2').real
     enhanced = enhancement.data[1:]
     enhanced /= max(enhanced)
-    fl.next('TCM118C enhancement curve')
+    fl.next('TCM51C enhancement curve')
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
