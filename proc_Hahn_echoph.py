@@ -2,8 +2,8 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200108','echo_1','yesterday'),
-        ('200109','echo_14_1','today'),
+        ('200113','echo_FS_TCM51C_4','TCM51C'),
+        #('200113','echo_1_2_2','TCM51C'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -45,7 +45,10 @@ for date,id_string,label_str in [
     max_shift = diff(peak_location).item()/2
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
-    s_sliced.ft('t2')
+    #s_sliced['t2':(200e-3,None)] = 0
+    #fl.next('sliced - f')
+    #fl.plot(s_sliced)
+    #fl.show();quit()
     s_ft = s_sliced.C
     fl.next('sliced')
     fl.plot(s_ft)

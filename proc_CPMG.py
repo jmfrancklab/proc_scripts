@@ -2,8 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200109','CPMG_3','p90 = 3.5'),
-        #('200109','CPMG_3p5_1','p90 = 3.5'),
+        ('200110','CPMG_9','p90 = 3.5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
