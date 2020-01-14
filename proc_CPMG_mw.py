@@ -104,9 +104,10 @@ for date,id_string in [
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     T2_values = ones_like(power_axis_W)
-    find_T2 = False
+    find_T2 = True
     if find_T2:
-        for k in xrange(len(power_axis_W)):
+        #for k in xrange(len(power_axis_W)):
+        for k in [0,5,15]:
             data = s['t2':0]['power',k]
             fl.next('Echo decay (power = %f W)'%power_axis_W[0])
             x = tE_axis
@@ -119,6 +120,7 @@ for date,id_string in [
             errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
             p0 = [max(ydata),0.5]
             p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+            print success
             x_fit = linspace(x.min(),x.max(),5000)
             fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
             xlabel('t (sec)')

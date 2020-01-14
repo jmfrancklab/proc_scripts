@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '200109'
+date = '200110'
 for id_string in [
     'CPMG_calib_1',
     ]:
@@ -46,6 +46,9 @@ for id_string in [
     fl.image(s)
     fl.next(id_string+'image abs')
     fl.image(abs(s))
+    s.ift('t2')
+    print s.getaxis('t2')
+    fl.show();quit()
     s = s['t2':(-500,500)]
     fl.next(id_string+'image abs')
     fl.image(abs(s['t2':(0,100)]))
