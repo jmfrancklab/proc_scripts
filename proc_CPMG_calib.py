@@ -1,11 +1,11 @@
 from pyspecdata import *
 from scipy.optimize import minimize
-date = '200110'
+date = '200115'
 nodename = 'nutation'
 freq_window = (-100,200)
 with figlist_var(filename='CPMG_data.pdf') as fl:
     for id_string in [
-        'CPMG_calib_1',
+        'CPMG_calib_2',
         ]:
         fl.basename = id_string
         filename = date+'_'+id_string+'.h5'
@@ -17,10 +17,12 @@ with figlist_var(filename='CPMG_data.pdf') as fl:
         nEchoes = s.get_prop('acq_params')['nEchoes']
         nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
         nScans = s.get_prop('acq_params')['nScans']
-        p90_s = s.get_prop('acq_params')['p90_us']
-        transient_s = s.get_prop('acq_params')['deadtime_us']*1e-6
-        deblank = s.get_prop('acq_params')['deblank_us']*1e-6
-        tau_s = s.get_prop('acq_params')['tau_us']*1e-6
+        p90_range_s = s.get_prop('acq_params')['p90_us']#*1e-6
+        deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
+        deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
+        marker_s = s.get_prop('acq_params')['marker_us']*1e-6
+        pad_start_s = s.get_prop('acq_params')['pad_start_us']*1e-6
+        pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
         # }}}
         s.set_units('p_90','s')
         s.setaxis('nScans',r_[0:nScans])

@@ -2,7 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200115','CPMG_17','p90 = 3.5'),
+        #('200115','CPMG_20_3p0','p90 = 3.0'),
+        #('200115','CPMG_20_3p1','p90 = 3.1'),
+        #('200115','CPMG_20_3p2','p90 = 3.2'),
+        ('200115','CPMG_20_3p3','p90 = 3.3'),
+        #('200115','CPMG_20_3p4','p90 = 3.4'),
+        #('200115','CPMG_20_3p5','p90 = 3.5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -35,18 +40,18 @@ for date,id_string,label_str in [
     s.setaxis('ph1',r_[0.,2.]/4)
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
-    fl.next(id_string+'raw data - chunking')
-    fl.image(s)
+    #fl.next(id_string+'raw data - chunking')
+    #fl.image(s)
     s.ft('t2', shift=True)
-    fl.next(id_string+'raw data - chunking ft')
-    fl.image(s)
+    #fl.next(id_string+'raw data - chunking ft')
+    #fl.image(s)
     s.ft(['ph1'])
-    fl.next(id_string+' image plot coherence-- ft ')
-    fl.image(s)
+    #fl.next(id_string+' image plot coherence-- ft ')
+    #fl.image(s)
     s.ift('t2')
     s.reorder('nScans',first=True)
-    fl.next(id_string+' image plot coherence ')
-    fl.image(s, interpolation='bilinear')
+    #fl.next(id_string+' image plot coherence ')
+    #fl.image(s, interpolation='bilinear')
     s = s['ph1',1].C
     s.mean('nScans',return_error=False)
     s.reorder('t2',first=True)
@@ -95,7 +100,7 @@ for date,id_string,label_str in [
     x = tE_axis
     ydata = data.data.real
     ydata /= max(ydata)
-    fl.plot(x,ydata, '.', alpha=0.4, label='%s'%label_str, human_units=False)
+    fl.plot(x,ydata, '.', alpha=0.7, label='%s'%label_str, human_units=False)
     fitfunc = lambda p, x: p[0]*exp(-x*p[1])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
     p0 = [0.5,0.360]
@@ -104,7 +109,7 @@ for date,id_string,label_str in [
     T2 = 1./p1[1]
     print T2
     x_fit = linspace(x.min(),x.max(),5000)
-    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
+    #fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
     xlabel('t (sec)')
     ylabel('Intensity')
     print "T2:",T2,"s"
