@@ -2,69 +2,60 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200110','CPMG_9','p90 = 3.5'),
+        ('200115','CPMG_17','p90 = 3.5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
+            #{{{ pulling acq params
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     nScans = s.get_prop('acq_params')['nScans']
-    print nScans
-    s.set_units('t','s')
-    print ndshape(s)
-    #fl.next(id_string+'raw data ')
-    #fl.plot(s.real,alpha=0.4)
-    #fl.plot(s.imag,alpha=0.4)
-    #fl.plot(abs(s),':',c='k',alpha=0.4)
-    orig_t = s.getaxis('t')
     p90_s = s.get_prop('acq_params')['p90_us']*1e-6
-    transient_s = s.get_prop('acq_params')['deadtime_us']*1e-6
-    deblank = s.get_prop('acq_params')['deblank_us']*1e-6
+    deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
+    deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
+    marker_s = s.get_prop('acq_params')['marker_us']*1e-6
+    tau1_s = s.get_prop('acq_params')['tau1_us']*1e-6
+    pad_start_s = s.get_prop('acq_params')['pad_start_us']*1e-6
+    pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
+    #}}}
+    orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
-    tau_s = s.get_prop('acq_params')['tau_us']*1e-6
-    pad_s = s.get_prop('acq_params')['pad_us']*1e-6
-    tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
-    print "ACQUISITION TIME:",acq_time_s,"s"
-    print "TAU DELAY:",tau_s,"s"
-    print "TWICE TAU:",2.0*tau_s,"s"
-    print "ECHO TIME:",tE_s,"s"
+    s.set_units('t','s')
+    twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
     t2_axis = linspace(0,acq_time_s,nPoints)
-    tE_axis = r_[1:nEchoes+1]*tE_s
+    tE_axis = r_[1:nEchoes+1]*twice_tau
     s.setaxis('t',None)
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
-    #fl.next(id_string+'raw data - chunking')
-    #fl.image(s)
+    fl.next(id_string+'raw data - chunking')
+    fl.image(s)
     s.ft('t2', shift=True)
-    #fl.next(id_string+'raw data - chunking ft')
-    #fl.image(s)
+    fl.next(id_string+'raw data - chunking ft')
+    fl.image(s)
     s.ft(['ph1'])
-    #fl.next(id_string+' image plot coherence-- ft ')
-    #fl.image(s)
+    fl.next(id_string+' image plot coherence-- ft ')
+    fl.image(s)
     s.ift('t2')
-    #fl.next(id_string+' image plot coherence ')
-    #fl.image(s)
+    s.reorder('nScans',first=True)
+    fl.next(id_string+' image plot coherence ')
+    fl.image(s, interpolation='bilinear')
     s = s['ph1',1].C
     s.mean('nScans',return_error=False)
     s.reorder('t2',first=True)
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
-    #fl.next('check center')
-    #fl.image(s)
+    fl.next('check center')
+    fl.image(s)
     s.ft('t2')
-    #fl.next('before phased - real ft')
-    #fl.image(s.real)
-    #fl.next('before phased - imag ft')
-    #fl.image(s.imag)
     f_axis = s.fromaxis('t2')
     def costfun(p):
         zeroorder_rad,firstorder = p
@@ -98,8 +89,8 @@ for date,id_string,label_str in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    data = s['t2':0]
-    #data = s['t2':(-100,100)].C.sum('t2')
+    #data = s['t2':30]
+    data = s['t2':(-100,100)].sum('t2')
     fl.next('Echo decay')
     x = tE_axis
     ydata = data.data.real
@@ -109,6 +100,7 @@ for date,id_string,label_str in [
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
     p0 = [0.5,0.360]
     p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+    assert success == 1, "Fit did not succeed"
     T2 = 1./p1[1]
     print T2
     x_fit = linspace(x.min(),x.max(),5000)
