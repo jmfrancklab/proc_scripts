@@ -2,10 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        #('200113','echo_FS_TCM51C_4','TCM51C'),
-        #('200113','echo_1_2_2','TCM51C'),
-        ('200115','echo_TEMPOL_2','n'),
-        ('200115','echo_TEMPOL_3','n'),
+        ('200116','echo_TEMPOL_2','n'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -33,8 +30,13 @@ for date,id_string,label_str in [
     s.ft(['ph1','ph2'])
     fl.next('coherence')
     fl.image(abs(s))
+    q = s['ph1',0]['ph2',-1].C
     s = s['ph1',1]['ph2',0].C
     s.mean('nScans',return_error=False)
+    q.mean('nScans',return_error=False)
+    fl.next('plot')
+    fl.plot(s)
+    fl.plot(q)
     slice_f = (-3e3,3e3)
     s = s['t2':slice_f].C
     s.ift('t2')
@@ -80,14 +82,20 @@ for date,id_string,label_str in [
     best_R2 = minpoint['R2']
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    q *= exp(1j*2*pi*best_shift*q.fromaxis('t2'))
     s.ift('t2')
+    q.ift('t2')
     ph0 = s['t2':0.0]
     ph0 /= abs(ph0)
     s /= ph0
+    q /= ph0
     s_sliced = s['t2':(0,None)].C
+    q_sliced = q['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
+    q_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
+    q_sliced.ft('t2')
     fl.next('Spectrum - freq domain')
     fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
-    print (s_sliced['t2':(-1800,-1200)]).mean()
+    fl.plot(-1*q_sliced.real, alpha=0.5, label='%s'%label_str)
 fl.show();quit()
