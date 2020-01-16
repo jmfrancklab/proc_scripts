@@ -2,11 +2,13 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200115','CPMG_26_3p0','3.0'),
-        ('200115','CPMG_26_3p1','3.1'),
-        ('200115','CPMG_26_3p2','3.2'),
-        ('200115','CPMG_26_3p3','3.3'),
-        ('200115','CPMG_26_3p4','3.4'),
+        #('200115','CPMG_26_2p7','2.7'),
+        #('200115','CPMG_26_2p7_2','2.7 2'),
+        #('200115','CPMG_26_2p7_3','2.7 3'),
+        #('200115','CPMG_26_2p7_4','2.7 4'),
+        #('200115','CPMG_26_2p7_5','2.7 5'),
+        #('200115','CPMG_26_2p7_6','2.7 5'),
+        ('200115','CPMG_26_2p7_7','2.7 5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
