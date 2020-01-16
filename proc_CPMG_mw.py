@@ -2,34 +2,33 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('200109','CPMG_DNP_1')
+        ('200115','CPMG_DNP_1')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
+            #{{{ pulling acq params
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     nScans = s.get_prop('acq_params')['nScans']
-    s.set_units('t','s')
-    print ndshape(s)
-    orig_t = s.getaxis('t')
     p90_s = s.get_prop('acq_params')['p90_us']*1e-6
-    transient_s = s.get_prop('acq_params')['deadtime_us']*1e-6
-    deblank = s.get_prop('acq_params')['deblank_us']*1e-6
+    deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
+    deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
+    marker_s = s.get_prop('acq_params')['marker_us']*1e-6
+    tau1_s = s.get_prop('acq_params')['tau1_us']*1e-6
+    pad_start_s = s.get_prop('acq_params')['pad_start_us']*1e-6
+    pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
+    #}}}
+    orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
-    tau_s = s.get_prop('acq_params')['tau_us']*1e-6
-    pad_s = s.get_prop('acq_params')['pad_us']*1e-6
-    tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
-    print "ACQUISITION TIME:",acq_time_s,"s"
-    print "TAU DELAY:",tau_s,"s"
-    print "TWICE TAU:",2.0*tau_s,"s"
-    print "ECHO TIME:",tE_s,"s"
+    s.set_units('t','s')
+    twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
     t2_axis = linspace(0,acq_time_s,nPoints)
-    tE_axis = r_[1:nEchoes+1]*tE_s
+    tE_axis = r_[1:nEchoes+1]*twice_tau
     s.setaxis('t',None)
     #s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
