@@ -104,33 +104,37 @@ for date,id_string in [
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     T2_values = ones_like(power_axis_W)
     find_T2 = True
+    #{{{ find T2
     if find_T2:
-        #for k in xrange(len(power_axis_W)):
-        for k in [0,5,15]:
+        for k in xrange(len(power_axis_W)):
+        #for k in [1,5,10,15,19]:
             data = s['t2':0]['power',k]
-            fl.next('Echo decay (power = %f W)'%power_axis_W[0])
+            fl.next('Echo decay (power = %f W)'%power_axis_W[k])
             x = tE_axis
             ydata = data.data.real
             if ydata[0] < 1:
                 ydata *= -1
             ydata /= max(ydata)
             fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
-            fitfunc = lambda p, x: exp(p[0]*-x*p[1])
+            fitfunc = lambda p, x: p[0]*exp(-x*p[1])
             errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-            p0 = [max(ydata),0.5]
+            p0 = [0.1,100.0]
             p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
-            print success
+            assert success == 1, "Fit did not succeed"
+            T2 = 1./p1[1]
             x_fit = linspace(x.min(),x.max(),5000)
-            fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
+            fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
             xlabel('t (sec)')
             ylabel('Intensity')
-            T2 = p1[0]
             T2_values[k] = T2
             print "T2:",T2,"s"
         fl.next('T2 vs power')
         fl.plot(power_axis_W[:-3],T2_values[:-3],'.')
         xlabel('Power (W)')
         ylabel('T2 (seconds)')
+    #}}}
+    print T2_values
+    fl.show();quit()
     enhancement = s['t2':0]['nEchoes',0].C
     enhanced = enhancement.data[1:].real
     enhanced /= max(enhanced)
