@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '191220'
-id_string = 'IR_4'
+date = '200121'
+id_string = 'IR_FS_TCM51C_4'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
@@ -37,7 +37,7 @@ fl.image(s)
 data = s['ph2',1]['ph1',0].C
 fl.next('plot data - ft')
 fl.image(data)
-data = data['t2':(-0.5e3,0.5e3)]
+data = data['t2':(-1e3,1e3)]
 min_vd = data.getaxis('vd')[abs(data).sum('t2').argmin('vd',raw_index=True).item()]
 print min_vd
 est_T1 = min_vd/log(2)
