@@ -18,8 +18,8 @@ for date,id_string,label_str in [
     s.reorder('t',first=True)
     t2_axis = s.getaxis('t')[0:nPoints/nPhaseSteps]
     s.setaxis('t',None)
-    s.chunk('t',['ph2','ph1','t2'],[4,4,-1])
-    s.setaxis('ph2',r_[0.,1.,2.,3.]/4)
+    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
     s.setaxis('nScans',r_[0:nScans])
