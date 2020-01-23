@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 fl = figlist_var()
-date = '200121'
-id_string = 'IR_FS_TCM51C_4'
+date = '200122'
+id_string = 'IR_water_6'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
