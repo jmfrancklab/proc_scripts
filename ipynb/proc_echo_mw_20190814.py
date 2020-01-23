@@ -29,7 +29,7 @@ nPoints = s.get_prop('acq_params')['nPoints']
 SW_kHz = s.get_prop('acq_params')['SW_kHz']
 nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
 s.set_units('t','s')
-print ndshape(s)
+print(ndshape(s))
 
 
 # In[ ]:
@@ -94,7 +94,7 @@ with figlist_var() as fl:
 
 
 t2_max = zeros_like(s.getaxis('power'))
-for x in xrange(len(s.getaxis('power'))):
+for x in range(len(s.getaxis('power'))):
     t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
 s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
 with figlist_var() as fl:
@@ -120,7 +120,7 @@ with figlist_var() as fl:
 
 
 remember_sign = zeros_like(s.getaxis('power'))
-for x in xrange(len(s.getaxis('power'))):
+for x in range(len(s.getaxis('power'))):
     if s['power',x].data.real.sum() > 0:
         remember_sign[x] = 1.0
     else:
@@ -132,7 +132,7 @@ for x in xrange(len(s.getaxis('power'))):
 # In[ ]:
 
 
-print remember_sign
+print(remember_sign)
 
 
 # In[ ]:
@@ -144,7 +144,7 @@ s.ft('t2')
 # In[ ]:
 
 
-for x in xrange(len(s.getaxis('power'))):
+for x in range(len(s.getaxis('power'))):
     temp = s['power',x].C
     fl.next('power %f'%s.getaxis('power')[x])
     fl.plot(temp,label='before')
@@ -172,7 +172,7 @@ for x in xrange(len(s.getaxis('power'))):
 
 
 f_max = zeros_like(s.getaxis('power'))
-for x in xrange(len(s.getaxis('power'))):
+for x in range(len(s.getaxis('power'))):
     f_max[x] = s.getaxis('t2')[s['power',x].data.argmax()]
 s.setaxis('t2',lambda t: t - f_max.mean())
 with figlist_var() as fl:
@@ -229,7 +229,7 @@ iteration = 0
 
 def print_func(x,f,accepted):
     global iteration
-    print(iteration, x, f, int(accepted))
+    print((iteration, x, f, int(accepted)))
     iteration = iteration+1
 
 sol = basinhopping(hermitian_costfun, r_[0.,0.],
@@ -359,7 +359,7 @@ tx_mon = r_[0.0,
            696e-3,
            696e-3]
 tx_mon_corr = zeros_like(tx_mon)
-for x in xrange(len(tx_mon)):
+for x in range(len(tx_mon)):
     tx_mon_corr[x] = 1e-3*10**((convert_to_power(tx_mon[x],'Tx')+29)/10.)
 
 
@@ -391,7 +391,7 @@ with figlist_var() as fl:
 # In[ ]:
 
 
-print ndshape(after)
+print(ndshape(after))
 
 
 # In[ ]:

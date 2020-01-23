@@ -27,10 +27,10 @@ for date,id_string in [
     tau_s = transient_s + acq_time_s*0.5
     pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s - deblank
     tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
-    print "ACQUISITION TIME:",acq_time_s,"s"
-    print "TAU DELAY:",tau_s,"s"
-    print "TWICE TAU:",2.0*tau_s,"s"
-    print "ECHO TIME:",tE_s,"s"
+    print("ACQUISITION TIME:",acq_time_s,"s")
+    print("TAU DELAY:",tau_s,"s")
+    print("TWICE TAU:",2.0*tau_s,"s")
+    print("ECHO TIME:",tE_s,"s")
     vd_list = s.getaxis('vd')
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
@@ -84,7 +84,7 @@ for date,id_string in [
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        print (iteration, x, f, int(accepted))
+        print((iteration, x, f, int(accepted)))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
@@ -97,11 +97,11 @@ for date,id_string in [
     phshift = exp(1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(1j*2*pi*zeroorder_rad)
     s *= phshift
-    print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-            firstorder,angle(zeroorder_rad)/pi*180)
+    print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
+            firstorder,angle(zeroorder_rad)/pi*180))
     #if s['nEchoes',0].data[:].sum().real < 0:
     #    s *= -1
-    print ndshape(s)
+    print(ndshape(s))
     fl.next('after phased - real ft')
     fl.image(s.real)
     fl.next('after phased - imag ft')
@@ -123,8 +123,8 @@ for date,id_string in [
     fl.show();quit()
     even_echo_center = abs(s)['ph1',1]['vd',0]['nEchoes',0].argmax('t2').data.item()
     odd_echo_center = abs(s)['ph1',-1]['vd',0]['nEchoes',1].argmax('t2').data.item()
-    print "EVEN ECHO CENTER:",even_echo_center,"s"
-    print "ODD ECHO CENTER: ",odd_echo_center,"s"
+    print("EVEN ECHO CENTER:",even_echo_center,"s")
+    print("ODD ECHO CENTER: ",odd_echo_center,"s")
     s.setaxis('t2',lambda x: x-even_echo_center)
     fl.next('check center before interleaving')
     fl.image(s)
@@ -161,8 +161,8 @@ for date,id_string in [
     zeroorder /= abs(zeroorder)
     fl.next('phdiff -- corrected')
     fl.image(phdiff_corr)
-    print "Relative phase shift (for interleaving) was "        "{:0.1f}\us and {:0.1f}$^\circ$".format(
-                firstorder/1e-6,angle(zeroorder)/pi*180)
+    print("Relative phase shift (for interleaving) was "        "{:0.1f}\\us and {:0.1f}$^\circ$".format(
+                firstorder/1e-6,angle(zeroorder)/pi*180))
     interleaved['evenodd',1] *= zeroorder*phshift
     interleaved.smoosh(['nEchoes','evenodd'],noaxis=True).reorder('t2',first=False)
     interleaved.setaxis('nEchoes',r_[1:nEchoes+1])
@@ -183,7 +183,7 @@ for date,id_string in [
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        print (iteration, x, f, int(accepted))
+        print((iteration, x, f, int(accepted)))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
@@ -196,8 +196,8 @@ for date,id_string in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     interleaved *= phshift
-    print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-            firstorder,angle(zeroorder_rad)/pi*180)
+    print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
+            firstorder,angle(zeroorder_rad)/pi*180))
     if interleaved['nEchoes',0]['vd',0].data[:].sum().real > 0:
         interleaved *= -1
     fl.next('interleaved -- phased ft')
@@ -208,7 +208,7 @@ for date,id_string in [
     fl.image(interleaved.imag)
     interleaved = interleaved['t2':(-4e3,4e3)].C
     interleaved.ift('t2')
-    print ndshape(interleaved)
+    print(ndshape(interleaved))
     interleaved.rename('nEchoes','tE').setaxis('tE',tE_axis)
     #for index,val in enumerate(vd_list):
     for index in r_[0:len(vd_list):1]:
@@ -234,5 +234,5 @@ for date,id_string in [
         xlabel('t (sec)')
         ylabel('Intensity')
         T2 = p1[0]
-        print "T2:",T2,"s"
+        print("T2:",T2,"s")
 fl.show();quit()

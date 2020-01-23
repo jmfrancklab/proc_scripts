@@ -5,7 +5,7 @@ def get_W(dBm):
     return 10**(dBm/10.)*1e-3
 dBm_list = [0., 30., 34., 36.]
 W_list = ones_like(dBm_list)
-for x in xrange(4):
+for x in range(4):
     W_list[x] = get_W(dBm_list[x])
 enhancement = []
 find_phase_params = True # phase params found for first dataset will be applied
@@ -22,8 +22,8 @@ for date,id_string,label_string in [
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
-    print ndshape(s)
-    print s.get_prop('acq_params')
+    print(ndshape(s))
+    print(s.get_prop('acq_params'))
     quit()
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
@@ -61,7 +61,7 @@ for date,id_string,label_string in [
         s_foropt.ift('t2')
         s_foropt /= t2_decay
         s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-        print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+        print(s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]])
         if ndshape(s_foropt)['t2'] % 2 == 0:
             s_foropt = s_foropt['t2',:-1]
         assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'

@@ -73,7 +73,7 @@ for date,id_string,label_str in [
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        print (iteration, x, f, int(accepted))
+        print((iteration, x, f, int(accepted)))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
@@ -86,11 +86,11 @@ for date,id_string,label_str in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
-    print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-            firstorder,angle(zeroorder_rad)/pi*180)
+    print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
+            firstorder,angle(zeroorder_rad)/pi*180))
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
-    print ndshape(s)
+    print(ndshape(s))
     fl.next('after phased - real ft')
     fl.image(s.real)
     fl.next('after phased - imag ft')
@@ -108,12 +108,12 @@ for date,id_string,label_str in [
     p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
     assert success == 1, "Fit did not succeed"
     T2 = 1./p1[1]
-    print T2
+    print(T2)
     x_fit = linspace(x.min(),x.max(),5000)
     fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
     xlabel('t (sec)')
     ylabel('Intensity')
-    print "T2:",T2,"s"
+    print("T2:",T2,"s")
 save_fig = False
 if save_fig:
     savefig('20200108_CPMG_trials.png',

@@ -11,7 +11,7 @@ for date,id_string,PW in [
                 exp_type = 'test_equip'))
     s.set_units('t','s')
     s = s['ch',0].C
-    print ndshape(s)
+    print(ndshape(s))
     fl.next('idk')
     for i,x in enumerate(s.getaxis('capture')):
         fl.plot(s['capture',i],alpha=0.2)

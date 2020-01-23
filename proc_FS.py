@@ -8,7 +8,7 @@ for date,id_string in [
     s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type = 'test_equip' ))
     s.set_units('t','s')
-    print s.getaxis('field')
+    print(s.getaxis('field'))
     nPoints = 2048 # copy from pp
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
@@ -20,12 +20,12 @@ for date,id_string in [
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
     s.set_units('field','G')
-    print ndshape(s)
+    print(ndshape(s))
     s.reorder('t2',first=False)
     fl.next('raw, chunk'+id_string)
     fl.image(s)
     s.ft(['ph2','ph1'])
-    print ndshape(s)
+    print(ndshape(s))
     fl.next('raw ft ph, chunk'+id_string)
     fl.image(s)
     s.ft('t2',shift=True)

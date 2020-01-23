@@ -43,7 +43,7 @@ with figlist_var(filename='CPMG_data.pdf') as fl:
         fl.image(abs(s), interpolation='bilinear')
         fl.next('time domain')
         s.ift('t2')
-        print "start of time axis",s.getaxis('t2')[0]
+        print("start of time axis",s.getaxis('t2')[0])
         assert s.getaxis('t2')[0] == 0.0, "why doesn't your time axis start at zero??"
         t_last = s.getaxis('t2')[-1]
         s.setaxis('t2', lambda x: x-t_last/2)# assume echo is symmetric

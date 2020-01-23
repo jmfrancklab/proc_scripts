@@ -58,10 +58,10 @@ acq_time_s = orig_t[nPoints]
 tau_s = transient_s + acq_time_s*0.5
 pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s - deblank
 tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
-print "ACQUISITION TIME:",acq_time_s,"s"
-print "TAU DELAY:",tau_s,"s"
-print "TWICE TAU:",2.0*tau_s,"s"
-print "ECHO TIME:",tE_s,"s"
+print("ACQUISITION TIME:",acq_time_s,"s")
+print("TAU DELAY:",tau_s,"s")
+print("TWICE TAU:",2.0*tau_s,"s")
+print("ECHO TIME:",tE_s,"s")
 vd_list = s.getaxis('vd')
 t2_axis = linspace(0,acq_time_s,nPoints)
 tE_axis = r_[1:nEchoes+1]*tE_s
@@ -121,7 +121,7 @@ iteration = 0
 def print_fun(x, f, accepted):
     global iteration
     iteration += 1
-    print (iteration, x, f, int(accepted))
+    print((iteration, x, f, int(accepted)))
     return
 sol = basinhopping(costfun, r_[0.,0.],
         minimizer_kwargs={"method":'L-BFGS-B'},
@@ -134,11 +134,11 @@ zeroorder_rad, firstorder = sol.x
 phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
 phshift *= exp(-1j*2*pi*zeroorder_rad)
 s *= phshift
-print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-        firstorder,angle(zeroorder_rad)/pi*180)
+print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
+        firstorder,angle(zeroorder_rad)/pi*180))
 if s['nEchoes',0].data[:].sum().real < 0:
     s *= -1
-print ndshape(s)
+print(ndshape(s))
 fl.next('after phased - real ft')
 fl.image(s.real)
 fl.next('after phased - imag ft')
@@ -203,7 +203,7 @@ if T2_fits:
         xlabel('t (sec)')
         ylabel('Intensity')
         T2 = p1[0]
-        print "T2:",T2,"s"
+        print("T2:",T2,"s")
 
 
 # CHECKPOINT
@@ -219,7 +219,7 @@ d = d.real
 # 
 
 
-print "Constructing kernels..."
+print("Constructing kernels...")
 Nx = 30
 Ny = 30
 #Nx_ax = nddata(linspace(0.02,0.2,Nx),'T1') # T1 
