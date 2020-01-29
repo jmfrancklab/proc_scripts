@@ -10,7 +10,8 @@ for date,id_string in [
     #('200113','echo_DNP_FS_TCM51C_2'),
     #('200113','echo_DNP_FS_TCM51C_3'),
     #('200113','echo_DNP_FS_TCM51C_4'),
-    ('200113','echo_DNP_TEMPOL_1'),
+    #('200127','echo_DNP_TCM51C_1'),
+    ('200128','echo_DNP_TCM118C_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
