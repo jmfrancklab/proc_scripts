@@ -31,10 +31,10 @@ for date,id_string in [
     tau_s = s.get_prop('acq_params')['tau_us']*1e-6
     pad_s = s.get_prop('acq_params')['pad_us']*1e-6
     tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
-    print "ACQUISITION TIME:",acq_time_s,"s"
-    print "TAU DELAY:",tau_s,"s"
-    print "TWICE TAU:",2.0*tau_s,"s"
-    print "ECHO TIME:",tE_s,"s"
+    print("ACQUISITION TIME:",acq_time_s,"s")
+    print("TAU DELAY:",tau_s,"s")
+    print("TWICE TAU:",2.0*tau_s,"s")
+    print("ECHO TIME:",tE_s,"s")
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('t',None)

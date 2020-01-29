@@ -62,7 +62,7 @@ def pulse(phase,theta):
         else:
             return matrix_rep
     else:
-        print "Cannot understand specified phase of rf pulse"
+        print("Cannot understand specified phase of rf pulse")
 
 
 # In[ ]:
@@ -139,7 +139,7 @@ for h,rf_phase in enumerate(['x','y','-x','-y']):
             R = complex128(R)
             equil_vec = array([[1],[0],[0],[1]],dtype=complex128)
             result = equil_vec
-            for k in xrange(n_sat-1):
+            for k in range(n_sat-1):
                 result = P.dot(result)
                 result = R.dot(result)
             results['T1',i]['T2',j]['ph',h] = P.dot(result)[1]-1j*P.dot(result)[2]
@@ -170,7 +170,7 @@ for i,T1 in enumerate(T1_grid):
         R = complex128(R)
         equil_vec = array([[1],[0],[0],[1]],dtype=complex128)
         result = equil_vec
-        for k in xrange(n_sat-1):
+        for k in range(n_sat-1):
             result = P.dot(result)
             result = R.dot(result)
         results['T1',i]['T2',j] = P.dot(result)[1]-1j*P.dot(result)[2]
@@ -207,13 +207,13 @@ T2_grid = 10**(T2_log)
 
 P = pulse(pi/2)
 
-for n_sat in xrange(0,50,2):
+for n_sat in range(0,50,2):
     for i,T1 in enumerate(T1_grid):
         for j,T2 in enumerate(T2_grid):
             R = expm(-interpulse*gamma(T1,T2))
             eq_vec = Liou_vec
             result = eq_vec
-            for k in xrange(n_sat-1):
+            for k in range(n_sat-1):
                 result = P.dot(result)
                 result = R.dot(result)
             results[r'$log_{10}(\frac{T_{1}}{interpulse})$',i][r'$log_{10}(\frac{T_{2}}{interpulse})$',j] = P.dot(result)[-1]

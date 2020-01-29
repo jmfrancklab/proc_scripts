@@ -44,7 +44,7 @@ for date,id_string in [
     s.reorder('t2',first=True)
     s.ift('t2')
     t2_max = zeros_like(s.getaxis('power'))
-    for x in xrange(len(s.getaxis('power'))):
+    for x in range(len(s.getaxis('power'))):
         t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
     s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
     s = s['t2':(0,None)]
@@ -55,7 +55,7 @@ for date,id_string in [
     fl.next('viz - signal 2')
     fl.image(s)
     remember_sign = zeros_like(s.getaxis('power'))
-    for x in xrange(len(s.getaxis('power'))):
+    for x in range(len(s.getaxis('power'))):
         if s['power',x].data.real.sum() > 0:
             remember_sign[x] = 1.0
         else:

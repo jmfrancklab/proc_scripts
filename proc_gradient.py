@@ -60,8 +60,8 @@ s0_foropt *= exp(1j*2*pi*shift_t*s0_foropt.fromaxis('t2'))
 s0_foropt.ift('t2')
 s0_foropt /= t2_decay
 s0_foropt = s0_foropt['t2':(-max_shift,max_shift)]
-print s0_foropt.getaxis('t2')
-print s0_foropt.getaxis('t2')[r_[0,ndshape(s0_foropt)['t2']//2,ndshape(s0_foropt)['t2']//2+1,-1]]
+print(s0_foropt.getaxis('t2'))
+print(s0_foropt.getaxis('t2')[r_[0,ndshape(s0_foropt)['t2']//2,ndshape(s0_foropt)['t2']//2+1,-1]])
 if ndshape(s0_foropt)['t2'] % 2 == 0:
     s0_foropt = s0_foropt['t2',:-1]
 #assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
@@ -72,7 +72,7 @@ s0_foropt /= max(abs(s0_foropt.getaxis('t2')))
 # }}}
 residual = abs(s0_foropt - s0_foropt['t2',::-1].runcopy(conj)).sum('t2')
 residual.reorder('shift')
-print ndshape(residual)
+print(ndshape(residual))
 minpoint = residual.argmin()
 best_shift = minpoint['shift']
 best_R2 = minpoint['R2']
@@ -135,8 +135,8 @@ s1_foropt *= exp(1j*2*pi*shift_t*s1_foropt.fromaxis('t2'))
 s1_foropt.ift('t2')
 s1_foropt /= t2_decay
 s1_foropt = s1_foropt['t2':(-max_shift,max_shift)]
-print s1_foropt.getaxis('t2')
-print s1_foropt.getaxis('t2')[r_[0,ndshape(s1_foropt)['t2']//2,ndshape(s1_foropt)['t2']//2+1,-1]]
+print(s1_foropt.getaxis('t2'))
+print(s1_foropt.getaxis('t2')[r_[0,ndshape(s1_foropt)['t2']//2,ndshape(s1_foropt)['t2']//2+1,-1]])
 if ndshape(s1_foropt)['t2'] % 2 == 0:
     s1_foropt = s1_foropt['t2',:-1]
 #assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
@@ -147,7 +147,7 @@ s1_foropt /= max(abs(s1_foropt.getaxis('t2')))
 # }}}
 residual = abs(s1_foropt - s1_foropt['t2',::-1].runcopy(conj)).sum('t2')
 residual.reorder('shift')
-print ndshape(residual)
+print(ndshape(residual))
 minpoint = residual.argmin()
 best_shift = minpoint['shift']
 best_R2 = minpoint['R2']

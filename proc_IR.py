@@ -8,7 +8,7 @@ nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type = 'test_equip' ))
 s.rename('t','t2').set_units('t2','s')
-print s.getaxis('vd')
+print(s.getaxis('vd'))
 fl.next('raw data - no clock correction')
 fl.image(s)
 s.ft('t2',shift=True)
@@ -27,7 +27,7 @@ s.chunk('t2',['ph2','ph1','t2'],[4,2,-1])
 s.setaxis('t2',t2_axis[nPoints])
 s.setaxis('ph1',r_[0.,2.]/4)
 s.setaxis('ph2',r_[0.,1.,2.,3.]/4)
-print ndshape(s)
+print(ndshape(s))
 fl.next('image')
 fl.image(s)
 s.ft(['ph2','ph1'])
@@ -58,8 +58,8 @@ s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
 s_foropt.ift('t2')
 s_foropt /= t2_decay
 s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-print s_foropt.getaxis('t2')
-print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+print(s_foropt.getaxis('t2'))
+print(s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]])
 if ndshape(s_foropt)['t2'] % 2 == 0:
     s_foropt = s_foropt['t2',:-1]
 ph0 = s_foropt['t2':0.0]
@@ -68,7 +68,7 @@ s_foropt /= ph0
 s_foropt /= max(abs(s_foropt.getaxis('t2')))
 residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
 residual.reorder('shift')
-print ndshape(residual)
+print(ndshape(residual))
 minpoint = residual.argmin()
 best_shift = minpoint['shift']
 best_R2 = minpoint['R2']
@@ -83,10 +83,10 @@ s_sliced['t2',0] *= 0.5
 s_sliced.ft('t2')
 min_vd = s_sliced.getaxis('vd')[abs(s_sliced).sum('t2').argmin('vd',raw_index=True).item()]
 est_T1 = min_vd/log(2)
-for x in xrange(len(s_sliced.getaxis('vd'))):
+for x in range(len(s_sliced.getaxis('vd'))):
     if s_sliced.getaxis('vd')[x] < min_vd:
         s_sliced['vd',x] *= -1
-print "Estimated T1 is:",est_T1,"s"
+print("Estimated T1 is:",est_T1,"s")
 fl.next('Spectrum - freq domain')
 fl.plot(s_sliced.reorder('vd',first=False), alpha=0.5)#, label='%s'%label_str)
 fl.next('Spectrum - waterfall')
@@ -108,7 +108,7 @@ p_ini = [1.0,10.0]
 p1,success = leastsq(errfunc, p_ini[:], args=(x_data,y_data))
 assert success == 1, "Fit did not succeed"
 T1 = 1./p1[1]
-print "T1:",T1,"s"
+print("T1:",T1,"s")
 fl.show();quit()
 x_fit = linspace(x_data.min(),x_data.max(),5000)
 fl.next('ext')

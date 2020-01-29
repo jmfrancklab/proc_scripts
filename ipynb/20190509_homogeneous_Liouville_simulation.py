@@ -429,7 +429,7 @@ for i,offset_pt in enumerate(offset_axis):
     input_vec = U_90.dot(Liou_vec.ravel()*r_[1,1,1,offset_w])
     input_vec = matrix_power(U_dt,int(pts_delay)).dot(input_vec) # interpulse delay
     input_vec = U_90.dot(U_90).dot(input_vec) # 180 pulse
-    for k,echo_num in xrange(nEchoes):
+    for k,echo_num in range(nEchoes):
         for j,t_point in enumerate(t2_axis):
             U = expm(-t_point*gamma_imp(T1,T2,offset,0,0))
             fid['Omega',i]['t2',j] = U.dot(input_vec)[1]-1j*U.dot(input_vec)[2]
@@ -488,7 +488,7 @@ for i,offset_pt in enumerate(offset_axis):
     U_dt = expm(-dt*gamma_imp(T1,T2,offset,0,0))
     input_vec = U_90.dot(Liou_vec.ravel()*r_[1,1,1,offset_w])
     input_vec = matrix_power(U_dt,int(tau_pts)).dot(input_vec) # interpulse delay
-    for k in xrange(nEchoes):
+    for k in range(nEchoes):
         if k == 0:
             input_vec = U_90.dot(U_90).dot(input_vec) # 180 pulse
             last_rho = input_vec.copy()

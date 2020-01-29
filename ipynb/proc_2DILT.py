@@ -105,7 +105,7 @@ def square_heaviside(x_vec):
         The c_r vector
     '''
     diag_heavi = []
-    for q in xrange(shape(K0.T)[0]):
+    for q in range(shape(K0.T)[0]):
         pull_val = dot(K0.T[q,:],x_vec)
         temp = pull_val[0]
         temp = H(temp)
@@ -154,7 +154,7 @@ def optimize_alpha(input_vec,val):
     ans = ans/(dot_prod)
     tol = 1e-3
     if abs(ans-val**2) <= tol:
-        print "ALPHA HAS CONVERGED"
+        print("ALPHA HAS CONVERGED")
         alpha_converged = True
         return ans,alpha_converged
     return ans,alpha_converged
@@ -173,9 +173,9 @@ def mod_BRD(guess,maxiter=20):
      '''
     smoothing_param = guess
     alpha_converged = False
-    for iter in xrange(maxiter):
-        print "*** *** ITERATION NO.",iter,"*** ***"
-        print "*** CURRENT LAMBDA",smoothing_param," *** "
+    for iter in range(maxiter):
+        print("*** *** ITERATION NO.",iter,"*** ***")
+        print("*** CURRENT LAMBDA",smoothing_param," *** ")
         x_norm = empty([1])
         r_norm = empty([1])
         soln,r_norm = nnls(A_prime(smoothing_param,dimension),b_prime)
@@ -187,13 +187,13 @@ def mod_BRD(guess,maxiter=20):
         new_alpha,alpha_converged = optimize_alpha(new_c,smoothing_param)
         new_lambda = sqrt(new_alpha[0,0])
         if alpha_converged:
-            print "*** OPTIMIZED LAMBDA",new_lambda," *** "
+            print("*** OPTIMIZED LAMBDA",new_lambda," *** ")
             break  
         if not alpha_converged:
-            print "*** UPDATED LAMBDA",new_lambda," *** "
+            print("*** UPDATED LAMBDA",new_lambda," *** ")
             smoothing_param = new_lambda
         if iter == maxiter-1:
-            print "DID NOT CONVERGE."
+            print("DID NOT CONVERGE.")
     return new_lambda
 #}}}
 
@@ -245,7 +245,7 @@ s.setaxis('t2',t2_axis).set_units('t2','s')
 fl.next(id_string+' chunked, no ft')
 fl.image(s)
 s.ft(['ph1'])
-print ndshape(s)
+print(ndshape(s))
 fl.next(id_string+' image plot coherence')
 fl.image(s)
 s.ft('t2',shift=True)
@@ -290,8 +290,8 @@ zeroorder /= abs(zeroorder)
 phdiff_corr *= zeroorder
 fl.next('phdiff -- corrected')
 fl.image(phdiff_corr)
-print "Relative phase shift (for interleaving) was "        "{:0.1f}\us and {:0.1f}$^\circ$".format(
-                firstorder/1e-6,angle(zeroorder)/pi*180)
+print("Relative phase shift (for interleaving) was "        "{:0.1f}\\us and {:0.1f}$^\circ$".format(
+                firstorder/1e-6,angle(zeroorder)/pi*180))
 interleaved['evenodd',1] *= zeroorder*phshift
 interleaved.smoosh(['nEchoes','evenodd'],noaxis=True).reorder('t2',first=False)
 interleaved.setaxis('nEchoes',r_[1:nEchoes+1])
@@ -312,7 +312,7 @@ iteration = 0
 def print_fun(x, f, accepted):
     global iteration
     iteration += 1
-    print(iteration, x, f, int(accepted))
+    print((iteration, x, f, int(accepted)))
 sol = basinhopping(costfun, r_[0.,0.],
         minimizer_kwargs={"method":'L-BFGS-B'},
         callback=print_fun,
@@ -324,8 +324,8 @@ zeroorder_rad, firstorder = sol.x
 phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
 phshift *= exp(-1j*2*pi*zeroorder_rad)
 interleaved *= phshift
-print "Relative phase shift was {:0.1f}\us and {:0.1f}$^\circ$".format(
-        firstorder,angle(zeroorder_rad)/pi*180)
+print("Relative phase shift was {:0.1f}\\us and {:0.1f}$^\circ$".format(
+        firstorder,angle(zeroorder_rad)/pi*180))
 if interleaved['nEchoes',0]['vd',0].data[:].sum().real > 0:
     interleaved *= -1
 fl.next('interleaved -- phased ft')
@@ -353,9 +353,9 @@ d = interleaved.C
 # 
 
 
-print ndshape(d)
-print d.getaxis('vd')
-print d.getaxis('nEchoes')
+print(ndshape(d))
+print(d.getaxis('vd'))
+print(d.getaxis('nEchoes'))
 
 
 # 
@@ -364,10 +364,10 @@ print d.getaxis('nEchoes')
 d.sum('t2')
 floor = d.imag['nEchoes':(d.getaxis('nEchoes')[0],d.getaxis('nEchoes')[-1])]
 devi_list = []
-for x in xrange(len(floor.getaxis('vd'))):
+for x in range(len(floor.getaxis('vd'))):
     devi_list.append(std(floor['vd',x].data))
 noise_floor = sum(devi_list)/len(devi_list)
-print "Noise floor (standard deviation of imaginary channel) is ",noise_floor
+print("Noise floor (standard deviation of imaginary channel) is ",noise_floor)
 
 
 # Sum along T2
@@ -383,7 +383,7 @@ d_sum = d_sum.real
 data = d_sum.C
 data.rename('vd','tau1')
 data.rename('nEchoes','tau2')
-print ndshape(data)
+print(ndshape(data))
 
 
 # Load interactive plotting
@@ -402,9 +402,9 @@ get_ipython().run_line_magic('matplotlib', 'notebook')
 data_nd = data.C
 data_nd.meshplot(cmap=cm.viridis)
 show()
-print ndshape(data_nd)
+print(ndshape(data_nd))
 data = data_nd.data
-print shape(data)
+print(shape(data))
 
 
 # Turn off interactive plotting
@@ -420,7 +420,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 # 
 
 
-print t2_axis[-1]
+print(t2_axis[-1])
 
 
 # 
@@ -439,7 +439,7 @@ T_E = 2*p90 + transient + acq_time
 #Note importance of using properly phased data as input (see Mitchell et al. 2012)
 #Implements singular value truncation at cutoff defined by noise (see Mitchell et al. 2012)
 
-print "Constructing kernels..."
+print("Constructing kernels...")
 Nx = 40
 Ny = 40
 log_Nx_ax = linspace(log10(3e-3),log10(30),Nx) # T1
@@ -450,10 +450,10 @@ N1_4d = reshape(tau1,(shape(tau1)[0],1,1,1))
 N2_4d = reshape(tau2,(1,shape(tau2)[0],1,1))
 Nx_4d = reshape(10**log_Nx_ax,(1,1,shape(log_Nx_ax)[0],1))
 Ny_4d = reshape(10**log_Ny_ax,(1,1,1,shape(log_Ny_ax)[0]))
-print "Shape of parameter of interest (x) axis",shape(log_Nx_ax),shape(Nx_4d)
-print "Shape of parameter of interest (y) axis",shape(log_Ny_ax),shape(Ny_4d)
-print "Shape of indirect dimension (tau1) axis",shape(tau1),shape(N1_4d)
-print "Shape of indirect dimension (tau2) axis",shape(tau2),shape(N2_4d)
+print("Shape of parameter of interest (x) axis",shape(log_Nx_ax),shape(Nx_4d))
+print("Shape of parameter of interest (y) axis",shape(log_Ny_ax),shape(Ny_4d))
+print("Shape of indirect dimension (tau1) axis",shape(tau1),shape(N1_4d))
+print("Shape of indirect dimension (tau2) axis",shape(tau2),shape(N2_4d))
 
 
 # 
@@ -461,39 +461,39 @@ print "Shape of indirect dimension (tau2) axis",shape(tau2),shape(N2_4d)
 
 k1 = (1.-2*exp(-N1_4d/Nx_4d))
 k2 = exp(-N2_4d/Ny_4d)
-print "Shape of K1 (relates tau1 and x)",shape(k1)
-print "Shape of K2 (relates tau2 and y)",shape(k2)
+print("Shape of K1 (relates tau1 and x)",shape(k1))
+print("Shape of K2 (relates tau2 and y)",shape(k2))
 k1_sqz = squeeze(k1)
 k2_sqz = squeeze(k2)
 U1,S1_row,V1 = np.linalg.svd(k1_sqz,full_matrices=False)
-print "SVD of K1",map(lambda x: x.shape, (U1, S1_row, V1))
+print("SVD of K1",[x.shape for x in (U1, S1_row, V1)])
 U2,S2_row,V2 = np.linalg.svd(k2_sqz,full_matrices=False)
-print "SVD of K2",map(lambda x: x.shape, (U2, S2_row, V2))
+print("SVD of K2",[x.shape for x in (U2, S2_row, V2)])
 
 
 # 
 
 
-print ""
-print "*** BEGINNING COMPRESSION ***"
-print ""
+print("")
+print("*** BEGINNING COMPRESSION ***")
+print("")
 data_max = amax(data_nd.data)
-print "Maximum in the data",data_max
+print("Maximum in the data",data_max)
 s_cutoff = noise_floor/data_max
-print "Cutoff singular values below",s_cutoff 
+print("Cutoff singular values below",s_cutoff) 
 
 
 # 
 
 
-for S1_i in xrange(shape(S1_row)[0]):
+for S1_i in range(shape(S1_row)[0]):
     if S1_row[S1_i] < s_cutoff:
-        print "Truncate S1 at index",S1_i
+        print("Truncate S1 at index",S1_i)
         choose_s1 = S1_i
         break
-for S2_i in xrange(shape(S2_row)[0]):
+for S2_i in range(shape(S2_row)[0]):
     if S2_row[S2_i] < s_cutoff:
-        print "Truncate S2 at index",S2_i
+        print("Truncate S2 at index",S2_i)
         choose_s2 = S2_i
         break
 
@@ -520,25 +520,25 @@ with figlist_var() as fl:
 # 
 
 
-print "Uncompressed singular row vector for K1",S1_row.shape
+print("Uncompressed singular row vector for K1",S1_row.shape)
 S1_row = S1_row[0:choose_s1]
-print "Compressed singular value row vector for K1",S1_row.shape
+print("Compressed singular value row vector for K1",S1_row.shape)
 V1 = V1[0:choose_s1,:]
 U1 = U1[:,0:choose_s1]
-print "Compressed V matrix for K1",V1.shape
-print "Comrpessed U matrix for K1",U1.shape
+print("Compressed V matrix for K1",V1.shape)
+print("Comrpessed U matrix for K1",U1.shape)
 
 
 # 
 
 
-print "Uncompressed singular row vector for K2",S2_row.shape
+print("Uncompressed singular row vector for K2",S2_row.shape)
 S2_row = S2_row[0:choose_s2]
-print "Compressed singular value row vector for K2",S2_row.shape
+print("Compressed singular value row vector for K2",S2_row.shape)
 V2 = V2[0:choose_s2,:]
 U2 = U2[:,0:choose_s2]
-print "Compressed V matrix for K2",V2.shape
-print "Compressed U matrix for K2",U2.shape
+print("Compressed V matrix for K2",V2.shape)
+print("Compressed U matrix for K2",U2.shape)
 
 
 # 
@@ -546,11 +546,11 @@ print "Compressed U matrix for K2",U2.shape
 
 I_S1 = eye(S1_row.shape[0])
 S1 = S1_row*I_S1
-print "Non-zero singular value matrix for K1",S1.shape
+print("Non-zero singular value matrix for K1",S1.shape)
 
 I_S2 = eye(S2_row.shape[0])
 S2 = S2_row*I_S2
-print "Non-zero singular value matrix for K2",S2.shape
+print("Non-zero singular value matrix for K2",S2.shape)
 
 
 # 
@@ -562,7 +562,7 @@ data_proj = U1.dot(U1.T.dot(data.dot(U2.dot(U2.T))))
 # 
 
 
-for tau1_index in xrange(shape(data_proj)[0]):
+for tau1_index in range(shape(data_proj)[0]):
     title('projected data')
     plot(data_proj[tau1_index,:])
 show()
@@ -593,9 +593,9 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 # 
 
 
-print "Projected data dimensions:",shape(data_proj)
+print("Projected data dimensions:",shape(data_proj))
 data_compr = U1.T.dot(data.dot(U2))
-print "Compressed data dimensioins:",shape(data_compr)
+print("Compressed data dimensioins:",shape(data_compr))
 
 
 # 
@@ -609,7 +609,7 @@ comp = reshape(comp,(shape(data_compr))[0]*(shape(data_compr))[1])
 
 
 figure()
-for x in xrange((shape(data_compr))[1]):
+for x in range((shape(data_compr))[1]):
     plot(data_compr[:,x],'-.')
 ylabel('Compressed data')
 xlabel('Index')
@@ -631,8 +631,8 @@ show()
 
 K1 = S1.dot(V1)
 K2 = S2.dot(V2)
-print "Compressed K1",shape(K1)
-print "Compressed K2",shape(K2)
+print("Compressed K1",shape(K1))
+print("Compressed K2",shape(K2))
 
 
 # 
@@ -642,29 +642,29 @@ K1 = reshape(K1, (shape(K1)[0],1,shape(K1)[1],1))
 K2 = reshape(K2, (1,shape(K2)[0],1,shape(K2)[1]))
 K0 = K1*K2
 K0 = reshape(K0, (shape(K1)[0]*shape(K2)[1],shape(K1)[2]*shape(K2)[3]))
-print "Compressed tensor kernel",shape(K0)
-print "* Should be (",shape(S1)[0],"*",shape(S2)[0],") x (",shape(Nx_4d)[2],"*",shape(Ny_4d)[3],")"
+print("Compressed tensor kernel",shape(K0))
+print("* Should be (",shape(S1)[0],"*",shape(S2)[0],") x (",shape(Nx_4d)[2],"*",shape(Ny_4d)[3],")")
 #END COMPRESSION
 
 
 # 
 
 
-print ""
-print "*** FINISHED COMPRESSION ***"
-print ""
+print("")
+print("*** FINISHED COMPRESSION ***")
+print("")
 
 
 # 
 
 
 datac_lex = []
-for m in xrange(shape(data_compr)[0]):
-    for l in xrange(shape(data_compr)[1]):
+for m in range(shape(data_compr)[0]):
+    for l in range(shape(data_compr)[1]):
         temp = data_compr[m][l]
         datac_lex.append(temp)
-print "Dimension of lexicographically ordered data:",shape(datac_lex)[0]
-print "Should match first dimension of compressed tensor kernel K0 which is",shape(K0)[0]
+print("Dimension of lexicographically ordered data:",shape(datac_lex)[0])
+print("Should match first dimension of compressed tensor kernel K0 which is",shape(K0)[0])
 
 
 # 
@@ -681,13 +681,13 @@ show()
 # 
 
 
-print ""
-print "*** BEGINNING REGULARIZATION ***"
-print ""
+print("")
+print("*** BEGINNING REGULARIZATION ***")
+print("")
 
 datac_lex = array(datac_lex)
 datac_lex = datac_lex[:,newaxis]
-print "Lexicographically orderd data:",shape(datac_lex)
+print("Lexicographically orderd data:",shape(datac_lex))
 
 dimension = K0.shape[1]
 def A_prime(val,dimension):
@@ -696,7 +696,7 @@ def A_prime(val,dimension):
 
 b_prime = r_[datac_lex,zeros((dimension,1))]
 b_prime = b_prime.squeeze()
-print "Shape of b vector",shape(b_prime)
+print("Shape of b vector",shape(b_prime))
 m_vec = datac_lex
 
 
@@ -708,7 +708,7 @@ rnorm_list = empty_like(lambda_range)
 smoothing_list = empty_like(lambda_range)
 alt_norm_list = empty_like(lambda_range)
 for index,lambda_val in enumerate(lambda_range):
-    print "index",index
+    print("index",index)
     soln,temp_rn = nnls(A_prime(lambda_val,dimension),b_prime)
     rnorm_list[index] = temp_rn
     f_vec = soln[:,newaxis]
@@ -744,15 +744,15 @@ show()
 heel = 0.1
 heel_alpha = 10**heel
 heel_lambda = sqrt(heel_alpha)
-print "Alpha",heel_alpha
-print "Lambda",heel_lambda
+print("Alpha",heel_alpha)
+print("Lambda",heel_lambda)
 guess_lambda = heel_lambda
 
 
 # 
 
 
-print "Estimating solution for guessed smoothing parameter..."
+print("Estimating solution for guessed smoothing parameter...")
 opt_vec = nnls_reg(guess_lambda)
 solution = reshape(opt_vec,(Nx,Ny))
 figure()
@@ -763,19 +763,19 @@ image(solution);show()
 # 
 
 
-print ""
-print "*** BEGINNING MODIFIED BRD OPTIMIZATION ***"
-print ""
+print("")
+print("*** BEGINNING MODIFIED BRD OPTIMIZATION ***")
+print("")
 opt_val = mod_BRD(guess=guess_lambda,maxiter=20)
 
 
 # 
 
 
-print "OPTIMIZED LAMBDA:",opt_val
-print ""
-print "*** FINDING OPTIMIZED SOLUTION ***"
-print ""
+print("OPTIMIZED LAMBDA:",opt_val)
+print("")
+print("*** FINDING OPTIMIZED SOLUTION ***")
+print("")
 opt_vec = nnls_reg(opt_val)
 solution = reshape(opt_vec,(Nx,Ny))
 
@@ -813,7 +813,7 @@ gcf().subplots_adjust(bottom=0.15)
 # 
 
 
-print ndshape(nd_solution)
+print(ndshape(nd_solution))
 
 
 # 
@@ -835,17 +835,17 @@ gcf().subplots_adjust(bottom=0.15)
 # 
 
 
-print "T1=",10**-1.684
-print "T2=",10**-1.319
+print("T1=",10**-1.684)
+print("T2=",10**-1.319)
 
 
 # 
 
 
-print "FOR ENVIRONMENT #1"
-print "T1",10**-0.8825,"s"
-print "T2",10**-1.29,"s"
-print "FOR ENVIRONMENT #1"
-print "T1",10**-0.78,"s"
-print "T2",10**-1.39,"s"
+print("FOR ENVIRONMENT #1")
+print("T1",10**-0.8825,"s")
+print("T2",10**-1.29,"s")
+print("FOR ENVIRONMENT #1")
+print("T1",10**-0.78,"s")
+print("T2",10**-1.39,"s")
 

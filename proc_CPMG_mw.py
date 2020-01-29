@@ -49,15 +49,15 @@ for date,id_string in [
     fl.image(s)
     #s.mean('nScans',return_error=False)
     s.reorder('t2',first=True)
-    print ndshape(s)
+    print(ndshape(s))
     t2_max = zeros_like(s.getaxis('power'))
-    for x in xrange(len(s.getaxis('power'))):
+    for x in range(len(s.getaxis('power'))):
         t2_max[x] = abs(s['power',x]['tE',0]).argmax('t2',raw_index=True).data
     s.setaxis('t2',lambda t: t -s.getaxis('t2')[int(t2_max.mean())])
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
-    print ndshape(s)
+    print(ndshape(s))
     s.reorder('nEchoes',first=True)
-    print ndshape(s)
+    print(ndshape(s))
     s.ft('t2')
     # as of right now, this plot doesn't show anything meaningful
     fl.next('check center')
@@ -73,7 +73,7 @@ for date,id_string in [
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        print (iteration, x, f, int(accepted))
+        print((iteration, x, f, int(accepted)))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
@@ -86,14 +86,14 @@ for date,id_string in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
-    print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-            firstorder,angle(zeroorder_rad)/pi*180)
+    print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
+            firstorder,angle(zeroorder_rad)/pi*180))
     if s['nEchoes':0]['t2':0]['power',-4].item().real > 0:
-        print s['nEchoes':0]['t2':0]['power',-4].item().real
-        print "Sign correction"
+        print(s['nEchoes':0]['t2':0]['power',-4].item().real)
+        print("Sign correction")
         s *= -1
-        print s['nEchoes':0]['t2':0]['power',-4].item().real
-    print ndshape(s)
+        print(s['nEchoes':0]['t2':0]['power',-4].item().real)
+    print(ndshape(s))
     s.reorder('power',first=True)
     fl.next('after phased - real ft')
     fl.image(s.real)
@@ -106,7 +106,7 @@ for date,id_string in [
     find_T2 = True
     #{{{ find T2
     if find_T2:
-        for k in xrange(len(power_axis_W)):
+        for k in range(len(power_axis_W)):
         #for k in [1,5,10,15,19]:
             data = s['t2':0]['power',k]
             fl.next('Echo decay (power = %f W)'%power_axis_W[k])
@@ -127,13 +127,13 @@ for date,id_string in [
             xlabel('t (sec)')
             ylabel('Intensity')
             T2_values[k] = T2
-            print "T2:",T2,"s"
+            print("T2:",T2,"s")
         fl.next('T2 vs power')
         fl.plot(power_axis_W[:-3],T2_values[:-3],'.')
         xlabel('Power (W)')
         ylabel('T2 (seconds)')
     #}}}
-    print T2_values
+    print(T2_values)
     fl.show();quit()
     enhancement = s['t2':0]['nEchoes',0].C
     enhanced = enhancement.data[1:].real
@@ -258,7 +258,7 @@ nPoints = s.get_prop('acq_params')['nPoints']
 nEchoes = s.get_prop('acq_params')['nEchoes']
 nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
 s.set_units('t','s')
-print ndshape(s)
+print(ndshape(s))
 
 
 # 
@@ -308,10 +308,10 @@ acq_time_s = orig_t[nPoints]
 tau_s = s.get_prop('acq_params')['tau_us']*1e-6
 pad_s = s.get_prop('acq_params')['pad_us']*1e-6
 tE_s = 2.0*p90_s + deadtime_s + acq_time_s + pad_s
-print "ACQUISITION TIME:",acq_time_s,"s"
-print "TAU DELAY:",tau_s,"s"
-print "TWICE TAU:",2.0*tau_s,"s"
-print "ECHO TIME:",tE_s,"s"
+print("ACQUISITION TIME:",acq_time_s,"s")
+print("TAU DELAY:",tau_s,"s")
+print("TWICE TAU:",2.0*tau_s,"s")
+print("ECHO TIME:",tE_s,"s")
 t2_axis = linspace(0,acq_time_s,nPoints)
 tE_axis = r_[1:nEchoes+1]*tE_s
 s.setaxis('t',None)
@@ -326,7 +326,7 @@ fl.image(s)
 # 
 
 
-print ndshape(s)
+print(ndshape(s))
 
 
 # 
@@ -390,7 +390,7 @@ iteration = 0
 def print_fun(x, f, accepted):
     global iteration
     iteration += 1
-    print (iteration, x, f, int(accepted))
+    print((iteration, x, f, int(accepted)))
     return
 sol = basinhopping(costfun, r_[0.,0.],
         minimizer_kwargs={"method":'L-BFGS-B'},
@@ -403,8 +403,8 @@ zeroorder_rad, firstorder = sol.x
 phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
 phshift *= exp(-1j*2*pi*zeroorder_rad)
 s *= phshift
-print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-        firstorder,angle(zeroorder_rad)/pi*180)
+print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
+        firstorder,angle(zeroorder_rad)/pi*180))
 
 
 # 
@@ -428,7 +428,7 @@ s = checkpoint.C
 # 
 
 
-print ndshape(s)
+print(ndshape(s))
 fl.next('after phased - real ft')
 fl.image(s.real)
 fl.next('after phased - imag ft')
@@ -507,7 +507,7 @@ data = data.real.C.sum('t2')
 
 
 fl.next('plotting first echo')
-for x in xrange(shape(s.getaxis('power'))[0]):
+for x in range(shape(s.getaxis('power'))[0]):
     fl.plot(s['tE',0]['power',x]['t2':(-600,900)])
 
 
@@ -515,7 +515,7 @@ for x in xrange(shape(s.getaxis('power'))[0]):
 
 
 power_list = s.getaxis('power')
-print power_list
+print(power_list)
 amplitude_r = empty_like(power_list)
 T2_r = empty_like(power_list)
 
@@ -523,8 +523,8 @@ T2_r = empty_like(power_list)
 # 
 
 
-for x in xrange(shape(s.getaxis('power'))[0]):
-    print abs(s['tE',0]['power',x].data).max()
+for x in range(shape(s.getaxis('power'))[0]):
+    print(abs(s['tE',0]['power',x].data).max())
 
 
 # 
@@ -545,7 +545,7 @@ for i,k in enumerate(power_list):
     fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[1]*1e3), human_units=False)
     xlabel('t (sec)')
     ylabel('Intensity')
-    print "FOR POWER:",power_list[i],"W \tAMPLITUDE:",p1[0],"\tT2:",p1[1]
+    print("FOR POWER:",power_list[i],"W \tAMPLITUDE:",p1[0],"\tT2:",p1[1])
     amplitude_r[i] = p1[0]
     T2_r[i] = p1[1]  
 

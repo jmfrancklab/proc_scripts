@@ -27,5 +27,5 @@ for id_string in [
     s = s.angle.name('signal phase').set_units('rad')
     s.data = s.data.cumsum()
     fl.plot(s,'o')
-    print (s.data[-1]-s.data[-2])/(s.getaxis('vd')[-1]-s.getaxis('vd')[-2])
+    print((s.data[-1]-s.data[-2])/(s.getaxis('vd')[-1]-s.getaxis('vd')[-2]))
 fl.show()

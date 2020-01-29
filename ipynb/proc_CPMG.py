@@ -36,10 +36,10 @@ for date,id_string in [
     tau_s = transient_s + acq_time_s*0.5
     pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
     tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
-    print "ACQUISITION TIME:",acq_time_s,"s"
-    print "TAU DELAY:",tau_s,"s"
-    print "TWICE TAU:",2.0*tau_s,"s"
-    print "ECHO TIME:",tE_s,"s"
+    print("ACQUISITION TIME:",acq_time_s,"s")
+    print("TAU DELAY:",tau_s,"s")
+    print("TWICE TAU:",2.0*tau_s,"s")
+    print("ECHO TIME:",tE_s,"s")
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('t',None)
@@ -85,8 +85,8 @@ for date,id_string in [
     s.ift('t2')
     even_echo_center = abs(s)['ph1',1]['tE',0].argmax('t2').data.item()
     odd_echo_center = abs(s)['ph1',-1]['tE',1].argmax('t2').data.item()
-    print "EVEN ECHO CENTER:",even_echo_center,"s"
-    print "ODD ECHO CENTER:",odd_echo_center,"s"
+    print("EVEN ECHO CENTER:",even_echo_center,"s")
+    print("ODD ECHO CENTER:",odd_echo_center,"s")
     s.setaxis('t2',lambda x: x-even_echo_center)
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center before interleaving')
@@ -121,8 +121,8 @@ for date,id_string in [
     zeroorder /= abs(zeroorder)
     fl.next('phdiff -- corrected')
     fl.image(phdiff_corr)
-    print "Relative phase shift (for interleaving) was "        "{:0.1f}\us and {:0.1f}$^\circ$".format(
-                firstorder/1e-6,angle(zeroorder)/pi*180)
+    print("Relative phase shift (for interleaving) was "        "{:0.1f}\\us and {:0.1f}$^\circ$".format(
+                firstorder/1e-6,angle(zeroorder)/pi*180))
     interleaved['evenodd',1] *= zeroorder*phshift
     interleaved.smoosh(['nEchoes','evenodd'],noaxis=True).reorder('t2',first=False)
     interleaved.setaxis('nEchoes',r_[1:nEchoes+1])
@@ -143,7 +143,7 @@ for date,id_string in [
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        print (iteration, x, f, int(accepted))
+        print((iteration, x, f, int(accepted)))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
@@ -156,8 +156,8 @@ for date,id_string in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     interleaved *= phshift
-    print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-            firstorder,angle(zeroorder_rad)/pi*180)
+    print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
+            firstorder,angle(zeroorder_rad)/pi*180))
     if interleaved['nEchoes',0].data[:].sum().real < 0:
         interleaved *= -1
     fl.next('interleaved -- phased ft')
@@ -166,7 +166,7 @@ for date,id_string in [
     fl.image(interleaved.real)
     fl.next('final imag data ft')
     fl.image(interleaved.imag)
-    print ndshape(interleaved)
+    print(ndshape(interleaved))
     interleaved.reorder('t2',first=True)
     fl.next('phased echoes, real - ft')
     fl.plot(interleaved.real)
@@ -205,7 +205,7 @@ ylabel('Intensity')
 
 
 T2 = p1[0]
-print "T2:",T2,"s"
+print("T2:",T2,"s")
 
 
 # 
@@ -225,7 +225,7 @@ tau1 = d_T2.getaxis('tE')
 N1_2d = reshape(tau1,(shape(tau1)[0],1)) # T1 POINTS
 Nx_2d = reshape(Nx_ax,(1,shape(Nx_ax)[0])) # T1 VALUES
 k1 = exp(-(N1_2d)/Nx_2d)
-print "Shape of K1 (relates tau1 and x)",shape(k1)
+print("Shape of K1 (relates tau1 and x)",shape(k1))
 
 
 # 
@@ -235,22 +235,22 @@ def gen_A_prime(val,dimension):
     return r_[k1, val*eye(dimension)]
 A_prime = gen_A_prime(5,k1.shape[1])
 b = zeros((data.shape[1],data.shape[0]))
-for x in xrange(data.shape[1]):
+for x in range(data.shape[1]):
     b[x,:] = data.real[:,x]
-print shape(k1)
-print shape(A_prime)
+print(shape(k1))
+print(shape(A_prime))
 b_prime = zeros((b.shape[0],A_prime.shape[0]))
-for x in xrange(b.shape[0]):
+for x in range(b.shape[0]):
     b_prime[x,:] = r_[b[x,:],zeros(k1.shape[1])]
-print shape(data)
-print shape(b)
-print shape(b_prime)
+print(shape(data))
+print(shape(b))
+print(shape(b_prime))
 
 
 # 
 
 
-print shape(A_prime),shape(b_prime)
+print(shape(A_prime),shape(b_prime))
 
 
 # 
@@ -258,13 +258,13 @@ print shape(A_prime),shape(b_prime)
 generate_L = False
 if generate_L:
     lambda_range = logspace(log10(8e-3),log10(2e3),20)
-    print shape(lambda_range)
+    print(shape(lambda_range))
     rnorm_list = empty_like(lambda_range)
     smoothing_list = empty_like(lambda_range)
     for index, lambda_val in enumerate(lambda_range):
         x = empty((b_prime.shape[0],k1.shape[1]))
         rnorm = empty(b_prime.shape[0])
-        for z in xrange(shape(b_prime)[0]):
+        for z in range(shape(b_prime)[0]):
             x[z,:], rnorm[z] = nnls(gen_A_prime(lambda_val,k1.shape[1]),b_prime[z,:])
         temp = sum(rnorm)
         rnorm_list[index] = temp
@@ -281,8 +281,8 @@ if generate_L:
 heel = -0.7
 heel_alpha = 10**float(heel)
 heel_lambda = sqrt(heel_alpha)
-print "Alpha",heel_alpha
-print "Lambda",heel_lambda
+print("Alpha",heel_alpha)
+print("Lambda",heel_lambda)
 guess_lambda = heel_lambda
 
 
@@ -291,7 +291,7 @@ guess_lambda = heel_lambda
 
 x = empty((b_prime.shape[0],k1.shape[1]))
 rnorm  = empty_like(x)
-for z in xrange(shape(b_prime)[0]):
+for z in range(shape(b_prime)[0]):
     x[z,:], rnorm[z] = nnls(gen_A_prime(guess_lambda,k1.shape[1]),b_prime[z,:])
 
 
