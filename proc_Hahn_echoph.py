@@ -6,12 +6,7 @@ import re
 t2 = symbols('t2')
 slice_f = (-1e3,1e3)
 exp_tuples = [
-        ('191111','echo_4','gradient off'),
-        ('191111','echo_4_2','gradient off'),
-        ('191111','echo_4_3','gradient off'),
-        ('191111','echo_4_on','gradient on'),
-        ('191111','echo_4_on_2','gradient on'),
-        ('191111','echo_4_on_3','gradient on'),
+        ('200129','echo_4','64x'),
         ]
 if calculate_enhancements:
     dBm_re = re.compile(r'\b([0-9]+) *dBm\b')
