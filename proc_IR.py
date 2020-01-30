@@ -1,5 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
+from hermitian_function_test import hermitian_function_test
 fl = figlist_var()
 date = '200122'
 id_string = 'IR_water_6'
@@ -38,67 +39,37 @@ s = s['ph2',1]['ph1',0].C
 slice_f = (-3e3,3e3)
 s = s['t2':slice_f].C
 s.ift('t2')
-max_data = abs(s.data).max()
-pairs = s['vd',0].contiguous(lambda x: abs(x) > max_data*0.5)
-longest_pair = diff(pairs).argmax()
-peak_location = pairs[longest_pair,:]
-s.setaxis('t2',lambda x: x-peak_location.mean())
-s.register_axis({'t2':0})
-max_shift = diff(peak_location).item()/2
-s_sliced = s['t2':(0,None)].C
-s_sliced['t2',0] *= 0.5
-s_ft = s_sliced.C
-fl.next('all corrected FIDs')
-fl.plot(s_ft.reorder('vd',first=False))
-shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
-t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:200j],'R2'))
-s_foropt = s.C
-s_foropt.ft('t2')
-s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
-s_foropt.ift('t2')
-s_foropt /= t2_decay
-s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-print(s_foropt.getaxis('t2'))
-print(s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]])
-if ndshape(s_foropt)['t2'] % 2 == 0:
-    s_foropt = s_foropt['t2',:-1]
-ph0 = s_foropt['t2':0.0]
-ph0 /= abs(ph0)
-s_foropt /= ph0
-s_foropt /= max(abs(s_foropt.getaxis('t2')))
-residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
-residual.reorder('shift')
-print(ndshape(residual))
-minpoint = residual.argmin()
-best_shift = minpoint['shift']
-best_R2 = minpoint['R2']
+residual,best_shift, best_R2 = hermitian_function_test(s)
+# {{{ slice out the FID appropriately and phase correct
+# it
 s.ft('t2')
 s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
 s.ift('t2')
 ph0 = s['t2':0.0]
 ph0 /= abs(ph0)
 s /= ph0
-s_sliced = s['t2':(0,None)].C
-s_sliced['t2',0] *= 0.5
-s_sliced.ft('t2')
-min_vd = s_sliced.getaxis('vd')[abs(s_sliced).sum('t2').argmin('vd',raw_index=True).item()]
+s = s['t2':(0,None)]
+s['t2',0] *= 0.5
+s.ft('t2')
+# }}}
+min_vd = s.getaxis('vd')[abs(s).sum('t2').argmin('vd',raw_index=True).item()]
 est_T1 = min_vd/log(2)
-for x in range(len(s_sliced.getaxis('vd'))):
-    if s_sliced.getaxis('vd')[x] < min_vd:
-        s_sliced['vd',x] *= -1
+for x in range(len(s.getaxis('vd'))):
+    if s.getaxis('vd')[x] < min_vd:
+        s['vd',x] *= -1
 print("Estimated T1 is:",est_T1,"s")
 fl.next('Spectrum - freq domain')
-fl.plot(s_sliced.reorder('vd',first=False), alpha=0.5)#, label='%s'%label_str)
+fl.plot(s.reorder('vd',first=False), alpha=0.5)#, label='%s'%label_str)
 fl.next('Spectrum - waterfall')
-s_sliced.waterfall()
-s_sliced.sum('t2')
+s.waterfall()
+s.sum('t2')
 fl.next('sum along t2')
-fl.plot(s_sliced.real,'o-')
-fl.plot(s_sliced.imag,'o-')
+fl.plot(s.real,'o-')
+fl.plot(s.imag,'o-')
 # perform fit for T1
 fl.next('T1 fit')
-x_data = s_sliced.getaxis('vd')
-y_data = s_sliced.data.real
+x_data = s.getaxis('vd')
+y_data = s.data.real
 y_data /= max(abs(y_data))
 fl.plot(x_data,y_data,'o-',human_units=False)
 fitfunc = lambda p,x: p[0]*(1-2*exp(-x_data*p[1]))
