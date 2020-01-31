@@ -3,8 +3,13 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
     #('200127','echo_DNP_TCM51C_1'),
-    ('200128','echo_DNP_TCM118C_1'),
+    #('200128','echo_DNP_TCM118C_1'),
+    #('200130','echo_DNP_1'),
+    #('200130','echo_DNP_2'),
     #('200130','echo_DNP_3'),
+    #('191118','echo_DNP_3'),
+    #('191217','echo_DNP_1'),
+    #('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
     #('200131','echo_DNP_pR_1'),
         ]:
@@ -85,7 +90,7 @@ for date,id_string in [
     enhancement.sum('t2').real
     enhanced = enhancement.data
     enhanced /= max(enhanced)
-    fl.next('RAS TCM118C enhancement curve')
+    fl.next('TEMPOL enhancement curve')
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
