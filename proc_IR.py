@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from hermitian_function_test import hermitian_function_test
+from hermitian_function_test import hermitian_function_test, zeroth_order_ph
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -51,13 +51,20 @@ s.ft(['ph2','ph1'])
 fl.image(s)
 fl.next('select coherence and phase')
 s.ift('t2')
-residual,ph0,best_shift, best_R2 = hermitian_function_test(s['ph2',1]['ph1',0])
+residual,best_shift, best_R2 = hermitian_function_test(s['ph2',1]['ph1',0])
+print("best shift is",best_shift)
 # {{{ slice out the FID appropriately and phase correct
 # it
 s.ft('t2')
 s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-s /= ph0
 s.ift('t2')
+ph0 = s['t2',0]['ph2',1]['ph1',0]
+if len(ph0.dimlabels) > 0:
+    assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+    ph0 = zeroth_order_ph(ph0)
+else:
+    ph0 = ph0/abs(ph0)
+s /= ph0
 s = s['t2':(0,None)]
 s['t2',0] *= 0.5
 fl.image(s)
@@ -68,6 +75,7 @@ fl.image(s)
 fl.next('signal vs. vd')
 s_sliced = s['ph2',1]['ph1',0]
 s_forerror = s['ph2',r_[0,2,3]]['ph1',1]
+# variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
 s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
 s_sliced.mean('t2').set_error(s_forerror.data)
 fl.plot(s_sliced,'o')

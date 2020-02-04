@@ -41,6 +41,7 @@ def zeroth_order_ph(d, plot_name=None):
         fl.plot(eigenVectors[0,1],eigenVectors[1,1],'o')
     return exp(1j*ph0)
 def hermitian_function_test(s, down_from_max=0.5):
+    r"""determine the center of the echo"""
     # {{{ determine where the "peak" of the echo is,
     # and use it to determine the max
     # shift
@@ -77,19 +78,21 @@ def hermitian_function_test(s, down_from_max=0.5):
     # the problem here is that we need to do this separately for each choice
     # of decay and shift, but allow zeroth_order_ph to operate over any
     # additional dimensions, so the following doesn't work correctly right now
-    # {{{ phase the center point to predominantly 0 or pi
-    center_point = s_foropt['t2',n_points//2+1]
-    if len(center_point.dimlabels) > 0:
-        assert len(center_point.dimlabels) == 1, repr(ndshape(center_point))+" has too many dimensions"
-        ph0 = zeroth_order_ph(center_point)
-        s_foropt /= ph0
-    else:
-        ph0 = center_point/abs(center_point)
-        s_foropt /= ph0
-    # }}}
+    for j in range(ndshape(s_foropt)['R2']):
+        for k in range(ndshape(s_foropt)['shift']):
+            # {{{ phase the center point to predominantly 0 or pi
+            center_point = s_foropt['R2',j]['shift',k]['t2',n_points//2+1]
+            if len(center_point.dimlabels) > 0:
+                assert len(center_point.dimlabels) == 1, repr(ndshape(center_point))+" has too many dimensions"
+                ph0 = zeroth_order_ph(center_point)
+                s_foropt['R2',j]['shift',k] /= ph0
+            else:
+                ph0 = center_point/abs(center_point)
+                s_foropt['R2',j]['shift',k] /= ph0
+            # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     residual.reorder('shift')
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
-    return residual,ph0,best_shift+peak_center,best_R2
+    return residual,best_shift+peak_center,best_R2
