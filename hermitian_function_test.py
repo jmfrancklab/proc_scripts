@@ -60,7 +60,6 @@ def hermitian_function_test(s, down_from_max=0.5):
     # }}}
     # {{{ construct test arrays for T2 decay and shift
     shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
-    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e2:200j],'R2'))
     # }}}
     s_foropt = s.C
     # {{{ time shift and correct for T2 decay
@@ -68,7 +67,6 @@ def hermitian_function_test(s, down_from_max=0.5):
     s_foropt *= exp(1j*2*pi*shift_t*
             s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
-    s_foropt /= t2_decay
     # }}}
     # {{{ make sure there's and odd number of points
     # and set phase of center point to 0
@@ -86,5 +84,4 @@ def hermitian_function_test(s, down_from_max=0.5):
     residual.reorder('shift')
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
-    best_R2 = minpoint['R2']
-    return residual,best_shift+peak_center,best_R2
+    return residual,best_shift+peak_center
