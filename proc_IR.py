@@ -1,96 +1,132 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
+from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from sympy import symbols
 fl = figlist_var()
+t2 = symbols('t2')
+# {{{ input parameters
 date = '200203'
 id_string = 'IR_pR_1_3'
-filename = date+'_'+id_string+'.h5'
+clock_correction = 1.0829/998.253
 nodename = 'signal'
+filter_bandwidth = 1e3
+# }}}
+filename = date+'_'+id_string+'.h5'
 s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type = 'test_equip' ))
-s.rename('t','t2').set_units('t2','s')
-s.ft('t2',shift=True)
-clock_correction = 1.0829/998.253
-s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-fl.next('raw data - clock correction')
-fl.image(s['t2':(-1e3,1e3)])
+# it doesn't make sense to do any type of FT until the
+# data is in the correct shape --- another reason why
+# chunking should be done before the file is saved
+print(s.getaxis('vd'))
+s.chunk('t',['ph2','ph1','t2'],[4,2,-1]).set_units('t2','s')
+s.setaxis('ph1',r_[0.:4.:2.]/4)
+s.setaxis('ph2',r_[0.:4.]/4)
+s.reorder(['ph1','ph2'])
+fl.next('raw data')
+s.ft('t2', shift=True)
+s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
+fl.image(s,interpolation='bicubic')
+fl.next('filtered data')
 s.ift('t2')
-s.chunk('t2',['ph2','ph1','t2'],[4,2,-1])
-#s.setaxis('t2',t2_axis[nPoints])
-s.setaxis('ph1',r_[0.,2.]/4)
-s.setaxis('ph2',r_[0.,1.,2.,3.]/4)
-fl.next('image')
-s.reorder('vd',first=False)
-s.reorder('t2',first=False)
-s.ft(['ph2','ph1'])
-fl.image(s['t2':(-1e3,1e3)].C.ft('t2'))
-s = s['ph2',1]['ph1',0]
-slice_f = (-600,800)
+rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+s.setaxis(t2-rough_center)
+s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
+fl.image(s)
+fl.next('before clock correction')
 s.ft('t2')
-s = s['t2':slice_f]
+fl.image(s)
+fl.next('after clock correction')
+s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+fl.image(s)
+## My attempts to align the frequencies here do not work -- we should rather
+## use the method from the YQ PNAS paper?
+#fl.next('align frequencies')
+#center_freqs = abs(s).argmax('t2')
+#s.ift('t2')
+#s *= exp(-1j*2*pi*center_freqs*s.fromaxis('t2'))
+#s.ft('t2')
+#fl.image(s)
+fl.next('image coherence')
+s.ft(['ph2','ph1'])
+fl.image(s)
 s.ift('t2')
-fl.next('rough center')
-max_data = abs(s.data).max()
-vd_pairs = []
-for x in xrange(len(s.getaxis('vd'))):
-    pairs = s['vd',x].contiguous(lambda t: abs(t) > max_data*0.5)
-    try:
-        longest_pair = diff(pairs).argmax()
-        peak_location = pairs[longest_pair,:]
-        print peak_location
-        # deciding to find phase corrections from first peak
-        #if x == len(s.getaxis('vd'))-1:
-        if x == 0:
-            max_shift = diff(peak_location).item()/2
-        vd_pairs.append(peak_location.mean())
-    except:
-        print "No max found"
-        pass
-peak_location = array(vd_pairs).mean()
-s.setaxis('t2',lambda x: x-peak_location)
-#s.register_axis({'t2':0})
-fl.image(s.C.ft('t2'))
-s_sliced = s['t2':(0,None)]
-s_sliced['t2',0] *= 0.5
-fl.next('all FIDs')
-fl.plot(s_sliced.C.reorder('vd',first=False))
-fl.next('all FIDs - FT')
-fl.plot(s_sliced.C.ft('t2').reorder('vd',first=False))
-shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
-#s_foropt = s['vd',-1].C
-s_foropt = s['vd',0].C
-s_foropt.ft('t2')
-s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
-s_foropt.ift('t2')
-s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-if ndshape(s_foropt)['t2'] % 2 == 0:
-    s_foropt = s_foropt['t2',:-1]
-ph0 = s_foropt['t2':0.0]
-ph0 /= abs(ph0)
-s_foropt /= ph0
-s_foropt /= max(abs(s_foropt.getaxis('t2')))
-residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
-residual.reorder('shift')
-minpoint = residual.argmin()
-best_shift = minpoint['shift']
+residual,best_shift = hermitian_function_test(s['ph2',1]['ph1',0])
+fl.next('hermitian test')
+fl.plot(residual)
+print("best shift is",best_shift)
+# {{{ slice out the FID appropriately and phase correct
+# it
 s.ft('t2')
 s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
 s.ift('t2')
-ph0 = s['t2':0.0]
-ph0 /= abs(ph0)
+ph0 = s['t2',0]['ph2',1]['ph1',0]
+if len(ph0.dimlabels) > 0:
+    assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+    ph0 = zeroth_order_ph(ph0)
+    print('phasing dimension as one')
+else:
+    ph0 = ph0/abs(ph0)
 s /= ph0
-fl.next('phased')
-fl.image(s.C.ft('t2'))
-s_sliced = s['t2':(0,None)]
-s_sliced['t2',0] *= 0.5
-s_sliced.ft('t2')
-min_vd = s_sliced.getaxis('vd')[abs(s_sliced).sum('t2').argmin('vd',raw_index=True).item()]
-est_T1 = min_vd/log(2)
-for x in range(len(s_sliced.getaxis('vd'))):
-    if s_sliced.getaxis('vd')[x] < min_vd:
-        s_sliced['vd',x] *= -1
-s_sliced.sum('t2')
-s_sliced /= max((s_sliced.data))
-fl.next('sum along t2 - real')
-fl.plot(s_sliced.real,'o-')
-fl.plot(s_sliced.imag,'o-')
+fl.next('check phasing -- real')
+fl.plot(s['ph2',1]['ph1',0])
+gridandtick(gca())
+fl.next('check phasing -- imag')
+fl.plot(s['ph2',1]['ph1',0].imag)
+gridandtick(gca())
+s = s['t2':(0,None)]
+s['t2',0] *= 0.5
+fl.next('phased and FID sliced')
+fl.image(s)
+fl.next('phased and FID sliced -- frequency domain')
+s.ft('t2')
+# }}}
+fl.image(s)
+fl.next('signal vs. vd')
+s_sliced = s['ph2',1]['ph1',0]
+s_forerror = s['ph2',r_[0,2,3]]['ph1',1]
+# variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
+s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
+s_sliced.mean('t2').set_error(s_forerror.data)
+fl.plot(s_sliced,'o')
+fl.plot(s_sliced.imag,'o')
+#min_vd = s.getaxis('vd')[abs(s).sum('t2').argmin('vd',raw_index=True).item()]
+#est_T1 = min_vd/log(2)
+#for x in range(len(s.getaxis('vd'))):
+#    if s.getaxis('vd')[x] < min_vd:
+#        s['vd',x] *= -1
+#print("Estimated T1 is:",est_T1,"s")
+fl.next('Spectrum - freq domain')
+fl.plot(s['ph2',1]['ph1',0])
+#fl.plot(s.reorder('vd',first=False), alpha=0.5)#, label='%s'%label_str)
+##fl.next('Spectrum - waterfall')
+##s_sliced.waterfall()
+##s_sliced.sum('t2')
+##s_sliced /= max(abs(s_sliced.data))
+#fl.next('sum along t2')
+#fl.plot(s.real,'o-')
+#fl.plot(s.imag,'o-')
+## perform fit for T1
+#fl.next('T1 fit')
+#x_data = s.getaxis('vd')
+#y_data = s.data.real
+#y_data /= max(abs(y_data))
+#fl.plot(x_data,y_data,'o-',human_units=False)
+fitfunc = lambda p, x: p[0]*(1-2*exp(-x*p[1]))
+x = s_sliced.fromaxis('vd')
+errfunc = lambda p: fitfunc(p,x).data - s_sliced.data.real
+p_ini = [1.0,10.0]
+p_opt,success = leastsq(errfunc, p_ini[:])
+assert success in [1,2,3], "Fit did not succeed"
+T1 = 1./p_opt[1]
+print("T1:",T1,"s")
+fl.next('fit')
+fl.plot(s_sliced, 'o', label='data')
+fl.plot(s_sliced.imag, 'o', label='data')
+new_x = nddata(r_[0:s_sliced.getaxis('vd')[-1]:500j],'vd')#.set_units('vd','s')
+fl.plot(fitfunc(p_opt,new_x), label='fit')
+gridandtick(gca())
+#fl.show();quit()
+#x_fit = linspace(x_data.min(),x_data.max(),5000)
+#fl.next('ext')
+#fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T1 = %0.2f ms)'%(T1*1e3), human_units=False)
 fl.show();quit()
