@@ -49,7 +49,6 @@ fl.image(s)
 fl.next('image coherence')
 s.ft(['ph2','ph1'])
 fl.image(s)
-fl.next('select coherence and phase')
 s.ift('t2')
 residual,best_shift, best_R2 = hermitian_function_test(s['ph2',1]['ph1',0])
 print("best shift is",best_shift)
@@ -62,13 +61,21 @@ ph0 = s['t2',0]['ph2',1]['ph1',0]
 if len(ph0.dimlabels) > 0:
     assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
     ph0 = zeroth_order_ph(ph0)
+    print('phasing dimension as one')
 else:
     ph0 = ph0/abs(ph0)
 s /= ph0
+fl.next('check phasing -- real')
+fl.plot(s['ph2',1]['ph1',0])
+gridandtick(gca())
+fl.next('check phasing -- imag')
+fl.plot(s['ph2',1]['ph1',0].imag)
+gridandtick(gca())
 s = s['t2':(0,None)]
 s['t2',0] *= 0.5
+fl.next('phased and FID sliced')
 fl.image(s)
-fl.next('select coherence and phase -- frequency domain')
+fl.next('phased and FID sliced -- frequency domain')
 s.ft('t2')
 # }}}
 fl.image(s)
