@@ -129,8 +129,4 @@ gridandtick(gca())
 #x_fit = linspace(x_data.min(),x_data.max(),5000)
 #fl.next('ext')
 #fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T1 = %0.2f ms)'%(T1*1e3), human_units=False)
-
-
-
 fl.show();quit()
-
