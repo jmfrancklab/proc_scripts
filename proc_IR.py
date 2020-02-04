@@ -2,8 +2,8 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from hermitian_function_test import hermitian_function_test
 fl = figlist_var()
-date = '200122'
-id_string = 'IR_water_6'
+date = '200131'
+id_string = 'IR_pR_1_2'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
@@ -61,8 +61,9 @@ print("Estimated T1 is:",est_T1,"s")
 fl.next('Spectrum - freq domain')
 fl.plot(s.reorder('vd',first=False), alpha=0.5)#, label='%s'%label_str)
 fl.next('Spectrum - waterfall')
-s.waterfall()
-s.sum('t2')
+s_sliced.waterfall()
+s_sliced.sum('t2')
+s_sliced /= max(abs(s_sliced.data))
 fl.next('sum along t2')
 fl.plot(s.real,'o-')
 fl.plot(s.imag,'o-')
