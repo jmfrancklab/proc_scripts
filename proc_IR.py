@@ -31,7 +31,7 @@ s.ift('t2')
 rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
 s.setaxis(t2-rough_center)
 s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
-fl.image(s,interpolation='bicubic')
+fl.image(s)
 fl.next('before clock correction')
 s.ft('t2')
 fl.image(s)
@@ -51,6 +51,8 @@ s.ft(['ph2','ph1'])
 fl.image(s)
 s.ift('t2')
 residual,best_shift, best_R2 = hermitian_function_test(s['ph2',1]['ph1',0])
+fl.next('hermitian test')
+fl.image(residual)
 print("best shift is",best_shift)
 # {{{ slice out the FID appropriately and phase correct
 # it
