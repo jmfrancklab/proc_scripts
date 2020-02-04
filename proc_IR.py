@@ -111,13 +111,19 @@ fl.plot(s['ph2',1]['ph1',0])
 #y_data = s.data.real
 #y_data /= max(abs(y_data))
 #fl.plot(x_data,y_data,'o-',human_units=False)
-#fitfunc = lambda p,x: p[0]*(1-2*exp(-x_data*p[1]))
-#errfunc = lambda p_arg,x_arg,y_arg: fitfunc(p_arg,x_arg) - y_arg
-#p_ini = [1.0,10.0]
-#p1,success = leastsq(errfunc, p_ini[:], args=(x_data,y_data))
-#assert success == 1, "Fit did not succeed"
-#T1 = 1./p1[1]
-#print("T1:",T1,"s")
+fitfunc = lambda p, x: p[0]*(1-2*exp(-x*p[1]))
+x = s_sliced.fromaxis('vd')
+errfunc = lambda p: fitfunc(p,x).data - s_sliced.data.real
+p_ini = [1.0,10.0]
+p_opt,success = leastsq(errfunc, p_ini[:])
+assert success in [1,2,3], "Fit did not succeed"
+T1 = 1./p_opt[1]
+print("T1:",T1,"s")
+fl.next('fit')
+fl.plot(s_sliced, 'o', label='data')
+fl.plot(s_sliced.imag, 'o', label='data')
+new_x = nddata(r_[0:s_sliced.getaxis('vd')[-1]:500j],'vd')#.set_units('vd','s')
+fl.plot(fitfunc(p_opt,new_x), label='fit')
 #fl.show();quit()
 #x_fit = linspace(x_data.min(),x_data.max(),5000)
 #fl.next('ext')
