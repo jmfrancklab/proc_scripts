@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        #('200129','echo_2','mod coil'),
+        ('200129','echo_2','mod coil'),
         #('200129','echo_3','no mod coil'),
         #('200129','echo_4','no mod coil'),
         ]:
