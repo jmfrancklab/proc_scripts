@@ -2,9 +2,15 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        #('200129','echo_2','mod coil'),
-        #('200129','echo_3','no mod coil'),
-        #('200129','echo_4','no mod coil'),
+        ('200130','echo_SW_11_nomodcoil','SW=3 kHz'),
+        ('200130','echo_SW_10_nomodcoil','SW=6 kHz'),
+        ('200130','echo_SW_9_nomodcoil','SW=12 kHz'),
+        ('200130','echo_SW_1_nomodcoil','SW=24 kHz'),
+        ('200130','echo_SW_2_nomodcoil','SW=48 kHz'),
+        ('200130','echo_SW_3_nomodcoil','SW=96 kHz'),
+        ('200130','echo_SW_4_nomodcoil','SW=192 kHz'),
+        ('200130','echo_SW_5_nomodcoil','SW=384 kHz'),
+        ('200130','echo_SW_6_nomodcoil','SW=768 kHz'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -19,11 +25,9 @@ for date,id_string,label_str in [
     print ndshape(s)
     s.reorder('t',first=True)
     t2_axis = s.getaxis('t')[0:nPoints/nPhaseSteps]
-    s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.setaxis('t2',t2_axis)
     s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
     s.ft('t2',shift=True)
@@ -33,9 +37,10 @@ for date,id_string,label_str in [
     fl.next('coherence')
     fl.image(abs(s)['t2':(-250,250)])
     s = s['ph1',1]['ph2',-2].C
-    s.mean('nScans',return_error=False)
-    fl.next('plot')
-    fl.plot(s)
+    s.mean('nScans')
+    #s.mean('nScans',return_error=False)
+    fl.next('plotting selected coherence channel')
+    fl.plot(s.real, alpha=0.4, label='%s'%label_str)
     slice_f = (-3e3,3e3)
     s = s['t2':slice_f].C
     s.ift('t2')
@@ -48,10 +53,6 @@ for date,id_string,label_str in [
     max_shift = diff(peak_location).item()/2
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
-    #s_sliced['t2':(200e-3,None)] = 0
-    #fl.next('sliced - f')
-    #fl.plot(s_sliced)
-    #fl.show();quit()
     s_ft = s_sliced.C
     fl.next('sliced')
     fl.plot(s_ft)
@@ -64,7 +65,7 @@ for date,id_string,label_str in [
     s_foropt /= t2_decay
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
     print s_foropt.getaxis('t2')
-    print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+    #print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
     if ndshape(s_foropt)['t2'] % 2 == 0:
         s_foropt = s_foropt['t2',:-1]
     #assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
@@ -89,5 +90,5 @@ for date,id_string,label_str in [
     s_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
     fl.next('Spectrum - freq domain')
-    fl.plot(s_sliced.real, alpha=0.5, label='%s'%label_str)
+    fl.plot(s_sliced.real, alpha=0.5, label='%s'%filename)
 fl.show();quit()
