@@ -2,3 +2,4 @@
 *.swo
 *.swp
 data_files.log
+missing_data_files.log

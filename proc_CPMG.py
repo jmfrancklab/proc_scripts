@@ -2,13 +2,13 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string,label_str in [
-        #('200115','CPMG_26_2p7','2.7'),
-        #('200115','CPMG_26_2p7_2','2.7 2'),
-        #('200115','CPMG_26_2p7_3','2.7 3'),
-        #('200115','CPMG_26_2p7_4','2.7 4'),
-        #('200115','CPMG_26_2p7_5','2.7 5'),
-        #('200115','CPMG_26_2p7_6','2.7 5'),
-        ('200115','CPMG_26_2p7_7','2.7 5'),
+        #('200207','CPMG_1','deadtime=100'),
+        #('200207','CPMG_2','deadtime=50'),
+        #('200207','CPMG_3','deadtime=25'),
+        #('200207','CPMG_4','deadtime=5'),
+        #('200207','CPMG_4_1','deadtime=5, 2'),
+        #('200207','CPMG_5','deadtime=5'),
+        ('200207','CPMG_5_1','deadtime=5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -54,7 +54,8 @@ for date,id_string,label_str in [
     #fl.next(id_string+' image plot coherence ')
     #fl.image(s, interpolation='bilinear')
     s = s['ph1',1].C
-    s.mean('nScans',return_error=False)
+    #s.mean('nScans',return_error=False)
+    s.mean('nScans')
     s.reorder('t2',first=True)
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
@@ -97,6 +98,7 @@ for date,id_string,label_str in [
     fl.image(s.imag)
     #data = s['t2':0]
     data = s['t2':(-100,100)].sum('t2')
+    #data = s['t2':(0,200)].sum('t2')
     fl.next('Echo decay')
     x = tE_axis
     ydata = data.data.real

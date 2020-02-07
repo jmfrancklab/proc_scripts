@@ -2,15 +2,9 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200130','echo_SW_11_nomodcoil','SW=3 kHz'),
-        ('200130','echo_SW_10_nomodcoil','SW=6 kHz'),
-        ('200130','echo_SW_9_nomodcoil','SW=12 kHz'),
-        ('200130','echo_SW_1_nomodcoil','SW=24 kHz'),
-        ('200130','echo_SW_2_nomodcoil','SW=48 kHz'),
-        ('200130','echo_SW_3_nomodcoil','SW=96 kHz'),
-        ('200130','echo_SW_4_nomodcoil','SW=192 kHz'),
-        ('200130','echo_SW_5_nomodcoil','SW=384 kHz'),
-        ('200130','echo_SW_6_nomodcoil','SW=768 kHz'),
+        ('200207','echo_1','deadtime=15'),
+        ('200207','echo_2','deadtime=10'),
+        ('200207','echo_3','deadtime=5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
