@@ -10,15 +10,15 @@ new_colors = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
               '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
               '#bcbd22', '#17becf'])
 for date,id_string,label_str in [
-        ('200130','echo_SW_11_nomodcoil','SW=3 kHz'),
-        ('200130','echo_SW_10_nomodcoil','SW=6 kHz'),
-        ('200130','echo_SW_9_nomodcoil','SW=12 kHz'),
-        ('200130','echo_SW_1_nomodcoil','SW=24 kHz'),
-        ('200130','echo_SW_2_nomodcoil','SW=48 kHz'),
-        ('200130','echo_SW_3_nomodcoil','SW=96 kHz'),
-        ('200130','echo_SW_4_nomodcoil','SW=192 kHz'),
-        ('200130','echo_SW_5_nomodcoil','SW=384 kHz'),
-        ('200130','echo_SW_6_nomodcoil','SW=768 kHz'),
+        ('200207','echo_SW_11','SW=3 kHz'),
+        ('200207','echo_SW_10','SW=6 kHz'),
+        ('200207','echo_SW_9','SW=12 kHz'),
+        ('200207','echo_SW_1','SW=24 kHz'),
+        ('200207','echo_SW_2','SW=48 kHz'),
+        ('200207','echo_SW_3','SW=96 kHz'),
+        ('200207','echo_SW_4','SW=192 kHz'),
+        ('200207','echo_SW_5','SW=384 kHz'),
+        ('200207','echo_SW_6','SW=768 kHz'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
