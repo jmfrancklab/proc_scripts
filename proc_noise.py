@@ -60,11 +60,18 @@ for date,id_string,label_str in [
     #fl.plot(signal.real, alpha=0.5, color=c, label=label_str)
     #fl.plot(signal.imag, ':', alpha=0.5, color=c, label=label_str)
     fl.plot(abs(signal)['t2':(None,0.2)], linewidth=3, color=c, alpha=0.25,
-            label=label_str, human_units=False) # here, it makes sense to set human_units to false because the spectra are very different widths -- because human_units calculates the default units each line independently, and sees if the new line falls in with previous, this will not work
+            label=label_str, human_units=False) # here, it makes sense to set
+    #                     human_units to false because the spectra are very
+    #                     different widths -- because human_units calculates
+    #                     the default units each line independently, and sees
+    #                     if the new line falls in with previous, this will not
+    #                     work
     fl.next('noise -- semilog', legend=True)
-    fl.plot(noise['t2':frq_slice], plottype='semilogy',alpha=0.2, color=c,
+    fl.plot(noise['t2':frq_slice], plottype='semilogy',alpha=0.05, color=c,
             human_units=False)
-    noise.convolve('t2',500)
+    noise.convolve('t2',500) # convolution is just to provide a running
+    # average, to make it clear where the average noise baseline is at (remember
+    # we are doing this *after* taking the abs)
     fl.plot(noise['t2':frq_slice], plottype='semilogy',alpha=0.5, color=c,
             label=label_str, human_units=False)
     fl.next('noise -- linear', legend=True)
