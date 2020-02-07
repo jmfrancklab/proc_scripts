@@ -12,6 +12,7 @@ for date,id_string in [
     #('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
     #('200131','echo_DNP_pR_1'),
+    ('200206','echo_DNP_LG_2'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -38,15 +39,15 @@ for date,id_string in [
     s.ft(['ph1','ph2'])
     fl.next('coherence levels')
     fl.image(s)
-    s = s['ph1',1]['ph2',0].C
+    s = s['ph1',1]['ph2',0]['t2':(-500,500)].C
     fl.next('viz - signal')
     fl.image(s)
     s.reorder('t2',first=True)
     s.ift('t2')
-    t2_max = zeros_like(s.getaxis('power'))
-    for x in range(len(s.getaxis('power'))):
-        t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
-    s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
+    #t2_max = zeros_like(s.getaxis('power'))
+    #for x in range(len(s.getaxis('power'))):
+    #    t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
+    #s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
     s.ft('t2')
@@ -54,18 +55,18 @@ for date,id_string in [
     fl.plot(s)
     fl.next('viz - signal 2')
     fl.image(s)
-    remember_sign = zeros_like(s.getaxis('power'))
-    for x in range(len(s.getaxis('power'))):
-        if s['power',x].data.real.sum() > 0:
-            remember_sign[x] = 1.0
-        else:
-            remember_sign[x] = -1.0
-    temp = s['power',-4].C
+    #remember_sign = zeros_like(s.getaxis('power'))
+    #for x in range(len(s.getaxis('power'))):
+    #    if s['power',x].data.real.sum() > 0:
+    #        remember_sign[x] = 1.0
+    #    else:
+    #        remember_sign[x] = -1.0
+    temp = s['power',0].C
     fl.next('signal, comparison')
     fl.plot(temp.real, alpha=0.5, label='real, pre-phasing')
     fl.plot(temp.imag, alpha=0.5, label='imag, pre-phasing')
     SW = diff(temp.getaxis('t2')[r_[0,-1]]).item()
-    thisph1 = nddata(r_[-4:4:2048j]/SW,'phi1').set_units('phi1','s')
+    thisph1 = nddata(r_[-4:4:5000j]/SW,'phi1').set_units('phi1','s')
     phase_test_r = temp * exp(-1j*2*pi*thisph1*temp.fromaxis('t2'))
     phase_test_rph0 = phase_test_r.C.sum('t2')
     phase_test_rph0 /= abs(phase_test_rph0)
@@ -83,20 +84,22 @@ for date,id_string in [
     fl.plot(temp.imag, alpha=0.5, label='imag, post-phasing')
     # for some reason, signs are exactly inverted when phased this way
     #s *= remember_sign
-    s *= -1
+    #s *= -1
     fl.next('signal, phased')
     fl.plot(s)
-    enhancement = s['t2':(-0.5e3,0.5e3)].C
+    fl.next('signal, phased - image')
+    fl.image(s)
+    enhancement = s['t2':(-60,0)].C
     enhancement.sum('t2').real
     enhanced = enhancement.data
     enhanced /= max(enhanced)
-    fl.next('TEMPOL enhancement curve')
+    fl.next(r'Enhancement curve 60 $\mu$M 4AT RM')
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     power_axis_W = r_[0,power_axis_W]
     fl.plot(power_axis_W[:-3],enhanced[:-3],'.',human_units=False)
-    fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
+    #fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
     xlabel('Power (W)')
     ylabel('Enhancement')
 fl.show();quit()
