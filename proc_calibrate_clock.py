@@ -8,17 +8,14 @@ for id_string in [
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip' ))
-
     s.rename('t','t2').set_units('t2','s')
     clock_correction = 0
     #clock_correction = -4.33/10.0
     fl.next('image raw')
-    fl.image(s)
-    s *= exp(-1j*s.fromaxis('vd')*clock_correction)
     acq_time = s.getaxis('t2')[-1]
-    manual_taxis_zero = acq_time*1e-3/2.0
+    manual_taxis_zero = acq_time/2.0
     s.setaxis('t2',lambda x: x-manual_taxis_zero)
-    fl.next('image corrected')
+    s.ft('t2', shift=True)
     fl.image(s)
     fl.next('phase error vs vd')
     fl.plot(s.sum('t2').angle, 'o')
@@ -28,4 +25,7 @@ for id_string in [
     s.data = s.data.cumsum()
     fl.plot(s,'o')
     print((s.data[-1]-s.data[-2])/(s.getaxis('vd')[-1]-s.getaxis('vd')[-2]))
+    #fl.next('image corrected')
+    #s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+    #fl.image(s)
 fl.show()
