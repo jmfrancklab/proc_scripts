@@ -28,6 +28,8 @@ s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
 fl.image(s,interpolation='bicubic')
 fl.next('filtered data')
 s.ift('t2')
+print abs(s).convolve('t2',0.01).mean_all_but('t2')
+print ndshape(s);quit()
 rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
 s.setaxis(t2-rough_center)
 s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
