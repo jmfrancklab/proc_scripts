@@ -7,8 +7,12 @@ for date,id_string,label_str in [
         #('200207','CPMG_3','deadtime=25'),
         #('200207','CPMG_4','deadtime=5'),
         #('200207','CPMG_4_1','deadtime=5, 2'),
-        #('200207','CPMG_5','deadtime=5'),
+        ('200207','CPMG_5','deadtime=5'),
         ('200207','CPMG_5_1','deadtime=5'),
+        ('200207','CPMG_5_2','deadtime=5'),
+        ('200207','CPMG_5_3','deadtime=5'),
+        #('200207','CPMG_6','deadtime=5'),
+        #('200207','CPMG_6_1','deadtime=5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
