@@ -2,17 +2,8 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string,label_str in [
-        #('200207','CPMG_1','deadtime=100'),
-        #('200207','CPMG_2','deadtime=50'),
-        #('200207','CPMG_3','deadtime=25'),
-        #('200207','CPMG_4','deadtime=5'),
-        #('200207','CPMG_4_1','deadtime=5, 2'),
-        ('200207','CPMG_5','deadtime=5'),
-        ('200207','CPMG_5_1','deadtime=5'),
-        ('200207','CPMG_5_2','deadtime=5'),
-        ('200207','CPMG_5_3','deadtime=5'),
-        #('200207','CPMG_6','deadtime=5'),
-        #('200207','CPMG_6_1','deadtime=5'),
+        ('200207','CPMG_5_4','deadtime=5'),
+        ('200207','CPMG_5_5','deadtime=5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -101,7 +92,7 @@ for date,id_string,label_str in [
     fl.next('after phased - imag ft')
     fl.image(s.imag)
     #data = s['t2':0]
-    data = s['t2':(-100,100)].sum('t2')
+    data = s['t2':(-200,200)].sum('t2')
     #data = s['t2':(0,200)].sum('t2')
     fl.next('Echo decay')
     x = tE_axis
