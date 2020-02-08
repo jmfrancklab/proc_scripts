@@ -3,7 +3,7 @@ from scipy.optimize import leastsq,minimize,basinhopping
 from itertools import cycle
 fl = figlist_var()
 scalefactor = 35000 # a manual adjustment -- seems to bring the signal level to close to 1
-convwidth = 1e3
+convwidth = 0.1e3
 frq_slice = (-50e3,50e3)
 showraw = False
 new_colors = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
