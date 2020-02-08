@@ -15,11 +15,11 @@ for date,id_string in [
     fl.next('image raw -- time domain')
     fl.image(s, interpolation='bicubic')
     s.ft('t2', shift=True)
-    s = s['t2':(-100,100)]
+    s = s['t2':(-5e3,5e3)]
     fl.next('image raw')
     fl.image(s)
     fl.next('image shifted and sliced')
-    #s = align_and_slice(s, fl=fl)
+    s = align_and_slice(s,fl=fl)
     fl.image(s)
     fl.next('phase error vs vd')
     fl.plot(s.sum('t2').angle, 'o')
@@ -28,5 +28,4 @@ for date,id_string in [
     s = s.angle.name('signal phase').set_units('rad')
     s.data = s.data.cumsum()
     fl.plot(s,'o')
-    #print (s.data[-1]-s.data[-2])/(s.getaxis('vd')[-1]-s.getaxis('vd')[-2])
 fl.show()
