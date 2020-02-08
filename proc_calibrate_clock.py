@@ -12,12 +12,14 @@ for date,id_string in [
     clock_correction = 0
     centerpoint = abs(s).mean('vd').argmax('t2').item()
     s.setaxis('t2', lambda x: x-centerpoint)
+    fl.next('image raw -- time domain')
+    fl.image(s, interpolation='bicubic')
     s.ft('t2', shift=True)
-    s = s['t2':(-1e3,1e3)]
+    s = s['t2':(-100,100)]
     fl.next('image raw')
     fl.image(s)
     fl.next('image shifted and sliced')
-    s = align_and_slice(s, fl=fl)
+    #s = align_and_slice(s, fl=fl)
     fl.image(s)
     fl.next('phase error vs vd')
     fl.plot(s.sum('t2').angle, 'o')
