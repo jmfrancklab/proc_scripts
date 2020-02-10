@@ -9,9 +9,18 @@ for id_string in [
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip' ))
     s.rename('t','t2').set_units('t2','s')
-    clock_correction = 0
+    #clock_correction = 0
+    clock_correction = -10.51/6
     fl.next('image raw')
     fl.image(s)
+    acq_time = s.getaxis('t2')[-1]
+    manual_taxis_zero = acq_time/2.0
+    s.setaxis('t2',lambda x: x-manual_taxis_zero)
+    s.ft('t2', shift=True)
+    s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+    fl.next('image corrected')
+    fl.image(s.ift('t2'))
+    s.ft('t2')
     fl.next('phase error vs vd')
     fl.plot(s.sum('t2').angle, 'o')
     fl.next('phase error, unwrapped vs vd')
