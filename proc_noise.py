@@ -10,15 +10,15 @@ new_colors = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
               '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
               '#bcbd22', '#17becf'])
 for date,id_string,label_str in [
-        ('200207','echo_SW_11','SW=3 kHz'),
-        ('200207','echo_SW_10','SW=6 kHz'),
-        ('200207','echo_SW_9','SW=12 kHz'),
-        ('200207','echo_SW_1','SW=24 kHz'),
-        ('200207','echo_SW_2','SW=48 kHz'),
-        ('200207','echo_SW_3','SW=96 kHz'),
-        ('200207','echo_SW_4','SW=192 kHz'),
-        ('200207','echo_SW_5','SW=384 kHz'),
-        ('200207','echo_SW_6','SW=768 kHz'),
+        ('200210','echo_SW_11','SW=3 kHz'),
+        ('200210','echo_SW_10','SW=6 kHz'),
+        ('200210','echo_SW_9','SW=12 kHz'),
+        ('200210','echo_SW_1','SW=24 kHz'),
+        ('200210','echo_SW_2','SW=48 kHz'),
+        ('200210','echo_SW_3','SW=96 kHz'),
+        ('200210','echo_SW_4','SW=192 kHz'),
+        ('200210','echo_SW_5','SW=384 kHz'),
+        ('200210','echo_SW_6','SW=768 kHz'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -69,7 +69,7 @@ for date,id_string,label_str in [
     fl.next('noise -- semilog', legend=True)
     fl.plot(noise['t2':frq_slice], plottype='semilogy',alpha=0.05, color=c,
             human_units=False)
-    noise.convolve('t2',500) # convolution is just to provide a running
+    #noise.convolve('t2',500) # convolution is just to provide a running
     # average, to make it clear where the average noise baseline is at (remember
     # we are doing this *after* taking the abs)
     fl.plot(noise['t2':frq_slice], plottype='semilogy',alpha=0.5, color=c,
