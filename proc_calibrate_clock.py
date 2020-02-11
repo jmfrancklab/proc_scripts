@@ -23,7 +23,7 @@ for date,id_string in [
     fl.image(s)
     fl.next('phase error vs vd')
     fl.plot(s.sum('t2').angle, 'o')
-    fl.next('phase error, unwrapped vs vd')
+    fl.next('phase error, unwrapped vs vd - sig avg')
     s = s['vd',1:]/s['vd',:-1]
     s = s.angle.name('signal phase').set_units('rad')
     s.data = s.data.cumsum()
