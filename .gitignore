@@ -1,5 +1,6 @@
 *.ipynb
 *.swo
 *.swp
+__pycache__
 data_files.log
 missing_data_files.log
