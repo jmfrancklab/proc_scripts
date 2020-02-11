@@ -1,18 +1,21 @@
 from pyspecdata import *
 fl = figlist_var()
-date = '190103'
+#date = '190103'
 for id_string in [
-        ('calibrate_clock'),
+        #('calibrate_clock'),
+        ('calibrate_clock_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip' ))
     s.rename('t','t2').set_units('t2','s')
-    #clock_correction = 0
-    clock_correction = -10.51/6
+    clock_correction = 0
+    #clock_correction = -10.51/6
     fl.next('image raw')
     fl.image(s)
+    fl.next('image raw - FT')
+    fl.image(s.C.ft('t2',shift=True))
     acq_time = s.getaxis('t2')[-1]
     manual_taxis_zero = acq_time/2.0
     s.setaxis('t2',lambda x: x-manual_taxis_zero)
