@@ -12,7 +12,8 @@ for date,id_string in [
     #('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
     #('200131','echo_DNP_pR_1'),
-    ('200206','echo_DNP_LG_2'),
+    #('200206','echo_DNP_LG_2'),
+    ('200210','echo_DNP_coil2'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -39,7 +40,7 @@ for date,id_string in [
     s.ft(['ph1','ph2'])
     fl.next('coherence levels')
     fl.image(s)
-    s = s['ph1',1]['ph2',0]['t2':(-500,500)].C
+    s = s['ph1',1]['ph2',0]['t2':(-100,200)].C
     fl.next('viz - signal')
     fl.image(s)
     s.reorder('t2',first=True)
@@ -89,7 +90,7 @@ for date,id_string in [
     fl.plot(s)
     fl.next('signal, phased - image')
     fl.image(s)
-    enhancement = s['t2':(-60,0)].C
+    enhancement = s['t2':(-100,200)].C
     enhancement.sum('t2').real
     enhanced = enhancement.data
     enhanced /= max(enhanced)
