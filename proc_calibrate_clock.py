@@ -4,22 +4,23 @@ from scipy.optimize import leastsq
 fl = figlist_var()
 apply_correction = True
 for date,id_string in [
-        ('200210','calibrate_clock_1'),
+        ('200212','calibrate_clock_6'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip' ))
     s.rename('t','t2').set_units('t2','s')
-    s.setaxis('vd',s.getaxis('vd')*1e-6) # not sure why, but vd list needed to be saved in us instead of sec
     centerpoint = abs(s).mean('nScans').mean('vd').argmax('t2').item()
     s.setaxis('t2', lambda x: x-centerpoint)
     fl.next('image raw -- time domain')
     fl.image(s, interpolation='bicubic')
     s.ft('t2', shift=True)
-    s = s['t2':(-5e3,5e3)]
+    s = s['t2':(-0.15e3,0.15e3)]
     if apply_correction:
-        clock_correction = 1.5486
+        #clock_correction = 1.692
+        #clock_correction = -1.089
+        clock_correction = 1.785
         s *= exp(-1j*s.fromaxis('vd')*clock_correction)
     fl.next('image raw')
     fl.image(s)
@@ -39,7 +40,7 @@ for date,id_string in [
     fitfunc = lambda p, x: p[0]*x
     errfunc = lambda p_arg,x_arg,y_arg: fitfunc(p_arg, x_arg) - y_arg
     p_ini = [1.0]
-    p1,success = leastsq(errfunc,p_ini[:],args=(x,s.data))
+    p1,success = leastsq(errfunc,p_ini[:],args=(x[-4:],s.data[-4:]))
     x_fit = linspace(x.min(),x.max(),5000)
     fl.plot(x_fit,fitfunc(p1,x_fit),':',human_units=False,label='%f'%p1[0])
     clock_correction = p1[0]
