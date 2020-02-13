@@ -7,7 +7,7 @@ for date,id_string in [
     #('200130','echo_DNP_1'),
     #('200130','echo_DNP_2'),
     #('200130','echo_DNP_3'),
-    ('191118','echo_DNP_3'),
+    #('191118','echo_DNP_3'),
     #('191217','echo_DNP_1'),
     #('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
