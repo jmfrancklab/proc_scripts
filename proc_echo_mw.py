@@ -93,7 +93,7 @@ for date,id_string in [
     enhancement.sum('t2').real
     enhanced = enhancement.data
     enhanced /= max(enhanced)
-    fl.next(r'Enhancement curve 60 $\mu$M 4AT RM')
+    fl.next(r'Enhancement curve')
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
@@ -102,4 +102,17 @@ for date,id_string in [
     fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
     xlabel('Power (W)')
     ylabel('Enhancement')
+    T1_powers_dBm = r_[23.44,28.61,31.54]#,34.81]
+    T1_powers_W = zeros_like(T1_powers_dBm)
+    T1_powers_W[:] = (1e-2*10**((T1_powers_W[:][:]+10.)*1e-1))
+    T1_powers_W = r_[0,T1_powers_W]
+    T1s = r_[1.837,1.941,2.278,2.688]
+    fl.next('T1 plot')
+    fl.plot(T1_powers_W,T1s,'o')
+    print(T1_powers_W)
+    new = 1-enhanced[:-3]
+    fl.next('new')
+    fl.plot(new)
+
+
 fl.show();quit()

@@ -1,5 +1,5 @@
 from pyspecdata import *
-def zeroth_order_ph(d, plot_name=None):
+def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
     zeroth-order even if the data is both negative
@@ -8,18 +8,21 @@ def zeroth_order_ph(d, plot_name=None):
         d.data.real,
         d.data.imag].T
         ))
+    mean_point = d.data.mean()
+    mean_vec = r_[mean_point.real,mean_point.imag]
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
     idx = eigenValues.argsort()[::-1]   
     eigenValues = eigenValues[idx]
     eigenVectors = eigenVectors[:,idx]
     # determine the phase angle from direction of the
-    # largest principle axis
-    ph0 = arctan2(eigenVectors[1,0],eigenVectors[0,0])
-    if plot_name:
+    # largest principle axis plus the mean
+    rotation_vector = eigenVectors[:,0] + mean_vec
+    ph0 = arctan2(rotation_vector[1],rotation_vector[0])
+    if fl:
         eigenVectors *= (eigenValues.reshape(-1,2)*ones((2,1)))/eigenValues.max()*abs(d.data).max()
         d_forplot = d.C
-        fl.next(plot_name)
+        fl.next('check covariance test')
         fl.plot(
                 d_forplot.data.real,
                 d_forplot.data.imag,
@@ -35,10 +38,16 @@ def zeroth_order_ph(d, plot_name=None):
                 alpha=0.25,
                 label='after'
                 )
-        fl.plot(0,0,'ko')
-        fl.plot(eigenVectors[0,0],eigenVectors[1,0],'o',
+        fl.plot(0,0,'ko', alpha=0.5)
+        fl.plot(mean_vec[0],mean_vec[1],'kx', label='mean', alpha=0.5)
+        evec_forplot = eigenVectors + mean_vec.reshape((-1,1))*ones((1,2))
+        fl.plot(evec_forplot[0,0],evec_forplot[1,0],'o', alpha=0.5,
                 label='first evec')
-        fl.plot(eigenVectors[0,1],eigenVectors[1,1],'o')
+        fl.plot(evec_forplot[0,1],evec_forplot[1,1],'o', alpha=0.5)
+        fl.plot(rotation_vector[0],rotation_vector[1],'o', alpha=0.5,
+                label='rotation vector')
+        ax = gca()
+        ax.set_aspect('equal', adjustable='box')
     return exp(1j*ph0)
 def hermitian_function_test(s, down_from_max=0.5):
     r"""determine the center of the echo"""
