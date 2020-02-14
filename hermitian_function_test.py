@@ -1,26 +1,44 @@
 from pyspecdata import *
+from matplotlib.patches import Ellipse
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
     zeroth-order even if the data is both negative
     and positive'''
-    eigenValues, eigenVectors = eig(cov(c_[
+    cov_mat = cov(c_[
         d.data.real,
         d.data.imag].T
-        ))
+        )
+    print('cov_mat',cov_mat)
+    eigenValues, eigenVectors = eig(cov_mat)
     mean_point = d.data.mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
     idx = eigenValues.argsort()[::-1]   
     eigenValues = eigenValues[idx]
-    eigenVectors = eigenVectors[:,idx]
+    print('eigenValues',eigenValues)
+    ## {{{ from https://matplotlib.org/gallery/statistics/confidence_ellipse.html#sphx-glr-gallery-statistics-confidence-ellipse-py doesn't seem to work
+    #pearson = cov_mat[0, 1]/np.sqrt(cov_mat[0, 0] * cov_mat[1, 1])
+    ## Using a special case to obtain the eigenvalues of this
+    ## two-dimensionl dataset.
+    #ell_radius_x = np.sqrt(1 + pearson)
+    #ell_radius_y = np.sqrt(1 - pearson)
+    #print("ell rad:",
+    #        ell_radius_x,ell_radius_x**2,
+    #        ell_radius_y,ell_radius_y**2)
+    ## }}}
+    eigenVectors = eigenVectors[:,idx] # first dimension x,y second evec #
+    eigenVectors *= sqrt(eigenValues.reshape(1,2))*ones((2,1)) # scale by the std, not the variance!
     # determine the phase angle from direction of the
     # largest principle axis plus the mean
-    rotation_vector = eigenVectors[:,0] + mean_vec
+    if (eigenVectors[:,0]*mean_vec).sum() > 0:
+        # we want the eigenvector on the far side of the ellipse
+        rotation_vector = mean_vec + eigenVectors[:,0]
+    else:
+        rotation_vector = mean_vec - eigenVectors[:,0]
     ph0 = arctan2(rotation_vector[1],rotation_vector[0])
     if fl:
-        eigenVectors *= (eigenValues.reshape(-1,2)*ones((2,1)))/eigenValues.max()*abs(d.data).max()
         d_forplot = d.C
         fl.next('check covariance test')
         fl.plot(
@@ -46,8 +64,16 @@ def zeroth_order_ph(d, fl=None):
         fl.plot(evec_forplot[0,1],evec_forplot[1,1],'o', alpha=0.5)
         fl.plot(rotation_vector[0],rotation_vector[1],'o', alpha=0.5,
                 label='rotation vector')
+        norms = sqrt((evec_forplot**2).sum(axis=0))
+        ell = Ellipse(xy=mean_vec,
+                width=2*sqrt(eigenValues[0]),
+                height=2*sqrt(eigenValues[1]),
+                angle=180/pi*arctan2(eigenVectors[1,0],
+                    eigenVectors[0,0]),
+                color='k', fill=False)
         ax = gca()
         ax.set_aspect('equal', adjustable='box')
+        ax.add_patch(ell)
     return exp(1j*ph0)
 def hermitian_function_test(s, down_from_max=0.5):
     r"""determine the center of the echo"""
