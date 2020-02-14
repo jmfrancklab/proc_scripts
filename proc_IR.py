@@ -6,7 +6,7 @@ fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
 date = '200212'
-id_string = 'IR_3_33dBm'
+id_string = 'IR_3_36dBm'
 clock_correction = 1.785
 nodename = 'signal'
 filter_bandwidth = 5e3
