@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from scipy import interpolate
 fl = figlist_var()
+k_sigma = False
 for date,id_string in [
     #('200127','echo_DNP_TCM51C_1'),
     #('200128','echo_DNP_TCM118C_1'),
@@ -10,9 +11,9 @@ for date,id_string in [
     #('200130','echo_DNP_3'),
     #('191118','echo_DNP_3'),
     #('191217','echo_DNP_1'),
-    #('200130','echo_DNP_5'),
+    ('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
-    ('200212','echo_DNP_1'),
+    #('200212','echo_DNP_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -103,24 +104,25 @@ for date,id_string in [
     fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
     xlabel('Power (W)')
     ylabel('Enhancement')
-    T1s = r_[1.707,1.969,2.308,2.720,3.378]
-    p_dBm = r_[23.44,28.61,31.54,34.81]
-    p_W = 10**(p_dBm/10.) * 1e-3
-    p_W = r_[0,p_W]
-    f = interpolate.interp1d(p_W,T1s)
-    xnew = linspace(p_W[0],p_W[-1],25)
-    ynew = f(xnew)
-    figure()
-    T1_p = ndshape([len(p_W)],['powers']).alloc(complex128)
-    T1_p.setaxis('powers',p_W)
-    T1_p['powers',:] = T1s[:]
-    fl.next('T1 plot')
-    fl.plot(T1_p,'o')
-    fl.plot(xnew,ynew,'.')
-    ks_p = ndshape([len(power_axis_W[:-3])],['powers']).alloc()
-    ks_p.setaxis('powers',power_axis_W[:-3])
-    ks_p['powers',:] = 1-enhanced[:-3]
-    ks_p /= (150e-6*(9.822555e9/14.898292e6)*ynew)
-    fl.next(r'150$\mu$M TEMPOL $k_{\sigma}$s(p)')
-    fl.plot(ks_p,'.')
+    if k_sigma:
+        T1s = r_[1.707,1.969,2.308,2.720,3.378]
+        p_dBm = r_[23.44,28.61,31.54,34.81]
+        p_W = 10**(p_dBm/10.) * 1e-3
+        p_W = r_[0,p_W]
+        f = interpolate.interp1d(p_W,T1s)
+        xnew = linspace(p_W[0],p_W[-1],25)
+        ynew = f(xnew)
+        figure()
+        T1_p = ndshape([len(p_W)],['powers']).alloc(complex128)
+        T1_p.setaxis('powers',p_W)
+        T1_p['powers',:] = T1s[:]
+        fl.next('T1 plot')
+        fl.plot(T1_p,'o')
+        fl.plot(xnew,ynew,'.')
+        ks_p = ndshape([len(power_axis_W[:-3])],['powers']).alloc()
+        ks_p.setaxis('powers',power_axis_W[:-3])
+        ks_p['powers',:] = 1-enhanced[:-3]
+        ks_p /= (150e-6*(9.822555e9/14.898292e6)*ynew)
+        fl.next(r'150$\mu$M TEMPOL $k_{\sigma}$s(p)')
+        fl.plot(ks_p,'.')
 fl.show();quit()
