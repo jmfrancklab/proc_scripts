@@ -29,14 +29,20 @@ def zeroth_order_ph(d, fl=None):
     #        ell_radius_y,ell_radius_y**2)
     ## }}}
     eigenVectors = eigenVectors[:,idx] # first dimension x,y second evec #
-    eigenVectors *= sqrt(eigenValues.reshape(1,2))*ones((2,1)) # scale by the std, not the variance!
     # determine the phase angle from direction of the
     # largest principle axis plus the mean
-    if (eigenVectors[:,0]*mean_vec).sum() > 0:
+    # the vector in the direction of the largest
+    # principle axis would have a norm equal to the
+    # sqrt (std not variance) of the eigenvalue, except
+    # that we only want to rotate when the distribution
+    # is assymetric, so include only the excess of the
+    # larger eval over the smaller
+    assymetry_mag = sqrt(eigenValues[0])-sqrt(eigenValues[1])
+    if (assymetry_mag*eigenVectors[:,0]*mean_vec).sum() > 0:
         # we want the eigenvector on the far side of the ellipse
-        rotation_vector = mean_vec + eigenVectors[:,0]
+        rotation_vector = mean_vec + assymetry_mag*eigenVectors[:,0]
     else:
-        rotation_vector = mean_vec - eigenVectors[:,0]
+        rotation_vector = mean_vec - assymetry_mag*eigenVectors[:,0]
     ph0 = arctan2(rotation_vector[1],rotation_vector[0])
     if fl:
         d_forplot = d.C
@@ -58,7 +64,8 @@ def zeroth_order_ph(d, fl=None):
                 )
         fl.plot(0,0,'ko', alpha=0.5)
         fl.plot(mean_vec[0],mean_vec[1],'kx', label='mean', alpha=0.5)
-        evec_forplot = eigenVectors + mean_vec.reshape((-1,1))*ones((1,2))
+        evec_forplot = sqrt(eigenValues.reshape(1,2))*ones((2,1))*eigenVectors # scale by the std, not the variance!
+        evec_forplot += mean_vec.reshape((-1,1))*ones((1,2))
         fl.plot(evec_forplot[0,0],evec_forplot[1,0],'o', alpha=0.5,
                 label='first evec')
         fl.plot(evec_forplot[0,1],evec_forplot[1,1],'o', alpha=0.5)
