@@ -5,8 +5,8 @@ from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-date = '200212'
-id_string = 'IR_3_36dBm'
+date = '200218'
+id_string = 'IR_1_36dBm'
 clock_correction = 1.785
 nodename = 'signal'
 filter_bandwidth = 5e3
