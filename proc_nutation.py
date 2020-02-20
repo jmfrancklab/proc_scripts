@@ -1,9 +1,9 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '200206'
+date = '200219'
 for id_string in [
-    'nutation_lg_coil2_1',
+    'nutation_alex_probe',
     ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'nutation'
@@ -11,15 +11,11 @@ for id_string in [
             directory = getDATADIR(exp_type = 'test_equip' ))
     orig_t = s.getaxis('t')
     s.set_units('p_90','s')
-    nPoints = 128
-    acq_time_s = orig_t[nPoints]
-    t2_axis = linspace(0,acq_time_s,nPoints)
     #s.setaxis('t',None)
     s.reorder('t',first=True)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    #s.setaxis('t2',t2_axis)
     s.reorder('t2',first=False)
     s.ft('t2',shift=True)
     #s *= exp(1j*2*pi*0.42) # manually determined ph correction

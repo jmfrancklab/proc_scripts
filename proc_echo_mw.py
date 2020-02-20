@@ -11,7 +11,7 @@ for date,id_string in [
     #('191217','echo_DNP_1'),
     #('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
-    ('200212','echo_DNP_1'),
+    ('200220','DNP_Y191R1apR_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
