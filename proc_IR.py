@@ -5,32 +5,37 @@ from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-date = '200212'
-id_string = 'IR_3_30dBm'
+date = '200218'
+id_string = 'IR_1_36dBm'
 clock_correction = 1.785
 nodename = 'signal'
-filter_bandwidth = 1e3
+filter_bandwidth = 5e3
+coh_sel = {'ph1':0,
+        'ph2':1}
+coh_err = {'ph1':1,# coherence channels to use for error
+        'ph2':r_[0,2,3]}
 # }}}
 filename = date+'_'+id_string+'.h5'
 s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type = 'test_equip' ))
+s.reorder(['ph2','ph1']).set_units('t2','s')
 fl.next('raw data')
-s.ft('t2', shift=True)
-s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
-fl.image(s,interpolation='bicubic')
-fl.next('filtered data')
-s.ift('t2')
-rough_center = abs(s).convolve('t2',0.0).mean_all_but('t2').argmax('t2').item()
-s.setaxis(t2-rough_center)
-fl.image(s)
-#s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
-fl.image(s)
-fl.next('before clock correction')
-s.ft('t2')
 fl.image(s)
 fl.next('after clock correction')
 s *= exp(-1j*s.fromaxis('vd')*clock_correction)
 fl.image(s)
+fl.next('raw data -- coherence channels')
+s.ft(['ph2','ph1'])
+fl.image(s)
+fl.next('filtered + rough centered data')
+s.ft('t2', shift=True)
+s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
+s.ift('t2')
+rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+s.setaxis(t2-rough_center)
+fl.image(s)
+#s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
+s.ft('t2')
 #{{{ aligning freq
 ## My attempts to align the frequencies here do not work -- we should rather
 ## use the method from the YQ PNAS paper?
@@ -41,13 +46,9 @@ fl.image(s)
 #s.ft('t2')
 #fl.image(s)
 #}}}
-fl.next('image coherence')
-s.ft(['ph2','ph1'])
-s.reorder('vd',first=False)
-s.reorder('t2',first=False)
-fl.image(s)
 s.ift('t2')
-residual,best_shift = hermitian_function_test(s['ph2',1]['ph1',0])
+residual,best_shift = hermitian_function_test(s[
+    'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 fl.next('hermitian test')
 fl.plot(residual)
 print("best shift is",best_shift)
@@ -56,19 +57,27 @@ print("best shift is",best_shift)
 s.ft('t2')
 s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
 s.ift('t2')
-ph0 = s['t2',0]['ph2',1]['ph1',0]
+fl.next('time domain after hermitian test')
+fl.image(s)
+ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
 if len(ph0.dimlabels) > 0:
     assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-    ph0 = zeroth_order_ph(ph0)
+    ph0 = zeroth_order_ph(ph0, fl=fl)
     print('phasing dimension as one')
 else:
+    print("there is only one dimension left -- standard 1D zeroth order phasing")
     ph0 = ph0/abs(ph0)
 s /= ph0
+fl.next('frequency domain -- after hermitian function test and phasing')
+s.ft('t2')
+fl.image(s)
+s.ift('t2')
 fl.next('check phasing -- real')
-fl.plot(s['ph2',1]['ph1',0])
+fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 gridandtick(gca())
 fl.next('check phasing -- imag')
-fl.plot(s['ph2',1]['ph1',0].imag)
+fl.plot(s[
+    'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']].imag)
 gridandtick(gca())
 s = s['t2':(0,None)]
 s['t2',0] *= 0.5
@@ -79,15 +88,15 @@ s.ft('t2')
 # }}}
 fl.image(s)
 fl.next('signal vs. vd')
-s_sliced = s['ph2',1]['ph1',0]*-1 # bc inverted at high powers
-s_forerror = s['ph2',r_[0,2,3]]['ph1',1]
+s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
+s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
 # variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
 s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
 s_sliced.mean('t2').set_error(s_forerror.data)
 fl.plot(s_sliced,'o')
 fl.plot(s_sliced.imag,'o')
 fl.next('Spectrum - freq domain')
-fl.plot(s['ph2',1]['ph1',0])
+fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 fitfunc = lambda p, x: p[0]*(1-2*exp(-x*p[1]))
 x = s_sliced.fromaxis('vd')
 errfunc = lambda p: fitfunc(p,x).data - s_sliced.data.real
