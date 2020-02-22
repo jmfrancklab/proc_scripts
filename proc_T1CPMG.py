@@ -4,66 +4,61 @@ fl = figlist_var()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 
 for date,id_string in [
-        ('190614','ipa_T1CPMG_1')
+        ('200221','T1CPMG_TEMPOLgel_1')
         ]:
-    SW_kHz = 15.0
-    nPoints = 128
-
-    nEchoes = 64
-    nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
+            #{{{ pulling acq params
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nPoints = s.get_prop('acq_params')['nPoints']
+    nEchoes = s.get_prop('acq_params')['nEchoes']
+    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    nScans = s.get_prop('acq_params')['nScans']
+    p90_s = s.get_prop('acq_params')['p90_us']*1e-6
+    deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
+    deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
+    marker_s = s.get_prop('acq_params')['marker_us']*1e-6
+    tau1_s = s.get_prop('acq_params')['tau1_us']*1e-6
+    pad_start_s = s.get_prop('acq_params')['pad_start_us']*1e-6
+    pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
+    #}}}
     s.set_units('t','s')
     fl.next('raw data - no clock correction')
     fl.image(s)
     orig_t = s.getaxis('t')
-    p90_s = 3.2*1e-6
-    transient_s = 100.0*1e-6
-    deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
-    tau_s = transient_s + acq_time_s*0.5
-    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s - deblank
-    tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
-    print("ACQUISITION TIME:",acq_time_s,"s")
-    print("TAU DELAY:",tau_s,"s")
-    print("TWICE TAU:",2.0*tau_s,"s")
-    print("ECHO TIME:",tE_s,"s")
-    vd_list = s.getaxis('vd')
+    s.set_units('t','s')
+    twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
     t2_axis = linspace(0,acq_time_s,nPoints)
-    tE_axis = r_[1:nEchoes+1]*tE_s
-    #{{{ for applying clock correction
-    clock_corr = True 
-    if clock_corr:
-        s.ft('t',shift=True)
-        clock_correction = -0.399405/9.969 # rad/sec
-        s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-        s.ift('t')
-        fl.next('raw data - clock correction')
-        fl.image(s)
-    #}}}
-    s.setaxis('t',None)
-    s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
+    tE_axis = r_[1:nEchoes+1]*twice_tau
+    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('nEchoes',r_[1:nEchoes+1])
+    s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis).set_units('t2','s')
+    vd_list = s.getaxis('vd')
     s.setaxis('vd',vd_list).set_units('vd','s')
-    fl.next('before ph ft')
-    fl.image(s)
+    s.ft('t2',shift=True)
+    #{{{ for applying clock correction
+    clock_corr = True
+    if clock_corr:
+        clock_correction = 1.785
+        s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+        fl.next('raw data - clock correction')
+        fl.image(s['tE',0])
+    #}}}
+    s.ift('t2')
     s.ft(['ph1'])
+    s = s['ph1',1].C
     fl.next(id_string+' image plot coherence')
     fl.image(s)
-    s.ft('t2',shift=True)
+    s.ft('t2')
     fl.next(id_string+' image plot coherence -- ft')
     fl.image(s)
     s.ift('t2')
-    s.reorder('vd',first=False)
-    coh = s.C.smoosh(['ph1','nEchoes','t2'],'t2').reorder('t2',first=False)
-    coh.setaxis('t2',orig_t).set_units('t2','s')
-    s = s['ph1',1].C
-    s.reorder('vd',first=True)
+    s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     echo_center = abs(s)['nEchoes',0]['vd',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
     fl.next('check center')
@@ -78,7 +73,7 @@ for date,id_string in [
         zeroorder_rad,firstorder = p
         phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
         phshift *= exp(-1j*2*pi*zeroorder_rad)
-        corr_test = phshift * s
+        corr_test = phshift * s['vd',-1]
         return (abs(corr_test.data.imag)**2)[:].sum()
     iteration = 0
     def print_fun(x, f, accepted):
@@ -90,7 +85,7 @@ for date,id_string in [
             minimizer_kwargs={"method":'L-BFGS-B'},
             callback=print_fun,
             stepsize=100.,
-            niter=50,
+            niter=100,
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
@@ -106,6 +101,7 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
+    fl.show();quit()
     s.ift('t2')
     fl.next('after phased - real')
     fl.image(s.real)

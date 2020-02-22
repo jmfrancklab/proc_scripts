@@ -5,9 +5,10 @@ from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-date = '200218'
-id_string = 'IR_1_36dBm'
+date = '200221'
+id_string = 'IR_TEMPOLgel_2'
 clock_correction = 1.785
+#clock_correction = 0
 nodename = 'signal'
 filter_bandwidth = 5e3
 coh_sel = {'ph1':0,
