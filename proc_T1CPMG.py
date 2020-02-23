@@ -1,8 +1,15 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
+from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from sympy import symbols
 fl = figlist_var()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
-
+# {{{ input parameters
+clock_correction = 1.785
+nodename = 'signal'
+filter_bandwidth = 5e3
+t2 = symbols('t2')
+# }}}
 for date,id_string in [
         ('200221','T1CPMG_TEMPOLgel_1')
         ]:
@@ -28,9 +35,12 @@ for date,id_string in [
     s.set_units('t','s')
     fl.next('raw data - no clock correction')
     fl.image(s)
+    fl.next('raw data - clock correction')
+    s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+    fl.image(s)
+    #{{{ set up of CPMG axis -- chunking
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
-    s.set_units('t','s')
     twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*twice_tau
@@ -40,23 +50,92 @@ for date,id_string in [
     s.setaxis('t2',t2_axis).set_units('t2','s')
     vd_list = s.getaxis('vd')
     s.setaxis('vd',vd_list).set_units('vd','s')
-    s.ft('t2',shift=True)
-    #{{{ for applying clock correction
-    clock_corr = True
-    if clock_corr:
-        clock_correction = 1.785
-        s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-        fl.next('raw data - clock correction')
-        fl.image(s['tE',0])
     #}}}
-    s.ift('t2')
+    fl.next('chunked data - coherence channels')
     s.ft(['ph1'])
-    s = s['ph1',1].C
-    fl.next(id_string+' image plot coherence')
+    fl.image(s)
+    fl.next('filtered + rough centered data')
+    # centering here means about 0 - this is mostly just an axis adjustment
+    s.ft('t2',shift=True)
+    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
+    s.ift('t2')
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
     fl.image(s)
     s.ft('t2')
-    fl.next(id_string+' image plot coherence -- ft')
+    # here we would align the frequencies which is hereto unresolved
+    s.ift('t2')
+    residual,best_shift = hermitian_function_test(s[
+        'ph1',1])
+    fl.next('hermitian test')
+    fl.plot(residual)
+    print("best shift is",best_shift)
+    # {{{ slice out the FID appropriately and phase correct
+    # it
+    s.ft('t2')
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s.ift('t2')
+    fl.next('time domain after hermitian test')
     fl.image(s)
+    ph0 = s['t2':0]['tE',0]['ph1',1]
+    print(ndshape(ph0))
+    ph0 = zeroth_order_ph(ph0, fl=fl)
+    print('phasing dimension as one')
+    s /= ph0
+    fl.next('frequency domain -- after hermitian function test and phasing')
+    s.ft('t2')
+    fl.image(s)
+    s.ift('t2')
+    fl.next('check phasing -- real')
+    fl.plot(s['ph1',1]['tE',0])
+    gridandtick(gca())
+    fl.next('check phasing -- imag')
+    fl.plot(s['ph1',1]['tE',0].imag)
+    gridandtick(gca())
+    # not sure that I really like how real vs imag looks here
+    # looks like signal at t2 = 0 gets phased properly, but anything else not
+    s = s['t2':(0,None)]
+    s['t2',0] *= 0.5
+    fl.next('phased and FID sliced')
+    fl.image(s)
+    fl.next('phased and FID sliced -- frequency domain')
+    s.ft('t2')
+    fl.image(s)
+    fl.next('signal vs. vd')
+    s_sliced = s['ph1',1]
+    s_forerror = s['ph1',0]
+    # variance along t2 gives error for the mean, then average it across all
+    # other dimension, then sqrt for stdev
+    # could not get error to work, given the echo dimension
+    fl.image(s_sliced.sum('t2'))
+    d = s_sliced.real
+    print("CONSTRUCTING KERNELS...")
+    Nx = 30
+    Ny = 30
+    Nx_ax = nddata(logspace(-3,1,Nx),'T1')
+    Ny_ax = nddata(logspace(-3,1,Ny),'T2')
+    data = d.C
+    data.rename('vd','tau1').setaxis('tau1',vd_list)
+    data.rename('tE','tau2').setaxis('tau2',tE_axis)
+    x = data.C.nnls(('tau1','tau2'),
+           (Nx_ax,Ny_ax),
+           (lambda x1,x2: 1.-2*exp(-x1/x2),
+            lambda y1,y2: exp(-y1/y2)),
+                     l='BRD')
+
+    x.setaxis('T1',log10(Nx_ax.data)).set_units('T1',None)
+    x.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
+    image(x)
+    xlabel(r'$log(T_2/$s$)$')
+    ylabel(r'$log(T_1/$s$)$')
+    fl.show();quit()
+
+
+
+
+
+
+
     s.ift('t2')
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     echo_center = abs(s)['nEchoes',0]['vd',0].argmax('t2').data.item()
@@ -85,7 +164,7 @@ for date,id_string in [
             minimizer_kwargs={"method":'L-BFGS-B'},
             callback=print_fun,
             stepsize=100.,
-            niter=100,
+            niter=500,
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
@@ -94,21 +173,18 @@ for date,id_string in [
     s *= phshift
     print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
             firstorder,angle(zeroorder_rad)/pi*180))
-    #if s['nEchoes',0].data[:].sum().real < 0:
-    #    s *= -1
     print(ndshape(s))
     fl.next('after phased - real ft')
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    fl.show();quit()
     s.ift('t2')
     fl.next('after phased - real')
     fl.image(s.real)
     fl.next('after phased - imag')
     fl.image(s.imag)
     fl.next('echoes')
-    view_echoes = False
+    view_echoes = True
     if view_echoes:
         for x,y in enumerate(vd_list):
             fl.plot(s['nEchoes',0]['vd',x],label='%s'%x)
