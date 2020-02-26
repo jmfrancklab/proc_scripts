@@ -1,7 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
-k_sigma = False
 for date,id_string in [
     #('200127','echo_DNP_TCM51C_1'),
     #('200128','echo_DNP_TCM118C_1'),
@@ -10,10 +9,9 @@ for date,id_string in [
     #('200130','echo_DNP_3'),
     #('191118','echo_DNP_3'),
     #('191217','echo_DNP_1'),
-    #('200130','echo_DNP_5'),
+    ('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
-    #('200212','echo_DNP_1'),
-    ('200219','echo_DNP_1'),
+    ('200225','DNP_echo_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -34,12 +32,6 @@ for date,id_string in [
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
     s.reorder('t2',first=False)
-    power_axis_dBm = array(s.get_prop('meter_powers'))
-    power_axis_W = zeros_like(power_axis_dBm)
-    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
-    power_axis_W = r_[0,power_axis_W]
-    print(power_axis_W);quit()
-    s.setaxis('power',power_axis_W)
     fl.next('raw data, chunked')
     fl.image(s)
     s.ft('t2',shift=True)
@@ -51,10 +43,10 @@ for date,id_string in [
     fl.image(s)
     s.reorder('t2',first=True)
     s.ift('t2')
-    #t2_max = zeros_like(s.getaxis('power'))
-    #for x in range(len(s.getaxis('power'))):
-    #    t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
-    #s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
+    t2_max = zeros_like(s.getaxis('power'))
+    for x in range(len(s.getaxis('power'))):
+        t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
+    s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
     s.ft('t2')
@@ -68,8 +60,7 @@ for date,id_string in [
             remember_sign[x] = 1.0
         else:
             remember_sign[x] = -1.0
-    s = s['t2':(-0.1e3,0.5e3)]
-    temp = s['power',0].C
+    temp = s['power',-4].C
     fl.next('signal, comparison')
     fl.plot(temp.real, alpha=0.5, label='real, pre-phasing')
     fl.plot(temp.imag, alpha=0.5, label='imag, pre-phasing')
@@ -94,18 +85,21 @@ for date,id_string in [
     #s *= remember_sign
     s *= -1
     fl.next('signal, phased')
-    fl.plot(s['power',0])
+    fl.plot(s)
     fl.next('signal, phased - image')
-    s.setaxis('power',power_axis_W)
     fl.image(s)
-    enhancement = s['t2':(0e3,0.25e3)].C
+    enhancement = s['t2':(-0.6e3,0.6e3)].C
     #enhancement = s.C
     enhancement.sum('t2').real
     enhanced = enhancement.data
     enhanced /= max(enhanced)
-    fl.next(r'150$\mu$M TEMPOL E(p)')
-    fl.plot(power_axis_W[:-3],enhanced[:-3],'.',human_units=False)
-    fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
+    fl.next(r'Enhancement curve TEMPOL')
+    power_axis_dBm = array(s.get_prop('meter_powers'))
+    power_axis_W = zeros_like(power_axis_dBm)
+    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
+    power_axis_W = r_[0,power_axis_W]
+    fl.plot(power_axis_W[:-3],enhanced[:-3],'.',human_units=False,label='%s'%date)
+    fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False,label='%s'%date)
     xlabel('Power (W)')
     ylabel('Enhancement')
 fl.show();quit()
