@@ -5,9 +5,10 @@ from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-date = '200218'
-id_string = 'IR_1_36dBm'
+date = '200221'
+id_string = 'IR_TEMPOLgel_2'
 clock_correction = 1.785
+#clock_correction = 0
 nodename = 'signal'
 filter_bandwidth = 5e3
 coh_sel = {'ph1':0,
@@ -33,7 +34,6 @@ s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
 s.ift('t2')
 rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
 s.setaxis(t2-rough_center)
-fl.image(s)
 #s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
 s.ft('t2')
 #{{{ aligning freq
@@ -60,6 +60,7 @@ s.ift('t2')
 fl.next('time domain after hermitian test')
 fl.image(s)
 ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
+print(ndshape(ph0))
 if len(ph0.dimlabels) > 0:
     assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
     ph0 = zeroth_order_ph(ph0, fl=fl)
@@ -71,6 +72,7 @@ s /= ph0
 fl.next('frequency domain -- after hermitian function test and phasing')
 s.ft('t2')
 fl.image(s)
+fl.show();quit()
 s.ift('t2')
 fl.next('check phasing -- real')
 fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
