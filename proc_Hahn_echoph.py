@@ -6,7 +6,8 @@ fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 for date,id_string,label_str in [
-        ('191007','echo_1','n'),
+        ('191007','echo_1','microwaves off'),
+        ('191007','echo_2','microwaves on'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -61,5 +62,7 @@ for date,id_string,label_str in [
     s.ft('t2')
     fl.image(s)
     fl.next('phased')
-    fl.plot(s['ph2',-2]['ph1',1])
-    fl.show();quit()
+    if label_str == 'microwaves on':
+        s *= -1
+    fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str)
+fl.show();quit()
