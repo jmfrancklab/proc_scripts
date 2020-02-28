@@ -2,19 +2,22 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('200219','AG_probe_1','n'),
+        ('200226','echo_2','n'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
+    s.ft('t2',shift=True)
+    fl.next('SWV')
+    fl.image(s.ft(['ph1','ph2']))
+    fl.show();quit()
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
-    print ndshape(s)
     s.reorder('t',first=True)
     t2_axis = s.getaxis('t')[0:nPoints/nPhaseSteps]
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
@@ -56,7 +59,6 @@ for date,id_string,label_str in [
     s_foropt.ift('t2')
     s_foropt /= t2_decay
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-    print s_foropt.getaxis('t2')
     #print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
     if ndshape(s_foropt)['t2'] % 2 == 0:
         s_foropt = s_foropt['t2',:-1]
@@ -68,7 +70,6 @@ for date,id_string,label_str in [
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     residual.reorder('shift')
-    print ndshape(residual)
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']

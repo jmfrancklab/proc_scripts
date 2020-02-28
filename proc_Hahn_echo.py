@@ -2,12 +2,13 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('200213','echo_coil2'),
+        ('200226','test'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip'))
+    print(ndshape(s))
     nEchoes = s.get_prop('acq_params')['nEchoes']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
