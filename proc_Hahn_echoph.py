@@ -1,6 +1,10 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
+from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from sympy import symbols
 fl = figlist_var()
+t2 = symbols('t2')
+filter_bandwidth = 5e3
 for date,id_string,label_str in [
         ('191007','echo_1','n'),
         ]:
@@ -19,61 +23,43 @@ for date,id_string,label_str in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
-    s.ft('t2',shift=True)
-    fl.next('raw data, chunked')
-    fl.image(abs(s)['t2':(-250,250)])
-    s.ft(['ph1','ph2'])
-    fl.next('coherence')
-    fl.image(abs(s)['t2':(-950,950)])
-    s = s['ph1',1]['ph2',-2].C
-    fl.next('plotting selected coherence channel')
-    fl.plot(s.real, alpha=0.4, label='%s'%label_str)
-    slice_f = (-3e3,3e3)
-    s = s['t2':slice_f].C
+    fl.next('raw data -- coherence channels')
+    s.ft(['ph2','ph1'])
+    fl.image(s)
+    fl.next('filtered + rough centered data')
+    s.ft('t2', shift=True)
+    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
-    max_data = abs(s.data).max()
-    pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
-    longest_pair = diff(pairs).argmax()
-    peak_location = pairs[longest_pair,:]
-    s.setaxis('t2',lambda x: x-peak_location.mean())
-    s.register_axis({'t2':0})
-    max_shift = diff(peak_location).item()/2
-    s_sliced = s['t2':(0,None)].C
-    s_sliced['t2',0] *= 0.5
-    s_ft = s_sliced.C
-    fl.next('sliced')
-    fl.plot(s_ft)
-    shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
-    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:200j],'R2'))
-    s_foropt = s.C
-    s_foropt.ft('t2')
-    s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
-    s_foropt.ift('t2')
-    s_foropt /= t2_decay
-    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-    #print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
-    if ndshape(s_foropt)['t2'] % 2 == 0:
-        s_foropt = s_foropt['t2',:-1]
-    #assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
-    ph0 = s_foropt['t2':0.0]
-    ph0 /= abs(ph0)
-    s_foropt /= ph0
-    s_foropt /= max(abs(s_foropt.getaxis('t2')))
-    # }}}
-    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
-    residual.reorder('shift')
-    minpoint = residual.argmin()
-    best_shift = minpoint['shift']
-    best_R2 = minpoint['R2']
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    fl.image(s)
+    s.ft('t2')
+    s.ift('t2')
+    residual,best_shift = hermitian_function_test(s[
+        'ph2',-2]['ph1',1])
+    fl.next('hermitian test')
+    fl.plot(residual)
+    print("best shift is",best_shift)
+    # {{{ slice out the FID appropriately and phase correct
+    # it
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    ph0 = s['t2':0.0]
-    ph0 /= abs(ph0)
+    fl.next('time domain after hermitian test')
+    fl.image(s)
+    ph0 = s['t2':0]['ph2',-2]['ph1',1]
+    print(ndshape(ph0))
+    if len(ph0.dimlabels) > 0:
+        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+        ph0 = zeroth_order_ph(ph0, fl=fl)
+        print('phasing dimension as one')
+    else:
+        print("there is only one dimension left -- standard 1D zeroth order phasing")
+        ph0 = ph0/abs(ph0)
     s /= ph0
-    s_sliced = s['t2':(0,None)].C
-    s_sliced['t2',0] *= 0.5
-    s_sliced.ft('t2')
-    fl.next('Spectrum - freq domain')
-    fl.plot(s_sliced.real, alpha=0.5, label='%s'%filename)
-fl.show();quit()
+    fl.next('frequency domain -- after hermitian function test and phasing')
+    s.ft('t2')
+    fl.image(s)
+    fl.next('phased')
+    fl.plot(s['ph2',-2]['ph1',1])
+    fl.show();quit()
