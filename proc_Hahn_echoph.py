@@ -7,7 +7,7 @@ t2 = symbols('t2')
 filter_bandwidth = 5e3
 for date,id_string,label_str in [
         ('191007','echo_1','microwaves off'),
-        #('191007','echo_2','microwaves on'),
+        ('191007','echo_2','microwaves on'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -24,8 +24,6 @@ for date,id_string,label_str in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
-    fl.next('raw data')
-    fl.image(s)
     fl.next('raw data -- coherence channels')
     s.ft(['ph2','ph1'])
     fl.image(s)
@@ -61,11 +59,14 @@ for date,id_string,label_str in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
+    s_ = s.C.ft('t2',pad=524)
     s.ft('t2')
     fl.image(s)
     fl.next('phased')
     if label_str == 'microwaves on':
         s *= -1
-    fl.plot(s['ph2',-2]['ph1',1].real,label='real')
-    fl.plot(s['ph2',-2]['ph1',1].imag,label='imaginary')
+        s_ *= -1
+    fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str)
+    fl.next('phased, pad')
+    fl.plot(s_['ph2',-2]['ph1',1],label='%s'%label_str)
 fl.show();quit()
