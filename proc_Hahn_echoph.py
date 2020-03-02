@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from hermitian_function_test import hermitian_function_test, zeroth_order_ph
 from sympy import symbols
+rcParams["savefig.transparent"] = True
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
