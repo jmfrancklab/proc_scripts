@@ -1,6 +1,11 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
+from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from sympy import symbols
+rcParams["savefig.transparent"] = True
 fl = figlist_var()
+t2 = symbols('t2')
+filter_bandwidth = 5e3
 for date,id_string in [
     #('200127','echo_DNP_TCM51C_1'),
     #('200128','echo_DNP_TCM118C_1'),
@@ -11,7 +16,7 @@ for date,id_string in [
     #('191217','echo_DNP_1'),
     ('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
-    ('200225','DNP_echo_1'),
+    #('200225','DNP_echo_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -38,59 +43,52 @@ for date,id_string in [
     s.ft(['ph1','ph2'])
     fl.next('coherence levels')
     fl.image(s)
-    s = s['ph1',1]['ph2',0].C
+    #s = s['ph1',1]['ph2',0].C
     fl.next('viz - signal')
     fl.image(s)
-    s.reorder('t2',first=True)
+    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
-    t2_max = zeros_like(s.getaxis('power'))
-    for x in range(len(s.getaxis('power'))):
-        t2_max[x] = abs(s['power',x]).argmax('t2',raw_index=True).data
-    s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max.mean())])
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    fl.next('Centering')
+    fl.image(s)
+    residual,best_shift = hermitian_function_test(s[
+        'ph2',-2]['ph1',1])
+    fl.next('hermitian test')
+    fl.plot(residual)
+    print("best shift is",best_shift)
+    # {{{ slice out the FID appropriately and phase correct
+    s.ft('t2')
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s.ift('t2')
+    fl.next('time domain after hermitian test')
+    fl.image(s)
+    ph0 = s['t2':0]['ph2',-2]['ph1',1]
+    print(ndshape(ph0))
+    if len(ph0.dimlabels) > 0:
+        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+        ph0 = zeroth_order_ph(ph0, fl=fl)
+        print('phasing dimension as one')
+    else:
+        print("there is only one dimension left -- standard 1D zeroth order phasing")
+        ph0 = ph0/abs(ph0)
+    s /= ph0
+    fl.next('time domain -- after hermitian function test and phasing')
+    fl.plot(s['ph2',-2]['ph1',1])
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
+    fl.next('FID slice, time domain -- after hermitian function test and phasing')
+    fl.plot(s['ph2',-2]['ph1',1])
+    fl.next('FID slice, freq domain -- after hermitian function test and phasing')
     s.ft('t2')
-    fl.next('t=0, FID, then FT')
-    fl.plot(s)
-    fl.next('viz - signal 2')
-    fl.image(s)
-    remember_sign = zeros_like(s.getaxis('power'))
-    for x in range(len(s.getaxis('power'))):
-        if s['power',x].data.real.sum() > 0:
-            remember_sign[x] = 1.0
-        else:
-            remember_sign[x] = -1.0
-    temp = s['power',-4].C
-    fl.next('signal, comparison')
-    fl.plot(temp.real, alpha=0.5, label='real, pre-phasing')
-    fl.plot(temp.imag, alpha=0.5, label='imag, pre-phasing')
-    SW = diff(temp.getaxis('t2')[r_[0,-1]]).item()
-    thisph1 = nddata(r_[-4:4:5000j]/SW,'phi1').set_units('phi1','s')
-    phase_test_r = temp * exp(-1j*2*pi*thisph1*temp.fromaxis('t2'))
-    phase_test_rph0 = phase_test_r.C.sum('t2')
-    phase_test_rph0 /= abs(phase_test_rph0)
-    phase_test_r /= phase_test_rph0
-    cost = abs(phase_test_r.real).sum('t2')
-    ph1_opt = cost.argmin('phi1').data
-    temp *= exp(-1j*2*pi*ph1_opt*temp.fromaxis('t2'))
-    s *= exp(-1j*2*pi*ph1_opt*temp.fromaxis('t2'))
-    ph0 = temp.C.sum('t2')
-    ph0 /= abs(ph0)
-    temp /= ph0
-    s /= ph0
-    fl.next('signal, comparison')
-    fl.plot(temp.real, alpha=0.5, label='real, post-phasing')
-    fl.plot(temp.imag, alpha=0.5, label='imag, post-phasing')
-    # for some reason, signs are exactly inverted when phased this way
-    #s *= remember_sign
+    fl.plot(s['ph2',-2]['ph1',1])
+    s = s['ph2',-2]['ph1',1]
     s *= -1
-    fl.next('signal, phased')
-    fl.plot(s)
-    fl.next('signal, phased - image')
-    fl.image(s)
     enhancement = s['t2':(-0.6e3,0.6e3)].C
     #enhancement = s.C
     enhancement.sum('t2').real
+    fl.next('plot')
+    fl.plot(enhancement,'.')
     enhanced = enhancement.data
     enhanced /= max(enhanced)
     fl.next(r'Enhancement curve TEMPOL')
