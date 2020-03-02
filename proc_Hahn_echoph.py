@@ -7,8 +7,7 @@ fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 for date,id_string,label_str in [
-        ('191007','echo_1','microwaves off'),
-        ('191007','echo_2','microwaves on'),
+        ('200218','echo_DNP_1','n'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -26,16 +25,19 @@ for date,id_string,label_str in [
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
     fl.next('raw data -- coherence channels')
+    s = s['power',0].C
     s.ft(['ph2','ph1'])
     fl.image(s)
     fl.next('filtered + rough centered data')
     s.ft('t2', shift=True)
+    s *= exp(-1j*2*pi*10.3)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     fl.image(s)
     s.ft('t2')
+    k = s.C
     s.ift('t2')
     residual,best_shift = hermitian_function_test(s[
         'ph2',-2]['ph1',1])
@@ -60,14 +62,11 @@ for date,id_string,label_str in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
-    s_ = s.C.ft('t2',pad=524)
-    s.ft('t2')
+    s.ft('t2',pad=512)
     fl.image(s)
     fl.next('phased')
-    if label_str == 'microwaves on':
-        s *= -1
-        s_ *= -1
-    fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str)
-    fl.next('phased, pad')
-    fl.plot(s_['ph2',-2]['ph1',1],label='%s'%label_str)
-fl.show();quit()
+    s.name('')
+    fl.plot(k['ph2',-2]['ph1',1],c='k',human_units=False,label='before phasing')
+    fl.plot(s['ph2',-2]['ph1',1],c='r',human_units=False,label='after phasing')
+    #fl.plot(s.imag['ph2',-2]['ph1',1])
+    fl.show();quit()
