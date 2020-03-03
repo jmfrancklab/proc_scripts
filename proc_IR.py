@@ -76,11 +76,12 @@ fl.show();quit()
 s.ift('t2')
 fl.next('check phasing -- real')
 fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-gridandtick(gca())
+#gridandtick(gca())
 fl.next('check phasing -- imag')
 fl.plot(s[
     'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']].imag)
-gridandtick(gca())
+fl.show();quit()
+#gridandtick(gca())
 s = s['t2':(0,None)]
 s['t2',0] *= 0.5
 fl.next('phased and FID sliced')
