@@ -6,9 +6,10 @@ rcParams["savefig.transparent"] = True
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
-for date,id_string,label_str in [
-        ('200302','alex_probe_w33_noMW_2','n'),
-        ('200302','alex_probe_w33_fullMW_2','n'),
+color_choice = True
+for date,id_string,label_str,color_str in [
+        ('200302','alex_probe_w33_noMW','microwaves off','blue'),
+        ('200302','alex_probe_w33_fullMW','microwaves on','red'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -28,7 +29,7 @@ for date,id_string,label_str in [
     fl.next('raw data -- coherence channels')
     s.ft(['ph2','ph1'])
     fl.image(s)
-    fl.next('filtered + rough centered data')
+    fl.next('filtered + rough centered data %s'%label_str)
     s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
@@ -39,7 +40,7 @@ for date,id_string,label_str in [
     k = s.C
     s.ift('t2')
     residual,best_shift = hermitian_function_test(s[
-        'ph2',-2]['ph1',1])
+        'ph2',-2]['ph1',1],shift_val=1)
     fl.next('hermitian test')
     fl.plot(residual)
     print("best shift is",best_shift)
@@ -49,6 +50,7 @@ for date,id_string,label_str in [
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
+    s *= exp(-s.getaxis('t2')/40e-3)
     fl.next('time domain after hermitian test')
     fl.image(s)
     ph0 = s['t2':0]['ph2',-2]['ph1',1]
@@ -69,7 +71,13 @@ for date,id_string,label_str in [
     fl.next('phased - time')
     fl.plot(s['ph2',-2]['ph1',1])
     s.ft('t2')
-    fl.next('phased')
+    #s.convolve('t2',7)
+    if label_str == 'microwaves on':
+        s *= -1
+    fl.next('')
     s.name('')
-    fl.plot(s['ph2',-2]['ph1',1])
+    if color_choice:
+        fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str,c=color_str)
+    else:
+        fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str)
 fl.show();quit()
