@@ -1,9 +1,18 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
+<<<<<<< HEAD
 for date,id_string,label_str in [
         ('200302','alex_probe_w33_fullMW','waterloading 33'),
         #('191206','echo_TEMPOL_1','TEMPOL'),
+=======
+t2 = symbols('t2')
+filter_bandwidth = 5e3
+color_choice = True
+for date,id_string,label_str,color_str in [
+        ('200302','alex_probe_w33_noMW','microwaves off','blue'),
+        ('200302','alex_probe_w33_fullMW','microwaves on','red'),
+>>>>>>> 4b319462e8a789a7533a72c91c324a924241b6e3
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -25,6 +34,7 @@ for date,id_string,label_str in [
     s.setaxis('t2',t2_axis)
     s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
+<<<<<<< HEAD
     s.ft('t2',shift=True)
     fl.next('raw data, chunked')
     fl.image(abs(s))
@@ -72,12 +82,31 @@ for date,id_string,label_str in [
     residual.reorder('shift')
     print ndshape(residual)
     fl.next('residual')
+=======
+    fl.next('raw data -- coherence channels')
+    s.ft(['ph2','ph1'])
+    fl.image(s)
+    fl.next('filtered + rough centered data %s'%label_str)
+    s.ft('t2', shift=True)
+    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
+    s.ift('t2')
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    fl.image(s)
+    s.ft('t2')
+    k = s.C
+    s.ift('t2')
+    residual,best_shift = hermitian_function_test(s[
+        'ph2',-2]['ph1',1],shift_val=1)
+    fl.next('hermitian test')
+>>>>>>> 4b319462e8a789a7533a72c91c324a924241b6e3
     fl.plot(residual)
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
+<<<<<<< HEAD
     ph0 = s['t2':0.0]
     ph0 /= abs(ph0)
     s /= ph0
@@ -89,4 +118,36 @@ for date,id_string,label_str in [
     fl.next('Spectrum FT')
     fl.plot(s_sliced.real, alpha=0.5, label='real - %s'%label_str)
     fl.plot(s_sliced.imag, alpha=0.5, label='imag - %s'%label_str)
+=======
+    s *= exp(-s.getaxis('t2')/40e-3)
+    fl.next('time domain after hermitian test')
+    fl.image(s)
+    ph0 = s['t2':0]['ph2',-2]['ph1',1]
+    print(ndshape(ph0))
+    if len(ph0.dimlabels) > 0:
+        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+        ph0 = zeroth_order_ph(ph0, fl=fl)
+        print('phasing dimension as one')
+    else:
+        print("there is only one dimension left -- standard 1D zeroth order phasing")
+        ph0 = ph0/abs(ph0)
+    s /= ph0
+    fl.next('frequency domain -- after hermitian function test and phasing')
+    s.ft('t2')
+    fl.image(s)
+    s.ift('t2')
+    s = s['t2':(0,None)]
+    fl.next('phased - time')
+    fl.plot(s['ph2',-2]['ph1',1])
+    s.ft('t2')
+    #s.convolve('t2',7)
+    if label_str == 'microwaves on':
+        s *= -1
+    fl.next('')
+    s.name('')
+    if color_choice:
+        fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str,c=color_str)
+    else:
+        fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str)
+>>>>>>> 4b319462e8a789a7533a72c91c324a924241b6e3
 fl.show();quit()
