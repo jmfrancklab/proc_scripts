@@ -5,7 +5,7 @@ from sympy import symbols
 rcParams["savefig.transparent"] = True
 fl = figlist_var()
 t2 = symbols('t2')
-filter_bandwidth = 5e3
+filter_bandwidth = 3e3
 for date,id_string in [
     #('200127','echo_DNP_TCM51C_1'),
     #('200128','echo_DNP_TCM118C_1'),
@@ -14,9 +14,11 @@ for date,id_string in [
     #('200130','echo_DNP_3'),
     #('191118','echo_DNP_3'),
     #('191217','echo_DNP_1'),
-    ('200130','echo_DNP_5'),
+    #('200130','echo_DNP_5'),
     #('200130','echo_DNP_AG'),
     #('200225','DNP_echo_1'),
+    #('200221','DNP_S179R1apR_one'),
+    ('200302','DNP_echo_w33_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -80,11 +82,14 @@ for date,id_string in [
     fl.next('FID slice, time domain -- after hermitian function test and phasing')
     fl.plot(s['ph2',-2]['ph1',1])
     fl.next('FID slice, freq domain -- after hermitian function test and phasing')
-    s.ft('t2')
-    fl.plot(s['ph2',-2]['ph1',1])
+    s.ft('t2',pad=350)
+    #fl.image(s['ph2',-2]['ph1',1]['power',:10])
+    s *= -1
+    fl.plot(s.convolve('t2',10)['ph2',-2]['ph1',1]['power',:10])
+    fl.show();quit()
     s = s['ph2',-2]['ph1',1]
     s *= -1
-    enhancement = s['t2':(-0.6e3,0.6e3)].C
+    enhancement = s['t2':(-0.1e3,0.4e3)].C
     #enhancement = s.C
     enhancement.sum('t2').real
     fl.next('plot')
@@ -96,8 +101,10 @@ for date,id_string in [
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     power_axis_W = r_[0,power_axis_W]
-    fl.plot(power_axis_W[:-3],enhanced[:-3],'.',human_units=False,label='%s'%date)
-    fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False,label='%s'%date)
+    print(power_axis_dBm)
+    print(power_axis_W)
+    fl.plot(power_axis_W[:5],enhanced[:5],'.',human_units=False,label='%s'%date)
+    #fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False,label='%s'%date)
     xlabel('Power (W)')
     ylabel('Enhancement')
 fl.show();quit()
