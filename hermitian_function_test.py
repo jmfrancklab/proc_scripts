@@ -49,7 +49,7 @@ def zeroth_order_ph(d, fl=None):
         ax = gca()
         ax.set_aspect('equal', adjustable='box')
     return exp(1j*ph0)
-def hermitian_function_test(s, down_from_max=0.5):
+def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
     r"""determine the center of the echo"""
     # {{{ determine where the "peak" of the echo is,
     # and use it to determine the max
@@ -68,7 +68,7 @@ def hermitian_function_test(s, down_from_max=0.5):
     max_shift = diff(peak_location).item()/2
     # }}}
     # {{{ construct test arrays for T2 decay and shift
-    shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
+    shift_t = nddata(r_[-1*shift_val:1*shift_val:1200j]*max_shift, 'shift')
     # }}}
     s_foropt = s.C
     # {{{ time shift and correct for T2 decay
