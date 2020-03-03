@@ -7,7 +7,7 @@ fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 for date,id_string in [
-    ('200122','echo_DNP_TCM51C_3'),
+    #('200122','echo_DNP_TCM51C_3'),
     #('200127','echo_DNP_TCM51C_1'),
     #('200128','echo_DNP_TCM118C_1'),
     #('200130','echo_DNP_1'),
@@ -19,6 +19,7 @@ for date,id_string in [
     #('200130','echo_DNP_AG'),
     #('200225','DNP_echo_1'),
     #('200221','DNP_S179R1apR_one'),
+    ('200302','DNP_echo_w33_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -55,7 +56,7 @@ for date,id_string in [
     fl.next('Centering')
     fl.image(s)
     residual,best_shift = hermitian_function_test(s[
-        'ph2',-2]['ph1',1])
+        'ph2',-2]['ph1',1], shift_val=6.0)
     fl.next('hermitian test')
     fl.plot(residual)
     print("best shift is",best_shift)
@@ -84,9 +85,10 @@ for date,id_string in [
     fl.next('FID slice, freq domain -- after hermitian function test and phasing')
     s.ft('t2')
     fl.plot(s['ph2',-2]['ph1',1])
+    fl.show();quit()
     s = s['ph2',-2]['ph1',1]
     s *= -1
-    enhancement = s['t2':(-0.4e3,0.4e3)].C
+    enhancement = s['t2':(-0.1e3,0.2e3)].C
     #enhancement = s.C
     enhancement.sum('t2').real
     fl.next('plot')
