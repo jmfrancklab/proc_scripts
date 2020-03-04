@@ -32,7 +32,7 @@ for date,id_string,label_str,color_str in [
     fl.next('raw data -- coherence channels')
     s.ft(['ph2','ph1'])
     fl.image(s)
-    fl.next('filtered + rough centered data %s'%label_str)
+    fl.next('filtered + rough centered data')
     s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
@@ -43,7 +43,7 @@ for date,id_string,label_str,color_str in [
     k = s.C
     s.ift('t2')
     residual,best_shift = hermitian_function_test(s[
-        'ph2',-2]['ph1',1],shift_val=1)
+        'ph2',-2]['ph1',1])
     fl.next('hermitian test')
     fl.plot(residual)
     print("best shift is",best_shift)
@@ -53,7 +53,6 @@ for date,id_string,label_str,color_str in [
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    s *= exp(-s.getaxis('t2')/40e-3)
     fl.next('time domain after hermitian test')
     fl.image(s)
     ph0 = s['t2':0]['ph2',-2]['ph1',1]
@@ -77,8 +76,5 @@ for date,id_string,label_str,color_str in [
     #s.convolve('t2',7)
     fl.next('')
     s.name('')
-    if color_choice:
-        fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str,c=color_str)
-    else:
-        fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str)
+    fl.plot(s['ph2',-2]['ph1',1])
 fl.show();quit()
