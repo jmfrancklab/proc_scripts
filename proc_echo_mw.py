@@ -80,23 +80,24 @@ for date,id_string in [
     fl.plot(s['ph2',-2]['ph1',1])
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
+    s *= exp(-s.getaxis('t2')/35e-3)
+    #s['t2':(35e-3,None)] = 0
     fl.next('FID slice, time domain -- after hermitian function test and phasing')
     fl.plot(s['ph2',-2]['ph1',1])
     fl.next('FID slice, freq domain -- after hermitian function test and phasing')
     s.ft('t2')
-    fl.plot(s['ph2',-2]['ph1',1])
-    fl.show();quit()
-    s = s['ph2',-2]['ph1',1]
     s *= -1
-    enhancement = s['t2':(-0.1e3,0.2e3)].C
+    s.convolve('t2',3)
+    fl.plot(s['power',:-3]['ph2',-2]['ph1',1])
+    s = s['ph2',-2]['ph1',1]
+    enhancement = s['t2':(25,100)].C
     #enhancement = s.C
     enhancement.sum('t2').real
     fl.next('plot')
     fl.plot(enhancement,'.')
     enhanced = enhancement.data
     enhanced /= max(enhanced)
-    #fl.next(r'TEMPOL - Enhancement vs. Power')
-    fl.next(r'')
+    fl.next(r'RM - Enhancement vs. Power')
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
