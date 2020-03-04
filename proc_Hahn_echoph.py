@@ -10,9 +10,10 @@ color_choice = True
 for date,id_string,label_str,color_str in [
         #('200302','alex_probe_w33_noMW','microwaves off','blue'),
         #('200302','alex_probe_w33_fullMW','microwaves on','red'),
-        ('191031','echo_5_2','microwaves on','red'),
-        ('191031','echo_5_mw_36dBm_2','microwaves on','red'),
         #('191031','echo_5_2','microwaves on','red'),
+        #('191031','echo_5_mw_36dBm_2','microwaves on','red'),
+        ('200304','echo_AER_1','microwaves on','red'),
+        #('200304','echo_AER_2','microwaves on','red'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -76,5 +77,5 @@ for date,id_string,label_str,color_str in [
     #s.convolve('t2',7)
     fl.next('')
     s.name('')
-    fl.plot(s['ph2',-2]['ph1',1])
+    fl.plot(s['ph2',-2]['ph1',1]['nScans',0])
 fl.show();quit()
