@@ -6,8 +6,9 @@ rcParams["savefig.transparent"] = True
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
-for date,id_string,label_str in [
-        ('191007','echo_2','n'),
+color_choice = True
+for date,id_string,label_str,color_str in [
+        ('200113','echo_TEMPOL_1','microwaves off','blue'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -23,27 +24,23 @@ for date,id_string,label_str in [
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.set_units('t2','s')
     s.reorder('t2',first=False)
-    fl.next('raw data')
-    s *= exp(-s.getaxis('t2')/10e-3)
-    fl.image(s)
-    fl.next('raw data -- coherence pathways')
-    #s = s['power',0].C
+    fl.next('raw data -- coherence channels')
     s.ft(['ph2','ph1'])
-    #s *= exp(-s.getaxis('t2')/10e-3)
     fl.image(s)
-    fl.show();quit()
     fl.next('filtered + rough centered data')
     s.ft('t2', shift=True)
-    s *= exp(-1j*2*pi*10.3)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    fl.image(s)
+    s.mean('nScans')
     s.ft('t2')
-    k = s.C
+    fl.image(s)
+    #k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
+    k = s.C*exp(-1j*0.9*2*pi)
+    k *= exp(-1j*k.fromaxis('t2')*2*pi*0.005)
+    s = k.C
     s.ift('t2')
     residual,best_shift = hermitian_function_test(s[
         'ph2',-2]['ph1',1])
@@ -68,16 +65,20 @@ for date,id_string,label_str in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
-    s.ft('t2',pad=512)
+    s.ft('t2')
     fl.image(s)
     s.ift('t2')
+    k.ift('t2')
     s = s['t2':(0,None)]
+    k = k['t2':(0,None)]
     fl.next('phased - time')
-    fl.plot(s)
-    s.ft('t2')
-    fl.next('phased')
-    s.name('')
-    fl.plot(k['ph2',-2]['ph1',1],c='k')
     fl.plot(s['ph2',-2]['ph1',1])
-    fl.plot(s.imag['ph2',-2]['ph1',1])
-    fl.show();quit()
+    s.ft('t2')
+    k.ft('t2')
+    #s.convolve('t2',7)
+    fl.next('')
+    s.name('')
+    fl.plot(k['ph2',-2]['ph1',1],label='before phasing',c='k')
+    fl.plot(s['ph2',-2]['ph1',1],label='after phasing',c='r')
+    legend(prop={"size":20})
+fl.show();quit()
