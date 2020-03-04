@@ -8,8 +8,11 @@ t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
 for date,id_string,label_str,color_str in [
-        ('200302','alex_probe_w33_noMW','microwaves off','blue'),
-        ('200302','alex_probe_w33_fullMW','microwaves on','red'),
+        #('200302','alex_probe_w33_noMW','microwaves off','blue'),
+        #('200302','alex_probe_w33_fullMW','microwaves on','red'),
+        ('191031','echo_5_2','microwaves on','red'),
+        ('191031','echo_5_mw_36dBm_2','microwaves on','red'),
+        #('191031','echo_5_2','microwaves on','red'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -46,7 +49,7 @@ for date,id_string,label_str,color_str in [
     print("best shift is",best_shift)
     # {{{ slice out the FID appropriately and phase correct
     # it
-    s.mean('nScans')
+    #s.mean('nScans')
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
@@ -72,8 +75,6 @@ for date,id_string,label_str,color_str in [
     fl.plot(s['ph2',-2]['ph1',1])
     s.ft('t2')
     #s.convolve('t2',7)
-    if label_str == 'microwaves on':
-        s *= -1
     fl.next('')
     s.name('')
     if color_choice:
