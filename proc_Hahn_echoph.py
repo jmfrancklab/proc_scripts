@@ -8,8 +8,7 @@ t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
 for date,id_string,label_str,color_str in [
-        ('200304','lg_probe_w33_off_8scans','microwaves off','blue'),
-        ('200304','lg_probe_w33_on_8scans','microwaves on','red'),
+        ('200113','echo_TEMPOL_1','microwaves off','blue'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -79,7 +78,8 @@ for date,id_string,label_str,color_str in [
     #s.convolve('t2',7)
     fl.next('')
     s.name('')
-    #fl.plot(k['ph2',-2]['ph1',1],label='before phasing',c='k')
-    fl.plot(s['ph2',-2]['ph1',1],c='%s'%color_str)
-    legend(prop={"size":20})
+    k.rename('t2','Offset').set_units('Offset','Hz')
+    s.rename('t2','Offset').set_units('Offset','Hz')
+    fl.plot(k['ph2',-2]['ph1',1],label='before phasing',c='k')
+    fl.plot(s['ph2',-2]['ph1',1],label='after phasing',c='r')
 fl.show();quit()
