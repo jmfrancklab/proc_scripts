@@ -6,9 +6,26 @@ for date,id_string,label_str in [
         #('200221','CPMG_TEMPOLgel_2p9_1','deadtime=5'),
         #('200303','CPMG_1','deadtime=5'),
         #('200303','CPMG_2','deadtime=5'),
-        ('200303','CPMG_3','deadtime=5'),
-        ('200303','CPMG_4','deadtime=5'),
-        ('200303','CPMG_5','deadtime=5'),
+        #('200303','CPMG_3','deadtime=5'),
+        #('200303','CPMG_4','deadtime=5'),
+        #('200303','CPMG_5','deadtime=5'),
+        #('200304','CPMG_3','deadtime=5'),
+        #('200304','CPMG_2p6_1','deadtime=5'),
+        #('200304','CPMG_2p7_1','deadtime=5'),
+        #('200304','CPMG_2p8_1','deadtime=5'),
+        #('200304','CPMG_2p9_1','deadtime=5'),
+        #('200304','CPMG_3p0_1','deadtime=5'),
+        #('200304','CPMG_3p1_1','deadtime=5'),
+        #('200304','CPMG_3p2_1','deadtime=5'),
+        #('200304','CPMG_3p3_1','deadtime=5'),
+        #('200304','CPMG_3p4_1','deadtime=5'),
+        #('200304','CPMG_3p5_1','deadtime=5'),
+        ('200304','CPMG_3p6_1','deadtime=5'),
+        #('200304','CPMG_3p7_1','deadtime=5'),
+        #('200304','CPMG_3p8_1','deadtime=5'),
+        #('200304','CPMG_3p9_1','deadtime=5'),
+        #('200304','CPMG_4p0_1','deadtime=5'),
+        ('200304','CPMG_3p6_2','deadtime=5'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -96,8 +113,8 @@ for date,id_string,label_str in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    data = s['t2':0]
-    #data = s['t2':(-200,200)].sum('t2')
+    #data = s['t2':0]
+    data = s['t2':(-200,200)].sum('t2')
     #data = s['t2':(0,200)].sum('t2')
     fl.next('Echo decay')
     x = tE_axis
