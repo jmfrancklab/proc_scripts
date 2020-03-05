@@ -5,8 +5,10 @@ from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-date = '200221'
-id_string = 'IR_TEMPOLgel_2'
+date = '200303'
+id_string = 'IR_AER_6'
+#date = '200221'
+#id_string = 'IR_TEMPOLgel_2'
 clock_correction = 1.785
 #clock_correction = 0
 nodename = 'signal'
@@ -71,19 +73,19 @@ else:
 s /= ph0
 fl.next('frequency domain -- after hermitian function test and phasing')
 s.ft('t2')
+s.convolve('t2',10)
 fl.image(s)
-fl.show();quit()
-s.ift('t2')
 fl.next('check phasing -- real')
 fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 #gridandtick(gca())
 fl.next('check phasing -- imag')
 fl.plot(s[
     'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']].imag)
-fl.show();quit()
+s.ift('t2')
 #gridandtick(gca())
 s = s['t2':(0,None)]
 s['t2',0] *= 0.5
+#s *= exp(-s.getaxis('t2')/10e-3)
 fl.next('phased and FID sliced')
 fl.image(s)
 fl.next('phased and FID sliced -- frequency domain')
@@ -91,13 +93,18 @@ s.ft('t2')
 # }}}
 fl.image(s)
 fl.next('signal vs. vd')
-s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
-s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
-# variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
-s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
-s_sliced.mean('t2').set_error(s_forerror.data)
+s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
+s_sliced.sum('t2')
+fl.plot(s_sliced,'o')
+fl.show();quit()
+#s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
+## variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
+#s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
+
+s_sliced.mean('t2')#.set_error(s_forerror.data)
 fl.plot(s_sliced,'o')
 fl.plot(s_sliced.imag,'o')
+fl.show();quit()
 fl.next('Spectrum - freq domain')
 fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 fitfunc = lambda p, x: p[0]*(1-2*exp(-x*p[1]))
