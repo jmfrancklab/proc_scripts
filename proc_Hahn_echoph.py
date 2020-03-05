@@ -8,8 +8,12 @@ t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
 for date,id_string,label_str,color_str in [
-        ('191007','echo_1','microwaves off','blue'),
-        ('191007','echo_2','microwaves on (2 W)','red'),
+        #('200302','alex_probe_w33_noMW','microwaves off','blue'),
+        #('200302','alex_probe_w33_fullMW','microwaves on','red'),
+        ('191031','echo_5_2','microwaves off','blue'),
+        ('191031','echo_5_mw_36dBm_2','microwaves on (4 W)','red'),
+        #('200304','echo_AER_1','microwaves on','red'),
+        #('200304','echo_AER_2','microwaves on','red'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -37,6 +41,7 @@ for date,id_string,label_str,color_str in [
     s.setaxis(t2-rough_center)
     fl.image(s)
     s.ft('t2')
+    k = s.C
     s.ift('t2')
     residual,best_shift = hermitian_function_test(s[
         'ph2',-2]['ph1',1])
@@ -45,6 +50,7 @@ for date,id_string,label_str,color_str in [
     print("best shift is",best_shift)
     # {{{ slice out the FID appropriately and phase correct
     # it
+    #s.mean('nScans')
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
@@ -61,16 +67,19 @@ for date,id_string,label_str,color_str in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
-    s_ = s.C.ft('t2',pad=524)
     s.ft('t2')
     fl.image(s)
-    fl.next('phased')
-    s.rename('t2','Offset').set_units('Offset','Hz')
-    s_.rename('t2','Offset').set_units('Offset','Hz')
-    if label_str == 'microwaves on (2 W)':
-        s *= -1
-        s_ *= -1
-    fl.plot(s['ph2',-2]['ph1',1],color='%s'%color_str,label='%s'%label_str)
-    fl.next('phased, pad')
-    fl.plot(s_['ph2',-2]['ph1',1],color='%s'%color_str,label='%s'%label_str)
+    s.ift('t2')
+    s = s['t2':(0,None)]
+    s *= exp(-s.fromaxis('t2')/15e-3)
+    fl.next('phased - time')
+    fl.plot(s['ph2',-2]['ph1',1])
+    s.ft('t2',pad=1024)
+    s.rename('t2','Offset')
+    s.set_units('Offset','Hz')
+    #s.set_units('Offset','Hz')
+    #s.convolve('t2',7)
+    fl.next('')
+    s.name('')
+    fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str,color='%s'%color_str)
 fl.show();quit()
