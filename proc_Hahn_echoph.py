@@ -1,8 +1,5 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from hermitian_function_test import hermitian_function_test, zeroth_order_ph
-from sympy import symbols
-rcParams["savefig.transparent"] = True
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
@@ -16,10 +13,13 @@ for date,id_string,label_str in [
                 exp_type = 'test_equip'))
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    nPhaseSteps = 8 
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
+    print(ndshape(s))
     s.reorder('t',first=True)
+    t2_axis = s.getaxis('t')[0:2048]
+    s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
