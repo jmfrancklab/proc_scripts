@@ -8,8 +8,7 @@ t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
 for date,id_string,label_str,color_str in [
-        ('200302','alex_probe_w33_noMW_2','microwaves off','blue'),
-        ('200302','alex_probe_w33_fullMW_2','microwaves on','red'),
+        ('200113','echo_TEMPOL_1','microwaves off','blue'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -35,9 +34,13 @@ for date,id_string,label_str,color_str in [
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    fl.image(s)
+    s.mean('nScans')
     s.ft('t2')
-    k = s.C
+    fl.image(s)
+    #k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
+    k = s.C*exp(-1j*0.9*2*pi)
+    k *= exp(-1j*k.fromaxis('t2')*2*pi*0.005)
+    s = k.C
     s.ift('t2')
     residual,best_shift = hermitian_function_test(s[
         'ph2',-2]['ph1',1])
@@ -46,11 +49,9 @@ for date,id_string,label_str,color_str in [
     print("best shift is",best_shift)
     # {{{ slice out the FID appropriately and phase correct
     # it
-    s.mean('nScans')
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    s *= exp(-s.getaxis('t2')/20e-3)
     fl.next('time domain after hermitian test')
     fl.image(s)
     ph0 = s['t2':0]['ph2',-2]['ph1',1]
@@ -67,16 +68,18 @@ for date,id_string,label_str,color_str in [
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
+    k.ift('t2')
     s = s['t2':(0,None)]
-    #s *= exp(-s.fromaxis('t2')/15e-3)
+    k = k['t2':(0,None)]
     fl.next('phased - time')
     fl.plot(s['ph2',-2]['ph1',1])
-    s.ft('t2',pad=1024)
-    s.rename('t2','Offset')
-    s.set_units('Offset','Hz')
-    #s.set_units('Offset','Hz')
+    s.ft('t2')
+    k.ft('t2')
     #s.convolve('t2',7)
     fl.next('')
     s.name('')
-    fl.plot(s['ph2',-2]['ph1',1],label='%s'%label_str,color='%s'%color_str)
+    k.rename('t2','Offset').set_units('Offset','Hz')
+    s.rename('t2','Offset').set_units('Offset','Hz')
+    fl.plot(k['ph2',-2]['ph1',1],label='without time-axis correction',c='k')
+    fl.plot(s['ph2',-2]['ph1',1],label='with time-axis correction',c='r')
 fl.show();quit()
