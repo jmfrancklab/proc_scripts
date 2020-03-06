@@ -19,7 +19,7 @@ for date,id_string in [
     #('200130','echo_DNP_AG'),
     #('200225','DNP_echo_1'),
     #('200221','DNP_S179R1apR_one'),
-    ('200302','DNP_echo_w33_1'),
+    ('200306','DNP_lg_probe_w34'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -46,10 +46,12 @@ for date,id_string in [
     s.ft(['ph1','ph2'])
     fl.next('coherence levels')
     fl.image(s)
-    #s = s['ph1',1]['ph2',0].C
     fl.next('viz - signal')
     fl.image(s)
-    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
+    print(ndshape(s))
+    s_ = s['power',:-4].C
+    print(ndshape(s_))
+    s = s_['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
@@ -80,17 +82,17 @@ for date,id_string in [
     fl.plot(s['ph2',-2]['ph1',1])
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
-    s *= exp(-s.getaxis('t2')/35e-3)
+    #s *= exp(-s.getaxis('t2')/35e-3)
     #s['t2':(35e-3,None)] = 0
     fl.next('FID slice, time domain -- after hermitian function test and phasing')
     fl.plot(s['ph2',-2]['ph1',1])
     fl.next('FID slice, freq domain -- after hermitian function test and phasing')
     s.ft('t2')
     s *= -1
-    s.convolve('t2',3)
+    #s.convolve('t2',3)
     fl.plot(s['power',:-3]['ph2',-2]['ph1',1])
     s = s['ph2',-2]['ph1',1]
-    enhancement = s['t2':(25,100)].C
+    enhancement = s['t2':(-50,50)].C
     #enhancement = s.C
     enhancement.sum('t2').real
     fl.next('plot')
@@ -98,12 +100,12 @@ for date,id_string in [
     enhanced = enhancement.data
     enhanced /= max(enhanced)
     fl.next(r'RM - Enhancement vs. Power')
-    power_axis_dBm = array(s.get_prop('meter_powers'))
+    power_axis_dBm = array(s.get_prop('meter_powers')[:-4])
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     power_axis_W = r_[0,power_axis_W]
-    fl.plot(power_axis_W[:-3],enhanced[:-3],'o',c='k',human_units=False,label='%s'%date)
-    fl.plot(power_axis_W[-3:],enhanced[-3:],'x',c='red',human_units=False,label='%s'%date)
+    fl.plot(power_axis_W,enhanced,'o',c='k',human_units=False,label='%s'%date)
+    #fl.plot(power_axis_W,enhanced,'x',c='red',human_units=False,label='%s'%date)
     xlabel('Power \ W')
     ylabel('Enhancement')
 fl.show();quit()
