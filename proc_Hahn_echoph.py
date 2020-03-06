@@ -1,9 +1,11 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
-for date,id_string,label_str in [
-        ('191212','echo_4','water-Ni'),
-        #('191206','echo_TEMPOL_1','TEMPOL'),
+t2 = symbols('t2')
+filter_bandwidth = 5e3
+color_choice = True
+for date,id_string,label_str,color_str in [
+        ('200113','echo_TEMPOL_1','microwaves off','blue'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -38,55 +40,55 @@ for date,id_string,label_str in [
     slice_f = (-5e3,5e3)
     s = s['t2':slice_f].C
     s.ift('t2')
-    max_data = abs(s.data).max()
-    print(max_data)
-    pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
-    longest_pair = diff(pairs).argmax()
-    peak_location = pairs[longest_pair,:]
-    s.setaxis('t2',lambda x: x-peak_location.mean())
-    s.register_axis({'t2':0})
-    max_shift = diff(peak_location).item()/2
-    s_sliced = s['t2':(0,None)].C
-    s_sliced['t2',0] *= 0.5
-    s_sliced.ft('t2')
-    s_ft = s_sliced.C
-    fl.next('sliced')
-    fl.plot(s_ft)
-    shift_t = nddata(r_[-0.1:0.1:200j]*max_shift, 'shift')
-    s_foropt = s.C
-    s_foropt.ft('t2')
-    s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
-    s_foropt.ift('t2')
-    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-    print(s_foropt.getaxis('t2'))
-    print(s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]])
-    if ndshape(s_foropt)['t2'] % 2 == 0:
-        s_foropt = s_foropt['t2',:-1]
-    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
-    ph0 = s_foropt['t2':0.0]
-    ph0 /= abs(ph0)
-    s_foropt /= ph0
-    s_foropt /= max(abs(s_foropt.getaxis('t2')))
-    # }}}
-    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
-    residual.reorder('shift')
-    print(ndshape(residual))
-    fl.next('residual')
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    s.mean('nScans')
+    s.ft('t2')
+    fl.image(s)
+    #k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
+    k = s.C*exp(-1j*0.9*2*pi)
+    k *= exp(-1j*k.fromaxis('t2')*2*pi*0.005)
+    s = k.C
+    s.ift('t2')
+    residual,best_shift = hermitian_function_test(s[
+        'ph2',-2]['ph1',1],shift_val=1)
+    fl.next('hermitian test')
     fl.plot(residual)
-    minpoint = residual.argmin()
-    best_shift = minpoint['shift']
+    print("best shift is",best_shift)
+    # {{{ slice out the FID appropriately and phase correct
+    # it
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    ph0 = s['t2':0.0]
-    ph0 /= abs(ph0)
+    s *= exp(-s.getaxis('t2')/40e-3)
+    fl.next('time domain after hermitian test')
+    fl.image(s)
+    ph0 = s['t2':0]['ph2',-2]['ph1',1]
+    print(ndshape(ph0))
+    if len(ph0.dimlabels) > 0:
+        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+        ph0 = zeroth_order_ph(ph0, fl=fl)
+        print('phasing dimension as one')
+    else:
+        print("there is only one dimension left -- standard 1D zeroth order phasing")
+        ph0 = ph0/abs(ph0)
     s /= ph0
-    s_sliced = s['t2':(0,None)].C
-    s_sliced['t2',0] *= 0.5
-    fl.next('time domain')
-    fl.plot(s_sliced)
-    s_sliced.ft('t2')
-    fl.next('Spectrum FT')
-    fl.plot(s_sliced.real, alpha=0.5, label='real - %s'%label_str)
-    fl.plot(s_sliced.imag, alpha=0.5, label='imag - %s'%label_str)
+    fl.next('frequency domain -- after hermitian function test and phasing')
+    s.ft('t2')
+    fl.image(s)
+    s.ift('t2')
+    k.ift('t2')
+    s = s['t2':(0,None)]
+    k = k['t2':(0,None)]
+    fl.next('phased - time')
+    fl.plot(s['ph2',-2]['ph1',1])
+    s.ft('t2')
+    k.ft('t2')
+    #s.convolve('t2',7)
+    fl.next('')
+    s.name('')
+    k.rename('t2','Offset').set_units('Offset','Hz')
+    s.rename('t2','Offset').set_units('Offset','Hz')
+    fl.plot(k['ph2',-2]['ph1',1],label='without time-axis correction',c='k')
+    fl.plot(s['ph2',-2]['ph1',1],label='with time-axis correction',c='r')
 fl.show();quit()
