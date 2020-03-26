@@ -1,3 +1,4 @@
+"""This module includes routines for phasing NMR spectra."""
 from pyspecdata import *
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints

@@ -16,7 +16,6 @@ import sys
 import os
 import shlex
 import sphinx_rtd_theme
-from pyspecdata.version import __version__
 import mock
  
 autodoc_mock_imports = ['numpy', 'scipy', 'scipy.interpolate', 'pylab', 'mpl_toolkits', 'get_ipython']
@@ -25,8 +24,10 @@ autodoc_mock_imports = ['numpy', 'scipy', 'scipy.interpolate', 'pylab', 'mpl_too
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../..'))
-sys.path.append(os.path.abspath('..'))
+#sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('..'))
+
+from version import __version__
 
 # -- General configuration ------------------------------------------------
 
@@ -66,9 +67,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'pySpecData'
-copyright = '2016, John M. Franck'
-author = 'John M. Franck'
+project = 'proc_scripts'
+copyright = '2020, John M. Franck group'
+author = 'Alec A. Beaton, Samantha M. Betts, Alexandria Guinness, John M. Franck'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

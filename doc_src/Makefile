@@ -88,7 +88,9 @@ doctest:
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
-github: html
+nojekyll:
+	@touch ../docs/.nojekyll
+github: nojekyll html
 	@cp -a _build/html/. ../docs
 	@echo "Please notice the status of the docs directory:"
 	@git status ../docs/*
