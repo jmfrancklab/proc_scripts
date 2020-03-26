@@ -163,10 +163,17 @@ axes, units, and names of dimensions) in a single
 as routines (“methods”) for manipulating that data
 (doing things like Fourier transforming, taking sums,
 etc. etc.).
+pySpecData provides a fundamentally unique was of
+dealing with spectroscopic data in Python
+(it enables things like <code class="docutils literal notranslate"><span class="pre">d['t2':(0.1,0.5)]</span></code> to slice
+out times from 0.1 to 0.5 s, automatic relabeling of
+axes during a Fourier transform, and automatic
+propagation of error, to name a few).
 If there are more efficient ways of dealing with axes,
 specifying data slices, dealing with Fourier <em>vs.</em>
 time-domain data, these are all implemented at the
-pySpecData level.</p>
+pySpecData level (which lives in a different repository
+than the application scripts here).</p>
 </div>
 <div class="section" id="first-level-in-this-repo">
 <h1>First level in this repo<a class="headerlink" href="#first-level-in-this-repo" title="Permalink to this headline">¶</a></h1>
