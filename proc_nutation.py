@@ -19,7 +19,7 @@ for id_string in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
-    s.ft('t2',shift=True)
+    s.ft('t2',shift=True,pad=4096)
     #s *= exp(1j*2*pi*0.42) # manually determined ph correction
     fl.next('image, raw')
     fl.image(s)
@@ -36,8 +36,9 @@ for id_string in [
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    s.ft('t2')
+    s.ft('t2',pad=4096)
     fl.next(id_string)
+    s = s['t2':(-200,200)]
     fl.image(s)
     fl.next(id_string+'image -- $B_1$ distribution')
     fl.image(abs(s.C.ft('p_90',shift=True)))
