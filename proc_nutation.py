@@ -1,9 +1,11 @@
 from pyspecdata import *
 from scipy.optimize import minimize
+from sympy import symbols
 fl = figlist_var()
-date = '200303'
+t2 = symbols('t2')
+date = '200219'
 for id_string in [
-    'nutation_2',
+    'nutation_alex_probe',
     ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'nutation'
@@ -31,10 +33,14 @@ for id_string in [
     #fl.next('image, $\Delta c_{1}$ = -1,$\Delta c_{2}$ = 0')
     #fl.image(s['t2':(None,-30e-3)]['ph2',0]['ph1',-1])
     s = s['ph2',0]['ph1',1].C
-    fl.next(id_string+'image')
+    s.ift('t2')
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    s.ft('t2')
+    fl.next(id_string)
     fl.image(s)
     fl.next(id_string+'image -- $B_1$ distribution')
     fl.image(abs(s.C.ft('p_90',shift=True)))
-    fl.next(id_string+'image abs')
+    fl.next('90 time for coil E')
     fl.image(abs(s))
 fl.show();quit()

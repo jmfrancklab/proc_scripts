@@ -1,15 +1,12 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
+from pyspecdata.load_files.bruker_nmr import bruker_data
 from hermitian_function_test import hermitian_function_test, zeroth_order_ph
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-date = '200303'
-id_string = 'IR_AER_6'
-#date = '200221'
-#id_string = 'IR_TEMPOLgel_2'
-clock_correction = 1.785
+#clock_correction = 1.785
 #clock_correction = 0
 nodename = 'signal'
 filter_bandwidth = 5e3
@@ -18,15 +15,18 @@ coh_sel = {'ph1':0,
 coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
-filename = date+'_'+id_string+'.h5'
-s = nddata_hdf5(filename+'/'+nodename,
-        directory = getDATADIR(exp_type = 'test_equip' ))
+for exp_name,expno in [
+        ('w12_200309',2),
+        ]:
+    s = find_file(exp_name, exp_type='NMR_Data_AG', dimname = 'indirect', expno=expno)
+s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
 s.reorder(['ph2','ph1']).set_units('t2','s')
 fl.next('raw data')
 fl.image(s)
 fl.next('after clock correction')
-s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-fl.image(s)
+s.rename('indirect','vd')
+#s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+#fl.image(s)
 fl.next('raw data -- coherence channels')
 s.ft(['ph2','ph1'])
 fl.image(s)
@@ -73,19 +73,19 @@ else:
 s /= ph0
 fl.next('frequency domain -- after hermitian function test and phasing')
 s.ft('t2')
-s.convolve('t2',10)
 fl.image(s)
+
+s.ift('t2')
 fl.next('check phasing -- real')
 fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 #gridandtick(gca())
 fl.next('check phasing -- imag')
 fl.plot(s[
     'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']].imag)
-s.ift('t2')
+
 #gridandtick(gca())
 s = s['t2':(0,None)]
 s['t2',0] *= 0.5
-#s *= exp(-s.getaxis('t2')/10e-3)
 fl.next('phased and FID sliced')
 fl.image(s)
 fl.next('phased and FID sliced -- frequency domain')
@@ -93,18 +93,13 @@ s.ft('t2')
 # }}}
 fl.image(s)
 fl.next('signal vs. vd')
-s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
-s_sliced.sum('t2')
-fl.plot(s_sliced,'o')
-fl.show();quit()
-#s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
-## variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
-#s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
-
-s_sliced.mean('t2')#.set_error(s_forerror.data)
+s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
+s_forerror = s['ph2',coh_err['ph2']]['ph1',0]
+# variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
+s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
+s_sliced.mean('t2').set_error(s_forerror.data)
 fl.plot(s_sliced,'o')
 fl.plot(s_sliced.imag,'o')
-fl.show();quit()
 fl.next('Spectrum - freq domain')
 fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 fitfunc = lambda p, x: p[0]*(1-2*exp(-x*p[1]))

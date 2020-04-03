@@ -89,7 +89,6 @@ for date,id_string in [
     fl.next('FID slice, freq domain -- after hermitian function test and phasing')
     s.ft('t2')
     s *= -1
-    s *= 
     #s.convolve('t2',5)
     fl.plot(s['power',0]['ph2',-2]['ph1',1])
     fl.plot(s['power',-4]['ph2',-2]['ph1',1])
