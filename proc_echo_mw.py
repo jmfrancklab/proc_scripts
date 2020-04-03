@@ -7,19 +7,19 @@ fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 for date,id_string in [
-    #('200122','echo_DNP_TCM51C_3'),
-    #('200127','echo_DNP_TCM51C_1'),
-    #('200128','echo_DNP_TCM118C_1'),
-    #('200130','echo_DNP_1'),
-    #('200130','echo_DNP_2'),
-    #('200130','echo_DNP_3'),
-    #('191118','echo_DNP_3'),
-    #('191217','echo_DNP_1'),
-    #('200130','echo_DNP_5'),
-    #('200130','echo_DNP_AG'),
-    #('200225','DNP_echo_1'),
-    #('200221','DNP_S179R1apR_one'),
-    ('200306','DNP_lg_probe_w34'),
+        #('200122','echo_DNP_TCM51C_3'),
+        #('200127','echo_DNP_TCM51C_1'),
+        #('200128','echo_DNP_TCM118C_1'),
+        #('200130','echo_DNP_1'),
+        #('200130','echo_DNP_2'),
+        #('200130','echo_DNP_3'),
+        #('191118','echo_DNP_3'),
+        #('191217','echo_DNP_1'),
+        #('200130','echo_DNP_5'),
+        #('200130','echo_DNP_AG'),
+        #('200225','DNP_echo_1'),
+        #('200221','DNP_S179R1apR_one'),
+        ('2003056','DNP_15NS175R1a_pR_2'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -92,7 +92,6 @@ for date,id_string in [
     #s.convolve('t2',5)
     fl.plot(s['power',0]['ph2',-2]['ph1',1])
     fl.plot(s['power',-4]['ph2',-2]['ph1',1])
-    fl.show();quit()
     s = s['ph2',-2]['ph1',1]
     enhancement = s['t2':(-50,50)].C
     #enhancement = s.C
