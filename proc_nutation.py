@@ -1,9 +1,12 @@
 from pyspecdata import *
 from scipy.optimize import minimize
+from hermitian_function_test import zeroth_order_ph
+from sympy import symbols
 fl = figlist_var()
-date = '200303'
+t2 = symbols('t2')
+date = '200219'
 for id_string in [
-    'nutation_2',
+    'nutation_alex_probe',
     ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'nutation'
@@ -17,22 +20,32 @@ for id_string in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
-    s.ft('t2',shift=True)
+    s.ft('t2',shift=True,pad=4096)
     #s *= exp(1j*2*pi*0.42) # manually determined ph correction
     fl.next('image, raw')
     fl.image(s)
     s.ft(['ph2','ph1'])
     fl.next('image, all coherence channels')
     fl.image(s)
-    #fl.next('image, $\Delta c_{1}$ = 1,$\Delta c_{2}$ = 0')
-    #fl.image(s['t2':(None,-30000)]['ph2',0]['ph1',1])
-    #fl.next('image, $\Delta c_{1}$ = 0,$\Delta c_{2}$ = -1')
-    #fl.image(s['ph2',1]['ph1',0])
-    #fl.next('image, $\Delta c_{1}$ = -1,$\Delta c_{2}$ = 0')
-    #fl.image(s['t2':(None,-30e-3)]['ph2',0]['ph1',-1])
     s = s['ph2',0]['ph1',1].C
     fl.next(id_string+'image')
     fl.image(s)
+    s.ift('t2',pad=4096)
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    s.ft('t2',pad=4096)
+    s = s['t2':(-100,50)]
+    #s.ft('t2',pad=4096)
+    fl.next('sliced')
+    fl.image(s)
+    s.ift('t2')
+    ph0 = zeroth_order_ph(s, fl=None)
+    s /= ph0
+    fl.next('phased')
+    s.ft('t2',pad=4096)
+    fl.image(s)
+    fl.show();quit()
+            
     fl.next(id_string+'image -- $B_1$ distribution')
     fl.image(abs(s.C.ft('p_90',shift=True)))
     fl.next(id_string+'image abs')
