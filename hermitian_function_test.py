@@ -4,7 +4,28 @@ def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
     zeroth-order even if the data is both negative
-    and positive'''
+    and positive.
+
+    Parameters
+    ==========
+    d: nddata
+        Complex data whose zeroth order phase you want
+        to find.
+    fl: figlist or None (default)
+        If you want the diagnostic plots (showing the
+        distribution of the data in the complex plane),
+        set this to your figlist object.
+        It will add a plot called "check covariance
+        test"
+
+    Returns
+    =======
+    retval: complex128
+        The zeroth order phase of the data, as a
+        complex number with magnitude 1.
+        To correct the zeroth order phase of the data,
+        divide by ``retval``.
+    '''
     eigenValues, eigenVectors = eig(cov(c_[
         d.data.real,
         d.data.imag].T
@@ -51,7 +72,12 @@ def zeroth_order_ph(d, fl=None):
         ax.set_aspect('equal', adjustable='box')
     return exp(1j*ph0)
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
-    r"""determine the center of the echo"""
+    r"""determine the center of the echo
+    
+    .. note::
+        This should be using zeroth_order_ph, but it's not, implying that it's
+        not the most recent version of this code... what's up with that??
+    """
     # {{{ determine where the "peak" of the echo is,
     # and use it to determine the max
     # shift
