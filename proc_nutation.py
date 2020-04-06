@@ -43,9 +43,14 @@ for id_string in [
     fl.image(s)
     fl.next('zeroth order correction')
     s.ift('t2')
-    ph0 = s['t2':0]['ph2',0]['ph1',1]
+    #ph0 = s['t2':0]['ph2',0]['ph1',1]
+    print(ndshape(s))
+    #quit()
     print("doing zeroth order correction now")
-    ph0 = zeroth_order_ph(ph0, fl=fl)
+    s.flatten(['p_90'])
+    print(ndshape(s))
+    quit()
+    ph0 = zeroth_order_ph(s, fl=fl)
     s /= ph0
     s.ft('t2')
     fl.image(s)
