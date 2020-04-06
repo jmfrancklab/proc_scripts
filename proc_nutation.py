@@ -21,22 +21,24 @@ for id_string in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
-    s.ft('t2',shift=True,pad=4096)
     #s *= exp(1j*2*pi*0.42) # manually determined ph correction
-    fl.next('image, raw')
-    fl.image(s)
+    # {{{ do the rough centering before anything else!
+    # in particular -- if you don't do this before convolution, the
+    # convolution doesn't work properly!
     s.ft(['ph2','ph1'])
-    fl.next('image, all coherence channels')
-    s.convolve('t2',50)
+    rough_center = abs(s)['ph2',0]['ph1',1].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    # }}}
+    fl.next('time domain (all $\\Delta p$)')
+    fl.image(s)
+    fl.next('frequency domain (all $\\Delta p$)')
+    s.ft('t2',shift=True,pad=4096)
     fl.image(s)
     s = s['ph2',0]['ph1',1].C
-    fl.next(id_string+'image')
+    fl.next('select $\\Delta p$ and convolve')
+    s.convolve('t2',50)
     fl.image(s)
-    s.ift('t2',pad=4096)
-    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
     fl.next('Figure 1')
-    s.ft('t2',pad=4096)
     fl.image(s)
     #fl.show();quit()
     s = s['t2':(-100,50)]
@@ -44,22 +46,16 @@ for id_string in [
     fl.next('sliced')
     fl.image(s)
     s.ift('t2')
-    #print(ndshape(s))
-    #quit()
-    #print(ndshape(s))
-    np.ravel(s) 
-    #print(ndshape(s))
-    #quit()
-    ph0 = s
-    ph0 = zeroth_order_ph(ph0, fl=None)
-    s /= ph0
-    fl.next('phased')
-    s.ft('t2',pad=4096)
-    fl.image(s)
-    fl.show();quit()
-            
-    fl.next(id_string+'image -- $B_1$ distribution')
-    fl.image(abs(s.C.ft('p_90',shift=True)))
-    fl.next(id_string+'image abs')
-    fl.image(abs(s))
+    #ph0 = s
+    #ph0 = zeroth_order_ph(ph0, fl=None)
+    #s /= ph0
+    #fl.next('phased')
+    #s.ft('t2',pad=4096)
+    #fl.image(s)
+    #fl.show();quit()
+    #        
+    #fl.next(id_string+'image -- $B_1$ distribution')
+    #fl.image(abs(s.C.ft('p_90',shift=True)))
+    #fl.next(id_string+'image abs')
+    #fl.image(abs(s))
 fl.show();quit()
