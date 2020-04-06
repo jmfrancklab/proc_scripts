@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import minimize
 from hermitian_function_test import zeroth_order_ph
 from sympy import symbols
+import numpy as np
 fl = figlist_var()
 t2 = symbols('t2')
 date = '200219'
@@ -26,6 +27,7 @@ for id_string in [
     fl.image(s)
     s.ft(['ph2','ph1'])
     fl.next('image, all coherence channels')
+    s.convolve('t2',50)
     fl.image(s)
     s = s['ph2',0]['ph1',1].C
     fl.next(id_string+'image')
@@ -33,13 +35,23 @@ for id_string in [
     s.ift('t2',pad=4096)
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
+    fl.next('Figure 1')
     s.ft('t2',pad=4096)
+    fl.image(s)
+    #fl.show();quit()
     s = s['t2':(-100,50)]
     #s.ft('t2',pad=4096)
     fl.next('sliced')
     fl.image(s)
     s.ift('t2')
-    ph0 = zeroth_order_ph(s, fl=None)
+    #print(ndshape(s))
+    #quit()
+    #print(ndshape(s))
+    np.ravel(s) 
+    #print(ndshape(s))
+    #quit()
+    ph0 = s
+    ph0 = zeroth_order_ph(ph0, fl=None)
     s /= ph0
     fl.next('phased')
     s.ft('t2',pad=4096)
