@@ -1,5 +1,9 @@
 from pyspecdata import *
 from scipy.optimize import minimize,leastsq
+<<<<<<< HEAD
+=======
+from hermitian_function_test import zeroth_order_ph
+>>>>>>> origin/alex
 init_logging(level='debug')
 # 2to3 JF 1/31
 
@@ -107,6 +111,7 @@ for date, id_string,corrected_volt in [
     # just ignore for now -- JF (though I explain for
     # myself)
     #def zeroth_order_ph(d, plot_name=None):
+<<<<<<< HEAD
         #r'''determine the covariance of the datapoints
         #in complex plane, and use to phase the
         #zeroth-order even if the data is both negative
@@ -153,6 +158,16 @@ for date, id_string,corrected_volt in [
         # }}}
     fl.next('demodulated and phased data')
     #d = d['t':(2e-06,4e-06)]
+=======
+    for j in range(2):
+        ph0 = zeroth_order_ph(d['ch',j])
+        d['ch',j] /= ph0
+        # }}}
+    
+    fl.next('demodulated and phased data')
+    #d = d['t':(2e-06,4e-06)]
+    
+>>>>>>> origin/alex
     for j in range(2):
         fl.plot(d['ch',j], label='channel %d real'%j,
                 alpha=0.5)
@@ -160,6 +175,7 @@ for date, id_string,corrected_volt in [
                 alpha=0.5)
         #fl.show();quit()
     d.setaxis('t',lambda x: x-pulse_start)
+<<<<<<< HEAD
     print("NOTE!!! the demodulated reflection looks bad -- fix it")
     # to use the phase of the reference to set both, we could do:
     # pulse_phase = d['ch',0].C.sum('t')
@@ -167,6 +183,15 @@ for date, id_string,corrected_volt in [
     pulse_phase = d.C.sum('t')
     pulse_phase /= abs(pulse_phase)
     d /= pulse_phase
+=======
+    #print("NOTE!!! the demodulated reflection looks bad -- fix it")
+    # to use the phase of the reference to set both, we could do:
+    # pulse_phase = d['ch',0].C.sum('t')
+    # but I don't know if that's reasonable -- rather I just phase both independently:
+    #pulse_phase = d.C.sum('t')
+    #pulse_phase /= abs(pulse_phase)
+    #d /= pulse_phase
+>>>>>>> origin/alex
     #cost function for phase correction
     for j,l in enumerate(['control','reflection']):
         fl.next('adjusted analytic '+l)
@@ -199,6 +224,7 @@ for date, id_string,corrected_volt in [
     fl.next('Plotting the decay slice')
     d.ift('t')
     #print(nddata(refl_blip_ranges))
+<<<<<<< HEAD
     dw = diff(d.getaxis('t')[0:2]).item()
     def phasecorrect(d):
         fl.push_marker() 
@@ -253,6 +279,13 @@ for date, id_string,corrected_volt in [
         #0.5*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0]))]
     fl.plot(decay)
     fl.show();quit()
+=======
+       #quit()# Inverse Fourier Transform into t domain
+    decay = d['ch',1]['t':(-0.169e-6,
+        (0.25*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0])))]
+    fl.plot(decay)
+    #fl.show();quit()
+>>>>>>> origin/alex
     # slice out a range from the start of the first
     # blip up to halfway between the END of the first
     # blip and the start of the second
