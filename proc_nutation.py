@@ -1,5 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import minimize
+from hermitian_function_test import zeroth_order_ph
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -38,10 +39,20 @@ for id_string in [
     s.setaxis(t2-rough_center)
     s.ft('t2',pad=4096)
     fl.next(id_string)
-    s = s['t2':(-200,200)]
+    s = s['t2':(-100,50)]
     fl.image(s)
-    fl.next(id_string+'image -- $B_1$ distribution')
-    fl.image(abs(s.C.ft('p_90',shift=True)))
-    fl.next('90 time for coil E')
-    fl.image(abs(s))
-fl.show();quit()
+    fl.next('zeroth order correction')
+    s.ift('t2')
+    ph0 = s['t2':0]['ph2',0]['ph1',1]
+    print("doing zeroth order correction now")
+    ph0 = zeroth_order_ph(ph0, fl=fl)
+    s /= ph0
+    s.ft('t2')
+    fl.image(s)
+    fl.show()
+    quit()
+    #fl.next(id_string+'image -- $B_1$ distribution')
+    #fl.image(abs(s.C.ft('p_90',shift=True)))
+    #fl.next('90 time for coil E')
+    #fl.image(abs(s))
+#fl.show();quit()
