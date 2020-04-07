@@ -1,5 +1,6 @@
 """This module includes routines for phasing NMR spectra."""
 from pyspecdata import *
+from matplotlib.patches import Ellipse
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
@@ -26,23 +27,34 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     '''
-    eigenValues, eigenVectors = eig(cov(c_[
+    cov_mat = cov(c_[
         d.data.real,
         d.data.imag].T
-        ))
+        )
+    eigenValues, eigenVectors = eig(cov_mat)
     mean_point = d.data.mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
     idx = eigenValues.argsort()[::-1]   
     eigenValues = eigenValues[idx]
-    eigenVectors = eigenVectors[:,idx]
+    eigenVectors = eigenVectors[:,idx] # first dimension x,y second evec #
     # determine the phase angle from direction of the
     # largest principle axis plus the mean
-    rotation_vector = eigenVectors[:,0] + mean_vec
+    # the vector in the direction of the largest
+    # principle axis would have a norm equal to the
+    # sqrt (std not variance) of the eigenvalue, except
+    # that we only want to rotate when the distribution
+    # is assymetric, so include only the excess of the
+    # larger eval over the smaller
+    assymetry_mag = sqrt(eigenValues[0])-sqrt(eigenValues[1])
+    if (assymetry_mag*eigenVectors[:,0]*mean_vec).sum() > 0:
+        # we want the eigenvector on the far side of the ellipse
+        rotation_vector = mean_vec + assymetry_mag*eigenVectors[:,0]
+    else:
+        rotation_vector = mean_vec - assymetry_mag*eigenVectors[:,0]
     ph0 = arctan2(rotation_vector[1],rotation_vector[0])
     if fl:
-        eigenVectors *= (eigenValues.reshape(-1,2)*ones((2,1)))/eigenValues.max()*abs(d.data).max()
         d_forplot = d.C
         fl.next('check covariance test')
         fl.plot(
@@ -62,14 +74,23 @@ def zeroth_order_ph(d, fl=None):
                 )
         fl.plot(0,0,'ko', alpha=0.5)
         fl.plot(mean_vec[0],mean_vec[1],'kx', label='mean', alpha=0.5)
-        evec_forplot = eigenVectors + mean_vec.reshape((-1,1))*ones((1,2))
+        evec_forplot = sqrt(eigenValues.reshape(1,2))*ones((2,1))*eigenVectors # scale by the std, not the variance!
+        evec_forplot += mean_vec.reshape((-1,1))*ones((1,2))
         fl.plot(evec_forplot[0,0],evec_forplot[1,0],'o', alpha=0.5,
                 label='first evec')
         fl.plot(evec_forplot[0,1],evec_forplot[1,1],'o', alpha=0.5)
         fl.plot(rotation_vector[0],rotation_vector[1],'o', alpha=0.5,
                 label='rotation vector')
+        norms = sqrt((evec_forplot**2).sum(axis=0))
+        ell = Ellipse(xy=mean_vec,
+                width=2*sqrt(eigenValues[0]),
+                height=2*sqrt(eigenValues[1]),
+                angle=180/pi*arctan2(eigenVectors[1,0],
+                    eigenVectors[0,0]),
+                color='k', fill=False)
         ax = gca()
         ax.set_aspect('equal', adjustable='box')
+        ax.add_patch(ell)
     return exp(1j*ph0)
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
     r"""determine the center of the echo
