@@ -6,9 +6,9 @@ from numpy import *
 fl = figlist_var()
 t2 = symbols('t2')
 
-date = '200219'
+date = '200312'
 for id_string in [
-    'nutation_alex_probe',
+    'nutation_coilE_2',
     ]:
     #{{{ Loading in data
     filename = date+'_'+id_string+'.h5'
@@ -59,7 +59,7 @@ for id_string in [
     #fl.show();quit()
     #}}}
     #{{{ slicing
-    s = s['t2':(-400,400)]
+    s = s['t2':(-100,500)]
     #s.ft('t2',pad=4096)
     fl.next('sliced')
     fl.image(s)

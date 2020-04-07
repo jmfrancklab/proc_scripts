@@ -27,11 +27,9 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     '''
-
     cov_mat = cov(c_[
         d.data.real.ravel(),
         d.data.imag.ravel()].T)
-
     eigenValues, eigenVectors = eig(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
