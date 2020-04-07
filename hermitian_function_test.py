@@ -27,15 +27,13 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     '''
-    real = ravel(d.data.real)
-    imag = ravel(d.data.imag)
-    both = append(real,imag)
-    cov_mat = cov(c_[both]).T
-        #append.ravel(d.data.real),
-        #ravel(d.data.imag)]).T
-        
+
+    cov_mat = cov(c_[
+        d.data.real.ravel(),
+        d.data.imag.ravel()].T)
+
     eigenValues, eigenVectors = eig(cov_mat)
-    mean_point = d.data.mean()
+    mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
@@ -51,7 +49,11 @@ def zeroth_order_ph(d, fl=None):
     # is assymetric, so include only the excess of the
     # larger eval over the smaller
     assymetry_mag = sqrt(eigenValues[0])-sqrt(eigenValues[1])
-    if (assymetry_mag*eigenVectors[:,0]*mean_vec).sum() > 0:
+    try:
+        assym_ineq = (assymetry_mag*eigenVectors[:,0]*mean_vec).sum()
+    except:
+        raise ValueError(strm("check the sizes of the following:",size(assymetry_mag),size(eigenVectors),size(mean_vec)))
+    if assym_ineq > 0:
         # we want the eigenvector on the far side of the ellipse
         rotation_vector = mean_vec + assymetry_mag*eigenVectors[:,0]
     else:
@@ -61,16 +63,16 @@ def zeroth_order_ph(d, fl=None):
         d_forplot = d.C
         fl.next('check covariance test')
         fl.plot(
-                d_forplot.data.real,
-                d_forplot.data.imag,
+                d_forplot.data.ravel().real,
+                d_forplot.data.ravel().imag,
                 '.',
                 alpha=0.25,
                 label='before'
                 )
         d_forplot /= exp(1j*ph0)
         fl.plot(
-                d_forplot.data.real,
-                d_forplot.data.imag,
+                d_forplot.data.ravel().real,
+                d_forplot.data.ravel().imag,
                 '.',
                 alpha=0.25,
                 label='after'
@@ -102,6 +104,11 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
         This should be using zeroth_order_ph, but it's not, implying that it's
         not the most recent version of this code... what's up with that??
     """
+    if s.get_ft_prop('t2', ['start','freq']) is None:
+        # this sets the frequency startpoint appropriately for an FT --> it
+        # should be possible to do this w/out actually performing an ft
+        s.ft('t2', shift=True)
+        s.ift('t2')
     # {{{ determine where the "peak" of the echo is,
     # and use it to determine the max
     # shift
