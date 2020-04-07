@@ -28,8 +28,8 @@ def zeroth_order_ph(d, fl=None):
         divide by ``retval``.
     '''
     cov_mat = cov(c_[
-        ravel(d.data.real),
-        ravel(d.data.imag)]).T
+        shape(d.data.real),
+        shape(d.data.imag)]).T
         
     eigenValues, eigenVectors = eig(cov_mat)
     mean_point = d.data.mean()

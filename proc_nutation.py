@@ -63,7 +63,7 @@ for id_string in [
     #s.ft('t2',pad=4096)
     fl.next('sliced')
     fl.image(s)
-    fl.show();quit()
+    #fl.show();quit()
     #}}}
     #{{{ phasing with zeroth order correction
     s.ift('t2')
@@ -72,7 +72,7 @@ for id_string in [
     fl.next('phased')
     s.ft('t2',pad=4096)
     fl.image(s)
-    fl.show();quit()
+    #fl.show();quit()
     #}}}
     #        
     #fl.next(id_string+'image -- $B_1$ distribution')
