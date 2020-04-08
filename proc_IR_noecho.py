@@ -64,7 +64,7 @@ def calc_baseline(this_d,
     return phcorr0,phcorr1,baseline
 #loading data in
 for exp_name,expno in [
-        ('w6_200224',2),
+        ('w8_200224',2),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -97,8 +97,8 @@ d.reorder(['indirect','t2'], first=False)
 fl.image(d) #labeling
 
 #titling to coherence domain
-#rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-#d.setaxis(t2-rough_center)
+rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+d.setaxis(t2-rough_center)
 d.ft('t2',shift=True) #fourier transform
 
 fl.next('time domain (all $\\Delta p$)')
@@ -110,7 +110,7 @@ fl.image(d)
 #fl.show();quit()
 fl.next('select coherence pathway and convolve')
 d = d['ph2',0]['ph1',-1].C # this brings you from 50 indirect dimensions to 5, The grouped rows represent ph1, we see signal in the top group which is 3 or -1, the signal is in the bottom of the two (which represent ph2) and so we select ph2, 0
-#d.convolve('t2',50)
+d.convolve('t2',50)
 fl.image(d)
 #fl.show();quit()
 #d.ift('t2')
@@ -125,12 +125,12 @@ fl.plot(d)
 
 fl.next('Plotting phased spectra')
 for j in range(ndshape(d)['indirect']):
-    fl.plot(d['indirect',j]['t2':(-20,20)],
+    fl.plot(d['indirect',j]['t2':(-200,200)],
         alpha=0.5,
         label='vd=%g'%d.getaxis('indirect')[j])
 
 #exponential curve
-rec_curve = d['t2':(-20,20)].C.sum('t2')
+rec_curve = d['t2':(-200,200)].C.sum('t2')
 fl.next('recovery curve')
 fl.plot(rec_curve,'o')
 #fl.show()
@@ -184,10 +184,10 @@ soln.reorder('t2',first=False)
 soln.rename('T1','log(T1)')
 soln.setaxis('log(T1)',log10(T1.data))
 fl.next('solution')
-fl.image(soln['t2':(-20,20)])
+fl.image(soln['t2':(-200,200)])
 
 
-fl.show();quit()
+#fl.show();quit()
 print("SAVING FILE")
 np.savez(exp_name+'_'+str(expno)+'_ILT_inv',
         data=soln.data,
