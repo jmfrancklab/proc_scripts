@@ -96,22 +96,10 @@ d.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dime
 d.reorder(['indirect','t2'], first=False)
 fl.image(d) #labeling
 
-#d.setaxis('t2',lambda x:x + 273.76)
-
-
-
-
 #titling to coherence domain
 rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
 d.setaxis(t2-rough_center)
 d.ft('t2',shift=True) #fourier transform
-
-#print("looking for SFO1:")
-#print([j for j in list(d.get_prop('acq').keys()) if 'sf' in j.lower()])
-#sfo1 = d.get_prop('acq')['SFO1']
-#arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
-#print("SFO1 is",sfo1)
-#d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
 
 fl.next('time domain (all $\\Delta p$)')
 d.ift('t2')
@@ -134,13 +122,6 @@ d /= ph0
 fl.plot(d)
 #d *= -1
 #fl.show();quit()
-
-#print("looking for SFO1:")
-#print([j for j in list(d.get_prop('acq').keys()) if 'sf' in j.lower()])
-#sfo1 = d.get_prop('acq')['SFO1']
-#arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
-#print("SFO1 is",sfo1)
-#d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
 
 fl.next('Plotting phased spectra')
 for j in range(ndshape(d)['indirect']):
@@ -193,15 +174,20 @@ if plot_Lcurve:
     d_2d = d*nddata(r_[1,1,1],r'\Omega')
 #fl.show()
 #quit()
-
+sfo1 = d.get_prop('acq')['SFO1']
+arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
+print("SFO1 is",sfo1)
+d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
 this_l = 0.119#pick number in l curve right before it curves up
 soln = d.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
 soln.reorder('t2',first=False)
 soln.rename('T1','log(T1)')
 soln.setaxis('log(T1)',log10(T1.data))
 fl.next('solution')
-fl.image(soln['t2':(-300,300)])
-fl.show();quit()
+fl.image(soln['t2':(-400,400)])
+
+
+#fl.show();quit()
 print("SAVING FILE")
 np.savez(exp_name+'_'+str(expno)+'_ILT_inv',
         data=soln.data,
