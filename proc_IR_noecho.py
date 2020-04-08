@@ -64,7 +64,7 @@ def calc_baseline(this_d,
     return phcorr0,phcorr1,baseline
 #loading data in
 for exp_name,expno in [
-        ('w4_200224',2),
+        ('w6_200224',2),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -145,7 +145,7 @@ print("Estimated T1 is:", est_T1,"s")
 #attempting ILT plot with NNLS_Tikhonov_190104
 
 T1 = nddata(logspace(-3,1,150),'T1')
-l = sqrt(logspace(-6.0,0.005,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+l = sqrt(logspace(-6.0,0.001,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
 plot_Lcurve = False
 if plot_Lcurve:
     def vec_lcurve(l):
@@ -178,7 +178,7 @@ sfo1 = d.get_prop('acq')['SFO1']
 arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
 print("SFO1 is",sfo1)
 d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-this_l = 0.002#pick number in l curve right before it curves up
+this_l = 0.026#pick number in l curve right before it curves up
 soln = d.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
 soln.reorder('t2',first=False)
 soln.rename('T1','log(T1)')
@@ -187,7 +187,7 @@ fl.next('solution')
 fl.image(soln['t2':(-20,20)])
 
 
-#fl.show();quit()
+fl.show();quit()
 print("SAVING FILE")
 np.savez(exp_name+'_'+str(expno)+'_ILT_inv',
         data=soln.data,
