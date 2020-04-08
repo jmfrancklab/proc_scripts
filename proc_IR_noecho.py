@@ -64,7 +64,7 @@ def calc_baseline(this_d,
     return phcorr0,phcorr1,baseline
 #loading data in
 for exp_name,expno in [
-        ('w8_200224',2),
+        ('w12_200224',2),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -120,7 +120,7 @@ ph0 = zeroth_order_ph(d['t2':0],fl=None)
 ph0 /= abs(ph0)
 d /= ph0
 fl.plot(d)
-#d *= -1
+d *= -1
 #fl.show();quit()
 
 fl.next('Plotting phased spectra')
@@ -178,7 +178,7 @@ sfo1 = d.get_prop('acq')['SFO1']
 arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
 print("SFO1 is",sfo1)
 d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-this_l = 0.026#pick number in l curve right before it curves up
+this_l = 0.017#pick number in l curve right before it curves up
 soln = d.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
 soln.reorder('t2',first=False)
 soln.rename('T1','log(T1)')
