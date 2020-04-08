@@ -6,9 +6,9 @@ from numpy import *
 fl = figlist_var()
 t2 = symbols('t2')
 
-date = '200312'
+date = '200219'
 for id_string in [
-    'nutation_coilE_2',
+    'nutation_alex_probe',
     ]:
     #{{{ Loading in data
     filename = date+'_'+id_string+'.h5'
@@ -30,6 +30,7 @@ for id_string in [
     s.ft(['ph2','ph1'])
     rough_center = abs(s)['ph2',0]['ph1',1].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
+        
     # }}}
     # {{{ centering of data using hermitian function test
     residual,best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
@@ -40,7 +41,8 @@ for id_string in [
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
     fl.next('time domain after hermitian test')
-    fl.image(s)
+    #fl.image(s)
+    #fl.show();quit()
     #}}}
     #{{{ reviewing data imaging thus far
     fl.next('time domain (all $\\Delta p$)')
@@ -59,7 +61,7 @@ for id_string in [
     #fl.show();quit()
     #}}}
     #{{{ slicing
-    s = s['t2':(-100,500)]
+    s = s['t2':(-250,250)]
     #s.ft('t2',pad=4096)
     fl.next('sliced')
     fl.image(s)
@@ -67,9 +69,10 @@ for id_string in [
     #{{{ phasing with zeroth order correction
     s.ift('t2')
     fl.next('final time domain')
-    ph0 = zeroth_order_ph(s['t2':0], fl=fl)
+    ph0 = zeroth_order_ph(s['t2':0], fl=None)
     s /= ph0
     fl.image(s)
+    #fl.show();quit()
     fl.next('phased')
     s.ft('t2',pad=4096)
     fl.image(s)
