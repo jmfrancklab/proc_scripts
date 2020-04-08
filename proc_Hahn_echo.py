@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('200226','test'),
+        ('200302','alex_probe_water'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -20,11 +20,12 @@ for date,id_string in [
     #fl.plot(s.imag,alpha=0.4)
     #fl.plot(abs(s),':',c='k',alpha=0.4)
     s.ft('t',shift=True)
-    fl.next('comp raw data - FT')
+    s.convolve('t',10)
+    fl.next('Water with Ni2+ - FT')
     #fl.plot(s.real,alpha=0.4)
     #fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),c='red')
-    fl.next('comp raw data - FT')
+    fl.next('Water with Ni2+ - FT')
     fl.plot(s.real,alpha=0.4)
     #fl.plot(s.imag,alpha=0.4)
     #fl.plot(abs(s),':',c='k',alpha=0.4)

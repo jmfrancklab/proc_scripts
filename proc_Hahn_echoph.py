@@ -1,12 +1,13 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from sympy import symbols
+from hermitian_function_test import hermitian_function_test
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
 for date,id_string in [
-        ('191212','echo_4'),
+        ('200302','alex_probe_water'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -20,7 +21,7 @@ for date,id_string in [
     nScans = s.get_prop('acq_params')['nScans']
     print(ndshape(s))
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:2048]
+    t2_axis = s.getaxis('t')[0:256]
     s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
@@ -34,7 +35,7 @@ for date,id_string in [
     s.ft(['ph1','ph2'])
     fl.next('coherence')
     fl.image(abs(s))
-    s = s['ph1',1]['ph2',0].C
+    #s = s['ph1',1]['ph2',0].C
     s.mean('nScans')#,return_error=False)
     fl.next('signal')
     #fl.plot(abs(s),label=label_str)
@@ -43,16 +44,16 @@ for date,id_string in [
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    s.mean('nScans')
+    #s.mean('nScans')
     s.ft('t2')
-    fl.image(s)
-    #k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
+    #fl.image(s)
+    k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
     k = s.C*exp(-1j*0.9*2*pi)
     k *= exp(-1j*k.fromaxis('t2')*2*pi*0.005)
     s = k.C
     s.ift('t2')
     residual,best_shift = hermitian_function_test(s[
-        'ph2',-2]['ph1',1],shift_val=1)
+        'ph2',0]['ph1',1],shift_val=1)
     fl.next('hermitian test')
     fl.plot(residual)
     print("best shift is",best_shift)
@@ -64,7 +65,7 @@ for date,id_string in [
     s *= exp(-s.getaxis('t2')/40e-3)
     fl.next('time domain after hermitian test')
     fl.image(s)
-    ph0 = s['t2':0]['ph2',-2]['ph1',1]
+    ph0 = s['t2':0]['ph2',0]['ph1',1]
     print(ndshape(ph0))
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
@@ -76,20 +77,23 @@ for date,id_string in [
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
+    s.convolve('t2',10)
     fl.image(s)
+    s = s['ph1',1]['ph2',0].C
+
     s.ift('t2')
     k.ift('t2')
     s = s['t2':(0,None)]
     k = k['t2':(0,None)]
-    fl.next('phased - time')
-    fl.plot(s['ph2',-2]['ph1',1])
+    #fl.next('phased - time')
+    #fl.plot(s['ph2',0]['ph1',1])
     s.ft('t2')
     k.ft('t2')
-    #s.convolve('t2',7)
+    s.convolve('t2',7)
     fl.next('')
     s.name('')
     k.rename('t2','Offset').set_units('Offset','Hz')
     s.rename('t2','Offset').set_units('Offset','Hz')
-    fl.plot(k['ph2',-2]['ph1',1],label='without time-axis correction',c='k')
-    fl.plot(s['ph2',-2]['ph1',1],label='with time-axis correction',c='r')
+    #fl.plot(k['ph2',-2]['ph1',1],label='without time-axis correction',c='k')
+    #fl.plot(s['ph2',-2]['ph1',1],label='with time-axis correction',c='r')
 fl.show();quit()
