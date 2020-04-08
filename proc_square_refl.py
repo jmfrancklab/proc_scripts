@@ -12,8 +12,8 @@ for date, id_string,corrected_volt in [
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
         #('200110','pulse_2',True),
-        #('200312','chirp_coile_4',True),
-        ('200103','pulse_1',True),
+        ('200312','chirp_coile',True),
+        #('200103','pulse_1',True),
         ]:
     d = nddata_hdf5(date+'_'+id_string+'.h5/capture1',
                 directory=getDATADIR(exp_type='test_equip'))
@@ -41,7 +41,7 @@ for date, id_string,corrected_volt in [
     fl.next('Absolute value of analytic signal, %s'%id_string)
     fl.plot(abs(d['ch',0]), alpha=0.5, label='control') #plot the 'envelope' of the control 
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
-    #fl.show();quit()
+    fl.show();quit()
     # }}}
     # {{{ determine the start and stop points for both
     # the pulse, as well as the two tuning blips
@@ -158,13 +158,14 @@ for date, id_string,corrected_volt in [
     fl.plot(response.real, alpha=0.5, label='response, real')
     fl.plot(response.imag, alpha=0.5, label='response, imag')
     fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
-    #fl.show();quit()
-    fl.next('Plotting the decay slice')
+    fl.show();quit()
+    fl.next('Plotting the decay slice for coil A')
     d.ift('t')
     #print(nddata(refl_blip_ranges))
        #quit()# Inverse Fourier Transform into t domain
-    decay = d['ch',1]['t':(-0.169e-6,
+    decay = d['ch',1]['t':(0.251e-6,
         (0.25*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0])))]
+    decay *= -1
     fl.plot(decay)
     #fl.show();quit()
     # slice out a range from the start of the first
@@ -175,6 +176,7 @@ for date, id_string,corrected_volt in [
     fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
     #defines fit function as p0exp(-(t-t0)*p1)+p2
     p_ini = r_[decay['t',0].data.real.max(),1/0.5e-6,0] #why is there a third number (0) here?
+    fl.next('decay slice for coil B')
     fl.plot(fitfunc(p_ini), ':', label='initial guess') 
     #applies the fit function to the initial point of the decay
     residual = lambda p: fitfunc(p).data.real - decay.data.real
