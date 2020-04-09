@@ -64,7 +64,7 @@ def calc_baseline(this_d,
     return phcorr0,phcorr1,baseline
 #loading data in
 for exp_name,expno in [
-        ('w4_200224',2),
+        ('w12_200224',2),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -97,8 +97,8 @@ d.reorder(['indirect','t2'], first=False)
 fl.image(d) #labeling
 
 #titling to coherence domain
-#rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-#d.setaxis(t2-rough_center)
+rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+d.setaxis(t2-rough_center)
 d.ft('t2',shift=True) #fourier transform
 
 fl.next('time domain (all $\\Delta p$)')
@@ -120,16 +120,17 @@ ph0 = zeroth_order_ph(d['t2':0],fl=None)
 ph0 /= abs(ph0)
 d /= ph0
 fl.plot(d)
+d *= -1
 #fl.show();quit()
 
 fl.next('Plotting phased spectra')
 for j in range(ndshape(d)['indirect']):
-    fl.plot(d['indirect',j]['t2':(-300,300)],
+    fl.plot(d['indirect',j]['t2':(-200,200)],
         alpha=0.5,
         label='vd=%g'%d.getaxis('indirect')[j])
 
 #exponential curve
-rec_curve = d['t2':(-300,300)].C.sum('t2')
+rec_curve = d['t2':(-200,200)].C.sum('t2')
 fl.next('recovery curve')
 fl.plot(rec_curve,'o')
 #fl.show()
@@ -144,7 +145,7 @@ print("Estimated T1 is:", est_T1,"s")
 #attempting ILT plot with NNLS_Tikhonov_190104
 
 T1 = nddata(logspace(-3,1,150),'T1')
-l = sqrt(logspace(-6.0,0.005,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+l = sqrt(logspace(-6.0,0.001,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
 plot_Lcurve = False
 if plot_Lcurve:
     def vec_lcurve(l):
@@ -173,17 +174,17 @@ if plot_Lcurve:
     d_2d = d*nddata(r_[1,1,1],r'\Omega')
 #fl.show()
 #quit()
-sfo1 = d.get_prop('acq')['SFO1']
+sfo1 = 277.6 
 arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
 print("SFO1 is",sfo1)
 d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-this_l = 0.011#pick number in l curve right before it curves up
+this_l = 0.017#pick number in l curve right before it curves up
 soln = d.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
 soln.reorder('t2',first=False)
 soln.rename('T1','log(T1)')
 soln.setaxis('log(T1)',log10(T1.data))
 fl.next('solution')
-fl.image(soln['t2':(-100,100)])
+fl.image(soln)
 
 
 #fl.show();quit()
