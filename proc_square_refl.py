@@ -13,9 +13,9 @@ for date, id_string,corrected_volt in [
         #('181001','sprobe_t2',True),
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
-        #('200110','pulse_2',True),
+        ('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103','pulse_1',True),
+        #('200103','pulse_1',True),
         ]:
     d = nddata_hdf5(date+'_'+id_string+'.h5/capture1',
                 directory=getDATADIR(exp_type='test_equip'))
@@ -257,7 +257,9 @@ for date, id_string,corrected_volt in [
     #fl.plot(d['ch',0].imag, label = 'control imag')
     #fl.show();quit()
     #quit()# Inverse Fourier Transform into t domain
-    decay = d['t':(-0.176e-6,2e-6),Human_units=False]
+    fl.next('decay')
+
+    decay = d['t':(-0.176e-6,2e-6)]
         #0.5*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0]))]
     fl.plot(decay)
     fl.show();quit()
