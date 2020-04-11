@@ -12,8 +12,8 @@ for date, id_string,corrected_volt in [
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
         #('200110','pulse_2',True),
-        ('200312','chirp_coile',True),
-        #('200103','pulse_1',True),
+        #('200312','chirp_coile_4',True),
+        ('200103','pulse_1',True),
         ]:
     d = nddata_hdf5(date+'_'+id_string+'.h5/capture1',
                 directory=getDATADIR(exp_type='test_equip'))
@@ -41,7 +41,7 @@ for date, id_string,corrected_volt in [
     fl.next('Absolute value of analytic signal, %s'%id_string)
     fl.plot(abs(d['ch',0]), alpha=0.5, label='control') #plot the 'envelope' of the control 
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
-    fl.show();quit()
+    #fl.show();quit()
     # }}}
     # {{{ determine the start and stop points for both
     # the pulse, as well as the two tuning blips
@@ -108,6 +108,7 @@ for date, id_string,corrected_volt in [
     # just ignore for now -- JF (though I explain for
     # myself)
     #def zeroth_order_ph(d, plot_name=None):
+
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j])
         d['ch',j] /= ph0
@@ -123,6 +124,7 @@ for date, id_string,corrected_volt in [
                 alpha=0.5)
         #fl.show();quit()
     d.setaxis('t',lambda x: x-pulse_start)
+
     #print("NOTE!!! the demodulated reflection looks bad -- fix it")
     # to use the phase of the reference to set both, we could do:
     # pulse_phase = d['ch',0].C.sum('t')
@@ -130,6 +132,7 @@ for date, id_string,corrected_volt in [
     #pulse_phase = d.C.sum('t')
     #pulse_phase /= abs(pulse_phase)
     #d /= pulse_phase
+
     #cost function for phase correction
     for j,l in enumerate(['control','reflection']):
         fl.next('adjusted analytic '+l)
@@ -158,16 +161,65 @@ for date, id_string,corrected_volt in [
     fl.plot(response.real, alpha=0.5, label='response, real')
     fl.plot(response.imag, alpha=0.5, label='response, imag')
     fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
-    fl.show();quit()
-    fl.next('Plotting the decay slice for coil A')
-    d.ift('t')
-    #print(nddata(refl_blip_ranges))
-       #quit()# Inverse Fourier Transform into t domain
-    decay = d['ch',1]['t':(0.251e-6,
-        (0.25*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0])))]
-    decay *= -1
-    fl.plot(decay)
     #fl.show();quit()
+    fl.next('Plotting the decay slice')
+    d.ift('t')
+    #print(nddata(r<<<<<< HEAD
+    dw = diff(d.getaxis('t')[0:2]).item()
+    def phasecorrect(d):
+        fl.push_marker() 
+        ph1 = nddata(r_[-5:5:70j]*dw,'phcorr')
+        dx = diff(ph1.getaxis('phcorr')[r_[0,1]]).item()
+        ph1 = exp(-1j*2*pi*ph1*d.fromaxis('t'))
+        d_cost = d * ph1
+        ph0 = d_cost.C.sum('t')
+        ph0 /= abs(ph0)
+        d_cost /= ph0
+        fl.next('phasing cost function')
+        d_cost.run(real).run(abs).sum('t')
+        fl.plot(d_cost,'.')
+        ph1_opt = d_cost.argmin('phcorr').item()
+        print('optimal phase correction',repr(ph1_opt))
+        # }}}
+        # {{{ apply the phase corrections
+        def applyphase(arg,ph1):
+            arg *= exp(-1j*2*pi*ph1*arg.fromaxis('t'))
+            ph0 = arg.C.sum('t')
+            ph0 /= abs(ph0)
+            arg /= ph0
+            return arg
+        def costfun(ph1):
+            if type(ph1) is ndarray:
+                ph1 = ph1.item()
+            temp = d.C
+            retval = applyphase(temp,ph1).run(real).run(abs).sum('t').item()
+            return retval
+        print("rough opt cost function is",costfun(ph1_opt))
+        r = minimize(costfun,ph1_opt,
+                bounds=[(ph1_opt-dx,ph1_opt+dx)])
+        assert r.success
+        d = applyphase(d,r.x.item())
+        fl.plot(r.x,r.fun,'x')
+        fl.pop_marker()
+        return d
+    d.ft('t')
+    d = phasecorrect(d['ch',1])
+    fl.next('phased f domain')
+
+    fl.plot(d, label = 'refl real')
+    fl.next('phased t domain')
+    d.ift('t')
+    fl.plot(d)
+    #fl.plot(d['ch',1].imag, label = 'refl imag')
+    #fl.plot(d['ch',0].real, label = 'control real')
+    #fl.plot(d['ch',0].imag, label = 'control imag')
+    #fl.show();quit()
+    #quit()# Inverse Fourier Transform into t domain
+    decay = d['t':(-0.176e-6,2e-6),Human_units=False]
+        #0.5*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0]))]
+    fl.plot(decay)
+    fl.show();quit()
+
     # slice out a range from the start of the first
     # blip up to halfway between the END of the first
     # blip and the start of the second
@@ -176,7 +228,6 @@ for date, id_string,corrected_volt in [
     fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
     #defines fit function as p0exp(-(t-t0)*p1)+p2
     p_ini = r_[decay['t',0].data.real.max(),1/0.5e-6,0] #why is there a third number (0) here?
-    fl.next('decay slice for coil B')
     fl.plot(fitfunc(p_ini), ':', label='initial guess') 
     #applies the fit function to the initial point of the decay
     residual = lambda p: fitfunc(p).data.real - decay.data.real
