@@ -64,7 +64,7 @@ def calc_baseline(this_d,
     return phcorr0,phcorr1,baseline
 #loading data in
 for exp_name,expno in [
-        ('w2_200224',2),
+        ('w8_200224',2),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -125,12 +125,12 @@ fl.plot(d)
 
 fl.next('Plotting phased spectra')
 for j in range(ndshape(d)['indirect']):
-    fl.plot(d['indirect',j]['t2':(-300,300)],
+    fl.plot(d['indirect',j]['t2':(-40,40)],
         alpha=0.5,
         label='vd=%g'%d.getaxis('indirect')[j])
 
 #exponential curve
-rec_curve = d['t2':(-300,300)].C.sum('t2')
+rec_curve = d['t2':(-40,40)].C.sum('t2')
 fl.next('recovery curve')
 fl.plot(rec_curve,'o')
 #fl.show()
@@ -145,7 +145,7 @@ print("Estimated T1 is:", est_T1,"s")
 #attempting ILT plot with NNLS_Tikhonov_190104
 
 T1 = nddata(logspace(-3,1,150),'T1')
-l = sqrt(logspace(-3.0,0.001,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+l = sqrt(logspace(-6.0,0.001,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
 plot_Lcurve = False
 if plot_Lcurve:
     def vec_lcurve(l):
@@ -174,20 +174,20 @@ if plot_Lcurve:
     d_2d = d*nddata(r_[1,1,1],r'\Omega')
 #fl.show()
 #quit()
-sfo1 = 273.76
+sfo1 = 272.05
 arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
 print("SFO1 is",sfo1)
 d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-this_l = 0.119#pick number in l curve right before it curves up
+this_l = 0.039#pick number in l curve right before it curves up
 soln = d.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
 soln.reorder('t2',first=False)
 soln.rename('T1','log(T1)')
 soln.setaxis('log(T1)',log10(T1.data))
-fl.next('solution')
-fl.image(soln['t2':(-400,400)])
+fl.next('water loading 8')
+fl.image(soln['t2':(100,300)])
 
 
-#fl.show();quit()
+fl.show();quit()
 print("SAVING FILE")
 np.savez(exp_name+'_'+str(expno)+'_ILT_inv',
         data=soln.data,

@@ -13,9 +13,9 @@ for date, id_string,corrected_volt in [
         #('181001','sprobe_t2',True),
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
-        ('200110','pulse_2',True),
+        #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        #('200103','pulse_1',True),
+        ('200103','pulse_1',True),
         ]:
     d = nddata_hdf5(date+'_'+id_string+'.h5/capture1',
                 directory=getDATADIR(exp_type='test_equip'))
@@ -161,11 +161,11 @@ for date, id_string,corrected_volt in [
     for j in range(2):
         fl.plot(d['ch',j], label='channel %d real'%j,
                 alpha=0.5)
-        fl.plot(d['ch',j].imag, label='channel %d imag'%j,
-                alpha=0.5)
+        #fl.plot(d['ch',j].imag, label='channel %d imag'%j,
+                #alpha=0.5)
         #fl.show();quit()
     d.setaxis('t',lambda x: x-pulse_start)
-
+    #fl.show();quit()
     #print("NOTE!!! the demodulated reflection looks bad -- fix it")
     # to use the phase of the reference to set both, we could do:
     # pulse_phase = d['ch',0].C.sum('t')
@@ -247,11 +247,11 @@ for date, id_string,corrected_volt in [
     d.ft('t')
     d = phasecorrect(d['ch',1])
     fl.next('phased f domain')
-
-    fl.plot(d, label = 'refl real')
+    fl.plot(d['ch',1], label = 'refl real')
     fl.next('phased t domain')
     d.ift('t')
     fl.plot(d)
+    fl.show();quit()
     #fl.plot(d['ch',1].imag, label = 'refl imag')
     #fl.plot(d['ch',0].real, label = 'control real')
     #fl.plot(d['ch',0].imag, label = 'control imag')
