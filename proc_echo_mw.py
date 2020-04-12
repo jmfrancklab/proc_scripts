@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
 from proc_scripts import postproc_dict
+from align_slice import align_and_slice, correlation_align
 from sympy import symbols
 #init_logging(level='debug')
 rcParams["savefig.transparent"] = True
@@ -42,19 +43,15 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     #{{{inverse fourier transform into time domain
     s.ift('t2')
     #}}}
-    
     #{{{visualize time domain after filtering and phasing 
-    logger = init_logging("info")
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
     fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range', s, time_range)
     #}}}
-    
     #{{{slices out time range along t2 axis
     s =s['t2':time_range]
     #}}}
-    
     #{{{visualize centered
     echo_start = s.getaxis('t2')[0]
     dw = diff(s.getaxis('t2')[r_[0,1]]).item()
@@ -64,13 +61,28 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     plotdata[lambda x: x>2] = 2
     fl.image(plotdata)
     #}}}
-
     #{{{
     fl.next('FID slice')
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
     #}}}
+    # {{{ align the peaks
+    fl.next('before alignment')
+    s.ft('t2')
+    fl.image(s)
+    s.ift('t2')
+    # {{{ try to use the correlation align
+    avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
+    s.ift(['ph1','ph2'])
+    s = correlation_align(s,avg,fl=fl)
+    s.ft(['ph1','ph2'])
+    # }}}
+    fl.next('after alignment')
+    s.ft('t2')
+    fl.image(s)
+    s.ift('t2')
+    # }}}
     
     #{{{redefine time range along t2
     fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range',
