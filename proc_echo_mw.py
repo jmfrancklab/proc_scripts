@@ -6,26 +6,17 @@ rcParams["savefig.transparent"] = True
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
-for date,id_string in [
-        #('200122','echo_DNP_TCM51C_3'),
-        #('200127','echo_DNP_TCM51C_1'),
-        #('200128','echo_DNP_TCM118C_1'),
-        #('200130','echo_DNP_1'),
-        #('200130','echo_DNP_2'),
-        #('200130','echo_DNP_3'),
-        #('191118','echo_DNP_3'),
-        #('191217','echo_DNP_1'),
-        #('200130','echo_DNP_5'),
-        #('200130','echo_DNP_AG'),
-        #('200225','DNP_echo_1'),
-        #('200221','DNP_S179R1apR_one'),
-        ('2003056','DNP_15NS175R1a_pR_2'),
+# notice how I dramatically simplified the following
+# going forward, this is how we should deal with filenames
+for searchstr in [
+        "200306_DNP_lg_probe_w34.*",
         ]:
-    filename = date+'_'+id_string+'.h5'
+    files = search_filename(searchstr, 'test_equip')
+    assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
+    dirname, filename = os.path.split(files[0])
     nodename = 'signal'
-    s = nddata_hdf5(filename+'/'+nodename,
-            directory = getDATADIR(
-                exp_type = 'test_equip'))
+    s = nddata_hdf5(filename+'/signal',
+            directory=dirname)
     nPoints = s.get_prop('acq_params')['nPoints']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
@@ -105,7 +96,7 @@ for date,id_string in [
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     power_axis_W = r_[0,power_axis_W]
-    fl.plot(power_axis_W,enhanced,'o',c='k',human_units=False,label='%s'%date)
+    fl.plot(power_axis_W,enhanced,'o',c='k',human_units=False,label='%s'%filename.split('.')[0])
     #fl.plot(power_axis_W,enhanced,'x',c='red',human_units=False,label='%s'%date)
     xlabel('Power \ W')
     ylabel('Enhancement')
