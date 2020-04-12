@@ -183,7 +183,7 @@ for date, id_string,corrected_volt in [
                 label='abs')
         #fl.show();quit()
     # }}}
-    # {{{ to plot the transfer function, we need to pick an impulse
+        # {{{ to plot the transfer function, we need to pick an impulse
     # of finite width, or else we get a bunch of noise
     transf_range = (-0.5e-6,3e-6)
     fl.next('the transfer function')
@@ -204,7 +204,9 @@ for date, id_string,corrected_volt in [
     fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
     #fl.show();quit()
     fl.next('Plotting the decay slice')
+
     d.ift('t')
+
     #print(nddata(refl_blip_ranges))
 
     dw = diff(d.getaxis('t')[0:2]).item()
@@ -247,11 +249,15 @@ for date, id_string,corrected_volt in [
     d.ft('t')
     d = phasecorrect(d['ch',1])
     fl.next('phased f domain')
-    fl.plot(d['ch',1], label = 'refl real')
+    fl.plot(d, label = 'refl real')
+    #fl.show();quit()
+        #d.ft('t')
+    d['t':(30,None)]=0
+    #d['t':(None,-20)]=0
     fl.next('phased t domain')
     d.ift('t')
     fl.plot(d)
-    fl.show();quit()
+    #fl.show();quit()
     #fl.plot(d['ch',1].imag, label = 'refl imag')
     #fl.plot(d['ch',0].real, label = 'control real')
     #fl.plot(d['ch',0].imag, label = 'control imag')
@@ -259,13 +265,14 @@ for date, id_string,corrected_volt in [
     #quit()# Inverse Fourier Transform into t domain
     fl.next('decay')
 
-    decay = d['t':(-0.176e-6,2e-6)]
+    decay = d['t':(-0.17e-6,2e-6)]
         #0.5*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0]))]
     fl.plot(decay)
-    fl.show();quit()
+    #fl.show();quit()
     # slice out a range from the start of the first
     # blip up to halfway between the END of the first
     # blip and the start of the second
+    fl.next('fit')
     decay = decay.setaxis('t',lambda x: x-decay.getaxis('t')[0])
     # }}}
     fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
@@ -282,6 +289,6 @@ for date, id_string,corrected_volt in [
     #relating the fit function to Q
     fl.plot(fitfunc(p_opt), label='fit')
     fl.plot(decay, label='data')
-    fl.plot(decay.imag, label='data (imag, not fit)')
+    #fl.plot(decay.imag, label='data (imag, not fit)')
     print(Q)
     fl.show();quit()

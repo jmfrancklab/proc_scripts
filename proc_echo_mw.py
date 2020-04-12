@@ -19,7 +19,8 @@ for date,id_string in [
         #('200130','echo_DNP_AG'),
         #('200225','DNP_echo_1'),
         #('200221','DNP_S179R1apR_one'),
-        ('2003056','DNP_15NS175R1a_pR_2'),
+        #('2003056','DNP_15NS175R1a_pR_2'),
+        ('200219','echo_DNP_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -48,6 +49,7 @@ for date,id_string in [
     fl.image(s)
     fl.next('viz - signal')
     fl.image(s)
+    #fl.show();quit()
     print(ndshape(s))
     s_ = s['power',:-4].C
     print(ndshape(s_))
@@ -92,6 +94,7 @@ for date,id_string in [
     #s.convolve('t2',5)
     fl.plot(s['power',0]['ph2',-2]['ph1',1])
     fl.plot(s['power',-4]['ph2',-2]['ph1',1])
+    fl.show();quit()
     s = s['ph2',-2]['ph1',1]
     enhancement = s['t2':(-50,50)].C
     #enhancement = s.C
