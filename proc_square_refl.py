@@ -161,11 +161,11 @@ for date, id_string,corrected_volt in [
     for j in range(2):
         fl.plot(d['ch',j], label='channel %d real'%j,
                 alpha=0.5)
-        fl.plot(d['ch',j].imag, label='channel %d imag'%j,
-                alpha=0.5)
+        #fl.plot(d['ch',j].imag, label='channel %d imag'%j,
+                #alpha=0.5)
         #fl.show();quit()
     d.setaxis('t',lambda x: x-pulse_start)
-
+    #fl.show();quit()
     #print("NOTE!!! the demodulated reflection looks bad -- fix it")
     # to use the phase of the reference to set both, we could do:
     # pulse_phase = d['ch',0].C.sum('t')
@@ -247,17 +247,19 @@ for date, id_string,corrected_volt in [
     d.ft('t')
     d = phasecorrect(d['ch',1])
     fl.next('phased f domain')
-
-    fl.plot(d, label = 'refl real')
+    fl.plot(d['ch',1], label = 'refl real')
     fl.next('phased t domain')
     d.ift('t')
     fl.plot(d)
+    fl.show();quit()
     #fl.plot(d['ch',1].imag, label = 'refl imag')
     #fl.plot(d['ch',0].real, label = 'control real')
     #fl.plot(d['ch',0].imag, label = 'control imag')
     #fl.show();quit()
     #quit()# Inverse Fourier Transform into t domain
-    decay = d['t':(-0.176e-6,2e-6),Human_units=False]
+    fl.next('decay')
+
+    decay = d['t':(-0.176e-6,2e-6)]
         #0.5*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0]))]
     fl.plot(decay)
     fl.show();quit()
