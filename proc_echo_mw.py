@@ -19,7 +19,8 @@ for date,id_string in [
         #('200130','echo_DNP_AG'),
         #('200225','DNP_echo_1'),
         #('200221','DNP_S179R1apR_one'),
-        ('2003056','DNP_15NS175R1a_pR_2'),
+        #('2003056','DNP_15NS175R1a_pR_2'),
+        ('200130','echo_DNP_5')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -79,13 +80,17 @@ for date,id_string in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('time domain -- after hermitian function test and phasing')
+
     fl.plot(s['ph2',-2]['ph1',1])
+
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
     s *= exp(-s.getaxis('t2')/10e-3)
     #s['t2':(35e-3,None)] = 0
     fl.next('FID slice, time domain -- after hermitian function test and phasing')
+
     fl.plot(s['ph2',-2]['ph1',1])
+
     fl.next('FID slice, freq domain -- after hermitian function test and phasing')
     s.ft('t2')
     s *= -1
