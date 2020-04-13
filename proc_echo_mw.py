@@ -86,7 +86,6 @@ for searchstr,freq_range,time_range in [
         'ph2',-2]['ph1',1])
     fl.next('hermitian test')
     fl.plot(residual)
-    # {{{ slice out the FID appropriately and phase correct
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0}, nearest=False)
     # {{{ implement zeroth-order correction
