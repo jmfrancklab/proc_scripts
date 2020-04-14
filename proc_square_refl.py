@@ -19,17 +19,13 @@ for date, id_string,corrected_volt in [
         ]:
     d = nddata_hdf5(date+'_'+id_string+'.h5/capture1',
                 directory=getDATADIR(exp_type='test_equip'))
-    print((d.get_units('t')))
-    d.set_units('t','s')
-    d.name('Amplitude').set_units('V')
+    d.set_units('t','s').name('Amplitude').set_units('V')
+    print(ndshape(d))
     fl.next('Raw signal %s'%id_string)
     if date == '191212':
         d['ch',0] *= 0.5
-    print("the t axis looks like this:",d.getaxis('t'))
-    fl.plot(d['ch',0],alpha=0.5,label='control') # turning off human
-                                                 #units forces plot in just V
+    fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
-    #fl.show();quit()
     # }}}
     # {{{ determining center frequency and convert to
     # analytic signal, show analytic signal
@@ -39,11 +35,13 @@ for date, id_string,corrected_volt in [
     center_frq = abs(d['ch',0]).argmax('t').item() # the center frequency is now the max of the freq peak    
     print(("initial guess at center frequency at %0.5f MHz"%(center_frq/1e6)))
     print(center_frq)
+    fl.next('Raw signal in freq domain, abs: %s'%id_string)
+    fl.plot(abs(d), human_units=False)
+    axvline(x=center_frq)
     d.ift('t') #Inverse Fourier Transform back to time domain to display the decaying exponential
     fl.next('Absolute value of analytic signal, %s'%id_string)
     fl.plot(abs(d['ch',0]), alpha=0.5, label='control') #plot the 'envelope' of the control 
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
-    #fl.show();quit()
     # }}}
     # {{{ determine the start and stop points for both
     # the pulse, as well as the two tuning blips
@@ -104,57 +102,12 @@ for date, id_string,corrected_volt in [
     #Cost function to correct zeroth order phasing
     pulse_start = test_data.argmin('t_shift').data
     #all data is now starting at min of t
+    # TODO here -- filter out frequencies very far from the center frequency
     d.ift('t') #Inverse Fourier Transform into t domain 
     # }}}
-    # {{{ I have modified the zeroth order phasing --
-    # just ignore for now -- JF (though I explain for
-    # myself)
-    #def zeroth_order_ph(d, plot_name=None):
-
-        #r'''determine the covariance of the datapoints
-        #in complex plane, and use to phase the
-        #zeroth-order even if the data is both negative
-        #and positive'''
-        #eigenValues, eigenVectors = eig(cov(c_[
-            #d.data.real,
-            #d.data.imag].T
-            #))
-        # next 3 lines from stackexchange -- sort by
-        # eigenvalue
-        #idx = eigenValues.argsort()[::-1]   
-        #eigenValues = eigenValues[idx]
-        #eigenVectors = eigenVectors[:,idx]
-        # determine the phase angle from direction of the
-        # largest principle axis
-        #ph0 = arctan2(eigenVectors[1,0],eigenVectors[0,0])
-        #if plot_name:
-            #eigenVectors *= (eigenValues.reshape(-1,2)*ones((2,1)))/eigenValues.max()*abs(d.data).max()
-            #d_forplot = d.C
-            #fl.next(plot_name)
-            #fl.plot(
-                    #d_forplot.data.real,
-                    #d_forplot.data.imag,
-                    #'.',
-                    #alpha=0.25,
-                    #label='before'
-                    #)
-            #d_forplot /= exp(1j*ph0)
-            #fl.plot(
-                    #d_forplot.data.real,
-                    #d_forplot.data.imag,
-                    #'.',
-                    #alpha=0.25,
-                    #label='after'
-                    #)
-            #fl.plot(0,0,'ko')
-            #fl.plot(eigenVectors[0,0],eigenVectors[1,0],'o',
-                    #label='first evec')
-            #fl.plot(eigenVectors[0,1],eigenVectors[1,1],'o')
-        #return exp(1j*ph0)
-    #for j in range(2):
-        #ph0 = zeroth_order_ph(d['ch',j], plot_name='phasing')
-        #d['ch',j] /= ph0
-        # }}}
+    for j in range(2):
+        ph0 = zeroth_order_ph(d['ch',j])
+        d['ch',j] /= ph0
     fl.next('demodulated and phased data')
     #d = d['t':(2e-06,4e-06)]
 
@@ -181,9 +134,8 @@ for date, id_string,corrected_volt in [
         fl.plot(d['ch',j].imag, alpha=0.3, label='imag')
         fl.plot(abs(d['ch',j]), alpha=0.3, color='k', linewidth=2,
                 label='abs')
-        #fl.show();quit()
     # }}}
-        # {{{ to plot the transfer function, we need to pick an impulse
+    # {{{ to plot the transfer function, we need to pick an impulse
     # of finite width, or else we get a bunch of noise
     transf_range = (-0.5e-6,3e-6)
     fl.next('the transfer function')
@@ -291,4 +243,4 @@ for date, id_string,corrected_volt in [
     fl.plot(decay, label='data')
     fl.plot(decay.imag, label='data (imag, not fit)')
     print(Q)
-    fl.show();quit()
+fl.show()
