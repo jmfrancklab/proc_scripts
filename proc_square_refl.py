@@ -1,6 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import minimize,leastsq
+
 from hermitian_function_test import zeroth_order_ph
+
 init_logging(level='debug')
 # 2to3 JF 1/31
 
@@ -11,9 +13,9 @@ for date, id_string,corrected_volt in [
         #('181001','sprobe_t2',True),
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
-        #('200110','pulse_2',True),
+        ('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103','pulse_1',True),
+        #('200103','pulse_1',True),
         ]:
     d = nddata_hdf5(date+'_'+id_string+'.h5/capture1',
                 directory=getDATADIR(exp_type='test_equip'))
@@ -109,22 +111,65 @@ for date, id_string,corrected_volt in [
     # myself)
     #def zeroth_order_ph(d, plot_name=None):
 
+        #r'''determine the covariance of the datapoints
+        #in complex plane, and use to phase the
+        #zeroth-order even if the data is both negative
+        #and positive'''
+        #eigenValues, eigenVectors = eig(cov(c_[
+            #d.data.real,
+            #d.data.imag].T
+            #))
+        # next 3 lines from stackexchange -- sort by
+        # eigenvalue
+        #idx = eigenValues.argsort()[::-1]   
+        #eigenValues = eigenValues[idx]
+        #eigenVectors = eigenVectors[:,idx]
+        # determine the phase angle from direction of the
+        # largest principle axis
+        #ph0 = arctan2(eigenVectors[1,0],eigenVectors[0,0])
+        #if plot_name:
+            #eigenVectors *= (eigenValues.reshape(-1,2)*ones((2,1)))/eigenValues.max()*abs(d.data).max()
+            #d_forplot = d.C
+            #fl.next(plot_name)
+            #fl.plot(
+                    #d_forplot.data.real,
+                    #d_forplot.data.imag,
+                    #'.',
+                    #alpha=0.25,
+                    #label='before'
+                    #)
+            #d_forplot /= exp(1j*ph0)
+            #fl.plot(
+                    #d_forplot.data.real,
+                    #d_forplot.data.imag,
+                    #'.',
+                    #alpha=0.25,
+                    #label='after'
+                    #)
+            #fl.plot(0,0,'ko')
+            #fl.plot(eigenVectors[0,0],eigenVectors[1,0],'o',
+                    #label='first evec')
+            #fl.plot(eigenVectors[0,1],eigenVectors[1,1],'o')
+        #return exp(1j*ph0)
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j])
         d['ch',j] /= ph0
         # }}}
-    
     fl.next('demodulated and phased data')
-    #d = d['t':(2e-06,4e-06)]
-    
+    d.ft('t')
+    fl.plot(d)
+    #fl.show();quit()
+    d = d['t':(-1.4e6,1.6e6)]
+    d.ift('t') 
     for j in range(2):
         fl.plot(d['ch',j], label='channel %d real'%j,
                 alpha=0.5)
         fl.plot(d['ch',j].imag, label='channel %d imag'%j,
                 alpha=0.5)
         #fl.show();quit()
-    d.setaxis('t',lambda x: x-pulse_start)
-
+    #d = d['t':(0,10)]
+    #d.setaxis('t',lambda x: x-pulse_start)
+    #fl.show();quit()
     #print("NOTE!!! the demodulated reflection looks bad -- fix it")
     # to use the phase of the reference to set both, we could do:
     # pulse_phase = d['ch',0].C.sum('t')
@@ -142,9 +187,9 @@ for date, id_string,corrected_volt in [
                 label='abs')
         #fl.show();quit()
     # }}}
-    # {{{ to plot the transfer function, we need to pick an impulse
+        # {{{ to plot the transfer function, we need to pick an impulse
     # of finite width, or else we get a bunch of noise
-    transf_range = (-0.5e-6,3e-6)
+    transf_range = (-1.4e-6,1.6e-6)
     fl.next('the transfer function')
     impulse = exp(-d.fromaxis('t')**2/2/(0.03e-6)**2) #impulse function
     ## the following gives a possibility for a causal impulse
@@ -156,7 +201,7 @@ for date, id_string,corrected_volt in [
     transf = d['ch',1]/d['ch',0] #defining transfer function
     impulse.ft('t') #applies FT to impulse function
     response = impulse*transf #defines response
-    response.ift('t') #Inverse Fourier transforms the response (which includes the impulse)
+    response.ift('t', shift=False) #Inverse Fourier transforms the response (which includes the impulse)
     response = response['t':transf_range] #defines x axis range of response
     fl.plot(response.real, alpha=0.5, label='response, real')
     fl.plot(response.imag, alpha=0.5, label='response, imag')
@@ -164,7 +209,10 @@ for date, id_string,corrected_volt in [
     #fl.show();quit()
     fl.next('Plotting the decay slice')
     d.ift('t')
-    #print(nddata(r<<<<<< HEAD
+    fl.plot(d)
+    #fl.show();quit()
+    #print(nddata(refl_blip_ranges))
+
     dw = diff(d.getaxis('t')[0:2]).item()
     def phasecorrect(d):
         fl.push_marker() 
@@ -205,24 +253,30 @@ for date, id_string,corrected_volt in [
     d.ft('t')
     d = phasecorrect(d['ch',1])
     fl.next('phased f domain')
-
     fl.plot(d, label = 'refl real')
+    #fl.show();quit()
+    #d.ft('t')
+    #d['t':(6,None)]=0
+    #d['t':(None,-20)]=0
     fl.next('phased t domain')
     d.ift('t')
     fl.plot(d)
+    #fl.show();quit()
     #fl.plot(d['ch',1].imag, label = 'refl imag')
     #fl.plot(d['ch',0].real, label = 'control real')
     #fl.plot(d['ch',0].imag, label = 'control imag')
     #fl.show();quit()
     #quit()# Inverse Fourier Transform into t domain
-    decay = d['t':(-0.176e-6,2e-6),Human_units=False]
+    fl.next('decay')
+
+    decay = d['t':(3e-6,5e-6)]
         #0.5*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0]))]
     fl.plot(decay)
-    fl.show();quit()
-
+    #fl.show();quit()
     # slice out a range from the start of the first
     # blip up to halfway between the END of the first
     # blip and the start of the second
+    fl.next('fit')
     decay = decay.setaxis('t',lambda x: x-decay.getaxis('t')[0])
     # }}}
     fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
