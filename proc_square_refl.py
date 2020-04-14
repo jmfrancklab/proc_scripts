@@ -151,20 +151,24 @@ for date, id_string,corrected_volt in [
                     #label='first evec')
             #fl.plot(eigenVectors[0,1],eigenVectors[1,1],'o')
         #return exp(1j*ph0)
-    #for j in range(2):
-        #ph0 = zeroth_order_ph(d['ch',j], plot_name='phasing')
-        #d['ch',j] /= ph0
+    for j in range(2):
+        ph0 = zeroth_order_ph(d['ch',j])
+        d['ch',j] /= ph0
         # }}}
     fl.next('demodulated and phased data')
-    #d = d['t':(2e-06,4e-06)]
-
+    d.ft('t')
+    fl.plot(d)
+    #fl.show();quit()
+    d = d['t':(-1.4e6,1.6e6)]
+    d.ift('t') 
     for j in range(2):
         fl.plot(d['ch',j], label='channel %d real'%j,
                 alpha=0.5)
-        #fl.plot(d['ch',j].imag, label='channel %d imag'%j,
-                #alpha=0.5)
+        fl.plot(d['ch',j].imag, label='channel %d imag'%j,
+                alpha=0.5)
         #fl.show();quit()
-    d.setaxis('t',lambda x: x-pulse_start)
+    #d = d['t':(0,10)]
+    #d.setaxis('t',lambda x: x-pulse_start)
     #fl.show();quit()
     #print("NOTE!!! the demodulated reflection looks bad -- fix it")
     # to use the phase of the reference to set both, we could do:
@@ -185,7 +189,7 @@ for date, id_string,corrected_volt in [
     # }}}
         # {{{ to plot the transfer function, we need to pick an impulse
     # of finite width, or else we get a bunch of noise
-    transf_range = (-0.5e-6,3e-6)
+    transf_range = (-1.4e-6,1.6e-6)
     fl.next('the transfer function')
     impulse = exp(-d.fromaxis('t')**2/2/(0.03e-6)**2) #impulse function
     ## the following gives a possibility for a causal impulse
@@ -197,16 +201,16 @@ for date, id_string,corrected_volt in [
     transf = d['ch',1]/d['ch',0] #defining transfer function
     impulse.ft('t') #applies FT to impulse function
     response = impulse*transf #defines response
-    response.ift('t') #Inverse Fourier transforms the response (which includes the impulse)
+    response.ift('t', shift=False) #Inverse Fourier transforms the response (which includes the impulse)
     response = response['t':transf_range] #defines x axis range of response
     fl.plot(response.real, alpha=0.5, label='response, real')
     fl.plot(response.imag, alpha=0.5, label='response, imag')
     fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
     #fl.show();quit()
     fl.next('Plotting the decay slice')
-
     d.ift('t')
-
+    fl.plot(d)
+    #fl.show();quit()
     #print(nddata(refl_blip_ranges))
 
     dw = diff(d.getaxis('t')[0:2]).item()
@@ -251,8 +255,8 @@ for date, id_string,corrected_volt in [
     fl.next('phased f domain')
     fl.plot(d, label = 'refl real')
     #fl.show();quit()
-        #d.ft('t')
-    d['t':(30,None)]=0
+    #d.ft('t')
+    #d['t':(6,None)]=0
     #d['t':(None,-20)]=0
     fl.next('phased t domain')
     d.ift('t')
@@ -265,7 +269,7 @@ for date, id_string,corrected_volt in [
     #quit()# Inverse Fourier Transform into t domain
     fl.next('decay')
 
-    decay = d['t':(0.5e-6,2e-6)]
+    decay = d['t':(3e-6,5e-6)]
         #0.5*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0]))]
     fl.plot(decay)
     #fl.show();quit()
