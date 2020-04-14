@@ -13,7 +13,7 @@ rcParams['figure.figsize'] = [10,6]
 # In[ ]:
 
 
-date,id_string = '190813','echo_DNP'
+date,id_string = '200219','echo_DNP_1'
 
 
 # In[ ]:
@@ -37,7 +37,7 @@ print(ndshape(s))
 
 with figlist_var() as fl:
     fl.next(id_string+'raw data ')
-    fl.image(s)
+    #fl.image(s)
 
 
 # In[ ]:
@@ -58,7 +58,6 @@ s.ft(['ph1','ph2'])
 with figlist_var() as fl:
     fl.next('raw data')
     fl.image(s)
-
 
 # In[ ]:
 
@@ -305,8 +304,8 @@ test.sum('t2').real
 
 with figlist_var() as fl:
     fl.next('enhancement, programmed power')
-    fl.plot(enhancement/enhancement['power',0].data,'.',alpha=0.7,label='Preliminary phasing')
-    fl.plot(test/test['power',0].data,'.',alpha=0.7,label='After Hermitian symm phasing')
+    fl.plot(enhancement/nddata(enhancement['power',0].data),'.',alpha=0.7,label='Preliminary phasing')
+    fl.plot(test/nddata(test['power',0].data),'.',alpha=0.7,label='After Hermitian symm phasing')
     legend()
     savefig('20190814_enhancement_prog_power_phase_error.pdf',
             transparent=True,
@@ -378,8 +377,8 @@ tx_test.setaxis('power',tx_mon_power_list)
 
 with figlist_var() as fl:
     fl.next('enhancement, TX_MON power axis')
-    fl.plot(tx_enhancement/tx_enhancement['power',0].data,'.',alpha=0.7,label='Preliminary phasing')
-    fl.plot(tx_test/tx_test['power',0].data,'.',alpha=0.7,label='After Hermitian symm phasing')
+    fl.plot(tx_enhancement/nddata(tx_enhancement['power',0].data),'.',alpha=0.7,label='Preliminary phasing')
+    fl.plot(tx_test/nddata(tx_test['power',0].data),'.',alpha=0.7,label='After Hermitian symm phasing')
     legend()
     #xlim(0.0,0.2)
     savefig('20190814_enhancement_txmon_phase_error.pdf',
@@ -433,7 +432,7 @@ test.sum('t2').real
 with figlist_var() as fl:
     fl.next('enhancement, programmed power axis, manual phasing')
     #fl.plot(enhancement/enhancement['power',0].data,'.',alpha=0.7,label='Preliminary phasing')
-    fl.plot(test/test['power',0].data,'.',alpha=0.7)#,label='After Hermitian symm phasing')
+    fl.plot(test/nddata(test['power',0].data),'.',alpha=0.7)#,label='After Hermitian symm phasing')
     #legend()
     savefig('20190814_enhancement_prog_power_manual_phasing.pdf',
            transparent=True,
@@ -454,7 +453,7 @@ tx_test.setaxis('power',tx_mon_power_list)
 with figlist_var() as fl:
     fl.next('enhancement, TX_MON power axis, manual phasing')
     #fl.plot(tx_enhancement/tx_enhancement['power',0].data,'.',alpha=0.7)#,label='Preliminary phasing')
-    fl.plot(tx_test/tx_test['power',0].data,'.',alpha=0.7)#,label='After Hermitian symm phasing')
+    fl.plot(tx_test/nddata(tx_test['power',0].data),'.',alpha=0.7)#,label='After Hermitian symm phasing')
     #legend()
     #xlim(0.0,0.2)
     savefig('20190814_enhancement_txmon_power_manula_phasing.pdf',

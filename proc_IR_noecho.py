@@ -181,8 +181,8 @@ d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
 this_l = 0.039#pick number in l curve right before it curves up
 soln = d.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
 soln.reorder('t2',first=False)
-soln.rename('T1','log(T1)')
-soln.setaxis('log(T1)',log10(T1.data))
+soln.rename('T1','log(T1/s)')
+soln.setaxis('log(T1/s)',log10(T1.data))
 fl.next('water loading 8')
 fl.image(soln['t2':(100,300)])
 

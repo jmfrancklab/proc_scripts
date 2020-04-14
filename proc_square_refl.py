@@ -13,9 +13,9 @@ for date, id_string,corrected_volt in [
         #('181001','sprobe_t2',True),
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
-        #('200110','pulse_2',True),
+        ('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103','pulse_1',True),
+        #('200103','pulse_1',True),
         ]:
     d = nddata_hdf5(date+'_'+id_string+'.h5/capture1',
                 directory=getDATADIR(exp_type='test_equip'))
@@ -265,7 +265,7 @@ for date, id_string,corrected_volt in [
     #quit()# Inverse Fourier Transform into t domain
     fl.next('decay')
 
-    decay = d['t':(-0.17e-6,2e-6)]
+    decay = d['t':(0.5e-6,2e-6)]
         #0.5*(refl_blip_ranges[0,1]+refl_blip_ranges[1,0]))]
     fl.plot(decay)
     #fl.show();quit()
@@ -289,6 +289,6 @@ for date, id_string,corrected_volt in [
     #relating the fit function to Q
     fl.plot(fitfunc(p_opt), label='fit')
     fl.plot(decay, label='data')
-    #fl.plot(decay.imag, label='data (imag, not fit)')
+    fl.plot(decay.imag, label='data (imag, not fit)')
     print(Q)
     fl.show();quit()
