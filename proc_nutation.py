@@ -6,9 +6,9 @@ from numpy import *
 fl = figlist_var()
 t2 = symbols('t2')
 
-date = '191212'
+date = '200219'
 for id_string in [
-    'nutation_2',
+    'nutation_alex_probe',
     ]:
     #{{{ Loading in data
     filename = date+'_'+id_string+'.h5'
@@ -28,12 +28,12 @@ for id_string in [
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
     s.ft(['ph2','ph1'])
-    rough_center = abs(s)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    rough_center = abs(s)['ph2',0]['ph1',1].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
         
     # }}}
     # {{{ centering of data using hermitian function test
-    residual,best_shift = hermitian_function_test(s['ph2',0]['ph1',0])
+    residual,best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     fl.next('hermitian test')
     fl.plot(residual)
     print("best shift is",best_shift)
@@ -50,9 +50,10 @@ for id_string in [
     fl.next('frequency domain (all $\\Delta p$)')
     s.ft('t2',pad=4096)
     fl.image(s)
+    #fl.show();quit()
     #}}}
     #{{{ selecting coherence and convolving
-    s = s['ph2',0]['ph1',0].C
+    s = s['ph2',0]['ph1',1].C
     fl.next('select $\\Delta p$ and convolve')
     s.convolve('t2',50)
     fl.image(s)
@@ -79,9 +80,10 @@ for id_string in [
     fl.next('real')
     fl.image(s.real)
     my_clim = gci().get_clim()
-    fl.next('imag')
-    fl.image(s.imag)
-    gci().set_clim(my_clim) # to match real
+    
+    #fl.next('imag')
+    #fl.image(s.imag)
+    #gci().set_clim(my_clim) # to match real
     #}}}
     #        
     #fl.next(id_string+'image -- $B_1$ distribution')
