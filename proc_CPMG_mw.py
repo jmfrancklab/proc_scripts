@@ -9,7 +9,10 @@ for date,id_string in [
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
-            #{{{ pulling acq params
+    #{{{ pulling acq params
+    s.setaxis('power',r_[
+        0,dBm2power(array(s.get_prop('meter_powers'))+20)]
+        ).set_units('power','W')
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
@@ -99,17 +102,14 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    power_axis_dBm = array(s.get_prop('meter_powers'))
-    power_axis_W = zeros_like(power_axis_dBm)
-    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
-    T2_values = ones_like(power_axis_W)
+    T2_values = ones(ndshape(s)['power'])
     find_T2 = True
     #{{{ find T2
     if find_T2:
-        for k in range(len(power_axis_W)):
+        for k in range(ndshape(s)['power']):
         #for k in [1,5,10,15,19]:
             data = s['t2':0]['power',k]
-            fl.next('Echo decay (power = %f W)'%power_axis_W[k])
+            fl.next('Echo decay (power = %f W)'%s.getaxis('power')[k])
             x = tE_axis
             ydata = data.data.real
             if ydata[0] < 1:
@@ -129,7 +129,7 @@ for date,id_string in [
             T2_values[k] = T2
             print("T2:",T2,"s")
         fl.next('T2 vs power')
-        fl.plot(power_axis_W[:-3],T2_values[:-3],'.')
+        fl.plot(s.getaxis('power')[:-3],T2_values[:-3],'.')
         xlabel('Power (W)')
         ylabel('T2 (seconds)')
     #}}}
@@ -139,7 +139,7 @@ for date,id_string in [
     enhanced = enhancement.data[1:].real
     enhanced /= max(enhanced)
     fl.next('150 uL TEMPOL enhancement (first echo of CPMG train)')
-    fl.plot(power_axis_W[:-3],enhanced[:-3],'.',human_units=False)
+    fl.plot(s.getaxis('power')[:-3],enhanced[:-3],'.',human_units=False)
     #fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
     xlabel('Power (W)')
     ylabel('Enhancement')

@@ -1,4 +1,5 @@
 from pyspecdata import *
+from utility import dBm2power
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from hermitian_function_test import hermitian_function_test, zeroth_order_ph
 from sympy import symbols
@@ -66,6 +67,15 @@ for searchstr,freq_range,time_range in [
     nodename = 'signal'
     s = nddata_hdf5(filename+'/signal',
             directory=dirname)
+    prog_power = s.getaxis('power').copy()
+    print("programmed powers",prog_power)
+    s.setaxis('power',r_[
+        0,dBm2power(array(s.get_prop('meter_powers'))+20)]
+        ).set_units('power','W')
+    print("meter powers",s.get_prop('meter_powers'))
+    print("actual powers",s.getaxis('power'))
+    print("ratio of actual to programmed power",
+                s.getaxis('power')/prog_power)
     nPoints = s.get_prop('acq_params')['nPoints']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
@@ -131,18 +141,7 @@ for searchstr,freq_range,time_range in [
     fl.next('enhancement')
     enhancement = s['t2':(-50,50)].C.sum('t2').real
     enhancement /= enhancement['power',0]
-    fl.plot(enhancement['power',:idx_maxpower+1],'ko')
-    fl.plot(enhancement['power',idx_maxpower+1:],'ro')
-    # {{{ manually calculated power axis
-    # this needs to be resolved and I posted to slack
-    # about this
-    power_axis_dBm = array(s.get_prop('meter_powers')[:-4])
-    power_axis_W = zeros_like(power_axis_dBm)
-    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
-    power_axis_W = r_[0,power_axis_W]
-    print('power axis from file',s.getaxis('power'))
-    print("manually calculated enhancement",power_axis_W)
-    print("ratio",power_axis_W/s.getaxis('power')[0:len(power_axis_W)])
-    # }}}
+    fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
+    fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
     ylabel('Enhancement')
 fl.show();quit()
