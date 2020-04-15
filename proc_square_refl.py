@@ -3,9 +3,9 @@ from scipy.optimize import minimize,leastsq
 
 from hermitian_function_test import zeroth_order_ph
 
-do_slice = False
-standard_cost = False
-show_transfer_func = False
+do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
+standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
+show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
 init_logging(level='debug')
 # 2to3 JF 1/31
 
