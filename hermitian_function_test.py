@@ -58,6 +58,7 @@ def zeroth_order_ph(d, fl=None):
         rotation_vector = mean_vec - assymetry_mag*eigenVectors[:,0]
     ph0 = arctan2(rotation_vector[1],rotation_vector[0])
     if fl:
+        fl.push_marker()
         d_forplot = d.C
         fl.next('check covariance test')
         fl.plot(
@@ -94,6 +95,7 @@ def zeroth_order_ph(d, fl=None):
         ax = gca()
         ax.set_aspect('equal', adjustable='box')
         ax.add_patch(ell)
+        fl.pop_marker()
     return exp(1j*ph0)
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
     r"""determine the center of the echo
