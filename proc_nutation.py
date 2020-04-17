@@ -79,8 +79,7 @@ for id_string in [
     fl.image(s)
     fl.next('real')
     fl.image(s.real)
-    my_clim = gci().get_clim()
-    
+    s.balance_clim(-2500,2500)    
     #fl.next('imag')
     #fl.image(s.imag)
     #gci().set_clim(my_clim) # to match real
