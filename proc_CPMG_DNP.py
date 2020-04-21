@@ -5,6 +5,7 @@
 
 
 from pyspecdata import *
+from utility import dBm2power
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
@@ -15,7 +16,10 @@ for date,id_string in [
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
-            #{{{ pulling acq params
+    #{{{ pulling acq params
+    s.setaxis('power',r_[
+        0,dBm2power(array(s.get_prop('meter_powers'))+20)]
+        ).set_units('power','W')
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
@@ -102,17 +106,12 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    power_axis_dBm = array(s.get_prop('meter_powers'))
-    power_axis_W = zeros_like(power_axis_dBm)
-    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
 
 
 # In[6]:
 
 
-power_axis_W = r_[0,power_axis_W[:-3]]
 d = s['power',:-3]['t2':(-100,150)].C.sum('t2')
-d.setaxis('power',power_axis_W)
 data = d['power',-1].C
 data = data.data
 tau = tE_axis

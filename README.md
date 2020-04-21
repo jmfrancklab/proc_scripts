@@ -10,3 +10,5 @@ The documentation is not extensive, but feel free to contact us jmfranck [at] sy
 Additionally, the code in this directory is undergoing a major restructuring effort to make it more accessible.
 However, a manuscript describing the implementation of this package in the context of Overhauser DNP
 (enhanced Nuclear Magnetic Resonance) is forthcoming.
+
+This code was principally developed by A Beaton in the Franck lab at Syracuse University, with some contributions by A Guinness and S Betts.

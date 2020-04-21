@@ -10,8 +10,9 @@ def align_and_slice(s, dimension='t2', convwidth=500, threshold=0.05, fl=None):
     s_conv = s.C*exp(-R * abs(s.fromaxis(dimension)))
     s_conv_save = s.C
     s_conv.ft(dimension)
-    fl.next('check for center')
-    fl.image(abs(s_conv))
+    if fl is not None:
+        fl.next('check for center')
+        fl.image(abs(s_conv))
     center_frq = abs(s_conv).argmax(dimension)
     s *= exp(-1j*2*pi*center_frq*s.fromaxis(dimension))
     s_conv = s_conv_save * exp(-1j*2*pi*center_frq*s.fromaxis(dimension))
