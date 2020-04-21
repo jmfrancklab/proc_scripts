@@ -1,4 +1,5 @@
 from pyspecdata import *
+init_logging(level='debug')
 
 #{{{ code bit from proc_IR
 from scipy.optimize import leastsq,minimize
@@ -117,7 +118,6 @@ s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
 s_sliced.sum('t2')
 fl.plot(s_sliced,'o')
 #}}}
-s_sliced.rename('vd','fit_axis')
 print(ndshape(s_sliced))
 print("BEGINNING T1 CURVE...")
 f = t1curve(s_sliced)
@@ -127,5 +127,8 @@ fl.next('t1 test')
 fl.plot(f,'o',label=f.name())
 f.fit()
 fl.plot(f.eval(100),label='%s fit'%f.name())
+text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
+        horizontalalignment='center', color = 'k')
 print("output:",f.output())
+print("latex:",f.latex())
 fl.show();quit()
