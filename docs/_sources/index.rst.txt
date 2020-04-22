@@ -1,5 +1,12 @@
 The processing will be structured into multiple levels.
 
+.. toctree::
+    :maxdepth: 3
+
+    index
+    phasing 
+    align
+
 Lowest level
 ============
 
@@ -26,6 +33,7 @@ than the application scripts here).
 
 First level in this repo
 ========================
+
 
 Currently, we have the following modules that provide
 functions intended to be reused.  We will refer to
