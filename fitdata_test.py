@@ -142,6 +142,9 @@ quit()
 print("f is ",lsafen(f))
 fl.next('t1 test')
 fl.plot(f,'o',label=f.name())
+print("symbolic variables:",f.symbolic_vars) # so I know the ordering for the next step
+fl.plot(f.fitfunc_multiarg(-3000,3000,1,f.fromaxis('vd')))
+fl.plot(f.getaxis('vd'),f.fitfunc_raw(r_[-3000,3000,1],f.getaxis('vd')),'--')
 f.fit()
 fl.plot(f.eval(100),label='%s fit'%f.name())
 text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
