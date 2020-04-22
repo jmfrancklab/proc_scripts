@@ -120,11 +120,18 @@ fl.plot(s_sliced,'o')
 #}}}
 print(ndshape(s_sliced))
 print("BEGINNING T1 CURVE...")
-f = t1curve(s_sliced)
-print("Functional format",f.function_string)
-print("f is ",lsafen(f))
+f = fitdata(s_sliced)
+M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 vd", real=True)
+f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
+print("Functional form",f.functional_form)
+print("Function string",f.function_string)
+f.fit_coeff = r_[-1,1,1]
+#print("f is ",lsafen(f))
 fl.next('t1 test')
 fl.plot(f,'o',label=f.name())
+print("symbolic variables:",f.symbolic_vars) # so I know the ordering for the next step
+fl.plot(f.fitfunc_multiarg(-3000,3000,1,f.fromaxis('vd')))
+fl.plot(f.getaxis('vd'),f.fitfunc_raw(r_[-3000,3000,1],f.getaxis('vd')),'--')
 f.fit()
 fl.plot(f.eval(100),label='%s fit'%f.name())
 text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
