@@ -4,8 +4,6 @@ The processing will be structured into multiple levels.
     :maxdepth: 3
 
     index
-    phasing 
-    align
 
 Lowest level
 ============
@@ -34,11 +32,16 @@ than the application scripts here).
 First level in this repo
 ========================
 
+.. for some reason, these show up twice in the left menu -- needs to be fixed
+
+.. toctree::
+
+    first_level/phasing 
+    first_level/align
 
 Currently, we have the following modules that provide
 functions intended to be reused.  We will refer to
 these as "first level" routines:
-
 -   :doc:`Phasing module <./phasing>` (zero and first order phasing)
 -   :doc:`Alignment module <./align>` (aligning peaks that are drifting in frequency)
 
