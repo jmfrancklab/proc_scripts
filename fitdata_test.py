@@ -121,7 +121,24 @@ fl.plot(s_sliced,'o')
 print(ndshape(s_sliced))
 print("BEGINNING T1 CURVE...")
 f = t1curve(s_sliced)
-print("Functional format",f.function_string)
+#x = s_sliced.getaxis('vd')
+
+# based off fit_func_raw_symb, pulling the parameters of the equation and the
+# fit parameter and expressing them as sympy symbols
+p = list(map(sympy.var,f.symbol_list))
+x = sympy.var(f.fit_axis)
+
+# generating sympy equation using these symbols
+sympy_expr = p[0]+(p[1]-p[0])*sympy.exp(-x/p[2])
+
+# trying to set the attribute -- error here
+f.functional_form=sympy_expr
+#f.functional_form(f.function_string)
+
+
+#print("Functional format",f.function_string)
+#print(f.functional_form(f.function_string))
+quit()
 print("f is ",lsafen(f))
 fl.next('t1 test')
 fl.plot(f,'o',label=f.name())
