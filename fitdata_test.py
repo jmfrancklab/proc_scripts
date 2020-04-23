@@ -134,8 +134,8 @@ fl.plot(f.fitfunc_multiarg(-3000,3000,1,f.fromaxis('vd')))
 fl.plot(f.getaxis('vd'),f.fitfunc_raw(r_[-3000,3000,1],f.getaxis('vd')),'--')
 f.fit()
 fl.plot(f.eval(100),label='%s fit'%f.name())
-text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
-        horizontalalignment='center', color = 'k')
-print("output:",f.output())
-print("latex:",f.latex())
+#text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
+        #horizontalalignment='center', color = 'k')
+#print("output:",f.output())
+#print("latex:",f.latex())
 fl.show();quit()
