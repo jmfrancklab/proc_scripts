@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Lowest level &mdash; proc_scripts 0.9 documentation</title>
+  <title>&lt;no title&gt; &mdash; proc_scripts 0.9 documentation</title>
   
 
   
@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -34,7 +34,8 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Lowest level" href="intro.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -82,14 +83,13 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">Lowest level</a></li>
-<li><a class="reference internal" href="#first-level-in-this-repo">First level in this repo</a></li>
-<li><a class="reference internal" href="#second-level-in-this-repo">Second level in this repo</a></li>
-<li><a class="reference internal" href="#top-level">Top level</a></li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#first-level-in-this-repo">First level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#top-level">Top level</a></li>
 </ul>
-</div>
+
             
           
         </div>
@@ -133,7 +133,7 @@
     
       <li><a href="#">Docs</a> &raquo;</li>
         
-      <li>Lowest level</li>
+      <li>&lt;no title&gt;</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -152,87 +152,34 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <p>The processing will be structured into multiple levels.</p>
-<div class="section" id="lowest-level">
-<h1>Lowest level<a class="headerlink" href="#lowest-level" title="Permalink to this headline">¶</a></h1>
-<p>At the lowest level lives <a class="reference external" href="http://jmfrancklab.github.io/pyspecdata">pySpecData</a>, which
-provides an object-oriented structure (nddata) for
-storing all information about code (<em>e.g.</em> data, error,
-axes, units, and names of dimensions) in a single
-“container” (technically called an “object”), as well
-as routines (“methods”) for manipulating that data
-(doing things like Fourier transforming, taking sums,
-etc. etc.).
-pySpecData provides a fundamentally unique was of
-dealing with spectroscopic data in Python
-(it enables things like <code class="docutils literal notranslate"><span class="pre">d['t2':(0.1,0.5)]</span></code> to slice
-out times from 0.1 to 0.5 s, automatic relabeling of
-axes during a Fourier transform, and automatic
-propagation of error, to name a few).
-If there are more efficient ways of dealing with axes,
-specifying data slices, dealing with Fourier <em>vs.</em>
-time-domain data, these are all implemented at the
-pySpecData level (which lives in a different repository
-than the application scripts here).</p>
-</div>
-<div class="section" id="first-level-in-this-repo">
-<h1>First level in this repo<a class="headerlink" href="#first-level-in-this-repo" title="Permalink to this headline">¶</a></h1>
-<p>Currently, we have the following modules that provide
-functions intended to be reused.  We will refer to
-these as “first level” routines:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="phasing.html"><span class="doc">Phasing module</span></a> (zero and first order phasing)</p></li>
-<li><p><a class="reference internal" href="align.html"><span class="doc">Alignment module</span></a> (aligning peaks that are drifting in frequency)</p></li>
+  <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#first-level-in-this-repo">First level in this repo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="first_level/phasing.html">Phasing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="first_level/align.html">Alignment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html#top-level">Top level</a></li>
 </ul>
 </div>
-<div class="section" id="second-level-in-this-repo">
-<h1>Second level in this repo<a class="headerlink" href="#second-level-in-this-repo" title="Permalink to this headline">¶</a></h1>
-<p>We are currently in the process of identifying the most
-up to date code that does each of the following tasks,
-and each will be separated into a function inside an
-appropriate module, and added to the previous list.
-At least parts of this should be relevant to most
-data processing tasks involving ODNP or relaxometry.
-We will refer to these as “second level”
-routines, since they use the “first level” routines:</p>
-<ul class="simple">
-<li><p>load raw data, and put into appropriately shaped nddata (whether
-Bruker or Spincore) → most up to date is in the processing code
-associated with ODNP aquisition, which currently lives in
-<code class="docutils literal notranslate"><span class="pre">run_Hahn_echo_mw.py</span></code> in <code class="docutils literal notranslate"><span class="pre">spincore_apps/SpinCore_pp</span></code></p></li>
-<li><p>Convert short spin echoes into appropriately sliced and phased FIDs
-→ most up to date in <code class="docutils literal notranslate"><span class="pre">proc_echo_mw.py</span></code></p></li>
-<li><p>Integrate and phase the integrals → most up to date in <code class="docutils literal notranslate"><span class="pre">proc_IR.py</span></code></p></li>
-<li><p>Fit the integrals with a relevant curve → Sam’s version of
-<code class="docutils literal notranslate"><span class="pre">proc_echo_mw.py</span></code></p></li>
-<li><p>Any potentially reusable code in the Q test code → <code class="docutils literal notranslate"><span class="pre">proc_square_refl.py</span></code></p></li>
-</ul>
-</div>
-<div class="section" id="top-level">
-<h1>Top level<a class="headerlink" href="#top-level" title="Permalink to this headline">¶</a></h1>
-<p>Finally, we will construct higher-level functions, all
-in a single module, that utilize these to</p>
-<span class="target" id="module-toplevel"></span><p>(<em>e.g.</em>) process an ODNP dataset, process a <sup>2</sup>H
-CPMG relaxometry dataset, <em>etc.</em></p>
-<p>These are the <em>top level</em> routines, because they use
-second-level routines.  For the sake of organization,
-there are <strong>only three levels</strong> of functions,
-and all the top level functions live in <code class="docutils literal notranslate"><span class="pre">toplevel.py</span></code>.
-(The top level functions will replace the current
-independent processing scripts).</p>
-<p>The idea is that these <strong>only</strong> accept file names and
-simple numbers and true-false values are arguments.
-They should consist <strong>mostly or entirely</strong> of
-second-level functions.
-The idea is that you would call these either from a GUI
-or from your notebook directory.</p>
-</div>
+<p>This is the documentation for a set of processing scripts based on the
+<a class="reference external" href="https://jmfrancklab.github.io/pyspecdata">pyspecdata</a> module.</p>
+<p>Start on the <a class="reference internal" href="intro.html"><span class="doc">intro</span></a> page, or browse the documentation to the left.</p>
 
 
            </div>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="intro.html" class="btn btn-neutral float-right" title="Lowest level" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
   
 
   <hr/>

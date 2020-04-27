@@ -1,7 +1,7 @@
 from pyspecdata import *
 from utility import dBm2power
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from proc_scripts import hermitian_function_test, zeroth_order_ph
 from sympy import symbols
 rcParams["savefig.transparent"] = True
 def expand_limits(thisrange,d):
