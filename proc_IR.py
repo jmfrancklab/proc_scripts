@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from pyspecdata.load_files.bruker_nmr import bruker_data
-from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from proc_scripts import hermitian_function_test, zeroth_order_ph,load_data
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -14,11 +14,13 @@ coh_sel = {'ph1':0,
         'ph2':1}
 coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
+expno = 2
+s = load_data('w12_200309')
 # }}}
-for exp_name,expno in [
-        ('w12_200309',2),
-        ]:
-    s = find_file(exp_name, exp_type='NMR_Data_AG', dimname = 'indirect', expno=expno)
+#for exp_name,expno in [
+#        ('w12_200309',2),
+#        ]:
+#    s = find_file(exp_name, exp_type='NMR_Data_AG', dimname = 'indirect', expno=expno)
 s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
 s.reorder(['ph2','ph1']).set_units('t2','s')
 fl.next('raw data')
