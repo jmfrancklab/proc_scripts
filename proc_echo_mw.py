@@ -5,37 +5,24 @@ from proc_scripts import *
 from sympy import symbols
 rcParams["savefig.transparent"] = True
 
-#def draw_limits(thisrange,d):
-#    full_range = d.getaxis('t2')[r_[0,-1]]
-#    dw = diff(d.getaxis('t2')[:2]).item()
-#    print("I find the full range to be",full_range)
-#    sgn = [-1,1] # add or subtract
-#    pairs = [[thisrange[j],full_range[j]+0.5*dw*sgn[j]] for j in range(2)]
-#    pairs[0] = pairs[0][::-1] # flip first
-#    my_xlim = gca().get_xlim() # following messes w/ xlim for some reason
-#    for j in pairs:
-#        if None not in j:
-#            print("drawing a vspan at",j)
-#            axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
-#    gca().set_xlim(my_xlim)
-class fl_mod (figlist_var):
-    def side_by_side(self,plotname,s,thisrange):
-        """a bit of a hack to get the two subplots into
-        the figure list -- also a good test for objective
-        figure list -- for each slice out 3x thisrange, and then
-        show the lines for thisrange"""
-        thisfig,(ax1,ax2) = subplots(1,2)
-        fl.next(plotname, fig=thisfig)
-        sca(ax1)
-        forplot = s['t2':expand_limits(thisrange,s)]
-        fl.image(forplot)
-        print("drawing limits",thisrange)
-        draw_limits(thisrange,forplot)
-        sca(ax2)
-        fl.image(forplot.C.cropped_log())
-        draw_limits(thisrange,forplot)
-        title('cropped log')
-        return
+#class fl_mod (figlist_var):
+#    def side_by_side(self,plotname,s,thisrange):
+#        """a bit of a hack to get the two subplots into
+#        the figure list -- also a good test for objective
+#        figure list -- for each slice out 3x thisrange, and then
+#        show the lines for thisrange"""
+#        thisfig,(ax1,ax2) = subplots(1,2)
+#        fl.next(plotname, fig=thisfig)
+#        sca(ax1)
+#        forplot = s['t2':expand_limits(thisrange,s)]
+#        fl.image(forplot)
+#        print("drawing limits",thisrange)
+#        draw_limits(thisrange,forplot)
+#        sca(ax2)
+#        fl.image(forplot.C.cropped_log())
+#        draw_limits(thisrange,forplot)
+#        title('cropped log')
+#        return
 fl = fl_mod()
 t2 = symbols('t2')
 # notice how I dramatically simplified the following
