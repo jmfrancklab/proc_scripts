@@ -1,36 +1,23 @@
 from pyspecdata import *
 from Utility import dBm2power
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from proc_scripts import hermitian_function_test, zeroth_order_ph, load_data
+from proc_scripts import * 
 from sympy import symbols
 rcParams["savefig.transparent"] = True
-def expand_limits(thisrange,d):
-    thisrange = list(thisrange)
-    full_range = d.getaxis('t2')[r_[0,-1]]
-    retval = array([thisrange[j] if thisrange[j] is not
-            None else full_range[j] for j in [0,-1]])
-    print(repr(retval))
-    m = mean(retval)
-    d = m-retval
-    retval = 3*d+m
-    sgn = [-1,1] # greater than or less than
-    return tuple(full_range[j] if
-            retval[j]*sgn[j] > full_range[j]*sgn[j]
-            else
-            retval[j] for j in range(2))
-def draw_limits(thisrange,d):
-    full_range = d.getaxis('t2')[r_[0,-1]]
-    dw = diff(d.getaxis('t2')[:2]).item()
-    print("I find the full range to be",full_range)
-    sgn = [-1,1] # add or subtract
-    pairs = [[thisrange[j],full_range[j]+0.5*dw*sgn[j]] for j in range(2)]
-    pairs[0] = pairs[0][::-1] # flip first
-    my_xlim = gca().get_xlim() # following messes w/ xlim for some reason
-    for j in pairs:
-        if None not in j:
-            print("drawing a vspan at",j)
-            axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
-    gca().set_xlim(my_xlim)
+
+#def draw_limits(thisrange,d):
+#    full_range = d.getaxis('t2')[r_[0,-1]]
+#    dw = diff(d.getaxis('t2')[:2]).item()
+#    print("I find the full range to be",full_range)
+#    sgn = [-1,1] # add or subtract
+#    pairs = [[thisrange[j],full_range[j]+0.5*dw*sgn[j]] for j in range(2)]
+#    pairs[0] = pairs[0][::-1] # flip first
+#    my_xlim = gca().get_xlim() # following messes w/ xlim for some reason
+#    for j in pairs:
+#        if None not in j:
+#            print("drawing a vspan at",j)
+#            axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
+#    gca().set_xlim(my_xlim)
 class fl_mod (figlist_var):
     def side_by_side(self,plotname,s,thisrange):
         """a bit of a hack to get the two subplots into
