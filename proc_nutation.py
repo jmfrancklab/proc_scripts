@@ -1,20 +1,15 @@
 from pyspecdata import *
 from scipy.optimize import minimize
-from hermitian_function_test import hermitian_function_test,zeroth_order_ph
+from proc_scripts import hermitian_function_test,zeroth_order_ph,load_data_nut
 from sympy import symbols
 from numpy import *
 fl = figlist_var()
 t2 = symbols('t2')
 
-date = '200219'
-for id_string in [
-    'nutation_alex_probe',
+for searchstr in [
+    '200219_nutation_alex_probe',
     ]:
-    #{{{ Loading in data
-    filename = date+'_'+id_string+'.h5'
-    nodename = 'nutation'
-    s = nddata_hdf5(filename+'/'+nodename,
-            directory = getDATADIR(exp_type = 'test_equip' ))
+    s = load_data_nut(searchstr) 
     orig_t = s.getaxis('t')
     s.set_units('p_90','s')
     #s.setaxis('t',None)

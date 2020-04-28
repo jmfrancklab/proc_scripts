@@ -1,18 +1,16 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
+from proc_scripts import load_data
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
-for date,id_string,label_str,color_str in [
-        ('191017','echo_adc44','microwaves off','blue'),
+for searchstr,label_str,color_str in [
+        ('191017_echo_adc44','microwaves off','blue'),
         ]:
-    filename = date+'_'+id_string+'.h5'
-    nodename = 'signal'
-    s = nddata_hdf5(filename+'/'+nodename,
-            directory = getDATADIR(
-                exp_type = 'test_equip'))
+    s = load_data(searchstr)
+
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = 8 
@@ -20,7 +18,7 @@ for date,id_string,label_str,color_str in [
     nScans = s.get_prop('acq_params')['nScans']
     print(ndshape(s))
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:2048]
+    t2_axis = s.getaxis('t')[0:128]
     s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)

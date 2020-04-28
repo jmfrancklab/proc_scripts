@@ -11,26 +11,8 @@ for searchstr,freq_range,time_range in [
         ["200306_DNP_lg_probe_w34.*",(-300,300),(None,0.05)]
         ]:
     s = load_data(searchstr)
-    # {{{ all of this belongs inside load_data
-    prog_power = s.getaxis('power').copy()
-    print("programmed powers",prog_power)
-    s.setaxis('power',r_[
-        0,dBm2power(array(s.get_prop('meter_powers'))+20)]
-        ).set_units('power','W')
-    print("meter powers",s.get_prop('meter_powers'))
-    print("actual powers",s.getaxis('power'))
-    print("ratio of actual to programmed power",
-               s.getaxis('power')/prog_power)
-    nPoints = s.get_prop('acq_params')['nPoints']
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    s.set_units('t','s')
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.labels({'ph2':r_[0.,2.]/4,
-        'ph1':r_[0.,1.,2.,3.]/4})
-    s.reorder(['ph2','ph1'])
-    # }}}
-    s.ft('t2',shift=True)
+
+    s.ft('t',shift=True)
     s.ft(['ph1','ph2'])
     fl.next('all data: frequency domain')
     fl.image(s)

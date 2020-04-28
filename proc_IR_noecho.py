@@ -3,7 +3,7 @@ from pyspecdata import *
 from pyspecdata.load_files.bruker_nmr import bruker_data
 from scipy.optimize import minimize,curve_fit,least_squares
 from numpy import random
-from hermitian_function_test import hermitian_function_test,zeroth_order_ph
+from proc_scripts import hermitian_function_test,zeroth_order_ph, load_data_nmr
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
@@ -81,7 +81,7 @@ for exp_name,expno in [
         #('ag_sep232019_w0_3_prod',2),
         #('ag_sep232019_w0_1_prod',2),
         ]:
-    d = find_file(exp_name, exp_type='NMR_Data_AG', dimname = 'indirect', expno=expno)
+    d = load_data_nmr(exp_name,expno) 
 print(ndshape(d))
 print(d.getaxis('indirect'))
 d.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
