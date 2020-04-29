@@ -18,7 +18,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 for exp_name,expno in [
         ('w12_200309',2),
         ]:
-    s = load_data(exp_name,'nmr',expno)
+    s = load_data(exp_name,expno,'IR')
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
     s.reorder(['ph2','ph1']).set_units('t2','s')
     fl.next('raw data')

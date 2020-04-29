@@ -9,7 +9,7 @@ t2 = symbols('t2')
 for searchstr in [
     '200219_nutation_alex_probe',
     ]:
-    s = load_data(searchstr,'nutation',None) 
+    s = load_data(searchstr,None,'nutation') 
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!

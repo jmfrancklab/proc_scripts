@@ -15,7 +15,7 @@ for searchstr, label_str in [
         #('200305_CPMG_3p9_2','deadtime=5'),
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
-    s = load_data(searchstr,'CPMG',None)
+    s = load_data(searchstr,None,'CPMG')
     s.ft('t2', shift=True)
     #fl.next(id_string+'raw data - chunking ft')
     #fl.image(s)

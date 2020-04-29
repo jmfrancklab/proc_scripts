@@ -1,8 +1,8 @@
 from pyspecdata import *
 from Utility import dBm2power
 #to use type s = load_data("nameoffile")
-def load_data(searchstr,exptype,expno):
-    if (exptype=='ODNP'):
+def load_data(searchstr,expno,postproc):
+    if (postproc=='ODNP'):
         files = search_filename(searchstr, 'test_equip')
         assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
         dirname, filename = os.path.split(files[0])
@@ -28,7 +28,7 @@ def load_data(searchstr,exptype,expno):
             'ph1':r_[0.,1.,2.,3.]/4})
         s.reorder(['ph2','ph1'])
         return s
-    if (exptype=='CPMG'):
+    if (postproc=='CPMG'):
         files = search_filename(searchstr, 'test_equip')
         assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
         dirname, filename = os.path.split(files[0])
@@ -61,7 +61,7 @@ def load_data(searchstr,exptype,expno):
         s.setaxis('tE',tE_axis)
         s.setaxis('t2',t2_axis)
         return s
-    if (exptype=='Hahn_echoph'):
+    if (postproc=='Hahn_echoph'):
         files = search_filename(searchstr, 'test_equip')
         assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
         dirname, filename = os.path.split(files[0])
@@ -85,7 +85,7 @@ def load_data(searchstr,exptype,expno):
         s.setaxis('nScans',r_[0:nScans])
         s.reorder('t2',first=False)
         return s
-    if (exptype=='nutation'):
+    if (postproc=='nutation'):
         files = search_filename(searchstr, 'test_equip')
         assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
         dirname, filename = os.path.split(files[0])
@@ -100,7 +100,7 @@ def load_data(searchstr,exptype,expno):
         s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
         s.reorder('t2',first=False)
         return s
-    if (exptype=='capture'):
+    if (postproc=='capture'):
         files = search_filename(searchstr, 'test_equip')
         assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
         dirname, filename = os.path.split(files[0])
@@ -109,7 +109,7 @@ def load_data(searchstr,exptype,expno):
                 directory=dirname)
         s.set_units('t','s').name('Amplitude').set_units('V')
         return s
-    if (exptype=='IR'):
+    if (postproc=='IR'):
         files = search_filename(searchstr, 'test_equip')
         s = find_file(searchstr, exp_type='test_equip', dimname = 'indirect', expno=expno)
         return s

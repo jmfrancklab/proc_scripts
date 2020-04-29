@@ -10,9 +10,7 @@ t2 = symbols('t2')
 for searchstr,freq_range,time_range in [
         ["200306_DNP_lg_probe_w34.*",(-300,300),(None,0.05)]
         ]:
-
-    s = load_data(searchstr,'ODNP',None)
-
+    s = load_data(searchstr,None,'ODNP')
     s.ft('t2',shift=True)
     s.ft(['ph1','ph2'])
     fl.next('all data: frequency domain')

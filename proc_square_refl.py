@@ -20,7 +20,7 @@ for searchstr,corrected_volt in [
         #('200312','chirp_coile_4',True),
         ('200103_pulse_1',True),
         ]:
-    d = load_data(searchstr,'capture',None) 
+    d = load_data(searchstr,None,'capture') 
 
     fl.next('Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V

@@ -10,7 +10,7 @@ for searchstr,label_str,color_str in [
         ('191017_echo_adc44','microwaves off','blue'),
         ]:
     #nPhaseSteps = 8
-    s = load_data(searchstr,'Hahn_echoph',None)
+    s = load_data(searchstr,None,'Hahn_echoph')
     s.ft('t2',shift=True)
     fl.next('raw data, chunked')
     fl.image(abs(s))
