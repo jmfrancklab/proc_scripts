@@ -3,7 +3,7 @@ from pyspecdata import *
 from pyspecdata.load_files.bruker_nmr import bruker_data
 from scipy.optimize import minimize,curve_fit,least_squares
 from numpy import random
-from proc_scripts import hermitian_function_test,zeroth_order_ph, load_data
+from proc_scripts import hermitian_function_test,zeroth_order_ph, load_data_bruker
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
@@ -81,7 +81,7 @@ for exp_name,expno in [
         #('ag_sep232019_w0_3_prod',2),
         #('ag_sep232019_w0_1_prod',2),
         ]:
-    d = load_data(exp_name,'nmr_noecho',expno) 
+    d = load_data_bruker(exp_name,'IR_noecho',expno) 
     #titling to coherence domain
     #rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     #d.setaxis(t2-rough_center)
