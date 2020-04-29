@@ -9,23 +9,8 @@ color_choice = True
 for searchstr,label_str,color_str in [
         ('191017_echo_adc44','microwaves off','blue'),
         ]:
-    s = load_data(searchstr)
-
-    nPoints = s.get_prop('acq_params')['nPoints']
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = 8 
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
-    nScans = s.get_prop('acq_params')['nScans']
-    print(ndshape(s))
-    s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:128]
-    s.setaxis('t',None)
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.setaxis('ph2',r_[0.,2.]/4)
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.setaxis('t2',t2_axis)
-    s.setaxis('nScans',r_[0:nScans])
-    s.reorder('t2',first=False)
+    #nPhaseSteps = 8
+    s = load_data(searchstr,'Hahn_echoph',None)
     s.ft('t2',shift=True)
     fl.next('raw data, chunked')
     fl.image(abs(s))

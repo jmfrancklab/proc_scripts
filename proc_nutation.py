@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import minimize
-from proc_scripts import hermitian_function_test,zeroth_order_ph,load_data_nut
+from proc_scripts import hermitian_function_test,zeroth_order_ph,load_data
 from sympy import symbols
 from numpy import *
 fl = figlist_var()
@@ -9,16 +9,7 @@ t2 = symbols('t2')
 for searchstr in [
     '200219_nutation_alex_probe',
     ]:
-    s = load_data_nut(searchstr) 
-    orig_t = s.getaxis('t')
-    s.set_units('p_90','s')
-    #s.setaxis('t',None)
-    s.reorder('t',first=True)
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.setaxis('ph2',r_[0.,2.]/4)
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.reorder('t2',first=False)
-    #}}}
+    s = load_data(searchstr,'nutation',None) 
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!

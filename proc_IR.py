@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from pyspecdata.load_files.bruker_nmr import bruker_data
-from proc_scripts import hermitian_function_test, zeroth_order_ph,load_data_nmr
+from proc_scripts import hermitian_function_test, zeroth_order_ph,load_data
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -18,7 +18,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 for exp_name,expno in [
         ('w12_200309',2),
         ]:
-    s = load_data_nmr(exp_name,expno)
+    s = load_data(exp_name,'nmr',expno)
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
     s.reorder(['ph2','ph1']).set_units('t2','s')
     fl.next('raw data')

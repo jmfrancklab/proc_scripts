@@ -15,35 +15,7 @@ for searchstr, label_str in [
         #('200305_CPMG_3p9_2','deadtime=5'),
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
-    s = load_data(searchstr)
-    #{{{ pulling acq params
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
-    nPoints = s.get_prop('acq_params')['nPoints']
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    nScans = s.get_prop('acq_params')['nScans']
-    p90_s = s.get_prop('acq_params')['p90_us']*1e-6
-    deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
-    deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
-    marker_s = s.get_prop('acq_params')['marker_us']*1e-6
-    tau1_s = s.get_prop('acq_params')['tau1_us']*1e-6
-    pad_start_s = s.get_prop('acq_params')['pad_start_us']*1e-6
-    pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
-    #}}}
-    orig_t = s.getaxis('t')
-    acq_time_s = orig_t[nPoints]
-    s.set_units('t','s')
-    twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
-    t2_axis = linspace(0,acq_time_s,nPoints)
-    tE_axis = r_[1:nEchoes+1]*twice_tau
-    s.setaxis('t',None)
-    s.setaxis('nScans',r_[0:nScans])
-    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('tE',tE_axis)
-    s.setaxis('t2',t2_axis)
-    #fl.next(id_string+'raw data - chunking')
-    #fl.image(s)
+    s = load_data(searchstr,'CPMG',None)
     s.ft('t2', shift=True)
     #fl.next(id_string+'raw data - chunking ft')
     #fl.image(s)

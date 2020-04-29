@@ -3,7 +3,7 @@ from pyspecdata import *
 from pyspecdata.load_files.bruker_nmr import bruker_data
 from scipy.optimize import minimize,curve_fit,least_squares
 from numpy import random
-from proc_scripts import hermitian_function_test,zeroth_order_ph, load_data_nmr
+from proc_scripts import hermitian_function_test,zeroth_order_ph, load_data
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
@@ -81,47 +81,33 @@ for exp_name,expno in [
         #('ag_sep232019_w0_3_prod',2),
         #('ag_sep232019_w0_1_prod',2),
         ]:
-    d = load_data_nmr(exp_name,expno) 
-print(ndshape(d))
-print(d.getaxis('indirect'))
-d.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
-print(d.getaxis('indirect'))
-print(d.getaxis('ph1'))
-print(d.getaxis('ph2'))
-d.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
-d.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
-d.setaxis('indirect', d.get_prop('vd'))
-fl.next('phased coherence domain') #switch to time domain as a string based name for fig
-d.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
-d.reorder(['indirect','t2'], first=False)
-fl.image(d) #labeling
-fl.show();quit()
-#titling to coherence domain
-#rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-#d.setaxis(t2-rough_center)
-d.ft('t2',shift=True) #fourier transform
+    d = load_data(exp_name,'nmr_noecho',expno) 
+    #titling to coherence domain
+    #rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    #d.setaxis(t2-rough_center)
+    d.ft('t2',shift=True) #fourier transform
 
-fl.next('time domain (all $\\Delta p$)')
-d.ift('t2')
-fl.image(d)
-fl.next('frequency domain (all $\\Delta p$)')
-d.ft('t2',pad=4096)
-fl.image(d)
-#fl.show();quit()
-fl.next('select coherence pathway and convolve')
-d = d['ph2',0]['ph1',-1].C # this brings you from 50 indirect dimensions to 5, The grouped rows represent ph1, we see signal in the top group which is 3 or -1, the signal is in the bottom of the two (which represent ph2) and so we select ph2, 0
-d.convolve('t2',5)
-fl.image(d)
-#fl.show();quit()
-#d.ift('t2')
-d.reorder('t2')
-fl.next('after 0th order correction')
-ph0 = zeroth_order_ph(d['t2':0],fl=None)
-ph0 /= abs(ph0)
-d /= ph0
-fl.plot(d)
-d *= -1
-#fl.show();quit()
+    fl.next('time domain (all $\\Delta p$)')
+    d.ift('t2')
+    fl.image(d)
+    fl.next('frequency domain (all $\\Delta p$)')
+    d.ft('t2',pad=4096)
+    fl.image(d)
+    #fl.show();quit()
+    fl.next('select coherence pathway and convolve')
+    d = d['ph2',0]['ph1',-1].C # this brings you from 50 indirect dimensions to 5, The grouped rows represent ph1, we see signal in the top group which is 3 or -1, the signal is in the bottom of the two (which represent ph2) and so we select ph2, 0
+    d.convolve('t2',5)
+    fl.image(d)
+    #fl.show();quit()
+    #d.ift('t2')
+    d.reorder('t2')
+    fl.next('after 0th order correction')
+    ph0 = zeroth_order_ph(d['t2':0],fl=None)
+    ph0 /= abs(ph0)
+    d /= ph0
+    fl.plot(d)
+    d *= -1
+    #fl.show();quit()
 
 fl.next('Plotting phased spectra')
 for j in range(ndshape(d)['indirect']):
