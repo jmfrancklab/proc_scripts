@@ -1,13 +1,18 @@
 from pyspecdata import *
 from Utility import dBm2power
 #to use type s = load_data("nameoffile")
-def load_data(searchstr,expno,postproc):
-    if (postproc=='ODNP'):
-        files = search_filename(searchstr, 'test_equip')
-        assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
-        dirname, filename = os.path.split(files[0])
+def proc_bruker_deut_IR_withecho_mancyc(s):
+    raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
+def proc_bruker_deut_IR_mancyc(s):
+    raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
+postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
+        'ab_ir2h':proc_bruker_deut_IR_mancyc}
+def load_data(searchstr, exp_type, which_exp, postproc=None):
+    if postproc=='spincore_ODNP_v1':
+        filename = search_filename(searchstr, exp_type)
+        dirname, filename = os.path.split(filename)
         nodename = 'signal'
-        s = nddata_hdf5(filename+'/signal',
+        s = nddata_hdf5(filename+'/'+which_exp,
                 directory=dirname)
         print("getting acquisition parameters")
         prog_power = s.getaxis('power').copy()
@@ -28,12 +33,11 @@ def load_data(searchstr,expno,postproc):
             'ph1':r_[0.,1.,2.,3.]/4})
         s.reorder(['ph2','ph1'])
         return s
-    if (postproc=='CPMG'):
-        files = search_filename(searchstr, 'test_equip')
-        assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
-        dirname, filename = os.path.split(files[0])
+    elif postproc=='CPMG':
+        filename = search_filename(searchstr, exp_type)
+        dirname, filename = os.path.split(filename)
         nodename = 'signal'
-        s = nddata_hdf5(filename+'/signal',
+        s = nddata_hdf5(filename+'/'+which_exp,
                 directory=dirname)
         print("getting acquisition parameters")
         SW_kHz = s.get_prop('acq_params')['SW_kHz']
@@ -61,12 +65,11 @@ def load_data(searchstr,expno,postproc):
         s.setaxis('tE',tE_axis)
         s.setaxis('t2',t2_axis)
         return s
-    if (postproc=='Hahn_echoph'):
-        files = search_filename(searchstr, 'test_equip')
-        assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
-        dirname, filename = os.path.split(files[0])
+    elif postproc=='Hahn_echoph':
+        filename = search_filename(searchstr, exp_type)
+        dirname, filename = os.path.split(filename)
         nodename = 'signal'
-        s = nddata_hdf5(filename+'/signal',
+        s = nddata_hdf5(filename+'/'+which_exp,
                 directory=dirname)
         print("getting acquisition parameters")
         nPoints = s.get_prop('acq_params')['nPoints']
@@ -85,12 +88,11 @@ def load_data(searchstr,expno,postproc):
         s.setaxis('nScans',r_[0:nScans])
         s.reorder('t2',first=False)
         return s
-    if (postproc=='nutation'):
-        files = search_filename(searchstr, 'test_equip')
-        assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
-        dirname, filename = os.path.split(files[0])
+    elif postproc=='nutation':
+        filename = search_filename(searchstr, exp_type)
+        dirname, filename = os.path.split(filename)
         nodename = 'nutation'
-        s = nddata_hdf5(filename+'/nutation',
+        s = nddata_hdf5(filename+'/'+which_exp,
                 directory=dirname)
         orig_t = s.getaxis('t')
         s.set_units('p_90','s')
@@ -100,17 +102,22 @@ def load_data(searchstr,expno,postproc):
         s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
         s.reorder('t2',first=False)
         return s
-    if (postproc=='capture'):
-        files = search_filename(searchstr, 'test_equip')
-        assert len(files)==1, "I found %d files matching the pattern %s"%(len(files),searchstr)
-        dirname, filename = os.path.split(files[0])
+    elif postproc=='capture':
+        filename = search_filename(searchstr, exp_type)
+        dirname, filename = os.path.split(filename)
         nodename = 'capture1'
-        s = nddata_hdf5(filename+'/capture1',
+        s = nddata_hdf5(filename+'/'+which_exp,
                 directory=dirname)
         s.set_units('t','s').name('Amplitude').set_units('V')
         return s
-    if (postproc=='IR'):
-        files = search_filename(searchstr, 'test_equip')
-        s = find_file(searchstr, exp_type='test_equip', dimname = 'indirect', expno=which_exp)
+    elif postproc is None:
+        print("You left postproc unset, so I'm assuming you're going to let me choose what to do.  Right now, this only works for Bruker format files")
+        # if we set s.set_prop('postproc_type'...), then find_file should automatically recognize what to do
+        if ('acq' in s.get_prop()) and ('PULPROG' in s.get_prop('acq')):
+            s = find_file(seachstr, exp_type=exp_type, dimname='indirect',
+                    expno=which_exp, postproc_lookup=postproc_lookup,
+                    postproc=s.get_prop('acq')['PULPROG']
+                    )
+        else:
+            raise ValueError("I can't determine the type of postprocessing")
         return s
-
