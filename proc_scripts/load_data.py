@@ -27,7 +27,7 @@ def proc_spincore_ODNP_v1(s):
 postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1}
-def load_data(searchstr, exp_type, which_exp, postproc=None):
+def load_data(searchstr, exp_type, which_exp=None, postproc=None):
     if postproc=='CPMG':
         filename = search_filename(searchstr, exp_type)
         dirname, filename = os.path.split(filename)
@@ -109,15 +109,11 @@ def load_data(searchstr, exp_type, which_exp, postproc=None):
         return find_file(searchstr, exp_type=exp_type, expno=which_exp,
                 postproc_lookup=postproc_lookup,
                 postproc=postproc)
-        return s
     elif postproc is None:
         print("You left postproc unset, so I'm assuming you're going to let me choose what to do.  Right now, this only works for Bruker format files")
         # if we set s.set_prop('postproc_type'...), then find_file should automatically recognize what to do
-        if ('acq' in s.get_prop()) and ('PULPROG' in s.get_prop('acq')):
-            s = find_file(seachstr, exp_type=exp_type, dimname='indirect',
-                    expno=which_exp, postproc_lookup=postproc_lookup,
-                    postproc=s.get_prop('acq')['PULPROG']
-                    )
-        else:
-            raise ValueError("I can't determine the type of postprocessing")
+        s = find_file(searchstr, exp_type=exp_type, dimname='indirect',
+                expno=which_exp, postproc_lookup=postproc_lookup)
         return s
+    else:
+        raise ValueError("I can't determine the type of postprocessing")
