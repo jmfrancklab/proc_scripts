@@ -28,16 +28,7 @@ postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1}
 def load_data(searchstr, exp_type, which_exp, postproc=None):
-    if postproc=='spincore_ODNP_v1':
-        filename = search_filename(searchstr, exp_type)
-        dirname, filename = os.path.split(filename)
-        nodename = 'signal'
-        s = nddata_hdf5(filename+'/'+which_exp,
-                directory=dirname)
-        print("getting acquisition parameters")
-        s = proc_spincore_ODNP_v1(s)
-        return s
-    elif postproc=='CPMG':
+    if postproc=='CPMG':
         filename = search_filename(searchstr, exp_type)
         dirname, filename = os.path.split(filename)
         nodename = 'signal'
@@ -113,6 +104,11 @@ def load_data(searchstr, exp_type, which_exp, postproc=None):
         s = nddata_hdf5(filename+'/'+which_exp,
                 directory=dirname)
         s.set_units('t','s').name('Amplitude').set_units('V')
+        return s
+    elif postproc in ['spincore_ODNP_v1']:
+        return find_file(searchstr, exp_type=exp_type, expno=which_exp,
+                postproc_lookup=postproc_lookup,
+                postproc=postproc)
         return s
     elif postproc is None:
         print("You left postproc unset, so I'm assuming you're going to let me choose what to do.  Right now, this only works for Bruker format files")
