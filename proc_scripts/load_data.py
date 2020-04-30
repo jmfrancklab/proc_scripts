@@ -111,6 +111,6 @@ def load_data(searchstr,expno,postproc):
         return s
     if (postproc=='IR'):
         files = search_filename(searchstr, 'test_equip')
-        s = find_file(searchstr, exp_type='test_equip', dimname = 'indirect', expno=expno)
+        s = find_file(searchstr, exp_type='test_equip', dimname = 'indirect', expno=which_exp)
         return s
 
