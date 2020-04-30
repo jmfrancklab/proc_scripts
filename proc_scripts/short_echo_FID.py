@@ -1,9 +1,13 @@
-from hermitian_function_test import zeroth_order_ph
+from hermitian_function_test import zeroth_order_ph,hermitian_function_test
 from proc_scripts import * 
 from pyspecdata import *
 from sympy import symbols
 
-def FID(s,time_range):
+def slice_FID_from_echo(s,time_range):
+    best_shift = hermitian_function_test(s[
+        'ph2',-2]['ph1',1], fl=fl)
+    s.setaxis('t2',lambda x: x-best_shift)
+    s.register_axis({'t2':0}, nearest=False)
     ph0 = s['t2':0]['ph2',-2]['ph1',1]
     s /= zeroth_order_ph(ph0, fl=None)
     if s['t2':0]['ph2',-2]['ph1',1]['power',0].real < 0:

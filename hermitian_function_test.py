@@ -95,7 +95,7 @@ def zeroth_order_ph(d, fl=None):
         ax.set_aspect('equal', adjustable='box')
         ax.add_patch(ell)
     return exp(1j*ph0)
-def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
+def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     r"""determine the center of the echo
     
     .. note::
@@ -149,4 +149,7 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
     residual.reorder('shift')
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
-    return residual,best_shift+peak_center
+    if fl:
+        fl.next('residual for hermitian test')
+        fl.plot(residual)
+    return best_shift+peak_center
