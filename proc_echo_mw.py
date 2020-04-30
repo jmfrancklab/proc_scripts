@@ -11,7 +11,7 @@ t2 = symbols('t2')
 for searchstr,exp_type,nodename,freq_range,time_range in [
         ["200306_DNP_lg_probe_w34.*",'test_equip','signal',(-300,300),(None,0.05)]
         ]:
-    s = load_data(searchstr,exp_type,which_exp=nodename,postproc='spincore_ODNP_v1')
+    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='spincore_ODNP_v1')
     s.ft('t2',shift=True)
     s.ft(['ph1','ph2'])
     fl.next('all data: frequency domain')
