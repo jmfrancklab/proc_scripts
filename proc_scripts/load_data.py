@@ -5,8 +5,28 @@ def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 def proc_bruker_deut_IR_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
+def proc_spincore_ODNP_v1(s):
+    prog_power = s.getaxis('power').copy()
+    print("programmed powers",prog_power)
+    s.setaxis('power',r_[
+        0,dBm2power(array(s.get_prop('meter_powers'))+20)]
+        ).set_units('power','W')
+    print("meter powers",s.get_prop('meter_powers'))
+    print("actual powers",s.getaxis('power'))
+    print("ratio of actual to programmed power",
+               s.getaxis('power')/prog_power)
+    nPoints = s.get_prop('acq_params')['nPoints']
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    s.set_units('t','s')
+    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.labels({'ph2':r_[0.,2.]/4,
+        'ph1':r_[0.,1.,2.,3.]/4})
+    s.reorder(['ph2','ph1'])
+    return s
 postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
-        'ab_ir2h':proc_bruker_deut_IR_mancyc}
+        'ab_ir2h':proc_bruker_deut_IR_mancyc,
+        'spincore_ODNP_v1':proc_spincore_ODNP_v1}
 def load_data(searchstr, exp_type, which_exp, postproc=None):
     if postproc=='spincore_ODNP_v1':
         filename = search_filename(searchstr, exp_type)
@@ -15,23 +35,7 @@ def load_data(searchstr, exp_type, which_exp, postproc=None):
         s = nddata_hdf5(filename+'/'+which_exp,
                 directory=dirname)
         print("getting acquisition parameters")
-        prog_power = s.getaxis('power').copy()
-        print("programmed powers",prog_power)
-        s.setaxis('power',r_[
-            0,dBm2power(array(s.get_prop('meter_powers'))+20)]
-            ).set_units('power','W')
-        print("meter powers",s.get_prop('meter_powers'))
-        print("actual powers",s.getaxis('power'))
-        print("ratio of actual to programmed power",
-                   s.getaxis('power')/prog_power)
-        nPoints = s.get_prop('acq_params')['nPoints']
-        SW_kHz = s.get_prop('acq_params')['SW_kHz']
-        nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-        s.set_units('t','s')
-        s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-        s.labels({'ph2':r_[0.,2.]/4,
-            'ph1':r_[0.,1.,2.,3.]/4})
-        s.reorder(['ph2','ph1'])
+        s = proc_spincore_ODNP_v1(s)
         return s
     elif postproc=='CPMG':
         filename = search_filename(searchstr, exp_type)
