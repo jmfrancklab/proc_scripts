@@ -107,13 +107,13 @@ def load_data(searchstr, exp_type, which_exp=None, postproc=None):
         return s
     elif postproc in ['spincore_ODNP_v1']:
         return find_file(searchstr, exp_type=exp_type, expno=which_exp,
-                postproc_lookup=postproc_lookup,
+                lookup=postproc_lookup,
                 postproc=postproc)
     elif postproc is None:
         print("You left postproc unset, so I'm assuming you're going to let me choose what to do.  Right now, this only works for Bruker format files")
         # if we set s.set_prop('postproc_type'...), then find_file should automatically recognize what to do
         s = find_file(searchstr, exp_type=exp_type, dimname='indirect',
-                expno=which_exp, postproc_lookup=postproc_lookup)
+                expno=which_exp, lookup=postproc_lookup)
         return s
     else:
         raise ValueError("I can't determine the type of postprocessing")
