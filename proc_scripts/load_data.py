@@ -106,9 +106,12 @@ def load_data(searchstr, exp_type, which_exp=None, postproc=None):
         s.set_units('t','s').name('Amplitude').set_units('V')
         return s
     elif postproc in ['spincore_ODNP_v1']:
-        return find_file(searchstr, exp_type=exp_type, expno=which_exp,
+        print("looking for spincore_ODNP_v1")
+        s = find_file(searchstr, exp_type=exp_type, expno=which_exp,
                 lookup=postproc_lookup,
                 postproc=postproc)
+        s = proc_spincore_ODNP_v1(s)
+        return s
     elif postproc is None:
         print("You left postproc unset, so I'm assuming you're going to let me choose what to do.  Right now, this only works for Bruker format files")
         # if we set s.set_prop('postproc_type'...), then find_file should automatically recognize what to do
