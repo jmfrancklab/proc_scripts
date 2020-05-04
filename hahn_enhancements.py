@@ -1,4 +1,5 @@
 from pyspecdata import *
+from utility import dBm2power
 from scipy.optimize import leastsq,minimize,basinhopping
 # {{{ in this section, I define some manual manipulations that might be
 # specific to the particular type of data, with the idea being that these could
@@ -35,12 +36,10 @@ class nddata_withopt (nddata):
         return temp
 # }}}
 fl = figlist_var()
-def get_W(dBm):
-    return 10**(dBm/10.)*1e-3
 dBm_list = [0., 30., 34., 36.]
 W_list = ones_like(dBm_list)
 for x in xrange(4):
-    W_list[x] = get_W(dBm_list[x])
+    W_list[x] = dBm2power(dBm_list[x])
 enhancement = []
 find_phase_params = True # phase params found for first dataset will be applied
                          # to all subsequently processed datasets

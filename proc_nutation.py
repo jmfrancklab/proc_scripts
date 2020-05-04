@@ -16,7 +16,9 @@ for searchstr,exp_type,nodename in [
     s.ft(['ph2','ph1'])
     rough_center = abs(s)['ph2',0]['ph1',1].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-        
+    fl.next('raw')
+    fl.image(s)
+
     # }}}
     # {{{ centering of data using hermitian function test
     residual,best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
@@ -65,10 +67,10 @@ for searchstr,exp_type,nodename in [
     fl.image(s)
     fl.next('real')
     fl.image(s.real)
-    s.balance_clim(-2500,2500)    
-    #fl.next('imag')
-    #fl.image(s.imag)
-    #gci().set_clim(my_clim) # to match real
+    my_clim = gci().get_clim()
+    fl.next('imag')
+    fl.image(s.imag)
+    gci().set_clim(my_clim) # to match real
     #}}}
     #        
     #fl.next(id_string+'image -- $B_1$ distribution')

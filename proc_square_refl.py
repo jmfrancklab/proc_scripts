@@ -4,6 +4,7 @@ from proc_scripts import *
 do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
+
 init_logging(level='debug')
 # 2to3 JF 1/31
 
@@ -14,7 +15,7 @@ for searchstr,exp_type,nodename,corrected_volt in [
         #('181001','sprobe_t2',True),
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
-        #('200110','pulse_2',True),
+        ('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
         ('200103_pulse_1','test_equip','capture1',True),
         ]:
@@ -93,11 +94,51 @@ for searchstr,exp_type,nodename,corrected_volt in [
     fl.plot(d['t':(None,40e6)], label='demod and sliced',
             alpha=0.5)
     # }}}
-    d.ift('t')
-    fl.next('before setting t=0')
-    for j in range(2):
-        fl.plot(abs(d['ch',j]), linewidth=3, color='k',
-                label='ch %d abs'%(j+1), alpha=0.3)
+    # {{{ I have modified the zeroth order phasing --
+    # just ignore for now -- JF (though I explain for
+    # myself)
+    #def zeroth_order_ph(d, plot_name=None):
+
+        #r'''determine the covariance of the datapoints
+        #in complex plane, and use to phase the
+        #zeroth-order even if the data is both negative
+        #and positive'''
+        #eigenValues, eigenVectors = eig(cov(c_[
+            #d.data.real,
+            #d.data.imag].T
+            #))
+        # next 3 lines from stackexchange -- sort by
+        # eigenvalue
+        #idx = eigenValues.argsort()[::-1]   
+        #eigenValues = eigenValues[idx]
+        #eigenVectors = eigenVectors[:,idx]
+        # determine the phase angle from direction of the
+        # largest principle axis
+        #ph0 = arctan2(eigenVectors[1,0],eigenVectors[0,0])
+        #if plot_name:
+            #eigenVectors *= (eigenValues.reshape(-1,2)*ones((2,1)))/eigenValues.max()*abs(d.data).max()
+            #d_forplot = d.C
+            #fl.next(plot_name)
+            #fl.plot(
+                    #d_forplot.data.real,
+                    #d_forplot.data.imag,
+                    #'.',
+                    #alpha=0.25,
+                    #label='before'
+                    #)
+            #d_forplot /= exp(1j*ph0)
+            #fl.plot(
+                    #d_forplot.data.real,
+                    #d_forplot.data.imag,
+                    #'.',
+                    #alpha=0.25,
+                    #label='after'
+                    #)
+            #fl.plot(0,0,'ko')
+            #fl.plot(eigenVectors[0,0],eigenVectors[1,0],'o',
+                    #label='first evec')
+            #fl.plot(eigenVectors[0,1],eigenVectors[1,1],'o')
+        #return exp(1j*ph0)
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j], fl=fl)
         d['ch',j] /= ph0
@@ -193,3 +234,4 @@ for searchstr,exp_type,nodename,corrected_volt in [
         fl.plot(decay.imag, label='data (imag, not fit)', alpha=0.5)
 fl.show()
 quit()
+
