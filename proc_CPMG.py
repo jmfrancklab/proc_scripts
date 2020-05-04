@@ -27,7 +27,7 @@ for searchstr,exp_type,nodename,label_str in [
     #fl.next(id_string+' image plot coherence ')
     #fl.image(s, interpolation='bilinear')
     s = s['ph1',1].C
-    #s.mean('nScans',return_error=False)
+
     s.mean('nScans')
     s.reorder('t2',first=True)
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
