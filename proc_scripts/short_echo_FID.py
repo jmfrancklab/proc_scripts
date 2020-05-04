@@ -1,4 +1,3 @@
-from hermitian_function_test import zeroth_order_ph,hermitian_function_test
 from proc_scripts import * 
 from pyspecdata import *
 from sympy import symbols
@@ -20,6 +19,7 @@ def slice_FID_from_echo(s,time_range):
     dw = diff(s.getaxis('t2')[r_[0,1]]).item()
     centered_echo = s['t2':(echo_start,-echo_start+dw)]
     plotdata = abs(centered_echo/centered_echo['t2',::-1])
+    fl.next('plot data')
     plotdata[lambda x: x>2] = 2
     fl.image(plotdata)
     fl.next('apodize and zero fill')

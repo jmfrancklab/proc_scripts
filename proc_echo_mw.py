@@ -17,10 +17,12 @@ for searchstr,exp_type,nodename,freq_range,time_range in [
     s.ft(['ph1','ph2'])
     fl.next('all data: frequency domain')
     fl.image(s)
+    fl.next('side by side')
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range)
     s = s['t2':freq_range]
     s.ift('t2')
+    fl.next('FID slice')
     s = slice_FID_from_echo(s,(None,0.05))
     fl.next('compare highest power to no power')
     idx_maxpower = argmax(s.getaxis('power'))
