@@ -6,11 +6,11 @@ fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
-for searchstr,label_str,color_str in [
-        ('191017_echo_adc44','microwaves off','blue'),
+for searchstr,exp_type,nodename,label_str,color_str in [
+        ('191017_echo_adc44','test_equip','signal','microwaves off','blue'),
         ]:
-    #nPhaseSteps = 8
-    s = load_data(searchstr,None,'Hahn_echoph')
+    #nPhaseSteps = 8 specified in load_data, may need to change accordingly
+    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='Hahn_echoph')
     s.ft('t2',shift=True)
     fl.next('raw data, chunked')
     fl.image(abs(s))

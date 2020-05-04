@@ -3,25 +3,25 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import load_data
 fl = figlist_var()
        
-for searchstr, label_str in [
+for searchstr,exp_type,nodename,label_str in [
         #('200221_CPMG_TEMPOLgel_3p0_1','deadtime=5'),
         #('200221_CPMG_TEMPOLgel_2p9_1','deadtime=5'),
         #('200304_CPMG_2p6_1','deadtime=5'),
         #('200305_CPMG_3p5_2','deadtime=5'),
         #('200305_CPMG_3p6_2','deadtime=5'),
-        ('200305_CPMG_3p7_2','deadtime=5'),
+        ('200305_CPMG_3p7_2','test_equip','signal','deadtime=5'),
         ('200305_CPMG_3p7_3','deadtime=5'),
         #('200305_CPMG_3p8_2','deadtime=5'),
         #('200305_CPMG_3p9_2','deadtime=5'),
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
-    s = load_data(searchstr,None,'CPMG')
+    s = load_data(searchstr,exp_type,which_exp=nodename,postproc='CPMG')
     s.ft('t2', shift=True)
-    #fl.next(id_string+'raw data - chunking ft')
-    #fl.image(s)
+    fl.next('raw data - chunking ft')
+    fl.image(s)
     s.ft(['ph1'])
-    #fl.next(id_string+' image plot coherence-- ft ')
-    #fl.image(s)
+    fl.next(' image plot coherence-- ft ')
+    fl.image(s)
     s.ift('t2')
     s.reorder('nScans',first=True)
     #fl.next(id_string+' image plot coherence ')

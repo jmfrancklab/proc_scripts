@@ -6,10 +6,10 @@ from numpy import *
 fl = figlist_var()
 t2 = symbols('t2')
 
-for searchstr in [
-    '200219_nutation_alex_probe',
+for searchstr,exp_type,nodename in [
+    ['200219_nutation_alex_probe','test_equip','nutation']
     ]:
-    s = load_data(searchstr,None,'nutation') 
+    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='nutation') 
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!

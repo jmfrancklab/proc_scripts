@@ -1,8 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import minimize,leastsq
-
-from proc_scripts import zeroth_order_ph,load_data
-
+from proc_scripts import *
 do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
@@ -11,16 +9,16 @@ init_logging(level='debug')
 
 fl = figlist_var()
  # {{{ load data, set units, show raw data
-for searchstr,corrected_volt in [
+for searchstr,exp_type,nodename,corrected_volt in [
         #('180806','pulse_reflection',True),
         #('181001','sprobe_t2',True),
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
         #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103_pulse_1',True),
+        ('200103_pulse_1','test_equip','capture1',True),
         ]:
-    d = load_data(searchstr,None,'capture') 
+    d = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='square_wave_capture') 
 
     fl.next('Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
