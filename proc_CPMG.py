@@ -16,6 +16,7 @@ for searchstr,exp_type,nodename,label_str in [
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
     s = load_data(searchstr,exp_type,which_exp=nodename,postproc='CPMG')
+    nEchoes = s.get_prop('acq_params')['nEchoes']
     s.ft('t2', shift=True)
     fl.next('raw data - chunking ft')
     fl.image(s)
@@ -27,7 +28,7 @@ for searchstr,exp_type,nodename,label_str in [
     #fl.next(id_string+' image plot coherence ')
     #fl.image(s, interpolation='bilinear')
     s = s['ph1',1].C
-
+    #s.mean('nScans',return_error=False)
     s.mean('nScans')
     s.reorder('t2',first=True)
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
@@ -72,10 +73,12 @@ for searchstr,exp_type,nodename,label_str in [
     data = s['t2':(-200,200)].sum('t2')
     #data = s['t2':(0,200)].sum('t2')
     fl.next('Echo decay')
-    x = tE_axis
+
+    x = s.getaxis('nEchoes')
     ydata = data.data.real
     ydata /= max(ydata)
     fl.plot(x,ydata,'-o', alpha=0.7, label='%s'%label_str, human_units=False)
+
     fitfunc = lambda p, x: p[0]*exp(-x*p[1])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
     p0 = [0.1,100.0,-3.0]

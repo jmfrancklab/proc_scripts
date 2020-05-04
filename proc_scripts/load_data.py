@@ -94,7 +94,7 @@ postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'square_wave_capture':proc_square_wave_capture}
 
 def load_data(searchstr, exp_type, which_exp=None, postproc=None):
-    if postproc=='CPMG':
+    if postproc is 'CPMG':
        return find_file(searchstr, exp_type=exp_type, expno=which_exp,
                lookup=postproc_lookup,
                postproc=postproc)
