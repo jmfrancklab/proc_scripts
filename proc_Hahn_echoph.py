@@ -1,13 +1,13 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import load_data
+from proc_scripts import *
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
 for searchstr,exp_type,nodename,label_str,color_str in [
-        ('191017_echo_adc44','test_equip','signal','microwaves off','blue'),
+        ('200210_echo_LG_3','test_equip','signal','microwaves off','blue'),
         ]:
     #nPhaseSteps = 8 specified in load_data, may need to change accordingly
     s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='Hahn_echoph')
@@ -34,8 +34,9 @@ for searchstr,exp_type,nodename,label_str,color_str in [
     k *= exp(-1j*k.fromaxis('t2')*2*pi*0.005)
     s = k.C
     s.ift('t2')
+
     residual,best_shift = hermitian_function_test(s[
-        'ph2',0]['ph1',1],shift_val=1)
+        'ph2',-2]['ph1',1],shift_val=1)
     fl.next('hermitian test')
     fl.plot(residual)
     print("best shift is",best_shift)

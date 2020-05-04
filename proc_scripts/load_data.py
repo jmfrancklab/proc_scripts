@@ -61,7 +61,7 @@ def proc_Hahn_echoph(s):
     nScans = s.get_prop('acq_params')['nScans']
     print(ndshape(s))
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:128]
+    t2_axis = s.getaxis('t')[0:2048]
     s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
