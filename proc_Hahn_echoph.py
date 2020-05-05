@@ -28,13 +28,11 @@ for searchstr,exp_type,nodename,label_str,color_str in [
     s.setaxis(t2-rough_center)
     #s.mean('nScans')
     s.ft('t2')
-    #fl.image(s)
-    k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
+    #k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
     k = s.C*exp(-1j*0.9*2*pi)
     k *= exp(-1j*k.fromaxis('t2')*2*pi*0.005)
     s = k.C
     s.ift('t2')
-
     residual,best_shift = hermitian_function_test(s[
         'ph2',-2]['ph1',1],shift_val=1)
     fl.next('hermitian test')
