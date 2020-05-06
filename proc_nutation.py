@@ -21,9 +21,9 @@ for searchstr,exp_type,nodename in [
     print(ndshape(s))
     # }}}
     # {{{ centering of data using hermitian function test
-    residual,best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
+    best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     fl.next('hermitian test')
-    fl.plot(residual)
+    fl.plot(best_shift)
     print("best shift is",best_shift)
     s.ft('t2', shift=True)
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
