@@ -56,6 +56,7 @@ def proc_Hahn_echoph(s):
     return s
 
 def proc_IR(s):
+    s = find_file(searchstr, exp_type,dimname = 'indirect', expno=which_exp)
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
     s.reorder(['ph2','ph1']).set_units('t2','s')
     fl.next('raw data')
@@ -121,7 +122,7 @@ def load_data(searchstr, exp_type, which_exp=None, postproc=None):
                 lookup=postproc_lookup,
                 postproc=postproc)
     elif postproc=='IR':
-        return find_file(searchstr, exp_type=exp_type,expno=which_exp,
+        return find_file(searchstr, exp_type=exp_type,dimname='indirect',expno=which_exp,
                 lookup=postproc_lookup,
                 postproc=postproc)
 
