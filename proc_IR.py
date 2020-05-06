@@ -7,18 +7,17 @@ fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
 #clock_correction = 1.785
-#clock_correction = 0
-nodename = 'signal'
+clock_correction = 1.785
 filter_bandwidth = 5e3
 coh_sel = {'ph1':0,
         'ph2':1}
 coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
-for searchstr,exp_type,expno in [
-        ('w12_200309','test_equip',2),
+for searchstr,exp_type,nodename in [
+        ('200303_IR_AER_6','test_equip','signal'),
         ]:
-    s = load_data(searchstr,exp_type=exp_type,which_exp=expno,postproc='IR')
+    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='IR_in_lab')
     #s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
     #s.reorder(['ph2','ph1']).set_units('t2','s')
     #fl.next('raw data')
@@ -27,9 +26,9 @@ for searchstr,exp_type,expno in [
     #s.rename('indirect','vd')
     #s *= exp(-1j*s.fromaxis('vd')*clock_correction)
     #fl.image(s)
-    fl.next('raw data -- coherence channels')
-    s.ft(['ph2','ph1'])
-    fl.image(s)
+    #fl.next('raw data -- coherence channels')
+    #s.ft(['ph2','ph1'])
+    #fl.image(s)
     fl.next('filtered + rough centered data')
     s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
@@ -49,10 +48,10 @@ for searchstr,exp_type,expno in [
     #fl.image(s)
     #}}}
     s.ift('t2')
-    residual,best_shift = hermitian_function_test(s[
+    best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     fl.next('hermitian test')
-    fl.plot(residual)
+    fl.plot(best_shift)
     print("best shift is",best_shift)
     # {{{ slice out the FID appropriately and phase correct
     # it

@@ -55,14 +55,11 @@ def proc_Hahn_echoph(s):
     s.reorder('t2',first=False)
     return s
 
-def proc_IR(s):
-    s = find_file(searchstr, exp_type,dimname = 'indirect', expno=which_exp)
-    s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
-    s.reorder(['ph2','ph1']).set_units('t2','s')
-    fl.next('raw data')
+def proc_IR_for_lab(s):
+    fl = figlist_var()
+    fl.next('raw data -- coherence channels')
+    s.ft(['ph2','ph1'])
     fl.image(s)
-    fl.next('after clock correction')
-    s.rename('indirect','vd')
     return s
 
 def proc_nutation(s):
@@ -106,7 +103,7 @@ postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'CPMG':proc_CPMG,
         'Hahn_echoph':proc_Hahn_echoph,
-        'IR':proc_IR,
+        'IR_in_lab':proc_IR_for_lab,
         'nutation':proc_nutation,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture':proc_square_wave_capture}
@@ -121,8 +118,8 @@ def load_data(searchstr, exp_type, which_exp=None, postproc=None):
         return find_file(searchstr, exp_type=exp_type, expno=which_exp,
                 lookup=postproc_lookup,
                 postproc=postproc)
-    elif postproc=='IR':
-        return find_file(searchstr, exp_type=exp_type,dimname='indirect',expno=which_exp,
+    elif postproc=='IR_in_lab':
+        return find_file(searchstr, exp_type=exp_type,expno=which_exp,
                 lookup=postproc_lookup,
                 postproc=postproc)
 
