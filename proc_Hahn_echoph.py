@@ -2,12 +2,13 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from proc_scripts import *
 from sympy import symbols
-fl = figlist_var()
+#fl = figlist_var()
+fl = fl_mod()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
 for searchstr,exp_type,nodename,label_str,color_str in [
-        ('200210_echo_LG_3','test_equip','signal','microwaves off','blue'),
+        ('200302_alex_probe_water','test_equip','signal','microwaves off','blue'),
         ]:
     #nPhaseSteps = 8 specified in load_data, may need to change accordingly
     s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='Hahn_echoph')
@@ -17,10 +18,10 @@ for searchstr,exp_type,nodename,label_str,color_str in [
     s.ft(['ph1','ph2'])
     fl.next('coherence')
     fl.image(abs(s))
-    s = s['ph1',1]['ph2',0].C
+    #s = s['ph1',1]['ph2',0].C
     s.mean('nScans')#,return_error=False)
     fl.next('signal')
-    fl.plot(abs(s),label=label_str)
+    #fl.plot(abs(s),label=label_str)
     slice_f = (-5e3,5e3)
     s = s['t2':slice_f].C
     s.ift('t2')
@@ -28,24 +29,25 @@ for searchstr,exp_type,nodename,label_str,color_str in [
     s.setaxis(t2-rough_center)
     #s.mean('nScans')
     s.ft('t2')
-    #k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
+    k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
     k = s.C*exp(-1j*0.9*2*pi)
     k *= exp(-1j*k.fromaxis('t2')*2*pi*0.005)
     s = k.C
     s.ift('t2')
-    residual,best_shift = hermitian_function_test(s[
-        'ph2',-2]['ph1',1],shift_val=1)
+    print(ndshape(s))
+    #s = s['ph1',1]['ph2',0]
+    residual = hermitian_function_test(s)
     fl.next('hermitian test')
     fl.plot(residual)
-    print("best shift is",best_shift)
+    print("best shift is",residual)
     # {{{ slice out the FID appropriately and phase correct
     # it
     s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s *= exp(1j*2*pi*residual*s.fromaxis('t2'))
     s.ift('t2')
     s *= exp(-s.getaxis('t2')/40e-3)
     fl.next('time domain after hermitian test')
-    fl.image(s)
+    fl.plot(s)
     ph0 = s['t2':0]['ph2',0]['ph1',1]
     print(ndshape(ph0))
     if len(ph0.dimlabels) > 0:
@@ -74,7 +76,7 @@ for searchstr,exp_type,nodename,label_str,color_str in [
     s.name('')
     k.rename('t2','Offset').set_units('Offset','Hz')
     s.rename('t2','Offset').set_units('Offset','Hz')
-    #fl.plot(k['ph2',-2]['ph1',1],label='without time-axis correction',c='k')
-    #fl.plot(s['ph2',-2]['ph1',1],label='with time-axis correction',c='r')
+    fl.plot(k['ph2',-2]['ph1',1],label='without time-axis correction',c='k')
+    fl.plot(s,label='with time-axis correction',c='r')
 
 fl.show();quit()

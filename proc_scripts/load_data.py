@@ -59,13 +59,15 @@ def proc_Hahn_echoph(s):
     nPhaseSteps = 8 
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
-    print(ndshape(s))
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:2048]
+    t2_axis = s.getaxis('t')[0:256]
     s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.setaxis('ph2',r_[0.,2.]/4)
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.labels({'ph2':r_[0.,2.]/4,
+        'ph1':r_[0.,1.,2.,3.]/4})
+    s.reorder(['ph2','ph1'])
+    #s.setaxis('ph2',r_[0.,2.]/4)
+    #s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
     s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)

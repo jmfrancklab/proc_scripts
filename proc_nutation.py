@@ -18,7 +18,7 @@ for searchstr,exp_type,nodename in [
     s.setaxis(t2-rough_center)
     fl.next('raw')
     fl.image(s)
-
+    print(ndshape(s))
     # }}}
     # {{{ centering of data using hermitian function test
     residual,best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
