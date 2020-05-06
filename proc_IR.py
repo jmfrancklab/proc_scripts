@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from pyspecdata.load_files.bruker_nmr import bruker_data
-from proc_scripts import hermitian_function_test, zeroth_order_ph,load_data
+from proc_scripts import * 
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -15,16 +15,16 @@ coh_sel = {'ph1':0,
 coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
-for exp_name,expno in [
-        ('w12_200309',2),
+for searchstr,exp_type,expno in [
+        ('w12_200309','test_equip',2),
         ]:
-    s = load_data(exp_name,expno,'IR')
-    s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
-    s.reorder(['ph2','ph1']).set_units('t2','s')
-    fl.next('raw data')
-    fl.image(s)
-    fl.next('after clock correction')
-    s.rename('indirect','vd')
+    s = load_data(searchstr,exp_type=exp_type,which_exp=expno,postproc='IR')
+    #s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
+    #s.reorder(['ph2','ph1']).set_units('t2','s')
+    #fl.next('raw data')
+    #fl.image(s)
+    #fl.next('after clock correction')
+    #s.rename('indirect','vd')
     #s *= exp(-1j*s.fromaxis('vd')*clock_correction)
     #fl.image(s)
     fl.next('raw data -- coherence channels')

@@ -5,26 +5,7 @@ def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 def proc_bruker_deut_IR_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
-def proc_spincore_ODNP_v1(s):
-    print("loading pre-processing for ODNP")
-    prog_power = s.getaxis('power').copy()
-    print("programmed powers",prog_power)
-    s.setaxis('power',r_[
-        0,dBm2power(array(s.get_prop('meter_powers'))+20)]
-        ).set_units('power','W')
-    print("meter powers",s.get_prop('meter_powers'))
-    print("actual powers",s.getaxis('power'))
-    print("ratio of actual to programmed power",
-               s.getaxis('power')/prog_power)
-    nPoints = s.get_prop('acq_params')['nPoints']
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    s.set_units('t','s')
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.labels({'ph2':r_[0.,2.]/4,
-        'ph1':r_[0.,1.,2.,3.]/4})
-    s.reorder(['ph2','ph1'])
-    return s
+
 def proc_CPMG(s):
     print("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
@@ -52,6 +33,7 @@ def proc_CPMG(s):
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
     return s
+
 def proc_Hahn_echoph(s):
     print("loading pre-processing for Hahn_echoph")
     nPoints = s.get_prop('acq_params')['nPoints']
@@ -72,6 +54,16 @@ def proc_Hahn_echoph(s):
     s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
     return s
+
+def proc_IR(s):
+    s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
+    s.reorder(['ph2','ph1']).set_units('t2','s')
+    fl.next('raw data')
+    fl.image(s)
+    fl.next('after clock correction')
+    s.rename('indirect','vd')
+    return s
+
 def proc_nutation(s):
     print("loading pre-processing for nutation")
     orig_t = s.getaxis('t')
@@ -82,6 +74,28 @@ def proc_nutation(s):
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
     return s
+
+def proc_spincore_ODNP_v1(s):
+    print("loading pre-processing for ODNP")
+    prog_power = s.getaxis('power').copy()
+    print("programmed powers",prog_power)
+    s.setaxis('power',r_[
+        0,dBm2power(array(s.get_prop('meter_powers'))+20)]
+        ).set_units('power','W')
+    print("meter powers",s.get_prop('meter_powers'))
+    print("actual powers",s.getaxis('power'))
+    print("ratio of actual to programmed power",
+               s.getaxis('power')/prog_power)
+    nPoints = s.get_prop('acq_params')['nPoints']
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    s.set_units('t','s')
+    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.labels({'ph2':r_[0.,2.]/4,
+        'ph1':r_[0.,1.,2.,3.]/4})
+    s.reorder(['ph2','ph1'])
+    return s
+
 def proc_square_wave_capture(s):
     print("loading pre-processing for square wave capture")
     s.set_units('t','s').name('Amplitude').set_units('V')
@@ -89,10 +103,11 @@ def proc_square_wave_capture(s):
 
 postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
-        'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'CPMG':proc_CPMG,
         'Hahn_echoph':proc_Hahn_echoph,
+        'IR':proc_IR,
         'nutation':proc_nutation,
+        'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture':proc_square_wave_capture}
 
 def load_data(searchstr, exp_type, which_exp=None, postproc=None):
@@ -103,6 +118,10 @@ def load_data(searchstr, exp_type, which_exp=None, postproc=None):
 
     elif postproc=='Hahn_echoph':
         return find_file(searchstr, exp_type=exp_type, expno=which_exp,
+                lookup=postproc_lookup,
+                postproc=postproc)
+    elif postproc=='IR':
+        return find_file(searchstr, exp_type=exp_type,expno=which_exp,
                 lookup=postproc_lookup,
                 postproc=postproc)
 
