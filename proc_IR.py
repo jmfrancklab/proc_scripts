@@ -17,7 +17,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 for searchstr,exp_type,nodename in [
         ('200303_IR_AER_6','test_equip','signal'),
         ]:
-    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='IR_in_lab')
+    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='spincore_IR')
     #s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
     #s.reorder(['ph2','ph1']).set_units('t2','s')
     #fl.next('raw data')

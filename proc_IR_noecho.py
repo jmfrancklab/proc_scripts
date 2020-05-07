@@ -63,8 +63,8 @@ def calc_baseline(this_d,
             label='after')
     return phcorr0,phcorr1,baseline
 #loading data in
-for exp_name,expno in [
-        ('w8_200224',2),
+for exp_name,exp_type,which_exp in [
+        ('w8_200224','test_equip',2),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -81,7 +81,8 @@ for exp_name,expno in [
         #('ag_sep232019_w0_3_prod',2),
         #('ag_sep232019_w0_1_prod',2),
         ]:
-    d = load_data_bruker(exp_name,'IR_noecho',expno) 
+    d = load_data_bruker(searchstr,exp_type=exp_type,expno=which_exp,None) 
+
     #titling to coherence domain
     #rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     #d.setaxis(t2-rough_center)
