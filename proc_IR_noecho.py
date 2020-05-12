@@ -3,7 +3,7 @@ from pyspecdata import *
 from pyspecdata.load_files.bruker_nmr import bruker_data
 from scipy.optimize import minimize,curve_fit,least_squares
 from numpy import random
-from proc_scripts import hermitian_function_test,zeroth_order_ph, load_data_bruker
+from proc_scripts import * 
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
@@ -81,7 +81,7 @@ for exp_name,exp_type,which_exp in [
         #('ag_sep232019_w0_3_prod',2),
         #('ag_sep232019_w0_1_prod',2),
         ]:
-    d = load_data_bruker(searchstr,exp_type=exp_type,expno=which_exp,None) 
+    d = load_data(searchstr=exp_name,exp_type=exp_type,which_exp=which_exp,postproc=None) 
 
     #titling to coherence domain
     #rough_center = abs(d)['ph2',0]['ph1',0].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
