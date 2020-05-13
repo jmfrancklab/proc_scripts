@@ -1,21 +1,22 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from proc_scripts import load_data
+from proc_scripts import postproc_lookup 
 fl = figlist_var()
        
-for searchstr,exp_type,nodename,label_str in [
+for searchstr, exp_type, nodename, postproc, label_str in [
         #('200221_CPMG_TEMPOLgel_3p0_1','deadtime=5'),
         #('200221_CPMG_TEMPOLgel_2p9_1','deadtime=5'),
         #('200304_CPMG_2p6_1','deadtime=5'),
         #('200305_CPMG_3p5_2','deadtime=5'),
         #('200305_CPMG_3p6_2','deadtime=5'),
-        ('200305_CPMG_3p7_2','test_equip','signal','deadtime=5'),
+        ('200305_CPMG_3p7_2','test_equip','signal','CPMG','deadtime=5'),
         ('200305_CPMG_3p7_3','deadtime=5'),
         #('200305_CPMG_3p8_2','deadtime=5'),
         #('200305_CPMG_3p9_2','deadtime=5'),
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
-    s = load_data(searchstr,exp_type,which_exp=nodename,postproc='CPMG')
+    s = find_file(searchstr, exp_type=exp_type,
+            expno=nodename, postproc=postproc, lookup=postproc_lookup)
     nEchoes = s.get_prop('acq_params')['nEchoes']
     s.ft('t2', shift=True)
     fl.next('raw data - chunking ft')

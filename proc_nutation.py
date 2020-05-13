@@ -1,15 +1,16 @@
 from pyspecdata import *
 from scipy.optimize import minimize
-from proc_scripts import hermitian_function_test,zeroth_order_ph,load_data
+from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_lookup
 from sympy import symbols
 from numpy import *
 fl = figlist_var()
 t2 = symbols('t2')
 
-for searchstr,exp_type,nodename in [
-    ['200219_nutation_alex_probe','test_equip','nutation']
+for searchstr,exp_type,nodename,postproc in [
+    ['200219_nutation_alex_probe','test_equip','nutation','spincore_nutation']
     ]:
-    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='nutation') 
+    s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
+            lookup=postproc_lookup) 
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!

@@ -1,6 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize,leastsq
 from proc_scripts import *
+from proc_scripts import postproc_lookup
 do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
@@ -10,16 +11,17 @@ init_logging(level='debug')
 
 fl = figlist_var()
  # {{{ load data, set units, show raw data
-for searchstr,exp_type,nodename,corrected_volt in [
+for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('180806','pulse_reflection',True),
         #('181001','sprobe_t2',True),
         #('181001','sprobe_t4',True),
         #('181103','probe',True),
-        ('200110','pulse_2',True),
+        #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103_pulse_1','test_equip','capture1',True),
+        ('200103_pulse_1','test_equip','capture1','square_wave_capture',True),
         ]:
-    d = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='square_wave_capture') 
+    d = find_file(searchstr, exp_type=exp_type, expno=nodename,
+            postproc=postproc, lookup=postproc_lookup) 
 
     fl.next('Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
@@ -144,7 +146,7 @@ for searchstr,exp_type,nodename,corrected_volt in [
         d['ch',j] /= ph0
         fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
         fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
-    d.ft('t')
+    #d.ft('t')
     d.ift('t')
     # grab the first blip -- expand forward and back by 1 μs compared to what
     # we found

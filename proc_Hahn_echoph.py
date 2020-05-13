@@ -1,17 +1,19 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from proc_scripts import *
+from proc_scripts.load_data import postproc_lookup
 from sympy import symbols
 #fl = figlist_var()
 fl = fl_mod()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 color_choice = True
-for searchstr,exp_type,nodename,label_str,color_str in [
-        ('200302_alex_probe_water','test_equip','signal','microwaves off','blue'),
+for searchstr,exp_type,nodename,postproc,label_str,color_str in [
+        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off','blue'),
         ]:
     #nPhaseSteps = 8 specified in load_data, may need to change accordingly
-    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='Hahn_echoph')
+    s = find_file(searchstr, exp_type=exp_type, expno=nodename,
+            postproc=postproc, lookup=postproc_lookup)
     s.ft('t2',shift=True)
     fl.next('raw data, chunked')
     fl.image(abs(s))
