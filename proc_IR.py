@@ -1,7 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from pyspecdata.load_files.bruker_nmr import bruker_data
-from proc_scripts import * 
+from proc_scripts import *
+from proc_scripts.load_data import postproc_lookup
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -14,10 +15,13 @@ coh_sel = {'ph1':0,
 coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
-for searchstr,exp_type,nodename in [
-        ('200303_IR_AER_6','test_equip','signal'),
+for searchstr,exp_type,nodename, postproc in [
+        ('200303_IR_AER_6','test_equip','signal','spincore_IR'),
         ]:
-    s = load_data(searchstr,exp_type=exp_type,which_exp=nodename,postproc='spincore_IR')
+    s = find_file(searchstr, exp_type=exp_type,
+            expno=nodename,
+            postproc=postproc, lookup=postproc_lookup,
+            dimname='indirect')
     #s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
     #s.reorder(['ph2','ph1']).set_units('t2','s')
     #fl.next('raw data')
@@ -33,7 +37,8 @@ for searchstr,exp_type,nodename in [
     s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
-    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but(
+            't2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     #s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
     s.ft('t2')
