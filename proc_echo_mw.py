@@ -28,7 +28,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.next('FID slice')
     print("THIS IS THE SHAPE")
     print(ndshape(s))
-    s = slice_FID_from_echo(s,(None,0.05))
+    s = slice_FID_from_echo(s)['t2':(None,0.05)]
     fl.next('compare highest power to no power')
     idx_maxpower = argmax(s.getaxis('power'))
     fl.plot(s['power',0])

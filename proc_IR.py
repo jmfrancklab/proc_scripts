@@ -22,17 +22,6 @@ for searchstr,exp_type,nodename, postproc in [
             expno=nodename,
             postproc=None, lookup=postproc_lookup,
             dimname='indirect')
-    #s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
-    #s.reorder(['ph2','ph1']).set_units('t2','s')
-    #fl.next('raw data')
-    #fl.image(s)
-    #fl.next('after clock correction')
-    #s.rename('indirect','vd')
-    #s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-    #fl.image(s)
-    #fl.next('raw data -- coherence channels')
-    #s.ft(['ph2','ph1'])
-    #fl.image(s)
     fl.next('filtered + rough centered data')
     s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
@@ -40,7 +29,6 @@ for searchstr,exp_type,nodename, postproc in [
     rough_center = abs(s).convolve('t2',0.01).mean_all_but(
             't2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    #s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
     s.ft('t2')
     #{{{ aligning freq
     ## My attempts to align the frequencies here do not work -- we should rather

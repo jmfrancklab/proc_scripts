@@ -18,7 +18,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_lookup)
     nEchoes = s.get_prop('acq_params')['nEchoes']
-    s.ft('t2', shift=True)
     fl.next('raw data - chunking ft')
     fl.image(s)
     s.ft(['ph1'])
@@ -61,7 +60,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
-    print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(firstorder,angle(zeroorder_rad)/pi*180))
+    logger.info(strm("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$"%(firstorder,angle(zeroorder_rad)/pi*180)))
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
     print(ndshape(s))

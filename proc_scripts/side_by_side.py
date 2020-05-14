@@ -45,4 +45,4 @@ class fl_mod (figlist_var):
         draw_limits(thisrange,forplot)
         title('cropped log')
         return
-fl = fl_mod()    
+ 

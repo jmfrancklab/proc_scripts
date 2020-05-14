@@ -2,7 +2,7 @@ from proc_scripts import *
 from pyspecdata import *
 from sympy import symbols
 
-def slice_FID_from_echo(s,time_range):
+def slice_FID_from_echo(s):
     best_shift = hermitian_function_test(s[
         'ph2',-2]['ph1',1])
     s.setaxis('t2',lambda x: x-best_shift)

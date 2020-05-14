@@ -25,13 +25,11 @@ for searchstr,exp_type,nodename,postproc in [
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     fl.next('hermitian test')
     fl.plot(best_shift)
-    print("best shift is",best_shift)
+    logger.info(strm("best shift is",best_shift))
     s.ft('t2', shift=True)
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
     fl.next('time domain after hermitian test')
-    #fl.image(s)
-    #fl.show();quit()
     #}}}
     #{{{ reviewing data imaging thus far
     fl.next('time domain (all $\\Delta p$)')
@@ -39,7 +37,6 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('frequency domain (all $\\Delta p$)')
     s.ft('t2',pad=4096)
     fl.image(s)
-    #fl.show();quit()
     #}}}
     #{{{ selecting coherence and convolving
     s = s['ph2',0]['ph1',1].C
@@ -48,11 +45,9 @@ for searchstr,exp_type,nodename,postproc in [
     fl.image(s)
     fl.next('Figure 1')
     fl.image(s)
-    #fl.show();quit()
     #}}}
     #{{{ slicing
     s = s['t2':(-250,250)]
-    #s.ft('t2',pad=4096)
     fl.next('sliced')
     fl.image(s)
     #}}}
@@ -62,7 +57,6 @@ for searchstr,exp_type,nodename,postproc in [
     ph0 = zeroth_order_ph(s['t2':0], fl=None)
     s /= ph0
     fl.image(s)
-    #fl.show();quit()
     fl.next('phased')
     s.ft('t2',pad=4096)
     fl.image(s)
@@ -71,11 +65,6 @@ for searchstr,exp_type,nodename,postproc in [
     my_clim = gci().get_clim()
     fl.next('imag')
     fl.image(s.imag)
-    gci().set_clim(my_clim) # to match real
+    gci().balance_clim(my_clim) # to match real
     #}}}
-    #        
-    #fl.next(id_string+'image -- $B_1$ distribution')
-    #fl.image(abs(s.C.ft('p_90',shift=True)))
-    #fl.next(id_string+'image abs')
-    #fl.image(abs(s))
 fl.show();quit()

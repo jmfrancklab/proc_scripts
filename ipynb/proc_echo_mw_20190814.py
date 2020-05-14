@@ -37,7 +37,7 @@ print(ndshape(s))
 
 with figlist_var() as fl:
     fl.next(id_string+'raw data ')
-    #fl.image(s)
+    fl.image(s)
 
 
 # In[ ]:

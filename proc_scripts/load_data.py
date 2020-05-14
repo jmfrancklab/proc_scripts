@@ -32,6 +32,7 @@ def proc_CPMG(s):
     s.setaxis('ph1',r_[0.,2.]/4)
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
+    s.ft('t2', shift=True)
     return s
 
 def proc_Hahn_echoph(s):
@@ -53,6 +54,12 @@ def proc_Hahn_echoph(s):
     s.setaxis('t2',t2_axis)
     s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
+    s.ft('t2',shift=True)
+    fl.next('raw data, chunked')
+    fl.image(abs(s))
+    s.ft(['ph1','ph2'])
+    fl.next('coherence')
+    fl.image(abs(s))
     return s
 
 def proc_spincore_IR(s):

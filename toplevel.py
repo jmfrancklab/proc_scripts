@@ -15,7 +15,7 @@ second-level functions.
 The idea is that you would call these either from a GUI
 or from your notebook directory.
 
-Scripts on top level:
+Scripts to be converted to top level:
     proc_CPMG.py
     proc_echo_mw.py
     proc_Hahn_echoph.py
