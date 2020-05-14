@@ -16,7 +16,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
 for searchstr,exp_type,nodename, postproc in [
-        ('w8_200309','NMR_Data_AG',2,'ab_ir2h'),
+        ('200303_IR_AER_6','test_equip','signal','spincore_IR'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,

@@ -11,7 +11,8 @@ fl = fl_mod()
 t2 = symbols('t2')
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
-        ["200306_DNP_lg_probe_w34.*",'test_equip','signal','spincore_ODNP_v1',(-300,300),(None,0.05)]
+        ["200306_DNP_lg_probe_w34.*", 'test_equip', 'signal',
+            'spincore_ODNP_v1', (-300,300), (None,0.05)]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
@@ -28,7 +29,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.next('FID slice')
     print("THIS IS THE SHAPE")
     print(ndshape(s))
-    s = slice_FID_from_echo(s)['t2':(None,0.05)]
+    s = slice_FID_from_echo(s,(None,0.05))
     fl.next('compare highest power to no power')
     idx_maxpower = argmax(s.getaxis('power'))
     fl.plot(s['power',0])

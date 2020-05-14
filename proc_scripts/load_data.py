@@ -37,6 +37,7 @@ def proc_CPMG(s):
 
 def proc_Hahn_echoph(s):
     print("loading pre-processing for Hahn_echoph")
+    fl = figlist_var()
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = 8 
@@ -136,9 +137,10 @@ def load_data(searchstr, exp_type, which_exp=None, postproc=None):
         # if we set s.set_prop('postproc_type'...), then find_file should automatically recognize what to do
         s = find_file(searchstr, exp_type=exp_type, dimname='indirect',
                 expno=which_exp)
-        postproc = s.set_prop('postproc_type')
-        return postproc
+        postproc = s.get_prop('postproc_type')
         print(postproc)
+        return s 
+
         #return (lookup = postproc_lookup)
     else:
         raise ValueError("I can't determine the type of postprocessing")

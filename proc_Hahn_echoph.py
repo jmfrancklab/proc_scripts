@@ -36,7 +36,7 @@ for searchstr,exp_type,nodename,postproc,label_str,color_str in [
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    s *= exp(-s.getaxis('t2')/40e-3)
+    s *= exp(-s.getaxis('t2'))
     fl.next('time domain after hermitian test')
     fl.plot(s)
     ph0 = s['t2':0]['ph2',0]['ph1',1]
@@ -51,7 +51,6 @@ for searchstr,exp_type,nodename,postproc,label_str,color_str in [
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
-    s.convolve('t2',10)
     fl.image(s)
     s = s['ph1',1]['ph2',0].C
     s.ift('t2')
