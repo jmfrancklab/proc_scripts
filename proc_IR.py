@@ -16,12 +16,14 @@ coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
 for searchstr,exp_type,nodename, postproc in [
-        ('200303_IR_AER_6','test_equip','signal','spincore_IR'),
+        ('w8_200224','test_equip',2,'ab_ir2h'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=None, lookup=postproc_lookup,
             dimname='indirect')
+    print(s.dimlabels)
+    quit()
     fl.next('filtered + rough centered data')
     s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
