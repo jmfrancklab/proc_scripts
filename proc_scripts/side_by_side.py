@@ -28,7 +28,6 @@ def draw_limits(thisrange,s):
             axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
     gca().set_xlim(my_xlim)
 def side_by_side(self,plotname,s,thisrange):
-    fl = figlist_var()
     """a bit of a hack to get the two subplots into
     the figure list -- also a good test for objective
     figure list -- for each slice out 3x thisrange, and then
@@ -46,4 +45,4 @@ def side_by_side(self,plotname,s,thisrange):
     title('cropped log')
     return
 class fl_mod(figlist_var):
-    side_by_side=side_by_side
+    side_by_side = side_by_side
