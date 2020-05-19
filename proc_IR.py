@@ -1,13 +1,11 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from pyspecdata.load_files.bruker_nmr import bruker_data
 from proc_scripts import *
 from proc_scripts.load_data import postproc_lookup
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-#clock_correction = 1.785
 clock_correction = 1.785
 filter_bandwidth = 5e3
 coh_sel = {'ph1':0,
@@ -16,32 +14,22 @@ coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
 for searchstr,exp_type,nodename, postproc in [
-        ('w8_200224','test_equip',2,'ab_ir2h'),
+        ('200303_IR_AER_6','test_equip','signal','spincore_ONDP_v1'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=None, lookup=postproc_lookup,
             dimname='indirect')
     print(s.dimlabels)
-    quit()
+    #quit()
     fl.next('filtered + rough centered data')
-    s.ft('t2', shift=True)
+    #s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but(
             't2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     s.ft('t2')
-    #{{{ aligning freq
-    ## My attempts to align the frequencies here do not work -- we should rather
-    ## use the method from the YQ PNAS paper?
-    #fl.next('align frequencies')
-    #center_freqs = abs(s).argmax('t2')
-    #s.ift('t2')
-    #s *= exp(-1j*2*pi*center_freqs*s.fromaxis('t2'))
-    #s.ft('t2')
-    #fl.image(s)
-    #}}}
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
@@ -69,7 +57,6 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     fl.image(s)
 
-s.ift('t2')
 fl.next('check phasing -- real')
 fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 #gridandtick(gca())
@@ -77,7 +64,7 @@ fl.next('check phasing -- imag')
 fl.plot(s[
     'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']].imag)
 
-#gridandtick(gca())
+s.ift('t2')
 s = s['t2':(0,None)]
 s['t2',0] *= 0.5
 fl.next('phased and FID sliced')

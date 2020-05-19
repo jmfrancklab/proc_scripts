@@ -17,7 +17,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_lookup)
-    s.ft('t2',shift=True)
+    #s.ft('t2',shift=True)
     s.ft(['ph1','ph2'])
     fl.next('all data: frequency domain')
     fl.image(s)

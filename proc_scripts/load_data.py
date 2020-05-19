@@ -120,6 +120,7 @@ def proc_spincore_ODNP_v1(s):
     s.labels({'ph2':r_[0.,2.]/4,
         'ph1':r_[0.,1.,2.,3.]/4})
     s.reorder(['ph2','ph1'])
+    s.ft('t2',shift=True)
     return s
 
 def proc_square_wave_capture(s):
