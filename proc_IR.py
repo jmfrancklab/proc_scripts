@@ -21,9 +21,7 @@ for searchstr,exp_type,nodename, postproc in [
             postproc=None, lookup=postproc_lookup,
             dimname='indirect')
     logger.info(strm(s.dimlabels))
-
     fl.next('filtered + rough centered data')
-    #s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but(
@@ -33,8 +31,6 @@ for searchstr,exp_type,nodename, postproc in [
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-    fl.next('hermitian test')
-    fl.plot(best_shift)
     logger.info(strm("best shift is",best_shift))
     # {{{ slice out the FID appropriately and phase correct
     # it
