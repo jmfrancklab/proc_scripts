@@ -7,7 +7,6 @@ fl = fl_mod()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 slice_f = (-5e3,5e3)
-R = 0.9
 color_choice = True
 for searchstr,exp_type,nodename,postproc,label_str,color_str in [
         ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off','blue'),
@@ -20,22 +19,18 @@ for searchstr,exp_type,nodename,postproc,label_str,color_str in [
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    s.ft('t2')
-    s_apodized = s.C*exp(-1j*s.fromaxis('t2')*R*2*pi)
-    s = s_apodized.C
-    s.ift('t2')
     logger.info(strm(ndshape(s)))
     #s = s['ph1',1]['ph2',0]
     best_shift = hermitian_function_test(s)
-    fl.next('hermitian test')
-    fl.plot(best_shift)
     logger.info(strm("best shift is",best_shift))
     # {{{ slice out the FID appropriately and phase correct
     # it
     s.ft('t2')
+    s_uncorrected = s.C
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    s *= exp(-s.getaxis('t2'))
+    # apply a lorentzian broadening
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     fl.next('time domain after hermitian test')
     fl.plot(s)
     ph0 = s['t2':0]['ph2',0]['ph1',1]
@@ -49,18 +44,15 @@ for searchstr,exp_type,nodename,postproc,label_str,color_str in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
-    s.ft('t2')
+    s.ft('t2', pad=512) # power of 2 FT
+    s.convolve('t2',10) # so that resolution of plot isn't higher than that of screen
     fl.image(s)
     s = s['ph1',1]['ph2',0].C
     s.ift('t2')
-    s_apodized.ift('t2')
     s = s['t2':(0,None)]
-    s_apodized = s_apodized['t2':(0,None)]
     s.ft('t2')
-    s_apodized.ft('t2')
-    s.convolve('t2',7)
-    fl.next('')
-    s.name('')
-    fl.plot(s_apodized['ph2',-2]['ph1',1],label='without time-axis correction',c='k')
+    fl.next('processed data')
+    fl.plot(s_uncorrected['ph2',-2]['ph1',1],
+            label='without time-axis correction',c='k')
     fl.plot(s,label='with time-axis correction',c='r')
 fl.show();quit()
