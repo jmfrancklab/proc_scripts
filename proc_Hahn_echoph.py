@@ -5,10 +5,10 @@ from proc_scripts.load_data import postproc_lookup
 from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
-filter_bandwidth = 5e3
 color_choice = True
-for searchstr,exp_type,nodename,postproc,label_str,color_str in [
-        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off','blue'),
+for searchstr,exp_type,nodename,postproc,label_str,color_str,slice_f,R in [
+        ('200302_alex_probe_water', 'test_equip', 'signal', 'Hahn_echoph',
+            'microwaves off', 'blue', (-5e3, 5e3), 0.9), 
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_lookup)
