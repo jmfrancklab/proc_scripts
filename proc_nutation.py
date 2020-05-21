@@ -60,11 +60,6 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('phased')
     s.ft('t2',pad=4096)
     fl.image(s)
-    fl.next('real')
-    fl.image(s.real)
-    my_clim = gci().get_clim()
-    fl.next('imag')
-    fl.image(s.imag)
-    gci().balance_clim(my_clim) # to match real
+    fl.real_imag('phased data',s)
     #}}}
 fl.show();quit()

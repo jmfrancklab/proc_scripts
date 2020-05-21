@@ -1,70 +1,16 @@
 print("Running")
 from pyspecdata import *
-from pyspecdata.load_files.bruker_nmr import bruker_data
-from scipy.optimize import minimize,curve_fit,least_squares
 from numpy import random
-from proc_scripts import * 
+from proc_scripts import *
+from proc_scripts.load_data import postproc_lookup
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
 fl = figlist_var()
 t2 = symbols('t2')
-def calc_baseline(this_d,
-        ph1lim,
-        npts=5,
-        guess=None,
-        show_plots=True):
-    if show_plots: fl.next('try baseline correction')
-    if show_plots: fl.plot(this_d,
-            label='before')
-    this_d_tdom = this_d.C.ift('t2')
-    blank_tdom = this_d_tdom.C
-    blank_tdom.data[:] = 0
-    def vec_to_params(ini_vec):
-        phcorr0,phcorr1 = ini_vec[:2]
-        baseline_vec = ini_vec[2:].view(complex128)
-        return phcorr0,phcorr1,baseline_vec
-    def apply_corr(ini_vec):
-        phcorr0,phcorr1,baseline_vec = vec_to_params(ini_vec)
-        d_test = this_d.C
-        d_test *= exp(-1j*phcorr1*d.fromaxis('t2')-1j*phcorr0)
-        d_test.ift('t2')
-        retval = d_test['t2',0:len(baseline_vec)] + baseline_vec
-        d_test['t2',0:len(baseline_vec)] = retval
-        return d_test.ft('t2')
-    def generate_baseline(baseline_vec):
-        baseline_data = blank_tdom.C
-        baseline_data['t2',0:len(baseline_vec)] += baseline_vec
-        return baseline_data
-    def costfun(ini_vec):
-        d_test = apply_corr(ini_vec)
-        return abs(d_test.real).sum('t2').data.item()
-    max_val = abs(this_d_tdom.data).max()
-    logger.info(strm(max_val))
-    mybounds = r_[-max_val,max_val][newaxis,:]*ones(npts*2)[:,newaxis]
-    logger.info(strm(shape(mybounds)))
-    logger.info(strm(mybounds))
-    mybounds = r_[
-            r_[-pi,pi,-ph1lim,ph1lim].reshape(-1,2),
-            mybounds]
-    if guess is None:
-        guess = zeros(npts*2+2)
-    else:
-        guess = r_[guess[0].real,
-                guess[1].real,
-                guess[2:].view(float64)]
-    res = minimize(costfun, (guess,),
-            method='L-BFGS-B',
-            bounds=mybounds,
-            )
-    phcorr0,phcorr1,baseline_vec = vec_to_params(res.x)
-    baseline = generate_baseline(baseline_vec)
-    if show_plots: fl.plot(this_d*exp(-1j*phcorr1*d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
-            label='after')
-    return phcorr0,phcorr1,baseline
 #loading data in
-for exp_name,exp_type,which_exp in [
-        ('w8_200224','test_equip',2),
+for searchstr,exp_type,which_exp,postproc in [
+        ('w8_200224','test_equip',2,'ag_IR2H'),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -81,8 +27,10 @@ for exp_name,exp_type,which_exp in [
         #('ag_sep232019_w0_3_prod',2),
         #('ag_sep232019_w0_1_prod',2),
         ]:
-    d = load_data(searchstr=exp_name,exp_type=exp_type,which_exp=which_exp,postproc=None) 
-    d.ft('t2',shift=True) #fourier transform
+    d = find_file(searchstr, exp_type=exp_type, 
+            expno=which_exp, 
+            postproc=None, lookup=postproc_lookup, 
+            dimname='indirect') 
     fl.next('time domain (all $\\Delta p$)')
     d.ift('t2')
     fl.image(d)
@@ -93,12 +41,9 @@ for exp_name,exp_type,which_exp in [
     d.convolve('t2',5)
     fl.image(d)
     d.reorder('t2')
-    fl.next('after 0th order correction')
     ph0 = zeroth_order_ph(d['t2':0],fl=None)
     ph0 /= abs(ph0)
     d /= ph0
-    fl.plot(d)
-    #fl.show();quit()
     d *= -1
 
 fl.next('Plotting phased spectra')
@@ -163,15 +108,7 @@ soln.rename('T1','log(T1)')
 soln.setaxis('log(T1)',log10(T1.data))
 fl.next('solution')
 fl.image(soln['t2':(100,300)])
-
-
 fl.show();quit()
-logger.info(strm("SAVING FILE"))
-np.savez(exp_name+'_'+str(expno)+'_ILT_inv',
-        data=soln.data,
-        logT1=soln.getaxis('log(T1)'),
-        t2=soln.getaxis('t2'))               
-logger.info(strm("FILE SAVED"))
-quit()
+
 
 

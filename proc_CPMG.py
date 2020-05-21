@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from proc_scripts import postproc_lookup 
+from proc_scripts import postproc_dict 
 fl = figlist_var()
        
 for searchstr, exp_type, nodename, postproc, label_str in [
@@ -16,7 +16,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
-            expno=nodename, postproc=postproc, lookup=postproc_lookup)
+            expno=nodename, postproc=postproc, lookup=postproc_dict)
     nEchoes = s.get_prop('acq_params')['nEchoes']
     fl.next('raw data - chunking ft')
     fl.image(s)
@@ -63,7 +63,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     logger.info(strm("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(firstorder,angle(zeroorder_rad)/pi*180)))
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
-    logger.infor(strm(ndshape(s)))
+    logger.info(strm(ndshape(s)))
     fl.next('after phased - real ft')
     fl.image(s.real)
     fl.next('after phased - imag ft')
