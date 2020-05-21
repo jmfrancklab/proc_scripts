@@ -99,6 +99,10 @@ def zeroth_order_ph(d, fl=None):
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
 
     r"""determine the center of the echo
+
+    .. todo::
+        Alex: please update this using standard Parameters and
+        Returns blocks
     
     .. note::
         This should be using zeroth_order_ph, but it's not, implying that it's

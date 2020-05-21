@@ -1,8 +1,17 @@
-from .hermitian_function_test import *
-from .align_slice import *
-from .load_data import *
-from .side_by_side import *
-from .slice_FID_from_echo import *
+# for the sake of organization, explicitly list the functions here
+from .phasing import zeroth_order_ph,hermitian_function_test
+from .align_slice import align_and_slice
+from .load_data import postproc_dict
+from .plotting import expand_limits,draw_limits,fl_mod
+from .slice_FID_from_echo import slice_FID_from_echo
+from .baseline import calc_baseline
 
-__all__ = ['zeroth_order_ph','hermitian_function_test','align_and_slice','load_data','side_by_side','fl_mod','slice_FID_from_echo']
+__all__ = ['zeroth_order_ph',
+        'hermitian_function_test',
+        'align_and_slice',
+        'side_by_side',
+        'fl_mod',
+        'slice_FID_from_echo',
+        'calc_baseline',
+        ]
 

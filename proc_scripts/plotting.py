@@ -28,6 +28,18 @@ def draw_limits(thisrange,s):
             axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
     gca().set_xlim(my_xlim)
 class fl_mod(figlist_var):
+    def real_imag(self,plotname,s):
+        thisfig,(ax1,ax2) = subplots(1,2)
+        self.next(plotname, fig=thisfig)
+        sca(ax1)
+        self.image(s.real)
+        title('real')
+        my_clim = gci().get_clim()
+        sca(ax2)
+        self.image(s.imag)
+        gci().set_clim(my_clim) # to match real
+        title('imaginary')
+        return
     def side_by_side(self,plotname,s,thisrange):
         """a bit of a hack to get the two subplots into
         the figure list -- also a good test for objective

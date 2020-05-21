@@ -136,32 +136,3 @@ postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_IR':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture':proc_square_wave_capture}
-
-def load_data(searchstr, exp_type, which_exp=None, postproc=None):
-    if postproc is 'CPMG':
-       return find_file(searchstr, exp_type=exp_type, expno=which_exp,
-               lookup=postproc_lookup,
-               postproc=postproc)
-
-    elif postproc in ['Hahn_echoph',
-            'spincore_ODNP_v1',
-            'spincore_IR',
-            'spincore_nutation',
-            'square_wave_capture'
-            ]:
-        return find_file(searchstr, exp_type=exp_type, expno=which_exp,
-                lookup=postproc_lookup,
-                postproc=postproc)
-        
-    elif postproc is None:
-        print("You left postproc unset, so I'm assuming you're going to let me choose what to do.  Right now, this only works for Bruker format files")
-        # if we set s.set_prop('postproc_type'...), then find_file should automatically recognize what to do
-        s = find_file(searchstr, exp_type=exp_type, dimname='indirect',
-                expno=which_exp)
-        postproc = s.get_prop('postproc_type')
-        print(postproc)
-        return s 
-
-        #return (lookup = postproc_lookup)
-    else:
-        raise ValueError("I can't determine the type of postprocessing")
