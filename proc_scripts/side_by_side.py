@@ -33,16 +33,15 @@ class fl_mod(figlist_var):
         the figure list -- also a good test for objective
         figure list -- for each slice out 3x thisrange, and then
         show the lines for thisrange"""
-        fl=figlist_var()
         thisfig,(ax1,ax2) = subplots(1,2)
-        fl.next(plotname, fig=thisfig)
+        self.next(plotname, fig=thisfig)
         sca(ax1)
         forplot = s['t2':expand_limits(thisrange,s)]
-        fl.image(forplot)
+        self.image(forplot)
         print("drawing limits",thisrange)
         draw_limits(thisrange,forplot)
         sca(ax2)
-        fl.image(forplot.C.cropped_log())
+        self.image(forplot.C.cropped_log())
         draw_limits(thisrange,forplot)
         title('cropped log')
         return
