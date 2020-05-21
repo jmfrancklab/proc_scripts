@@ -25,7 +25,7 @@ for searchstr,exp_type,nodename,postproc,label_str,color_str in [
     s_apodized *= exp(-1j*s_apodized.fromaxis('t2')*2*pi*0.005)
     s = s_apodized.C
     s.ift('t2')
-    print(ndshape(s))
+    logger.info(strm(ndshape(s)))
     #s = s['ph1',1]['ph2',0]
     best_shift = hermitian_function_test(s)
     fl.next('hermitian test')
@@ -40,13 +40,13 @@ for searchstr,exp_type,nodename,postproc,label_str,color_str in [
     fl.next('time domain after hermitian test')
     fl.plot(s)
     ph0 = s['t2':0]['ph2',0]['ph1',1]
-    print(ndshape(ph0))
+    logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0, fl=fl)
-        print('phasing dimension as one')
+        logger.info(strm('phasing dimension as one'))
     else:
-        print("there is only one dimension left -- standard 1D zeroth order phasing")
+        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')

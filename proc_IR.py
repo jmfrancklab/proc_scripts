@@ -20,8 +20,8 @@ for searchstr,exp_type,nodename, postproc in [
             expno=nodename,
             postproc=None, lookup=postproc_lookup,
             dimname='indirect')
-    print(s.dimlabels)
-    #quit()
+    logger.info(strm(s.dimlabels))
+
     fl.next('filtered + rough centered data')
     #s.ft('t2', shift=True)
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
@@ -35,7 +35,7 @@ for searchstr,exp_type,nodename, postproc in [
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     fl.next('hermitian test')
     fl.plot(best_shift)
-    print("best shift is",best_shift)
+    logger.info(strm("best shift is",best_shift))
     # {{{ slice out the FID appropriately and phase correct
     # it
     s.ft('t2')
@@ -44,13 +44,13 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('time domain after hermitian test')
     fl.image(s)
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
-    print(ndshape(ph0))
+    logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0, fl=fl)
-        print('phasing dimension as one')
+        logger.info(strm('phasing dimension as one'))
     else:
-        print("there is only one dimension left -- standard 1D zeroth order phasing")
+        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
@@ -90,7 +90,7 @@ p_ini = [1.0,10.0]
 p_opt,success = leastsq(errfunc, p_ini[:])
 assert success in [1,2,3], "Fit did not succeed"
 T1 = 1./p_opt[1]
-print("T1:",T1,"s")
+logger.info(strm("T1:",T1,"s"))
 fl.next('fit')
 fl.plot(s_sliced, 'o', label='data')
 fl.plot(s_sliced.imag, 'o', label='data')

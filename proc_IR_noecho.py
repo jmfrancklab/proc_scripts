@@ -40,10 +40,10 @@ def calc_baseline(this_d,
         d_test = apply_corr(ini_vec)
         return abs(d_test.real).sum('t2').data.item()
     max_val = abs(this_d_tdom.data).max()
-    print(max_val)
+    logger.info(strm(max_val))
     mybounds = r_[-max_val,max_val][newaxis,:]*ones(npts*2)[:,newaxis]
-    print(shape(mybounds))
-    print(mybounds)
+    logger.info(strm(shape(mybounds)))
+    logger.info(strm(mybounds))
     mybounds = r_[
             r_[-pi,pi,-ph1lim,ph1lim].reshape(-1,2),
             mybounds]
@@ -118,7 +118,7 @@ fl.plot(rec_curve,'o')
 min_index = abs(d).run(sum, 't2').argmin('indirect',raw_index=True).data
 min_vd = d.getaxis('indirect')[min_index]
 est_T1 = min_vd/log(2)
-print("Estimated T1 is:", est_T1,"s")
+logger.info(strm("Estimated T1 is:", est_T1,"s"))
 
 #attempting ILT plot with NNLS_Tikhonov_190104
 
@@ -154,7 +154,7 @@ if plot_Lcurve:
 #quit()
 sfo1 = 273.76
 arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
-print("SFO1 is",sfo1)
+logger.info(strm("SFO1 is",sfo1))
 d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
 this_l = 0.178#pick number in l curve right before it curves up
 soln = d.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
@@ -166,12 +166,12 @@ fl.image(soln['t2':(100,300)])
 
 
 fl.show();quit()
-print("SAVING FILE")
+logger.info(strm("SAVING FILE"))
 np.savez(exp_name+'_'+str(expno)+'_ILT_inv',
         data=soln.data,
         logT1=soln.getaxis('log(T1)'),
         t2=soln.getaxis('t2'))               
-print("FILE SAVED")
+logger.info(strm("FILE SAVED"))
 quit()
 
 
