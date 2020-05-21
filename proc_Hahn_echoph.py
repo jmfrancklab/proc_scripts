@@ -6,6 +6,8 @@ from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
+slice_f = (-5e3,5e3)
+R = 0.9
 color_choice = True
 for searchstr,exp_type,nodename,postproc,label_str,color_str in [
         ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off','blue'),
@@ -14,15 +16,12 @@ for searchstr,exp_type,nodename,postproc,label_str,color_str in [
             postproc=postproc, lookup=postproc_lookup)
     s.mean('nScans')    
     fl.next('signal')
-    slice_f = (-5e3,5e3)
     s = s['t2':slice_f]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     s.ft('t2')
-    s_apodized = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
-    s_apodized = s.C*exp(-1j*0.9*2*pi)
-    s_apodized *= exp(-1j*s_apodized.fromaxis('t2')*2*pi*0.005)
+    s_apodized = s.C*exp(-1j*s.fromaxis('t2')*R*2*pi)
     s = s_apodized.C
     s.ift('t2')
     logger.info(strm(ndshape(s)))

@@ -1,5 +1,5 @@
 from pyspecdata import *
-from Utility import dBm2power
+from .Utility import dBm2power
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")

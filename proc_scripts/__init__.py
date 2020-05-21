@@ -3,6 +3,7 @@ from .align_slice import *
 from .load_data import *
 from .side_by_side import *
 from .slice_FID_from_echo import *
+from .Utility import *
 
-__all__ = ['zeroth_order_ph','hermitian_function_test','align_and_slice','load_data','side_by_side','fl_mod','slice_FID_from_echo']
+__all__ = ['zeroth_order_ph','hermitian_function_test','align_and_slice','load_data','side_by_side','fl_mod','slice_FID_from_echo','dBm2power','power2dBm','Vpp2power']
 
