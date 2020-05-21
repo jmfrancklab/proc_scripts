@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from proc_scripts import *
-from proc_scripts.load_data import postproc_lookup
+from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
@@ -12,7 +12,7 @@ for searchstr,exp_type,nodename,postproc,label_str,color_str in [
         ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off','blue'),
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_lookup)
+            postproc=postproc, lookup=postproc_dict)
     s.mean('nScans')    
     fl.next('signal')
     s = s['t2':slice_f]

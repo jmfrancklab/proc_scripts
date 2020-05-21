@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize,leastsq
 from proc_scripts import *
-from proc_scripts import postproc_lookup
+from proc_scripts import postproc_dict
 do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
@@ -21,7 +21,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         ('200103_pulse_1','test_equip','capture1','square_wave_capture',True),
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_lookup) 
+            postproc=postproc, lookup=postproc_dict) 
 
     fl.next('Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
@@ -38,7 +38,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     else:
         d['t':(0,3e6)] = 0 # filter out low-frq noise, which becomes high-frq noise on demod
     center_frq = abs(d['ch',0]).argmax('t').item() # the center frequency is now the max of the freq peak    
-    logger.infor(strm(("initial guess at center frequency at %0.5f MHz"%(center_frq/1e6))))
+    logger.info(strm(("initial guess at center frequency at %0.5f MHz"%(center_frq/1e6))))
     logger.info(strm(center_frq))
     fl.next('frequency domain\n%s'%searchstr)
     fl.plot(abs(d['t':(None,40e6)]),label='Raw signal in freq domain,\nshows a bandwidth of about 20 MHz', alpha=0.5)
@@ -141,8 +141,8 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j], fl=fl)
         d['ch',j] /= ph0
-        fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
-        fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
+        #fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
+        #fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
     if show_transfer_func:
         # {{{ to plot the transfer function, we need to pick an impulse
         # of finite width, or else we get a bunch of noise

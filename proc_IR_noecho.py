@@ -2,7 +2,7 @@ print("Running")
 from pyspecdata import *
 from numpy import random
 from proc_scripts import *
-from proc_scripts.load_data import postproc_lookup
+from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
@@ -29,7 +29,7 @@ for searchstr,exp_type,which_exp,postproc in [
         ]:
     d = find_file(searchstr, exp_type=exp_type, 
             expno=which_exp, 
-            postproc=None, lookup=postproc_lookup, 
+            postproc=None, lookup=postproc_dict, 
             dimname='indirect') 
     fl.next('time domain (all $\\Delta p$)')
     d.ift('t2')

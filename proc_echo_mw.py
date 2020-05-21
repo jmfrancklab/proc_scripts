@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
-from proc_scripts import postproc_lookup
+from proc_scripts import postproc_dict
 from sympy import symbols
 init_logging(level='debug')
 rcParams["savefig.transparent"] = True
@@ -15,7 +15,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
-            lookup=postproc_lookup)
+            lookup=postproc_dict)
     #s.ft('t2',shift=True)
     s.ft(['ph1','ph2'])
     fl.next('all data: frequency domain')

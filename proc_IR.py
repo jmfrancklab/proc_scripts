@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from proc_scripts import *
-from proc_scripts.load_data import postproc_lookup
+from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -18,7 +18,7 @@ for searchstr,exp_type,nodename, postproc in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
-            postproc=None, lookup=postproc_lookup,
+            postproc=None, lookup=postproc_dict,
             dimname='indirect')
     logger.info(strm(s.dimlabels))
     fl.next('filtered + rough centered data')
