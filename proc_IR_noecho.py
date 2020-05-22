@@ -110,5 +110,3 @@ fl.next('solution')
 fl.image(soln['t2':(100,300)])
 fl.show();quit()
 
-
-

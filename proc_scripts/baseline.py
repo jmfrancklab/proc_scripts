@@ -4,10 +4,10 @@ def calc_baseline(this_d,
         guess=None,
         show_plots=True):
     """
-    
+
     """
     if show_plots: fl.next('try baseline correction')
-    if show_plots:fl.plot(this_d,
+    if show_plots: fl.plot(this_d,
             label='before')
     this_d_tdom = this_d.C.ift('t2')
     blank_tdom = this_d_tdom.C
@@ -33,10 +33,10 @@ def calc_baseline(this_d,
         return abs(d_test.real).sum('t2').data.item()
     max_val = abs(this_d_tdom.data).max()
     print(max_val)
-    mybound = r_[-max_val,max_val][newaxis,:]*ones(npts*2)[:,newaxis]
+    mybounds = r_[-max_val,max_val][newaxis,:]*ones(npts*2)[:,newaxis]
     print(shape(mybounds))
     print(mybounds)
-    mybound = r_[
+    mybounds = r_[
             r_[-pi,pi,-ph1lim,ph1lim].reshape(-1,2),
             mybounds]
     if guess is None:
@@ -54,5 +54,4 @@ def calc_baseline(this_d,
     if show_plots: fl.plot(this_d*exp(-1j*phcorr1*d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
             label='after')
     return phcorr0,phcorr1,baseline
-
 
