@@ -101,7 +101,6 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         d['ch',j] /= ph0
         fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
         fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
-    #d.ft('t')
     d.ift('t')
     # grab the first blip -- expand forward and back by 1 μs compared to what
     # we found
