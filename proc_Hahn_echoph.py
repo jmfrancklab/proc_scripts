@@ -7,9 +7,8 @@ fl = fl_mod()
 t2 = symbols('t2')
 filter_bandwidth = 5e3
 slice_f = (-5e3,5e3)
-color_choice = True
-for searchstr,exp_type,nodename,postproc,label_str,color_str in [
-        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off','blue'),
+for searchstr,exp_type,nodename,postproc,label_str in [
+        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off'),
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict)
