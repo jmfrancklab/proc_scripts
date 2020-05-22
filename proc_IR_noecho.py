@@ -1,15 +1,16 @@
 print("Running")
 from pyspecdata import *
 from numpy import random
-from proc_scripts import * 
+from proc_scripts import *
+from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
 fl = figlist_var()
 t2 = symbols('t2')
 #loading data in
-for exp_name,exp_type,which_exp in [
-        ('w8_200224','test_equip',2),
+for searchstr,exp_type,which_exp,postproc in [
+        ('w8_200224','test_equip',2,'ag_IR2H'),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -26,8 +27,10 @@ for exp_name,exp_type,which_exp in [
         #('ag_sep232019_w0_3_prod',2),
         #('ag_sep232019_w0_1_prod',2),
         ]:
-    d = find_file(...
-    d.ft('t2',shift=True) #fourier transform
+    d = find_file(searchstr, exp_type=exp_type, 
+            expno=which_exp, 
+            postproc=None, lookup=postproc_dict, 
+            dimname='indirect') 
     fl.next('time domain (all $\\Delta p$)')
     d.ift('t2')
     fl.image(d)
@@ -38,12 +41,9 @@ for exp_name,exp_type,which_exp in [
     d.convolve('t2',5)
     fl.image(d)
     d.reorder('t2')
-    fl.next('after 0th order correction')
     ph0 = zeroth_order_ph(d['t2':0],fl=None)
     ph0 /= abs(ph0)
     d /= ph0
-    fl.plot(d)
-    #fl.show();quit()
     d *= -1
 
 fl.next('Plotting phased spectra')
@@ -63,7 +63,7 @@ fl.plot(rec_curve,'o')
 min_index = abs(d).run(sum, 't2').argmin('indirect',raw_index=True).data
 min_vd = d.getaxis('indirect')[min_index]
 est_T1 = min_vd/log(2)
-print("Estimated T1 is:", est_T1,"s")
+logger.info(strm("Estimated T1 is:", est_T1,"s"))
 
 #attempting ILT plot with NNLS_Tikhonov_190104
 
@@ -99,7 +99,7 @@ if plot_Lcurve:
 #quit()
 sfo1 = 273.76
 arbitrary_reference = d.get_prop('acq')['BF1'] # will eventually be 
-print("SFO1 is",sfo1)
+logger.info(strm("SFO1 is",sfo1))
 d.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
 this_l = 0.178#pick number in l curve right before it curves up
 soln = d.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
@@ -108,3 +108,5 @@ soln.rename('T1','log(T1)')
 soln.setaxis('log(T1)',log10(T1.data))
 fl.next('solution')
 fl.image(soln['t2':(100,300)])
+fl.show();quit()
+

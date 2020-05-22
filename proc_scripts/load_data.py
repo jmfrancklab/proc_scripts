@@ -1,5 +1,5 @@
 from pyspecdata import *
-from Utility import dBm2power
+from .Utility import dBm2power
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
@@ -128,7 +128,7 @@ def proc_square_wave_capture(s):
     s.set_units('t','s').name('Amplitude').set_units('V')
     return s
 
-postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
+postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'CPMG':proc_CPMG,
         'Hahn_echoph':proc_Hahn_echoph,
@@ -136,3 +136,4 @@ postproc_lookup = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_IR':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture':proc_square_wave_capture}
+

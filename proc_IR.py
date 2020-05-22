@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from proc_scripts import *
-from proc_scripts.load_data import postproc_lookup
+from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -18,9 +18,9 @@ for searchstr,exp_type,nodename, postproc in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
-            postproc=None, lookup=postproc_lookup,
+            postproc=None, lookup=postproc_dict,
             dimname='indirect')
-    print(s.dimlabels)
+    logger.info(strm(s.dimlabels))
     fl.next('filtered + rough centered data')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
@@ -31,7 +31,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-    print("best shift is",best_shift)
+    logger.info(strm("best shift is",best_shift))
     # {{{ slice out the FID appropriately and phase correct
     # it
     s.ft('t2')
@@ -40,13 +40,13 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('time domain after hermitian test')
     fl.image(s)
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
-    print(ndshape(ph0))
+    logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0, fl=fl)
-        print('phasing dimension as one')
+        logger.info(strm('phasing dimension as one'))
     else:
-        print("there is only one dimension left -- standard 1D zeroth order phasing")
+        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
@@ -86,7 +86,7 @@ p_ini = [1.0,10.0]
 p_opt,success = leastsq(errfunc, p_ini[:])
 assert success in [1,2,3], "Fit did not succeed"
 T1 = 1./p_opt[1]
-print("T1:",T1,"s")
+logger.info(strm("T1:",T1,"s"))
 fl.next('fit')
 fl.plot(s_sliced, 'o', label='data')
 fl.plot(s_sliced.imag, 'o', label='data')

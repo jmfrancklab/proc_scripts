@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from proc_scripts import postproc_lookup 
+from proc_scripts import postproc_dict 
 fl = figlist_var()
        
 for searchstr, exp_type, nodename, postproc, label_str in [
@@ -16,7 +16,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
-            expno=nodename, postproc=postproc, lookup=postproc_lookup)
+            expno=nodename, postproc=postproc, lookup=postproc_dict)
     nEchoes = s.get_prop('acq_params')['nEchoes']
     fl.next('raw data - chunking ft')
     fl.image(s)
@@ -47,7 +47,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        print((iteration, x, f, int(accepted)))
+        logger.info(strm((iteration, x, f, int(accepted))))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
@@ -60,10 +60,10 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
-    logger.info(strm("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(firstorder,angle(zeroorder_rad)/pi*180)))
+    logger.info(strm("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$".format(firstorder,angle(zeroorder_rad)/pi*180)))
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
-    print(ndshape(s))
+    logger.info(strm(ndshape(s)))
     fl.next('after phased - real ft')
     fl.image(s.real)
     fl.next('after phased - imag ft')
@@ -84,12 +84,12 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
     assert success == 1, "Fit did not succeed"
     T2 = 1./p1[1]
-    print(T2)
+    logger.info(strm(T2))
     x_fit = linspace(x.min(),x.max(),5000)
     fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
     xlabel('t (sec)')
     ylabel('Intensity')
-    print("T2:",T2,"s")
+    logger.info(strm("T2:",T2,"s"))
     save_fig = False
     if save_fig:
         savefig('20200108_CPMG_trials.png',

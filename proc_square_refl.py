@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize,leastsq
 from proc_scripts import *
-from proc_scripts import postproc_lookup
+from proc_scripts import postproc_dict
 do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
@@ -21,7 +21,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         ('200103_pulse_1','test_equip','capture1','square_wave_capture',True),
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_lookup) 
+            postproc=postproc, lookup=postproc_dict) 
 
     fl.next('Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
@@ -38,8 +38,8 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     else:
         d['t':(0,3e6)] = 0 # filter out low-frq noise, which becomes high-frq noise on demod
     center_frq = abs(d['ch',0]).argmax('t').item() # the center frequency is now the max of the freq peak    
-    print(("initial guess at center frequency at %0.5f MHz"%(center_frq/1e6)))
-    print(center_frq)
+    logger.info(strm(("initial guess at center frequency at %0.5f MHz"%(center_frq/1e6))))
+    logger.info(strm(center_frq))
     fl.next('frequency domain\n%s'%searchstr)
     fl.plot(abs(d['t':(None,40e6)]),label='Raw signal in freq domain,\nshows a bandwidth of about 20 MHz', alpha=0.5)
     axvline(x=center_frq/1e6)
@@ -62,18 +62,18 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     pulse_range = filter_range(pulse_range)
     # }}}
     if not pulse_range.shape[0] == 1:
-        print(("seems to be more than one pulse -- on starting at " 
-                + ','.join(('start '+str(j[0])+' length '+str(diff(j)) for j in pulse_range))))   # If there is more than one section that goes above half max
+        logger.info(strm(("seems to be more than one pulse -- on starting at " 
+                + ','.join(('start '+str(j[0])+' length '+str(diff(j)) for j in pulse_range)))))   # If there is more than one section that goes above half max
     # it assumes theres more than one pulse 
     pulse_range = pulse_range[0,:]
     fl.plot(abs(d['ch',0]['t':tuple(pulse_range)]), alpha=0.1, color='k',  #shades in the section of pulse range (above half max) for 
             linewidth=10)                                                  #control 
     refl_blip_ranges = abs(d['ch',1]).contiguous(lambda x:
             x > 0.06*x.data.max()) 
-    print("before filter",refl_blip_ranges)
+    logger.info(strm("before filter",refl_blip_ranges))
     refl_blip_ranges = filter_range(refl_blip_ranges)                      # repeats the filter range but for the reflected signal                
     refl_blip_ranges.sort(axis=0) # they are sorted by range size, not first/last
-    print("after filter",refl_blip_ranges)
+    logger.info(strm("after filter",refl_blip_ranges))
     assert refl_blip_ranges.shape[0] == 2, "seems to be more than two tuning blips "
     for thisrange in refl_blip_ranges:
         fl.plot(abs(d['ch',1]['t':tuple(thisrange)]), alpha=0.1, color='k',
@@ -89,7 +89,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     # when modulating by same frequency of the waveform,
     # abs(sum(waveform)) will be a maximum
     center_frq += fine_adj_frq
-    print(("found center frequency at %0.5f MHz"%(center_frq/1e6)))
+    logger.info(strm(("found center frequency at %0.5f MHz"%(center_frq/1e6))))
     d.ft('t') #Fourier Transform into freq domain
     d.setaxis('t', lambda x: x - fine_adj_frq) #apply shift to x axis
     fl.next('frequency domain\n%s'%searchstr)
@@ -141,8 +141,8 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j], fl=fl)
         d['ch',j] /= ph0
-        fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
-        fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
+        #fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
+        #fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
     if show_transfer_func:
         # {{{ to plot the transfer function, we need to pick an impulse
         # of finite width, or else we get a bunch of noise
@@ -164,7 +164,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(response.imag, alpha=0.5, label='response, imag')
         fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
         #fl.show();quit()
-    #print(nddata(refl_blip_ranges))
+    
     dw = diff(d.getaxis('t')[0:2]).item()
     for thislabel,decay in [('initial',d['ch',1]['t':(refl_blip_ranges[0,0]-1e-6,refl_blip_ranges[1,0]-1e-6)]),
             ('final',d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)])]:
