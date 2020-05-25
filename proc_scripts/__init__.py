@@ -7,6 +7,7 @@ from .baseline import calc_baseline
 from .Utility import *
 
 __all__ = ['zeroth_order_ph',
+        'phasecorrect',
         'hermitian_function_test',
         'align_and_slice',
         'expand_limits',
