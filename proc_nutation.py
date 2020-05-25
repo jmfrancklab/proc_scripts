@@ -11,6 +11,7 @@ for searchstr,exp_type,nodename,postproc in [
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict) 
+ 
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
@@ -21,6 +22,7 @@ for searchstr,exp_type,nodename,postproc in [
     fl.image(s)
     logger.info(strm(ndshape(s)))
     # }}}
+    
     # {{{ centering of data using hermitian function test
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     fl.next('hermitian test')
@@ -31,6 +33,7 @@ for searchstr,exp_type,nodename,postproc in [
     s.ift('t2')
     fl.next('time domain after hermitian test')
     #}}}
+    
     #{{{ reviewing data imaging thus far
     fl.next('time domain (all $\\Delta p$)')
     fl.image(s)
@@ -38,6 +41,7 @@ for searchstr,exp_type,nodename,postproc in [
     s.ft('t2',pad=4096)
     fl.image(s)
     #}}}
+    
     #{{{ selecting coherence and convolving
     s = s['ph2',0]['ph1',1].C
     fl.next('select $\\Delta p$ and convolve')
@@ -46,11 +50,13 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('Figure 1')
     fl.image(s)
     #}}}
+    
     #{{{ slicing
     s = s['t2':(-250,250)]
     fl.next('sliced')
     fl.image(s)
     #}}}
+    
     #{{{ phasing with zeroth order correction
     s.ift('t2')
     fl.next('final time domain')

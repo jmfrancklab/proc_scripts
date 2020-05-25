@@ -36,7 +36,7 @@ class fl_mod(figlist_var):
         title('real')
         my_clim = gci().get_clim()
         sca(ax2)
-        self.image(s.image)
+        self.image(s)
         gci().set_clim(my_clim) #to match real
         title('imaginary')
         return
