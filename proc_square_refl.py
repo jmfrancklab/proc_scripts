@@ -27,6 +27,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
     # }}}
+    
     # {{{ determining center frequency and convert to
     # analytic signal, show analytic signal
     d.ft('t',shift=True) #Fourier Transform into freq domain
@@ -51,11 +52,12 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(abs(d['ch',0]), alpha=0.5, label='control') #plot the 'envelope' of the control 
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
     # }}}
-    # {{{ determine the start and stop points for both
-    # the pulse, as well as the two tuning blips
+    
+    #determine the start and stop points for both the pulse, as well as the two tuning blips
     pulse_range = abs(d['ch',0]).contiguous(lambda x:  # returns list of limits for which the lambda function holds true
             x > 0.5*x.data.max())                      # So will define pulse_range as all x values where the signal goes 
                                                        # above half the max of the signal
+    
     # {{{ filter for ranges >0.1 μs -- use the compact list comprehension
     def filter_range(x): return array([j for j in x if
         diff(j).item() > 0.1e-6])
@@ -71,7 +73,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     refl_blip_ranges = abs(d['ch',1]).contiguous(lambda x:
             x > 0.06*x.data.max()) 
     logger.info(strm("before filter",refl_blip_ranges))
-    refl_blip_ranges = filter_range(refl_blip_ranges)                      # repeats the filter range but for the reflected signal                
+    refl_blip_ranges = filter_range(refl_blip_ranges)  # repeats the filter range but for the reflected signal                
     refl_blip_ranges.sort(axis=0) # they are sorted by range size, not first/last
     logger.info(strm("after filter",refl_blip_ranges))
     assert refl_blip_ranges.shape[0] == 2, "seems to be more than two tuning blips "
@@ -79,6 +81,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(abs(d['ch',1]['t':tuple(thisrange)]), alpha=0.1, color='k',
                 linewidth=10)
     # }}}
+    
     # {{{ apply a linear phase to find any remaining fine offset of the pulse,
     #     and demodulate
     f_shift = nddata(r_[-0.1e6:0.1e6:200j],'f_test')
@@ -96,22 +99,28 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(d['t':(None,40e6)], label='demod and sliced',
             alpha=0.5)
     # }}}
+    
+    #{{{ zeroth order phase correction
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j], fl=fl)
         d['ch',j] /= ph0
         fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
         fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
     d.ift('t')
-    # grab the first blip -- expand forward and back by 1 μs compared to what
+    #}}}
+
+    #{{{ grab the first blip -- expand forward and back by 1 μs compared to what
     # we found
     first_blip = d['ch',1][
             't':tuple(refl_blip_ranges[0]+r_[-1e-6,1e-6])].C
     fl.next('show first blip')
     fl.plot(abs(first_blip), alpha=0.5)
     fl.plot(first_blip.real, alpha=0.5)
+    #}}}
+
+    # {{{ use the "standard cost function" to determine the
+    #     t=0 (treat decay as an FID)
     if standard_cost:
-        # {{{ use the "standard cost function" to determine the
-        #     t=0 (treat decay as an FID)
         first_blip.ft('t')
         fl.next('test time axis')
         t_shift = nddata(r_[-0.2e-6:0.2e-6:1000j]+pulse_range[0],
@@ -140,17 +149,14 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j], fl=fl)
         d['ch',j] /= ph0
-        #fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
-        #fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
-    if show_transfer_func:
-        # {{{ to plot the transfer function, we need to pick an impulse
+    
+    #{{{ to plot the transfer function, we need to pick an impulse
         # of finite width, or else we get a bunch of noise
+    if show_transfer_func:
         transf_range = (-0.5e-6,3e-6)
         fl.next('the transfer function')
         impulse = exp(-d.fromaxis('t')**2/2/(0.03e-6)**2) #impulse function
         ## the following gives a possibility for a causal impulse
-        #impulse = exp(-abs(d.fromaxis('t'))/0.01e-6)
-        #impulse['t':(None,0)] = 0
         fl.plot(impulse['t':transf_range], alpha=0.5, color='k', label='impulse')
         #plots impulse function in range of transfer function
         d.ft('t') #Fourier Transforms into freq domain
@@ -162,8 +168,9 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(response.real, alpha=0.5, label='response, real')
         fl.plot(response.imag, alpha=0.5, label='response, imag')
         fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
-        #fl.show();quit()
-    
+    #}}}
+
+    #{{{ fits curve to find Q
     dw = diff(d.getaxis('t')[0:2]).item()
     for thislabel,decay in [('initial',d['ch',1]['t':(refl_blip_ranges[0,0]-1e-6,refl_blip_ranges[1,0]-1e-6)]),
             ('final',d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)])]:
@@ -188,6 +195,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(fitfunc(p_opt), label='fit, Q=%0.1f'%Q, alpha=0.5)
         fl.plot(decay.real, label='data (real)', alpha=0.5)
         fl.plot(decay.imag, label='data (imag, not fit)', alpha=0.5)
+        #}}}
 fl.show()
 quit()
 
