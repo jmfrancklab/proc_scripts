@@ -4,13 +4,13 @@ from proc_scripts import postproc_dict
 fl = figlist_var()
        
 for searchstr, exp_type, nodename, postproc, label_str in [
-        #('200221_CPMG_TEMPOLgel_3p0_1','deadtime=5'),
-        #('200221_CPMG_TEMPOLgel_2p9_1','deadtime=5'),
+        #('200221_CPMG_TEMPOLgel_3p0_1','test_equip','signal','CPMG','deadtime=5'),
+        #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','CPMG','deadtime=5'),
         #('200304_CPMG_2p6_1','deadtime=5'),
         #('200305_CPMG_3p5_2','deadtime=5'),
         #('200305_CPMG_3p6_2','deadtime=5'),
         ('200305_CPMG_3p7_2','test_equip','signal','CPMG','deadtime=5'),
-        ('200305_CPMG_3p7_3','deadtime=5'),
+        #('200305_CPMG_3p7_3','deadtime=5'),
         #('200305_CPMG_3p8_2','deadtime=5'),
         #('200305_CPMG_3p9_2','deadtime=5'),
         #('200305_CPMG_4p0_1','deadtime=5'),
@@ -82,22 +82,24 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.next('after phased - imag ft')
     fl.image(s.imag)
 
-    #summing along t2 axis
+    #summing along t2 axis and plotting initial decay
     data = s['t2':(-100,150)].sum('t2')
     fl.next('Echo decay')
     x = s.getaxis('nEchoes')
     ydata = data.data.real
     ydata /= max(ydata)
     fl.plot(x,ydata,'-o', alpha=0.7, label='%s'%label_str, human_units=False)
-    
+    print(s.dimlabels)
+    #fl.show();quit()
     print(ndshape(s))
     print("Beginning T2 curve")
-    s = fitdata(s)
-    M0,T2,tE = sympy symbols("M_0 T_2 t_E", real=True)
+    s_sliced = s['nEchoes',(0,60)]['t2',(-50,100)]
+    s = fitdata(s_sliced)
+    M0,T2,tE = sympy.symbols("M_0 T_2 t_E", real=True)
     s.functional_form = M0*sympy.exp(-tE/T2)
     print("Functional form", s.functional_form)
     print("Function string",s.function_string)
-    s.fit_coeff r_[-1,1,1]
+    s.fit_coeff = r_[-1,1,1]
     fl.next('T2 test')
     fl.plot(s,'o',label=f.name())
     print("symbolic variable:",s.symbolic_vars)
