@@ -15,6 +15,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
         #('200305_CPMG_3p9_2','deadtime=5'),
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
+    #loads in data and visualizes raw 
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
     nEchoes = s.get_prop('acq_params')['nEchoes']
@@ -24,17 +25,25 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.next(' image plot coherence-- ft ')
     fl.image(s)
     s.ift('t2')
+    
+    #moves nScans to be inside other axes
     s.reorder('nScans',first=True)
-    #fl.next(id_string+' image plot coherence ')
-    #fl.image(s, interpolation='bilinear')
+    
+    #select coherence pathway and average nScans
     s = s['ph1',1].C
     s.mean('nScans')
+
+    #move t2 dimension inside
     s.reorder('t2',first=True)
+
+    #centering echo at 0
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center')
     fl.image(s)
+    
+    #phase correction
     s.ft('t2')
     f_axis = s.fromaxis('t2')
     def costfun(p):
@@ -49,6 +58,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
         iteration += 1
         logger.info(strm((iteration, x, f, int(accepted))))
         return
+    
+    #minimizing cost function
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
             callback=print_fun,
@@ -57,6 +68,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
+    
+    #applying phase shift
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
@@ -68,16 +81,30 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-    #data = s['t2':0]
-    data = s['t2':(-200,200)].sum('t2')
-    #data = s['t2':(0,200)].sum('t2')
-    fl.next('Echo decay')
 
+    #summing along t2 axis
+    data = s['t2':(-100,150)].sum('t2')
+    fl.next('Echo decay')
     x = s.getaxis('nEchoes')
     ydata = data.data.real
     ydata /= max(ydata)
     fl.plot(x,ydata,'-o', alpha=0.7, label='%s'%label_str, human_units=False)
-
+    
+    print(ndshape(s))
+    print("Beginning T2 curve")
+    s = fitdata(s)
+    M0,T2,tE = sympy symbols("M_0 T_2 t_E", real=True)
+    s.functional_form = M0*sympy.exp(-tE/T2)
+    print("Functional form", s.functional_form)
+    print("Function string",s.function_string)
+    s.fit_coeff r_[-1,1,1]
+    fl.next('T2 test')
+    fl.plot(s,'o',label=f.name())
+    print("symbolic variable:",s.symbolic_vars)
+    fl.show();quit()
+    
+    
+    fl.show();quit()
     fitfunc = lambda p, x: p[0]*exp(-x*p[1])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
     p0 = [0.1,100.0,-3.0]
