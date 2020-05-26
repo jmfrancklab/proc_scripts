@@ -68,12 +68,13 @@ for searchstr, exp_type, nodename, postproc, label_str in [
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
-    
+    angle = (zeroorder_rad)/pi*180 
     #applying phase shift
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
-    logger.info(strm("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$".format(firstorder,angle(zeroorder_rad)/pi*180)))
+    logger.info(strm("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(firstorder,angle)))
+    fl.show();quit()
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
     logger.info(strm(ndshape(s)))
