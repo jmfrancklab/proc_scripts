@@ -96,7 +96,19 @@ def zeroth_order_ph(d, fl=None):
         ax.add_patch(ell)
     return exp(1j*ph0)
 
-def phasecorrect(d):
+def ph1_real_Abs(d):
+    r''' Performs first order phase correction with cost function
+    and takes the absolute of the real.
+
+    Parameters
+    ==========
+    d: nddata
+        Complex data whose first order phase you want
+        to find.
+    Returns    
+    =========
+    retval
+    '''
     fl.push_marker() 
     ph1 = nddata(r_[-5:5:70j]*dw,'phcorr')
     dx = diff(ph1.getaxis('phcorr')[r_[0,1]]).item()

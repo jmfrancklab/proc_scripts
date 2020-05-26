@@ -5,7 +5,6 @@ from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
-filter_bandwidth = 5e3
 slice_f = (-5e3,5e3)
 
 for searchstr,exp_type,nodename,postproc,label_str in [

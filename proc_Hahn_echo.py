@@ -1,6 +1,5 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import load_data
 fl = figlist_var()
 for date,id_string in [
         ('200302','alex_probe_water'),

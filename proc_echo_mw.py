@@ -39,10 +39,11 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
     fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range', s, time_range)
     
-    #slices out time range along t2 axis
+    #{{{#slices out time range along t2 axis
     s =s['t2':time_range]
-
-    #visualize centered
+    #}}}
+    
+    #{{{#visualize centered
     echo_start = s.getaxis('t2')[0]
     dw = diff(s.getaxis('t2')[r_[0,1]]).item()
     centered_echo = s['t2':(echo_start,-echo_start+dw)]
@@ -50,19 +51,24 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.next('plot data')
     plotdata[lambda x: x>2] = 2
     fl.image(plotdata)
-    
-    #slice out the FID from the echoes
+    #}}}
+
+    #{{{#slice out the FID from the echoes
+    #to use: as a rule of thumb, make the white boxes
+    # about 2x as far as it looks like they should be
     fl.next('FID slice')
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
+    #}}}
     
-    #redefine time range along t2
+    #{{{#redefine time range along t2
     fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range',
         s,time_range)
     s = s['t2':time_range]
-    
-    #mirror test to test centered data
+    #}}}
+
+    #{{{#mirror test to test centered data
     fl.next('echo mirror test')
     echo_start = s.getaxis('t2')[0]
     dw = diff(s.getaxis('t2')[r_[0,1]]).item()
@@ -71,35 +77,41 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.next('plot data')
     plotdata[lambda x: x>2] = 2
     fl.image(plotdata)
+    #}}}
     
-    #apodizing and zero fill
+    #{{{#apodizing and zero fill
     fl.next('apodize and zero fill')
     R = 5.0/(time_range[-1]) # assume full decay by end time
     s *= exp(-s.fromaxis('t2')*R)
     s.ft('t2',pad=1024)
     fl.image(s)
+    #}}}
     
-    #select coherence channel in time domain
+    #{{{#select coherence channel in time domain
     s.ift('t2')
     s = s['ph2',-2]['ph1',1]['t2':(0,None)]
     s['t2',0] *= 0.5
     s.ft('t2')
-    
-    #plotting enhancement curve at lowest and highest powers 
+    #}}}
+
+    #{{{#plotting enhancement curve at lowest and highest powers 
     fl.next('compare highest power to no power')
     idx_maxpower = argmax(s.getaxis('power'))
     fl.plot(s['power',0])
     fl.plot(s['power',idx_maxpower])
-
-    #plotting full enhancement curve
+    #}}}
+    
+    #{{{#plotting full enhancement curve
     fl.next('full enhancement curve')
     fl.plot(s)
+    #}}}
     
-    #plotting enhancement vs power
+    #{{{#plotting enhancement vs power
     fl.next('enhancement')
     enhancement = s['t2':(-50,50)].C.sum('t2').real
     enhancement /= enhancement['power',0]
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
     ylabel('Enhancement')
+    #}}}
 fl.show();quit()
