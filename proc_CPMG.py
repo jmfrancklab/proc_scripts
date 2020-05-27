@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import postproc_dict 
 fl = figlist_var()
-       
+
 for searchstr, exp_type, nodename, postproc, label_str in [
         #('200221_CPMG_TEMPOLgel_3p0_1','deadtime=5'),
         #('200221_CPMG_TEMPOLgel_2p9_1','deadtime=5'),
@@ -17,6 +17,10 @@ for searchstr, exp_type, nodename, postproc, label_str in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
+    logging.basicConfig(filename="logfile.txt")
+    stderrLogger=logging.StreamHandler()
+    stderrLogger.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+    logging.getLogger().addHandler(stderrLogger)
     nEchoes = s.get_prop('acq_params')['nEchoes']
     fl.next('raw data - chunking ft')
     fl.image(s)
@@ -58,7 +62,10 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
-    logger.info(strm("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$".format(firstorder,angle(zeroorder_rad)/pi*180)))
+    print("F")
+    mylogger = init_logging("info")
+    logger.info("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$").format(firstorder,angle(zeroorder_rad)/pi*180)
+    quit()
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
     logger.info(strm(ndshape(s)))
