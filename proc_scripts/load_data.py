@@ -27,7 +27,8 @@ def proc_bruker_deut_IR_mancyc(s):
     #raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
 def proc_CPMG(s):
-    print("loading pre-processing for CPMG preprocessing")
+    logging.basicConfig()
+    logger.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']

@@ -5,7 +5,7 @@ from sympy import symbols
 from numpy import *
 fl = fl_mod()
 t2 = symbols('t2')
-
+logger = init_logging("info")
 for searchstr,exp_type,nodename,postproc in [
     ['200219_nutation_alex_probe','test_equip','nutation','spincore_nutation']
     ]:

@@ -5,8 +5,8 @@ from proc_scripts import postproc_dict
 do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
-
-init_logging(level='debug')
+logger = init_logging('info')
+#init_logging(level='debug')
 # 2to3 JF 1/31
 
 fl = figlist_var()

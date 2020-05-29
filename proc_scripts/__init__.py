@@ -1,4 +1,4 @@
-from .phasing import zeroth_order_ph,hermitian_function_test
+from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs
 from .align_slice import align_and_slice
 from .load_data import postproc_dict
 from .plotting import expand_limits,draw_limits,fl_mod 
@@ -7,7 +7,7 @@ from .baseline import calc_baseline
 from .Utility import *
 
 __all__ = ['zeroth_order_ph',
-        'phasecorrect',
+        'ph1_real_Abs',
         'hermitian_function_test',
         'align_and_slice',
         'expand_limits',

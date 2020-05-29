@@ -8,7 +8,7 @@ matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
 fl = figlist_var()
 t2 = symbols('t2')
-
+logger = init_logging("info")
 #loading data in
 for searchstr,exp_type,which_exp,postproc in [
         ('w8_200224','test_equip',2,'ab_ir2h'),

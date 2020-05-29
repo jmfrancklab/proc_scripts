@@ -5,7 +5,7 @@ from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
-
+logger = init_logging("info")
 # {{{ input parameters
 clock_correction = 1.785
 filter_bandwidth = 5e3
