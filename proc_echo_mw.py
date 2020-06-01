@@ -79,6 +79,7 @@ for searchstr,freq_range,time_range in [
     nPoints = s.get_prop('acq_params')['nPoints']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    s = s['power':(0,10)]
     s.set_units('t','s')
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.labels({'ph2':r_[0.,2.]/4,
@@ -88,6 +89,7 @@ for searchstr,freq_range,time_range in [
     s.ft(['ph1','ph2'])
     fl.next('all data: frequency domain')
     fl.image(s)
+    #fl.show();quit()
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range)
     s = s['t2':freq_range]
