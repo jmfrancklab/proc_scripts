@@ -4,9 +4,9 @@ from proc_scripts import postproc_dict
 fl = figlist_var()
 
 for searchstr, exp_type, nodename, postproc, label_str in [
-        #('200221_CPMG_TEMPOLgel_3p0_1','deadtime=5'),
-        #('200221_CPMG_TEMPOLgel_2p9_1','deadtime=5'),
-        ('200304_CPMG_2p6_1','test_equip','signal','CPMG','deadtime=5'),
+        #('200221_CPMG_TEMPOLgel_3p0_1','test_equip','signal','CPMG','deadtime=5'),
+        ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','CPMG','deadtime=5'),
+        #('200304_CPMG_2p6_1','test_equip','signal','CPMG','deadtime=5'),
         #('200305_CPMG_3p5_2','deadtime=5'),
         #('200305_CPMG_3p6_2','deadtime=5'),
         #('200305_CPMG_3p7_2','test_equip','signal','CPMG','deadtime=5'),
@@ -40,6 +40,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center')
     fl.image(s)
+    fl.show();quit()
     #}}}
     #{{{cost function phase correction
     s.ft('t2')
