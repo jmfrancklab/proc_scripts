@@ -15,6 +15,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
         #('200305_CPMG_3p9_2','deadtime=5'),
         #('200305_CPMG_4p0_1','deadtime=5'),
         ]:
+    ###{{{loading in data and displaying raw data
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
     logging.basicConfig(filename="logfile.txt")
@@ -24,6 +25,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     nEchoes = s.get_prop('acq_params')['nEchoes']
     fl.next('raw data - chunking ft')
     fl.image(s)
+    #}}}
+    #{{{select and display coherence channel centered
     s.ft(['ph1'])
     fl.next(' image plot coherence-- ft ')
     fl.image(s)
@@ -37,6 +40,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center')
     fl.image(s)
+    #}}}
+    #{{{cost function phase correction
     s.ft('t2')
     f_axis = s.fromaxis('t2')
     def costfun(p):
@@ -72,6 +77,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
+    #}}}
+    #{{{select echo decay fit function
     data = s['t2':(-200,200)].sum('t2')
     fl.next('Echo decay')
     x = s.getaxis('nEchoes')
@@ -90,6 +97,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     xlabel('t (sec)')
     ylabel('Intensity')
     logger.info(strm("T2:",T2,"s"))
+    #}}}
+    #{{{saving figure
     save_fig = False
     if save_fig:
         savefig('20200108_CPMG_trials.png',
@@ -98,3 +107,4 @@ for searchstr, exp_type, nodename, postproc, label_str in [
                 pad_inches=0,
                 legend=True)
     fl.show()
+    #}}}

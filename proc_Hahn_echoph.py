@@ -11,29 +11,29 @@ for searchstr,exp_type,nodename,postproc,label_str in [
         ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off'),
         ]:
     
-    #loads raw data and plots
+    #{{{loads raw data and plots
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict)
     s.mean('nScans')    
-    
-    #rough centering of sliced data 
+    #}}}
+    #{{{rough centering of sliced data 
     s = s['t2':slice_f]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     logger.info(strm(ndshape(s)))
-    
-    #finds best shift according to hermitian function test
+    #}}}
+    #{{{finds best shift according to hermitian function test
     best_shift = hermitian_function_test(s)
     logger.info(strm("best shift is",best_shift))
-
-    #slice out the FID appropriately and phase correct it
+    #}}}
+    #{{{slice out the FID appropriately and phase correct it
     s.ft('t2')
     s_uncorrected = s.C
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    
-    # apply a lorentzian broadening
+    #}}}
+    #{{{ apply a lorentzian broadening
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     fl.next('time domain after hermitian test')
     fl.plot(s)
@@ -47,20 +47,20 @@ for searchstr,exp_type,nodename,postproc,label_str in [
         logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = ph0/abs(ph0)
     s /= ph0
-    
-    #visualizes the data after hermitian function test and phasing 
+    #}}}
+    #{{{visualizes the data after hermitian function test and phasing 
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2', pad=512) # power of 2 FT
     s.convolve('t2',10) # so that resolution of plot isn't higher than that of screen
     fl.image(s)
-    
-    #select coherence and select t2 axis range
+    #}}}
+    #{{{select coherence and select t2 axis range
     s = s['ph1',1]['ph2',0].C
     s.ift('t2')
     s = s['t2':(0,None)]
     s.ft('t2')
-    
-    #visualize final processed data
+    #}}}
+    #{{{visualize final processed data
     fl.next('processed data')
     fl.plot(s_uncorrected['ph2',-2]['ph1',1],
             label='without time-axis correction',c='k')

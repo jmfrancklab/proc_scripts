@@ -43,7 +43,7 @@ for searchstr,exp_type,nodename,postproc in [
     #}}}
     
     #{{{ selecting coherence and convolving
-    s = s['ph2',0]['ph1',1].C
+    s = s['ph2',0]['ph1',1]
     fl.next('select $\\Delta p$ and convolve')
     s.convolve('t2',50)
     fl.image(s)

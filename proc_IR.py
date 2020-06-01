@@ -24,15 +24,15 @@ for searchstr,exp_type,nodename, postproc in [
             dimname='indirect')
     logger.info(strm(s.dimlabels))
     
-    #rough centers data
+    #{{{rough centers data
     fl.next('filtered + rough centered data')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but(
             't2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    
-    #hermitian function test and apply best shift
+    #}}}
+    #{{{hermitian function test and apply best shift
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     logger.info(strm("best shift is",best_shift))
@@ -42,8 +42,8 @@ for searchstr,exp_type,nodename, postproc in [
     s.ift('t2')
     fl.next('time domain after hermitian test')
     fl.image(s)
-
-    #zeroth order phase correction
+    #}}}
+    #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
     logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
@@ -58,15 +58,15 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     s.convolve('t2',10)
     fl.image(s)
-    
-    #select t2 axis range and 
+    #}}}
+    #{{{select t2 axis range and 
     s.ift('t2')
     s = s['t2':(0,None)]
     s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
-    
-    
+    #}}}
+    #{{{decay curve and fitting
     fl.next('signal vs. vd')
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
     s_sliced.sum('t2')
@@ -77,7 +77,6 @@ for searchstr,exp_type,nodename, postproc in [
     M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 vd", real=True)
     s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
     print("Functional form", s.functional_form)
-    #print("Function string",s.function_string)
     s.fit_coeff = r_[-1,1,1]
     fl.next('t1 test')
     fl.plot(s, 'o', label=s.name())

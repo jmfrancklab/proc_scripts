@@ -53,21 +53,24 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
     # }}}
     
-    #determine the start and stop points for both the pulse, as well as the two tuning blips
+    #{{{determine the start and stop points for both the pulse, as well as the two tuning blips
     pulse_range = abs(d['ch',0]).contiguous(lambda x:  # returns list of limits for which the lambda function holds true
             x > 0.5*x.data.max())                      # So will define pulse_range as all x values where the signal goes 
                                                        # above half the max of the signal
-    
-    # {{{ filter for ranges >0.1 μs -- use the compact list comprehension
+    #}}}
+
+    #{{{ filter for ranges >0.1 μs -- use the compact list comprehension
     def filter_range(x): return array([j for j in x if
         diff(j).item() > 0.1e-6])
     pulse_range = filter_range(pulse_range)
-    # }}}
     if not pulse_range.shape[0] == 1:
         logger.info(strm(("seems to be more than one pulse -- on starting at " 
                 + ','.join(('start '+str(j[0])+' length '+str(diff(j)) for j in pulse_range)))))   # If there is more than one section that goes above half max
     # it assumes theres more than one pulse 
     pulse_range = pulse_range[0,:]
+    #}}}
+
+    #{{{plotting reflection blip
     fl.plot(abs(d['ch',0]['t':tuple(pulse_range)]), alpha=0.1, color='k',  #shades in the section of pulse range (above half max) for 
             linewidth=10)                                                  #control 
     refl_blip_ranges = abs(d['ch',1]).contiguous(lambda x:
@@ -135,7 +138,6 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(test_data,'.')
         # determine time zero
         time_zero = test_data.argmin('t_shift').item()
-        # }}}
     else:
         time_zero = abs(first_blip).argmax('t').item()
     d.setaxis('t', lambda x: x-time_zero).register_axis({'t':0})
@@ -146,10 +148,14 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(abs(d['ch',j]), linewidth=3, color='k',
                 label='ch %d abs'%(j+1), alpha=0.3)
     d = d['t':(-10e6,10e6)] # slice out frequencies with signal
+    #}}}
+    
+    #{{{zeroth order phase correction
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j], fl=fl)
         d['ch',j] /= ph0
-    
+    #}}}
+
     #{{{ to plot the transfer function, we need to pick an impulse
         # of finite width, or else we get a bunch of noise
     if show_transfer_func:
