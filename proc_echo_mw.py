@@ -9,6 +9,12 @@ rcParams["savefig.transparent"] = True
 fl = fl_mod()
 t2 = symbols('t2')
 
+# slice out the FID from the echoes,
+# also frequency filtering, in order to generate the
+# list of integrals for ODNP
+# to use: as a rule of thumb, make the white boxes
+# about 2x as far as it looks like they should be
+
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
         ["200306_DNP_lg_probe_w34.*", 'test_equip', 'signal',
@@ -59,9 +65,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.image(plotdata)
     #}}}
 
-    #{{{slice out the FID from the echoes
-    #to use: as a rule of thumb, make the white boxes
-    # about 2x as far as it looks like they should be
+    #{{{
     fl.next('FID slice')
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))

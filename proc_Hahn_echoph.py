@@ -5,10 +5,10 @@ from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
-slice_f = (-5e3,5e3)
 
-for searchstr,exp_type,nodename,postproc,label_str in [
-        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off'),
+
+for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
+        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off',(-5e3,5e3)),
         ]:
     
     #{{{loads raw data and plots
