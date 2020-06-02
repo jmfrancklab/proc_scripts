@@ -98,16 +98,27 @@ def zeroth_order_ph(d, fl=None):
 
 def ph1_real_Abs(d):
     r''' Performs first order phase correction with cost function
-    and takes the absolute of the real.
+    by taking the sum of the absolute value of the real [DeBrouwer2009].
+
+    .. todo::
+        update with `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_.
 
     Parameters
     ==========
     d: nddata
         Complex data whose first order phase you want
         to find.
+
     Returns    
     =========
     retval
+
+    .. rubric: References
+
+    ..  [DeBrouwer2009] de Brouwer, H. (2009). Evaluation of algorithms for
+        automated phase correction of NMR spectra. Journal of Magnetic
+        Resonance (San Diego, Calif. : 1997), 201(2), 230–238.
+        https://doi.org/10.1016/j.jmr.2009.09.017
     '''
     fl.push_marker() 
     ph1 = nddata(r_[-5:5:70j]*dw,'phcorr')
