@@ -55,7 +55,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        logger.info(strm((iteration, x, f, int(accepted))))
+        logger.info(strm(iteration, x, f, int(accepted)))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
