@@ -21,7 +21,6 @@ def proc_bruker_deut_IR_mancyc(s):
     fl.next('frequency domain (all $\\Delta p$)')
     s.ft('t2',pad=4096)
     fl.image(s)
-
     return s
     #raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
