@@ -1,5 +1,5 @@
 from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs
-from .align_slice import align_and_slice
+from .align_slice import align_and_slice,correlation_align
 from .load_data import postproc_dict
 from .plotting import expand_limits,draw_limits,fl_mod 
 from .slice_FID_from_echo import slice_FID_from_echo
@@ -10,6 +10,7 @@ __all__ = ['zeroth_order_ph',
         'ph1_real_Abs',
         'hermitian_function_test',
         'align_and_slice',
+        'correlation_align',
         'expand_limits',
         'draw_limits',
         'fl_mod',

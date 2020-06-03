@@ -2,7 +2,6 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
 from proc_scripts import postproc_dict
-from align_slice import align_and_slice, correlation_align
 from sympy import symbols
 #init_logging(level='debug')
 rcParams["savefig.transparent"] = True
