@@ -57,7 +57,6 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     s.convolve('t2',10)
     fl.image(s)
-    fl.show();quit()
     #}}}
     #{{{select t2 axis range and 
     s.ift('t2')
@@ -71,19 +70,15 @@ for searchstr,exp_type,nodename, postproc in [
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
     s_sliced.sum('t2')
     fl.plot(s_sliced,'o')
-    print(ndshape(s_sliced))
-    print("BEGINNING T1 CURVE...")
+    logger.info(strm(ndshape(s_sliced)))
+    logger.info(strm("BEGINNING T1 CURVE..."))
     s = fitdata(s_sliced)
-    M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 vd", real=True)
+    M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
     s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
-    print("Functional form", s.functional_form)
+    #logger.info(strm("Functional form", s.functional_form))
     s.fit_coeff = r_[-1,1,1]
     fl.next('t1 test')
     fl.plot(s, 'o', label=s.name())
-    print("symbolic variables:",s.symbolic_vars)
-    fl.show();quit()
-    fl.plot(f.fitfunc_multiarg(-3000,3000,1,s.fromaxis('vd')))
-    fl.plot(s.getaxis('vd'),s.fitfunc_raw(r_[-3000,3000,1],s.getaxis('vd')),'--')
     s.fit()
     fl.plot(s.eval(100),label='%s fit'%s.name())
     text(0.75, 0.25, s.latex(), transform=gca().transAxes, size='large',
@@ -92,26 +87,3 @@ for searchstr,exp_type,nodename, postproc in [
     print("latex:",s.latex())
     fl.show();quit()
 
-    s_forerror = s['ph2',coh_err['ph2']]['ph1',0]
-    # variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
-    s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
-    s_sliced.mean('t2').set_error(s_forerror.data)
-    fl.plot(s_sliced,'o')
-    fl.plot(s_sliced.imag,'o')
-    fl.next('Spectrum - freq domain')
-    fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-    fitfunc = lambda p, x: p[0]*(1-2*exp(-x*p[1]))
-    x = s_sliced.fromaxis('vd')
-    errfunc = lambda p: fitfunc(p,x).data - s_sliced.data.real
-    p_ini = [1.0,10.0]
-    p_opt,success = leastsq(errfunc, p_ini[:])
-    assert success in [1,2,3], "Fit did not succeed"
-    T1 = 1./p_opt[1]
-    logger.info(strm("T1:",T1,"s"))
-    fl.next('fit')
-    fl.plot(s_sliced, 'o', label='data')
-    fl.plot(s_sliced.imag, 'o', label='data')
-    new_x = nddata(r_[0:s_sliced.getaxis('vd')[-1]:500j],'vd')#.set_units('vd','s')
-    fl.plot(fitfunc(p_opt,new_x), label='fit')
-    gridandtick(gca())
-    fl.show();quit()

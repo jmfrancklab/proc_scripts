@@ -23,7 +23,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     stderrLogger=logging.StreamHandler()
     stderrLogger.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
     logging.getLogger().addHandler(stderrLogger)
-    #nEchoes = s.get_prop('acq_params')['nEchoes']
+    nEchoes = s.get_prop('acq_params')['nEchoes']
     #fl.next('raw data - chunking ft')
     #fl.image(s)
     #}}}
@@ -81,7 +81,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #{{{select echo decay fit function
     data = s['t2':(-200,200)].sum('t2')
     fl.next('Echo decay')
-    x = tE_axis
+    x = s.getaxis('nEchoes')
     ydata = data.data.real
     ydata /= max(ydata)
     fl.plot(x,ydata,'-o', alpha=0.7, label='%s'%label_str, human_units=False)
