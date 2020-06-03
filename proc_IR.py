@@ -16,14 +16,13 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('200303_IR_AER_6','test_equip','signal','spincore_ONDP_v1'),
+        ('200303_IR_AER_6','test_equip','signal','spincore_IR'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
-            postproc=None, lookup=postproc_dict,
+            postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
     logger.info(strm(s.dimlabels))
-    
     #{{{rough centers data
     fl.next('filtered + rough centered data')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
@@ -38,7 +37,7 @@ for searchstr,exp_type,nodename, postproc in [
     logger.info(strm("best shift is",best_shift))
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.reorder(['ph2','ph1','vd'])
+    s.reorder(['ph2','ph1','indirect'])
     s.ift('t2')
     fl.next('time domain after hermitian test')
     fl.image(s)
@@ -58,6 +57,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     s.convolve('t2',10)
     fl.image(s)
+    fl.show();quit()
     #}}}
     #{{{select t2 axis range and 
     s.ift('t2')

@@ -18,18 +18,19 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     ###{{{loading in data and displaying raw data
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
+ 
     logging.basicConfig(filename="logfile.txt")
     stderrLogger=logging.StreamHandler()
     stderrLogger.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
     logging.getLogger().addHandler(stderrLogger)
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    fl.next('raw data - chunking ft')
-    fl.image(s)
+    #nEchoes = s.get_prop('acq_params')['nEchoes']
+    #fl.next('raw data - chunking ft')
+    #fl.image(s)
     #}}}
     #{{{select and display coherence channel centered
     s.ft(['ph1'])
-    fl.next(' image plot coherence-- ft ')
-    fl.image(s)
+    #fl.next(' image plot coherence-- ft ')
+    #fl.image(s)
     s.ift('t2')
     s.reorder('nScans',first=True)
     s = s['ph1',1].C
@@ -40,7 +41,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center')
     fl.image(s)
-    fl.show();quit()
     #}}}
     #{{{cost function phase correction
     s.ft('t2')
@@ -69,8 +69,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
     logging = init_logging("info")
-    logging.info("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$", firstorder, angle(zeroorder_rad)/pi*180)
-    quit()
+    #logging.info("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$", firstorder, angle(zeroorder_rad)/pi*180)
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
     logger.info(strm(ndshape(s)))
@@ -82,7 +81,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #{{{select echo decay fit function
     data = s['t2':(-200,200)].sum('t2')
     fl.next('Echo decay')
-    x = s.getaxis('nEchoes')
+    x = tE_axis
     ydata = data.data.real
     ydata /= max(ydata)
     fl.plot(x,ydata,'-o', alpha=0.7, label='%s'%label_str, human_units=False)
@@ -98,6 +97,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     xlabel('t (sec)')
     ylabel('Intensity')
     logger.info(strm("T2:",T2,"s"))
+    fl.show();quit()
     #}}}
     #{{{saving figure
     save_fig = False

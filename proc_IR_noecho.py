@@ -31,16 +31,7 @@ for searchstr,exp_type,which_exp,postproc in [
     d = find_file(searchstr, exp_type=exp_type, 
             expno=which_exp, 
             postproc=None, lookup=postproc_dict, 
-            dimname='indirect') 
-    
-    #{{{imaging raw data with zerofill
-    fl.next('time domain (all $\\Delta p$)')
-    d.ift('t2')
-    fl.image(d)
-    fl.next('frequency domain (all $\\Delta p$)')
-    d.ft('t2',pad=4096)
-    fl.image(d)
-    #}}}
+            dimname='indirect')
     #{{{convolution and zeroth order phase correction
     fl.next('select coherence pathway and convolve')
     d = d['ph2',0]['ph1',-1]
