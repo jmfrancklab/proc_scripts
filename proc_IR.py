@@ -55,8 +55,7 @@ for searchstr,exp_type,nodename, postproc in [
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
-    s.convolve('t2',10)
-    fl.image(s)
+    fl.image(s.C.convolve('t2',10))
     #}}}
     #{{{select t2 axis range and 
     s.ift('t2')
@@ -75,7 +74,7 @@ for searchstr,exp_type,nodename, postproc in [
     s = fitdata(s_sliced)
     M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
     s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
-    #logger.info(strm("Functional form", s.functional_form))
+    logger.info(strm("Functional form", s.functional_form))
     s.fit_coeff = r_[-1,1,1]
     fl.next('t1 test')
     fl.plot(s, 'o', label=s.name())
@@ -85,5 +84,5 @@ for searchstr,exp_type,nodename, postproc in [
             horizontalalignment='center',color='k')
     print("output:",s.output())
     print("latex:",s.latex())
-    fl.show();quit()
+fl.show()
 

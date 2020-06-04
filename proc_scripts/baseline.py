@@ -4,7 +4,8 @@ def calc_baseline(this_d,
         guess=None,
         show_plots=True):
     """
-
+    .. todo::
+        Alex write a doc string here
     """
     if show_plots: fl.next('try baseline correction')
     if show_plots: fl.plot(this_d,

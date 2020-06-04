@@ -28,6 +28,10 @@ def draw_limits(thisrange,s):
             axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
     gca().set_xlim(my_xlim)
 class fl_mod(figlist_var):
+    """
+    .. todo::
+        Alex write a docstring here
+    """
     def real_imag(self,plotname,s):
         thisfig,(ax1,ax2) = subplots(1,2)
         self.next(plotname, fig=thisfig)
