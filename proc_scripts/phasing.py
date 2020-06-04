@@ -28,11 +28,10 @@ def zeroth_order_ph(d, fl=None):
         divide by ``retval``.
     '''
     cov_mat = cov(c_[
-        d.data.real,
-        d.data.imag].T
-        )
+        d.data.real.ravel(),
+        d.data.imag.ravel()].T)
     eigenValues, eigenVectors = eig(cov_mat)
-    mean_point = d.data.mean()
+    mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
@@ -48,7 +47,11 @@ def zeroth_order_ph(d, fl=None):
     # is assymetric, so include only the excess of the
     # larger eval over the smaller
     assymetry_mag = sqrt(eigenValues[0])-sqrt(eigenValues[1])
-    if (assymetry_mag*eigenVectors[:,0]*mean_vec).sum() > 0:
+    try:
+        assym_ineq = (assymetry_mag*eigenVectors[:,0]*mean_vec).sum()
+    except:
+        raise ValueError(strm("check the sizes of the following:",size(assymetry_mag),size(eigenVectors),size(mean_vec)))
+    if assym_ineq > 0:
         # we want the eigenvector on the far side of the ellipse
         rotation_vector = mean_vec + assymetry_mag*eigenVectors[:,0]
     else:
@@ -58,16 +61,16 @@ def zeroth_order_ph(d, fl=None):
         d_forplot = d.C
         fl.next('check covariance test')
         fl.plot(
-                d_forplot.data.real,
-                d_forplot.data.imag,
+                d_forplot.data.ravel().real,
+                d_forplot.data.ravel().imag,
                 '.',
                 alpha=0.25,
                 label='before'
                 )
         d_forplot /= exp(1j*ph0)
         fl.plot(
-                d_forplot.data.real,
-                d_forplot.data.imag,
+                d_forplot.data.ravel().real,
+                d_forplot.data.ravel().imag,
                 '.',
                 alpha=0.25,
                 label='after'
@@ -92,13 +95,84 @@ def zeroth_order_ph(d, fl=None):
         ax.set_aspect('equal', adjustable='box')
         ax.add_patch(ell)
     return exp(1j*ph0)
-def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
+
+def ph1_real_Abs(d):
+    r''' Performs first order phase correction with cost function
+    by taking the sum of the absolute value of the real [DeBrouwer2009].
+
+    .. todo::
+        update with `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_.
+
+    Parameters
+    ==========
+    d: nddata
+        Complex data whose first order phase you want
+        to find.
+
+    Returns    
+    =========
+    retval
+
+    .. rubric: References
+
+    ..  [DeBrouwer2009] de Brouwer, H. (2009). Evaluation of algorithms for
+        automated phase correction of NMR spectra. Journal of Magnetic
+        Resonance (San Diego, Calif. : 1997), 201(2), 230–238.
+        https://doi.org/10.1016/j.jmr.2009.09.017
+    '''
+    fl.push_marker() 
+    ph1 = nddata(r_[-5:5:70j]*dw,'phcorr')
+    dx = diff(ph1.getaxis('phcorr')[r_[0,1]]).item()
+    ph1 = exp(-1j*2*pi*ph1*d.fromaxis('t2'))
+    d_cost = d * ph1
+    ph0 = d_cost.C.sum('t2')
+    ph0 /= abs(ph0)
+    d_cost /= ph0
+    fl.next('phasing cost function')
+    d_cost.run(real).run(abs).sum('t2')
+    fl.plot(d_cost,'.')
+    ph1_opt = d_cost.argmin('phcorr').item()
+    print('optimal phase correction',repr(ph1_opt))
+    # }}}
+    # {{{ apply the phase corrections
+    def applyphase(arg,ph1):
+        arg *= exp(-1j*2*pi*ph1*arg.fromaxis('t2'))
+        ph0 = arg.C.sum('t2')
+        ph0 /= abs(ph0)
+        arg /= ph0
+        return arg
+    def costfun(ph1):
+        if type(ph1) is ndarray:
+            ph1 = ph1.item()
+        temp = d.C
+        retval = applyphase(temp,ph1).run(real).run(abs).sum('t2').item()
+        return retval
+    print("rough opt cost function is",costfun(ph1_opt))
+    r = minimize(costfun,ph1_opt,
+            bounds=[(ph1_opt-dx,ph1_opt+dx)])
+    assert r.success
+    d = applyphase(d,r.x.item())
+    fl.plot(r.x,r.fun,'x')
+    fl.pop_marker()
+    return d
+
+def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
+
     r"""determine the center of the echo
+
+    .. todo::
+        Alex: please update this using standard Parameters and
+        Returns blocks
     
     .. note::
         This should be using zeroth_order_ph, but it's not, implying that it's
         not the most recent version of this code... what's up with that??
     """
+    if s.get_ft_prop('t2', ['start','freq']) is None:
+        # this sets the frequency startpoint appropriately for an FT --> it
+        # should be possible to do this w/out actually performing an ft
+        s.ft('t2', shift=True)
+        s.ift('t2')
     # {{{ determine where the "peak" of the echo is,
     # and use it to determine the max
     # shift
@@ -141,4 +215,9 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0):
     residual.reorder('shift')
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
-    return residual,best_shift+peak_center
+
+    if fl:
+        fl.next('residual for hermitian test')
+        fl.plot(residual)
+    return best_shift+peak_center
+
