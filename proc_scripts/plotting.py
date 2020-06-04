@@ -29,8 +29,18 @@ def draw_limits(thisrange,s):
     gca().set_xlim(my_xlim)
 class fl_mod(figlist_var):
     """
-    .. todo::
-        Alex write a docstring here
+    Used to create an image for comparison where two images or plots are 
+    side by side in the same window. Takes characteristics from figlist_var
+    Parameters
+    ==========
+    plotname:   string with name of plot 
+    s:          nddata being analyzed
+    thisrange:  range along x axis to be analyzed
+
+    Returns
+    =======
+    plot image side by side with the cropped log 
+
     """
     def real_imag(self,plotname,s):
         thisfig,(ax1,ax2) = subplots(1,2)
@@ -54,7 +64,6 @@ class fl_mod(figlist_var):
         sca(ax1)
         forplot = s['t2':expand_limits(thisrange,s)]
         self.image(forplot)
-        print("drawing limits",thisrange)
         draw_limits(thisrange,forplot)
         sca(ax2)
         self.image(forplot.C.cropped_log())
