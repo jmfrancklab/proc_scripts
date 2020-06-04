@@ -1,6 +1,5 @@
 from pyspecdata import *
 from align_slice import align_and_slice
-from scipy.optimize import leastsq
 fl = figlist_var()
 apply_correction = True
 for date,id_string in [
@@ -37,6 +36,7 @@ for date,id_string in [
     fl.plot(s,'o',human_units=False)
     # begin fit to return clock correction
     x = s.getaxis('vd')
+    raise RuntimeError("the following code should not be using leastsq -- this is a line, while leastsq is for non-linear fits")
     fitfunc = lambda p, x: p[0]*x
     errfunc = lambda p_arg,x_arg,y_arg: fitfunc(p_arg, x_arg) - y_arg
     p_ini = [1.0]
