@@ -75,7 +75,7 @@ for searchstr,exp_type,nodename, postproc in [
     s = fitdata(s_sliced)
     M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
     s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
-    #logger.info(strm("Functional form", s.functional_form))
+    logger.info(strm("Functional form", s.functional_form))
     s.fit_coeff = r_[-1,1,1]
     fl.next('t1 test')
     fl.plot(s, 'o', label=s.name())
