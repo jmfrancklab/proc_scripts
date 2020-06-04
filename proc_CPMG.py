@@ -1,4 +1,5 @@
 from pyspecdata import *
+from scipy.optimize import basinhopping
 from proc_scripts import postproc_dict 
 fl = figlist_var()
 logger = init_logging('info')
