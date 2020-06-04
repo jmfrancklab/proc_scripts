@@ -48,6 +48,7 @@ class fl_mod(figlist_var):
         thisfig,(ax1,ax2) = subplots(1,2)
         self.next(plotname, fig=thisfig)
         sca(ax1)
+        #self.set_units('t2',None)
         forplot = s['t2':expand_limits(thisrange,s)]
         self.image(forplot)
         print("drawing limits",thisrange)

@@ -84,6 +84,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # }}}
     
     #{{{redefine time range along t2
+    s.set_units('indirect',None)
     fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range',
         s,time_range)
     s = s['t2':time_range]
