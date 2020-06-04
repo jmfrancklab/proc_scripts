@@ -69,7 +69,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
     logging = init_logging("info")
-    #logging.info("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$", firstorder, angle(zeroorder_rad)/pi*180)
+    logging.info(strm("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$", firstorder, angle(zeroorder_rad)/pi*180))
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
     logger.info(strm(ndshape(s)))
