@@ -6,7 +6,6 @@
 
 from pyspecdata import *
 from utility import dBm2power
-from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
         ('200115','CPMG_DNP_1')

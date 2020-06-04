@@ -1,5 +1,4 @@
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import postproc_dict 
 fl = figlist_var()
 logger = init_logging('info')
@@ -62,8 +61,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
-    logging = init_logging("info")
-    #logging.info("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$", firstorder, angle(zeroorder_rad)/pi*180)
+    logging.info(strm("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$", firstorder, angle(zeroorder_rad)/pi*180))
     if s['nEchoes',0].data[:].sum().real < 0:
         s *= -1
     logger.info(strm(ndshape(s)))
@@ -75,22 +73,10 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #{{{select echo decay fit function
     data = s['t2':(-200,200)].sum('t2')
     fl.next('Echo decay')
-    x = s.getaxis('nEchoes')
-    ydata = data.data.real
-    ydata /= max(ydata)
-    fl.plot(x,ydata,'-o', alpha=0.7, label='%s'%label_str, human_units=False)
-    fitfunc = lambda p, x: p[0]*exp(-x*p[1])
-    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [0.1,100.0,-3.0]
-    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
-    assert success == 1, "Fit did not succeed"
+    raise RuntimeError("set up nonlinear fitting of T2 decay with "+str([0.1,100.0,-3.0])+"as a guess")
+    logger.info(strm(self.output()))
+    fl.plot(data.eval(400))
     T2 = 1./p1[1]
-    logger.info(strm(T2))
-    x_fit = linspace(x.min(),x.max(),5000)
-    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
-    xlabel('t (sec)')
-    ylabel('Intensity')
-    logger.info(strm("T2:",T2,"s"))
     #}}}
     #{{{saving figure
     save_fig = False
