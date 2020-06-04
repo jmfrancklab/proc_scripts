@@ -55,8 +55,7 @@ for searchstr,exp_type,nodename, postproc in [
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
-    s.convolve('t2',10)
-    fl.image(s)
+    fl.image(s.C.convolve('t2',10))
     #}}}
     #{{{select t2 axis range and 
     s.ift('t2')
@@ -92,5 +91,5 @@ for searchstr,exp_type,nodename, postproc in [
             horizontalalignment='center',color='k')
     print("output:",s.output())
     print("latex:",s.latex())
-    fl.show();quit()
+fl.show()
 

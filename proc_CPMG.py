@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import postproc_dict 
 fl = figlist_var()
+logger = init_logging('info')
 
 for searchstr, exp_type, nodename, postproc, label_str in [
         #('200221_CPMG_TEMPOLgel_3p0_1','test_equip','signal','CPMG','deadtime=5'),
@@ -18,14 +19,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     ###{{{loading in data and displaying raw data
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
- 
-    logging.basicConfig(filename="logfile.txt")
-    stderrLogger=logging.StreamHandler()
-    stderrLogger.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-    logging.getLogger().addHandler(stderrLogger)
     nEchoes = s.get_prop('acq_params')['nEchoes']
-    #fl.next('raw data - chunking ft')
-    #fl.image(s)
     #}}}
     #{{{select and display coherence channel centered
     s.ft(['ph1'])
@@ -97,7 +91,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     xlabel('t (sec)')
     ylabel('Intensity')
     logger.info(strm("T2:",T2,"s"))
-    fl.show();quit()
     #}}}
     #{{{saving figure
     save_fig = False
