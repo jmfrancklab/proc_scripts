@@ -50,11 +50,11 @@ class fl_mod(figlist_var):
         sca(ax1)
         #self.set_units('t2',None)
         forplot = s['t2':expand_limits(thisrange,s)]
-        self.image(forplot)
+        self.image(forplot,human_units=False)
         print("drawing limits",thisrange)
         draw_limits(thisrange,forplot)
         sca(ax2)
-        self.image(forplot.C.cropped_log())
+        self.image(forplot.C.cropped_log(),human_units=False)
         draw_limits(thisrange,forplot)
         title('cropped log')
         return

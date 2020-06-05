@@ -51,9 +51,10 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
     if fl is not None:
         fl.push_marker()
         fl.next('cross-correlation')
-        fl.image(forplot)
+        fl.image(forplot,human_units=False)
         fl.plot(myline.smoosh(phcyc_dims+indirect_dims,'indirect'
             ).setaxis('indirect','#'
                     ).reorder('indirect',first=False)
-                , 'w', linewidth=3, alpha=0.5)
+                , 'w', linewidth=3, alpha=0.5,
+                human_units=False)
     return s*exp(-1j*2*pi*myline*s.fromaxis(axis))
