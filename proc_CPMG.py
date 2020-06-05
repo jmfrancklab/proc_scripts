@@ -72,9 +72,29 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.image(s.imag)
     #}}}
     #{{{select echo decay fit function
-    data = s['t2':(-200,200)].sum('t2')
+    s.ift('t2')
+    s = s['t2':(0,None)]
+    #s *= -1
+    s['t2',0] *= 0.5
+    s.ft('t2')
+    data = s['t2':(0,None)].sum('t2')
     fl.next('Echo decay')
-    raise RuntimeError("set up nonlinear fitting of T2 decay with "+str([0.1,100.0,-3.0])+"as a guess")
+    fl.plot(data,'o')
+    #raise RuntimeError("set up nonlinear fitting of T2 decay with "+str([0.1,100.0,-3.0])+"as a guess")
+    print("starting T2 curve")
+    f = fitdata(data)
+    M0,T2,nEchoes = sympy.symbols("M_0 T_2 nEchoes", real=True)
+    f.functional_form = M0*sympy.exp(-nEchoes/T2)
+    f.fit_coeff = r_[-1,1,1]
+    fl.next('T2 test')
+    fl.plot(f,'o',label=f.name())
+    f.fit()
+    fl.plot(f.eval(100),label='%s fit'%f.name())
+    text(0.75,0.25, f.latex(),transform=gca().transAxes, size='large',
+            horizontalalignment='center', color= 'k')
+    print("output",f.output())
+    print("latex",f.latex())
+    fl.show();quit()
     logger.info(strm(self.output()))
     fl.plot(data.eval(400))
     T2 = 1./p1[1]
