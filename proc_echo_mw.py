@@ -30,7 +30,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
 
     #{{{visualize the frequency limits
     fl.next('all data: frequency domain')
-    fl.image(s,human_units=False)
+    fl.image(s)
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range)
     #}}}
@@ -58,7 +58,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     plotdata = abs(centered_echo/centered_echo['t2',::-1])
     fl.next('plot data')
     plotdata[lambda x: x>2] = 2
-    fl.image(plotdata,human_units=False)
+    fl.image(plotdata)
     #}}}
     #{{{slice FID from echo
     fl.next('FID slice')
@@ -69,7 +69,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # {{{ align the peaks
     fl.next('before alignment')
     s.ft('t2')
-    fl.image(s,human_units=False)
+    fl.image(s)
     s.ift('t2')
     # {{{ try to use the correlation align
     avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
@@ -79,7 +79,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # }}}
     fl.next('after alignment')
     s.ft('t2')
-    fl.image(s,human_units=False)
+    fl.image(s)
     s.ift('t2')
     # }}}
     
@@ -98,7 +98,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     plotdata = abs(centered_echo/centered_echo['t2',::-1])
     fl.next('plot data')
     plotdata[lambda x: x>2] = 2
-    fl.image(plotdata,human_units=False)
+    fl.image(plotdata)
     #}}}
     
     #{{{apodizing and zero fill
@@ -106,7 +106,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     R = 5.0/(time_range[-1]) # assume full decay by end time
     s *= exp(-s.fromaxis('t2')*R)
     s.ft('t2',pad=1024)
-    fl.image(s,human_units=False)
+    fl.image(s)
     #}}}
     
     #{{{select coherence channel in time domain
@@ -125,7 +125,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     
     #{{{plotting full enhancement curve
     fl.next('full enhancement curve')
-    fl.plot(s,human_units=False)
+    fl.plot(s)
     #}}}
     
     #{{{plotting enhancement vs power
@@ -133,7 +133,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     enhancement = s['t2':(-50,50)].sum('t2').real
     enhancement /= enhancement['power',0]
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
-    fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
+    fl.plot(enhancement['power',idx_maxpower+1:],'ro')
     ylabel('Enhancement')
     #}}}
 fl.show();quit()
