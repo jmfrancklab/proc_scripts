@@ -16,12 +16,14 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('200303_IR_AER_6','test_equip','signal','spincore_IR'),
+        ('200212_IR_3_30dBm', 'test_equip', 'signal', 
+            'spincore_IR'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
+    s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
     logger.info(strm(s.dimlabels))
     #{{{rough centers data
     fl.next('filtered + rough centered data')
@@ -60,7 +62,7 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{select t2 axis range and 
     s.ift('t2')
     s = s['t2':(0,None)]
-    s *= -1
+    #s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
     #}}}
