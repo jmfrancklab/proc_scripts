@@ -60,7 +60,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     plotdata[lambda x: x>2] = 2
     fl.image(plotdata)
     #}}}
-    #{{{
+    #{{{slice FID from echo
     fl.next('FID slice')
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))

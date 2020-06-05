@@ -31,7 +31,6 @@ for searchstr,exp_type,nodename,postproc in [
     s.ft('t2', shift=True)
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    fl.next('time domain after hermitian test')
     #}}}
     
     #{{{ reviewing data imaging thus far
