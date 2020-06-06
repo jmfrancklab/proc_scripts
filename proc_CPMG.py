@@ -30,9 +30,13 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s = s['ph1',1].C
     s.mean('nScans')
     s.reorder('t2',first=True)
+    # I would call tE tau_e?
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
-    s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
+    t_echo = # you need to set this to the time of an echo
+    #   (how long from one echo to the next)
+    #   this should be calculated from the ppg
+    s.setaxis('tE',t_echo*(1+r_[0:nEchoes]))
     fl.next('check center')
     fl.image(s)
     #}}}
@@ -63,7 +67,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
     logging.info(strm("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$", firstorder, angle(zeroorder_rad)/pi*180))
-    if s['nEchoes',0].data[:].sum().real < 0:
+    if s['tE',0].data[:].sum().real < 0:
         s *= -1
     logger.info(strm(ndshape(s)))
     fl.next('after phased - real ft')
@@ -83,8 +87,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #raise RuntimeError("set up nonlinear fitting of T2 decay with "+str([0.1,100.0,-3.0])+"as a guess")
     print("starting T2 curve")
     f = fitdata(data)
-    M0,T2,nEchoes = sympy.symbols("M_0 T_2 nEchoes", real=True)
-    f.functional_form = M0*sympy.exp(-nEchoes/T2)
+    M0,T2,tE = sympy.symbols("M_0 T_2 tE", real=True)
+    f.functional_form = M0*sympy.exp(-tE/T2)
     f.fit_coeff = r_[-1,1,1]
     fl.next('T2 test')
     fl.plot(f,'o',label=f.name())
@@ -94,7 +98,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
             horizontalalignment='center', color= 'k')
     print("output",f.output())
     print("latex",f.latex())
-    fl.show();quit()
     logger.info(strm(self.output()))
     fl.plot(data.eval(400))
     T2 = 1./p1[1]
