@@ -4,6 +4,8 @@ def calc_baseline(this_d,
         guess=None,
         show_plots=True):
     """
+    Calculate the baseline for an FID-like spectrum.
+
     Parameters
     ==========
     this_d:     nddata
