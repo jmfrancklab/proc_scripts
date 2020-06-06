@@ -23,11 +23,8 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     s.setaxis(t2-rough_center)
     logger.info(strm(ndshape(s)))
     #}}}
-    #{{{slice out the FID appropriately and phase correct it
-    best_shift = hermitian_function_test(s)
     s.ft('t2')
     s_uncorrected = s.C
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
     #}}}
     #{{{ apply phase corrections
