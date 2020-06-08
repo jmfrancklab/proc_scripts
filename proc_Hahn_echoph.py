@@ -1,99 +1,69 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
+from proc_scripts import *
+from proc_scripts.load_data import postproc_dict
 from sympy import symbols
-from hermitian_function_test import hermitian_function_test
-fl = figlist_var()
+fl = fl_mod()
 t2 = symbols('t2')
-filter_bandwidth = 5e3
-color_choice = True
-for date,id_string in [
-        ('200302','alex_probe_water'),
+
+
+for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
+        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off',(-5e3,5e3)),
         ]:
-    filename = date+'_'+id_string+'.h5'
-    nodename = 'signal'
-    s = nddata_hdf5(filename+'/'+nodename,
-            directory = getDATADIR(
-                exp_type = 'test_equip'))
-    nPoints = s.get_prop('acq_params')['nPoints']
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = 8 
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
-    nScans = s.get_prop('acq_params')['nScans']
-    print(ndshape(s))
-    s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:256]
-    s.setaxis('t',None)
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.setaxis('ph2',r_[0.,2.]/4)
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.setaxis('t2',t2_axis)
-    s.setaxis('nScans',r_[0:nScans])
-    s.reorder('t2',first=False)
-    s.ft('t2',shift=True)
-    fl.next('raw data, chunked')
-    fl.image(abs(s))
-    s.ft(['ph1','ph2'])
-    fl.next('coherence')
-    fl.image(abs(s))
-    #s = s['ph1',1]['ph2',0].C
-    s.mean('nScans')#,return_error=False)
-    fl.next('signal')
-    #fl.plot(abs(s),label=label_str)
-    slice_f = (-5e3,5e3)
-    s = s['t2':slice_f].C
+    
+    #{{{loads raw data and plots
+    s = find_file(searchstr, exp_type=exp_type, expno=nodename,
+            postproc=postproc, lookup=postproc_dict)
+    s.mean('nScans')    
+    #}}}
+    #{{{rough centering of sliced data 
+    s = s['t2':slice_f]
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    #s.mean('nScans')
+    logger.info(strm(ndshape(s)))
+    #}}}
+    #{{{finds best shift according to hermitian function test
+    best_shift = hermitian_function_test(s)
+    logger.info(strm("best shift is",best_shift))
+    #}}}
+    #{{{slice out the FID appropriately and phase correct it
     s.ft('t2')
-    #fl.image(s)
-    k = s.C*exp(-1j*s.fromaxis('t2')*0.9*2*pi)
-    k = s.C*exp(-1j*0.9*2*pi)
-    k *= exp(-1j*k.fromaxis('t2')*2*pi*0.005)
-    s = k.C
-    s.ift('t2')
-    residual,best_shift = hermitian_function_test(s[
-        'ph2',0]['ph1',1],shift_val=1)
-    fl.next('hermitian test')
-    fl.plot(residual)
-    print("best shift is",best_shift)
-    # {{{ slice out the FID appropriately and phase correct
-    # it
-    s.ft('t2')
+    s_uncorrected = s.C
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
-    s *= exp(-s.getaxis('t2')/40e-3)
+    #}}}
+    #{{{ apply a lorentzian broadening
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     fl.next('time domain after hermitian test')
-    fl.image(s)
+    fl.plot(s)
     ph0 = s['t2':0]['ph2',0]['ph1',1]
-    print(ndshape(ph0))
+    logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0, fl=fl)
-        print('phasing dimension as one')
+        logger.info(strm('phasing dimension as one'))
     else:
-        print("there is only one dimension left -- standard 1D zeroth order phasing")
+        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = ph0/abs(ph0)
     s /= ph0
+    #}}}
+    #{{{visualizes the data after hermitian function test and phasing 
     fl.next('frequency domain -- after hermitian function test and phasing')
-    s.ft('t2')
-    s.convolve('t2',10)
+    s.ft('t2', pad=512) # power of 2 FT
+    s.convolve('t2',10) # so that resolution of plot isn't higher than that of screen
     fl.image(s)
+    #}}}
+    #{{{select coherence and select t2 axis range
     s = s['ph1',1]['ph2',0].C
-
     s.ift('t2')
     k.ift('t2')
     s = s['t2':(0,None)]
-    k = k['t2':(0,None)]
-    #fl.next('phased - time')
-    #fl.plot(s['ph2',0]['ph1',1])
     s.ft('t2')
-    k.ft('t2')
-    s.convolve('t2',7)
-    fl.next('')
-    s.name('')
-    k.rename('t2','Offset').set_units('Offset','Hz')
-    s.rename('t2','Offset').set_units('Offset','Hz')
-    #fl.plot(k['ph2',-2]['ph1',1],label='without time-axis correction',c='k')
-    #fl.plot(s['ph2',-2]['ph1',1],label='with time-axis correction',c='r')
+    #}}}
+    #{{{visualize final processed data
+    fl.next('processed data')
+    fl.plot(s_uncorrected['ph2',-2]['ph1',1],
+            label='without time-axis correction',c='k')
+    fl.plot(s,label='with time-axis correction',c='r')
 fl.show();quit()

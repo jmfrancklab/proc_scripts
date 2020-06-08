@@ -14,4 +14,14 @@ They should consist **mostly or entirely** of
 second-level functions.
 The idea is that you would call these either from a GUI
 or from your notebook directory.
+
+Scripts to be converted to top level functions:
+
+-    proc_CPMG.py
+-    proc_echo_mw.py
+-    proc_Hahn_echoph.py
+-    proc_IR.py
+-    proc_IR_noecho.py
+-    proc_nutation.py
+-    proc_square_refl.py
 """
