@@ -23,8 +23,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #}}}
     #{{{select and display coherence channel centered
     s.ft(['ph1'])
-    #fl.next(' image plot coherence-- ft ')
-    #fl.image(s)
     s.ift('t2')
     s.reorder('nScans',first=True)
     s = s['ph1',1].C
@@ -32,7 +30,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s.reorder('t2',first=True)
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
-    #s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center')
     fl.image(s)
     #}}}
@@ -93,10 +90,11 @@ for searchstr, exp_type, nodename, postproc, label_str in [
             horizontalalignment='center', color= 'k')
     print("output",f.output())
     print("latex",f.latex())
-    fl.show();quit()
-    logger.info(strm(self.output()))
-    fl.plot(data.eval(400))
+    #fl.show();quit()
+    #logger.info(strm(self.output()))
+    #fl.plot(data.eval(400))
     T2 = 1./f.output('R_2')
+    fl.show();quit()
     #}}}
     #{{{saving figure
     save_fig = False
