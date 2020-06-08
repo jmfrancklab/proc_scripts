@@ -103,9 +103,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #raise RuntimeError("set up nonlinear fitting of T2 decay with "+str([0.1,100.0,-3.0])+"as a guess")
     print("starting T2 curve")
     f = fitdata(data)
-    M0,T2,tE = sympy.symbols("M_0 T_2 tE", real=True)
-    f.functional_form = M0*sympy.exp(-tE/T2)
-    f.fit_coeff = r_[-1,1,1]
+    M0,R2,tE = sympy.symbols("M_0 R_2 tE", real=True)
+    f.functional_form = M0*sympy.exp(-tE*R2)
     fl.next('T2 test')
     fl.plot(f,'o',label=f.name())
     f.fit()
@@ -117,7 +116,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.show();quit()
     #logger.info(strm(self.output()))
     fl.plot(data.eval(400))
-    T2 = 1./p1[1]
+    T2 = 1./f.output('R_2')
     #}}}
     #{{{saving figure
     save_fig = False
