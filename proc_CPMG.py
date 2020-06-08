@@ -19,26 +19,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     ###{{{loading in data and displaying raw data
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
-    nPoints = s.get_prop('acq_params')['nPoints']
-    p90_s = s.get_prop('acq_params')['p90_us']*1e-6
-    deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
     nEchoes = s.get_prop('acq_params')['nEchoes']
-    deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
-    pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
-    marker_s = s.get_prop('acq_params')['marker_us']*1e-6
-    nScans = s.get_prop('acq_params')['nScans']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    orig_t = s.getaxis('t')
-    acq_time_s = orig_t[nPoints-1]
-    s.set_units('t','s')
-    t_echo = deblank_s + 2*p90_s + deadtime_s + acq_time_s + pad_end_s + marker_s 
-    t2_axis = linspace(0,acq_time_s,nPoints)
-    s.setaxis('nScans', r_[0:nScans])
-    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('tE',t_echo*(1+r_[0:nEchoes]))
-    s.setaxis('t2',t2_axis)
-    #s.ft('t2',shift=True)
     #}}}
     #{{{select and display coherence channel centered
     s.ft(['ph1'])
@@ -49,10 +30,9 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s = s['ph1',1].C
     s.mean('nScans')
     s.reorder('t2',first=True)
-    # I would call tE tau_e?
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
-        
+    #s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center')
     fl.image(s)
     #}}}
@@ -92,11 +72,11 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.image(s.imag)
     #}}}
     #{{{select echo decay fit function
-    #s.ift('t2')
-    #s = s['t2':(0,None)]
+    s.ift('t2')
+    s = s['t2':(0,None)]
     #s *= -1
-    #s['t2',0] *= 0.5
-    #s.ft('t2')
+    s['t2',0] *= 0.5
+    s.ft('t2')
     data = s['t2':(0,None)].sum('t2')
     fl.next('Echo decay')
     fl.plot(data,'o')
@@ -115,7 +95,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     print("output",f.output())
     print("latex",f.latex())
     fl.show();quit()
-    #logger.info(strm(self.output()))
+    logger.info(strm(self.output()))
     fl.plot(data.eval(400))
     T2 = 1./p1[1]
     #}}}
