@@ -71,6 +71,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
+    old_order = list(s.dimlabels)
     # {{{ try to use the correlation align
     avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
     s.ift(['ph1','ph2'])
@@ -78,8 +79,11 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s.ft(['ph1','ph2'])
     # }}}
     fl.next('after alignment')
+    s.reorder(old_order)
+    s.reorder('ph2','ph1','power','indirect','t2')
+
     s.ft('t2')
-    fl.image(s)
+    fl.image(s,human_units=False)
     s.ift('t2')
     # }}}
     

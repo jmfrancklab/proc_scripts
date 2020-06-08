@@ -44,7 +44,7 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
     phcyc_dims = [j for j in indirect_dims if j.startswith('ph')]
     phcyc_dims.sort()
     indirect_dims = list(set(indirect_dims) - set(phcyc_dims))
-    forplot.reorder(phcyc_dims+indirect_dims)
+    #forplot.reorder(phcyc_dims+indirect_dims)
     forplot.smoosh(phcyc_dims+indirect_dims,'indirect'
             ).setaxis('indirect','#'
                     ).reorder('indirect',first=False)
@@ -54,7 +54,7 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
         fl.image(forplot,human_units=False)
         fl.plot(myline.smoosh(phcyc_dims+indirect_dims,'indirect'
             ).setaxis('indirect','#'
-                    ).reorder('indirect',first=False)
+                    ).reorder('indirect',first=True)
                 , 'w', linewidth=3, alpha=0.5,
                 human_units=False)
     return s*exp(-1j*2*pi*myline*s.fromaxis(axis))
