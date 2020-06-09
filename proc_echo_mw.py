@@ -138,7 +138,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     enhancement = s['t2':(-50,50)].sum('t2').real
     enhancement /= enhancement['power',0]
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
-    fl.plot(enhancement['power',idx_maxpower+1:],'ro')
+    fl.plot(enhancement['power',idx_maxpower+1:],'ro',human_units=False)
     ylabel('Enhancement')
     #}}}
 fl.show();quit()
