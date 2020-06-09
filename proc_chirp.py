@@ -43,6 +43,7 @@ with figlist_var(filename='chirp.pdf') as fl:
             pulse_90 = True
         else :
             pulse_90 = False
+        Raise RuntimeError("Have not tested since proc_scripts package")
         d.set_units('t','s')
         d.name('Amplitude $/$ $V$')
         #fl.next('plot ch 0 %s'%id_string)

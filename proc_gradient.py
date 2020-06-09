@@ -13,6 +13,7 @@ s0 = nddata_hdf5(filename0+'/'+nodename,
 s1 = nddata_hdf5(filename1+'/'+nodename,
         directory = getDATADIR(
             exp_type = 'test_equip'))
+Raise RuntimeError("1st and 2nd level functions not integrated yet")
 nPoints = s0.get_prop('acq_params')['nPoints']
 nEchoes = s0.get_prop('acq_params')['nEchoes']
 nPhaseSteps = s0.get_prop('acq_params')['nPhaseSteps']
