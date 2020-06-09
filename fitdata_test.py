@@ -1,9 +1,10 @@
 from pyspecdata import *
+from proc_scripts import hermitian_function_test,zeroth_order_ph
 init_logging(level='debug')
 
 #{{{ code bit from proc_IR
 from scipy.optimize import leastsq,minimize
-from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+#from hermitian_function_test import hermitian_function_test, zeroth_order_ph
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -74,8 +75,6 @@ f.fit_coeff = r_[-1,1,1]
 fl.next('t1 test')
 fl.plot(f,'o',label=f.name())
 print("symbolic variables:",f.symbolic_vars) # so I know the ordering for the next step
-#fl.plot(f.fitfunc_multiarg(-3000,3000,1,f.fromaxis('vd')))
-#fl.plot(f.getaxis('vd'),f.fitfunc_raw(r_[-3000,3000,1],f.getaxis('vd')),'--')
 f.fit()
 fl.plot(f.eval(100),label='%s fit'%f.name())
 text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',

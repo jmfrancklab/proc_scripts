@@ -31,7 +31,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     #{{{visualize the frequency limits
     fl.next('all data: frequency domain')
     fl.image(s)
-    #fl.show();quit()
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range)
     #}}}
