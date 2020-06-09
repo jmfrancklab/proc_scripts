@@ -67,6 +67,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
     #}}}
     # {{{ align the peaks
+    orig = s.C
     fl.next('before alignment')
     s.ft('t2')
     fl.image(s)
@@ -90,8 +91,8 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     #{{{redefine time range along t2
     s.set_units('indirect',None)
     fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range',
-        s,time_range)
-    s = s['t2':time_range]
+        orig,time_range)
+    s = orig['t2':time_range]
     #}}}
 
     #{{{mirror test to test centered data
