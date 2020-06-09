@@ -77,7 +77,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     data = s['t2':(0,None)].sum('t2')
     fl.next('Echo decay')
     fl.plot(data,'o')
-    #raise RuntimeError("set up nonlinear fitting of T2 decay with "+str([0.1,100.0,-3.0])+"as a guess")
     print("starting T2 curve")
     f = fitdata(data)
     M0,R2,tE = sympy.symbols("M_0 R_2 tE", real=True)
@@ -90,9 +89,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
             horizontalalignment='center', color= 'k')
     print("output",f.output())
     print("latex",f.latex())
-    #fl.show();quit()
-    #logger.info(strm(self.output()))
-    #fl.plot(data.eval(400))
     T2 = 1./f.output('R_2')
     fl.show();quit()
     #}}}
