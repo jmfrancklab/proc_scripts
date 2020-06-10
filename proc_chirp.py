@@ -1,6 +1,5 @@
 from pyspecdata import *
-#import logging
-#init_logging(level=logging.DEBUG)
+#init_logging(lebel='debug')
 #{{{ boolean statement for processing data before modification to generate chirp
 #   that sets voltage of ref (CH1 of scope) and DUT (CH2 of scope) to same value
 corrected_volt = True
@@ -44,6 +43,7 @@ with figlist_var(filename='chirp.pdf') as fl:
             pulse_90 = True
         else :
             pulse_90 = False
+        Raise RuntimeError("Have not tested since proc_scripts package")
         d.set_units('t','s')
         d.name('Amplitude $/$ $V$')
         #fl.next('plot ch 0 %s'%id_string)

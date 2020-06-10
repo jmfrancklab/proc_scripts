@@ -88,7 +88,6 @@ for searchstr,exp_type,which_exp,postproc in [
                         annotate('%d'%j, (log10(r_norm[j,0]),log10(x_norm[j,0])),
                                 ha='left',va='bottom',rotation=45)
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
-    #fl.show();quit()
     #}}}
     #{{{setting axis to incorporate SFO1 based off of 
     # acqu file of data
@@ -105,5 +104,5 @@ for searchstr,exp_type,which_exp,postproc in [
     soln.setaxis('log(T1)',log10(T1.data))
     fl.next('solution')
     fl.image(soln['t2':(100,300)])
-    fl.show();quit()
+fl.show()
     #}}}

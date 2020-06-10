@@ -1,5 +1,4 @@
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 def get_W(dBm):
     return 10**(dBm/10.)*1e-3

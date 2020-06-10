@@ -4,7 +4,28 @@ def calc_baseline(this_d,
         guess=None,
         show_plots=True):
     """
+    Calculate the baseline for an FID-like spectrum.
 
+    Parameters
+    ==========
+    this_d:     nddata
+                complex data that needs baseline
+    ph1lim:     range of ph1 dimension used
+    npts:       integer for shape of array
+    guess:      guessed baseline array or None
+                if None will fill array shape given with 
+                zeroes. If guess then will fill shape given
+                with guess.
+    show_plots: True or False
+                If the plots are wanted set to True.
+                This will add a plot called "try
+                baseline correction" for before and
+                after the baseline correction
+    Returns
+    =======
+    phcorr0: zeroth order phase correction
+    phcorr1: first order phase correction
+    baseline: generated baseline in form of array
     """
     if show_plots: fl.next('try baseline correction')
     if show_plots: fl.plot(this_d,
