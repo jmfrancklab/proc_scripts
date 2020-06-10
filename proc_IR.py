@@ -17,7 +17,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 
 for searchstr,exp_type,nodename, postproc in [
         ('200212_IR_3_30dBm', 'test_equip', 'signal', 
-            'spincore_IR'),
+            'spincore_IR_v1'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,

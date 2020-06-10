@@ -8,7 +8,7 @@ t2 = symbols('t2')
 
 
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
-        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off',(-5e3,5e3)),
+        ('200302_alex_probe_water','test_equip','signal','spincore_Hahn_echoph_v1','microwaves off',(-5e3,5e3)),
         ]:
     
     #{{{loads raw data and plots
