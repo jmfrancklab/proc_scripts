@@ -25,7 +25,8 @@ def proc_bruker_deut_IR_mancyc(s):
     return s
     #raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
-def proc_CPMG(s):
+def proc_spincore_CPMG(s):
+    fl = figlist_var()
     logging.basicConfig()
     logger.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
@@ -53,6 +54,8 @@ def proc_CPMG(s):
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
     s.ft('t2', shift=True)
+    fl.next('raw data - chunking ft')
+    fl.image(s)
     return s
 
 def proc_Hahn_echoph(s):
@@ -137,7 +140,7 @@ def proc_square_wave_capture(s):
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
-        'CPMG':proc_CPMG,
+        'spincore_CPMG':proc_spincore_CPMG,
         'Hahn_echoph':proc_Hahn_echoph,
         'spincore_nutation':proc_nutation,
         'spincore_IR':proc_spincore_IR,
