@@ -45,7 +45,9 @@ def proc_CPMG(s):
     s.set_units('t','s')
     twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
     t2_axis = linspace(0,acq_time_s,nPoints)
-    tE_axis = r_[1:nEchoes+1]*twice_tau
+    # for the final term added here, see cavanagh -- I'm not positive if it's correct or not
+    ppg_between_90_and_first_180 = ???
+    tE_axis = r_[0:nEchoes]*twice_tau + ppg_between_90_and_first_180 + 2*p90_s/pi
     s.setaxis('t',None)
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
@@ -137,10 +139,10 @@ def proc_square_wave_capture(s):
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
-        'CPMG':proc_CPMG,
-        'Hahn_echoph':proc_Hahn_echoph,
-        'spincore_nutation':proc_nutation,
-        'spincore_IR':proc_spincore_IR,
+        'spincore_CPMG_v1':proc_CPMG,
+        'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
+        'spincore_nutation_v1':proc_nutation,
+        'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
-        'square_wave_capture':proc_square_wave_capture}
+        'square_wave_capture_v1':proc_square_wave_capture}
 
