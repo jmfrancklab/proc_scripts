@@ -45,16 +45,15 @@ def proc_CPMG(s):
     s.set_units('t','s')
     twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
     t2_axis = linspace(0,acq_time_s,nPoints)
-    # for the 2*p90_s/pi term added here, see cavanagh chpt 3 (this is the
-    # evolution during the 90) -- I'm not positive if it's correct or not
-    ppg_between_90_and_first_180 = ???
-    tE_axis = r_[0:nEchoes]*twice_tau + ppg_between_90_and_first_180 + 2*p90_s/pi + twice_tau/2
-    s.setaxis('t',None)
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
+    # OK, so I made some changes and then realized that we need to assume that
+    # the pulse sequence correctly balances the evolution between 2*p90_s/pi
+    # (cavanagh chpt 3 this is the evolution during the 90 -- I'm not positive
+    # if my expression is correct or not -- please do check/change, and leave
+    # this comment in some form) and the center of the 180 pulse appropriately
+    s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
     s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('tE',tE_axis)
-    s.setaxis('t2',t2_axis)
     s.ft('t2', shift=True)
     return s
 
