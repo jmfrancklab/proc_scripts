@@ -18,7 +18,7 @@ for searchstr,exp_type,nodename,postproc in [
     s.ft(['ph2','ph1'])
     rough_center = abs(s)['ph2',0]['ph1',1].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    fl.next('raw')
+    fl.next('Raw')
     fl.image(s)
     logger.info(strm(ndshape(s)))
     # }}}

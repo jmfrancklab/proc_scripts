@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('200302','alex_probe_water'),
+        ('200219','alex_echo_AGprobe_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
