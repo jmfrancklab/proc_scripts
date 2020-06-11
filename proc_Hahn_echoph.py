@@ -22,6 +22,12 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     logger.info(strm(ndshape(s)))
+    fl.next('time domain')
+    fl.image(s)
+    s.ft('t2')
+    fl.next('frequency domain')
+    fl.image(s)
+    fl.show();quit()
     #}}}
     s.ft('t2')
     s_uncorrected = s.C

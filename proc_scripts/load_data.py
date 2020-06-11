@@ -26,6 +26,7 @@ def proc_bruker_deut_IR_mancyc(s):
     #raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
 def proc_CPMG(s):
+    fl = figlist_var()
     logging.basicConfig()
     logger.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
@@ -53,6 +54,7 @@ def proc_CPMG(s):
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
     s.ft('t2', shift=True)
+    fl.image(s)
     return s
 
 def proc_Hahn_echoph(s):
@@ -74,8 +76,12 @@ def proc_Hahn_echoph(s):
     s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
     s.ft('t2',shift=True)
-    fl.next('raw data, chunked')
-    fl.image(abs(s))
+    fl.next('frequency domain')
+    fl.image(s)
+    s.ift('t2')
+    fl.next('time domain')
+    fl.image(s)
+    s.ft('t2')
     s.ft(['ph1','ph2'])
     fl.next('coherence')
     fl.image(abs(s))

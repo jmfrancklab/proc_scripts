@@ -22,9 +22,15 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict)
-    
     #{{{Fourier Transforms coherence channels
-    s.ft(['ph1','ph2']) 
+    s.ft(['ph1','ph2'])
+    fl.next('frequency domain')
+    fl.image(s)
+    s.ift('t2')
+    fl.next('time domain')
+    fl.image(s)
+    fl.show();quit()
+
     #}}}
 
     #{{{visualize the frequency limits
