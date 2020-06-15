@@ -1,5 +1,5 @@
 from pyspecdata import *
-#init_logging(lebel='debug')
+#init_logging(label='debug')
 #{{{ boolean statement for processing data before modification to generate chirp
 #   that sets voltage of ref (CH1 of scope) and DUT (CH2 of scope) to same value
 corrected_volt = True
