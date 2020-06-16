@@ -5,23 +5,14 @@ def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
 def proc_bruker_deut_IR_mancyc(s):
-    fl = figlist_var()
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
     s.setaxis('indirect', s.get_prop('vd'))
-    fl.next('FT + coherence domain')
 #titling to coherence domain
     s.ft('t2',shift=True) #fourier transform
     s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
     s.reorder(['indirect','t2'], first=False)
-    fl.image(s)
-    fl.next('time domain (all $\\Delta p$)')
-    s.ift('t2')
-    fl.image(s)
-    fl.next('frequency domain (all $\\Delta p$)')
-    s.ft('t2',pad=4096)
-    fl.image(s)
     return s
     #raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 

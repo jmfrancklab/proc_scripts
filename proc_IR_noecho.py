@@ -31,6 +31,14 @@ for searchstr,exp_type,which_exp,postproc in [
             expno=which_exp, 
             postproc=postproc, lookup=postproc_dict, 
             dimname='indirect')
+    fl.next('FT + coherence domain')
+    fl.image(s)
+    fl.next('time domain (all $\\Delta p$)')
+    s.ift('t2')
+    fl.image(s)
+    fl.next('frequency domain (all $\\Delta p$)')
+    s.ft('t2',pad=4096)
+    fl.image(s)
     #{{{convolution and zeroth order phase correction
     fl.next('select coherence pathway and convolve')
     s = s['ph2',0]['ph1',-1]

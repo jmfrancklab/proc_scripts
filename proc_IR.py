@@ -16,12 +16,14 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('200303_IR_AER_6','test_equip','signal','spincore_IR'),
+        ('200212_IR_3_30dBm', 'test_equip', 'signal', 
+            'spincore_IR'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
+    s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
     logger.info(strm(s.dimlabels))
     #{{{rough centers data
     fl.next('filtered + rough centered data')
@@ -32,11 +34,6 @@ for searchstr,exp_type,nodename, postproc in [
     s.setaxis(t2-rough_center)
     #}}}
     #{{{hermitian function test and apply best shift
-    fl.next('time domain before')
-    fl.image(s)
-    fl.next('frequency domain before')
-    s.ft('t2')
-    fl.image(s)
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     logger.info(strm("best shift is",best_shift))
@@ -46,10 +43,6 @@ for searchstr,exp_type,nodename, postproc in [
     s.ift('t2')
     fl.next('time domain after hermitian test')
     fl.image(s)
-    fl.next('frequency domain after')
-    s.ft('t2')
-    fl.image(s)
-    fl.show();quit()
     #}}}
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
@@ -64,13 +57,12 @@ for searchstr,exp_type,nodename, postproc in [
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
-    s.convolve('t2',10)
-    fl.image(s)
+    fl.image(s.C.convolve('t2',10))
     #}}}
     #{{{select t2 axis range and 
     s.ift('t2')
     s = s['t2':(0,None)]
-    s *= -1
+    #s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
     #}}}
@@ -94,5 +86,5 @@ for searchstr,exp_type,nodename, postproc in [
             horizontalalignment='center',color='k')
     print("output:",s.output())
     print("latex:",s.latex())
-    fl.show();quit()
+fl.show()
 
