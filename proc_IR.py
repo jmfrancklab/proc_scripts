@@ -32,6 +32,11 @@ for searchstr,exp_type,nodename, postproc in [
     s.setaxis(t2-rough_center)
     #}}}
     #{{{hermitian function test and apply best shift
+    fl.next('time domain before')
+    fl.image(s)
+    fl.next('frequency domain before')
+    s.ft('t2')
+    fl.image(s)
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     logger.info(strm("best shift is",best_shift))
@@ -41,6 +46,10 @@ for searchstr,exp_type,nodename, postproc in [
     s.ift('t2')
     fl.next('time domain after hermitian test')
     fl.image(s)
+    fl.next('frequency domain after')
+    s.ft('t2')
+    fl.image(s)
+    fl.show();quit()
     #}}}
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
@@ -75,7 +84,7 @@ for searchstr,exp_type,nodename, postproc in [
     s = fitdata(s_sliced)
     M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
     s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
-    #logger.info(strm("Functional form", s.functional_form))
+    logger.info(strm("Functional form", s.functional_form))
     s.fit_coeff = r_[-1,1,1]
     fl.next('t1 test')
     fl.plot(s, 'o', label=s.name())

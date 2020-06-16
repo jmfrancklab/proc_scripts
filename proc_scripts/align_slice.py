@@ -1,24 +1,24 @@
 from pyspecdata import *
-def align_and_slice(s, axis='t2', convwidth=500, threshold=0.05, fl=None):
+def align_and_slice(s, dimension='t2', convwidth=500, threshold=0.05, fl=None):
     r"""Align the peak frequencies, and automatically slice them -- passing fl assumes you are debugging and want diagnostic plots"""
     if fl is not None:
         fl.push_marker()
-    if not s.get_ft_prop(axis):
+    if not s.get_ft_prop(dimension):
         raise ValueError("Data has not been FTd yet!")
-    s.ift(axis)
+    s.ift(dimension)
     R = pi*convwidth # Lorentzian FWHM formula -- R = 1/T2, FWHM = R/pi
-    s_conv = s.C*exp(-R * abs(s.fromaxis(axis)))
+    s_conv = s.C*exp(-R * abs(s.fromaxis(dimension)))
     s_conv_save = s.C
-    s_conv.ft(axis)
+    s_conv.ft(dimension)
     if fl is not None:
         fl.next('check for center')
         fl.image(abs(s_conv))
-    center_frq = abs(s_conv).argmax(axis)
-    s *= exp(-1j*2*pi*center_frq*s.fromaxis(axis))
-    s_conv = s_conv_save * exp(-1j*2*pi*center_frq*s.fromaxis(axis))
-    s.ft(axis)
-    s_conv.ft(axis)
-    s_conv.mean_all_but([axis])
+    center_frq = abs(s_conv).argmax(dimension)
+    s *= exp(-1j*2*pi*center_frq*s.fromaxis(dimension))
+    s_conv = s_conv_save * exp(-1j*2*pi*center_frq*s.fromaxis(dimension))
+    s.ft(dimension)
+    s_conv.ft(dimension)
+    s_conv.mean_all_but([dimension])
     slices = s_conv.contiguous(lambda x:
             abs(x)>threshold*abs(s_conv.data).max())
     if fl is None:
@@ -58,3 +58,4 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
                 , 'w', linewidth=3, alpha=0.5,
                 human_units=False)
     return s*exp(-1j*2*pi*myline*s.fromaxis(axis))
+
