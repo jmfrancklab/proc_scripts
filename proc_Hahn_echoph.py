@@ -57,7 +57,6 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     #{{{select coherence and select t2 axis range
     s = s['ph1',1]['ph2',0].C
     s.ift('t2')
-    k.ift('t2')
     s = s['t2':(0,None)]
     s.ft('t2')
     #}}}
