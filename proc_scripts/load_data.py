@@ -1,5 +1,6 @@
 from pyspecdata import *
 from .Utility import dBm2power
+fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
@@ -48,7 +49,6 @@ def proc_CPMG(s):
 
 def proc_Hahn_echoph(s):
     print("loading pre-processing for Hahn_echoph")
-    fl = figlist_var()
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = 8 
@@ -73,7 +73,6 @@ def proc_Hahn_echoph(s):
     return s
 
 def proc_spincore_IR(s):
-    fl = figlist_var()
     s.rename('vd','indirect')
     s.reorder(['ph1','ph2','indirect','t2'])
     fl.next('raw data -- coherence channels')
