@@ -1,32 +1,23 @@
 from pyspecdata import *
 from .Utility import dBm2power
+fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
 def proc_bruker_deut_IR_mancyc(s):
-    fl = figlist_var()
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
     s.setaxis('indirect', s.get_prop('vd'))
-    fl.next('FT + coherence domain')
 #titling to coherence domain
     s.ft('t2',shift=True) #fourier transform
     s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
     s.reorder(['indirect','t2'], first=False)
-    fl.image(s)
-    fl.next('time domain (all $\\Delta p$)')
-    s.ift('t2')
-    fl.image(s)
-    fl.next('frequency domain (all $\\Delta p$)')
-    s.ft('t2',pad=4096)
-    fl.image(s)
     return s
     #raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
-def proc_spincore_CPMG(s):
-    fl = figlist_var()
+def proc_CPMG(s):
     logging.basicConfig()
     logger.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
@@ -46,23 +37,18 @@ def proc_spincore_CPMG(s):
     s.set_units('t','s')
     twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
     t2_axis = linspace(0,acq_time_s,nPoints)
+    tE_axis = r_[1:nEchoes+1]*twice_tau
+    s.setaxis('t',None)
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    # OK, so I made some changes and then realized that we need to assume that
-    # the pulse sequence correctly balances the evolution between 2*p90_s/pi
-    # (cavanagh chpt 3 this is the evolution during the 90 -- I'm not positive
-    # if my expression is correct or not -- please do check/change, and leave
-    # this comment in some form) and the center of the 180 pulse appropriately
-    s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
     s.setaxis('ph1',r_[0.,2.]/4)
+    s.setaxis('tE',tE_axis)
+    s.setaxis('t2',t2_axis)
     s.ft('t2', shift=True)
-    fl.next('raw data - chunking ft')
-    fl.image(s)
     return s
 
 def proc_Hahn_echoph(s):
     print("loading pre-processing for Hahn_echoph")
-    fl = figlist_var()
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = 8 
@@ -87,18 +73,17 @@ def proc_Hahn_echoph(s):
     return s
 
 def proc_spincore_IR(s):
-    fl = figlist_var()
     s.rename('vd','indirect')
     s.reorder(['ph1','ph2','indirect','t2'])
     fl.next('raw data -- coherence channels')
     s.ft(['ph2','ph1'])
-    s.ft('t2')
+    s.ft('t2',shift=True)
     fl.image(s)
     fl.next('time domain (all $\\Delta p$)')
     s.ift('t2')
     fl.image(s)
     fl.next('frequency domain (all $\\Delta p$)')
-    s.ft('t2',pad=4096)
+    s.ft('t2', pad=4096)
     fl.image(s)
     return s
 
@@ -143,9 +128,9 @@ def proc_square_wave_capture(s):
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'spincore_CPMG_v1':proc_CPMG,
-        'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
-        'spincore_nutation_v1':proc_nutation,
+        'spincore_Hahn_echoph':proc_Hahn_echoph,
+        'spincore_nutation':proc_nutation,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
-        'square_wave_capture_v1':proc_square_wave_capture}
+        'square_wave_capture':proc_square_wave_capture}
 

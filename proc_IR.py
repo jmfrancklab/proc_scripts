@@ -33,28 +33,8 @@ for searchstr,exp_type,nodename, postproc in [
             't2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     #}}}
-    #{{{hermitian function test and apply best shift
-    best_shift = hermitian_function_test(s[
-        'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-    logger.info(strm("best shift is",best_shift))
-    s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.reorder(['ph2','ph1','indirect'])
-    s.ift('t2')
-    fl.next('time domain after hermitian test')
-    fl.image(s)
-    #}}}
-    #{{{zeroth order phase correction
-    ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
-    logger.info(strm(ndshape(ph0)))
-    if len(ph0.dimlabels) > 0:
-        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-        ph0 = zeroth_order_ph(ph0, fl=fl)
-        logger.info(strm('phasing dimension as one'))
-    else:
-        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
-        ph0 = ph0/abs(ph0)
-    s /= ph0
+    #{{{slicing out FID from echo and centering
+    s = slice_FID_from_echo(s,1,0)
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
     fl.image(s.C.convolve('t2',10))
@@ -62,7 +42,6 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{select t2 axis range and 
     s.ift('t2')
     s = s['t2':(0,None)]
-    #s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
     #}}}
@@ -77,16 +56,17 @@ for searchstr,exp_type,nodename, postproc in [
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
     s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
     logger.info(strm("Functional form", s.functional_form))
+    s.fit_coeff = r_[-1,1,1]
     # JF notes that we want to be able to set the guess using a dictionary
     # here (which is what I think setting fit_coeff was doing), then plot
     # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
-    s.set_guess({M0:-1, Mi:1, R1:1}) # this is the only line that will not
+    #s.set_guess({M0:-1, Mi:1, R1:1}) # this is the only line that will not
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
     fl.plot(s, 'o', label=s.name())
-    s.settoguess()
-    fl.plot(s, '-', label='initial guess')
+    #s.settoguess()
+    #fl.plot(s, '-', label='initial guess')
     s.fit()
     fl.plot(s.eval(100),label='%s fit'%s.name())
     text(0.75, 0.25, s.latex(), transform=gca().transAxes, size='large',

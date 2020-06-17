@@ -19,7 +19,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     ###{{{loading in data and displaying raw data
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
-    nEchoes = s.get_prop('acq_params')['nEchoes']
     #}}}
     #{{{select and display coherence channel centered
     s.ft(['ph1'])

@@ -8,7 +8,7 @@ t2 = symbols('t2')
 
 
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
-        ('200302_alex_probe_water','test_equip','signal','spincore_Hahn_echoph_v1','microwaves off',(-5e3,5e3)),
+        ('200302_alex_probe_water','test_equip','signal','spincore_Hahn_echoph','microwaves off',(-5e3,5e3)),
         ]:
     
     #{{{loads raw data and plots
@@ -23,13 +23,17 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     s.setaxis(t2-rough_center)
     logger.info(strm(ndshape(s)))
     #}}}
-    s.ft('t2')
-    s_uncorrected = s.C
-    s.ift('t2')
-    #}}}
-    #{{{ apply phase corrections
+    #{{{finds best shift according to hermitian function test
     best_shift = hermitian_function_test(s)
     logger.info(strm("best shift is",best_shift))
+    #}}}
+    #{{{slice out the FID appropriately and phase correct it
+    s.ft('t2')
+    s_uncorrected = s.C
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s.ift('t2')
+    #}}}
+    #{{{ apply a lorentzian broadening
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     fl.next('time domain after hermitian test')
     fl.plot(s)
