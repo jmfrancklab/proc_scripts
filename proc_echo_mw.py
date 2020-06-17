@@ -69,7 +69,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.next('FID slice')
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))
-    s = slice_FID_from_echo(s)['t2':(None,0.05)]
+    s = slice_FID_from_echo(s,-2,1)['t2':(None,0.05)]
     #}}}
     
     #{{{redefine time range along t2

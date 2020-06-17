@@ -77,13 +77,13 @@ def proc_spincore_IR(s):
     s.reorder(['ph1','ph2','indirect','t2'])
     fl.next('raw data -- coherence channels')
     s.ft(['ph2','ph1'])
-    s.ft('t2')
+    s.ft('t2',shift=True)
     fl.image(s)
     fl.next('time domain (all $\\Delta p$)')
     s.ift('t2')
     fl.image(s)
     fl.next('frequency domain (all $\\Delta p$)')
-    s.ft('t2',pad=4096)
+    s.ft('t2', pad=4096)
     fl.image(s)
     return s
 
