@@ -31,6 +31,9 @@ for searchstr,exp_type,which_exp,postproc in [
             expno=which_exp, 
             postproc=postproc, lookup=postproc_dict, 
             dimname='indirect')
+    s.ift('t2')
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
     #{{{convolution and zeroth order phase correction
     fl.next('select coherence pathway and convolve')
     s = s['ph2',0]['ph1',-1]
@@ -40,6 +43,8 @@ for searchstr,exp_type,which_exp,postproc in [
     ph0 = zeroth_order_ph(s['t2':0],fl=None)
     ph0 /= abs(ph0)
     s /= ph0
+    print(ndshape(s))
+    quit()
     #}}}
     #{{{visualize phased spectra
     for j in range(ndshape(s)['indirect']):
@@ -48,10 +53,25 @@ for searchstr,exp_type,which_exp,postproc in [
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
     #}}}
-    #{{{exponential curve
+    #{{{exponential curve with fit
+    #s *= -1 # phasing may have inverted it for some reason
     rec_curve = s['t2':(-150,150)].sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
+    #fl.show();quit()
+    f =fitdata(rec_curve)
+    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
+    f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
+    logger.info(strm("Functional form", f.functional_form))
+    fl.next('t1 test')
+    fl.plot(f, 'o',label=f.name())
+    f.fit()
+    fl.plot(f.eval(100),label=
+            '%s fit'%f.name())
+    text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
+            horizontalalignment='center',color='k')
+    print("output:",f.output())
+    print("latex:",f.latex())
     #}}}
     #{{{estimating T1
     min_index = abs(s).run(sum, 't2').argmin('indirect',raw_index=True).data
@@ -95,9 +115,10 @@ for searchstr,exp_type,which_exp,postproc in [
     arbitrary_reference = s.get_prop('acq')['BF1'] 
     logger.info(strm("SFO1 is",sfo1))
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
+    #fl.show();quit()
     #}}}
     #{{{creating plot off of solution to L curve
-    this_l = 0.013#pick number in l curve right before it curves up
+    this_l = 0.001#pick number in l curve right before it curves up
     soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
     soln.reorder('t2',first=False)
     soln.rename('T1','log(T1)')

@@ -46,6 +46,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     #}}}
     #{{{decay curve and fitting
+    s *= -1
     fl.next('signal vs. vd')
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
     s_sliced.sum('t2')
