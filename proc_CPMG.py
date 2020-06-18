@@ -21,12 +21,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
             expno=nodename, postproc=postproc, lookup=postproc_dict)
     #}}}
     #{{{select and display coherence channel centered
-    s.ft(['ph1'])
-    s.ift('t2')
-    s.reorder('nScans',first=True)
-    s = s['ph1',1].C
-    s.mean('nScans')
-    s.reorder('t2',first=True)
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
     fl.next('check center')
