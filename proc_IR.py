@@ -34,7 +34,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.setaxis(t2-rough_center)
     #}}}
     #{{{slicing out FID from echo and centering
-    s = slice_FID_from_echo(s,1,0)
+    s = slice_FID_from_echo(s,1,0) # so, to be clear, this includes all phasing?
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
     fl.image(s.C.convolve('t2',10))
@@ -56,7 +56,6 @@ for searchstr,exp_type,nodename, postproc in [
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
     s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
     logger.info(strm("Functional form", s.functional_form))
-    s.fit_coeff = r_[-1,1,1]
     # JF notes that we want to be able to set the guess using a dictionary
     # here (which is what I think setting fit_coeff was doing), then plot
     # the guess to make sure that's what we're doing -- like so
