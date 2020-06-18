@@ -2,7 +2,7 @@ from proc_scripts import *
 from pyspecdata import *
 from sympy import symbols
 
-def slice_FID_from_echo(s,ph2,ph1):
+def slice_FID_from_echo(s, ph1=1, ph2=-2):
     fl = fl_mod() 
     best_shift = hermitian_function_test(s[
         'ph2',ph2]['ph1',ph1])
