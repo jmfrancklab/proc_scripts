@@ -31,10 +31,10 @@ def align_and_slice(s, dimension='t2', convwidth=500, threshold=0.05, fl=None):
 def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
     assert not s.get_ft_prop(axis), 'I want time-domain data'
     assert not avg.get_ft_prop(axis), 'I want time-domain data'
-    avg.run(conj)
+    c = avg.run(conj)
     R = pi*convwidth # Lorentzian FWHM formula -- R = 1/T2, FWHM = R/pi
     # ALSO convolve both
-    check = avg * s * exp(-2*R*abs(s.fromaxis(axis)))
+    check = avg * c * exp(-2*R*abs(s.fromaxis(axis)))
     assert s.get_ft_prop(axis,['start','freq']) is not None, "should be FT'd first, so the startpoint is set"
     check.ft(axis, pad=2**14)
     check.reorder(axis,first=False)
@@ -57,5 +57,5 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
                     ).reorder('indirect',first=True)
                 , 'w', linewidth=3, alpha=0.5,
                 human_units=False)
-    return s*exp(-1j*2*pi*myline*s.fromaxis(axis))
+    return s*exp(1j*2*pi*myline*s.fromaxis(axis))
 
