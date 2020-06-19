@@ -34,31 +34,28 @@ for searchstr,exp_type,which_exp,postproc in [
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    #{{{convolution and zeroth order phase correction
-    fl.next('select coherence pathway and convolve')
-    s = s['ph2',0]['ph1',-1]
-    s.convolve('t2',5)
+    fl.next('rough centered')
     fl.image(s)
+    #{{{convolution and zeroth order phase correction
+    s = s['t2':(0,None)]['ph2',0]['ph1',-1]
     s.reorder('t2')
-    ph0 = zeroth_order_ph(s['t2':0],fl=None)
+    ph0 = zeroth_order_ph(s,fl=None)
     ph0 /= abs(ph0)
     s /= ph0
-    #print(ndshape(s))
-    #quit()
+    fl.next('zeroth order phase correction')
+    fl.image(s)
     #}}}
     #{{{visualize phased spectra
     for j in range(ndshape(s)['indirect']):
         fl.next('Plotting phased spectra')
-        fl.plot(s['indirect',j]['t2':(-150,150)],
+        fl.plot(s['indirect',j]['t2':(0,None)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
     #}}}
     #{{{exponential curve with fit
-    #s *= -1 # phasing may have inverted it for some reason
-    rec_curve = s['t2':(-150,150)].sum('t2')
+    rec_curve = s['t2':(0,None)].sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
-    #fl.show();quit()
     f =fitdata(rec_curve)
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
     f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
@@ -80,8 +77,8 @@ for searchstr,exp_type,which_exp,postproc in [
     print("Estimated T1 is:", est_T1,"s")
     #}}}
     #{{{attempting ILT plot with NNLS_Tikhonov_190104
-    T1 = nddata(logspace(-5,5,150),'T1')
-    l = sqrt(logspace(-8.0,0.005,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+    T1 = nddata(logspace(-3,1,150),'T1')
+    l = sqrt(logspace(-8.0,0.05,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
     plot_Lcurve = False
     if plot_Lcurve:
         def vec_lcurve(l):
@@ -114,11 +111,12 @@ for searchstr,exp_type,which_exp,postproc in [
     sfo1 = 272.05
     arbitrary_reference = s.get_prop('acq')['BF1'] 
     logger.info(strm("SFO1 is",sfo1))
+    s.ft('t2')
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
     #fl.show();quit()
     #}}}
     #{{{creating plot off of solution to L curve
-    this_l = 0.001#pick number in l curve right before it curves up
+    this_l = 0.008#pick number in l curve right before it curves up
     soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
     soln.reorder('t2',first=False)
     soln.rename('T1','log(T1)')
