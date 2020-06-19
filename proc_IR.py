@@ -62,7 +62,6 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{select t2 axis range and 
     s.ift('t2')
     s = s['t2':(0,None)]
-    #s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
     #}}}
@@ -74,12 +73,19 @@ for searchstr,exp_type,nodename, postproc in [
     logger.info(strm(ndshape(s_sliced)))
     logger.info(strm("BEGINNING T1 CURVE..."))
     s = fitdata(s_sliced)
-    M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
-    s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
+    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect", real=True)
+    s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
     logger.info(strm("Functional form", s.functional_form))
-    s.fit_coeff = r_[-1,1,1]
+    # JF notes that we want to be able to set the guess using a dictionary
+    # here (which is what I think setting fit_coeff was doing), then plot
+    # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
+    s.set_guess({M0:-1, Mi:1, R1:1}) #this is the only line that will not 
+    # work, currently -- we will need a pull request on pyspecdata as well
+    # to make it work
     fl.plot(s, 'o', label=s.name())
+    s.settoguess()
+    fl.plot(s, '-', label='initial guess')
     s.fit()
     fl.plot(s.eval(100),label='%s fit'%s.name())
     text(0.75, 0.25, s.latex(), transform=gca().transAxes, size='large',
