@@ -115,7 +115,6 @@ for searchstr,exp_type,which_exp,postproc,this_l in [
     sfo1 = 272.05
     arbitrary_reference = s.get_prop('acq')['BF1'] 
     logger.info(strm("SFO1 is",sfo1))
-    s.ft('t2')
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
     #}}}
     #{{{creating plot off of solution to L curve
