@@ -8,9 +8,12 @@ matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 fl = figlist_var()
 t2 = symbols('t2')
 logger = init_logging("info")
-#loading data in
-for searchstr,exp_type,which_exp,postproc in [
-        ('w8_200224','test_equip',2,'ab_ir2h'),
+#loading data in:
+#    this_l is the regularization lambda specific to
+#    each dataset, which must be chosen from the
+#    L-curve.
+for searchstr,exp_type,which_exp,postproc,this_l in [
+        ('w8_200224','test_equip',2,'ab_ir2h',0.008),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -53,7 +56,8 @@ for searchstr,exp_type,which_exp,postproc in [
             label='vd=%g'%s.getaxis('indirect')[j])
     #}}}
     #{{{exponential curve with fit
-    rec_curve = s['t2':(0,None)].sum('t2')
+    s.ft('t2')
+    rec_curve = s['t2':(-150,150)].sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
     f =fitdata(rec_curve)
@@ -113,15 +117,14 @@ for searchstr,exp_type,which_exp,postproc in [
     logger.info(strm("SFO1 is",sfo1))
     s.ft('t2')
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-    #fl.show();quit()
     #}}}
     #{{{creating plot off of solution to L curve
-    this_l = 0.008#pick number in l curve right before it curves up
-    soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
-    soln.reorder('t2',first=False)
-    soln.rename('T1','log(T1)')
-    soln.setaxis('log(T1)',log10(T1.data))
-    fl.next('solution')
-    fl.image(soln['t2':(100,300)])
+    if this_l is not None:
+        soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
+        soln.reorder('t2',first=False)
+        soln.rename('T1','log(T1)')
+        soln.setaxis('log(T1)',log10(T1.data))
+        fl.next('solution')
+        fl.image(soln['t2':(100,300)])
 fl.show()
     #}}}

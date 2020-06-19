@@ -56,7 +56,6 @@ def proc_spincore_CPMG_v1(s, fl=None):
     # this comment in some form) and the center of the 180 pulse appropriately
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
     s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('t2', linspace(0,acq_time_s,nPoints))
     s.ft('t2', shift=True)
     if fl is not None:
         fl.next('raw data - chunking ft')
