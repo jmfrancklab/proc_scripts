@@ -43,8 +43,8 @@ for searchstr,exp_type,which_exp,postproc in [
     ph0 = zeroth_order_ph(s['t2':0],fl=None)
     ph0 /= abs(ph0)
     s /= ph0
-    print(ndshape(s))
-    quit()
+    #print(ndshape(s))
+    #quit()
     #}}}
     #{{{visualize phased spectra
     for j in range(ndshape(s)['indirect']):
