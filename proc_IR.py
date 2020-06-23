@@ -39,6 +39,7 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('frequency domain before')
     s.ft('t2')
     fl.image(s)
+    s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     logger.info(strm("best shift is",best_shift))
@@ -51,7 +52,6 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('frequency domain after')
     s.ft('t2')
     fl.image(s)
-    fl.show();quit()
     #}}}
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
@@ -65,7 +65,7 @@ for searchstr,exp_type,nodename, postproc in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
-    s.ft('t2')
+    #s.ft('t2')
     fl.image(s.C.convolve('t2',10))
     #}}}
     #{{{select t2 axis range and 
@@ -89,7 +89,10 @@ for searchstr,exp_type,nodename, postproc in [
     # here (which is what I think setting fit_coeff was doing), then plot
     # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
-    s.set_guess({M0:-1, Mi:1, R1:1}) # this is the only line that will not 
+    
+    x=s.set_guess(Mi=-1, M0=1, R1=1)
+    print(x)
+    quit()# this is the only line that will not 
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
     fl.plot(s, 'o', label=s.name())
