@@ -38,9 +38,7 @@ s.setaxis(t2-rough_center)
 residual,best_shift = hermitian_function_test(s[
     'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 print("best shift is",best_shift)
-s.ft('t2')
-s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-s.ift('t2')
+s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
 ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
 print(ndshape(ph0))
 if len(ph0.dimlabels) > 0:

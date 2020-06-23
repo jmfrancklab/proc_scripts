@@ -28,9 +28,7 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('hermitian test')
     fl.plot(best_shift)
     logger.info(strm("best shift is",best_shift))
-    s.ft('t2', shift=True)
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     #}}}
     
     #{{{ reviewing data imaging thus far

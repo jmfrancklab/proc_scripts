@@ -125,9 +125,7 @@ if False:
         best_R2 = minpoint['R2']
         fl.plot(best_R2,best_shift,'o')
         find_phase_params = False
-    s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     ph0 = s['t2':0.0]
     ph0 /= abs(ph0)
     s /= ph0

@@ -37,10 +37,8 @@ for searchstr,exp_type,nodename, postproc in [
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     logger.info(strm("best shift is",best_shift))
-    s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s.reorder(['ph2','ph1','indirect'])
-    s.ift('t2')
     fl.next('time domain after hermitian test')
     fl.image(s)
     #}}}

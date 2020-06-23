@@ -74,9 +74,7 @@ for date,id_string in [
     print("best shift is",best_shift)
     # {{{ slice out the FID appropriately and phase correct
     # it
-    s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
     fl.image(s)
     ph0 = s['t2':0]['tE',0]['ph1',1]

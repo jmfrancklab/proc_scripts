@@ -76,9 +76,7 @@ print(ndshape(residual))
 minpoint = residual.argmin()
 best_shift = minpoint['shift']
 best_R2 = minpoint['R2']
-s0.ft('t2')
-s0 *= exp(1j*2*pi*best_shift*s0.fromaxis('t2'))
-s0.ift('t2')
+s0.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
 ph0 = s0['t2':0.0]
 ph0 /= abs(ph0)
 s0 /= ph0
@@ -151,9 +149,7 @@ print(ndshape(residual))
 minpoint = residual.argmin()
 best_shift = minpoint['shift']
 best_R2 = minpoint['R2']
-s1.ft('t2')
-s1 *= exp(1j*2*pi*best_shift*s1.fromaxis('t2'))
-s1.ift('t2')
+s1.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
 ph0 = s1['t2':0.0]
 ph0 /= abs(ph0)
 s1 /= ph0
