@@ -8,9 +8,12 @@ matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 fl = figlist_var()
 t2 = symbols('t2')
 logger = init_logging("info")
-#loading data in
-for searchstr,exp_type,which_exp,postproc in [
-        ('w8_200224','test_equip',2,'ab_ir2h'),
+#loading data in:
+#    this_l is the regularization lambda specific to
+#    each dataset, which must be chosen from the
+#    L-curve.
+for searchstr,exp_type,which_exp,postproc,this_l in [
+        ('w8_200224','test_equip',2,'ab_ir2h',0.008),
         #('w12_200224',2),
         #('ag_oct182019_w0_10',3),
         #('ag_oct182019_w0_8',3),
@@ -31,27 +34,45 @@ for searchstr,exp_type,which_exp,postproc in [
             expno=which_exp, 
             postproc=postproc, lookup=postproc_dict, 
             dimname='indirect')
-    #{{{convolution and zeroth order phase correction
-    fl.next('select coherence pathway and convolve')
-    s = s['ph2',0]['ph1',-1]
-    s.convolve('t2',5)
+    s.ift('t2')
+    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    fl.next('rough centered')
     fl.image(s)
+    #{{{convolution and zeroth order phase correction
+    s = s['t2':(0,None)]['ph2',0]['ph1',-1]
     s.reorder('t2')
-    ph0 = zeroth_order_ph(s['t2':0],fl=None)
+    ph0 = zeroth_order_ph(s,fl=None)
     ph0 /= abs(ph0)
     s /= ph0
+    fl.next('zeroth order phase correction')
+    fl.image(s)
     #}}}
     #{{{visualize phased spectra
     for j in range(ndshape(s)['indirect']):
         fl.next('Plotting phased spectra')
-        fl.plot(s['indirect',j]['t2':(-150,150)],
+        fl.plot(s['indirect',j]['t2':(0,None)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
     #}}}
-    #{{{exponential curve
+    #{{{exponential curve with fit
+    s.ft('t2')
     rec_curve = s['t2':(-150,150)].sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
+    f =fitdata(rec_curve)
+    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
+    f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
+    logger.info(strm("Functional form", f.functional_form))
+    fl.next('t1 test')
+    fl.plot(f, 'o',label=f.name())
+    f.fit()
+    fl.plot(f.eval(100),label=
+            '%s fit'%f.name())
+    text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
+            horizontalalignment='center',color='k')
+    print("output:",f.output())
+    print("latex:",f.latex())
     #}}}
     #{{{estimating T1
     min_index = abs(s).run(sum, 't2').argmin('indirect',raw_index=True).data
@@ -60,8 +81,8 @@ for searchstr,exp_type,which_exp,postproc in [
     print("Estimated T1 is:", est_T1,"s")
     #}}}
     #{{{attempting ILT plot with NNLS_Tikhonov_190104
-    T1 = nddata(logspace(-5,5,150),'T1')
-    l = sqrt(logspace(-8.0,0.005,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+    T1 = nddata(logspace(-3,1,150),'T1')
+    l = sqrt(logspace(-8.0,0.05,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
     plot_Lcurve = False
     if plot_Lcurve:
         def vec_lcurve(l):
@@ -88,7 +109,6 @@ for searchstr,exp_type,which_exp,postproc in [
                         annotate('%d'%j, (log10(r_norm[j,0]),log10(x_norm[j,0])),
                                 ha='left',va='bottom',rotation=45)
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
-    #fl.show();quit()
     #}}}
     #{{{setting axis to incorporate SFO1 based off of 
     # acqu file of data
@@ -98,12 +118,12 @@ for searchstr,exp_type,which_exp,postproc in [
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
     #}}}
     #{{{creating plot off of solution to L curve
-    this_l = 0.013#pick number in l curve right before it curves up
-    soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
-    soln.reorder('t2',first=False)
-    soln.rename('T1','log(T1)')
-    soln.setaxis('log(T1)',log10(T1.data))
-    fl.next('solution')
-    fl.image(soln['t2':(100,300)])
-    fl.show();quit()
+    if this_l is not None:
+        soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
+        soln.reorder('t2',first=False)
+        soln.rename('T1','log(T1)')
+        soln.setaxis('log(T1)',log10(T1.data))
+        fl.next('solution')
+        fl.image(soln['t2':(100,300)])
+fl.show()
     #}}}

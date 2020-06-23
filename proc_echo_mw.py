@@ -3,7 +3,7 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
-#init_logging(level='debug')
+init_logging(level='info')
 rcParams["savefig.transparent"] = True
 
 fl = fl_mod()

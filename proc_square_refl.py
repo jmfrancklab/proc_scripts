@@ -18,8 +18,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('181103','probe',True),
         #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200213_alex_coil_2','test_equip','capture1','square_wave_capture',True),
-        #('200103_pulse_1','test_equip','capture1','square_wave_capture',True),
+        ('200103_pulse_1','test_equip','capture1','square_wave_capture_v1',True),
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
@@ -106,7 +105,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     
     #{{{ zeroth order phase correction
     for j in range(2):
-        ph0 = zeroth_order_ph(d['ch',j], fl=fl)
+        ph0 = zeroth_order_ph(d['ch',j], fl=None)
         d['ch',j] /= ph0
         fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
         fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)

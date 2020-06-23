@@ -1,5 +1,4 @@
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
         ('200116','echo_phc2','n'),
