@@ -24,7 +24,7 @@ for searchstr,exp_type,nodename, postproc in [
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
     s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
-    logger.info(strm(s.dimlabels))
+    #logger.info(strm(s.dimlabels))
     #{{{rough centers data
     fl.next('filtered + rough centered data')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
