@@ -7,17 +7,15 @@ fl = figlist_var()
 t2 = symbols('t2')
 logger = init_logging("info")
 # {{{ input parameters
-clock_correction = 1.785
-filter_bandwidth = 5e3
 coh_sel = {'ph1':0,
         'ph2':1}
 coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
 
-for searchstr,exp_type,nodename, postproc in [
+for searchstr,exp_type,nodename, postproc, clock_correction, filter_bandwidth in [
         ('200212_IR_3_30dBm', 'test_equip', 'signal', 
-            'spincore_IR'),
+            'spincore_IR', 1.785, 5e3),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
