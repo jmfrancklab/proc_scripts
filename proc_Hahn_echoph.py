@@ -1,69 +1,92 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import *
-from proc_scripts.load_data import postproc_dict
-from sympy import symbols
-fl = fl_mod()
-t2 = symbols('t2')
-
-
-for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
-        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off',(-5e3,5e3)),
+fl = figlist_var()
+for date,id_string,label_str in [
+        ('191212','echo_4','water-Ni'),
+        #('191206','echo_TEMPOL_1','TEMPOL'),
         ]:
-    
-    #{{{loads raw data and plots
-    s = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_dict)
-    s.mean('nScans')    
-    #}}}
-    #{{{rough centering of sliced data 
-    s = s['t2':slice_f]
-    s.ift('t2')
-    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
-    logger.info(strm(ndshape(s)))
-    #}}}
-    #{{{finds best shift according to hermitian function test
-    best_shift = hermitian_function_test(s)
-    logger.info(strm("best shift is",best_shift))
-    #}}}
-    #{{{slice out the FID appropriately and phase correct it
-    s.ft('t2')
-    s_uncorrected = s.C
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
-    #}}}
-    #{{{ apply a lorentzian broadening
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    fl.next('time domain after hermitian test')
-    fl.plot(s)
-    ph0 = s['t2':0]['ph2',0]['ph1',1]
-    logger.info(strm(ndshape(ph0)))
-    if len(ph0.dimlabels) > 0:
-        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-        ph0 = zeroth_order_ph(ph0, fl=fl)
-        logger.info(strm('phasing dimension as one'))
-    else:
-        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
-        ph0 = ph0/abs(ph0)
-    s /= ph0
-    #}}}
-    #{{{visualizes the data after hermitian function test and phasing 
-    fl.next('frequency domain -- after hermitian function test and phasing')
-    s.ft('t2', pad=512) # power of 2 FT
-    s.convolve('t2',10) # so that resolution of plot isn't higher than that of screen
-    fl.image(s)
-    #}}}
-    #{{{select coherence and select t2 axis range
+    filename = date+'_'+id_string+'.h5'
+    nodename = 'signal'
+    s = nddata_hdf5(filename+'/'+nodename,
+            directory = getDATADIR(
+                exp_type = 'test_equip'))
+    nPoints = s.get_prop('acq_params')['nPoints']
+    nEchoes = s.get_prop('acq_params')['nEchoes']
+    #nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nScans = s.get_prop('acq_params')['nScans']
+    print(ndshape(s))
+    s.reorder('t',first=True)
+    t2_axis = s.getaxis('t')[0:2048]
+    s.setaxis('t',None)
+    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.setaxis('ph2',r_[0.,2.]/4)
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.setaxis('t2',t2_axis)
+    s.setaxis('nScans',r_[0:nScans])
+    s.reorder('t2',first=False)
+    s.ft('t2',shift=True)
+    fl.next('raw data, chunked')
+    fl.image(abs(s))
+    s.ft(['ph1','ph2'])
+    fl.next('coherence')
+    fl.image(abs(s))
     s = s['ph1',1]['ph2',0].C
+    s.mean('nScans')#,return_error=False)
+    fl.next('signal')
+    fl.plot(abs(s),label=label_str)
+    slice_f = (-5e3,5e3)
+    s = s['t2':slice_f].C
     s.ift('t2')
-    k.ift('t2')
-    s = s['t2':(0,None)]
+    max_data = abs(s.data).max()
+    print(max_data)
+    pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
+    longest_pair = diff(pairs).argmax()
+    peak_location = pairs[longest_pair,:]
+    s.setaxis('t2',lambda x: x-peak_location.mean())
+    s.register_axis({'t2':0})
+    max_shift = diff(peak_location).item()/2
+    s_sliced = s['t2':(0,None)].C
+    s_sliced['t2',0] *= 0.5
+    s_sliced.ft('t2')
+    s_ft = s_sliced.C
+    fl.next('sliced')
+    fl.plot(s_ft)
+    shift_t = nddata(r_[-0.1:0.1:200j]*max_shift, 'shift')
+    s_foropt = s.C
+    s_foropt.ft('t2')
+    s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
+    s_foropt.ift('t2')
+    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
+    print(s_foropt.getaxis('t2'))
+    print(s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]])
+    if ndshape(s_foropt)['t2'] % 2 == 0:
+        s_foropt = s_foropt['t2',:-1]
+    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
+    ph0 = s_foropt['t2':0.0]
+    ph0 /= abs(ph0)
+    s_foropt /= ph0
+    s_foropt /= max(abs(s_foropt.getaxis('t2')))
+    # }}}
+    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
+    residual.reorder('shift')
+    print(ndshape(residual))
+    fl.next('residual')
+    fl.plot(residual)
+    minpoint = residual.argmin()
+    best_shift = minpoint['shift']
     s.ft('t2')
-    #}}}
-    #{{{visualize final processed data
-    fl.next('processed data')
-    fl.plot(s_uncorrected['ph2',-2]['ph1',1],
-            label='without time-axis correction',c='k')
-    fl.plot(s,label='with time-axis correction',c='r')
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s.ift('t2')
+    ph0 = s['t2':0.0]
+    ph0 /= abs(ph0)
+    s /= ph0
+    s_sliced = s['t2':(0,None)].C
+    s_sliced['t2',0] *= 0.5
+    fl.next('time domain')
+    fl.plot(s_sliced)
+    s_sliced.ft('t2')
+    fl.next('Spectrum FT')
+    fl.plot(s_sliced.real, alpha=0.5, label='real - %s'%label_str)
+    fl.plot(s_sliced.imag, alpha=0.5, label='imag - %s'%label_str)
 fl.show();quit()

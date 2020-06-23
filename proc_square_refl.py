@@ -18,7 +18,8 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('181103','probe',True),
         #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103_pulse_1','test_equip','capture1','square_wave_capture',True),
+        ('200213_alex_coil_2','test_equip','capture1','square_wave_capture',True),
+        #('200103_pulse_1','test_equip','capture1','square_wave_capture',True),
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 

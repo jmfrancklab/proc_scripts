@@ -64,7 +64,7 @@ def proc_Hahn_echoph(s):
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:256]
+    t2_axis = s.getaxis('t')[0:2048]
     s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.labels({'ph2':r_[0.,2.]/4,
@@ -138,7 +138,7 @@ def proc_square_wave_capture(s):
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'CPMG':proc_CPMG,
-        'Hahn_echoph':proc_Hahn_echoph,
+        'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
         'spincore_nutation':proc_nutation,
         'spincore_IR':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
