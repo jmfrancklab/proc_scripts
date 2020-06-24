@@ -24,7 +24,7 @@ for searchstr,exp_type,nodename, postproc in [
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
     s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
-    logger.info(strm(s.dimlabels))
+    #logger.info(strm(s.dimlabels))
     #{{{rough centers data
     fl.next('filtered + rough centered data')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
@@ -34,12 +34,21 @@ for searchstr,exp_type,nodename, postproc in [
     s.setaxis(t2-rough_center)
     #}}}
     #{{{hermitian function test and apply best shift
+    fl.next('time domain before')
+    fl.image(s)
+    fl.next('frequency domain before')
+    s.ft('t2')
+    fl.image(s)
+    s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s.reorder(['ph2','ph1','indirect'])
     fl.next('time domain after hermitian test')
+    fl.image(s)
+    fl.next('frequency domain after')
+    s.ft('t2')
     fl.image(s)
     #}}}
     #{{{zeroth order phase correction
@@ -54,7 +63,7 @@ for searchstr,exp_type,nodename, postproc in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
-    s.ft('t2')
+    #s.ft('t2')
     fl.image(s.C.convolve('t2',10))
     #}}}
     #{{{select t2 axis range and 
@@ -78,14 +87,16 @@ for searchstr,exp_type,nodename, postproc in [
     # here (which is what I think setting fit_coeff was doing), then plot
     # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
-    s.set_guess({M0:-1, Mi:1, R1:1}) # this is the only line that will not 
+    
+    s.set_guess(Mi=-1, M0=1, R1=1)
+    #quit()# this is the only line that will not 
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
-    fl.plot(s, 'o', label=s.name())
+    #fl.plot(g, 'o', label="guess")
     s.settoguess()
     fl.plot(s, '-', label='initial guess')
     s.fit()
-    fl.plot(s.eval(100),label='%s fit'%s.name())
+    fl.plot(s.eval(100),label='fit')
     text(0.75, 0.25, s.latex(), transform=gca().transAxes, size='large',
             horizontalalignment='center',color='k')
     print("output:",s.output())

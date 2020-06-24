@@ -76,7 +76,7 @@ def proc_Hahn_echoph(s, fl=None):
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:256]
+    t2_axis = s.getaxis('t')[0:2048]
     s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.labels({'ph2':r_[0.,2.]/4,
