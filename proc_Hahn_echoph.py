@@ -1,4 +1,8 @@
-from pyspecdata import *
+# this version of the code taken from checking out the only commit on dec 12 2019
+# to process, use 'conda activate py2' assuming you have a proper python2 environment setup
+# then 'git checkout py2' in pyspecdata
+
+from pyspecdata import * 
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
@@ -12,12 +16,14 @@ for date,id_string,label_str in [
                 exp_type = 'test_equip'))
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
-    print ndshape(s)
+    print(s.get_prop('acq_params'))
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:nPoints/nPhaseSteps]
+    nPhaseSteps = 8.
+    stop_pt = nPoints/nPhaseSteps
+    t2_axis = s.getaxis('t')
+    t2_axis = t2_axis[:int(stop_pt)]
     s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
@@ -32,14 +38,13 @@ for date,id_string,label_str in [
     fl.next('coherence')
     fl.image(abs(s))
     s = s['ph1',1]['ph2',0].C
-    s.mean('nScans',return_error=False)
+    s.mean('nScans')
     fl.next('signal')
-    fl.plot(abs(s),label=label_str)
+    fl.plot(abs(s))
     slice_f = (-5e3,5e3)
     s = s['t2':slice_f].C
     s.ift('t2')
     max_data = abs(s.data).max()
-    print max_data
     pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
@@ -58,8 +63,6 @@ for date,id_string,label_str in [
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-    print s_foropt.getaxis('t2')
-    print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
     if ndshape(s_foropt)['t2'] % 2 == 0:
         s_foropt = s_foropt['t2',:-1]
     assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
@@ -70,7 +73,6 @@ for date,id_string,label_str in [
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     residual.reorder('shift')
-    print ndshape(residual)
     fl.next('residual')
     fl.plot(residual)
     minpoint = residual.argmin()
