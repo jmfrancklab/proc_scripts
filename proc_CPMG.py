@@ -1,5 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import basinhopping
+from proc_scripts import postproc_dict
+from proc_scripts import *
 fl = figlist_var()
 logger = init_logging('info')
 for searchstr, exp_type, nodename, postproc, label_str in [
@@ -26,11 +28,20 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s.reorder('t2',first=True)
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
-    fl.next('check center')
+    best_shift = hermitian_function_test(s)
+    logger.info(strm("best shift is",best_shift))
+    s.setaxis('t2',lambda x:x-best_shift)
+    fl.next('time domain after hermitian test')
     fl.image(s)
+    s.register_axis({'t2':0})
+    s = s['t2':(-15,15)]
+    print(s.getaxis('t2')[0])
+    print(s.getaxis('t2')[-1])
+    fl.next('centered')
+    s.ft('t2')
+    fl.image(s,human_units=False)
     #}}}
     #{{{cost function phase correction
-    s.ft('t2')
     f_axis = s.fromaxis('t2')
     def costfun(p):
         zeroorder_rad,firstorder = p
