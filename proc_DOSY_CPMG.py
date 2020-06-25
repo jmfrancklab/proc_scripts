@@ -84,6 +84,9 @@ with figlist_var(file_name=filename+'.pdf') as fl:
     fl.image(abs(s))
     fl.next('request 3')
     fl.image(s)
+    fl.next('plot indirect 0')
+    fl.plot(s['indirect',0])
+    fl.show();quit()
     perform_fitting = False
     if perform_fitting:
         f_axis = s.fromaxis('t2')
