@@ -219,5 +219,5 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     if fl:
         fl.next('residual for hermitian test')
         fl.plot(residual)
-    return best_shift+peak_center
+    return best_shift+peak_center,residual
 

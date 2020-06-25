@@ -4,6 +4,7 @@ from proc_scripts import *
 from sympy import symbols
 import os
 
+fl = figlist_var()
 t2 = symbols('t2')
 
 expno = 3
@@ -48,8 +49,6 @@ d.reorder('t2',first=True)
 d.reorder('t2',first=False)
 figure();title('request 4 (request 2 in time domain)')
 image(d['ph8',0]['ph4',1]['m',1]['n',0])
-show();quit()
-
 
 s = d['ph8',0]['ph4',1]['m',1]['n',0].C
 
@@ -62,17 +61,23 @@ echo_center = abs(s['echo',0]).argmax('t2').data.item()
 s.setaxis('t2', lambda x: x-echo_center)
 figure();title('time domain before hermitian test')
 image(s)
-best_shift = hermitian_function_test(s)
+best_shift,res = hermitian_function_test(s,fl=fl)
+figure();title('residual from hermitian test')
+plot(res)
+show()
 print("Best shift is",best_shift)
-s.setaxis('t2', lambda x: x-best_shift)
+d.setaxis('t2', lambda x: x-echo_center-best_shift)
 figure();title('time domain after hermitian test')
-image(s)
+image(d)
+figure();title('request 5 (after subtracting best shift)')
+image(d['ph8',0]['ph4',1]['m',1]['n',0])
+quit()
 s.register_axis({'t2':0})
 s = s['t2':(0,None)]
 s.ft('t2')
 figure();title('request 3')
 image(s)
-show();quit()
+show();fl.show();quit()
 
 f_axis = s.fromaxis('t2')
 def costfun(p):
