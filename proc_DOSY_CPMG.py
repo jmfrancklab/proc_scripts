@@ -41,6 +41,15 @@ d.setaxis('ph4',r_[0.,2.]/4)
 d.setaxis('m',r_[0,2.]/4)
 d.setaxis('n',r_[0,2.]/4)
 d.ft(['ph8','ph4','m','n'])
+d.reorder('indirect',first=False)
+d.reorder('echo',first=True)
+d.reorder('echo',first=False)
+d.reorder('t2',first=True)
+d.reorder('t2',first=False)
+figure();title('request 4 (request 2 in time domain)')
+image(d['ph8',0]['ph4',1]['m',1]['n',0])
+show();quit()
+
 
 s = d['ph8',0]['ph4',1]['m',1]['n',0].C
 
