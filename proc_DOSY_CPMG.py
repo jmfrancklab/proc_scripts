@@ -74,10 +74,7 @@ with figlist_var(file_name=filename+'.pdf') as fl:
     s.setaxis('t2', lambda x: x-echo_center)
     fl.next('request 5 (after subtracting best shift)')
     s.register_axis({'t2':0})
-    #s /= zeroth_order_ph(s['t2',0], fl=fl)
-    ph0 = s['t2',0].C.mean('t2')
-    ph0 /= abs(ph0)
-    s /= ph0
+    s /= zeroth_order_ph(s['t2':0])
     fl.image(s)
     time_bound = min(abs(s.getaxis('t2')[r_[0,-1]]))
     s = s['t2':(-time_bound,time_bound)]
