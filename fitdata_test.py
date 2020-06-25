@@ -35,20 +35,11 @@ s.ift('t2')
 rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
 s.setaxis(t2-rough_center)
 #s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
-residual,best_shift = hermitian_function_test(s[
+center_point = hermitian_function_test(s[
     'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-print("best shift is",best_shift)
-s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
-print(ndshape(ph0))
-if len(ph0.dimlabels) > 0:
-    assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-    ph0 = zeroth_order_ph(ph0, fl=None)
-    print('phasing dimension as one')
-else:
-    print("there is only one dimension left -- standard 1D zeroth order phasing")
-    ph0 = ph0/abs(ph0)
-s /= ph0
+print("center of echo is at",center_point)
+s.setaxis('t2', lambda x: x-center_point).register_axis({'t2':0})
+s /= zeroth_order_ph(s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 s.ft('t2')
 s.convolve('t2',10)
 s.ift('t2')
