@@ -17,7 +17,8 @@ t2 = symbols('t2')
 
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
-        ["200306_DNP_lg_probe_w34.*", 'test_equip', 'signal', 'spincore_ODNP_v1', (-300,300), (None,0.03)]
+        ["200306_DNP_lg_probe_w34.*", 'test_equip', 'signal',
+            'spincore_ODNP_v1', (-300,300), (None,0.03)]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
