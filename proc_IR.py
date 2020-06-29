@@ -19,6 +19,7 @@ for searchstr,exp_type,nodename, postproc in [
         ('200212_IR_3_30dBm', 'test_equip', 'signal', 
             'spincore_IR_v1'),
         ]:
+    fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
@@ -31,10 +32,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.ift('t2')
     #}}}
     #{{{hermitian function test and apply best shift
-    fl.next('time domain before')
-    fl.image(s)
     fl.next('frequency domain before')
-    s.ft('t2')
     fl.image(s)
     s.ift('t2')
     best_shift = hermitian_function_test(s[
@@ -47,7 +45,7 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('frequency domain after')
     s.ft('t2')
     fl.image(s)
-    fl.show();quit()
+    s.ift('t2')
     #}}}
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
@@ -61,7 +59,7 @@ for searchstr,exp_type,nodename, postproc in [
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
-    #s.ft('t2')
+    s.ft('t2')
     fl.image(s.C.convolve('t2',10))
     #}}}
     #{{{select t2 axis range and 
@@ -85,12 +83,10 @@ for searchstr,exp_type,nodename, postproc in [
     # here (which is what I think setting fit_coeff was doing), then plot
     # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
-    
     s.set_guess(Mi=-1, M0=1, R1=1)
-    #quit()# this is the only line that will not 
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
-    #fl.plot(g, 'o', label="guess")
+    fl.plot(g, 'o', label="data")
     s.settoguess()
     fl.plot(s, '-', label='initial guess')
     s.fit()

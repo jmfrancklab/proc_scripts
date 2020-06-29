@@ -14,7 +14,7 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     #{{{loads raw data and plots
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict)
-    s.mean('nScans')
+    s.mean('nScans')    
     #}}}
     #{{{rough centering of sliced data 
     s = s['t2':slice_f]
@@ -55,7 +55,7 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     fl.image(s)
     #}}}
     #{{{select coherence and select t2 axis range
-    s = s['ph1',1]['ph2',0].C
+    s = s['ph1',1]['ph2',0]
     s.ift('t2')
     s = s['t2':(0,None)]
     s.ft('t2')
@@ -65,4 +65,8 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     fl.plot(s_uncorrected['ph2',-2]['ph1',1],
             label='without time-axis correction',c='k')
     fl.plot(s,label='with time-axis correction',c='r')
+    fl.next('Spectrum FT')
+    fl.plot(s.real, alpha=0.5, label='real - %s'%label_str)
+    fl.plot(s.imag, alpha=0.5, label='imag - %s'%label_str)
+    #}}}
 fl.show();quit()
