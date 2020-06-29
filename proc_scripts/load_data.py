@@ -82,6 +82,7 @@ def proc_Hahn_echoph(s, fl=None):
     s.labels({'ph2':r_[0.,2.]/4,
         'ph1':r_[0.,1.,2.,3.]/4})
     s.reorder(['ph2','ph1'])
+    s.setaxis('t2',t2_axis)
     s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
     s.ft('t2',shift=True)
