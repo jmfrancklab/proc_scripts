@@ -26,12 +26,9 @@ for searchstr,exp_type,nodename, postproc in [
     s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
     #logger.info(strm(s.dimlabels))
     #{{{rough centers data
-    fl.next('filtered + rough centered data')
+    #fl.next('filtered + rough centered data')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
-    rough_center = abs(s).convolve('t2',0.01).mean_all_but(
-            't2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
     #}}}
     #{{{hermitian function test and apply best shift
     fl.next('time domain before')
@@ -50,6 +47,7 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('frequency domain after')
     s.ft('t2')
     fl.image(s)
+    fl.show();quit()
     #}}}
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
