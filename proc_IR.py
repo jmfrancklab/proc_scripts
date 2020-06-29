@@ -25,14 +25,13 @@ for searchstr,exp_type,nodename, postproc in [
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
     s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
-    #{{{centers data
+    #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
-    s.ift('t2')
     #}}}
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')
     fl.image(s)
-    #s.ift('t2')
+    s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
     logger.info(strm("best shift is",best_shift))
@@ -74,14 +73,15 @@ for searchstr,exp_type,nodename, postproc in [
     logger.info(strm(ndshape(s_sliced)))
     logger.info(strm("BEGINNING T1 CURVE..."))
     s = fitdata(s_sliced)
-    M_0,M_inf,R_1,vd = sympy.symbols("M_0, M_inf, R_1, indirect", real=True)
-    s.functional_form = M_inf + (M_0-M_inf)*sympy.exp(-vd*R_1)
+    M0,Mi,R1,vd = sympy.symbols("M0, Mi, R1, indirect", real=True)
+    s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
     logger.info(strm("Functional form", s.functional_form))
     # JF notes that we want to be able to set the guess using a dictionary
     # here (which is what I think setting fit_coeff was doing), then plot
     # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
-    s.set_guess(M_0=1, M_inf=-1, R_1=1)
+    p={M0:1,Mi:-1, R1:1}
+    s.set_guess(p)
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
     fl.plot(g, 'o', label="data")
