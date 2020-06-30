@@ -1,15 +1,16 @@
 from pyspecdata import *
 from pyspecdata.load_files.bruker_nmr import bruker_data
 from proc_scripts import zeroth_order_ph,calc_baseline,ph1_real_Abs
+from proc_scripts.load_data import postproc_dict
 from scipy.optimize import minimize,curve_fit,least_squares
 rcParams['lines.linewidth'] = 0.5
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 
 fl = figlist_var()
-for exp_name,expno,manual_phcyc,w0 in [
+for searchstr, exp_type, which_exp, postproc, manual_phcyc, w0 in [
         #('ag_oct182019_bulk',1,True,0),
         #('ag_oct182019_w0_1',1,True,1),
-        ('ag_oct182019_w0_3',1,False,3),
+        ('ag_oct182019_w0_3','test_equip',1,'zg2h', False, 3),
         #('ag_oct182019_w0_6',1,True,6),
         #('ag_oct182019_w0_8',1,True,8),
         #('ag_oct182019_w0_12',1,True,12),
@@ -30,14 +31,17 @@ for exp_name,expno,manual_phcyc,w0 in [
         #('ag_sep062019_w0_3_IR',2,False,3)
         # these are the names of the data folders
         ]:
-    print((exp_name,expno))
     label_id = '$w_0=%f$'%w0
     if manual_phcyc:
-        s = find_file(exp_name, exp_type='NMR_Data_AG', dimname='ph', expno=expno) # here I am loading the data from the Google drive
+        s = find_file(searchstr, exp_type=exp_type, expno=which_exp,
+                postproc=postproc, lookup=postproc_dict,
+                dimname='ph') # here I am loading the data from the Google drive
         s.labels('ph',r_[0:4]).ft('ph') # assume it's a four step phase cycle
         s = s['ph',-1] # assuming it's a ninety pulse experiment
     else:
-        s = find_file(exp_name, exp_type='NMR_Data_AG', expno=expno) # here I am loading the data from the Google drive
+        s = find_file(searchstr, exp_type=exp_type, expno=which_exp,
+                postproc=postproc, lookup=postproc_dict)
+                # here I am loading the data from the Google drive
     dw = diff(s.getaxis('t2')[0:2]).item()
     # {{{ determine the phase corrections
     s.ft('t2', shift=True)

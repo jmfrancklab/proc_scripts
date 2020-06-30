@@ -148,6 +148,9 @@ def proc_square_wave_capture(s):
     s.set_units('t','s').name('Amplitude').set_units('V')
     return s
 
+def proc_90_pulse(s):
+    return s
+
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
@@ -155,5 +158,6 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_nutation_v1':proc_nutation,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
-        'square_wave_capture_v1':proc_square_wave_capture}
+        'square_wave_capture_v1':proc_square_wave_capture,
+        'zg2h':proc_90_pulse}
 
