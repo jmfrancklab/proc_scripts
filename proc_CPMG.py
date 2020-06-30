@@ -6,7 +6,7 @@ fl = figlist_var()
 logger = init_logging('info')
 for searchstr, exp_type, nodename, postproc, label_str in [
         #('200221','CPMG_TEMPOLgel_3p0_1','deadtime=5'),
-        ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','CPMG','deadtime=5'),
+        ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
         #('200304','CPMG_2p6_1','deadtime=5'),
         #('200305','CPMG_3p5_2','deadtime=5'),
         #('200305','CPMG_3p6_2','deadtime=5'),
@@ -20,18 +20,20 @@ for searchstr, exp_type, nodename, postproc, label_str in [
             expno=nodename, postproc=postproc, lookup=postproc_dict)
     nEchoes = s.get_prop('acq_params')['nEchoes']
     #{{{select and display coherence channel centered
-    echo_center = abs(s)['tE',0].argmax('t2').data.item()
-    s.setaxis('t2', lambda x: x-echo_center)
-    
-    
+    #echo_center = abs(s)['tE',0].argmax('t2').data.item()
+    #s.setaxis('t2', lambda x: x-echo_center)
     best_shift = hermitian_function_test(s)
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2',lambda x:x-best_shift)
     fl.next('time domain after hermitian test')
     fl.image(s)
     s.register_axis({'t2':0})
+    s = s['t2':(-0.01,0.01)]
     fl.next('centered')
+    s.ft('t2',shift=True)
     fl.image(s)
+    print(s.getaxis('t2')[0])
+    print(s.getaxis('t2')[-1])
     fl.show();quit()
     #}}}
     #{{{cost function phase correction
