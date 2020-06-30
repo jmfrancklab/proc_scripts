@@ -20,8 +20,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
             expno=nodename, postproc=postproc, lookup=postproc_dict)
     nEchoes = s.get_prop('acq_params')['nEchoes']
     #{{{select and display coherence channel centered
-    #echo_center = abs(s)['tE',0].argmax('t2').data.item()
-    #s.setaxis('t2', lambda x: x-echo_center)
     best_shift = hermitian_function_test(s)
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2',lambda x:x-best_shift)
@@ -30,14 +28,10 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s.register_axis({'t2':0})
     s = s['t2':(-0.01,0.01)]
     fl.next('centered')
-    s.ft('t2',shift=True)
+    s.ft('t2')
     fl.image(s)
-    print(s.getaxis('t2')[0])
-    print(s.getaxis('t2')[-1])
-    fl.show();quit()
     #}}}
     #{{{cost function phase correction
-    s.ft('t2')
     f_axis = s.fromaxis('t2')
     def costfun(p):
         zeroorder_rad,firstorder = p
@@ -81,7 +75,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.next('Echo decay')
     fl.plot(data,'o')
     print("starting T2 curve")
-    f = fitdata(data)
+    f = fitdata(data.real)
     M0,R2,tE = sympy.symbols("M_0 R_2 tE", real=True)
     f.functional_form = M0*sympy.exp(-tE*R2)
     fl.next('T2 test')
