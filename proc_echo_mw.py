@@ -3,7 +3,6 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
-init_logging(level='info')
 rcParams["savefig.transparent"] = True
 
 fl = fl_mod()
@@ -18,7 +17,7 @@ t2 = symbols('t2')
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
         ["200306_DNP_lg_probe_w34.*", 'test_equip', 'signal',
-            'spincore_ODNP_v1', (-300,300), (None,0.03)]
+            'spincore_ODNP_v1', (-300,300), (None,0.05)]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
@@ -48,7 +47,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
-    fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range', s, time_range)
+    #fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range', s, time_range)
     #}}}
     
     #{{{slices out time range along t2 axis
@@ -64,18 +63,19 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     plotdata[lambda x: x>2] = 2
     fl.image(plotdata)
     #}}}
-
+    
+    #AG:why is this repeated??
     #{{{slice FID from echo
-    fl.next('FID slice')
-    logger.info(strm("THIS IS THE SHAPE"))
-    logger.info(strm(ndshape(s)))
-    s = slice_FID_from_echo(s)['t2':(None,0.05)]
+    #fl.next('FID slice')
+    #logger.info(strm("THIS IS THE SHAPE"))
+    #logger.info(strm(ndshape(s)))
+    #s = slice_FID_from_echo(s)['t2':(None,0.05)]
     #}}}
     
     #{{{redefine time range along t2
-    fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range',
-        s,time_range)
-    s = s['t2':time_range]
+    #fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range',
+    #    s,time_range)
+    #s = s['t2':time_range]
     #}}}
 
     #{{{mirror test to test centered data
