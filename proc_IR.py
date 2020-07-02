@@ -66,10 +66,8 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     #}}}
     #{{{decay curve and fitting
-    fl.next('signal vs. vd')
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
     s_sliced.sum('t2')
-    fl.plot(s_sliced,'o')
     logger.info(strm(ndshape(s_sliced)))
     logger.info(strm("BEGINNING T1 CURVE..."))
     s = fitdata(s_sliced)
@@ -83,7 +81,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.set_guess({M0:-500, Minf:500, R1:1})# make this bigger b/c the data is big
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
-    fl.plot(s.eval(100), 'o', label="data")
+    fl.plot(s, 'o', label="data")
     s.settoguess()
     fl.plot(s.eval(100), '-', label='initial guess')
     s.fit()
