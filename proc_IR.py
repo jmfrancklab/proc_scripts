@@ -80,10 +80,10 @@ for searchstr,exp_type,nodename, postproc in [
     # here (which is what I think setting fit_coeff was doing), then plot
     # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
-    g = s.set_guess({M0:1, Mi:-1, R1:1})
+    s.set_guess({M0:1, Mi:-1, R1:1})
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
-    fl.plot(g, 'o', label="data")
+    fl.plot(s, 'o', label="data")
     s.settoguess()
     fl.plot(s, '-', label='initial guess')
     s.fit()
