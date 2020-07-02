@@ -1,71 +1,20 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from proc_scripts import *
+from proc_scripts import postproc_dict
 from sympy import symbols
 import os
 init_logging('debug')
-
+fl = figlist_var()
 t2 = symbols('t2')
 expno = 3
 filename = 'ab_jun172020_w0_5'
-with figlist_var(file_name=filename+'.pdf') as fl:
-    d = find_file(filename,
-                  expno=expno,
-                 exp_type='NMR_Data_AAB')
-    # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
-    l22 = int(d.get_prop('acq')['L'][22]) # b/c the l are integers by definition
-    l25 = int(d.get_prop('acq')['L'][25])
-    d12 = d.get_prop('acq')['D'][12]
-    d11 = d.get_prop('acq')['D'][11]
-    p1 = d.get_prop('acq')['P'][1]
-    ppg = d.get_prop('pulprog')
-    # {{{ these are explanatory -- maybe comment them out?
-    m = re.search('(.*dwdel1=.*)',ppg,flags=re.IGNORECASE)
-    print(m.groups()) # show the line that sets dwdel1
-    # then look for de and depa
-    print([(j,d.get_prop('acq')[j]) for j in d.get_prop('acq').keys() if 'de' in j.lower()])
-    # I actually can't find depa
-    # }}}
-    m = re.search('\ndefine list<grad_scalar> gl1 = {(.*)}',ppg)
-    grad_list = array([float(j.group()) for j in re.finditer('([0-9.]+)',m.groups()[0])])
-    m = re.search('([0-9.]+) G/mm', d.get_prop('gradient_calib'))
-    grad_list *= float(m.groups()[0])*0.1
-    dwdel1 = 3.5e-6 # where does this come from? DE is actually larger than this?
-    # {{{ find anavpt without hard-setting
-    m = re.search('"anavpt=([0-9]+)"',ppg)
-    if m is None:
-        raise ValueError("I can't find anavpt in the pulse sequence")
-    anavpt = int(m.groups()[0])
-    # }}}
-    dwdel2 = (anavpt*0.05e-6)/2
-    TD = d.get_prop('acq')['TD2']
-    quadrature_points = TD/2
-    num_points_per_echo = quadrature_points/l25
-    acq_time = dwdel2*num_points_per_echo*2
-    # {{{ so, in principle, later, we can/should do what I did above (w/ eval),
-    # but it's getting crazy now, so I stop for now
-    tau_extra = 20e-6
-    tau_pad = tau_extra-6e-6
-    tau_pad_start = tau_extra-dwdel1-6e-6
-    tau_pad_end = tau_extra-6e-6
-    tE = dwdel1 + 5e-6 + tau_pad_start + 1e-6 + num_points_per_echo*(dwdel2*2) + tau_pad_end
-    # }}}
-
-    d.chunk('indirect',['indirect','phcyc'],[l22,-1])
-    d.chunk('phcyc',['ph8','ph4','m','n'],[2,2,2,2])
-    d.setaxis('ph8',r_[0.,2.]/4)
-    d.setaxis('ph4',r_[0.,2.]/4)
-    d.setaxis('m',r_[0,2.]/4)
-    d.setaxis('n',r_[0,2.]/4)
-    d.ft(['ph8','ph4','m','n'])
-    d.reorder(['m','n','ph4','ph8','indirect','t2'])
-    d.setaxis('indirect',grad_list)
-    fl.next('abs raw data')
-    fl.image(abs(d))
-    d.chunk('t2',['echo','t2'],[l25,-1])
-    d.reorder(['m','n','ph4','ph8','indirect','echo','t2'])
-    d.ft('t2', shift=True).ift('t2') # this is overkill -- need a pyspecdata function that does this w/out the fft
-    # }}}
+for searchstr, exp_type, nodename, postproc in [
+        ["ab_jun172020_w0_5.*",'test_equip',3,'DOSY_CPMG_v1'],
+        ]:
+    s = find_file(searchstr, exp_type=exp_type, expno=nodename,
+            postproc=postproc,
+            lookup=postproc_dict)
     s = d['ph8',0]['ph4',1]['m',1]['n',0]
 
     # coarse phasing before hermitian_function_test doesn't seem to be required
