@@ -83,7 +83,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.set_guess({M0:1, Mi:-1, R1:1})
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
-    fl.plot(s, 'o', label="data")
+    fl.plot(s.eval(100), 'o', label="data")
     s.settoguess()
     fl.plot(s, '-', label='initial guess')
     s.fit()
