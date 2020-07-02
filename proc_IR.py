@@ -73,19 +73,19 @@ for searchstr,exp_type,nodename, postproc in [
     logger.info(strm(ndshape(s_sliced)))
     logger.info(strm("BEGINNING T1 CURVE..."))
     s = fitdata(s_sliced)
-    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect", real=True)
-    s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
+    M0,Minf,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect", real=True)
+    s.functional_form = Minf + (M0-Minf)*sympy.exp(-vd*R1)
     logger.info(strm("Functional form", s.functional_form))
     # JF notes that we want to be able to set the guess using a dictionary
     # here (which is what I think setting fit_coeff was doing), then plot
     # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
-    s.set_guess({M0:1, Mi:-1, R1:1})
+    s.set_guess({M0:-500, Minf:500, R1:1})# make this bigger b/c the data is big
     # work, currently -- we will need a pull request on pyspecdata as well
     # to make it work
     fl.plot(s.eval(100), 'o', label="data")
     s.settoguess()
-    fl.plot(s, '-', label='initial guess')
+    fl.plot(s.eval(100), '-', label='initial guess')
     s.fit()
     fl.plot(s.eval(100),label='fit')
     text(0.75, 0.25, s.latex(), transform=gca().transAxes, size='large',
