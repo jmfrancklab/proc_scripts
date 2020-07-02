@@ -47,7 +47,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
-    #fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range', s, time_range)
+    fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range', s, time_range)
     #}}}
     
     #{{{slices out time range along t2 axis
@@ -64,20 +64,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.image(plotdata)
     #}}}
     
-    #AG:why is this repeated??
-    #{{{slice FID from echo
-    #fl.next('FID slice')
-    #logger.info(strm("THIS IS THE SHAPE"))
-    #logger.info(strm(ndshape(s)))
-    #s = slice_FID_from_echo(s)['t2':(None,0.05)]
-    #}}}
-    
-    #{{{redefine time range along t2
-    #fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range',
-    #    s,time_range)
-    #s = s['t2':time_range]
-    #}}}
-
     #{{{mirror test to test centered data
     fl.next('echo mirror test')
     echo_start = s.getaxis('t2')[0]

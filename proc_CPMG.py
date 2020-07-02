@@ -5,31 +5,31 @@ from proc_scripts import postproc_dict
 fl = figlist_var()
 logger = init_logging('info')
 for searchstr, exp_type, nodename, postproc, label_str in [
-        #('200221','CPMG_TEMPOLgel_3p0_1','deadtime=5'),
+        #('200221_CPMG_TEMPOLgel_3p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
         ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
-        #('200304','CPMG_2p6_1','deadtime=5'),
-        #('200305','CPMG_3p5_2','deadtime=5'),
-        #('200305','CPMG_3p6_2','deadtime=5'),
-        #('200305','CPMG_3p7_2','deadtime=5'),
-        #('200305','CPMG_3p7_3','deadtime=5'),
-        #('200305','CPMG_3p8_2','deadtime=5'),
-        #('200305','CPMG_3p9_2','deadtime=5'),
-        #('200305','CPMG_4p0_1','deadtime=5'),
+        #('200304_CPMG_2p6_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p7_3','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p8_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p9_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_4p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
         ]:
     s =  find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
-    nEchoes = s.get_prop('acq_params')['nEchoes']
     #{{{select and display coherence channel centered
     best_shift = hermitian_function_test(s)
     logger.info(strm("best shift is",best_shift))
-    s.setaxis('t2',lambda x:x-best_shift)
+    s.setaxis('t2', lambda x: x-best_shift)
     fl.next('time domain after hermitian test')
     fl.image(s)
     s.register_axis({'t2':0})
-    s = s['t2':(-0.01,0.01)]
+    # {{{ what point does this serve?
     fl.next('centered')
     s.ft('t2')
     fl.image(s)
+    # }}}
     #}}}
     #{{{cost function phase correction
     f_axis = s.fromaxis('t2')
@@ -68,7 +68,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #{{{select echo decay fit function
     s.ift('t2')
     s = s['t2':(0,None)]
-    #s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
     data = s['t2':(0,None)].sum('t2')

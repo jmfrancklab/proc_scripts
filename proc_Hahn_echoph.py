@@ -23,18 +23,11 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     s.setaxis(t2-rough_center)
     logger.info(strm(ndshape(s)))
     #}}}
-    #{{{finds best shift according to hermitian function test
+    #{{{ apply phase corrections
     best_shift = hermitian_function_test(s)
     logger.info(strm("best shift is",best_shift))
-    #}}}
-    #{{{slice out the FID appropriately and phase correct it
-    s.ft('t2')
-    s_uncorrected = s.C
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
-    #}}}
-    #{{{ apply a lorentzian broadening
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s_uncorrected = s.C.ft('t2')
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
     fl.plot(s)
     ph0 = s['t2':0]['ph2',0]['ph1',1]
@@ -55,10 +48,7 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     fl.image(s)
     #}}}
     #{{{select coherence and select t2 axis range
-    s = s['ph1',1]['ph2',0]
-    s.ift('t2')
-    s = s['t2':(0,None)]
-    s.ft('t2')
+    s = select_FID_and_slice...
     #}}}
     #{{{visualize final processed data
     fl.next('processed data')
