@@ -12,23 +12,23 @@ logger = init_logging("info")
 #    this_l is the regularization lambda specific to
 #    each dataset, which must be chosen from the
 #    L-curve.
-for searchstr,exp_type,which_exp,postproc,this_l in [
-        ('w8_200224','test_equip',2,'ab_ir2h',0.008),
-        #('w12_200224',2),
-        #('ag_oct182019_w0_10',3),
-        #('ag_oct182019_w0_8',3),
-        #('ag_oct182019_w0_6',2),
-        #('ag_oct182019_w0_3',2),
-        #('ag_oct92019_w0_12',2),
-        #('ag_oct92019_w0_10',2),
-        #('ag_oct92019_w0_8',2),
-        #('ag_bulk_d20',2),
-        #('ag_sep062019_w0_12_IR',2),
-        #('ag_sep232019_w0_12_prod',2),
-        #('ag_sep232019_w0_8_prod',2),
-        #('ag_sep232019_w0_6_prod',2),
-        #('ag_sep232019_w0_3_prod',2),
-        #('ag_sep232019_w0_1_prod',2),
+for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
+        ('w8_200224','test_equip',2,'ab_ir2h',0.008,(-150,150)),
+        #('w12_200224',2,(-150,150)),
+        #('ag_oct182019_w0_10',3,(-150,150)),
+        #('ag_oct182019_w0_8',3,(-150,150)),
+        #('ag_oct182019_w0_6',2,(-150,150)),
+        #('ag_oct182019_w0_3',2,(-150,150)),
+        #('ag_oct92019_w0_12',2,(-150,150)),
+        #('ag_oct92019_w0_10',2,(-150,150)),
+        #('ag_oct92019_w0_8',2,(-150,150)),
+        #('ag_bulk_d20',2,(-150,150)),
+        #('ag_sep062019_w0_12_IR',2,(-150,150)),
+        #('ag_sep232019_w0_12_prod',2,(-150,150)),
+        #('ag_sep232019_w0_8_prod',2,(-150,150)),
+        #('ag_sep232019_w0_6_prod',2,(-150,150)),
+        #('ag_sep232019_w0_3_prod',2,(-150,150)),
+        #('ag_sep232019_w0_1_prod',2,(-150,150)),
         ]:
     s = find_file(searchstr, exp_type=exp_type, 
             expno=which_exp, 
@@ -36,25 +36,15 @@ for searchstr,exp_type,which_exp,postproc,this_l in [
             dimname='indirect')
     s.ift('t2')
     #{{{ select appropriate coherence channel
-    ph0 = s['t2':0]['ph2',0]['ph1',-1]
-    if len(ph0.dimlabels) > 0:
-        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+"has too many dimensions"
-        ph0 = zeroth_order_ph(ph0,fl=fl)
-        logger.info(strm('phasing dimension as one'))
-    else:
-        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
-        ph0 /= abs(ph0)
+    s = s['ph2',0]['ph1',-1]
+    s.reorder('t2')
+    ph0 = zeroth_order_ph(s['t2':0],fl=None)
+    ph0 /= abs(ph0)
     s /= ph0
     fl.next('zeroth order phase correction')
     fl.image(s)
-    s.ft('t2')
-    s.convolve('t2',10)
     #}}}
-    #{{{select t2 axis range 
-    s.ift('t2')
-    s = s['t2':(0,None)]
     s.ft('t2')
-    #}}}
     #{{{visualize phased spectra
     for j in range(ndshape(s)['indirect']):
         fl.next('Plotting phased spectra')
@@ -63,8 +53,7 @@ for searchstr,exp_type,which_exp,postproc,this_l in [
             label='vd=%g'%s.getaxis('indirect')[j])
     #}}}
     #{{{exponential curve with fit
-    s_sliced = s['ph2',0]['ph1',-1]
-    rec_curve = s_sliced.sum('t2')
+    rec_curve = s['t2':f_range].sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
     f =fitdata(rec_curve)
@@ -125,7 +114,6 @@ for searchstr,exp_type,which_exp,postproc,this_l in [
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
     #}}}
     #{{{creating plot off of solution to L curve
-    print(ndshape(s))
     if this_l is not None:
         soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
         soln.reorder('t2',first=False)
