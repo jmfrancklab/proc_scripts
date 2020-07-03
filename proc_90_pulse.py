@@ -10,7 +10,7 @@ fl=figlist_var()
 for searchstr, exp_type, which_exp, postproc, manual_phcyc, w0 in [
         ('ag_oct182019_w0_3', 'test_equip', 1, 'zg2h', False, 3),
         ]:
-    label_id='$w_0=%f$'w%0
+    label_id='$w_0=%f$'%w0
     if manual_phcyc:
         s = find_file(searchstr, exp_type=exp_type, expno= which_exp,
                 postproc=postproc,lookup=postproc_dict,

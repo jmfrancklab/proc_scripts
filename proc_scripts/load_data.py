@@ -146,6 +146,7 @@ def proc_square_wave_capture(s):
     return s
 
 def proc_90_pulse(s):
+    print("loading data for a 90 pulse exp.")
     return s
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
