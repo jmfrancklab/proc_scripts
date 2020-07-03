@@ -1,24 +1,27 @@
 from pyspecdata import *
-from pyspecdata.load_files.bruker_nmr import bruker_data
-from proc_scripts import zeroth_order_ph,calc_baseline,ph1_real_Abs
+from numpy import random
+from proc_scripts import *
 from proc_scripts.load_data import postproc_dict
+from sympy import symbols
 from scipy.optimize import minimize,curve_fit,least_squares
 rcParams['lines.linewidth'] = 0.5
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 
 fl=figlist_var()
-for searchstr, exp_type, which_exp, postproc, manual_phcyc, w0 in [
-        ('ag_oct182019_w0_3', 'test_equip', 1, 'zg2h', False, 3),
+t2 = symbols('t2')
+logger = init_logging("info")
+for searchstr,exp_type,which_exp,postproc,manual_phcyc,w0 in [
+        ('w8_200224','test_equip',1,'bruker_90',False,8),
         ]:
     label_id='$w_0=%f$'%w0
     if manual_phcyc:
         s = find_file(searchstr, exp_type=exp_type, expno= which_exp,
-                postproc=postproc,lookup=postproc_dict,
-                dimname='ph')
+                postproc=postproc, lookup=postproc_dict)
         s.labels('ph',r_[0:4]).ft('ph') #assuming it is a four step cycle
         s = s['ph',-1] #assuming it is a 90 pulse exp
     else:
-        s = find_file(searchstr, exp_type=exp_type, expno=which_exp,
+        s = find_file(searchstr, exp_type=exp_type,
+                expno=which_exp,
                 postproc=postproc, lookup=postproc_dict)
     dw = diff(s.getaxis('t2')[0:2]).item()
     # {{{ determine the phase corrections

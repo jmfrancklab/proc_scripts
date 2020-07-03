@@ -6,6 +6,7 @@ def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
 def proc_bruker_deut_IR_mancyc(s, fl=None):
+    print("going through this")
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
@@ -145,8 +146,19 @@ def proc_square_wave_capture(s):
     s.set_units('t','s').name('Amplitude').set_units('V')
     return s
 
-def proc_90_pulse(s):
+def proc_90_pulse(s,fl=None):
     print("loading data for a 90 pulse exp.")
+    s.ft('t2')
+    if fl is not None:
+        s_forplot = s.C
+        fl.next('FT + coherence domain')
+        fl.image(s_forplot)
+        fl.next('time domain (all $\\Delta p$)')
+        s_forplot.ift('t2')
+        fl.image(s_forplot)
+        fl.next('frequency domain (all $\\Delta p$)')
+        s_forplot.ft('t2',pad=4096)
+        fl.image(s_forplot)
     return s
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
@@ -157,5 +169,5 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_square_wave_capture,
-        'zg2h':proc_90_pulse}
+        'bruker_90':proc_90_pulse}
 
