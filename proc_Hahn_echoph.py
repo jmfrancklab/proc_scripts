@@ -8,7 +8,8 @@ t2 = symbols('t2')
 
 
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
-        ('200302_alex_probe_water','test_equip','signal','spincore_Hahn_echoph_v1','microwaves off',(-5e3,5e3)),
+        ('200302_alex_probe_water','test_equip','signal',
+            'spincore_Hahn_echoph_v1','microwaves off',(-5e3,5e3)),
         ]:
     
     #{{{loads raw data and plots
@@ -47,8 +48,10 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     s.convolve('t2',10) # so that resolution of plot isn't higher than that of screen
     fl.image(s)
     #}}}
-    #{{{select coherence and select t2 axis range
-    s = select_FID_and_slice...
+    #{{{slice out FID from echo
+    s.ift('t2')
+    s = slice_FID_from_echo(s)
+    s.ft('t2')
     #}}}
     #{{{visualize final processed data
     fl.next('processed data')
