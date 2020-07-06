@@ -24,8 +24,11 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     s.setaxis('t2', lambda x: x-best_shift)
     fl.next('time domain after hermitian test')
     fl.image(s)
-    s.register_axis({'t2':0})
     #}}}
+    #{{{ centering CPMG echo
+    s = center_CPMG_echo(s)
+    fl.next('centered echo')
+    fl.image(s)
     #{{{cost function phase correction
     s.ft('t2')
     f_axis = s.fromaxis('t2')
