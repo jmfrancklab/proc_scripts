@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import minimize
-from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod
+from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod,center_CPMG_echo
 from sympy import symbols
 from numpy import *
 fl = fl_mod()
@@ -16,22 +16,22 @@ for searchstr,exp_type,nodename,postproc in [
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
     s.ft(['ph2','ph1'])
-    rough_center = abs(s)['ph2',0]['ph1',1].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
-    fl.next('raw')
-    fl.image(s)
-    logger.info(strm(ndshape(s)))
+    #rough_center = abs(s)['ph2',0]['ph1',1].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+    #s.setaxis(t2-rough_center)
+    #fl.next('raw')
+    #fl.image(s)
+    #logger.info(strm(ndshape(s)))
     # }}}
     
     # {{{ centering of data using hermitian function test
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
-    fl.next('hermitian test')
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift)
     fl.next('time domain after hermitian test')
     fl.image(s)
-    s.register_axis({'t2':0})
-
+    s = center_CPMG_echo(s)
+    fl.next('centered')
+    fl.image(s)
     #}}}
     
     #{{{ reviewing data imaging thus far
@@ -45,8 +45,6 @@ for searchstr,exp_type,nodename,postproc in [
     s = s['ph2',0]['ph1',1]
     fl.next('select $\\Delta p$ and convolve')
     s.convolve('t2',50)
-    fl.image(s)
-    fl.next('Figure 1')
     fl.image(s)
     #}}}
     

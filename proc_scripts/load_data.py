@@ -119,6 +119,8 @@ def proc_nutation(s):
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
+    s.ft('t2',shift=True)
+    s.ift('t2')
     return s
 
 def proc_spincore_ODNP_v1(s):
