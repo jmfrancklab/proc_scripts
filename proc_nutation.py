@@ -26,9 +26,12 @@ for searchstr,exp_type,nodename,postproc in [
     # {{{ centering of data using hermitian function test
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     fl.next('hermitian test')
-    fl.plot(best_shift)
     logger.info(strm("best shift is",best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    s.setaxis('t2', lambda x: x-best_shift)
+    fl.next('time domain after hermitian test')
+    fl.image(s)
+    s.register_axis({'t2':0})
+
     #}}}
     
     #{{{ reviewing data imaging thus far
