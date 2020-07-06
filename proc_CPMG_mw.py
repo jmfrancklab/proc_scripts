@@ -1,5 +1,4 @@
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
         ('200115','CPMG_DNP_1')
@@ -116,16 +115,9 @@ for date,id_string in [
                 ydata *= -1
             ydata /= max(ydata)
             fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
-            fitfunc = lambda p, x: p[0]*exp(-x*p[1])
-            errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-            p0 = [0.1,100.0]
-            p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
-            assert success == 1, "Fit did not succeed"
-            T2 = 1./p1[1]
-            x_fit = linspace(x.min(),x.max(),5000)
-            fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(T2*1e3), human_units=False)
-            xlabel('t (sec)')
-            ylabel('Intensity')
+            raise RuntimeEror("Need to set up fitdata using new capabilities")
+            data.guess([0.1,100.0]) <-- should be a dictionary
+            fl.plot(data.eval(400))
             T2_values[k] = T2
             print("T2:",T2,"s")
         fl.next('T2 vs power')
@@ -234,7 +226,6 @@ fl.show();quit()
 
 
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 rcParams['figure.figsize'] = [10,6]
 
@@ -532,20 +523,15 @@ for x in range(shape(s.getaxis('power'))[0]):
 
 for i,k in enumerate(power_list):
     temp = data['power',i].C
-    x = tE_axis 
-    ydata = temp.data.real
-    fl.next('DECAY DATA')
-    fl.plot(x,ydata, '.', alpha=0.4, label='%f'%k, human_units=False)
-    fitfunc = lambda p, x: p[0]*exp(-x/p[1])
-    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [11102.0,0.6]
-    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
-    x_fit = linspace(x.min(),x.max(),20000)
+    fl.plot(temp, '.', alpha=0.4, label='%f'%k, human_units=False)
+    temp = fitdata(temp)
+    A,R2,tau = symbols('A R2 tau')
+    data.symbolic_expression = A*sympy.exp(-tau*R2)
+    data.guess({A:11102.0,R2:0.6})
+    data.fit()
     fl.next('DECAY FITS')
-    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[1]*1e3), human_units=False)
-    xlabel('t (sec)')
-    ylabel('Intensity')
-    print("FOR POWER:",power_list[i],"W \tAMPLITUDE:",p1[0],"\tT2:",p1[1])
+    fl.plot(data.eval(400),':', label='fit (T2 = %0.2f ms)'%(p1[1]*1e3), human_units=False)
+    logger.info(strm("FOR POWER:",power_list[i],"W \tAMPLITUDE:",p1[0],"\tT2:",p1[1]))
     amplitude_r[i] = p1[0]
     T2_r[i] = p1[1]  
 

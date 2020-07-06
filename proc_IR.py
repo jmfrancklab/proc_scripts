@@ -22,7 +22,6 @@ for searchstr,exp_type,nodename, postproc, clock_correction, filter_bandwidth in
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
     s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
-    logger.info(strm(s.dimlabels))
     #{{{rough centers data
     fl.next('filtered + rough centered data')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
@@ -31,10 +30,39 @@ for searchstr,exp_type,nodename, postproc, clock_correction, filter_bandwidth in
             't2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     #}}}
-    #{{{slicing out FID from echo and centering
-    s = slice_FID_from_echo(s,1,0)
-    fl.next('frequency domain -- after hermitian function test and phasing')
+    #{{{hermitian function test and apply best shift
+    fl.next('time domain before')
+    fl.image(s)
+    fl.next('frequency domain before')
     s.ft('t2')
+    fl.image(s)
+    s.ift('t2')
+    best_shift = hermitian_function_test(s[
+        'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
+    logger.info(strm("best shift is",best_shift))
+    s.ft('t2')
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s.reorder(['ph2','ph1','indirect'])
+    s.ift('t2')
+    fl.next('time domain after hermitian test')
+    fl.image(s)
+    fl.next('frequency domain after')
+    s.ft('t2')
+    fl.image(s)
+    #}}}
+    #{{{zeroth order phase correction
+    ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
+    logger.info(strm(ndshape(ph0)))
+    if len(ph0.dimlabels) > 0:
+        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+        ph0 = zeroth_order_ph(ph0, fl=fl)
+        logger.info(strm('phasing dimension as one'))
+    else:
+        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
+        ph0 = ph0/abs(ph0)
+    s /= ph0
+    fl.next('frequency domain -- after hermitian function test and phasing')
+    #s.ft('t2')
     fl.image(s.C.convolve('t2',10))
     #}}}
     #{{{select t2 axis range and 
@@ -51,14 +79,23 @@ for searchstr,exp_type,nodename, postproc, clock_correction, filter_bandwidth in
     logger.info(strm(ndshape(s_sliced)))
     logger.info(strm("BEGINNING T1 CURVE..."))
     s = fitdata(s_sliced)
-    M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
-    s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
+    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect", real=True)
+    s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
     logger.info(strm("Functional form", s.functional_form))
-    s.fit_coeff = r_[-1,1,1]
+    # JF notes that we want to be able to set the guess using a dictionary
+    # here (which is what I think setting fit_coeff was doing), then plot
+    # the guess to make sure that's what we're doing -- like so
     fl.next('t1 test')
-    fl.plot(s, 'o', label=s.name())
+    
+    s.set_guess(Mi=-1, M0=1, R1=1)
+    #quit()# this is the only line that will not 
+    # work, currently -- we will need a pull request on pyspecdata as well
+    # to make it work
+    #fl.plot(g, 'o', label="guess")
+    s.settoguess()
+    fl.plot(s, '-', label='initial guess')
     s.fit()
-    fl.plot(s.eval(100),label='%s fit'%s.name())
+    fl.plot(s.eval(100),label='fit')
     text(0.75, 0.25, s.latex(), transform=gca().transAxes, size='large',
             horizontalalignment='center',color='k')
     print("output:",s.output())

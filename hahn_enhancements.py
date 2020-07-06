@@ -1,6 +1,5 @@
 from pyspecdata import *
 from utility import dBm2power
-from scipy.optimize import leastsq,minimize,basinhopping
 # {{{ in this section, I define some manual manipulations that might be
 # specific to the particular type of data, with the idea being that these could
 # be modified for different acquisition conditions / pulse sequences

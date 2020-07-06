@@ -1,34 +1,37 @@
 from pyspecdata import *
 from scipy.optimize import basinhopping
-from proc_scripts import postproc_dict
 from proc_scripts import *
+from proc_scripts import postproc_dict 
 fl = figlist_var()
 logger = init_logging('info')
+
 for searchstr, exp_type, nodename, postproc, label_str in [
-        #('200221','CPMG_TEMPOLgel_3p0_1','deadtime=5'),
-        ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','CPMG','deadtime=5'),
-        #('200304','CPMG_2p6_1','deadtime=5'),
-        #('200305','CPMG_3p5_2','deadtime=5'),
-        #('200305','CPMG_3p6_2','deadtime=5'),
-        #('200305','CPMG_3p7_2','deadtime=5'),
-        #('200305','CPMG_3p7_3','deadtime=5'),
-        #('200305','CPMG_3p8_2','deadtime=5'),
-        #('200305','CPMG_3p9_2','deadtime=5'),
-        #('200305','CPMG_4p0_1','deadtime=5'),
+        #('200221_CPMG_TEMPOLgel_3p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200304_CPMG_2p6_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p7_3','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p8_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_3p9_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        #('200305_CPMG_4p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
         ]:
     s =  find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
-    nEchoes = s.get_prop('acq_params')['nEchoes']
+    #}}}
     #{{{select and display coherence channel centered
-    s.ft(['ph1'])
-    s.ift('t2')
-    s.reorder('nScans',first=True)
-    s = s['ph1',1].C
-    s.mean('nScans')
-    s.reorder('t2',first=True)
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
-    raise ValueError("after merging PR#13, look at the code to center the echo in proc_DOSY_CPMG.py from the DOSY_T2 branch to center an echo, move it to a second-level function, and reuse it here.")
+    fl.next('check center')
+    fl.image(s)
+    best_shift = hermitian_function_test(s)
+    logger.info(strm("best shift is",best_shift))
+    s.ft('t2')
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+    s.ift('t2')
+    fl.next('time domain after hermitian test')
+    fl.image(s)
     #}}}
     #{{{cost function phase correction
     s.ft('t2')
@@ -71,6 +74,7 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
+
     data = s['t2':(0,None)].sum('t2')
     fl.next('Echo decay')
     fl.plot(data,'o')
