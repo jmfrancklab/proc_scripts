@@ -25,13 +25,9 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.next('time domain after hermitian test')
     fl.image(s)
     s.register_axis({'t2':0})
-    # {{{ what point does this serve?
-    fl.next('centered')
-    s.ft('t2')
-    fl.image(s)
-    # }}}
     #}}}
     #{{{cost function phase correction
+    s.ft('t2')
     f_axis = s.fromaxis('t2')
     def costfun(p):
         zeroorder_rad,firstorder = p
