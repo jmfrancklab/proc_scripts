@@ -15,7 +15,7 @@ for searchstr, exp_type, nodename, postproc in [
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict)
-    s = d['ph8',0]['ph4',1]['m',1]['n',0]
+    s = s['ph8',0]['ph4',1]['m',1]['n',0]
 
     # coarse phasing before hermitian_function_test doesn't seem to be required
     echo_center = hermitian_function_test(s['indirect',0],fl=fl)
