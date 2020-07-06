@@ -1,5 +1,6 @@
 from pyspecdata import *
 from .Utility import dBm2power
+import logging
 fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
@@ -70,7 +71,7 @@ def proc_spincore_CPMG_v1(s, fl=None):
     return s
 
 def proc_Hahn_echoph(s, fl=None):
-    print("loading pre-processing for Hahn_echoph")
+    logging.info("loading pre-processing for Hahn_echoph")
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = 8 
@@ -109,7 +110,7 @@ def proc_spincore_IR(s):
     return s
 
 def proc_nutation(s):
-    print("loading pre-processing for nutation")
+    logging.info("loading pre-processing for nutation")
     orig_t = s.getaxis('t')
     s.set_units('p_90','s')
     s.reorder('t',first=True)
@@ -120,14 +121,14 @@ def proc_nutation(s):
     return s
 
 def proc_spincore_ODNP_v1(s):
-    print("loading pre-processing for ODNP")
+    logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
-    print("programmed powers",prog_power)
+    logging.info(strm("programmed powers",prog_power))
     s.setaxis('power',r_[
         0,dBm2power(array(s.get_prop('meter_powers'))+20)]
         ).set_units('power','W')
-    print("meter powers",s.get_prop('meter_powers'))
-    print("actual powers",s.getaxis('power'))
+    logging.info(strm("meter powers",s.get_prop('meter_powers')))
+    logging.info(strm("actual powers",s.getaxis('power')))
     print("ratio of actual to programmed power",
                s.getaxis('power')/prog_power)
     nPoints = s.get_prop('acq_params')['nPoints']
@@ -142,12 +143,12 @@ def proc_spincore_ODNP_v1(s):
     return s
 
 def proc_square_wave_capture(s):
-    print("loading pre-processing for square wave capture")
+    logging.info("loading pre-processing for square wave capture")
     s.set_units('t','s').name('Amplitude').set_units('V')
     return s
 
 def proc_90_pulse(s,fl=None):
-    print("loading data for a 90 pulse exp.")
+    logging.info("loading data for a 90 pulse exp.")
     s.ft('t2')
     if fl is not None:
         s_forplot = s.C

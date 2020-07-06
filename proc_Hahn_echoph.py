@@ -8,7 +8,7 @@ t2 = symbols('t2')
 
 
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
-        ('200302_alex_probe_water','test_equip','signal',
+        ('200302_alex_probe_water', 'test_equip', 'signal', 
             'spincore_Hahn_echoph_v1','microwaves off',(-5e3,5e3)),
         ]:
     
@@ -45,8 +45,10 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     #{{{visualizes the data after hermitian function test and phasing 
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2', pad=512) # power of 2 FT
-    s.convolve('t2',10) # so that resolution of plot isn't higher than that of screen
-    fl.image(s)
+    fl.image(s.C.convolve('t2',10)) # so that resolution of
+    # plot isn't higher than that of screen -- note that we do
+    # this on a copy of the data, since we don't actually want
+    # to alter the data here
     #}}}
     #{{{slice out FID from echo
     s.ift('t2')
