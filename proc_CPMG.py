@@ -1,10 +1,9 @@
 from pyspecdata import *
 from scipy.optimize import basinhopping
 from proc_scripts import *
-from proc_scripts import postproc_dict 
+from proc_scripts import postproc_dict
 fl = figlist_var()
 logger = init_logging('info')
-
 for searchstr, exp_type, nodename, postproc, label_str in [
         #('200221_CPMG_TEMPOLgel_3p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
         ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
@@ -19,22 +18,20 @@ for searchstr, exp_type, nodename, postproc, label_str in [
         ]:
     s =  find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
-    #}}}
     #{{{select and display coherence channel centered
-    echo_center = abs(s)['tE',0].argmax('t2').data.item()
-    s.setaxis('t2', lambda x: x-echo_center)
-    fl.next('check center')
-    fl.image(s)
     best_shift = hermitian_function_test(s)
     logger.info(strm("best shift is",best_shift))
-    s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
+    s.setaxis('t2', lambda x: x-best_shift)
     fl.next('time domain after hermitian test')
     fl.image(s)
+    s.register_axis({'t2':0})
+    # {{{ what point does this serve?
+    fl.next('centered')
+    s.ft('t2')
+    fl.image(s)
+    # }}}
     #}}}
     #{{{cost function phase correction
-    s.ft('t2')
     f_axis = s.fromaxis('t2')
     def costfun(p):
         zeroorder_rad,firstorder = p
@@ -71,15 +68,13 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     #{{{select echo decay fit function
     s.ift('t2')
     s = s['t2':(0,None)]
-    #s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
-
     data = s['t2':(0,None)].sum('t2')
     fl.next('Echo decay')
     fl.plot(data,'o')
     print("starting T2 curve")
-    f = fitdata(data)
+    f = fitdata(data.real)
     M0,R2,tE = sympy.symbols("M_0 R_2 tE", real=True)
     f.functional_form = M0*sympy.exp(-tE*R2)
     fl.next('T2 test')
@@ -103,4 +98,3 @@ for searchstr, exp_type, nodename, postproc, label_str in [
                 legend=True)
     fl.show()
     #}}}
-

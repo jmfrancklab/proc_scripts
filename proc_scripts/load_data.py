@@ -76,13 +76,10 @@ def proc_Hahn_echoph(s, fl=None):
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:2048]
-    s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.labels({'ph2':r_[0.,2.]/4,
         'ph1':r_[0.,1.,2.,3.]/4})
     s.reorder(['ph2','ph1'])
-    s.setaxis('t2',t2_axis)
     s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
     s.ft('t2',shift=True)
@@ -148,6 +145,9 @@ def proc_square_wave_capture(s):
     s.set_units('t','s').name('Amplitude').set_units('V')
     return s
 
+def proc_90_pulse(s):
+    return s
+
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
@@ -155,5 +155,6 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_nutation_v1':proc_nutation,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
-        'square_wave_capture_v1':proc_square_wave_capture}
+        'square_wave_capture_v1':proc_square_wave_capture,
+        'zg2h':proc_90_pulse}
 
