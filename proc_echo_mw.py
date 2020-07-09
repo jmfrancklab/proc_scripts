@@ -63,11 +63,13 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     plotdata[lambda x: x>2] = 2
     fl.image(plotdata)
     #}}}
+
     #{{{slice FID from echo
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
     #}}}
+    
     # {{{ align the peaks
     orig = s.C
     fl.next('before alignment')
@@ -78,10 +80,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # {{{ try to use the correlation align
     avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
     s.ift(['ph1','ph2'])
-    logger.info(strm("S SHAPE IS"))
-    logger.info(strm(ndshape(s)))
-    logger.info(strm("AVG SHAPE IS"))
-    logger.info(strm(ndshape(avg)))
     s = correlation_align(s,avg,fl=fl)
     s.ft(['ph1','ph2'])
     # }}}
