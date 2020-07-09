@@ -48,6 +48,7 @@ for searchstr,exp_type,nodename, postproc in [
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
     logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
+        print("hello")
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0, fl=fl)
         logger.info(strm('phasing dimension as one'))
