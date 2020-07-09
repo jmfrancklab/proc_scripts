@@ -1,4 +1,5 @@
 from pyspecdata import *
+import numpy as np
 def align_and_slice(s, dimension='t2', convwidth=500, threshold=0.05, fl=None):
     r"""Align the peak frequencies, and automatically slice them -- passing fl assumes you are debugging and want diagnostic plots"""
     if fl is not None:
@@ -35,22 +36,23 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
     R = pi*convwidth # Lorentzian FWHM formula -- R = 1/T2, FWHM = R/pi
     # ALSO convolve both
     check = avg * s * exp(-2*R*abs(s.fromaxis(axis)))
+    print(check)
     assert s.get_ft_prop(axis,['start','freq']) is not None, "should be FT'd first, so the startpoint is set"
-    check.ft(axis, pad=2**14)
-    check.reorder(axis,first=False)
-    forplot = abs(check)[axis:(-50,50)]
-    myline = forplot.C.argmax(axis)
+    #check.ft(axis, pad=2**14)
+    #check.reorder(axis,first=False)
+    #forplot = abs(check)[axis:(-50,50)]
+    myline = check.C.argmax(axis)
     indirect_dims = set(s.dimlabels) - set([axis])
     phcyc_dims = [j for j in indirect_dims if j.startswith('ph')]
     phcyc_dims.sort()
     indirect_dims = list(set(indirect_dims) - set(phcyc_dims))
-    print(ndshape(forplot))
-    forplot.smoosh(phcyc_dims+indirect_dims,'indirect').setaxis('indirect','#').reorder('indirect',first=False)
-    print(ndshape(forplot))
+    #print(ndshape(forplot))
+    check.smoosh(phcyc_dims+indirect_dims,'indirect').setaxis('indirect','#').reorder('indirect',first=False)
+    #print(ndshape(forplot))
     if fl is not None:
         fl.push_marker()
         fl.next('cross-correlation')
-        fl.image(forplot,human_units=False)
+        fl.image(check,human_units=False)
         fl.plot(myline.smoosh(phcyc_dims+indirect_dims,'indirect'
             ).setaxis('indirect','#'
                     ).reorder('indirect',first=True)
