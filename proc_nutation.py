@@ -16,21 +16,13 @@ for searchstr,exp_type,nodename,postproc in [
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
     s.ft(['ph2','ph1'])
-    #rough_center = abs(s)['ph2',0]['ph1',1].convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-    #s.setaxis(t2-rough_center)
-    #fl.next('raw')
-    #fl.image(s)
-    #logger.info(strm(ndshape(s)))
     # }}}
     
     # {{{ centering of data using hermitian function test
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     logger.info(strm("best shift is",best_shift))
-    s.setaxis('t2', lambda x: x-best_shift)
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
-    fl.image(s)
-    s = center_CPMG_echo(s)
-    fl.next('centered')
     fl.image(s)
     #}}}
     

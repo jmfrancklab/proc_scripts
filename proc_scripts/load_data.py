@@ -2,13 +2,14 @@ from pyspecdata import *
 from .Utility import dBm2power
 import os
 from sympy import symbols
+import logging
 fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
 def proc_bruker_deut_IR_mancyc(s, fl=fl):
-    print("going through this")
+    logger.info("going through this")
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
@@ -31,7 +32,6 @@ def proc_bruker_deut_IR_mancyc(s, fl=fl):
     #raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
 
 def proc_spincore_CPMG_v1(s, fl=None):
-    logging.basicConfig()
     logger.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
@@ -132,8 +132,8 @@ def proc_spincore_ODNP_v1(s):
         ).set_units('power','W')
     logging.info(strm("meter powers",s.get_prop('meter_powers')))
     logging.info(strm("actual powers",s.getaxis('power')))
-    print("ratio of actual to programmed power",
-               s.getaxis('power')/prog_power)
+    logging.info(strm("ratio of actual to programmed power",
+               s.getaxis('power')/prog_power))
     nPoints = s.get_prop('acq_params')['nPoints']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
@@ -151,7 +151,7 @@ def proc_square_wave_capture(s):
     return s
 
 def proc_DOSY_CPMG(s):
-    print("loading pre-processing for DOSY-CPMG")
+    logging.info("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
     l22 = int(s.get_prop('acq')['L'][22]) # b/c the l are integers by definition
     l25 = int(s.get_prop('acq')['L'][25])
@@ -161,9 +161,9 @@ def proc_DOSY_CPMG(s):
     ppg = s.get_prop('pulprog')
     # {{{ these are explanatory -- maybe comment them out?
     m = re.search(('.*dwdel1=.*'),ppg,flags=re.IGNORECASE)
-    print(m.groups()) # show the line that sets dwdel1
+    logging.info(strm(m.groups())) # show the line that sets dwdel1
     # then look for de and depa
-    print([(j,s.get_prop('acq')[j]) for j in s.get_prop('acq').keys() if 'de' in j.lower()])
+    logging.info(strm([(j,s.get_prop('acq')[j]) for j in s.get_prop('acq').keys() if 'de' in j.lower()]))
     # I actually can't find depa
     # }}}
     m = re.search('\ndefine list<grad_scalar> gl1 = {(.*)}',ppg)
@@ -216,6 +216,7 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_square_wave_capture,
+        'zg2h':proc_90_pulse,
+        'zg':proc_90_pulse,
         'DOSY_CPMG_v1':proc_DOSY_CPMG}
-
 

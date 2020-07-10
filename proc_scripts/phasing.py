@@ -29,7 +29,8 @@ def zeroth_order_ph(d, fl=None):
     '''
     cov_mat = cov(c_[
         d.data.real.ravel(),
-        d.data.imag.ravel()].T,aweights=d.unit_weights)
+        d.data.imag.ravel()].T,
+        aweights=abs(d.data))
     eigenValues, eigenVectors = eig(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
@@ -202,14 +203,14 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     # {{{ make sure there's and odd number of points
     # and set phase of center point to 0
     logger.info(strm("here is t2",s_foropt.getaxis('t2')))
-    logger.info(ndshape(s_foropt))
+    logger.info(strm(ndshape(s_foropt)))
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-    logger.info(ndshape(s_foropt))
+    logger.info(strm(ndshape(s_foropt)))
     n_points = ndshape(s_foropt)['t2']
     if n_points % 2 == 0:
         s_foropt = s_foropt['t2',:-1]
         n_points -= 1
-    logger.info(ndshape(s_foropt))
+    logger.info(strm(ndshape(s_foropt)))
     center_point = s_foropt['t2',n_points//2+1]
     s_foropt /= center_point/abs(center_point)
     # }}}

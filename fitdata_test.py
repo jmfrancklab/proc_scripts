@@ -37,7 +37,7 @@ s.setaxis(t2-rough_center)
 #s = s['t2':(-25e-3,25e-3)] # select only 50 ms in time domain, because it's so noisy
 center_point = hermitian_function_test(s[
     'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-print("center of echo is at",center_point)
+logger.info(strm("center of echo is at",center_point))
 s.setaxis('t2', lambda x: x-center_point).register_axis({'t2':0})
 s /= zeroth_order_ph(s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 s.ft('t2')
