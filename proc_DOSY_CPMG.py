@@ -16,18 +16,7 @@ for searchstr, exp_type, nodename, postproc in [
             postproc=postproc,
             lookup=postproc_dict)
     s = s['ph8',0]['ph4',1]['m',1]['n',0]
-
-    # coarse phasing before hermitian_function_test doesn't seem to be required
-    echo_center = hermitian_function_test(s['indirect',0],fl=fl)
-    print("echo center is",echo_center)
-    s.setaxis('t2', lambda x: x-echo_center)
-    fl.next('request 5 (after subtracting best shift)')
-    s.register_axis({'t2':0})
-    s /= zeroth_order_ph(s['t2':0])
-    fl.image(s)
-    time_bound = min(abs(s.getaxis('t2')[r_[0,-1]]))
-    s = s['t2':(-time_bound,time_bound)]
-    assert isclose(s.getaxis('t2')[0],-s.getaxis('t2')[-1]), strm("if this doesn't work, talk to John b/c it means the pyspecdata slice notation isn't inclusive and I think we want it to be (?)",s.getaxis('t2')[r_[0,-1]])
+    s = center_CPMG_echo(s)
     s.ft('t2')
     fl.next('abs: request 3')
     fl.image(abs(s))

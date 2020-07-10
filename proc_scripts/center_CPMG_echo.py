@@ -2,9 +2,9 @@ from pyspecdata import *
 from sympy import symbols
 from proc_scripts import * 
 def center_CPMG_echo(s):
-    best_shift = hermitian_function_test(s)
-    logger.info(strm("best shift is",best_shift))
-    s.setaxis('t2', lambda x: x-best_shift)
+    echo_center = hermitian_function_test(s['indirect',0],fl=fl)
+    logger.info("echo center is",echo_center)
+    s.setaxis('t2', lambda x: x-echo_center)
     s.register_axis({'t2':0})
     s /= zeroth_order_ph(s['t2':0])
     time_bound = min(abs(s.getaxis('t2')[r_[0,-1]]))
