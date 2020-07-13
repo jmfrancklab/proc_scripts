@@ -65,7 +65,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     #}}}
     
     #{{{mirror test to test centered data
-    fl.next('echo mirror test')
     echo_start = s.getaxis('t2')[0]
     dw = diff(s.getaxis('t2')[r_[0,1]]).item()
     centered_echo = s['t2':(echo_start,-echo_start+dw)]

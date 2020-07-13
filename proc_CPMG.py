@@ -23,7 +23,6 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.next('centered echo')
     fl.image(s)
     #{{{select echo decay fit function
-    s.ift('t2')
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
     s.ft('t2')

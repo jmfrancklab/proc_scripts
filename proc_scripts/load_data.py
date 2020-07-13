@@ -190,7 +190,6 @@ def proc_DOSY_CPMG(s):
     tau_pad_end = tau_extra-6e-6
     tE = dwdel1 + 5e-6 + tau_pad_start + 1e-6 + num_points_per_echo*(dwdel2*2) + tau_pad_end
     # }}}
-
     s.chunk('indirect',['indirect','phcyc'],[l22,-1])
     s.chunk('phcyc',['ph8','ph4','m','n'],[2,2,2,2])
     s.setaxis('ph8',r_[0.,2.]/4)
@@ -216,7 +215,7 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_square_wave_capture,
-        'zg2h':proc_90_pulse,
-        'zg':proc_90_pulse,
+        #'zg2h':proc_90_pulse,
+        #'zg':proc_90_pulse,
         'DOSY_CPMG_v1':proc_DOSY_CPMG}
 
