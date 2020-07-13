@@ -16,6 +16,7 @@ for searchstr, exp_type, nodename, postproc in [
             postproc=postproc,
             lookup=postproc_dict)
     s = s['ph8',0]['ph4',1]['m',1]['n',0]
+    s = s['indirect',0]
     s = center_CPMG_echo(s)
     s.ft('t2')
     fl.next('abs: request 3')
@@ -23,7 +24,7 @@ for searchstr, exp_type, nodename, postproc in [
     fl.next('request 3')
     fl.image(s)
     fl.next('plot indirect 0')
-    fl.plot(s['indirect',0])
+    fl.plot(s)
     fl.show();quit()
     perform_fitting = False
     if perform_fitting:

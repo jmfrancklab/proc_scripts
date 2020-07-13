@@ -3,6 +3,7 @@ from .Utility import dBm2power
 import os
 from sympy import symbols
 import logging
+from .phasing import ph1_real_Abs
 fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
@@ -22,9 +23,11 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
         s_forplot = s.C
         fl.next('FT + coherence domain')
         fl.image(s_forplot)
+    if fl is not None:    
         fl.next('time domain (all $\\Delta p$)')
         s_forplot.ift('t2')
         fl.image(s_forplot)
+    if fl is not None:    
         fl.next('frequency domain (all $\\Delta p$)')
         s_forplot.ft('t2',pad=4096)
         fl.image(s_forplot)
@@ -206,6 +209,27 @@ def proc_DOSY_CPMG(s):
     # }}}
     return s
 
+def proc_90_pulse(s,fl=fl):
+    dw = diff(s.getaxis('t2')[0:2]).item()
+    # {{{ determine the phase corrections
+    s.ft('t2', shift=True)
+    s = ph1_real_Abs(s,dw)
+    # }}}
+    s_conv = s.C
+    s_conv.ift('t2')
+    s_conv *= exp(-8*pi*s_conv.fromaxis('t2'))
+    s_conv.ft('t2')
+    if fl is not None:
+        fl.next('raw - frequency domain')
+        fl.image(s)
+    if fl is not None:
+        fl.next('raw - time domain')
+        s.ift('t2')
+        fl.image(s)
+    return s
+
+
+
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
@@ -214,7 +238,7 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_square_wave_capture,
-        #'zg2h':proc_90_pulse,
-        #'zg':proc_90_pulse,
+        'zg2h':proc_90_pulse,
+        'zg':proc_90_pulse,
         'DOSY_CPMG_v1':proc_DOSY_CPMG}
 
