@@ -46,9 +46,9 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     #}}}
     s.ft('t2')
     #{{{visualize phased spectra
+    fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
-        fl.next('Plotting phased spectra')
-        fl.plot(s['indirect',j]['t2':(0,None)],
+        fl.plot(s['indirect',j]['t2':f_range],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
     #}}}
