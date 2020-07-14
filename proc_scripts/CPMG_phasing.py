@@ -2,7 +2,6 @@ from pyspecdata import *
 from sympy import symbols
 from proc_scripts import *
 import math
-fl=figlist_var()
 def center_CPMG_echo(s, axis='t2', fl=None):
     echo_center = hermitian_function_test(s, fl=fl)
     logger.info("echo center is",echo_center)
