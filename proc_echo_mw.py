@@ -4,6 +4,7 @@ from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
 rcParams["savefig.transparent"] = True
+logger = init_logging("info")
 
 fl = fl_mod()
 t2 = symbols('t2')
@@ -22,58 +23,19 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict)
-    
-    #{{{Fourier Transforms coherence channels
-    s.ft(['ph1','ph2']) 
-    #}}}
-
-    #{{{visualize the frequency limits
+    s.ft(['ph1','ph2']) # Fourier Transforms coherence channels
     fl.next('all data: frequency domain')
     fl.image(s)
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
-            s,freq_range)
-    #}}}
-
-    #{{{slice out the frequency range along t2 axis
-    s = s['t2':freq_range]
-    #}}}
-    
-    #{{{inverse fourier transform into time domain
-    s.ift('t2')
-    #}}}
-    
-    #{{{visualize time domain after filtering and phasing 
-    logger = init_logging("info")
-    logger.info(strm("THIS IS THE SHAPE"))
-    logger.info(strm(ndshape(s)))
+            s,freq_range) # visualize the frequency limits
+    s = s['t2':freq_range] # slice out the frequency range along t2 axis
+    s.ift('t2') # inverse fourier transform into time domain
+    logger.debug(strm("THIS IS THE SHAPE"))
+    logger.debug(strm(ndshape(s)))
     s = slice_FID_from_echo(s)['t2':(None,0.05)]
+    # visualize time domain after filtering and phasing 
     fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range', s, time_range)
-    #}}}
-    
-    #{{{slices out time range along t2 axis
-    s =s['t2':time_range]
-    #}}}
-    
-    #{{{visualize centered
-    echo_start = s.getaxis('t2')[0]
-    dw = diff(s.getaxis('t2')[r_[0,1]]).item()
-    centered_echo = s['t2':(echo_start,-echo_start+dw)]
-    plotdata = abs(centered_echo/centered_echo['t2',::-1])
-    fl.next('plot data')
-    plotdata[lambda x: x>2] = 2
-    fl.image(plotdata)
-    #}}}
-    
-    #{{{mirror test to test centered data
-    echo_start = s.getaxis('t2')[0]
-    dw = diff(s.getaxis('t2')[r_[0,1]]).item()
-    centered_echo = s['t2':(echo_start,-echo_start+dw)]
-    plotdata = abs(centered_echo/centered_echo['t2',::-1])
-    fl.next('plot data')
-    plotdata[lambda x: x>2] = 2
-    fl.image(plotdata)
-    #}}}
-    
+    s =s['t2':time_range] # slices out time range along t2 axis
     #{{{apodizing and zero fill
     fl.next('apodize and zero fill')
     R = 5.0/(time_range[-1]) # assume full decay by end time
@@ -81,26 +43,21 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s.ft('t2',pad=1024)
     fl.image(s)
     #}}}
-    
     #{{{select coherence channel in time domain
     s.ift('t2')
     s = s['ph2',-2]['ph1',1]['t2':(0,None)]
-    s['t2',0] *= 0.5
     s.ft('t2')
     #}}}
-
     #{{{plotting enhancement curve at lowest and highest powers 
     fl.next('compare highest power to no power')
     idx_maxpower = argmax(s.getaxis('power'))
     fl.plot(s['power',0])
     fl.plot(s['power',idx_maxpower])
     #}}}
-    
     #{{{plotting full enhancement curve
     fl.next('full enhancement curve')
     fl.plot(s)
     #}}}
-    
     #{{{plotting enhancement vs power
     fl.next('enhancement')
     enhancement = s['t2':(-50,50)].sum('t2').real

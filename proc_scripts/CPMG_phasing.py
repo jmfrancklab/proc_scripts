@@ -3,22 +3,22 @@ from sympy import symbols
 from proc_scripts import *
 import math
 fl=figlist_var()
-def center_CPMG_echo(s):
-    echo_center = hermitian_function_test(s,fl=fl)#['indirect',0],fl=fl)
+def center_CPMG_echo(s, axis='t2', fl=None):
+    echo_center = hermitian_function_test(s, fl=fl)
     logger.info("echo center is",echo_center)
-    s.setaxis('t2', lambda x: x-echo_center)
-    s.register_axis({'t2':0})
-    s /= zeroth_order_ph(s['t2':0])
-    time_bound = min(abs(s.getaxis('t2')[r_[0,-1]]))
-    s = s['t2':(-time_bound,time_bound)]
-    assert math.isclose(s.getaxis('t2')[0],-s.getaxis('t2')[-1], rel_tol=0.05),"echo is not symmetric! you are using the wrong code!!"
+    s.setaxis(axis, lambda x: x-echo_center)
+    s.register_axis({axis:0})
+    s /= zeroth_order_ph(s[axis:0])
+    time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
+    s = s[axis:(-time_bound,time_bound)]
+    assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!!"
     return s
-def minimize_CPMG_imag(s, fl=None):
+def minimize_CPMG_imag(s, axis='t2', fl=None):
     """optimize the first and second order phase of a CPMG pulse sequence
     by minimizing the energy of its imaginary component"""
     #{{{cost function phase correction
-    s.ft('t2')
-    f_axis = s.fromaxis('t2')
+    s.ft(axis)
+    f_axis = s.fromaxis(axis)
     def costfun(p):
         zeroorder_rad,firstorder = p
         phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))

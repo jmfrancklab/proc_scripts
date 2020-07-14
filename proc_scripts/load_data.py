@@ -3,7 +3,6 @@ from .Utility import dBm2power
 import os
 from sympy import symbols
 import logging
-from .phasing import ph1_real_Abs
 fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
@@ -208,27 +207,6 @@ def proc_DOSY_CPMG(s):
     s.ft('t2', shift=True).ift('t2') # this is overkill -- need a pyspecdata function that does this w/out the fft
     # }}}
     return s
-
-def proc_90_pulse(s,fl=fl):
-    dw = diff(s.getaxis('t2')[0:2]).item()
-    # {{{ determine the phase corrections
-    s.ft('t2', shift=True)
-    s = ph1_real_Abs(s,dw)
-    # }}}
-    s_conv = s.C
-    s_conv.ift('t2')
-    s_conv *= exp(-8*pi*s_conv.fromaxis('t2'))
-    s_conv.ft('t2')
-    if fl is not None:
-        fl.next('raw - frequency domain')
-        fl.image(s)
-    if fl is not None:
-        fl.next('raw - time domain')
-        s.ift('t2')
-        fl.image(s)
-    return s
-
-
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,

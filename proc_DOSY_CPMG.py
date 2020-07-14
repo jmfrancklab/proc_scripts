@@ -24,8 +24,7 @@ for searchstr, exp_type, nodename, postproc in [
     fl.next('request 3')
     fl.image(s)
     fl.next('plot indirect 0')
-    fl.plot(s)
-    fl.show();quit()
+    fl.plot(s['indirect',0])
     perform_fitting = False
     if perform_fitting:
         f_axis = s.fromaxis('t2')

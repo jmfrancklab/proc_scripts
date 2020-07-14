@@ -2,7 +2,6 @@
 from pyspecdata import *
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
-fl = figlist_var()
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the

@@ -4,9 +4,9 @@ from proc_scripts import *
 from proc_scripts import postproc_dict
 fl = figlist_var()
 logger = init_logging('info')
-for searchstr, exp_type, nodename, postproc, label_str in [
+for searchstr, exp_type, nodename, postproc, label_str, f_slice in [
         #('200221_CPMG_TEMPOLgel_3p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
-        ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
+        ('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200304_CPMG_2p6_1','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
         #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
         #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1','deadtime=5'),
@@ -23,10 +23,8 @@ for searchstr, exp_type, nodename, postproc, label_str in [
     fl.next('centered echo')
     fl.image(s)
     #{{{select echo decay fit function
-    s = s['t2':(0,None)]
-    s['t2',0] *= 0.5
     s.ft('t2')
-    data = s['t2':(0,None)].sum('t2')
+    data = s['t2':f_slice].sum('t2')
     fl.next('Echo decay')
     fl.plot(data,'o')
     print("starting T2 curve")
