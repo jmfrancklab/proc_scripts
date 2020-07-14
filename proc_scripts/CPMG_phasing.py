@@ -2,15 +2,16 @@ from pyspecdata import *
 from sympy import symbols
 from proc_scripts import *
 import math
-def center_CPMG_echo(s, axis='t2', fl=None):
+fl = figlist_var()
+def center_CPMG_echo(s, axis='t2',fl=None):
     echo_center = hermitian_function_test(s, fl=fl)
-    logger.info("echo center is",echo_center)
+    logger.info(strm("echo center is",echo_center))
     s.setaxis(axis, lambda x: x-echo_center)
     s.register_axis({axis:0})
     s /= zeroth_order_ph(s[axis:0])
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
     s = s[axis:(-time_bound,time_bound)]
-    assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!!"
+    assert math.isclose(s.getaxis(axis)[1],-s.getaxis(axis)[-1],abs_tol=0.05),"echo is not symmetric! you are using the wrong code!!"
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
     """optimize the first and second order phase of a CPMG pulse sequence
