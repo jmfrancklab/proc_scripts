@@ -22,17 +22,10 @@ for searchstr,exp_type,nodename,postproc in [
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('time domain after hermitian test')
-    fl.image(s)
     #}}}
     
-    #{{{ reviewing data imaging thus far
-    fl.next('time domain (all $\\Delta p$)')
-    fl.image(s)
-    fl.next('frequency domain (all $\\Delta p$)')
     s.ft('t2',pad=4096)
-    fl.image(s)
-    #}}}
+    
     #{{{ selecting coherence and convolving
     s = s['ph2',0]['ph1',1]
     fl.next('select $\\Delta p$ and convolve')

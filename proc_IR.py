@@ -67,9 +67,8 @@ for searchstr,exp_type,nodename, postproc in [
     #}}}
     #{{{decay curve and fitting
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
-    s_sliced.sum('t2')
-    logger.info(strm(ndshape(s_sliced)))
-    logger.info(strm("BEGINNING T1 CURVE..."))
+    rec_curve = s_sliced.sum('t2')
+    curve = plot_curve(s, rec_curve, (None,None), curve='recovery')
     s = fitdata(s_sliced)
     M0,Minf,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect", real=True)
     s.functional_form = Minf + (M0-Minf)*sympy.exp(-vd*R1)

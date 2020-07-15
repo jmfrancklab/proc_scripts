@@ -29,8 +29,6 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     logger.info(strm("best shift is",best_shift))
     s_uncorrected = s.C.ft('t2')
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('time domain after hermitian test')
-    fl.plot(s)
     ph0 = s['t2':0]['ph2',0]['ph1',1]
     logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:

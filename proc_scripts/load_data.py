@@ -144,6 +144,9 @@ def proc_spincore_ODNP_v1(s):
         'ph1':r_[0.,1.,2.,3.]/4})
     s.reorder(['ph2','ph1'])
     s.ft('t2',shift=True)
+    s.ft(['ph1','ph2']) # Fourier Transforms coherence channels
+    fl.next('all data: frequency domain')
+    fl.image(s)
     return s
 
 def proc_square_wave_capture(s):

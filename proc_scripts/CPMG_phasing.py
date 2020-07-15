@@ -12,6 +12,9 @@ def center_CPMG_echo(s, axis='t2',fl=None):
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
     s = s[axis:(-time_bound,time_bound)]
     assert math.isclose(s.getaxis(axis)[1],-s.getaxis(axis)[-1],abs_tol=0.05),"echo is not symmetric! you are using the wrong code!!"
+    with figlist_var() as fgl:
+        fgl.next('centered echo')
+        fgl.image(s)
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
     """optimize the first and second order phase of a CPMG pulse sequence

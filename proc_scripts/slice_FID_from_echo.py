@@ -17,6 +17,7 @@ def slice_FID_from_echo(s, ph1=1, ph2=-2):
         logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = coh_slice/abs(coh_slice)
     s /= ph0
+    s['t2',0] *= -0.5
     if 'power' in s.dimlabels:
         if s['t2':0]['ph2',ph2]['ph1',ph1]['power',0].real < 0:
             s *= -1

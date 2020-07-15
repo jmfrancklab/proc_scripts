@@ -1,13 +1,14 @@
 from pyspecdata import *
-from numpy import random
+import numpy as np
+from numpy import * 
 from proc_scripts import *
 from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
-fl = figlist_var()
 t2 = symbols('t2')
 logger = init_logging("info")
+fl = figlist_var()
 #loading data in:
 #    this_l is the regularization lambda specific to
 #    each dataset, which must be chosen from the
@@ -41,34 +42,14 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     ph0 = zeroth_order_ph(s['t2':0],fl=None)
     ph0 /= abs(ph0)
     s /= ph0
-    fl.next('zeroth order phase correction')
-    fl.image(s)
     #}}}
     s.ft('t2')
-    #{{{visualize phased spectra
-    fl.next('Plotting phased spectra')
-    for j in range(ndshape(s)['indirect']):
-        fl.plot(s['indirect',j]['t2':f_range],
-            alpha=0.5,
-            label='vd=%g'%s.getaxis('indirect')[j])
-    #}}}
+    print(ndshape(s))
+    print(np.sign(s['t2',2047]['indirect',15]))
+    s *= -1    
     #{{{exponential curve with fit
     rec_curve = s['t2':f_range].sum('t2')
-    fl.next('recovery curve')
-    fl.plot(rec_curve,'o')
-    f =fitdata(rec_curve)
-    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
-    f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
-    logger.info(strm("Functional form", f.functional_form))
-    fl.next('t1 test')
-    fl.plot(f, 'o',label=f.name())
-    f.fit()
-    fl.plot(f.eval(100),label=
-            '%s fit'%f.name())
-    text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
-            horizontalalignment='center',color='k')
-    print("output:",f.output())
-    print("latex:",f.latex())
+    curve = plot_curve(s, rec_curve, f_range, curve='recovery')
     #}}}
     #{{{estimating T1
     min_index = abs(s).run(sum, 't2').argmin('indirect',raw_index=True).data

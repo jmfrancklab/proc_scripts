@@ -14,6 +14,7 @@ def expand_limits(thisrange,s):
             retval[j]*sgn[j] > full_range[j]*sgn[j]
             else
             retval[j] for j in range(2))
+
 def draw_limits(thisrange,s):
     full_range = s.getaxis('t2')[r_[0,-1]]
     dw = diff(s.getaxis('t2')[:2]).item()
@@ -27,6 +28,7 @@ def draw_limits(thisrange,s):
             print("drawing a vspan at",j)
             axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
     gca().set_xlim(my_xlim)
+
 class fl_mod(figlist_var):
     """
     Used to create an image for comparison where two images or plots are 
@@ -71,4 +73,47 @@ class fl_mod(figlist_var):
         title('cropped log')
         return
 
+    def recovery(s,rec_curve,f_range):
+        fl.next('recovery curve')
+        fl.plot(rec_curve,'o')
+        f =fitdata(rec_curve)
+        M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
+        f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
+        logger.info(strm("Functional form", f.functional_form))
+        fl.next('t1 test')
+        fl.plot(f, 'o',label=f.name())
+        f.fit()
+        fl.plot(f.eval(100),label=
+                '%s fit'%f.name())
+        text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
+                horizontalalignment='center',color='k')
+        print("output:",f.output())
+        print("latex:",f.latex())
+        return
 
+    def decay(s, f_range):
+        data = s['t2':f_range].sum('t2')
+        fl.next('Echo decay')
+        fl.plot(data,'o')
+        print("starting T2 curve")
+        f = fitdata(data.real)
+        M0,R2,tE = sympy.symbols("M_0 R_2 tE", real=True)
+        f.functional_form = M0*sympy.exp(-tE*R2)
+        fl.next('T2 test')
+        fl.plot(f,'o',label=f.name())
+        f.fit()
+        fl.plot(f.eval(100),label='%s fit'%f.name())
+        text(0.75,0.25, f.latex(),transform=gca().transAxes, size='large',
+                horizontalalignment='center', color= 'k')
+        print("output",f.output())
+        print("latex",f.latex())
+        T2 = 1./f.output('R_2')
+        return
+    
+    def plot_curve(s, rec_curve, f_range, curve):
+        if curve == 'recovery':
+            recovery(s, rec_curve, f_range)
+            return
+        if curve == 'decay':
+            decay(s, f_range)
+            return

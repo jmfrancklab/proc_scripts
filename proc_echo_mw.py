@@ -5,7 +5,6 @@ from proc_scripts import postproc_dict
 from sympy import symbols
 rcParams["savefig.transparent"] = True
 logger = init_logging("info")
-
 fl = fl_mod()
 t2 = symbols('t2')
 
@@ -14,7 +13,6 @@ t2 = symbols('t2')
 # list of integrals for ODNP
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
-
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
         ["200306_DNP_lg_probe_w34.*", 'test_equip', 'signal',
@@ -23,9 +21,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict)
-    s.ft(['ph1','ph2']) # Fourier Transforms coherence channels
-    fl.next('all data: frequency domain')
-    fl.image(s)
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range) # visualize the frequency limits
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
