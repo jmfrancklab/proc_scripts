@@ -44,12 +44,9 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     s /= ph0
     #}}}
     s.ft('t2')
-    print(ndshape(s))
-    print(np.sign(s['t2',2047]['indirect',15]))
-    s *= -1    
     #{{{exponential curve with fit
-    rec_curve = s['t2':f_range].sum('t2')
-    curve = plot_curve(s, rec_curve, f_range, curve='recovery')
+    f,T1 = recovery(s, f_range)
+    fl.plot_curve(f,"inversion recovery curve")
     #}}}
     #{{{estimating T1
     min_index = abs(s).run(sum, 't2').argmin('indirect',raw_index=True).data

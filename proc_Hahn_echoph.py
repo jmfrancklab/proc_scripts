@@ -62,4 +62,4 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     fl.plot(s.real, alpha=0.5, label='real - %s'%label_str)
     fl.plot(s.imag, alpha=0.5, label='imag - %s'%label_str)
     #}}}
-fl.show();quit()
+fl.show()
