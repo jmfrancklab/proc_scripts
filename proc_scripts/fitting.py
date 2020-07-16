@@ -45,7 +45,7 @@ def recovery(s,f_range,direct='t2',indirect='indirect',guess=None):
     rec_curve *= sgn
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 %s"%indirect,real=True)
     f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
-    return _fitcurve_final(f,'R1',guess):
+    return _fitcurve_final(f,'R1',guess)
 
 def decay(s,f_range,direct='t2',indirect='indirect', guess=None):
     """Take phased data, slice and integrate it in order to fit a T2 decay curve
@@ -69,4 +69,4 @@ def decay(s,f_range,direct='t2',indirect='indirect', guess=None):
     rec_curve *= sgn
     M0,Mi,R1,vd = sympy.symbols("M_0 R_2 %s"%indirect,real=True)
     f.functional_form = (M0)*sympy.exp(-vd*R1)
-    return _fitcurve_final(f,'R1',guess):
+    return _fitcurve_final(f,'R1',guess)

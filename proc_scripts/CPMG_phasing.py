@@ -10,6 +10,10 @@ def center_CPMG_echo(s, axis='t2',fl=None):
     s /= zeroth_order_ph(s[axis:0])
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
     s = s[axis:(-time_bound,time_bound)]
+    print('this is what s.getaxis(axis)[0] is:')
+    print(s.getaxis(axis)[0])
+    print('this is what s.getaxis(axis)[-1] is:')
+    print(s.getaxis(axis)[-1])
     assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!!"
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
