@@ -3,6 +3,7 @@ from .Utility import dBm2power
 import os
 from sympy import symbols
 import logging
+fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")

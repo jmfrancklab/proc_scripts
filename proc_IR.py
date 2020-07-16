@@ -66,11 +66,12 @@ for searchstr,exp_type,nodename, postproc in [
     s['t2',0] *= 0.5
     s.ft('t2')
     #}}}
-    #{{{decay curve and fitting
+    #{{{recovery curve and fitting
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
     # below, f_range needs to be defined
-    f,T1,g = recovery(s_sliced, f_range,
-            guess={M0:-500, Minf:500, R1:1})
+    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
+    f,T1,g = recovery(s_sliced, (-100,100),
+            guess={M0:-500, Mi:500, R1:1})
     fl.plot_curve(f,'inversion recovery curve',guess=g)
 fl.show()
 
