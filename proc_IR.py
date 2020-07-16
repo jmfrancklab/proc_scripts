@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from proc_scripts import *
 from proc_scripts.load_data import postproc_dict
+from proc_scripts.fitting import recovery
 from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
@@ -67,27 +68,9 @@ for searchstr,exp_type,nodename, postproc in [
     #}}}
     #{{{decay curve and fitting
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
-    rec_curve = s_sliced.sum('t2')
-    curve = plot_curve(s, rec_curve, (None,None), curve='recovery')
-    s = fitdata(s_sliced)
-    M0,Minf,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect", real=True)
-    s.functional_form = Minf + (M0-Minf)*sympy.exp(-vd*R1)
-    logger.info(strm("Functional form", s.functional_form))
-    # JF notes that we want to be able to set the guess using a dictionary
-    # here (which is what I think setting fit_coeff was doing), then plot
-    # the guess to make sure that's what we're doing -- like so
-    fl.next('t1 test')
-    s.set_guess({M0:-500, Minf:500, R1:1})# make this bigger b/c the data is big
-    # work, currently -- we will need a pull request on pyspecdata as well
-    # to make it work
-    fl.plot(s, 'o', label="data")
-    s.settoguess()
-    fl.plot(s.eval(100), '-', label='initial guess')
-    s.fit()
-    fl.plot(s.eval(100),label='fit')
-    text(0.75, 0.25, s.latex(), transform=gca().transAxes, size='large',
-            horizontalalignment='center',color='k')
-    print("output:",s.output())
-    print("latex:",s.latex())
+    # below, f_range needs to be defined
+    f,T1,g = recovery(s_sliced, f_range,
+            guess={M0:-500, Minf:500, R1:1})
+    fl.plot_curve(f,'inversion recovery curve',guess=g)
 fl.show()
 

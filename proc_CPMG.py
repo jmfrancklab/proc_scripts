@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import basinhopping
 from proc_scripts import *
 from proc_scripts import postproc_dict
+from proc_scripts.fitting import decay
 fl = fl_mod()
 logger = init_logging('info')
 for searchstr, exp_type, nodename, postproc, label_str, f_range in [
@@ -24,8 +25,8 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
     fl.image(s)
     #{{{select echo decay fit function
     s.ft('t2')
-    curve = plot_curve(s, None, f_range, curve='decay')
-    quit()
+    f,T2 = decay(s, f_range, indirect='tE')
+    fl.plot_curve(f,'T2 relaxation decay')
     #}}}
     #{{{saving figure
     save_fig = False
