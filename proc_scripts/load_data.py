@@ -3,7 +3,6 @@ from .Utility import dBm2power
 import os
 from sympy import symbols
 import logging
-fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
@@ -219,5 +218,7 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_square_wave_capture,
+        'zg2h':proc_90_pulse,
+        'zg':proc_90_pulse,
         'DOSY_CPMG_v1':proc_DOSY_CPMG}
 
