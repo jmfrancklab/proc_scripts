@@ -126,7 +126,7 @@ def proc_nutation(s):
     s.ift('t2')
     return s
 
-def proc_spincore_ODNP_v1(s):
+def proc_spincore_ODNP_v1(s,fl=None):
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))
@@ -147,8 +147,9 @@ def proc_spincore_ODNP_v1(s):
     s.reorder(['ph2','ph1'])
     s.ft('t2',shift=True)
     s.ft(['ph1','ph2']) # Fourier Transforms coherence channels
-    fl.next('all data: frequency domain')
-    fl.image(s)
+    if fl is not None:
+        fl.next('all data: frequency domain')
+        fl.image(s)
     return s
 
 def proc_square_wave_capture(s):
