@@ -3,7 +3,6 @@ from .Utility import dBm2power
 import os
 from sympy import symbols
 import logging
-fl = figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s):
     raise RuntimeError("this is where postprocessing would be implemented -- not implemented yet")
@@ -96,19 +95,22 @@ def proc_Hahn_echoph(s, fl=None):
         fl.image(abs(s))
     return s
 
-def proc_spincore_IR(s):
+def proc_spincore_IR(s,fl=None):
     s.rename('vd','indirect')
     s.reorder(['ph1','ph2','indirect','t2'])
-    fl.next('raw data -- coherence channels')
     s.ft(['ph2','ph1'])
     s.ft('t2', shift=True)
-    fl.image(s)
-    fl.next('time domain (all $\\Delta p$)')
+    if fl is not None:
+        fl.next('raw data -- coherence channels')
+        fl.image(s)
     s.ift('t2')
-    fl.image(s)
-    fl.next('frequency domain (all $\\Delta p$)')
+    if fl is not None:
+        fl.next('time domain (all $\\Delta p$)')
+        fl.image(s)
     s.ft('t2', pad=4096)
-    fl.image(s)
+    if fl is not None:
+        fl.next('frequency domain (all $\\Delta p$)')
+        fl.image(s)
     return s
 
 def proc_nutation(s):

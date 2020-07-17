@@ -39,7 +39,7 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     #{{{ select appropriate coherence channel
     s = s['ph2',0]['ph1',-1]
     s.reorder('t2')
-    ph0 = zeroth_order_ph(s['t2':0],fl=None)
+    ph0 = zeroth_order_ph(s['t2':0],fl=fl)
     ph0 /= abs(ph0)
     s /= ph0
     #}}}

@@ -3,13 +3,10 @@ from sympy import symbols
 def _fitcurve_initial(s,f_range,direct,indirect,guess):
     if not s.get_ft_prop(direct):
         raise ValueError("Your data should be in the frequency domain!")
-    rec_curve = s[direct:f_range].sum(direct).real
-    print(ndshape(s))
-    sgn = sign(rec_curve[indirect:(rec_curve.getaxis(indirect).max())].item())
-    rec_curve *= sgn
-    f = fitdata(rec_curve)
-    return f
+    curve = s[direct:f_range].sum(direct).real
+    return fitdata(curve), curve
 def _fitcurve_final(f,whichrate,guess):
+    logger.info(strm("Functional form", f.functional_form))
     logger.info(strm("Functional form", f.functional_form))
     if guess is not None:
         f.set_guess(guess)
@@ -21,7 +18,7 @@ def _fitcurve_final(f,whichrate,guess):
     print("output:",f.output())
     print("latex:",f.latex())
     if guess is None:
-        return f,retval
+        return f,1./f.output(whichrate)
     else:
         return f,1./f.output(whichrate),save_guess
 def recovery(s,f_range,direct='t2',indirect='indirect',guess=None):
@@ -45,6 +42,8 @@ def recovery(s,f_range,direct='t2',indirect='indirect',guess=None):
         Give an nddata with all parameters set to the guess value.
     """
     _fitcurve_initial(s,f_range,direct,indirect,guess)
+    sgn = sign(curve[indir_name:(curve.getaxis(indir_name).max())].item())
+    curve *= sgn
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 %s"%indirect,real=True)
     f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
     return _fitcurve_final(f,'R1',guess)
@@ -66,7 +65,9 @@ def decay(s,f_range,direct='t2',indirect='indirect', guess=None):
     T1: float
         just the T1 relaxation time
     """
-    _fitcurve_initial(s,f_range,direct,indirect,guess)
-    M0,Mi,R1,vd = sympy.symbols("M_0 R_2 %s"%indirect,real=True)
-    f.functional_form = (M0)*sympy.exp(-vd*R1)
-    return _fitcurve_final(f,'R1',guess)
+    f, curve = _fitcurve_initial(s,f_range,direct,indirect,guess)
+    sgn = sign(curve[indirect:0].item())
+    curve *= sgn
+    M0,R2,vd = sympy.symbols("M_0 R_2 %s"%indirect,real=True)
+    f.functional_form = (M0)*sympy.exp(-vd*R2)
+    return _fitcurve_final(f,'R_2',guess)

@@ -34,7 +34,7 @@ for searchstr,exp_type,nodename, postproc in [
     fl.image(s)
     s.ift('t2')
     best_shift = hermitian_function_test(s[
-        'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
+        'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s.reorder(['ph2','ph1','indirect'])
@@ -44,6 +44,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
+    fl.show();quit()
     #}}}
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
