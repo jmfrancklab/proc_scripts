@@ -24,7 +24,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
     fl.image(s)
     #{{{select echo decay fit function
     s.ft('t2')
-    f,T2 = decay(s, f_range, indirect='tE',guess=None)
+    f,T2 = decay(s, f_range, indirect='tE')
     fl.plot_curve(f,'T2 relaxation decay')
     #}}}
     #{{{saving figure

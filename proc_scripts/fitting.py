@@ -4,7 +4,7 @@ def _fitcurve_initial(s,f_range,direct,indirect,guess):
     if not s.get_ft_prop(direct):
         raise ValueError("Your data should be in the frequency domain!")
     curve = s[direct:f_range].sum(direct).real
-    return fitdata(curve), curve
+    return fitdata(curve)
 def _fitcurve_final(f,whichrate,guess):
     logger.info(strm("Functional form", f.functional_form))
     logger.info(strm("Functional form", f.functional_form))
@@ -41,8 +41,8 @@ def recovery(s,f_range,direct='t2',indirect='indirect',guess=None):
         returned only if the guess argument is set.
         Give an nddata with all parameters set to the guess value.
     """
-    f, curve = _fitcurve_initial(s,f_range,direct,indirect,guess)
-    sgn = sign(curve[indirect:(curve.getaxis(indirect).max())].item())
+    curve = _fitcurve_initial(s,f_range,direct,indirect,guess)
+    sgn = sign(curve[indir_name:(curve.getaxis(indir_name).max())].item())
     curve *= sgn
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 %s"%indirect,real=True)
     f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
@@ -65,9 +65,9 @@ def decay(s,f_range,direct='t2',indirect='indirect', guess=None):
     T1: float
         just the T1 relaxation time
     """
-    f, curve = _fitcurve_initial(s,f_range,direct,indirect,guess)
+    curve = _fitcurve_initial(s,f_range,direct,indirect,guess)
     sgn = sign(curve[indirect:0].item())
     curve *= sgn
     M0,R2,vd = sympy.symbols("M_0 R_2 %s"%indirect,real=True)
-    f.functional_form = (M0)*sympy.exp(-vd*R2)
-    return _fitcurve_final(f,'R_2',guess)
+    curve.functional_form = (M0)*sympy.exp(-vd*R2)
+    return _fitcurve_final(curve,'R_2',guess)
