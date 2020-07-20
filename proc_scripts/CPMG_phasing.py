@@ -3,6 +3,16 @@ from sympy import symbols
 from proc_scripts import *
 import math
 def center_CPMG_echo(s, axis='t2',fl=None):
+    """Centers and phases a CPMG echo and returns the centered echo
+    
+    Parameters
+    ----------
+    axis: str name of the axis you are centering on
+
+    Returns
+    -------
+    s: data with a centered echo at ['t2':0]
+    """
     echo_center = hermitian_function_test(s, fl=fl)
     logger.info(strm("echo center is",echo_center))
     s.setaxis(axis, lambda x: x-echo_center)

@@ -4,7 +4,7 @@ from proc_scripts import *
 from proc_scripts.load_data import postproc_dict
 from proc_scripts.fitting import recovery
 from sympy import symbols
-fl = figlist_var()
+fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 # {{{ input parameters

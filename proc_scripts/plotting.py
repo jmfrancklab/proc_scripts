@@ -1,6 +1,16 @@
 from pyspecdata import *
 from sympy import symbols
 def expand_limits(thisrange,s):
+    """" Used to expand limits of the side by side function
+
+    Parameters
+    ----------
+    thisrange: range you are interested in extending
+
+    Returns
+    -------
+    tuple of the expanded range
+    """
     thisrange = list(thisrange)
     full_range = s.getaxis('t2')[r_[0,-1]]
     retval = array([thisrange[j] if thisrange[j] is not

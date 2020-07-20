@@ -2,13 +2,14 @@ from pyspecdata import *
 import numpy as np
 from numpy import * 
 from proc_scripts import *
+from proc_scripts.fitting import recovery
 from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 #baseline fitting
 t2 = symbols('t2')
 logger = init_logging("info")
-fl = figlist_var()
+fl = fl_mod()
 #loading data in:
 #    this_l is the regularization lambda specific to
 #    each dataset, which must be chosen from the
@@ -45,6 +46,7 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     #}}}
     s.ft('t2')
     #{{{exponential curve with fit
+    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect", real=True)
     f,T1 = recovery(s, f_range)
     fl.plot_curve(f,"inversion recovery curve")
     #}}}
