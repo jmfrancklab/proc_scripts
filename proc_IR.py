@@ -50,7 +50,7 @@ for searchstr,exp_type,nodename, postproc in [
     logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-        ph0 = zeroth_order_ph(ph0, fl=None)
+        ph0 = zeroth_order_ph(ph0, fl=fl)
         logger.info(strm('phasing dimension as one'))
     else:
         logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))

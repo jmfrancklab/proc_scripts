@@ -30,7 +30,7 @@ def zeroth_order_ph(d, fl=None):
     '''
     cov_mat = cov(c_[
         d.data.real.ravel(),
-        d.data.imag.ravel()].T),
+        d.data.imag.ravel()].T,
         aweights=abs(d.data).ravel())
     eigenValues, eigenVectors = eig(cov_mat)
     mean_point = d.data.ravel().mean()
