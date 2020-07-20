@@ -80,8 +80,8 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # {{{ try to use the correlation align
     avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
     s.ift(['ph1','ph2'])
-    one = correlation_align(s,avg,fl=fl)
-    s = correlation_align(one,s,fl=fl)
+    s = correlation_align(s,avg,fl=fl)
+    s = correlation_align(s,avg,fl=fl)
     s.ft(['ph1','ph2'])
     # }}}
     fl.next('after alignment')
