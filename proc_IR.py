@@ -44,14 +44,13 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
-    fl.show();quit()
     #}}}
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
     logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-        ph0 = zeroth_order_ph(ph0, fl=fl)
+        ph0 = zeroth_order_ph(ph0, fl=None)
         logger.info(strm('phasing dimension as one'))
     else:
         logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
