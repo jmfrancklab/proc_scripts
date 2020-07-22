@@ -103,26 +103,11 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
             alpha=0.5)
     # }}}
     
-    #{{{ zeroth order phase correction
-    for j in range(2):
-        ph0 = zeroth_order_ph(d['ch',j], fl=fl)
-        d['ch',j] /= ph0
-        fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
-        fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
-    d.ift('t')
-    #}}}
-
-    #{{{ grab the first blip -- expand forward and back by 1 μs compared to what
-    # we found
-    first_blip = d['ch',1][
-            't':tuple(refl_blip_ranges[0]+r_[-1e-6,1e-6])].C
-    fl.next('show first blip')
-    fl.plot(abs(first_blip), alpha=0.5)
-    fl.plot(first_blip.real, alpha=0.5)
-    #}}}
-
     # {{{ use the "standard cost function" to determine the
     #     t=0 (treat decay as an FID)
+    d.ift('t')
+    first_blip = d['ch',1][
+            't':tuple(refl_blip_ranges[0]+r_[-1e-6,1e-6])].C
     if standard_cost:
         first_blip.ft('t')
         fl.next('test time axis')
