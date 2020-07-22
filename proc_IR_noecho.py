@@ -58,8 +58,7 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     #{{{attempting ILT plot with NNLS_Tikhonov_190104
     T1 = nddata(logspace(-3,1,150),'T1')
     l = sqrt(logspace(-8.0,0.05,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
-    plot_Lcurve = False
-    if plot_Lcurve:
+    if this_l is None:
         def vec_lcurve(l):
             return s.nnls('indirect',T1,lambda x,y: 1.0-2*exp(-x/y), l=l)
 
