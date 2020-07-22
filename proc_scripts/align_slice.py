@@ -52,13 +52,11 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
         fl.push_marker()
         fl.next('cross-correlation')
         fl.image(forplot,human_units=False)
-        fl.plot(thisline, 'w', linewidth=3, alpha=0.5,
+        fl.plot(thisline, 'k', linewidth=3, alpha=0.75,
                 human_units=False)
-    print('myline shape is')
-    print(ndshape(thisline))
-    print('axis shape is')
-    print(ndshape(s.fromaxis(axis)))
-    print('s shape is')
-    print(ndshape(s))
-    return s*exp(1j*2*pi*myline*s.fromaxis(axis))
+    if fl is not None:
+        fl.next('cross-correlation plot')
+        fl.plot(thisline, 'k', linewidth=3, alpha=0.75,
+                human_units=False)
+    return s*exp(-1j*2*pi*myline*s.fromaxis(axis))
 

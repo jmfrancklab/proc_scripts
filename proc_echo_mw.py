@@ -91,6 +91,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     #s.reorder('ph2','ph1','power','indirect','t2')
     s.ft('t2')
     fl.image(s,human_units=False)
+    fl.show();quit()
     s.ift('t2')
     #}}}
 
