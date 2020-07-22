@@ -105,7 +105,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     
     #{{{ zeroth order phase correction
     for j in range(2):
-        ph0 = zeroth_order_ph(d['ch',j], fl=None)
+        ph0 = zeroth_order_ph(d['ch',j], fl=fl)
         d['ch',j] /= ph0
         fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
         fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
