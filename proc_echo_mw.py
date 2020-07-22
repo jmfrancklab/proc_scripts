@@ -80,9 +80,9 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # {{{ try to use the correlation align
     avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
     s.ift(['ph1','ph2'])
-    fl.basename = 'first time'
-    s = correlation_align(s,avg,fl=fl)
-    fl.basename = 'second time'
+    fl.basename = 'overlay, blue=1st, red=2nd, black=3rd'
+    s = correlation_align(s,avg,color='b',fl=fl)
+    s = correlation_align(s,avg,color='r',fl=fl)
     s = correlation_align(s,avg,fl=fl)
     s.ft(['ph1','ph2'])
     # }}}
@@ -91,7 +91,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     #s.reorder('ph2','ph1','power','indirect','t2')
     s.ft('t2')
     fl.image(s,human_units=False)
-    fl.show();quit()
     s.ift('t2')
     #}}}
 

@@ -28,7 +28,7 @@ def align_and_slice(s, dimension='t2', convwidth=500, threshold=0.05, fl=None):
     if fl is not None:
         fl.pop_marker()
     return s[axis:slices]
-def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
+def correlation_align(s,avg,convwidth=0,axis='t2',color='k',fl=None):
     assert not s.get_ft_prop(axis), 'I want time-domain data'
     assert not avg.get_ft_prop(axis), 'I want time-domain data'
     avg.run(conj)
@@ -39,7 +39,7 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
     check.ft(axis, pad=2**14)
     #check.reorder(axis,first=False) #does nothing, as in with this statement uncommented looks the same as 
     #with it commented out
-    forplot = abs(check)[axis:(-20,20)]
+    forplot = abs(check)[axis:(-500,500)]
     myline = forplot.C.argmax(axis)
     indirect_dims = set(s.dimlabels) - set([axis])
     phcyc_dims = [j for j in indirect_dims if j.startswith('ph')]
@@ -56,7 +56,7 @@ def correlation_align(s,avg,convwidth=0,axis='t2',fl=None):
                 human_units=False)
     if fl is not None:
         fl.next('cross-correlation plot')
-        fl.plot(thisline, 'k', linewidth=3, alpha=0.75,
+        fl.plot(thisline, color, linewidth=3, alpha=0.75,
                 human_units=False)
     return s*exp(-1j*2*pi*myline*s.fromaxis(axis))
 
