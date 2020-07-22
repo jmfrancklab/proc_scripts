@@ -42,7 +42,7 @@ def recovery(s,f_range,direct='t2',indirect='indirect',guess=None):
         Give an nddata with all parameters set to the guess value.
     """
     curve = _fitcurve_initial(s,f_range,direct,indirect,guess)
-    sgn = sign(curve[indir_name:(curve.getaxis(indir_name).max())].item())
+    sgn = sign(curve[indirect:(curve.getaxis(indirect).max())].item())
     curve *= sgn
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 %s"%indirect,real=True)
     f.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
