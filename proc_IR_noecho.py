@@ -46,7 +46,6 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     #}}}
     s.ft('t2')
     #{{{exponential curve with fit
-    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect", real=True)
     f,T1 = recovery(s, f_range)
     fl.plot_curve(f,"inversion recovery curve")
     #}}}

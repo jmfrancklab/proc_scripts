@@ -1,18 +1,24 @@
 from pyspecdata import *
 from sympy import symbols
-def expand_limits(thisrange,s):
-    """" Used to expand limits of the side by side function
+def expand_limits(thisrange,s,axis='t2'):
+    """" Used to expand limits of a range (typically used for slicing) by XXXX%
 
     Parameters
     ----------
-    thisrange: range you are interested in extending
+    thisrange: tuple of 2 floats
+        slice range you are interested in extending
+    s: nddata
+        the data you are planning on slicing
+    axis: str
+        name of the axis along which the slice range will be applied
 
     Returns
     -------
-    tuple of the expanded range
+    retval: tuple of 2 floats
+        the expanded range
     """
     thisrange = list(thisrange)
-    full_range = s.getaxis('t2')[r_[0,-1]]
+    full_range = s.getaxis(axis)[r_[0,-1]]
     retval = array([thisrange[j] if thisrange[j] is not
             None else full_range[j] for j in [0,-1]])
     print(repr(retval))
@@ -26,6 +32,7 @@ def expand_limits(thisrange,s):
             retval[j] for j in range(2))
 
 def draw_limits(thisrange,s):
+    "I need a docstring!"
     full_range = s.getaxis('t2')[r_[0,-1]]
     dw = diff(s.getaxis('t2')[:2]).item()
     print("I find the full range to be",full_range)

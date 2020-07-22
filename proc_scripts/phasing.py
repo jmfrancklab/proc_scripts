@@ -31,7 +31,12 @@ def zeroth_order_ph(d, fl=None):
     cov_mat = cov(c_[
         d.data.real.ravel(),
         d.data.imag.ravel()].T,
-        aweights=abs(d.data).ravel())
+        aweights=abs(d.data).ravel()**2 # when running proc_square_refl, having
+        # this line dramatically reduces the size of the imaginary component
+        # during the "blips," and the magnitude squared seems to perform
+        # slightly better than the magnitude -- this should be both a robust
+        # test and a resolution for issue #23
+        )
     eigenValues, eigenVectors = eig(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]

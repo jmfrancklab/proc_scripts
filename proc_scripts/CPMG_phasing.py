@@ -7,11 +7,14 @@ def center_CPMG_echo(s, axis='t2',fl=None):
     
     Parameters
     ----------
-    axis: str name of the axis you are centering on
+    axis: str
+        name of the axis you are centering on
+        (the direct dimension)
 
     Returns
     -------
-    s: data with a centered echo at ['t2':0]
+    s: nddata
+        contains echo-like data with two or more dimensions
     """
     echo_center = hermitian_function_test(s, fl=fl)
     logger.info(strm("echo center is",echo_center))
