@@ -10,11 +10,11 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
         #('200304_CPMG_2p6_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
-        #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
+        ('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p7_3','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p8_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p9_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
-        ('200305_CPMG_4p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
+        #('200305_CPMG_4p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         ]:
     s =  find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict)
