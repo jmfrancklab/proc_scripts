@@ -1,7 +1,7 @@
 from pyspecdata import *
 from sympy import symbols
 def expand_limits(thisrange,s,axis='t2'):
-    """" Used to expand limits of a range (typically used for slicing) by XXXX%
+    """" Used to expand limits of a range (typically used for slicing) by 3X
 
     Parameters
     ----------
@@ -32,7 +32,20 @@ def expand_limits(thisrange,s,axis='t2'):
             retval[j] for j in range(2))
 
 def draw_limits(thisrange,s):
-    "I need a docstring!"
+    """
+    determines the range of the t2 axis and pairs it with the range given
+    returns the x axis limits for plotting
+
+    Parameters
+    ----------
+    thisrange: tuple of 2 floats
+        slice range you are interested in extending
+    s: nddata
+        the data you are planning on slicing
+    Returns
+    -------
+    the limits for the t2 axis for plotting purposes
+    """
     full_range = s.getaxis('t2')[r_[0,-1]]
     dw = diff(s.getaxis('t2')[:2]).item()
     print("I find the full range to be",full_range)
