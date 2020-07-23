@@ -77,7 +77,9 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.image(s)
     s.ift('t2')
     old_order = list(s.dimlabels)
+    print(nddata('power'))
     # {{{ try to use the correlation align
+    s = s['power':(None,5)]
     avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
     s.ift(['ph1','ph2'])
     fl.basename = 'overlay, blue=1st, red=2nd, black=3rd'
