@@ -84,14 +84,24 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     print(ndshape(s))
     s = s['transient',:20]
     print(ndshape(s))
-
-    fl.basename = 'overlay'
+    s.ft('t2')
+    avg.ft('t2')
+    fl.next('s when smooshed')
+    fl.plot(s,human_units=False)
+    fl.next('avg')
+    fl.plot(avg)
+    s.ift('t2')
+    avg.ift('t2')
+    fl.basename = 'overlay, rainbow order, black=last'
     s = correlation_align(s,avg,color='r',fl=fl)
     s = correlation_align(s,avg,color='y',fl=fl)
     s = correlation_align(s,avg,color='g',fl=fl)
     s = correlation_align(s,avg,color='b',fl=fl)
     s = correlation_align(s,avg,color='m',fl=fl)
     s = correlation_align(s,avg,fl=fl)
+    fl.next('s after correlation')
+    s.ft('t2')
+    fl.plot(s,human_units=False)
     fl.show();quit()
     s.ft(['ph1','ph2'])
     # }}}
