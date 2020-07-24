@@ -78,12 +78,13 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s.ift('t2')
     old_order = list(s.dimlabels)
     avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
-    s.smoosh(['ph2','power'],'transient')
-    print(ndshape(s))
-    s = s['transient',[0,15]]
-    print(ndshape(s))
     # {{{ try to use the correlation align
-    s.ift(['ph1','transient'])
+    s.ift(['ph1','ph2'])
+    s.smoosh(['ph2','ph1','power'],'transient')
+    print(ndshape(s))
+    s = s['transient',:20]
+    print(ndshape(s))
+
     fl.basename = 'overlay'
     s = correlation_align(s,avg,color='r',fl=fl)
     s = correlation_align(s,avg,color='y',fl=fl)
