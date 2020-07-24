@@ -52,7 +52,7 @@ def correlation_align(s,avg,convwidth=0,axis='t2',color='k',fl=None):
         fl.push_marker()
         fl.next('cross-correlation')
         fl.image(forplot,human_units=False)
-        fl.plot(thisline, 'k', linewidth=3, alpha=0.75,
+        fl.plot(thisline, 'k', linewidth=3, alpha=0.25,
                 human_units=False)
     if fl is not None:
         fl.next('cross-correlation plot')

@@ -77,15 +77,21 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     fl.image(s)
     s.ift('t2')
     old_order = list(s.dimlabels)
-    print(nddata('power'))
-    # {{{ try to use the correlation align
-    s = s['power':(None,5)]
     avg = s['ph1',1]['ph2',-2].C.mean_all_but('t2')
-    s.ift(['ph1','ph2'])
-    fl.basename = 'overlay, blue=1st, red=2nd, black=3rd'
-    s = correlation_align(s,avg,color='b',fl=fl)
+    s.smoosh(['ph2','power'],'transient')
+    print(ndshape(s))
+    s = s['transient',[0,15]]
+    print(ndshape(s))
+    # {{{ try to use the correlation align
+    s.ift(['ph1','transient'])
+    fl.basename = 'overlay'
     s = correlation_align(s,avg,color='r',fl=fl)
+    s = correlation_align(s,avg,color='y',fl=fl)
+    s = correlation_align(s,avg,color='g',fl=fl)
+    s = correlation_align(s,avg,color='b',fl=fl)
+    s = correlation_align(s,avg,color='m',fl=fl)
     s = correlation_align(s,avg,fl=fl)
+    fl.show();quit()
     s.ft(['ph1','ph2'])
     # }}}
     fl.next('after alignment')
