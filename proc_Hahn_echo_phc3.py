@@ -1,5 +1,4 @@
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
         ('200116','echo_phc3','n'),
@@ -55,9 +54,7 @@ for date,id_string,label_str in [
     shift_t = nddata(r_[-1:1:200j]*max_shift, 'shift')
     t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:200j],'R2'))
     s_foropt = s.C
-    s_foropt.ft('t2')
-    s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
-    s_foropt.ift('t2')
+    s_foropt.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s_foropt /= t2_decay
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
     print(s_foropt.getaxis('t2'))
@@ -76,9 +73,7 @@ for date,id_string,label_str in [
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
-    s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     ph0 = s['t2':0.0]
     ph0 /= abs(ph0)
     s /= ph0

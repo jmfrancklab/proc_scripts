@@ -8,7 +8,8 @@ t2 = symbols('t2')
 
 
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
-        ('200302_alex_probe_water','test_equip','signal','Hahn_echoph','microwaves off',(-5e3,5e3)),
+        ('200302_alex_probe_water', 'test_equip', 'signal', 
+            'spincore_Hahn_echoph_v1','microwaves off',(-5e3,5e3)),
         ]:
     
     #{{{loads raw data and plots
@@ -23,20 +24,11 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     s.setaxis(t2-rough_center)
     logger.info(strm(ndshape(s)))
     #}}}
-    #{{{finds best shift according to hermitian function test
+    #{{{ apply phase corrections
     best_shift = hermitian_function_test(s)
     logger.info(strm("best shift is",best_shift))
-    #}}}
-    #{{{slice out the FID appropriately and phase correct it
-    s.ft('t2')
-    s_uncorrected = s.C
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
-    #}}}
-    #{{{ apply a lorentzian broadening
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    fl.next('time domain after hermitian test')
-    fl.plot(s)
+    s_uncorrected = s.C.ft('t2')
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     ph0 = s['t2':0]['ph2',0]['ph1',1]
     logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
@@ -51,13 +43,14 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     #{{{visualizes the data after hermitian function test and phasing 
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2', pad=512) # power of 2 FT
-    s.convolve('t2',10) # so that resolution of plot isn't higher than that of screen
-    fl.image(s)
+    fl.image(s.C.convolve('t2',10)) # so that resolution of
+    # plot isn't higher than that of screen -- note that we do
+    # this on a copy of the data, since we don't actually want
+    # to alter the data here
     #}}}
-    #{{{select coherence and select t2 axis range
-    s = s['ph1',1]['ph2',0].C
+    #{{{slice out FID from echo
     s.ift('t2')
-    s = s['t2':(0,None)]
+    s = slice_FID_from_echo(s)
     s.ft('t2')
     #}}}
     #{{{visualize final processed data
@@ -65,4 +58,8 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     fl.plot(s_uncorrected['ph2',-2]['ph1',1],
             label='without time-axis correction',c='k')
     fl.plot(s,label='with time-axis correction',c='r')
-fl.show();quit()
+    fl.next('Spectrum FT')
+    fl.plot(s.real, alpha=0.5, label='real - %s'%label_str)
+    fl.plot(s.imag, alpha=0.5, label='imag - %s'%label_str)
+    #}}}
+fl.show()

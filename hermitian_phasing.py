@@ -1,5 +1,4 @@
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 def get_W(dBm):
     return 10**(dBm/10.)*1e-3
@@ -10,6 +9,7 @@ for x in range(4):
 enhancement = []
 find_phase_params = True # phase params found for first dataset will be applied
                          # to all subsequently processed datasets
+raise RuntimeError("why does this file still exist? -- can we test and see that these can be processed w/ one of the others?")
 for date,id_string,label_string in [
         ('191031','echo_5_4','no microwaves'),
         ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),

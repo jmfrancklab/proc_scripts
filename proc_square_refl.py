@@ -18,7 +18,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('181103','probe',True),
         #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103_pulse_1','test_equip','capture1','square_wave_capture',True),
+        ('200103_pulse_1','test_equip','capture1','square_wave_capture_v1',True),
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
@@ -103,26 +103,11 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
             alpha=0.5)
     # }}}
     
-    #{{{ zeroth order phase correction
-    for j in range(2):
-        ph0 = zeroth_order_ph(d['ch',j], fl=fl)
-        d['ch',j] /= ph0
-        fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
-        fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
-    d.ift('t')
-    #}}}
-
-    #{{{ grab the first blip -- expand forward and back by 1 μs compared to what
-    # we found
-    first_blip = d['ch',1][
-            't':tuple(refl_blip_ranges[0]+r_[-1e-6,1e-6])].C
-    fl.next('show first blip')
-    fl.plot(abs(first_blip), alpha=0.5)
-    fl.plot(first_blip.real, alpha=0.5)
-    #}}}
-
     # {{{ use the "standard cost function" to determine the
     #     t=0 (treat decay as an FID)
+    d.ift('t')
+    first_blip = d['ch',1][
+            't':tuple(refl_blip_ranges[0]+r_[-1e-6,1e-6])].C
     if standard_cost:
         first_blip.ft('t')
         fl.next('test time axis')
@@ -143,18 +128,27 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     d.setaxis('t', lambda x: x-time_zero).register_axis({'t':0})
     refl_blip_ranges -= time_zero
     pulse_range -= time_zero
-    fl.next('after setting t=0')
-    for j in range(2):
-        fl.plot(abs(d['ch',j]), linewidth=3, color='k',
-                label='ch %d abs'%(j+1), alpha=0.3)
     d = d['t':(-10e6,10e6)] # slice out frequencies with signal
     #}}}
     
     #{{{zeroth order phase correction
     for j in range(2):
+        fl.basename = "channel %d"%(j+1)
         ph0 = zeroth_order_ph(d['ch',j], fl=fl)
         d['ch',j] /= ph0
+    fl.basename = None
     #}}}
+
+    # {{{ 
+    fl.next('after all corrections are complete')
+    for j in range(2):
+        fl.plot(d['ch',j].real,
+                label='ch %d real'%(j+1), alpha=0.5)
+        fl.plot(d['ch',j].imag,
+                label='ch %d imag'%(j+1), alpha=0.5)
+        fl.plot(abs(d['ch',j]), linewidth=3, color='k',
+                label='ch %d abs'%(j+1), alpha=0.3)
+    # }}}
 
     #{{{ to plot the transfer function, we need to pick an impulse
         # of finite width, or else we get a bunch of noise

@@ -1,6 +1,7 @@
 """This module includes routines for phasing NMR spectra."""
 from pyspecdata import *
 from matplotlib.patches import Ellipse
+from scipy.optimize import minimize
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
@@ -29,7 +30,13 @@ def zeroth_order_ph(d, fl=None):
     '''
     cov_mat = cov(c_[
         d.data.real.ravel(),
-        d.data.imag.ravel()].T)
+        d.data.imag.ravel()].T,
+        aweights=abs(d.data).ravel()**2 # when running proc_square_refl, having
+        # this line dramatically reduces the size of the imaginary component
+        # during the "blips," and the magnitude squared seems to perform
+        # slightly better than the magnitude -- this should be both a robust
+        # test and a resolution for issue #23
+        )
     eigenValues, eigenVectors = eig(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
@@ -96,7 +103,7 @@ def zeroth_order_ph(d, fl=None):
         ax.add_patch(ell)
     return exp(1j*ph0)
 
-def ph1_real_Abs(d):
+def ph1_real_Abs(s,dw):
     r''' Performs first order phase correction with cost function
     by taking the sum of the absolute value of the real [DeBrouwer2009].
 
@@ -105,7 +112,7 @@ def ph1_real_Abs(d):
 
     Parameters
     ==========
-    d: nddata
+    s: nddata
         Complex data whose first order phase you want
         to find.
 
@@ -123,15 +130,15 @@ def ph1_real_Abs(d):
     fl.push_marker() 
     ph1 = nddata(r_[-5:5:70j]*dw,'phcorr')
     dx = diff(ph1.getaxis('phcorr')[r_[0,1]]).item()
-    ph1 = exp(-1j*2*pi*ph1*d.fromaxis('t2'))
-    d_cost = d * ph1
-    ph0 = d_cost.C.sum('t2')
+    ph1 = exp(-1j*2*pi*ph1*s.fromaxis('t2'))
+    s_cost = s * ph1
+    ph0 = s_cost.C.sum('t2')
     ph0 /= abs(ph0)
-    d_cost /= ph0
+    s_cost /= ph0
     fl.next('phasing cost function')
-    d_cost.run(real).run(abs).sum('t2')
-    fl.plot(d_cost,'.')
-    ph1_opt = d_cost.argmin('phcorr').item()
+    s_cost.run(real).run(abs).sum('t2')
+    fl.plot(s_cost,'.')
+    ph1_opt = s_cost.argmin('phcorr').item()
     print('optimal phase correction',repr(ph1_opt))
     # }}}
     # {{{ apply the phase corrections
@@ -144,17 +151,17 @@ def ph1_real_Abs(d):
     def costfun(ph1):
         if type(ph1) is ndarray:
             ph1 = ph1.item()
-        temp = d.C
+        temp = s.C
         retval = applyphase(temp,ph1).run(real).run(abs).sum('t2').item()
         return retval
     print("rough opt cost function is",costfun(ph1_opt))
     r = minimize(costfun,ph1_opt,
             bounds=[(ph1_opt-dx,ph1_opt+dx)])
     assert r.success
-    d = applyphase(d,r.x.item())
+    s = applyphase(s,r.x.item())
     fl.plot(r.x,r.fun,'x')
     fl.pop_marker()
-    return d
+    return s
 
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
 
@@ -201,11 +208,15 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     # }}}
     # {{{ make sure there's and odd number of points
     # and set phase of center point to 0
+    logger.info(strm("here is t2",s_foropt.getaxis('t2')))
+    logger.info(strm(ndshape(s_foropt)))
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
+    logger.info(strm(ndshape(s_foropt)))
     n_points = ndshape(s_foropt)['t2']
     if n_points % 2 == 0:
         s_foropt = s_foropt['t2',:-1]
         n_points -= 1
+    logger.info(strm(ndshape(s_foropt)))
     center_point = s_foropt['t2',n_points//2+1]
     s_foropt /= center_point/abs(center_point)
     # }}}

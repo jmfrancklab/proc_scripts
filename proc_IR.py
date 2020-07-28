@@ -2,8 +2,9 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from proc_scripts import *
 from proc_scripts.load_data import postproc_dict
+from proc_scripts.fitting import recovery
 from sympy import symbols
-fl = figlist_var()
+fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 # {{{ input parameters
@@ -16,31 +17,33 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('200303_IR_AER_6','test_equip','signal','spincore_IR'),
+        ('200212_IR_3_30dBm', 'test_equip', 'signal', 
+            'spincore_IR_v1'),
         ]:
+    fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
-    logger.info(strm(s.dimlabels))
-    #{{{rough centers data
-    fl.next('filtered + rough centered data')
+    s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
+    #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
-    s.ift('t2')
-    rough_center = abs(s).convolve('t2',0.01).mean_all_but(
-            't2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
     #}}}
     #{{{hermitian function test and apply best shift
-    best_shift = hermitian_function_test(s[
-        'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-    logger.info(strm("best shift is",best_shift))
-    s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.reorder(['ph2','ph1','indirect'])
+    fl.next('frequency domain before')
+    fl.image(s)
     s.ift('t2')
+    best_shift = hermitian_function_test(s[
+        'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
+    logger.info(strm("best shift is",best_shift))
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    s.reorder(['ph2','ph1','indirect'])
     fl.next('time domain after hermitian test')
     fl.image(s)
+    fl.next('frequency domain after')
+    s.ft('t2')
+    fl.image(s)
+    s.ift('t2')
     #}}}
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
@@ -55,35 +58,20 @@ for searchstr,exp_type,nodename, postproc in [
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
-    s.convolve('t2',10)
-    fl.image(s)
+    fl.image(s.C.convolve('t2',10))
     #}}}
     #{{{select t2 axis range and 
     s.ift('t2')
     s = s['t2':(0,None)]
-    s *= -1
     s['t2',0] *= 0.5
     s.ft('t2')
     #}}}
-    #{{{decay curve and fitting
-    fl.next('signal vs. vd')
+    #{{{recovery curve and fitting
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
-    s_sliced.sum('t2')
-    fl.plot(s_sliced,'o')
-    logger.info(strm(ndshape(s_sliced)))
-    logger.info(strm("BEGINNING T1 CURVE..."))
-    s = fitdata(s_sliced)
-    M0,Mi,T1,vd = sympy.symbols("M_0 M_inf T_1 indirect", real=True)
-    s.functional_form = Mi + (M0-Mi)*sympy.exp(-vd/T1)
-    logger.info(strm("Functional form", s.functional_form))
-    s.fit_coeff = r_[-1,1,1]
-    fl.next('t1 test')
-    fl.plot(s, 'o', label=s.name())
-    s.fit()
-    fl.plot(s.eval(100),label='%s fit'%s.name())
-    text(0.75, 0.25, s.latex(), transform=gca().transAxes, size='large',
-            horizontalalignment='center',color='k')
-    print("output:",s.output())
-    print("latex:",s.latex())
-    fl.show();quit()
+    # below, f_range needs to be defined
+    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
+    f,T1,g = recovery(s_sliced, (-100,100),
+            guess={M0:-500, Mi:500, R1:1})
+    fl.plot_curve(f,'inversion recovery curve',guess=g)
+fl.show()
 

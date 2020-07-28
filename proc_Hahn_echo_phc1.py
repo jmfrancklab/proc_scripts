@@ -1,5 +1,4 @@
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
         ('200214','echo_coil2','n'),
@@ -77,9 +76,7 @@ for date,id_string,label_str in [
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
-    s.ft('t2')
-    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-    s.ift('t2')
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     ph0 = s['t2':0.0]
     ph0 /= abs(ph0)
     s /= ph0
