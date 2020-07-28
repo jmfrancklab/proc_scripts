@@ -1,7 +1,7 @@
 Phasing
 =======
 
-The ``hermitian_function_test`` module:
+The ``phasing`` module:
 
-.. automodule:: proc_scripts.hermitian_function_test
+.. automodule:: proc_scripts.phasing
     :members:
