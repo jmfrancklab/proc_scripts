@@ -31,8 +31,7 @@ for searchstr,exp_type,nodename, postproc in [
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
-            dimname='indirect')
-    s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
+            clock_correction=clock_correction, dimname='indirect')
     #{{{filter data
     if postproc=='spincore_IR_v1':
         s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
@@ -40,6 +39,7 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')
     fl.image(s)
+    fl.show();quit()
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
