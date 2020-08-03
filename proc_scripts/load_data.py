@@ -91,6 +91,36 @@ def proc_spincore_CPMG_v1(s, fl=None):
     s.reorder('t2',first=True)
     return s
 
+def proc_bruker_CPMG_v1(s,fl=fl):
+    anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
+    anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
+    anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
+    for m in anavpt_matches:
+        if m is not None:
+            anavpt = int(m.groups()[0])
+    actual_SW = 20e6/anavpt 
+    bruker_final_t2_value = double(s.getaxis('t2')[-1].item())
+    s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
+    l25 = s.get_prop('acq')['L'][25]
+    dwdel1 = 6.5e-6
+    dwdel2 = (anavpt*0.05e-6)/2
+    d12 = s.get_prop('acq')['D'][12]
+    d11 = s.get_prop('acq')['D'][11]
+    p1 = s.get_prop('acq')['P'][1]
+    TD = 8192
+    quad_pts = TD/2
+    num_pts_per_echo = quad_pts/l25
+    acq_time = dwdel2*num_pts_per_echo*2
+    tau_extra = 20e-6
+    tau_pad_start = tau_extra-dwdel1-6e-6
+    tau_pad_end = tau_extra-6e-6
+    tE = dwdel1 + 5e-6 + tau_pad_start + 1e-6 + num_pts_per_echo*(dwdel2*2) + tau_pad_end 
+    s.chunk('t2',['echo','t2'],[int(l25),-1])
+    s.rename('indirect','ph')
+    s.ft('ph')
+    fl.next('Coherence domain')
+    fl.image(s)
+    return s
 def proc_Hahn_echoph(s, fl=None):
     logging.info("loading pre-processing for Hahn_echoph")
     nPoints = s.get_prop('acq_params')['nPoints']
