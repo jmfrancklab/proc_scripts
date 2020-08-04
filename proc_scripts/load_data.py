@@ -92,7 +92,20 @@ def proc_spincore_CPMG_v1(s, fl=fl):
     s.mean('nScans')
     s.reorder('t2',first=True)
     return s
-
+def proc_bruker_T1CPMG_v1(s,fl=fl):
+    print(ndshape(s))
+    print(s.get_prop('acq')['L'][25])
+    s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
+    fl.next('t domain before')
+    s = s['ph2',[1,3]]
+    s.reorder('t2',first=False)
+    fl.image(s)
+    s.ft(['ph1','ph2'])
+    s.reorder(['ph1','ph2','indirect'])
+    fl.next('t domain after FTing phase cycles')
+    fl.image(s)
+    print(ndshape(s))
+    return s
 def proc_bruker_CPMG_v1(s,fl=fl):
     print(ndshape(s))
     s.chunk('indirect',['indirect','ph1'],[-1,4])
@@ -103,15 +116,15 @@ def proc_bruker_CPMG_v1(s,fl=fl):
     s.setaxis('ph1',r_[0,2]/2)
     fl.next('raw data before')
     fl.image(s)
-    s.ft('t2',shift=True)
-    fl.next('coherence domain before')
-    fl.image(s)
+    #s.ft('t2',shift=True)
+    #fl.next('coherence domain before')
+    #fl.image(s)
     s.ft(['ph1'])
     fl.next('raw data ftd phase cycling')
     fl.image(s)
-    fl.next('raw data FTd phase cycling t domain')
-    s.ift('t2')
-    fl.image(s)
+    #fl.next('raw data FTd phase cycling t domain')
+    #s.ift('t2')
+    #fl.image(s)
     #anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
     #anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
     #anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
@@ -309,6 +322,7 @@ def proc_DOSY_CPMG(s):
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'ag_CPMG_strob':proc_bruker_CPMG_v1,
+        'ag_T1CPMG_2h':proc_bruker_T1CPMG_v1,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
         'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
         'spincore_nutation_v1':proc_nutation,

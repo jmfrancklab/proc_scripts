@@ -1,26 +1,25 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from proc_scripts import *
+from proc_scripts import postproc_dict
 from sympy import symbols
-fl = figlist_var()
+fl = fl_mod()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 rcParams["savefig.transparent"] = True
 # {{{ input parameters
-#clock_correction = 1.785
 clock_correction = 0
-nodename = 'signal'
 filter_bandwidth = 5e3
 t2 = symbols('t2')
 # }}}
-for date,id_string in [
-        ('200303','T1CPMG_AER')
+for searchstr, exp_type, nodename, postproc in [
+        ('w8_200731','test_equip',5,'ag_T1CPMG_2h')
+        #('200303','T1CPMG_AER')
         ]:
-    filename = date+'_'+id_string+'.h5'
-    nodename = 'signal'
-    s = nddata_hdf5(filename+'/'+nodename,
-            directory = getDATADIR(
-                exp_type = 'test_equip'))
-            #{{{ pulling acq params
+    s = find_file(searchstr,exp_type=exp_type,
+            expno=nodename, postproc=postproc,
+            lookup=postproc_dict)
+    fl.show();quit()
+    #{{{ pulling acq params
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
