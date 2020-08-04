@@ -92,19 +92,18 @@ def proc_spincore_CPMG_v1(s, fl=fl):
     s.mean('nScans')
     s.reorder('t2',first=True)
     return s
-def proc_bruker_T1CPMG_v1(s,fl=fl):
-    print(ndshape(s))
-    print(s.get_prop('acq')['L'][25])
+def proc_bruker_T1CPMG_v1(s,fl=None):
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
-    fl.next('t domain before')
     s = s['ph2',[1,3]]
     s.reorder('t2',first=False)
-    fl.image(s)
+    if fl is not None:
+        fl.next('t domain before')
+        fl.image(s)
     s.ft(['ph1','ph2'])
     s.reorder(['ph1','ph2','indirect'])
-    fl.next('t domain after FTing phase cycles')
-    fl.image(s)
-    print(ndshape(s))
+    if fl is not None:
+        fl.next('t domain after FTing phase cycles')
+        fl.image(s)
     return s
 def proc_bruker_CPMG_v1(s,fl=fl):
     print(ndshape(s))

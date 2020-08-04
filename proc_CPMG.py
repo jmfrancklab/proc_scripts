@@ -28,13 +28,15 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
                 expno=nodename, postproc=postproc,
                 lookup=postproc_dict)
     print(ndshape(s))
-    fl.show();quit()
+    #fl.show();quit()
     #{{{ centering CPMG echo
-    s = center_CPMG_echo(s)
-    fl.next('centered echo')
-    fl.image(s)
+    #s = center_CPMG_echo(s)
+    #fl.next('centered echo')
+    #fl.image(s)
     #{{{select echo decay fit function
     s.ft('t2')
+    fl.next('before fitting')
+    fl.image(s)
     f,T2 = decay(s, f_range, indirect='tE')
     fl.plot_curve(f,'T2 relaxation decay')
     #}}}
