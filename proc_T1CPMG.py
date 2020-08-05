@@ -27,10 +27,11 @@ for searchstr, exp_type, nodename, postproc in [
     fl.image(s)
     #}}}
     #{{{chunk t2 axis into echoes
-    s.chunk('t2',['t2','echoes'],[-1,128])
-    s.reorder(['indirect','echoes','t2'])
+    s.chunk('t2',['echoes','t2'],[128,-1])
+    #s.reorder(['indirect','echoes','t2'])
     fl.next('t2 chunked')
     fl.image(s)
+    fl.show();quit()
     #}}}
     #{{{centering echoes
     best_shift = hermitian_function_test(s,fl=fl)

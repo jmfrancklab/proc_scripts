@@ -27,8 +27,9 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
         s = find_file(searchstr, exp_type=exp_type,
                 expno=nodename, postproc=postproc,
                 lookup=postproc_dict)
+    print(s.get_prop('acq')['TD1'][1])
     print(ndshape(s))
-    #fl.show();quit()
+    fl.show();quit()
     #{{{ centering CPMG echo
     #s = center_CPMG_echo(s)
     #fl.next('centered echo')
