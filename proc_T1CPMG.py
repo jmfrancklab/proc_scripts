@@ -28,8 +28,7 @@ for searchstr, exp_type, nodename, postproc in [
     #}}}
     #{{{chunk t2 axis into echoes
     s.chunk('t2',['echoes','t2'],[128,-1])
-    #s.reorder(['indirect','echoes','t2'])
-    fl.next('t2 chunked')
+    fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
     fl.show();quit()
     #}}}
