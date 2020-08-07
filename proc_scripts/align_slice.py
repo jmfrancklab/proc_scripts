@@ -1,4 +1,6 @@
 from pyspecdata import *
+import matplotlib.pyplot as plt
+import numpy as np
 def align_and_slice(s, dimension='t2', convwidth=500, threshold=0.05, fl=None):
     r"""Align the peak frequencies, and automatically slice them -- passing fl assumes you are debugging and want diagnostic plots"""
     if fl is not None:
@@ -28,7 +30,7 @@ def align_and_slice(s, dimension='t2', convwidth=500, threshold=0.05, fl=None):
     if fl is not None:
         fl.pop_marker()
     return s[axis:slices]
-def correlation_align(s,avg,convwidth=0,axis='t2',linestyle='.',color='k',fl=None):
+def correlation_align(s,avg,convwidth=0,axis='t2',color='k',linestyle='',fl=None):
     assert not s.get_ft_prop(axis), 'I want time-domain data'
     assert not avg.get_ft_prop(axis), 'I want time-domain data'
     avg.run(conj)
@@ -52,11 +54,11 @@ def correlation_align(s,avg,convwidth=0,axis='t2',linestyle='.',color='k',fl=Non
         fl.push_marker()
         fl.next('cross-correlation')
         fl.image(forplot,human_units=False)
-        fl.plot(thisline, '.', 'k', linewidth=3, alpha=0.5,
+        fl.plot(thisline, color=color, linestyle=linestyle, linewidth=3, alpha=0.5,
                 human_units=False)
     if fl is not None:
         fl.next('cross-correlation plot')
-        fl.plot(thisline, color, linewidth=3, alpha=0.5,
+        fl.plot(thisline, color=color, linestyle=linestyle, linewidth=3, alpha=0.5,
                 human_units=False)
     return s*exp(-1j*2*pi*myline*s.fromaxis(axis))
 
