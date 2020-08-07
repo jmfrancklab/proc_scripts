@@ -1,0 +1,17 @@
+proc_IR.py has set guess function but not usable yet
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch alec_fitdata_rebased
+# Your branch is up to date with 'origin/alec_fitdata_rebased'.
+#
+# Changes to be committed:
+#	modified:   proc_IR.py
+#
+# Untracked files:
+#	ipynb/20190814_enhancement_prog_power_manual_phasing.pdf
+#	ipynb/20190814_enhancement_prog_power_phase_error.pdf
+#	ipynb/20190814_enhancement_txmon_phase_error.pdf
+#	ipynb/20190814_enhancement_txmon_power_manula_phasing.pdf
+#	ipynb/20190814_spectra_phase_fixed.pdf
+#

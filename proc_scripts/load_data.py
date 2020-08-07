@@ -13,12 +13,15 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     s.setaxis('ph2',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('indirect', s.get_prop('indirect'))
 #titling to coherence domain
-    s.ft('t2',shift=True) #fourier transform
+    #s.ft('t2',shift=True) #fourier transform
+    if fl is not None:
+        fl.next('IR prior to FTing ph')
+        fl.image(s)
     s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
     s.reorder(['indirect','t2'], first=False)
     if fl is not None:
         s_forplot = s.C
-        fl.next('FT + coherence domain')
+        fl.next('FT')
         fl.image(s_forplot)
     if fl is not None:    
         fl.next('time domain (all $\\Delta p$)')
@@ -115,9 +118,6 @@ def proc_bruker_CPMG_v1(s,fl=fl):
     s.setaxis('ph1',r_[0,2]/2)
     fl.next('raw data before')
     fl.image(s)
-    #s.ft('t2',shift=True)
-    #fl.next('coherence domain before')
-    #fl.image(s)
     s.ft(['ph1'])
     fl.next('raw data ftd phase cycling')
     fl.image(s)

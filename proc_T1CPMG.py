@@ -21,6 +21,7 @@ for searchstr, exp_type, nodename, postproc in [
             expno=nodename, postproc=postproc,
             lookup=postproc_dict)
     #{{{select coherence 
+    #fl.show();quit()
     s = s['ph1',0]
     s = s['ph2',-1]
     fl.next('select coherence')
