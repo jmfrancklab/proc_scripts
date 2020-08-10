@@ -100,7 +100,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s = correlation_align(s,avg,color='m',linestyle='dotted',fl=fl)
     #s = correlation_align(s,avg,fl=fl)
     fl.next('s after correlation')
-    s.ft('t2')
+    s.ft('t2',pad=4096)
     fl.plot(s,human_units=False)
     fl.show();quit()
     s.ft(['ph1','ph2'])
