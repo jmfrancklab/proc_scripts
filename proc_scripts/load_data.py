@@ -19,6 +19,7 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
         fl.image(s)
     s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
     s.reorder(['indirect','t2'], first=False)
+    s = s['ph2',0]['ph1',-1]
     if fl is not None:
         s_forplot = s.C
         fl.next('FT')
