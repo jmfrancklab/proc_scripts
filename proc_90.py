@@ -1,14 +1,15 @@
 from pyspecdata import *
-from proc_scripts import *
+from pyspecdata.load_files.bruker_nmr import bruker_data
+from proc_scripts import zeroth_order_ph, calc_baseline, ph1_real_Abs
 from proc_scripts.load_data import postproc_dict
 from scipy.optimize import minimize,curve_fit,least_squares
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 fl = figlist_var()
-for searchstr, exp_type, nodename, postproc in [
+for searchstr, exp_type, which_exp, postproc in [
         ('w8_200731','test_equip',1,'zg2h'),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
-                expno=nodename, postproc=postproc, lookup=postproc_dict)     
+                expno=which_exp, postproc=postproc, lookup=postproc_dict)     
     fl.show();quit()
     if manual_phcyc:
         fl.basename = exp_name
