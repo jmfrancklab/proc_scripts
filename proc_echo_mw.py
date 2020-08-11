@@ -82,8 +82,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s.ift(['ph1','ph2'])
     s.smoosh(['ph2','ph1','power'],'transient')
     print(ndshape(s))
-    s = s['transient',14]
-    print(ndshape(s))
+    s = s['transient',0::20]
     s.ft('t2',pad=4096)
     avg.ft('t2',pad=4096)
     fl.next('s when smooshed')
