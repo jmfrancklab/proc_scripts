@@ -5,31 +5,30 @@ from proc_scripts.load_data import postproc_dict
 from scipy.optimize import minimize,curve_fit,least_squares
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 fl = figlist_var()
-for searchstr, exp_type, which_exp, postproc in [
-        ('w8_200731','test_equip',1,'zg2h'),
+for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
+        ('w8_200731','test_equip',1,'zg2h',False,fl),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
                 expno=which_exp, postproc=postproc, lookup=postproc_dict)     
-    fl.show();quit()
+    #fl.show();quit()
     if manual_phcyc:
         fl.basename = exp_name
         fl.next('image of phase cycle domain')
-        fl.image(d)
-        d.setaxis('ph',r_[0,1,2,3]/4.)
-        d.ft('ph')# based on 90 pulse experiment, we seem to want ft rather than ift for deuterium (phcyc goes around the circle the wrong way)
+        fl.image(s)
+        s.setaxis('ph',r_[0,1,2,3]/4.)
+        s.ft('ph')# based on 90 pulse experiment, we seem to want ft rather than ift for deuterium (phcyc goes around the circle the wrong way)
         fl.next('image of coherence domain')
-        fl.image(d)
-        d = d['ph',-1].C
-    fl.basename = None
-
-    baseline = (d['t2':(None,-100)].C.mean('t2', return_error=False)+d['t2':(300,None)].C.mean('t2', return_error=False)).item()*0.5
-    d -= baseline
+        fl.image(s)
+        s = s['ph',-1].C
+    #s.ft('t2')
+    baseline = (s['t2':(-300,-100)].C.mean('t2')+s['t2':(100,300)].C.mean('t2')).item()*0.5
+    s -= baseline
 
     # Use this to get the 1st order phase correction
-    SW = diff(d.getaxis('t2')[r_[0,-1]]).item()
-    # {{{ generate a series of test spectra with first order correction applied
-    thisph1 = nddata(r_[-6:6:2048j]/SW,'phi1').set_units('phi1','s')
-    phase_test_r = d * exp(-1j*2*pi*thisph1*d.fromaxis('t2'))
+    fl.next('first order phase correction')
+    dw = diff(s.getaxis('t2')[0:2]).item()
+    s = ph1_real_Abs(s,dw,fl=fl)
+    fl.show();quit()
     # }}}
     # {{{ correct the test spectra by the zeroth order correction
     phase_test_rph0 = phase_test_r.C.sum('t2')
