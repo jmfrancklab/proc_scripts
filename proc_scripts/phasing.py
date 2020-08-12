@@ -2,6 +2,7 @@
 from pyspecdata import *
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
+fl=figlist_var()
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
@@ -103,7 +104,7 @@ def zeroth_order_ph(d, fl=None):
         ax.add_patch(ell)
     return exp(1j*ph0)
 
-def ph1_real_Abs(s,dw):
+def ph1_real_Abs(s,dw,fl=None):
     r''' Performs first order phase correction with cost function
     by taking the sum of the absolute value of the real [DeBrouwer2009].
 
@@ -135,9 +136,11 @@ def ph1_real_Abs(s,dw):
     ph0 = s_cost.C.sum('t2')
     ph0 /= abs(ph0)
     s_cost /= ph0
-    fl.next('phasing cost function')
+    if fl is not None:
+        fl.next('phasing cost function')
     s_cost.run(real).run(abs).sum('t2')
-    fl.plot(s_cost,'.')
+    if fl is not None:
+        fl.plot(s_cost,'.')
     ph1_opt = s_cost.argmin('phcorr').item()
     print('optimal phase correction',repr(ph1_opt))
     # }}}
@@ -159,7 +162,9 @@ def ph1_real_Abs(s,dw):
             bounds=[(ph1_opt-dx,ph1_opt+dx)])
     assert r.success
     s = applyphase(s,r.x.item())
-    fl.plot(r.x,r.fun,'x')
+    if fl is not None:
+        fl.next('first order phase correction')
+        fl.plot(r.x,r.fun,'x')
     fl.pop_marker()
     return s
 
