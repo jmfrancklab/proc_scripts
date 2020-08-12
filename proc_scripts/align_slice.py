@@ -54,11 +54,21 @@ def correlation_align(s,avg,convwidth=0,axis='t2',color='k',linestyle='',fl=None
         fl.push_marker()
         fl.next('cross-correlation')
         fl.image(forplot,human_units=False)
-        fl.plot(thisline, color=color, linestyle=linestyle, linewidth=3, alpha=0.5,
+        fl.plot(thisline.imag,color=color,linestyle='-', linewidth=3, alpha=0.5,
+                human_units=False)
+        fl.plot(thisline.real, color='k', linestyle='--', linewidth=3, alpha=0.5,
                 human_units=False)
     if fl is not None:
+        fl.next('s and avg')
+        fl.plot(s.real,color='r',human_units=False)
+        fl.plot(s.imag,color='b',human_units=False)
+        fl.plot(avg.real,color='m',human_units=False)
+        fl.plot(avg.imag,color='g', human_units=False)
+    if fl is not None:
         fl.next('cross-correlation plot')
-        fl.plot(thisline, color=color, linestyle=linestyle, linewidth=3, alpha=0.5,
+        fl.plot(thisline.real, color='k', linestyle='--', linewidth=3, alpha=0.5,
+                human_units=False)
+        fl.plot(thisline.imag, color='r', linestyle='-', linewidth=3, alpha=0.5,
                 human_units=False)
     return s*exp(-1j*2*pi*myline*s.fromaxis(axis))
 

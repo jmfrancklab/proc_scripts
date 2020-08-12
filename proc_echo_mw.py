@@ -82,7 +82,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s.ift(['ph1','ph2'])
     s.smoosh(['ph2','ph1','power'],'transient')
     print(ndshape(s))
-    s = s['transient',0::20]
+    s = s['transient',13:16]
     s.ft('t2',pad=4096)
     avg.ft('t2',pad=4096)
     fl.next('s when smooshed')
@@ -95,8 +95,8 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s = correlation_align(s,avg,color='r',linestyle='solid',fl=fl)
     s = correlation_align(s,avg,color='y',linestyle='solid',fl=fl)
     s = correlation_align(s,avg,color='g',linestyle='solid',fl=fl)
-    s = correlation_align(s,avg,color='b',linestyle='dotted',fl=fl)
-    s = correlation_align(s,avg,color='m',linestyle='dotted',fl=fl)
+    #s = correlation_align(s,avg,color='b',linestyle='dotted',fl=fl)
+    #s = correlation_align(s,avg,color='m',linestyle='dotted',fl=fl)
     #s = correlation_align(s,avg,fl=fl)
     fl.next('s after correlation')
     s.ft('t2',pad=4096)
