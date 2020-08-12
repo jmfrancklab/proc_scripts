@@ -81,8 +81,20 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # {{{ try to use the correlation align
     s.ift(['ph1','ph2'])
     s.smoosh(['ph2','ph1','power'],'transient')
-    print(ndshape(s))
-    s = s['transient',13:16]
+    #print(ndshape(s))
+    for j in r_[10:17]:
+        for k in r_[12:19]:
+            this_transient = s['transient',j:k]
+            this_correlation = correlation_align(s['transient',j:k],avg)
+            fl.next('correlation plot for transient %j')
+            fl.plot(this_transient.real,color='r',linestyle='-',label='s real')
+            fl.plot(this_transient.imag,color='k',linestyle='--',label='s imag')
+            fl.plot(this_correlation.real,color='y',linestyle='-',label='corr real')
+            fl.plot(this_correlation.imag,color='g',linestyle='--',label='corr imag')
+            fl.plot(avg.real,color='c',linestyle='-',label='avg real')
+            fl.plot(avg.imag,color='m',linestyle='--',label='avg imag')
+    fl.show();quit()    
+    s = s['transient',12:14]
     s.ft('t2',pad=4096)
     avg.ft('t2',pad=4096)
     fl.next('s when smooshed')
@@ -93,12 +105,17 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     avg.ift('t2')
     fl.basename = 'overlay, rainbow order, black=last'
     s = correlation_align(s,avg,color='r',linestyle='solid',fl=fl)
+    s.ift('t2')
+    avg.ift('t2')
     s = correlation_align(s,avg,color='y',linestyle='solid',fl=fl)
+    s.ift('t2')
+    avg.ift('t2')
     s = correlation_align(s,avg,color='g',linestyle='solid',fl=fl)
     #s = correlation_align(s,avg,color='b',linestyle='dotted',fl=fl)
     #s = correlation_align(s,avg,color='m',linestyle='dotted',fl=fl)
     #s = correlation_align(s,avg,fl=fl)
     fl.next('s after correlation')
+    s.ift('t2')
     s.ft('t2',pad=4096)
     fl.plot(s,human_units=False)
     fl.show();quit()
