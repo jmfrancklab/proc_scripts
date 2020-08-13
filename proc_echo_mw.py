@@ -4,6 +4,7 @@ from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
 rcParams["savefig.transparent"] = True
+logger = init_logging("debug")
 
 fl = fl_mod()
 t2 = symbols('t2')
@@ -43,7 +44,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     #}}}
     
     #{{{visualize time domain after filtering and phasing 
-    logger = init_logging("info")
     logger.info(strm("THIS IS THE SHAPE"))
     logger.info(strm(ndshape(s)))
     s = slice_FID_from_echo(s,0,1)['t2':(None,0.05)]
