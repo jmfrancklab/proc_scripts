@@ -81,7 +81,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # {{{ try to use the correlation align
     s.ift(['ph1','ph2'])
     s.smoosh(['ph2','ph1','power'],'transient')
-    #print(ndshape(s))
+    print(ndshape(s))
     for j in r_[10:17]:
             this_transient = s['transient',j]
             this_correlation = correlation_align(s['transient',j],avg)

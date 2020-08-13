@@ -33,6 +33,8 @@ def align_and_slice(s, dimension='t2', convwidth=500, threshold=0.05, fl=None):
 def correlation_align(s,avg,convwidth=0,axis='t2',color='k',linestyle='',fl=None):
     assert not s.get_ft_prop(axis), 'I want time-domain data'
     assert not avg.get_ft_prop(axis), 'I want time-domain data'
+    print(ndshape(s))
+    #s = s.chunk('transient',['ph2','ph1','power'],[2,4,-1])
     avg.run(conj)
     R = pi*convwidth # Lorentzian FWHM formula -- R = 1/T2, FWHM = R/pi
     # ALSO convolve both
@@ -47,10 +49,10 @@ def correlation_align(s,avg,convwidth=0,axis='t2',color='k',linestyle='',fl=None
     phcyc_dims = [j for j in indirect_dims if j.startswith('ph')]
     phcyc_dims.sort()
     indirect_dims = list(set(indirect_dims) - set(phcyc_dims))
-    logger.debug(strm("phcyc_dims",phcyc_dims,"indirect_dimlabels",indirect_dims))
+    logger.info(strm("phcyc_dims",phcyc_dims,"indirect_dimlabels",indirect_dims))
     forplot.smoosh(phcyc_dims+indirect_dims,'indirect',noaxis=True).setaxis('indirect','#').reorder('indirect',first=False)
     thisline = myline.C
-    thisline.smoosh(phcyc_dims+indirect_dims, 'indirect', noaxis=True).setaxis('indirect','#').reorder('indirect',first=True)
+    thisline.smoosh([phcyc_dims,indirect_dims], 'indirect', noaxis=True).setaxis('indirect','#').reorder('indirect',first=True)
     if fl is not None:
         fl.push_marker()
         fl.next('cross-correlation')
