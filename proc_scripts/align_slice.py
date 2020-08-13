@@ -47,9 +47,9 @@ def correlation_align(s,avg,convwidth=0,axis='t2',color='k',linestyle='',fl=None
     phcyc_dims = [j for j in indirect_dims if j.startswith('ph')]
     phcyc_dims.sort()
     indirect_dims = list(set(indirect_dims) - set(phcyc_dims))
-    forplot.smoosh(phcyc_dims+indirect_dims,'indirect').setaxis('indirect','#').reorder('indirect',first=False)
+    forplot.smoosh(phcyc_dims+indirect_dims,'indirect',noaxis=True).setaxis('indirect','#').reorder('indirect',first=False)
     thisline = myline.C
-    thisline.smoosh(phcyc_dims+indirect_dims, 'indirect').setaxis('indirect','#').reorder('indirect',first=True)
+    thisline.smoosh(phcyc_dims+indirect_dims, 'indirect', noaxis=True).setaxis('indirect','#').reorder('indirect',first=True)
     if fl is not None:
         fl.push_marker()
         fl.next('cross-correlation')

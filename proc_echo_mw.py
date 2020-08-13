@@ -83,10 +83,9 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s.smoosh(['ph2','ph1','power'],'transient')
     #print(ndshape(s))
     for j in r_[10:17]:
-        for k in r_[12:19]:
-            this_transient = s['transient',j:k]
-            this_correlation = correlation_align(s['transient',j:k],avg)
-            fl.next('correlation plot for transient %j')
+            this_transient = s['transient',j]
+            this_correlation = correlation_align(s['transient',j],avg)
+            fl.next('correlation plot for transient %d'%j)
             fl.plot(this_transient.real,color='r',linestyle='-',label='s real')
             fl.plot(this_transient.imag,color='k',linestyle='--',label='s imag')
             fl.plot(this_correlation.real,color='y',linestyle='-',label='corr real')
