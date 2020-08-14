@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import *
+from proc_scripts import fl_mod,center_CPMG_echo
 from proc_scripts import postproc_dict
 from sympy import symbols
 from proc_scripts.fitting import decay
@@ -33,21 +33,10 @@ for searchstr, exp_type, nodename, postproc in [
     fl.image(s)
     #}}}
     #{{{centering echoes
-    best_shift = hermitian_function_test(s,fl=fl)
-    logger.info(strm("best shift is",best_shift))
-    s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('centered')
-    fl.image(s)
     s = center_CPMG_echo(s)
     fl.next('centered with center cpmg echo function')
     fl.image(s)
-    #}}}
-    #{{{zeroth order phase correction
-    ph0 = s['t2':0]
-    ph0 = zeroth_order_ph(ph0, fl=fl)
-    s /= ph0
-    fl.next('after phasing')
-    fl.image(s)
+    s = s['t2',:4]
     #}}}
     #{{{fitting decay function
     s.ft('t2')
