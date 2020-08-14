@@ -31,7 +31,6 @@ for searchstr, exp_type, nodename, postproc in [
     s.chunk('t2',['echoes','t2'],[128,-1])
     fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
-    fl.show();quit()
     #}}}
     #{{{centering echoes
     best_shift = hermitian_function_test(s,fl=fl)
@@ -52,6 +51,9 @@ for searchstr, exp_type, nodename, postproc in [
     #}}}
     #{{{fitting decay function
     s.ft('t2')
+    fl.next('freq domain')
+    fl.image(s)
+    fl.show();quit()
     f,T2 = decay(s, (None,None), indirect='echoes')
     fl.plot_curve(f,'T2 relaxation decay')
     fl.show();quit()
