@@ -81,17 +81,23 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     # {{{ try to use the correlation align
     s.ift(['ph1','ph2'])
     s.smoosh(['ph2','ph1','power'],'transient')
+    d = s.C
+    d.ft('t2')
+    A = avg.C
+    A.ft('t2')
     #print(ndshape(s))
     for j in r_[10:17]:
-            this_transient = s['transient',j]
-            this_correlation = correlation_align(s['transient',j],avg)
+            this_transient = d['transient',j]
             fl.next('correlation plot for transient %d'%j)
             fl.plot(this_transient.real,color='r',linestyle='-',label='s real')
             fl.plot(this_transient.imag,color='k',linestyle='--',label='s imag')
-            fl.plot(this_correlation.real,color='y',linestyle='-',label='corr real')
-            fl.plot(this_correlation.imag,color='g',linestyle='--',label='corr imag')
-            fl.plot(avg.real,color='c',linestyle='-',label='avg real')
-            fl.plot(avg.imag,color='m',linestyle='--',label='avg imag')
+            #s.ift('t2')
+            this_correlation = correlation_align(s['transient',j],avg)
+            corr = this_correlation.ft('t2')
+            fl.plot(corr.real,color='y',linestyle='-',label='corr real')
+            fl.plot(corr.imag,color='g',linestyle='--',label='corr imag')
+            fl.plot(A.real,color='c',linestyle='-',label='avg real')
+            fl.plot(A.imag,color='m',linestyle='--',label='avg imag')
     fl.show();quit()    
     s = s['transient',12:14]
     s.ft('t2',pad=4096)
