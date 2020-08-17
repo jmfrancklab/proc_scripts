@@ -16,7 +16,7 @@ def center_CPMG_echo(s, axis='t2',fl=None):
     s: nddata
         contains echo-like data with two or more dimensions
     """
-    echo_center = hermitian_function_test(s, fl=fl)
+    echo_center = hermitian_function_test(s, fl=None)
     logger.info(strm("echo center is",echo_center))
     s.setaxis(axis, lambda x: x-echo_center)
     s.register_axis({axis:0})
@@ -24,7 +24,6 @@ def center_CPMG_echo(s, axis='t2',fl=None):
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
     s = s[axis:(-time_bound,time_bound)]
     assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound=%g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
-
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
     """optimize the first and second order phase of a CPMG pulse sequence

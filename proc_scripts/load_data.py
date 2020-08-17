@@ -3,7 +3,6 @@ from .Utility import dBm2power
 import os
 from sympy import symbols
 import logging
-fl=figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     print("this is the 90 time")
@@ -99,14 +98,14 @@ def proc_spincore_CPMG_v1(s, fl=fl):
 def proc_bruker_T1CPMG_v1(s,fl=None):
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
     s = s['ph2',[1,3]]
-    s.reorder('t2',first=False)
+    #s.reorder('t2',first=False)
     if fl is not None:
-        fl.next('t domain before')
+        fl.next('t domain,phcyc domain')
         fl.image(s)
     s.ft(['ph1','ph2'])
     s.reorder(['ph1','ph2','indirect'])
     if fl is not None:
-        fl.next('t domain after FTing phase cycles')
+        fl.next('t domain coh domain')
         fl.image(s)
     return s
 def proc_bruker_CPMG_v1(s,fl=fl):

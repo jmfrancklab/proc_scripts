@@ -4,8 +4,9 @@ from proc_scripts import fl_mod,center_CPMG_echo
 from proc_scripts import postproc_dict
 from sympy import symbols
 from proc_scripts.fitting import decay
+logger = init_logging("debug")
+
 fl = fl_mod()
-logger = init_logging("info")
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 rcParams["savefig.transparent"] = True
 # {{{ input parameters
@@ -13,15 +14,13 @@ clock_correction = 0
 filter_bandwidth = 5e3
 t2 = symbols('t2')
 # }}}
-for searchstr, exp_type, nodename, postproc in [
-        ('w8_200731','test_equip',5,'ag_T1CPMG_2h')
+for searchstr, exp_type, nodename in [
+        ('w8_200731','test_equip',5)
         #('200303','T1CPMG_AER')
         ]:
     s = find_file(searchstr,exp_type=exp_type,
-            expno=nodename, postproc=postproc,
-            lookup=postproc_dict)
+            expno=nodename,lookup=postproc_dict, fl=fl)
     #{{{select coherence 
-    #fl.show();quit()
     s = s['ph1',0]
     s = s['ph2',-1]
     fl.next('select coherence')
@@ -31,6 +30,7 @@ for searchstr, exp_type, nodename, postproc in [
     s.chunk('t2',['echoes','t2'],[128,-1])
     fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
+    fl.show();quit() 
     #}}}
     #{{{centering echoes
     s = center_CPMG_echo(s)
