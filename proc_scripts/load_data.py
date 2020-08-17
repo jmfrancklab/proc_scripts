@@ -4,7 +4,7 @@ import os
 from sympy import symbols
 import logging
 #to use type s = load_data("nameoffile")
-def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
+def proc_bruker_deut_IR_withecho_mancyc(s,fl=None):
     print("this is the 90 time")
     print(s.get_prop('acq')['P'][1])
     s.chunk('indirect',['indirect','ph2','ph1'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
@@ -33,7 +33,7 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
         fl.image(s_forplot)
     return s
 
-def proc_bruker_deut_IR_mancyc(s, fl=fl):
+def proc_bruker_deut_IR_mancyc(s, fl=None):
     print("this is the d1")
     print(s.get_prop('acq')['D'][1])
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
@@ -59,7 +59,7 @@ def proc_bruker_deut_IR_mancyc(s, fl=fl):
     fl.show()
     return s
 
-def proc_spincore_CPMG_v1(s, fl=fl):
+def proc_spincore_CPMG_v1(s, fl=None):
     print(ndshape(s))
     logger.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
@@ -108,7 +108,7 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
         fl.next('t domain coh domain')
         fl.image(s)
     return s
-def proc_bruker_CPMG_v1(s,fl=fl):
+def proc_bruker_CPMG_v1(s,fl=None):
     print(ndshape(s))
     s.chunk('indirect',['indirect','ph1'],[-1,4])
     s.setaxis('ph1',r_[0,2,0,2]/4)
