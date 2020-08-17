@@ -36,7 +36,7 @@ for searchstr, exp_type, nodename, postproc in [
     s = center_CPMG_echo(s)
     fl.next('centered with center cpmg echo function')
     fl.image(s)
-    s = s['t2',:4]
+    fl.show();quit()
     #}}}
     #{{{fitting decay function
     s.ft('t2')
