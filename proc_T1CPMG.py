@@ -5,7 +5,6 @@ from proc_scripts import postproc_dict
 from sympy import symbols
 from proc_scripts.fitting import decay
 logger = init_logging("debug")
-
 fl = fl_mod()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 rcParams["savefig.transparent"] = True
