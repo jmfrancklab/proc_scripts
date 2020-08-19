@@ -114,13 +114,15 @@ def proc_bruker_CPMG_v1(s,fl=None):
     s.setaxis('ph1',r_[0,2,0,2]/4)
     #s.reorder('t2',first=False)
     print(ndshape(s))
-    s = s['ph1',2:4]
+    s = s['ph1',0:2]
     s.setaxis('ph1',r_[0,2]/2)
-    fl.next('raw data before')
-    fl.image(s)
+    if fl is not None:
+        fl.next('raw data before')
+        fl.image(s)
     s.ft(['ph1'])
-    fl.next('raw data ftd phase cycling')
-    fl.image(s)
+    if fl is not None:
+        fl.next('raw data ftd phase cycling')
+        fl.image(s)
     #fl.next('raw data FTd phase cycling t domain')
     #s.ift('t2')
     #fl.image(s)

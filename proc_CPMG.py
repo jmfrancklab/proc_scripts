@@ -26,14 +26,13 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
     if postproc=='ag_CPMG_strob':
         s = find_file(searchstr, exp_type=exp_type,
                 expno=nodename, postproc=postproc,
-                lookup=postproc_dict)
-    #print(s.get_prop('acq')['TD1'][1])
-    print(ndshape(s))
+                lookup=postproc_dict,fl=fl)
+    #fl.show();quit()
+        #{{{ centering CPMG echo
+    s = center_CPMG_echo(s)
+    fl.next('centered echo')
+    fl.image(s)
     fl.show();quit()
-    #{{{ centering CPMG echo
-    #s = center_CPMG_echo(s)
-    #fl.next('centered echo')
-    #fl.image(s)
     #{{{select echo decay fit function
     s.ft('t2')
     fl.next('before fitting')
