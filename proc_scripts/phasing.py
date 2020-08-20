@@ -164,7 +164,7 @@ def ph1_real_Abs(s,dw):
     fl.pop_marker()
     return s
 
-@profile
+#@profile
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
 
     r"""determine the center of the echo
@@ -221,6 +221,8 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     logger.info(strm(ndshape(s_foropt)))
     center_point = s_foropt['t2',n_points//2+1]
     s_foropt /= center_point/abs(center_point)
+    print("SHAPE OF S_FOROPT")
+    print(ndshape(s_foropt))
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).mean_all_but(['shift','R2'])
     # in the following, weight for the total signal recovered

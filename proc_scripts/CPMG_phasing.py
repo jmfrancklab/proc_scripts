@@ -3,7 +3,7 @@ from sympy import symbols
 from proc_scripts import *
 import math
 from line_profiler import LineProfiler
-@profile
+#@profile
 def center_CPMG_echo(s, axis='t2',fl=None):
     """Centers and phases a CPMG echo and returns the centered echo
     

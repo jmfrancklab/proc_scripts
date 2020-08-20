@@ -28,15 +28,17 @@ for searchstr, exp_type, nodename in [
     fl.next('select coherence')
     fl.image(s)
     #}}}
+    #{{{centering echoes
+    s = center_CPMG_echo(s)
+    fl.next('centered with center cpmg echo function')
+    fl.image(s)
+    fl.show();quit()
+
     #{{{chunk t2 axis into echoes
     s.chunk('t2',['echoes','t2'],[128,-1])
     fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
     #}}}
-    #{{{centering echoes
-    s = center_CPMG_echo(s)
-    fl.next('centered with center cpmg echo function')
-    fl.image(s)
     fl.show();quit()
     #}}}
     #{{{fitting decay function
