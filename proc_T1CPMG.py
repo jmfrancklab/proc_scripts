@@ -32,8 +32,6 @@ for searchstr, exp_type, nodename in [
     s.chunk('t2',['echoes','t2'],[128,-1])
     fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
-    print(ndshape(s))
-    fl.show();quit() 
     #}}}
     #{{{centering echoes
     s = center_CPMG_echo(s)

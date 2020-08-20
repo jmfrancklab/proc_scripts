@@ -2,6 +2,7 @@
 from pyspecdata import *
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
+from line_profiler import LineProfiler
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
@@ -163,6 +164,7 @@ def ph1_real_Abs(s,dw):
     fl.pop_marker()
     return s
 
+@profile
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
 
     r"""determine the center of the echo
