@@ -17,7 +17,7 @@ filter_bandwidth = 5e3
 t2 = symbols('t2')
 # }}}
 for searchstr, exp_type, nodename in [
-        ('w8_200731','test_equip',5)
+        ('w8_200731','NMR_Data_AG',5)
         #('200303','T1CPMG_AER')
         ]:
     s = find_file(searchstr,exp_type=exp_type,
@@ -28,17 +28,21 @@ for searchstr, exp_type, nodename in [
     fl.next('select coherence')
     fl.image(s)
     #}}}
-    #{{{centering echoes
-    s = center_CPMG_echo(s)
-    fl.next('centered with center cpmg echo function')
-    fl.image(s)
-    fl.show();quit()
-
     #{{{chunk t2 axis into echoes
     s.chunk('t2',['echoes','t2'],[128,-1])
     fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
-    #}}}
+
+    #{{{centering echoes
+    indirect_range = r_[0:15]
+    for j in indirect_range:
+        s = s['indirect',j]
+        s = center_CPMG_echo(s)
+        fl.next('centered with center cpmg echo function')
+        fl.image(s)
+    fl.show();quit()
+
+        #}}}
     fl.show();quit()
     #}}}
     #{{{fitting decay function

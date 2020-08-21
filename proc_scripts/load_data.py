@@ -114,7 +114,7 @@ def proc_bruker_CPMG_v1(s,fl=None):
     s.setaxis('ph1',r_[0,2,0,2]/4)
     #s.reorder('t2',first=False)
     print(ndshape(s))
-    s = s['ph1',0:2]
+    s = s['ph1',1:3]
     s.setaxis('ph1',r_[0,2]/2)
     if fl is not None:
         fl.next('raw data before')
