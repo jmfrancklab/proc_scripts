@@ -4,7 +4,7 @@ from proc_scripts import *
 import math
 from line_profiler import LineProfiler
 #@profile
-def center_CPMG_echo(s, axis='t2',fl=None):
+def find_echo_center(s, axis='t2',fl=None):
     """Centers and phases a CPMG echo and returns the centered echo
     
     Parameters
@@ -18,8 +18,10 @@ def center_CPMG_echo(s, axis='t2',fl=None):
     s: nddata
         contains echo-like data with two or more dimensions
     """
-    echo_center = hermitian_function_test(s, fl=None)
+    echo_center = hermitian_function_test(s, fl=fl)
     logger.info(strm("echo center is",echo_center))
+    return echo_center 
+def center_echo(s, echo_center, axis='t2',fl=None):
     s.setaxis(axis, lambda x: x-echo_center)
     s.register_axis({axis:0})
     s /= zeroth_order_ph(s[axis:0])

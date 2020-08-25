@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import fl_mod,center_CPMG_echo
+from proc_scripts import fl_mod,find_echo_center, center_echo
 from proc_scripts import postproc_dict
 from sympy import symbols
 from proc_scripts.fitting import decay
@@ -32,14 +32,23 @@ for searchstr, exp_type, nodename in [
     s.chunk('t2',['echoes','t2'],[128,-1])
     fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
-
+    print("shape of s")
+    print(ndshape(s))
     #{{{centering echoes
-    indirect_range = r_[0:15]
-    for j in indirect_range:
-        s = s['indirect',j]
-        s = center_CPMG_echo(s)
-        fl.next('centered with center cpmg echo function')
-        fl.image(s)
+    centers = []
+    for j in r_[0:15]:
+        s_slice = s['indirect',j]['echoes',0:128]['t2',0:31]
+        s_slice = find_echo_center(s_slice)
+        fl.next('individual slice')
+        fl.image(s_slice)
+        centers.append(s_slice)
+    print(centers)
+    avg_center = sum(centers)/len(centers)
+    s.ft('t2')
+    s = center_echo(s, avg_center)
+    fl.next('s centered')
+    fl.image(s)
+    print(ndshape(s))
     fl.show();quit()
 
         #}}}
