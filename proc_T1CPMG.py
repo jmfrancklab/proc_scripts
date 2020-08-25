@@ -32,8 +32,8 @@ for searchstr, exp_type, nodename in [
     s.chunk('t2',['echoes','t2'],[128,-1])
     fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
-    print("shape of s")
     print(ndshape(s))
+    #}}}
     #{{{centering echoes
     centers = []
     for j in r_[0:15]:
