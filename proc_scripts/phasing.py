@@ -166,7 +166,6 @@ def ph1_real_Abs(s,dw):
 
 #@profile
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
-
     r"""determine the center of the echo
 
     .. todo::

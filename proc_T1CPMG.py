@@ -23,36 +23,38 @@ for searchstr, exp_type, nodename in [
     s = find_file(searchstr,exp_type=exp_type,
             expno=nodename,lookup=postproc_dict, fl=fl)
     #{{{select coherence 
-    s = s['ph1',0]
-    s = s['ph2',-1]
+    s = s['ph1',0]['ph2',-1]
     fl.next('select coherence')
     fl.image(s)
     #}}}
     #{{{chunk t2 axis into echoes
-    s.chunk('t2',['echoes','t2'],[128,-1])
+    num_echoes = int(s.get_prop('acq')['L'][25])
+    logger.debug(strm("here is the t2 axis before chunking the echoes",
+        s.getaxis('t2')[r_[0,-1]]))
+    s.chunk('t2',['echoes','t2'],[num_echoes,-1])
+    logger.debug(strm("here is the t2 axis after chunking the echoes",
+        s.getaxis('t2')[r_[0,-1]]))
     fl.next('t2 chunked', figsize=(5,20))
     fl.image(s)
-    print(ndshape(s))
     #}}}
     #{{{centering echoes
     centers = []
-    for j in r_[0:15]:
-        s_slice = s['indirect',j]['echoes',0:128]['t2',0:31]
-        s_slice = find_echo_center(s_slice)
-        fl.next('individual slice')
-        fl.image(s_slice)
-        centers.append(s_slice)
-    print(centers)
+    for j in range(ndshape(s)['indirect']):
+        s_slice = s['indirect',j]
+        this_center = find_echo_center(s_slice)
+        centers.append(this_center)
+    logger.info(centers)
     avg_center = sum(centers)/len(centers)
     s.ft('t2')
+    logger.info(ndshape(s))
     s = center_echo(s, avg_center)
+    logger.info(ndshape(s))
     fl.next('s centered')
+    logger.info(ndshape(s))
     fl.image(s)
-    print(ndshape(s))
+    logger.info(ndshape(s))
     fl.show();quit()
-
-        #}}}
-    fl.show();quit()
+    #}}}
     #}}}
     #{{{fitting decay function
     s.ft('t2')
