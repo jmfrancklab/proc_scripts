@@ -20,7 +20,10 @@ def find_echo_center(s, axis='t2',fl=None):
     logger.info(strm("echo center is",echo_center))
     return echo_center 
 def center_echo(s, echo_center, axis='t2',fl=None):
+    logger.debug(strm("t2 axis start and stop before shifting",s.getaxis(axis)[r_[0,-1]]))
+    logger.debug(strm("about to subtract",echo_center,"from the axis"))
     s.setaxis(axis, lambda x: x-echo_center)
+    logger.debug(strm("t2 axis start and stop",s.getaxis(axis)[r_[0,-1]]))
     s.register_axis({axis:0})
     s /= zeroth_order_ph(s[axis:0])
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
