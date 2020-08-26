@@ -107,6 +107,15 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     if fl is not None:
         fl.next('t domain coh domain')
         fl.image(s)
+    s = s['ph1',0]['ph2',-1]
+    if fl is not None:
+        fl.next('select coherence')
+        fl.image(s)
+    num_echoes = int(s.get_prop('acq')['L'][25])
+    s.chunk('t2',['echoes','t2'],[num_echoes,-1])
+    if fl is not None:
+        fl.next('t2 chunked', figsize=(5,20))
+        fl.image(s)
     return s
 def proc_bruker_CPMG_v1(s,fl=None):
     print(ndshape(s))

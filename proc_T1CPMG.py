@@ -22,37 +22,22 @@ for searchstr, exp_type, nodename in [
         ]:
     s = find_file(searchstr,exp_type=exp_type,
             expno=nodename,lookup=postproc_dict, fl=fl)
-    #{{{select coherence 
-    s = s['ph1',0]['ph2',-1]
-    fl.next('select coherence')
-    fl.image(s)
-    #}}}
-    #{{{chunk t2 axis into echoes
-    num_echoes = int(s.get_prop('acq')['L'][25])
-    logger.debug(strm("here is the t2 axis before chunking the echoes",
-        s.getaxis('t2')[r_[0,-1]]))
-    s.chunk('t2',['echoes','t2'],[num_echoes,-1])
-    logger.debug(strm("here is the t2 axis after chunking the echoes",
-        s.getaxis('t2')[r_[0,-1]]))
-    fl.next('t2 chunked', figsize=(5,20))
-    fl.image(s)
-    #}}}
     #{{{centering echoes
+    s.ft('t2',shift=True)
+    s.ift('t2')
     centers = []
     for j in range(ndshape(s)['indirect']):
         s_slice = s['indirect',j]
-        this_center = find_echo_center(s_slice)
+        this_center = find_echo_center(s_slice,fl=fl)
         centers.append(this_center)
     logger.info(centers)
     avg_center = sum(centers)/len(centers)
-    s.ft('t2')
-    logger.info(ndshape(s))
+    logger.info(strm("averaged center is",avg_center))
+    print("here is the t2 axis before centering",
+        s.getaxis('t2')[r_[0,-1]])
     s = center_echo(s, avg_center)
-    logger.info(ndshape(s))
     fl.next('s centered')
-    logger.info(ndshape(s))
     fl.image(s)
-    logger.info(ndshape(s))
     fl.show();quit()
     #}}}
     #}}}
@@ -63,5 +48,5 @@ for searchstr, exp_type, nodename in [
     fl.show();quit()
     f,T2 = decay(s, (None,None), indirect='echoes')
     fl.plot_curve(f,'T2 relaxation decay')
-    fl.show();quit()
+    how();quit()
 
