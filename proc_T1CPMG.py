@@ -32,12 +32,17 @@ for searchstr, exp_type, nodename in [
         centers.append(this_center)
     logger.info(centers)
     avg_center = sum(centers)/len(centers)
-    logger.info(strm("averaged center is",avg_center))
-    print("here is the t2 axis before centering",
-        s.getaxis('t2')[r_[0,-1]])
     s = center_echo(s, avg_center)
     fl.next('s centered')
     fl.image(s)
+    fl.next('s centered in freq domain')
+    s.ft('t2')
+    fl.image(s)
+    s = s['t2':(-30,30)]
+    s.sum('t2')
+    fl.next('summed along t2')
+    fl.image(s)
+    print(ndshape(s))
     fl.show();quit()
     #}}}
     #}}}
