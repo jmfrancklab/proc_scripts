@@ -97,13 +97,50 @@ def proc_spincore_CPMG_v1(s, fl=None):
     return s
 def proc_bruker_T1CPMG_v1(s,fl=None):
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
+    s.reorder('t2',first=False)
     s = s['ph2',[1,3]]
-    #s.reorder('t2',first=False)
     if fl is not None:
         fl.next('t domain,phcyc domain')
         fl.image(s)
+    anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
+    anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
+    anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
+    for m in anavpt_matches:
+        if m is not None:
+            anavpt = int(m.groups()[0])
+    actual_SW = 20e6/anavpt 
+    bruker_final_t2_value = double(s.getaxis('t2')[-1].item())
+    s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
+    s.rename('indirect','nScans')
+    nEchoes = s.get_prop('acq')['L'][25]
+    nPhaseSteps = (s.get_prop('acq')['L'][21])*(s.get_prop('acq')['L'][22])
+    dwdel1 = 6.5e-6
+    dwdel2 = (anavpt*0.05e-6)/2
+    d12 = s.get_prop('acq')['D'][12]
+    d11 = s.get_prop('acq')['D'][11]
+    p90_s = s.get_prop('acq')['P'][1]
+    TD = 8192
+    quad_pts = TD/2
+    nPoints = quad_pts/nEchoes
+    acq_time = dwdel2*nPoints*2
+    tau_extra = 20e-6
+    tau_pad_start = tau_extra-dwdel1-6e-6
+    tau_pad_end = tau_extra-6e-6
+    twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
+    orig_t = s.getaxis('t2')
+    acq_time_s = orig_t[32] #32=nPoints
+    s.set_units('t2','s')
+    t2_axis = linspace(0,acq_time_s,nPoints)
+    s.setaxis('nScans',r_[0:16])
+    print(ndshape(s))
+    s.chunk('t2',['phsteps','tE','t2'],[int(nPhaseSteps),int(nEchoes),-1])
+    s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
+    s.ft('t2', shift=True)
+    if fl is not None:
+        fl.next('raw data - chunking ft')
+        fl.image(s)
     s.ft(['ph1','ph2'])
-    s.reorder(['ph1','ph2','indirect'])
+    s.reorder(['ph1','ph2','nScans'])
     if fl is not None:
         fl.next('t domain coh domain')
         fl.image(s)
@@ -111,8 +148,8 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     if fl is not None:
         fl.next('select coherence')
         fl.image(s)
-    num_echoes = int(s.get_prop('acq')['L'][25])
-    s.chunk('t2',['echoes','t2'],[num_echoes,-1])
+    s.ift('t2')
+    s.reorder('nScans',first=True)
     if fl is not None:
         fl.next('t2 chunked', figsize=(5,20))
         fl.image(s)
