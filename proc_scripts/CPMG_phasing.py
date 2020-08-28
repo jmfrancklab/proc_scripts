@@ -24,7 +24,15 @@ def center_echo(s, echo_center, axis='t2',fl=None):
     s.register_axis({axis:0})
     print("after register axis, t2 axis is", s.getaxis(axis))
     s /= zeroth_order_ph(s[axis:0],fl=fl)
+    if fl is not None:
+        fl.next('real')
+        fl.image(s.real)
+    if fl is not None:
+        fl.next('imaginary')
+        fl.image(s.imag)
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
+    print("time bound is",time_bound)
+    return s
     axis_before = ndshape(s)[axis]
     s = s[axis:(-time_bound,time_bound)]
     axis_after = ndshape(s)[axis]

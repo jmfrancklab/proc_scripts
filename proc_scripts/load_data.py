@@ -111,7 +111,7 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
             anavpt = int(m.groups()[0])
     actual_SW = 20e6/anavpt 
     bruker_final_t2_value = double(s.getaxis('t2')[-1].item())
-    #s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
+    s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
     s.rename('indirect','nScans')
     nEchoes = s.get_prop('acq')['L'][25]
     nPhaseSteps = (s.get_prop('acq')['L'][21])*(s.get_prop('acq')['L'][22])
