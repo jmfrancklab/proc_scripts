@@ -65,7 +65,7 @@ def zeroth_order_ph(d, fl=None):
     else:
         rotation_vector = mean_vec - assymetry_mag*eigenVectors[:,0]
     ph0 = arctan2(rotation_vector[1],rotation_vector[0])
-    if fl:
+    if fl is not None:
         d_forplot = d.C
         fl.next('check covariance test')
         fl.plot(

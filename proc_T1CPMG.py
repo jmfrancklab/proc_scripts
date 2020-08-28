@@ -7,7 +7,6 @@ from proc_scripts.fitting import decay
 logger = init_logging("debug")
 logger.info("this is a test")
 logger.info("this is a test debug")
-
 fl = fl_mod()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 rcParams["savefig.transparent"] = True
@@ -22,17 +21,6 @@ for searchstr, exp_type, nodename,this_l in [
         ]:
     s = find_file(searchstr,exp_type=exp_type,
             expno=nodename,lookup=postproc_dict, fl=fl)
-    #nEchoes = s.get_prop('acq')['L'][25]
-    #dwdel1 = s.get_prop('acq')['DE']*(e-6)
-    #dwdel2 = ((s.get_prop('acq')['ANAVPT'])*0.05)/2
-    #pts_per_echo=(8192/2)/(s.get_prop('acq')['L'][25]) #here 8192 is td
-    #d12 = s.get_prop('acq')['D'][12]
-    #tau_start = d12-dwdel1-6*(e-6)
-    #tau_end = d12-6(e-6)
-    #twice_tau = dwdel1+5(e-6)+tau_start+(2*dwdel2*pts_per_echo)+tau_end+1(e-6)+5(e-6)
-    #tE_axis = r_[1:nEchoes+1]*twice_tau
-    #fl.show();quit()
-    #{{{centering echoes
     centers = []
     for j in range(ndshape(s)['nScans']):
         s_slice = s['nScans',j]
@@ -40,13 +28,16 @@ for searchstr, exp_type, nodename,this_l in [
         centers.append(this_center)
     logger.info(centers)
     avg_center = sum(centers)/len(centers)
+    print("this is your center",avg_center)
     s = center_echo(s, avg_center)
+    fl.show();quit()
     fl.next('s centered')
     fl.image(s)
-    quit()
     fl.next('s centered in freq domain')
     s.ft('t2')
     fl.image(s)
+    fl.show();quit()
+
     #}}}
     #{{{slice out signal and sum along t2
     s = s['t2':(-30,30)]

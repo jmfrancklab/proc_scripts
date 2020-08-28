@@ -99,8 +99,9 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
     s.reorder('t2',first=False)
     s = s['ph2',[1,3]]
+    s.reorder(['indirect','ph2','ph1','t2'])
     if fl is not None:
-        fl.next('t domain,phcyc domain')
+        fl.next('raw data with indirect chunked')
         fl.image(s)
     anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
     anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
@@ -132,7 +133,6 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     s.set_units('t2','s')
     t2_axis = linspace(0,acq_time_s,nPoints)
     s.setaxis('nScans',r_[0:16])
-    print(ndshape(s))
     s.chunk('t2',['phsteps','tE','t2'],[int(nPhaseSteps),int(nEchoes),-1])
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
     s.ft('t2', shift=True)
@@ -142,14 +142,14 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     s.ft(['ph1','ph2'])
     s.reorder(['ph1','ph2','nScans'])
     if fl is not None:
-        fl.next('t domain coh domain')
+        fl.next('freq domain coh domain')
         fl.image(s)
+    #{{{select coherence
     s = s['ph1',0]['ph2',-1]
     if fl is not None:
         fl.next('select coherence')
         fl.image(s)
     s.ift('t2')
-    s.reorder('nScans',first=True)
     if fl is not None:
         fl.next('t2 chunked', figsize=(5,20))
         fl.image(s)
