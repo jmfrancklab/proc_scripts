@@ -21,13 +21,13 @@ def find_echo_center(s, axis='t2',fl=None):
     return echo_center 
 def center_echo(s, echo_center, axis='t2',fl=None):
     s.setaxis(axis, lambda x: x-echo_center)
-    print("before register axis, t2 axis is", s.getaxis(axis))
     s.register_axis({axis:0})
     print("after register axis, t2 axis is", s.getaxis(axis))
     s /= zeroth_order_ph(s[axis:0],fl=fl)
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
     s = s[axis:(-time_bound,time_bound)]
     print("time bound is",time_bound)
+    print("after setting axis to time bounds", s.getaxis(axis))
     assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound %g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
