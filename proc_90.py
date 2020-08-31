@@ -25,6 +25,8 @@ for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
     dw = diff(s.getaxis('t2')[r_[0,-1]]).item()
     s = ph1_real_Abs(s,dw,fl=fl)
     s_before = s.C
+    fl.plot(s)
+    #fl.show();quit()
     #peak = abs(s).contiguous(lambda x:
     #        x > 0.1*x.data.max())
     #def filter_range(thisrange):
@@ -50,20 +52,21 @@ for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
     #baseline = s.fromaxis('t2').run(lambda x: sum(
     #    c[j]*x**j for j in range(len(c))))
     
-    phcorr0,phcorr1,baseline = calc_baseline(s,None)
+    phcorr0,phcorr1,baseline = calc_baseline(this_d=s,ph1lim=50,npts=5,guess=None,fl=fl)
     fl.next('baseline')
     fl.plot(baseline.real,alpha=0.5)
     fl.plot(baseline.imag,alpha=0.5)
     fl.plot(s, alpha=0.1)
-    s -=baseline
+    s = baseline
     fl.next('baseline subtracted',legend=True)
     fl.plot(s,alpha=0.5,label='after')
     fl.plot(s_before,alpha=0.5,label='before')
     # }}}
     s = ph1_real_Abs(s,dw,fl=fl)
     fl.next('with additional first order phasing',legend=True)
-    fl.plot(s)
+    fl.plot(baseline)
     fl.plot(s_before)
+
 
     # {{{ normalize, shift the axis, and select the center 300 Hz of the spectrum
     fl.next('normalized and centered')

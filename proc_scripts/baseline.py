@@ -1,4 +1,5 @@
 from pyspecdata import *
+from scipy.optimize import minimize
 def calc_baseline(this_d,
         ph1lim, 
         npts=5,
@@ -42,7 +43,7 @@ def calc_baseline(this_d,
     def apply_corr(ini_vec):
         phcorr0,phcorr1,baseline_vec = vec_to_params(ini_vec)
         d_test = this_d.C
-        d_test *= exp(-1j*phcorr1*d.fromaxis('t2')-1j*phcorr0)
+        d_test *= exp(-1j*phcorr1*this_d.fromaxis('t2')-1j*phcorr0)
         d_test.ift('t2')
         retval = d_test['t2',0:len(baseline_vec)] + baseline_vec
         d_test['t2',0:len(baseline_vec)] = retval
@@ -60,7 +61,7 @@ def calc_baseline(this_d,
     print(shape(mybounds))
     print(mybounds)
     mybounds = r_[
-            r_[(-1*pi),(pi),(-1*ph1lim),(ph1lim)].reshape(-1,2),
+            r_[(-3.14),(3.14),(-1*ph1lim),(ph1lim)].reshape(-1,2),
             mybounds]
     if guess is None:
         guess = zeros(npts*2+2)
@@ -68,14 +69,15 @@ def calc_baseline(this_d,
         guess = r_[guess[0].real,
                 guess[1].real,
                 guess[2:].view(float64)]
-    res = minimize(costfun, (guess,),
-            method='L-BFGS-B',
-            bounds=mybounds,
-            )
+    res = minimize(costfun, (guess),
+        method='L-BFGS-B',
+        bounds=mybounds.reshape(-1,2),
+        )
     phcorr0,phcorr1,baseline_vec = vec_to_params(res.x)
     baseline = generate_baseline(baseline_vec)
     if fl is not None:
-        fl.plot(this_d*exp(-1j*phcorr1*d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
+        fl.plot(this_d*exp(-1j*phcorr1*this_d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
             label='after')
+    baseline = this_d*exp(-1j*phcorr1*this_d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2')    
     return phcorr0,phcorr1,baseline
 
