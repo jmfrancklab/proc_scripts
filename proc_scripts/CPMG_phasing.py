@@ -25,10 +25,17 @@ def center_echo(s, echo_center, axis='t2',fl=None):
     print("after register axis, t2 axis is", s.getaxis(axis))
     s /= zeroth_order_ph(s[axis:0],fl=fl)
     if fl is not None:
-        fl.next('real')
-        fl.image(s.real)
+        fl.next('absolute')
+        fl.image(abs(s))
     if fl is not None:
         fl.next('imaginary')
+        fl.image(s.imag)
+    if fl is not None:
+        fl.next('absolute, freq domain')
+        s.ft('t2')
+        fl.image(abs(s))
+    if fl is not None:
+        fl.next('imaginary,freq domain')
         fl.image(s.imag)
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
     print("time bound is",time_bound)
