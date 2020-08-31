@@ -21,18 +21,23 @@ for searchstr, exp_type, nodename,this_l in [
         ]:
     s = find_file(searchstr,exp_type=exp_type,
             expno=nodename,lookup=postproc_dict, fl=fl)
+    fl.next('selected coherence')
+    s = s['ph2',-1]['ph1',0]
+    fl.image(s)
+    #fl.show();quit()
     centers = []
-    for j in range(ndshape(s)['nScans']):
-        s_slice = s['nScans',j]
+    for j in range(ndshape(s)['indirect']):
+        s_slice = s['indirect',j]
         this_center = find_echo_center(s_slice,fl=fl)
         centers.append(this_center)
     logger.info(centers)
     avg_center = sum(centers)/len(centers)
     s = center_echo(s, avg_center,fl=fl)
     print(ndshape(s))
+    s = s['tE',20]['indirect',1]
     fl.next('abs vs imag',legend=True)
-    fl.plot(abs(s['tE',20]),'-',label='abs')
-    fl.plot(s.imag['tE',20],'--',label='imag')
+    fl.plot(abs(s),'-',label='abs')
+    fl.plot(s.imag,'--',label='imag')
     fl.show();quit()
     fl.next('s centered')
     fl.image(s)
