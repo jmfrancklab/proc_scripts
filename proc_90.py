@@ -21,18 +21,44 @@ for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
         s = s['ph',-1].C
     #fl.show();quit()
     s.ft('t2')
-    baseline = (s['t2':(None,-30)].C.mean('t2')+s['t2':(30,None)].C.mean('t2')).item()*0.5
-    s -= baseline
-    fl.next('baseline subtracted')
-    fl.plot(s)
-    #fl.show();quit()
-    # Use this to get the 1st order phase correction
     fl.next('first order phase correction')
     dw = diff(s.getaxis('t2')[r_[0,-1]]).item()
     s = ph1_real_Abs(s,dw,fl=fl)
-    fl.next('first order applied')
-    fl.plot(s)
+    s_before = s.C
+    peak = abs(s).contiguous(lambda x:
+            x > 0.1*x.data.max())
+    def filter_range(thisrange):
+        mask = diff(thisrange, axis=1) > 0.1e-6*ones((1,2))
+        thisrange = thisrange[mask].reshape((-1,2))
+        return thisrange
+    peak = filter_range(peak)
+    #assert peak.shape[0] == 1, "there should only be one peak here"+repr(peak.shape)
+    peak = peak[0,:]
+    peak_start,peak_end = peak
+    baseline = s.C
+    xaxis = baseline.getaxis('t2')
+    mask = logical_or(xaxis<peak_start, xaxis>peak_end)
+    baseline.data = baseline.data[mask]
+    baseline.setaxis('t2',xaxis[mask])
+    fl.next('region for baseline',legend=True)
+    fl.plot(baseline.real,'.',alpha=0.5, label='real')
+    fl.plot(baseline.imag,'.',alpha=0.5,label='imag')
+    grab_y = gca().get_ylim()
+    fl.plot(s.real,alpha=0.1)
+    fl.plot(s.imag, alpha=0.1)
+    c,_ = baseline.real.polyfit('t2',order=5)
+    baseline = s.fromaxis('t2').run(lambda x: sum(
+        c[j]*x**j for j in range(len(c))))
+    s -=baseline
+    fl.next('baseline subtracted',legend=True)
+    fl.plot(s,alpha=0.5,label='after')
+    fl.plot(s_before,alpha=0.5,label='before')
     # }}}
+    s = ph1_real_Abs(s,dw,fl=fl)
+    fl.next('with additional first order phasing',legend=True)
+    fl.plot(s)
+    fl.plot(s_before)
+
     # {{{ normalize, shift the axis, and select the center 300 Hz of the spectrum
     fl.next('normalized and centered')
     max_val_at = s.C.argmax('t2').item() #adding maxes to be put on git screen
