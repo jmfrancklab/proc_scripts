@@ -22,17 +22,17 @@ for searchstr, exp_type, nodename,this_l in [
     s = find_file(searchstr,exp_type=exp_type,
             expno=nodename,lookup=postproc_dict, fl=fl)
     centers = []
-    #for j in range(ndshape(s)['nScans']):
-    #    s_slice = s['nScans',j]
-    #    this_center = find_echo_center(s_slice,fl=fl)
-    #    centers.append(this_center)
-    #logger.info(centers)
-    #avg_center = sum(centers)/len(centers)
-    #print("this is your center",avg_center)
-    center = find_echo_center(s['nScans',1])
-    print("THIS IS T2 AXIS BEFORE CENTERING",s.getaxis('t2'))
-    s = center_echo(s, center,fl=fl)
-    print("THIS IS T2 AXIS AFTER CENTERING",s.getaxis('t2'))
+    for j in range(ndshape(s)['nScans']):
+        s_slice = s['nScans',j]
+        this_center = find_echo_center(s_slice,fl=fl)
+        centers.append(this_center)
+    logger.info(centers)
+    avg_center = sum(centers)/len(centers)
+    s = center_echo(s, avg_center,fl=fl)
+    print(ndshape(s))
+    fl.next('abs vs imag',legend=True)
+    fl.plot(abs(s['tE',20]),'-',label='abs')
+    fl.plot(s.imag['tE',20],'--',label='imag')
     fl.show();quit()
     fl.next('s centered')
     fl.image(s)
