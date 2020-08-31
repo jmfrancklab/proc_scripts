@@ -129,28 +129,27 @@ def ph1_real_Abs(s,dw,fl=None):
         https://doi.org/10.1016/j.jmr.2009.09.017
     '''
     fl.push_marker() 
-    ph1 = nddata(r_[-5:5:70j]*dw,'phcorr')
+    ph1 = nddata(r_[-6:6:2048j]/dw,'phcorr').set_units('phcorr','s')
     dx = diff(ph1.getaxis('phcorr')[r_[0,1]]).item()
     ph1 = exp(-1j*2*pi*ph1*s.fromaxis('t2'))
     s_cost = s * ph1
     ph0 = s_cost.C.sum('t2')
     ph0 /= abs(ph0)
     s_cost /= ph0
-    if fl is not None:
-        fl.next('phasing cost function')
     s_cost.run(real).run(abs).sum('t2')
     if fl is not None:
+        fl.next('phasing cost function')
         fl.plot(s_cost,'.')
     ph1_opt = s_cost.argmin('phcorr').item()
     print('optimal phase correction',repr(ph1_opt))
     # }}}
     # {{{ apply the phase corrections
-    def applyphase(arg,ph1):
-        arg *= exp(-1j*2*pi*ph1*arg.fromaxis('t2'))
-        ph0 = arg.C.sum('t2')
+    def applyphase(s,ph1):
+        s *= exp(-1j*2*pi*ph1*s.fromaxis('t2'))
+        ph0 = s.C.sum('t2')
         ph0 /= abs(ph0)
-        arg /= ph0
-        return arg
+        s /= ph0
+        return s
     def costfun(ph1):
         if type(ph1) is ndarray:
             ph1 = ph1.item()

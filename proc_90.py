@@ -6,11 +6,10 @@ from scipy.optimize import minimize,curve_fit,least_squares
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 fl = figlist_var()
 for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
-        ('w8_200731','test_equip',1,'zg2h',False,fl),
+        ('w8_200731','NMR_Data_AG',1,'zg2h',False,fl),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
-                expno=which_exp, postproc=postproc, lookup=postproc_dict)     
-    #fl.show();quit()
+                expno=which_exp, postproc=postproc, lookup=postproc_dict,fl=fl)     
     if manual_phcyc:
         fl.basename = exp_name
         fl.next('image of phase cycle domain')
@@ -20,46 +19,27 @@ for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
         fl.next('image of coherence domain')
         fl.image(s)
         s = s['ph',-1].C
-    #s.ft('t2')
-    baseline = (s['t2':(-300,-100)].C.mean('t2')+s['t2':(100,300)].C.mean('t2')).item()*0.5
+    #fl.show();quit()
+    s.ft('t2')
+    baseline = (s['t2':(None,-30)].C.mean('t2')+s['t2':(30,None)].C.mean('t2')).item()*0.5
     s -= baseline
-
+    fl.next('baseline subtracted')
+    fl.plot(s)
+    #fl.show();quit()
     # Use this to get the 1st order phase correction
     fl.next('first order phase correction')
-    dw = diff(s.getaxis('t2')[0:2]).item()
+    dw = diff(s.getaxis('t2')[r_[0,-1]]).item()
     s = ph1_real_Abs(s,dw,fl=fl)
-    fl.show();quit()
-    # }}}
-    # {{{ correct the test spectra by the zeroth order correction
-    phase_test_rph0 = phase_test_r.C.sum('t2')
-    phase_test_rph0 /= abs(phase_test_rph0)
-    phase_test_r /= phase_test_rph0
-    # }}}
-    # {{{ calculate and plot the cost as a function of the first order correction
-    cost = abs(phase_test_r.real).sum('t2')
-    fl.next('phasing cost function for first order correction')
-    fl.plot(cost,'.',human_units=False)
-    # }}}
-    # {{{ determine and apply the optimal phase correction
-    ph1_opt = cost.argmin('phi1').item()
-    d *= exp(-1j*2*pi*ph1_opt*d.fromaxis('t2')) # first order corr
-    # {{{ determining 0th order correction
-    d_ph0 = d.C.sum('t2') # summing along t2
-    d_ph0 /= abs(d_ph0) # dividing by abs val of the sum
-    d /= d_ph0
-    # }}}
-    # }}}
-    # {{{ show the corrected, unshifted spectrum
-    fl.next('corrected spectrum')
-    fl.plot(d,label="%s ph1=%f ms"%(label_id,ph1_opt/1e-3),human_units=False)
+    fl.next('first order applied')
+    fl.plot(s)
     # }}}
     # {{{ normalize, shift the axis, and select the center 300 Hz of the spectrum
     fl.next('normalized and centered')
-    max_val_at = d.C.argmax('t2').item() #adding maxes to be put on git screen
-    d /= d['t2':max_val_at]
-    d.setaxis('t2',lambda x: x-max_val_at)
-    print("SFO1",d.get_prop('acq')['SFO2'])
-    fl.plot(d['t2':(-150,150)], alpha=0.5, label=r"%s $\nu_0$=%f ppm"%(label_id,max_val_at/d.get_prop('acq')['SFO1']),human_units=False)
+    max_val_at = s.C.argmax('t2').item() #adding maxes to be put on git screen
+    s /= s['t2':max_val_at]
+    s.setaxis('t2',lambda x: x-max_val_at)
+    print("SFO1",s.get_prop('acq')['SFO2'])
+    fl.plot(s['t2':(-150,150)], alpha=0.5, label=r"%s $\nu_0$=%f ppm"%(searchstr,max_val_at/s.get_prop('acq')['SFO1']),human_units=False)
     # }}}
 fl.show() # showing the plot
 quit()
