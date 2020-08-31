@@ -1,8 +1,9 @@
+from pyspecdata import *
 def calc_baseline(this_d,
         ph1lim, 
         npts=5,
         guess=None,
-        show_plots=True):
+        fl=None):
     """
     Calculate the baseline for an FID-like spectrum.
 
@@ -27,8 +28,9 @@ def calc_baseline(this_d,
     phcorr1: first order phase correction
     baseline: generated baseline in form of array
     """
-    if show_plots: fl.next('try baseline correction')
-    if show_plots: fl.plot(this_d,
+    if fl is not None:
+        fl.next('try baseline correction')
+        fl.plot(this_d,
             label='before')
     this_d_tdom = this_d.C.ift('t2')
     blank_tdom = this_d_tdom.C
@@ -58,7 +60,7 @@ def calc_baseline(this_d,
     print(shape(mybounds))
     print(mybounds)
     mybounds = r_[
-            r_[-pi,pi,-ph1lim,ph1lim].reshape(-1,2),
+            r_[(-1*pi),(pi),(-1*ph1lim),(ph1lim)].reshape(-1,2),
             mybounds]
     if guess is None:
         guess = zeros(npts*2+2)
@@ -72,7 +74,8 @@ def calc_baseline(this_d,
             )
     phcorr0,phcorr1,baseline_vec = vec_to_params(res.x)
     baseline = generate_baseline(baseline_vec)
-    if show_plots: fl.plot(this_d*exp(-1j*phcorr1*d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
+    if fl is not None:
+        fl.plot(this_d*exp(-1j*phcorr1*d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
             label='after')
     return phcorr0,phcorr1,baseline
 

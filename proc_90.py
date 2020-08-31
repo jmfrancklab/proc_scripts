@@ -25,30 +25,36 @@ for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
     dw = diff(s.getaxis('t2')[r_[0,-1]]).item()
     s = ph1_real_Abs(s,dw,fl=fl)
     s_before = s.C
-    peak = abs(s).contiguous(lambda x:
-            x > 0.1*x.data.max())
-    def filter_range(thisrange):
-        mask = diff(thisrange, axis=1) > 0.1e-6*ones((1,2))
-        thisrange = thisrange[mask].reshape((-1,2))
-        return thisrange
-    peak = filter_range(peak)
+    #peak = abs(s).contiguous(lambda x:
+    #        x > 0.1*x.data.max())
+    #def filter_range(thisrange):
+    #    mask = diff(thisrange, axis=1) > 0.1e-6*ones((1,2))
+    #    thisrange = thisrange[mask].reshape((-1,2))
+    #    return thisrange
+    #peak = filter_range(peak)
     #assert peak.shape[0] == 1, "there should only be one peak here"+repr(peak.shape)
-    peak = peak[0,:]
-    peak_start,peak_end = peak
-    baseline = s.C
-    xaxis = baseline.getaxis('t2')
-    mask = logical_or(xaxis<peak_start, xaxis>peak_end)
-    baseline.data = baseline.data[mask]
-    baseline.setaxis('t2',xaxis[mask])
-    fl.next('region for baseline',legend=True)
-    fl.plot(baseline.real,'.',alpha=0.5, label='real')
-    fl.plot(baseline.imag,'.',alpha=0.5,label='imag')
-    grab_y = gca().get_ylim()
-    fl.plot(s.real,alpha=0.1)
-    fl.plot(s.imag, alpha=0.1)
-    c,_ = baseline.real.polyfit('t2',order=5)
-    baseline = s.fromaxis('t2').run(lambda x: sum(
-        c[j]*x**j for j in range(len(c))))
+    #peak = peak[0,:]
+    #peak_start,peak_end = peak
+    #baseline = s.C
+    #xaxis = baseline.getaxis('t2')
+    #mask = logical_or(xaxis<peak_start, xaxis>peak_end)
+    #baseline.data = baseline.data[mask]
+    #baseline.setaxis('t2',xaxis[mask])
+    #fl.next('region for baseline',legend=True)
+    #fl.plot(baseline.real,'.',alpha=0.5, label='real')
+    #fl.plot(baseline.imag,'.',alpha=0.5,label='imag')
+    #grab_y = gca().get_ylim()
+    #fl.plot(s.real,alpha=0.1)
+    #fl.plot(s.imag, alpha=0.1)
+    #c,_ = baseline.real.polyfit('t2',order=5)
+    #baseline = s.fromaxis('t2').run(lambda x: sum(
+    #    c[j]*x**j for j in range(len(c))))
+    
+    phcorr0,phcorr1,baseline = calc_baseline(s,None)
+    fl.next('baseline')
+    fl.plot(baseline.real,alpha=0.5)
+    fl.plot(baseline.imag,alpha=0.5)
+    fl.plot(s, alpha=0.1)
     s -=baseline
     fl.next('baseline subtracted',legend=True)
     fl.plot(s,alpha=0.5,label='after')
