@@ -15,7 +15,8 @@ t2 = symbols('t2')
 # }}}
 for searchstr, exp_type, nodename,flat_echo in [
         #('w8_200731','NMR_Data_AG',5,True)
-        ('w8_1AT2RM_200731','NMR_Data_AG',4,True)
+        #('w8_1AT2RM_200731','NMR_Data_AG',4,True)
+        ('w8_1AT4RM_200731','NMR_Data_AG',4,True)
         #('200303','T1CPMG_AER')
         ]:
     s = find_file(searchstr,exp_type=exp_type,
