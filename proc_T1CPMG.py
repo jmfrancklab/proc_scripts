@@ -40,11 +40,10 @@ for searchstr, exp_type, nodename,this_l,flat_echo in [
         logger.info(centers)
         avg_center = sum(centers)/len(centers)
         s = center_echo(s, avg_center, fl=fl)
-    s = s['tE',20]['indirect',1]
-    fl.next('abs vs imag',legend=True)
-    fl.plot(abs(s),'-',label='abs')
-    fl.plot(s.imag,'--',label='imag')
-    fl.show();quit()
+    #s = s['tE',20]['indirect',1]
+    #fl.next('abs vs imag',legend=True)
+    #fl.plot(abs(s),'-',label='abs')
+    #fl.plot(s.imag,'--',label='imag')
     fl.next('s centered')
     fl.image(s)
     fl.next('s centered in freq domain')
@@ -58,18 +57,17 @@ for searchstr, exp_type, nodename,this_l,flat_echo in [
     s.sum('t2')
     fl.next('summed along t2')
     fl.image(s)
-    #fl.show();quit()
     #}}}
     #{{{save to hdf5 file
     #s.name('w8_200731')
     #s.hdf5_write('w8_200731.h5')
     #{{{attempting ILT plot with NNLS_Tikhonov_190104
-    vd_list = s.getaxis('indirect')
+    vd_list = s.get_prop('vd')
     tE_axis = s.getaxis('tE')
     Nx = 50
     Ny = 50
-    Nx_ax = nddata(logspace(-3,5,Nx),'T1')
-    Ny_ax = nddata(logspace(-3,5,Ny),'T2')
+    Nx_ax = nddata(logspace(-5,3,Nx),'T1')
+    Ny_ax = nddata(logspace(-5,3,Ny),'T2')
     data = s.C
     data.rename('indirect','tau1').setaxis('tau1',vd_list)
     data.rename('tE','tau2').setaxis('tau2',tE_axis)

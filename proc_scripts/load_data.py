@@ -119,9 +119,10 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     nEchoes = s.get_prop('acq')['L'][25]
     dwdel1 = s.get_prop('acq')['DE']*1e-6
     dwdel2 = (anavpt*0.05e-6)/2
-    d12 = s.get_prop('acq')['D'][12]
+    #d12 is read as 0 if taken from parameters bc its too small
+    d12 = 20e-6     
     d11 = s.get_prop('acq')['D'][11]
-    p90_s = s.get_prop('acq')['P'][1]
+    p90_s = s.get_prop('acq')['P'][1]*1e-6
     quad_pts = ndshape(s)['t2'] # note tha twe have not yet chunked t2
     nPoints = quad_pts/nEchoes
     acq_time = dwdel2*nPoints*2
@@ -134,7 +135,7 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
     # JF: as you've used it here twice_tau should be the period from one 180 to another
     # }}}
-    s.set_units('t2','s')
+    s.set_units('t2','us')
     s.chunk('t2',['tE','t2'],[nEchoes,-1])
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
     s.ft('t2', shift=True).ft(['ph1','ph2'])
