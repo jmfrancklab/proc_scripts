@@ -13,8 +13,9 @@ clock_correction = 0
 filter_bandwidth = 5e3
 t2 = symbols('t2')
 # }}}
-for searchstr, exp_type, nodename,this_l,flat_echo in [
-        ('w8_200731','NMR_Data_AG',5,0.088,True)
+for searchstr, exp_type, nodename,flat_echo in [
+        #('w8_200731','NMR_Data_AG',5,True)
+        ('w8_1AT2RM_200731','NMR_Data_AG',4,True)
         #('200303','T1CPMG_AER')
         ]:
     s = find_file(searchstr,exp_type=exp_type,
@@ -40,10 +41,13 @@ for searchstr, exp_type, nodename,this_l,flat_echo in [
         logger.info(centers)
         avg_center = sum(centers)/len(centers)
         s = center_echo(s, avg_center, fl=fl)
+    #{{{Used to test if echo is flat or not
     #s = s['tE',20]['indirect',1]
     #fl.next('abs vs imag',legend=True)
     #fl.plot(abs(s),'-',label='abs')
     #fl.plot(s.imag,'--',label='imag')
+    #fl.show();quit()
+    #}}}
     fl.next('s centered')
     fl.image(s)
     fl.next('s centered in freq domain')
@@ -57,6 +61,7 @@ for searchstr, exp_type, nodename,this_l,flat_echo in [
     s.sum('t2')
     fl.next('summed along t2')
     fl.image(s)
+    #fl.show();quit()
     #}}}
     #{{{save to hdf5 file
     #s.name('w8_200731')
