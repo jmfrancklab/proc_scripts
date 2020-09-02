@@ -101,6 +101,7 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
     s = s['ph2',[1,3]]
     s.reorder(['indirect','ph2','ph1','t2'])
+    s.setaxis('indirect', s.get_prop('vd'))
     if fl is not None:
         fl.next('raw data with indirect chunked')
         fl.image(s)

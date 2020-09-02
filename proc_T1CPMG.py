@@ -68,7 +68,6 @@ for searchstr, exp_type, nodename,flat_echo in [
     #s.name('w8_200731')
     #s.hdf5_write('w8_200731.h5')
     #{{{attempting ILT plot with NNLS_Tikhonov_190104
-    vd_list = s.get_prop('vd')
     tE_axis = s.getaxis('tE')
     Nx = 50
     Ny = 50
