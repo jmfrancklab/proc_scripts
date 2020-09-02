@@ -21,7 +21,9 @@ for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
         s = s['ph',-1].C
     #fl.show();quit()
     s.ft('t2')
-    fl.next('first order phase correction')
+    fl.next('before phase correction')
+    fl.plot(s)
+    fl.next('after phase correction')
     dw = diff(s.getaxis('t2')[r_[0,-1]]).item()
     s = ph1_real_Abs(s,dw,fl=fl)
     s_before = s.C
