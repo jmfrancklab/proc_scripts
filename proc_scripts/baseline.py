@@ -30,9 +30,9 @@ def calc_baseline(this_d,
     baseline: generated baseline in form of array
     """
     if fl is not None:
-        fl.next('try baseline correction')
+        fl.next('calc_baseline diagnostic showing before and after application')
         fl.plot(this_d,
-            label='before')
+            label='before baseline correction')
     this_d_tdom = this_d.C.ift('t2')
     blank_tdom = this_d_tdom.C
     blank_tdom.data[:] = 0
@@ -77,7 +77,7 @@ def calc_baseline(this_d,
     baseline = generate_baseline(baseline_vec)
     if fl is not None:
         fl.plot(this_d*exp(-1j*phcorr1*this_d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
-            label='after')
+            label='after baseline correction')
     baseline = this_d*exp(-1j*phcorr1*this_d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2')    
     return phcorr0,phcorr1,baseline
 
