@@ -14,8 +14,8 @@ filter_bandwidth = 5e3
 t2 = symbols('t2')
 # }}}
 for searchstr, exp_type, nodename,flat_echo in [
-        ('w8_200731','NMR_Data_AG',5,True)
-        #('w8_1AT2RM_200731','NMR_Data_AG',4,True)
+        #('w8_200731','NMR_Data_AG',5,True)
+        ('w8_1AT2RM_200731','NMR_Data_AG',4,True)
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
         #('200303','T1CPMG_AER')
         ]:
@@ -62,13 +62,14 @@ for searchstr, exp_type, nodename,flat_echo in [
     s.sum('t2')
     fl.next('summed along t2')
     fl.image(s)
-    fl.show();quit()
+    #fl.show();quit()
     #}}}
     #{{{save to hdf5 file
     #s.name('w8_200731')
     #s.hdf5_write('w8_200731.h5')
     #{{{attempting ILT plot with NNLS_Tikhonov_190104
     tE_axis = s.getaxis('tE')
+    vd_list = s.getaxis('indirect')
     Nx = 50
     Ny = 50
     Nx_ax = nddata(logspace(-5,3,Nx),'T1')
@@ -85,7 +86,7 @@ for searchstr, exp_type, nodename,flat_echo in [
     x.setaxis('T1',log10(Nx_ax.data)).set_units('T1',None)
     x.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
     figure()
-    title(r'$T_{1} - T_{2} distribution$')
+    title(r'$T_{1} - T_{2} distribution$ for water loading 8 1AT/2RM')
     image(x)
     xlabel(r'$log(T_2/$s$)$')
     ylabel(r'$log(T_1/$s$)$')
