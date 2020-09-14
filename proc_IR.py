@@ -39,19 +39,16 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')
     fl.image(s)
-    fl.show();quit()
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    s.reorder(['ph2','ph1','indirect'])
     fl.next('time domain after hermitian test')
     fl.image(s)
     fl.next('frequency domain after')
     s.ft('t2')
     fl.image(s)
-    fl.show();quit()
     s.ift('t2')
     #}}}
     #{{{zeroth order phase correction
