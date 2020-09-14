@@ -11,15 +11,14 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     s.chunk('indirect',['ph2','ph1','indirect'],[2,4,-1]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
-    s.setaxis('indirect', s.get_prop('indirect'))
+    s.setaxis('indirect', s.get_prop('vd'))
 #titling to coherence domain
-    #s.ft('t2',shift=True) #fourier transform
+    s.ft('t2',shift=True) #fourier transform
     if fl is not None:
         fl.next('IR prior to FTing ph')
         fl.image(s)
     s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
     s.reorder(['indirect','t2'], first=False)
-    #s = s['ph2',-1]['ph1',-1]
     if fl is not None:
         s_forplot = s.C
         fl.next('FT')
@@ -324,7 +323,6 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
         'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
         'spincore_nutation_v1':proc_nutation,
-        'spincore_IR_v1':proc_spincore_IR,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_square_wave_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG}
