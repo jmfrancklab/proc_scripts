@@ -17,18 +17,21 @@ def proc_bruker_90_pulse(s,fl=None):
         fl.plot(s)
     return s
 def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
-    s.chunk('indirect',['indirect','ph1','ph2','ph3'],[-1,4,2,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
+    logger.info(strm("this is the 90 time",s.get_prop('acq')['P'][1]))
+    s.chunk('indirect',['ph2','ph1','indirect'],[2,4,-1]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
-    s.setaxis('ph3',r_[0:2.]/4)
-    s.setaxis('indirect', s.get_prop('indirect'))
+    s.setaxis('indirect', s.get_prop('vd'))
 #titling to coherence domain
     s.ft('t2',shift=True) #fourier transform
-    s.ft(['ph1','ph2','ph3']) #fourier transforming from phase cycle dim to coherence dimension
+    if fl is not None:
+        fl.next('IR prior to FTing ph')
+        fl.image(s)
+    s.ft(['ph1','ph2'])
     s.reorder(['indirect','t2'], first=False)
     if fl is not None:
         s_forplot = s.C
-        fl.next('FT + coherence domain')
+        fl.next('FT')
         fl.image(s_forplot)
     if fl is not None:    
         fl.next('time domain (all $\\Delta p$)')
