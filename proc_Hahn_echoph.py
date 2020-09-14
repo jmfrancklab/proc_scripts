@@ -5,6 +5,7 @@ from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
+logger = init_logging('debug')
 
 
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
@@ -22,7 +23,8 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     s.ift('t2')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    logger.info(strm(ndshape(s)))
+    logger.debug(strm(ndshape(s)))
+    quit()
     #}}}
     #{{{ apply phase corrections
     best_shift = hermitian_function_test(s)

@@ -32,26 +32,23 @@ for searchstr,exp_type,nodename, postproc in [
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             clock_correction=clock_correction, dimname='indirect')
-    #{{{filter data
+        #{{{filter data
     if postproc=='spincore_IR_v1':
         s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')
     fl.image(s)
-    fl.show();quit()
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    s.reorder(['ph2','ph1','indirect'])
     fl.next('time domain after hermitian test')
     fl.image(s)
     fl.next('frequency domain after')
     s.ft('t2')
     fl.image(s)
-    #fl.show();quit()
     s.ift('t2')
     #}}}
     #{{{zeroth order phase correction
@@ -76,10 +73,13 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     #}}}
     #{{{recovery curve and fitting
-    s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
+    s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] # bc inverted at high powers
     # below, f_range needs to be defined
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
-    f,T1,g = recovery(s_sliced, (-100,100),
+    fl.next('indirect')
+    fl.plot(s_sliced)
+    fl.show();quit()
+    f,T1,g = recovery(s_sliced, (0,0.5),
             guess={M0:-500, Mi:500, R1:1})
     fl.plot_curve(f,'inversion recovery curve',guess=g)
 fl.show()

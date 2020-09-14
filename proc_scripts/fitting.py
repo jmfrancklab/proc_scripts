@@ -1,9 +1,12 @@
 from pyspecdata import *
 from sympy import symbols
+fl = figlist_var()
 def _fitcurve_initial(s,f_range,direct,indirect,guess):
     if not s.get_ft_prop(direct):
         raise ValueError("Your data should be in the frequency domain!")
     curve = s[direct:f_range].sum(direct).real
+    fl.plot(curve, human_units=False)
+    fl.show();quit()
     return fitdata(curve)
 def _fitcurve_final(f,whichrate,guess):
     logger.info(strm("Functional form", f.functional_form))

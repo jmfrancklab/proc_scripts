@@ -4,7 +4,7 @@ from proc_scripts import *
 from proc_scripts import postproc_dict
 from proc_scripts.fitting import decay
 fl = fl_mod()
-logger = init_logging('info')
+logger = init_logging('debug')
 dwdel1=6.5e-6
 TD=4
 tau_extra=20e-6
@@ -27,12 +27,11 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
         s = find_file(searchstr, exp_type=exp_type,
                 expno=nodename, postproc=postproc,
                 lookup=postproc_dict,fl=fl)
-    #fl.show();quit()
         #{{{ centering CPMG echo
-    s = center_CPMG_echo(s)
+    center = find_echo_center(s)
+    s = center_echo(s,center,fl=fl)
     fl.next('centered echo')
     fl.image(s)
-    fl.show();quit()
     #{{{select echo decay fit function
     s.ft('t2')
     fl.next('before fitting')

@@ -6,6 +6,7 @@ from .slice_FID_from_echo import slice_FID_from_echo
 from .baseline import calc_baseline
 from .Utility import *
 from .CPMG_phasing import find_echo_center, center_echo
+from .fitting import recovery, decay
 
 __all__ = ['zeroth_order_ph',
         'ph1_real_Abs',
@@ -20,6 +21,8 @@ __all__ = ['zeroth_order_ph',
         'power2dBm',
         'Vpp2power',
         'find_echo_center',
-        'center_echo'
+        'center_echo',
+        'recovery',
+        'decay'
         ]
 

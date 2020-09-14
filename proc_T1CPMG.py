@@ -24,7 +24,6 @@ for searchstr, exp_type, nodename,flat_echo in [
     fl.next('selected coherence')
     s = s['ph2',-1]['ph1',0]
     fl.image(s)
-    #fl.show();quit()
     #this section is hard coded for flat echoes. I print the shape of s
     #to get the length of t2 and ensure it is an odd number. I then take 
     #the middle index and set this to 0. We will find a way to not have
@@ -62,7 +61,7 @@ for searchstr, exp_type, nodename,flat_echo in [
     s.sum('t2')
     fl.next('summed along t2')
     fl.image(s)
-    #fl.show();quit()
+    fl.show();quit()
     #}}}
     #{{{save to hdf5 file
     #s.name('w8_200731')
