@@ -33,8 +33,7 @@ for searchstr,exp_type,nodename, postproc in [
             postproc=postproc, lookup=postproc_dict,
             clock_correction=clock_correction, dimname='indirect')
         #{{{filter data
-    if postproc=='spincore_IR_v1':
-        s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
+    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')

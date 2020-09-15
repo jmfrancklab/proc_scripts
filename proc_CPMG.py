@@ -30,6 +30,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
         #{{{ centering CPMG echo
     center = find_echo_center(s)
     s = center_echo(s,center,fl=fl)
+    logger.debug(strm(ndshape(s)))
     fl.next('centered echo')
     fl.image(s)
     #{{{select echo decay fit function

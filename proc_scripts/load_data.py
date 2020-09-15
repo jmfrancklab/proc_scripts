@@ -322,7 +322,7 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ag_T1CPMG_2h':proc_bruker_T1CPMG_v1,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
         'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
-        'spincore_IR_v1':proc_spincore_IR
+        'spincore_IR_v1':proc_spincore_IR,
         'spincore_nutation_v1':proc_nutation,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_square_wave_capture,
