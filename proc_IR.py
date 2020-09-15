@@ -11,7 +11,7 @@ logger = init_logging("info")
 clock_correction = 1.785
 filter_bandwidth = 5e3
 coh_sel = {'ph1':0,
-        'ph2':0}
+        'ph2':-1}
 coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
