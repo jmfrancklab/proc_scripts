@@ -32,7 +32,7 @@ for searchstr,exp_type,nodename, postproc in [
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             clock_correction=clock_correction, dimname='indirect')
-        #{{{filter data
+    #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
     #{{{hermitian function test and apply best shift
