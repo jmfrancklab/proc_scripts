@@ -17,9 +17,9 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        #('200212_IR_3_30dBm', 'test_equip', 'signal', 
-         #   'spincore_IR_v1'),
-        ('w8_200309', 'test_equip',2,'ag_IR2H'),
+        ('w8_200731', 'test_equip', 2, 
+            'ag_IR2H'),
+        #('w8_200309', 'test_equip',2,'ag_IR2H'),
         ]:
     fl.basename = searchstr
     if postproc=='ag_IR2H':
@@ -39,6 +39,7 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')
     fl.image(s)
+    #fl.show();quit()
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
@@ -49,6 +50,7 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('frequency domain after')
     s.ft('t2')
     fl.image(s)
+    #fl.show();quit()
     s.ift('t2')
     #}}}
     #{{{zeroth order phase correction
