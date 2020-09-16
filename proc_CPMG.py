@@ -20,14 +20,9 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
         #('200305_CPMG_3p9_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_4p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         ]:
-    if postproc=='spincore_CPMG_v1':
-        s =  find_file(searchstr, exp_type=exp_type,
-            expno=nodename, postproc=postproc, lookup=postproc_dict)
-    if postproc=='ag_CPMG_strob':
-        s = find_file(searchstr, exp_type=exp_type,
-                expno=nodename, postproc=postproc,
-                lookup=postproc_dict,fl=fl)
-        #{{{ centering CPMG echo
+    s = find_file(searchstr, exp_type=exp_type,
+            expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
+    #{{{ centering CPMG echo
     center = find_echo_center(s)
     s = center_echo(s,center,fl=fl)
     logger.debug(strm(ndshape(s)))
