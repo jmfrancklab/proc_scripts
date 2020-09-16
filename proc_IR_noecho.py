@@ -36,7 +36,6 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
             expno=which_exp, 
             postproc=postproc, lookup=postproc_dict, 
             dimname='indirect')
-    fl.show();quit()
     s.ift('t2')
     #{{{ select appropriate coherence channel
     s = s['ph2',0]['ph1',-1]

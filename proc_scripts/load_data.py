@@ -42,7 +42,7 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     s.setaxis('indirect', s.get_prop('vd'))
 #titling to coherence domain
     s.ft('t2',shift=True) #fourier transform
-    #s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
+    s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
     s.reorder(['indirect','t2'], first=False)
     if fl is not None:
         s_forplot = s.C
@@ -56,7 +56,6 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
         fl.next('frequency domain (all $\\Delta p$)')
         s_forplot.ft('t2',pad=4096)
         fl.image(s_forplot)
-    fl.show()
     return s
 
 def proc_spincore_CPMG_v1(s, fl=None):

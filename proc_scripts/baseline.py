@@ -60,7 +60,7 @@ def calc_baseline(this_d,
     print(shape(mybounds))
     print(mybounds)
     mybounds = r_[
-            r_[(-3.14),(pi),(-1*ph1lim),(ph1lim)].reshape(-1,2),
+            r_[-pi,pi,-ph1lim,ph1lim].reshape(-1,2),
             mybounds]
     if guess is None:
         guess = zeros(npts*2+2)

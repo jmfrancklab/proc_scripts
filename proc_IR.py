@@ -8,7 +8,6 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 # {{{ input parameters
-clock_correction = 1.785
 filter_bandwidth = 5e3
 coh_sel = {'ph1':0,
         'ph2':-1}
@@ -16,22 +15,23 @@ coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
 
-for searchstr,exp_type,nodename, postproc in [
+for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('w8_200731', 'test_equip', 2, 
         #    'ag_IR2H'),
-        ('w8_200309', 'test_equip',2,'ag_IR2H'),
+        ('w8_200309', 'test_equip',2,'ag_IR2H',1.785),
         ]:
     fl.basename = searchstr
-    if postproc=='ag_IR2H':
-        s = find_file(searchstr,exp_type=exp_type,
-                expno=nodename,
-                postproc=postproc, lookup=postproc_dict,
-                dimname='indirect')
-    if postproc=='spincore_IR_v1':    
+    if clock_correction is None:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
-            clock_correction=clock_correction, dimname='indirect')
+            dimname='indirect')
+    else:
+        s = find_file(searchstr, exp_type=exp_type,
+            expno=nodename,
+            postproc=postproc, lookup=postproc_dict,
+            dimname='indirect',
+            clock_correction=clock_correction)
     #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
