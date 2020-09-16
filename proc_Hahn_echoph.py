@@ -24,7 +24,6 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     logger.debug(strm(ndshape(s)))
-    quit()
     #}}}
     #{{{ apply phase corrections
     best_shift = hermitian_function_test(s)
