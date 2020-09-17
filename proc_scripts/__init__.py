@@ -5,7 +5,8 @@ from .plotting import expand_limits,draw_limits,fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
 from .baseline import calc_baseline
 from .Utility import *
-from .CPMG_phasing import center_CPMG_echo
+from .CPMG_phasing import find_echo_center, center_echo
+from .fitting import recovery, decay
 
 __all__ = ['zeroth_order_ph',
         'ph1_real_Abs',
@@ -19,6 +20,9 @@ __all__ = ['zeroth_order_ph',
         'dBm2power',
         'power2dBm',
         'Vpp2power',
-        'center_CPMG_echo',
+        'find_echo_center',
+        'center_echo',
+        'recovery',
+        'decay'
         ]
 

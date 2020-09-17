@@ -65,7 +65,7 @@ def zeroth_order_ph(d, fl=None):
     else:
         rotation_vector = mean_vec - assymetry_mag*eigenVectors[:,0]
     ph0 = arctan2(rotation_vector[1],rotation_vector[0])
-    if fl:
+    if fl is not None:
         d_forplot = d.C
         fl.next('check covariance test')
         fl.plot(
@@ -167,8 +167,8 @@ def ph1_real_Abs(s,dw,fl=None):
     fl.pop_marker()
     return s
 
+#@profile
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
-
     r"""determine the center of the echo
 
     .. todo::
@@ -187,23 +187,22 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     # {{{ determine where the "peak" of the echo is,
     # and use it to determine the max
     # shift
-    s = s.C # need to copy, since I'm manipulating the axis here,
+    s_foropt = s.C # need to copy, since I'm manipulating the axis here,
     # and am assuming the axis of the source data is not manipulated
-    data_for_peak = abs(s).mean_all_but(['t2'])
+    data_for_peak = abs(s_foropt).mean_all_but(['t2'])
     max_val = data_for_peak.data.max()
     pairs = data_for_peak.contiguous(lambda x: abs(x) >
             max_val*down_from_max)
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
     peak_center = peak_location.mean()
-    s.setaxis('t2',lambda x: x-peak_center)
-    s.register_axis({'t2':0})
+    s_foropt.setaxis('t2',lambda x: x-peak_center)
+    s_foropt.register_axis({'t2':0})
     max_shift = diff(peak_location).item()/2
     # }}}
     # {{{ construct test arrays for T2 decay and shift
     shift_t = nddata(r_[-1*shift_val:1*shift_val:1200j]*max_shift, 'shift')
     # }}}
-    s_foropt = s.C
     # {{{ time shift and correct for T2 decay
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*
@@ -223,6 +222,8 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     logger.info(strm(ndshape(s_foropt)))
     center_point = s_foropt['t2',n_points//2+1]
     s_foropt /= center_point/abs(center_point)
+    print("SHAPE OF S_FOROPT")
+    print(ndshape(s_foropt))
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).mean_all_but(['shift','R2'])
     # in the following, weight for the total signal recovered

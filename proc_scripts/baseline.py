@@ -76,8 +76,13 @@ def calc_baseline(this_d,
     phcorr0,phcorr1,baseline_vec = vec_to_params(res.x)
     baseline = generate_baseline(baseline_vec)
     if fl is not None:
+<<<<<<< HEAD
         fl.plot(this_d*exp(-1j*phcorr1*this_d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
             label='after baseline correction')
     baseline = this_d*exp(-1j*phcorr1*this_d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2')    
+=======
+        fl.plot(this_d*exp(-1j*phcorr1*d.fromaxis('t2')-1j*phcorr0)+baseline.C.ft('t2'),
+            label='after')
+>>>>>>> bruker_processing
     return phcorr0,phcorr1,baseline
 

@@ -37,7 +37,7 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     if fl is not None:
         fl.next('IR prior to FTing ph')
         fl.image(s)
-    s.ft(['ph1','ph2'])
+    s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
     s.reorder(['indirect','t2'], first=False)
     if fl is not None:
         s_forplot = s.C
@@ -54,6 +54,8 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     return s
 
 def proc_bruker_deut_IR_mancyc(s, fl=None):
+    print("this is the d1")
+    print(s.get_prop('acq')['D'][1])
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
@@ -77,6 +79,7 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     return s
 
 def proc_spincore_CPMG_v1(s, fl=None):
+    print(ndshape(s))
     logger.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
@@ -87,6 +90,7 @@ def proc_spincore_CPMG_v1(s, fl=None):
     deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
     deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
     marker_s = s.get_prop('acq_params')['marker_us']*1e-6
+    print(marker_s)
     tau1_s = s.get_prop('acq_params')['tau1_us']*1e-6
     pad_start_s = s.get_prop('acq_params')['pad_start_us']*1e-6
     pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
@@ -97,11 +101,6 @@ def proc_spincore_CPMG_v1(s, fl=None):
     t2_axis = linspace(0,acq_time_s,nPoints)
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    # OK, so I made some changes and then realized that we need to assume that
-    # the pulse sequence correctly balances the evolution between 2*p90_s/pi
-    # (cavanagh chpt 3 this is the evolution during the 90 -- I'm not positive
-    # if my expression is correct or not -- please do check/change, and leave
-    # this comment in some form) and the center of the 180 pulse appropriately
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
     s.setaxis('ph1',r_[0.,2.]/4)
     s.ft('t2', shift=True)
@@ -114,6 +113,83 @@ def proc_spincore_CPMG_v1(s, fl=None):
     s = s['ph1',1].C
     s.mean('nScans')
     s.reorder('t2',first=True)
+    return s
+def proc_bruker_T1CPMG_v1(s,fl=None):
+    assert s.get_prop('acq')['L'][21] == 2, "phase cycle isn't correct!"
+    assert s.get_prop('acq')['L'][22] == 4, "phase cycle isn't correct!"
+    s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
+    s = s['ph2',[1,3]]
+    s.reorder(['indirect','ph2','ph1','t2'])
+    s.setaxis('indirect', s.get_prop('vd'))
+    if fl is not None:
+        fl.next('raw data with indirect chunked')
+        fl.image(s)
+    anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
+    anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
+    anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
+    for m in anavpt_matches:
+        if m is not None:
+            anavpt = int(m.groups()[0])
+    actual_SW = 20e6/anavpt # JF: check that this is based on the manual's definition of anavpt
+    bruker_final_t2_value = double(s.getaxis('t2')[-1].item())
+    s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
+    logger.debug(strm("the final t2 value according to the Bruker SW_h was",
+        bruker_final_t2_value, "but I determine it to be",
+        double(s.getaxis('t2')[-1].item()), "with anavpt"))
+    nEchoes = s.get_prop('acq')['L'][25]
+    dwdel1 = s.get_prop('acq')['DE']*1e-6
+    dwdel2 = (anavpt*0.05e-6)/2
+    #d12 is read as 0 if taken from parameters bc its too small
+    d12 = 20e-6     
+    d11 = s.get_prop('acq')['D'][11]
+    p90_s = s.get_prop('acq')['P'][1]*1e-6
+    quad_pts = ndshape(s)['t2'] # note tha twe have not yet chunked t2
+    nPoints = quad_pts/nEchoes
+    acq_time = dwdel2*nPoints*2
+    # {{{ these are hard-coded for the pulse sequence
+    #     if we need to, we could pull these from the pulse sequence, as we do
+    #     for anavpt above
+    tau_extra = 20e-6
+    tau_pad_start = tau_extra-dwdel1-6e-6
+    tau_pad_end = tau_extra-6e-6
+    twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
+    # JF: as you've used it here twice_tau should be the period from one 180 to another
+    # }}}
+    s.set_units('t2','us')
+    s.chunk('t2',['tE','t2'],[nEchoes,-1])
+    s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
+    s.ft('t2', shift=True).ft(['ph1','ph2'])
+    s.reorder(['ph1','ph2','indirect'])
+    if fl is not None:
+        fl.next('freq domain coh domain')
+        fl.image(s)
+    s.ift('t2')
+    if fl is not None:
+        fl.next('t2 chunked', figsize=(5,20))
+        fl.image(s)
+    return s
+def proc_bruker_CPMG_v1(s,fl=None):
+    print(ndshape(s))
+    s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
+    s.setaxis('ph1',r_[0:4]/4.)
+    s.setaxis('ph2',r_[0:2]/2.)
+    print(ndshape(s))
+    #s = s['ph1',1:3]
+    #s.setaxis('ph1',r_[0,2]/2)
+    if fl is not None:
+        fl.next('raw data before')
+        fl.image(s)
+    s.ft(['ph1','ph2'])
+    if fl is not None:
+        fl.next('raw data ftd phase cycling')
+        fl.image(s)
+    return s
+
+    s.chunk('t2',['echo','t2'],[int(nEchoes),-1])
+    s.ft('ph')
+    s.ft('t2')
+    fl.next('Coherence domain')
+    fl.image(s)
     return s
 
 def proc_Hahn_echoph(s, fl=None):
@@ -264,10 +340,12 @@ postproc_dict = {'ag_zg2h':proc_90_pulse_mancyc,
         'zg2h':proc_bruker_90_pulse,
         'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
+        'ag_CPMG_strob':proc_bruker_CPMG_v1,
+        'ag_T1CPMG_2h':proc_bruker_T1CPMG_v1,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
         'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
-        'spincore_nutation_v1':proc_nutation,
         'spincore_IR_v1':proc_spincore_IR,
+        'spincore_nutation_v1':proc_nutation,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_square_wave_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG}
