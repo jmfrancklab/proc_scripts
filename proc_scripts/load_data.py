@@ -150,15 +150,16 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     return s
 def proc_bruker_CPMG_v1(s,fl=None):
     print(ndshape(s))
-    s.chunk('indirect',['indirect','ph1'],[-1,4])
-    s.setaxis('ph1',r_[0,2,0,2]/4)
+    s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
+    s.setaxis('ph1',r_[0:4]/4.)
+    s.setaxis('ph2',r_[0:2]/2.)
     print(ndshape(s))
-    s = s['ph1',1:3]
-    s.setaxis('ph1',r_[0,2]/2)
+    #s = s['ph1',1:3]
+    #s.setaxis('ph1',r_[0,2]/2)
     if fl is not None:
         fl.next('raw data before')
         fl.image(s)
-    s.ft(['ph1'])
+    s.ft(['ph1','ph2'])
     if fl is not None:
         fl.next('raw data ftd phase cycling')
         fl.image(s)

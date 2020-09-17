@@ -11,7 +11,7 @@ tau_extra=20e-6
 for searchstr, exp_type, nodename, postproc, label_str, f_range in [
         #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('w8_200731','test_equip',3,'ag_CPMG_strob','water loading 8',(-500,500)),
-        ('200304_CPMG_2p6_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
+        ('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500)),
         #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
@@ -22,6 +22,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
+    fl.show();quit()
     #{{{ centering CPMG echo
     center = find_echo_center(s)
     s = center_echo(s,center,fl=fl)
