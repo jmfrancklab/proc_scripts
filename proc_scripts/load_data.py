@@ -173,7 +173,7 @@ def proc_bruker_CPMG_v1(s,fl=None):
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
     s.setaxis('ph1',r_[0:4]/4.)
     s.setaxis('ph2',r_[0:2]/2.)
-    print(ndshape(s))
+    s.reorder(['ph2','ph1'])
     #s = s['ph1',1:3]
     #s.setaxis('ph1',r_[0,2]/2)
     if fl is not None:
