@@ -6,6 +6,16 @@ from sympy import symbols
 import logging
 fl=figlist_var()
 #to use type s = load_data("nameoffile")
+def proc_90_pulse_mancyc(s,fl=None):
+    s.chunk('indirect',['ph2','ph1','indirect'],[2,4,-1]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
+    s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
+    s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
+    s.ft('t2',shift=True)
+    s.ft(['ph1','ph2'])
+    if fl is not None:
+        fl.next('coherence domain')
+        fl.image(s)
+    return s    
 def proc_bruker_90_pulse(s,fl=None):
     s.ft('t2',shift=True)
     if fl is not None:
@@ -250,7 +260,8 @@ def proc_DOSY_CPMG(s):
     # }}}
     return s
 
-postproc_dict = {'zg2h':proc_bruker_90_pulse,
+postproc_dict = {'ag_zg2h':proc_90_pulse_mancyc,
+        'zg2h':proc_bruker_90_pulse,
         'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
