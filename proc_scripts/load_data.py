@@ -7,13 +7,18 @@ import logging
 fl=figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_90_pulse_mancyc(s,fl=None):
-    s.chunk('indirect',['ph2','ph1','indirect'],[2,4,-1]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
+    print(ndshape(s))
+    s.chunk('indirect',['indirect','ph1'],[-1,4]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
-    s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
+    #s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
     s.ft('t2',shift=True)
-    s.ft(['ph1','ph2'])
+    s.ft(['ph1'])#,'ph2'])
     if fl is not None:
         fl.next('coherence domain')
+        fl.image(s)
+    s.ift('t2')    
+    if fl is not None:
+        fl.next('time domain')
         fl.image(s)
     return s    
 def proc_bruker_90_pulse(s,fl=None):
@@ -41,7 +46,7 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     s.reorder(['indirect','t2'], first=False)
     if fl is not None:
         s_forplot = s.C
-        fl.next('FT')
+        fl.next('FTd phase cycles')
         fl.image(s_forplot)
     if fl is not None:    
         fl.next('time domain (all $\\Delta p$)')
@@ -177,11 +182,15 @@ def proc_bruker_CPMG_v1(s,fl=None):
     #s = s['ph1',1:3]
     #s.setaxis('ph1',r_[0,2]/2)
     if fl is not None:
-        fl.next('raw data before')
+        fl.next('raw data before FTing phase cycles')
         fl.image(s)
     s.ft(['ph1','ph2'])
     if fl is not None:
         fl.next('raw data ftd phase cycling')
+        fl.image(s)
+    s.ft('t2',shift=True)
+    if fl is not None:
+        fl.next('coherence domain')
         fl.image(s)
     return s
 

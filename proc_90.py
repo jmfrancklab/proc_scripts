@@ -6,7 +6,7 @@ from scipy.optimize import minimize,curve_fit,least_squares
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 fl = figlist_var()
 for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
-        ('w8_200917','test_equip',5,'ag_zg2h',True,fl),
+        ('w8_200917','test_equip',2,'ag_zg2h',True,fl),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
                 expno=which_exp, postproc=postproc, lookup=postproc_dict,fl=fl)  

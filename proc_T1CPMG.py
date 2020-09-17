@@ -16,7 +16,7 @@ read_h5 = True
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
         #('w8_200731','NMR_Data_AG',5,True)
-        ('w8_1AT2RM_200731','NMR_Data_AG',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
+        ('w8_200917','test_equip',9,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
         #('200303','T1CPMG_AER','signal',False,1.785)
         ]:

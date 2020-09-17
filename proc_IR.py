@@ -18,21 +18,21 @@ coh_err = {'ph1':1,# coherence channels to use for error
 for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('w8_200731', 'test_equip', 2, 
         #    'ag_IR2H'),
-        ('w8_200309', 'test_equip',2,'ag_IR2H',1.785),
+        ('w8_200917', 'test_equip',8,'ag_IR2H',None),
         ]:
     fl.basename = searchstr
     if clock_correction is None:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
-            postproc=postproc, lookup=postproc_dict,
-            dimname='indirect')
+            postproc=postproc, lookup=postproc_dict)
     else:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect',
             clock_correction=clock_correction)
-    #{{{filter data
+    fl.show();quit()
+        #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
     #{{{hermitian function test and apply best shift
