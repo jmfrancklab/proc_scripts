@@ -18,7 +18,8 @@ coh_err = {'ph1':1,# coherence channels to use for error
 for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('w8_200731', 'test_equip', 2, 
         #    'ag_IR2H'),
-        ('w8_200309', 'test_equip',2,'ag_IR2H',None),
+        #('w8_200309', 'test_equip',2,'ag_IR2H',None),
+        ('ag_oct182019_w0_3','test_equip',2,'ab_ir2h',None)
         ]:
     fl.basename = searchstr
     if clock_correction is None:
@@ -75,8 +76,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
     # below, f_range needs to be defined
     M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
-    f,T1,g = recovery(s_sliced, (-100,100),
-            guess={M0:-500, Mi:500, R1:1})
-    fl.plot_curve(f,'inversion recovery curve',guess=g)
+    f,T1 = recovery(s_sliced, (-100,100),guess=None)
+    fl.plot_curve(f,'inversion recovery curve')
 fl.show()
 

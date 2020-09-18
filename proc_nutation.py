@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import minimize
-from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod,center_CPMG_echo
+from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod
 from sympy import symbols
 from numpy import *
 fl = fl_mod()
