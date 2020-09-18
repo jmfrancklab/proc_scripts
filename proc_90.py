@@ -6,23 +6,20 @@ from scipy.optimize import minimize,curve_fit,least_squares
 matplotlib.rcParams["figure.figsize"] = [8.0,5.0]
 fl = figlist_var()
 for searchstr, exp_type, which_exp, postproc, manual_phcyc, fl in [
-        ('w8_200917','test_equip',2,'ag_zg2h',True,fl),
+        ('w8_200731','NMR_Data_AG',1,'zg2h',False,fl),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
-                expno=which_exp, postproc=postproc, lookup=postproc_dict,fl=fl)  
-    #fl.show();quit()
+                expno=which_exp, postproc=postproc, lookup=postproc_dict,fl=fl)     
     if manual_phcyc:
-        fl.basename = searchstr
-        #fl.next('image of phase cycle domain')
-        #fl.image(s)
-        print(ndshape(s))
-        fl.show();quit()
+        fl.basename = exp_name
+        fl.next('image of phase cycle domain')
+        fl.image(s)
         s.setaxis('ph',r_[0,1,2,3]/4.)
         s.ft('ph')# based on 90 pulse experiment, we seem to want ft rather than ift for deuterium (phcyc goes around the circle the wrong way)
         fl.next('image of coherence domain')
         fl.image(s)
         s = s['ph',-1].C
-    fl.show();quit()
+    #fl.show();quit()
     s.ft('t2')
     fl.next('before phase correction')
     fl.plot(s)
