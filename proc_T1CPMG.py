@@ -27,14 +27,14 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         s = s['ph2',-1]['ph1',0]
         s *= exp(-1j*s.fromaxis('vd')*clock_correction)
         fl.image(s)
-        #this section is hard coded for flat echoes. I print the shape of s
-        #to get the length of t2 and ensure it is an odd number. I then take 
-        #the middle index and set this to 0. We will find a way to not have
-        #this hard coded but for now this is what we have. 9/1/20
+        # this section is hard coded for flat echoes. I print the shape of s
+        # to get the length of t2 and ensure it is an odd number. I then take 
+        # the middle index and set this to 0. We will find a way to not have
+        # this hard coded but for now this is what we have. 9/1/20
         if flat_echo:
-            s['t2',16]=0
-            center=find_echo_center(s,fl=fl)
-            s = center_echo(s,center,fl=fl)
+            # if the echo is flat, why were you using find_echo_center?
+            # here I just manually tell it to use the middle point
+            avg_center = s.getaxis('t2')[0].item() + diff(s.getaxis('t2')[r_[0,-1]]).item()
         else:    
             centers = []
             for j in range(ndshape(s)['indirect']):
@@ -43,7 +43,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
                 centers.append(this_center)
             logger.info(centers)
             avg_center = sum(centers)/len(centers)
-            s = center_echo(s, avg_center, fl=fl)
+        s = center_echo(s, avg_center, fl=fl)
         if test_for_flat_echo:
             #{{{Used to test if echo is flat or not
             s = s['tE',20]['indirect',1]

@@ -22,11 +22,10 @@ def find_echo_center(s, axis='t2',fl=None):
 def center_echo(s, echo_center, axis='t2',fl=None):
     s.setaxis(axis, lambda x: x-echo_center)
     s.register_axis({axis:0})
-    print("after register axis, t2 axis is", s.getaxis(axis))
+    logger.debug(strm("after register axis, t2 axis is", s.getaxis(axis)))
     s /= zeroth_order_ph(s[axis:0],fl=fl)
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
-    print("time bound is",time_bound)
-    return s
+    logger.debug(strm("time bound is",time_bound))
     axis_before = ndshape(s)[axis]
     s = s[axis:(-time_bound,time_bound)]
     axis_after = ndshape(s)[axis]
