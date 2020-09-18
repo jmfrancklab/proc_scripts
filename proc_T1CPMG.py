@@ -16,16 +16,17 @@ read_h5 = True
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
         #('w8_200731','NMR_Data_AG',5,True)
-        ('w8_1AT2RM_200731','NMR_Data_AG',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
+        ('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
         #('200303','T1CPMG_AER','signal',False,1.785)
         ]:
     if write_h5:
+        #before running go into the preprocessing in load_data as some parameters are hardcoded. Double check these
         s = find_file(searchstr,exp_type=exp_type,
                 expno=nodename,lookup=postproc_dict, fl=fl)
         fl.next('selected coherence')
         s = s['ph2',-1]['ph1',0]
-        s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+        s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
         fl.image(s)
         # this section is hard coded for flat echoes. I print the shape of s
         # to get the length of t2 and ensure it is an odd number. I then take 

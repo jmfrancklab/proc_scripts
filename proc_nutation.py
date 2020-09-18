@@ -15,7 +15,7 @@ for searchstr,exp_type,nodename,postproc in [
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
-    s.ft(['ph2','ph1'])
+    s.ift('t2')
     # }}}
     
     # {{{ centering of data using hermitian function test

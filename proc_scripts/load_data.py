@@ -12,7 +12,6 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     s.setaxis('ph1',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:2.]/4) #setting values of axis ph1 to line up
     s.setaxis('indirect', s.get_prop('vd'))
-#titling to coherence domain
     s.ft('t2',shift=True) #fourier transform
     if fl is not None:
         fl.next('IR prior to FTing ph')
@@ -88,18 +87,13 @@ def proc_spincore_CPMG_v1(s, fl=None):
         fl.next('raw data - chunking ft')
         fl.image(s)
     s.ft(['ph1'])
-    s.ift('t2')
-    s.reorder('nScans',first=True)
-    s = s['ph1',1].C
-    s.mean('nScans')
-    s.reorder('t2',first=True)
     return s
 def proc_bruker_T1CPMG_v1(s,fl=None):
     assert s.get_prop('acq')['L'][21] == 2, "phase cycle isn't correct!"
     assert s.get_prop('acq')['L'][22] == 4, "phase cycle isn't correct!"
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
     #{{{removes CP aspect
-    #s = s['ph2',[1,3]]
+    s = s['ph2',[1,3]]
     #}}}
     s.reorder(['indirect','ph2','ph1','t2'])
     s.setaxis('indirect', s.get_prop('vd'))
@@ -149,15 +143,12 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     if fl is not None:
         fl.next('t2 chunked', figsize=(5,20))
         fl.image(s)
+    s.ft('t2')
     return s
 def proc_bruker_CPMG_v1(s,fl=None):
-    print(ndshape(s))
     s.chunk('indirect',['ph1','ph2','indirect'],[4,2,-1])
     s.setaxis('ph1',r_[0:4]/4.)
     s.setaxis('ph2',r_[0:2]/2.)
-    print(ndshape(s))
-    #s = s['ph1',1:3]
-    #s.setaxis('ph1',r_[0,2]/2)
     if fl is not None:
         fl.next('raw data before')
         fl.image(s)
@@ -165,13 +156,7 @@ def proc_bruker_CPMG_v1(s,fl=None):
     if fl is not None:
         fl.next('raw data ftd phase cycling')
         fl.image(s)
-    return s
-
-    s.chunk('t2',['echo','t2'],[int(nEchoes),-1])
-    s.ft('ph')
-    s.ft('t2')
-    fl.next('Coherence domain')
-    fl.image(s)
+    s.ft('t2',shift=True)    
     return s
 
 def proc_Hahn_echoph(s, fl=None):
@@ -226,8 +211,8 @@ def proc_nutation(s):
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
+    s.ft(['ph2','ph1'])
     s.ft('t2',shift=True)
-    s.ift('t2')
     return s
 
 def proc_spincore_ODNP_v1(s,fl=None):
