@@ -18,7 +18,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('w8_200731', 'test_equip', 2, 
         #    'ag_IR2H'),
-        ('w8_200309', 'test_equip',2,'ag_IR2H',1.785),
+        ('w8_200309', 'test_equip',2,'ag_IR2H',None),
         ]:
     fl.basename = searchstr
     if clock_correction is None:

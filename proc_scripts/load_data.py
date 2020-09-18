@@ -152,7 +152,7 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     return s
 def proc_bruker_CPMG_v1(s,fl=None):
     print(ndshape(s))
-    s.chunk('indirect',['indirect','ph1','ph2'],[-1,4,2])
+    s.chunk('indirect',['ph1','ph2','indirect'],[4,2,-1])
     s.setaxis('ph1',r_[0:4]/4.)
     s.setaxis('ph2',r_[0:2]/2.)
     print(ndshape(s))
