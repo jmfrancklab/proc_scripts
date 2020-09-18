@@ -98,7 +98,9 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     assert s.get_prop('acq')['L'][21] == 2, "phase cycle isn't correct!"
     assert s.get_prop('acq')['L'][22] == 4, "phase cycle isn't correct!"
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
-    s = s['ph2',[1,3]]
+    #{{{removes CP aspect
+    #s = s['ph2',[1,3]]
+    #}}}
     s.reorder(['indirect','ph2','ph1','t2'])
     s.setaxis('indirect', s.get_prop('vd'))
     if fl is not None:
