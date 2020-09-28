@@ -2,14 +2,22 @@ from pyspecdata import *
 from align_slice import align_and_slice
 fl = figlist_var()
 apply_correction = True
-for date,id_string in [
-        ('200212','calibrate_clock_6'),
+for filename,nodename,thisdir,vdrange in [
+        #('200212','calibrate_clock_6'),
+        #('200917_calibrate_clock_1','signal','test_equip',slice(None,-1)),
+        ('200923_calibrate_clock_1','signal','test_equip',slice(None,-1)),
+        #('200922_calibrate_clock_2','signal','test_equip',slice(None)),
         ]:
-    filename = date+'_'+id_string+'.h5'
-    nodename = 'signal'
-    s = nddata_hdf5(filename+'/'+nodename,
-            directory = getDATADIR(exp_type = 'test_equip' ))
+    fl.basename = filename
+    s = find_file(filename, expno=nodename, exp_type=thisdir)
+    # I don't understand how to get the carrier frequency
+    # carrier = s.get_prop('acq')['carrierFreq_MHz']
+    # I just set this to zero, so I can include the code below
+    carrier = 0
     s.rename('t','t2').set_units('t2','s')
+    s.reorder('vd') # based on field variation, it does seem the repeats were
+    # done in the outer loop, but I still like to present them as though from an
+    # inner loop
     centerpoint = abs(s).mean('nScans').mean('vd').argmax('t2').item()
     s.setaxis('t2', lambda x: x-centerpoint)
     fl.next('image raw -- time domain')
@@ -21,28 +29,33 @@ for date,id_string in [
         #clock_correction = -1.089
         clock_correction = 1.785
         s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-    fl.next('image raw')
+    fl.next('image raw -- frequency domain')
     fl.image(s)
+    s = align_and_slice(s, convwidth=0, fl=fl)
     fl.next('image shifted and sliced')
-    s = align_and_slice(s,convwidth=0,fl=fl)
+    fl.image(s)
+    fl.next('mean and repeat align and slice')
     s.mean('nScans')
+    s = align_and_slice(s, convwidth=0)
     fl.image(s)
     fl.next('phase error vs vd')
-    fl.plot(s.sum('t2').angle, 'o')
+    s_forcalc = s.C.sum('t2')
+    fl.plot(s_forcalc.angle, 'o')
     fl.next('phase error, unwrapped vs vd - sig avg')
-    s = s['vd',1:]/s['vd',:-1]
-    s = s.angle.name('signal phase').set_units('rad')
-    s.data = s.data.cumsum()
-    fl.plot(s,'o',human_units=False)
+    s_forcalc = s_forcalc['vd',1:]/s_forcalc['vd',:-1]
+    s_angle = s_forcalc.angle.name('signal phase').set_units('rad').run_nopop(cumsum,'vd')
+    fl.plot(s_angle,'o')
     # begin fit to return clock correction
-    x = s.getaxis('vd')
-    raise RuntimeError("the following code should not be using leastsq -- this is a line, while leastsq is for non-linear fits")
-    fitfunc = lambda p, x: p[0]*x
-    errfunc = lambda p_arg,x_arg,y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p_ini = [1.0]
-    p1,success = leastsq(errfunc,p_ini[:],args=(x[-4:],s.data[-4:]))
-    x_fit = linspace(x.min(),x.max(),5000)
-    fl.plot(x_fit,fitfunc(p1,x_fit),':',human_units=False,label='%f'%p1[0])
-    clock_correction = p1[0]
-    print(clock_correction)
+    c,thisfit = s_angle['vd',vdrange].polyfit('vd')
+    fl.plot(thisfit, alpha=0.5)
+    zeroth_order = c[0]
+    clock_correction = c[1]
+    # if I have the carrier:
+    text(0.5,0.5, '%#0.4g rad/s, %#0.4g Hz, %#0.8g Hz carrier = %#0.8g $\\times$ 75 MHz'%(clock_correction,clock_correction/2/pi,
+        carrier*1e6,carrier/75),
+            transform=gca().transAxes)
+    s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+    s *= exp(-1j*zeroth_order)
+    fl.next('corrected')
+    fl.image(s)
 fl.show()
