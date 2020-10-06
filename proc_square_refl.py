@@ -18,14 +18,16 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('181103','probe',True),
         #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103_pulse_1','test_equip','capture1','square_wave_capture_v1',True),
+        #('200103_pulse_1','test_equip','capture1','square_wave_capture_v1',True),
+        ('201006_coilE_1','test_equip','capture1','square_wave_capture_v1',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
-
+    d.set_units('t','s').name('Amplitude').set_units('V')
     fl.next('Raw signal %s'%searchstr)
-    fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
+    #fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
+    fl.show();quit()
     # }}}
     
     # {{{ determining center frequency and convert to
