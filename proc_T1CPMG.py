@@ -10,13 +10,14 @@ rcParams["savefig.transparent"] = True
 # {{{ input parameters
 filter_bandwidth = 5e3
 t2 = symbols('t2')
-test_for_flat_echo = False # test for flat echo and exit
+test_for_flat_echo = True # test for flat echo and exit
 write_h5 = True
 read_h5 = True
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
+        ('freeSL_201007','test_equip',2,False,0,'T1CPMG_1020.h5','AG_processed_data')
         #('w8_200731','NMR_Data_AG',5,True)
-        ('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
+        #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
         #('200303','T1CPMG_AER','signal',False,1.785)
         ]:
