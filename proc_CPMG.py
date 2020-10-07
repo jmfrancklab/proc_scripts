@@ -24,7 +24,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
-    fl.show();quit()
+    #fl.show();quit()
     s.ift('t2')
     if spincore:
         s.reorder('nScans',first=True)
@@ -41,7 +41,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
     s.ft('t2')
     fl.next('before fitting')
     fl.image(s)
-    fl.show();quit()
+    #fl.show();quit()
     f,T2 = decay(s, f_range, indirect='tE')
     fl.plot_curve(f,'T2 relaxation decay')
     #}}}

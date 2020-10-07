@@ -23,6 +23,9 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
+    print(d.getaxis('t'))
+    quit()
+            
     d.set_units('t','s').name('Amplitude').set_units('V')
     fl.next('Raw signal %s'%searchstr)
     #fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V

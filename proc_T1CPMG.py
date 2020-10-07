@@ -10,12 +10,12 @@ rcParams["savefig.transparent"] = True
 # {{{ input parameters
 filter_bandwidth = 5e3
 t2 = symbols('t2')
-test_for_flat_echo = True # test for flat echo and exit
-write_h5 = True
+test_for_flat_echo = False # test for flat echo and exit
+write_h5 = False
 read_h5 = True
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
-        ('freeSL_201007','test_equip',2,False,0,'T1CPMG_1020.h5','AG_processed_data')
+        ('freeSL_201007','test_equip',6,False,0,'T1CPMG_1020.h5','process_data_AG')
         #('w8_200731','NMR_Data_AG',5,True)
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
@@ -25,6 +25,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         #before running go into the preprocessing in load_data as some parameters are hardcoded. Double check these
         s = find_file(searchstr,exp_type=exp_type,
                 expno=nodename,lookup=postproc_dict, fl=fl)
+        #fl.show();quit()
         fl.next('selected coherence')
         s = s['ph2',-1]['ph1',0]
         s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
@@ -55,13 +56,14 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
             fl.show();quit()
             #}}}
         fl.next('s centered')
+        s.ift('t2')
         fl.image(s)
         fl.next('s centered in freq domain')
         s.ft('t2')
         fl.image(s)
         #}}}
         #{{{slice out signal and sum along t2
-        s = s['t2':(-154,154)]
+        s = s['t2':(-500,500)]
         s.sum('t2')
         fl.next('summed along t2')
         fl.image(s)
@@ -94,5 +96,5 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         title(r'$T_{1} - T_{2} distribution$ for water loading 8 1AT/2RM')
         fl.image(s_ILT)
         s_ILT.name(searchstr+'_ILT') # use searchstr as the node name withing the HDF5 file
-        s_ILT.hdf5_write(h5_name, directory=getDATADIR(h5_dir))
+        #s_ILT.hdf5_write(h5_name, directory=getDATADIR(h5_dir))
     fl.show()

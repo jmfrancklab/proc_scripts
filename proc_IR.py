@@ -16,10 +16,11 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc, clock_correction in [
+        ('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 
         #    'ag_IR2H'),
         #('w8_200309', 'test_equip',2,'ag_IR2H',None),
-        ('ag_oct182019_w0_3','test_equip',2,'ab_ir2h',None)
+        #('ag_oct182019_w0_3','test_equip',2,'ab_ir2h',None)
         ]:
     fl.basename = searchstr
     if clock_correction is None:
@@ -49,6 +50,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     fl.next('frequency domain after')
     s.ft('t2')
     fl.image(s)
+    fl.show();quit()
     s.ift('t2')
     #}}}
     #{{{zeroth order phase correction
