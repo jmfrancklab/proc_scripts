@@ -201,7 +201,7 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     shift_t = nddata(r_[-1*shift_val:1*shift_val:1200j]*max_shift, 'shift')
     # }}}
     # {{{ time shift and correct for T2 decay
-    #s_foropt.ft('t2')
+    s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*
             s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')

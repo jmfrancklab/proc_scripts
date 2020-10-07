@@ -13,7 +13,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         #('freeSL_201001','test_equip',7,'ag_CPMG_strob','free SL',(-500,500),False),
         #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500),True),
         #('w8_200731','test_equip',3,'ag_CPMG_strob','water loading 8',(-500,500),False),
-        ('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-300,300),False),
+        ('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-500,500),False),
         #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
@@ -24,7 +24,6 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
-    #fl.show();quit()
     s.ift('t2')
     if spincore:
         s.reorder('nScans',first=True)
