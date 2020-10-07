@@ -12,10 +12,10 @@ filter_bandwidth = 5e3
 t2 = symbols('t2')
 test_for_flat_echo = False # test for flat echo and exit
 write_h5 = False
-read_h5 = True
+read_h5 = True 
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
-        ('freeSL_201007','test_equip',6,False,0,'T1CPMG_1020.h5','process_data_AG')
+        ('freeD2O_201007','test_equip',2,False,0,'T1CPMG_1020_freewater_1.h5','process_data_AG')
         #('w8_200731','NMR_Data_AG',5,True)
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
@@ -63,7 +63,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         fl.image(s)
         #}}}
         #{{{slice out signal and sum along t2
-        s = s['t2':(-500,500)]
+        s = s['t2':(-1000,1000)]
         s.sum('t2')
         fl.next('summed along t2')
         fl.image(s)
