@@ -11,11 +11,11 @@ rcParams["savefig.transparent"] = True
 filter_bandwidth = 5e3
 t2 = symbols('t2')
 test_for_flat_echo = False # test for flat echo and exit
-write_h5 = True
+write_h5 = False
 read_h5 = True 
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
-        ('freeD2O_201007','test_equip',2,False,0,'T1CPMG_1020_freewater.h5','process_data_AG')
+        ('freeD2O_201007','test_equip',2,False,0,'T1CPMG_10201007_freewater.h5','process_data_AG')
         #('w8_200731','NMR_Data_AG',5,True)
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
@@ -34,6 +34,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         # to get the length of t2 and ensure it is an odd number. I then take 
         # the middle index and set this to 0. We will find a way to not have
         # this hard coded but for now this is what we have. 9/1/20
+        s.ift('t2')
         if flat_echo:
             # if the echo is flat, why were you using find_echo_center?
             # here I just manually tell it to use the middle point
@@ -56,14 +57,14 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
             fl.show();quit()
             #}}}
         fl.next('s centered')
-        s.ift('t2')
         fl.image(s)
-        fl.next('s centered in freq domain')
+        fl.next('s centered in frequency domain')
         s.ft('t2')
         fl.image(s)
+        #fl.show();quit()
         #}}}
         #{{{slice out signal and sum along t2
-        s = s['t2':(-600,200)]
+        s = s['t2':(-600,600)]
         s.sum('t2')
         fl.next('summed along t2')
         fl.image(s)
@@ -71,14 +72,15 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         #{{{save to hdf5 file
         s.name(searchstr) # use searchstr as the node name withing the HDF5 file
         s.hdf5_write(h5_name, directory=getDATADIR(h5_dir))
+        print(ndshape(s))
         #}}}
     if read_h5:
-        s = nddata_hdf5(h5_name+'/'+searchstr, directory=getDATADIR(h5_dir))
+        s = nddata_hdf5(h5_name+'/'+searchstr,getDATADIR(exp_type=h5_dir)) 
         #{{{attempting ILT plot with NNLS_Tikhonov_190104
         tE_axis = s.getaxis('tE')
         vd_list = s.getaxis('indirect')
-        Nx = 50
-        Ny = 50
+        Nx = 128
+        Ny = 16
         x_name = r'$log(T_2/$s$)$'
         y_name = r'$log(T_1/$s$)$'
         Nx_ax = nddata(logspace(-5,3,Nx),x_name)
@@ -92,9 +94,12 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
                          l='BRD')
 
         s_ILT.set_units(x_name, None).set_units(y_name, None)
+        s_ILT.setaxis('$log(T_2/$s$)$',tE_axis)
+        s_ILT.setaxis('$log(T_1/$s$)$',vd_list)
         fl.next('distributions')
-        title(r'$T_{1} - T_{2} distribution$ for water loading 8 1AT/2RM')
+        title(r'$T_{1} - T_{2} distribution$ for Free water')
         fl.image(s_ILT)
+        fl.show();quit()
         s_ILT.name(searchstr+'_ILT') # use searchstr as the node name withing the HDF5 file
         #s_ILT.hdf5_write(h5_name, directory=getDATADIR(h5_dir))
     fl.show()
