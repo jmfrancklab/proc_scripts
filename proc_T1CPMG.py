@@ -15,8 +15,10 @@ write_h5 = False
 read_h5 = True 
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
-        ('freeD2O_201007','test_equip',2,False,0,'T1CPMG_10201007_freewater.h5','process_data_AG')
-        #('w8_200731','NMR_Data_AG',5,True)
+        ('w8_201008','test_equip',3,False,0,'T1CPMG_201008_w8.h5','process_data_AG')
+        #('free4AT_201008','test_equip',6,False,0,'T1CPMG_201008_FreeAT.h5','process_data_AG'),
+        #('freeD20_201008','test_equip',8,False,0,'T1CPMG_201008_FreeD20.h5','process_data_AG'),
+        #('w8_200731','test_equip',5,False,0,'T1CPMG_200731.h5','process_data_AG')
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
         #('200303','T1CPMG_AER','signal',False,1.785)
@@ -64,7 +66,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         #fl.show();quit()
         #}}}
         #{{{slice out signal and sum along t2
-        s = s['t2':(-600,600)]
+        s = s['t2':(-300,300)]
         s.sum('t2')
         fl.next('summed along t2')
         fl.image(s)
@@ -79,8 +81,8 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         #{{{attempting ILT plot with NNLS_Tikhonov_190104
         tE_axis = s.getaxis('tE')
         vd_list = s.getaxis('indirect')
-        Nx = 128
-        Ny = 16
+        Nx = 50
+        Ny = 50
         x_name = r'$log(T_2/$s$)$'
         y_name = r'$log(T_1/$s$)$'
         Nx_ax = nddata(logspace(-5,3,Nx),x_name)
@@ -94,10 +96,8 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
                          l='BRD')
 
         s_ILT.set_units(x_name, None).set_units(y_name, None)
-        s_ILT.setaxis('$log(T_2/$s$)$',tE_axis)
-        s_ILT.setaxis('$log(T_1/$s$)$',vd_list)
         fl.next('distributions')
-        title(r'$T_{1} - T_{2} distribution$ for Free water')
+        title(r'$T_{1} - T_{2} distribution$ for Free 4-AT')
         fl.image(s_ILT)
         fl.show();quit()
         s_ILT.name(searchstr+'_ILT') # use searchstr as the node name withing the HDF5 file

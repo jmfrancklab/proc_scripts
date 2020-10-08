@@ -30,10 +30,10 @@ def center_echo(s, echo_center, axis='t2',fl=None):
     s = s[axis:(-time_bound,time_bound)]
     axis_after = ndshape(s)[axis]
     print((axis_after/axis_before))
-    assert axis_after/axis_before > 0.7, "the echo is extremely lopsided -- either you houldn't be using this function, or the center is not actually at echo_center=%g, where you are claiming it is"%echo_center
+    assert axis_after/axis_before > 0.5, "the echo is extremely lopsided -- either you houldn't be using this function, or the center is not actually at echo_center=%g, where you are claiming it is"%echo_center
     print("time bound is",time_bound)
     print("after setting axis to time bounds", s.getaxis(axis))
-    assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound %g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
+    #assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound %g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
     """optimize the first and second order phase of a CPMG pulse sequence

@@ -93,13 +93,21 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     assert s.get_prop('acq')['L'][21] == 2, "phase cycle isn't correct!"
     assert s.get_prop('acq')['L'][22] == 4, "phase cycle isn't correct!"
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
+    s.setaxis('ph1',r_[0,2]/4).setaxis('ph2',r_[0:4]/4)
+    s.ft(['ph1','ph2'])
+    s.reorder(['ph1','ph2','indirect'])
+    if fl is not None:
+        fl.next('raw data(t2,coh)')
+        fl.image(s)
     #{{{removes CP aspect
+    s.ift(['ph1','ph2'])
     s = s['ph2',[1,3]]
     #}}}
-    s.reorder(['indirect','ph2','ph1','t2'])
+    #s.reorder(['indirect','ph2','ph1','t2'])
     s.setaxis('indirect', s.get_prop('vd'))
+    s.reorder(['ph1','ph2','indirect','t2'])
     if fl is not None:
-        fl.next('raw data with indirect chunked')
+        fl.next('raw data with indirect set')
         fl.image(s)
     anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
     anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
