@@ -15,9 +15,10 @@ write_h5 = False
 read_h5 = True 
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
-        ('w8_201008','test_equip',3,False,0,'T1CPMG_201008_w8.h5','process_data_AG')
+        ('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
+        #('w8_201008','test_equip',3,False,0,'T1CPMG_201008_w8.h5','process_data_AG')
         #('free4AT_201008','test_equip',6,False,0,'T1CPMG_201008_FreeAT.h5','process_data_AG'),
-        #('freeD20_201008','test_equip',8,False,0,'T1CPMG_201008_FreeD20.h5','process_data_AG'),
+        #('freeD2O_201008','test_equip',9,False,0,'T1CPMG_201008_FreeD20.h5','process_data_AG'),
         #('w8_200731','test_equip',5,False,0,'T1CPMG_200731.h5','process_data_AG')
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
@@ -38,9 +39,8 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         # this hard coded but for now this is what we have. 9/1/20
         s.ift('t2')
         if flat_echo:
-            # if the echo is flat, why were you using find_echo_center?
-            # here I just manually tell it to use the middle point
-            avg_center = s.getaxis('t2')[0].item() + diff(s.getaxis('t2')[r_[0,-1]]).item()
+           s['t2',16]=0
+           avg_center=find_echo_center(s,fl=fl)
         else:    
             centers = []
             for j in range(ndshape(s)['indirect']):
@@ -66,7 +66,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         #fl.show();quit()
         #}}}
         #{{{slice out signal and sum along t2
-        s = s['t2':(-300,300)]
+        s = s['t2':(-500,500)]
         s.sum('t2')
         fl.next('summed along t2')
         fl.image(s)
@@ -83,22 +83,23 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         vd_list = s.getaxis('indirect')
         Nx = 50
         Ny = 50
-        x_name = r'$log(T_2/$s$)$'
-        y_name = r'$log(T_1/$s$)$'
-        Nx_ax = nddata(logspace(-5,3,Nx),x_name)
-        Ny_ax = nddata(logspace(-5,3,Ny),y_name)
-        s.rename('indirect','tau1').setaxis('tau1',vd_list)
-        s.rename('tE','tau2').setaxis('tau2',tE_axis)
-        s_ILT = s.C.nnls(('tau1','tau2'),
+        Nx_ax = nddata(logspace(-5,3,Nx),'T1')
+        Ny_ax = nddata(logspace(-5,3,Ny),'T2')
+        s_ILT=s.C
+        s_ILT.rename('indirect','tau1').setaxis('tau1',vd_list)
+        s_ILT.rename('tE','tau2').setaxis('tau2',tE_axis)
+        s_ILT = s_ILT.nnls(('tau1','tau2'),
                (Nx_ax,Ny_ax),
                (lambda x1,x2: 1.-2*exp(-x1/x2),
                 lambda y1,y2: exp(-y1/y2)),
                          l='BRD')
-
-        s_ILT.set_units(x_name, None).set_units(y_name, None)
-        fl.next('distributions')
-        title(r'$T_{1} - T_{2} distribution$ for Free 4-AT')
-        fl.image(s_ILT)
+        s_ILT.setaxis('T1',log10(Nx_ax.data)).set_units('T1',None)
+        s_ILT.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
+        figure()
+        title(r'$T_{1} - T_{2} distribution$ for w8 1 AT per 2 RM')
+        image(s_ILT)
+        xlabel(r'$log(T_2/$s$)$')
+        ylabel(r'$log(T_1/$s$)$')
         fl.show();quit()
         s_ILT.name(searchstr+'_ILT') # use searchstr as the node name withing the HDF5 file
         #s_ILT.hdf5_write(h5_name, directory=getDATADIR(h5_dir))
