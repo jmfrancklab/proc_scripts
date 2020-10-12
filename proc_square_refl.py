@@ -185,31 +185,41 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     #d.ift('t')
     #{{{ fits curve to find Q
     dw = diff(d.getaxis('t')[0:2]).item()
-    for thislabel,decay in [('initial',d['ch',1]['t':(refl_blip_ranges[0,0]-1e-6,refl_blip_ranges[1,0]-1e-6)]),
-            ('final',d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)])]:
-        max_t = abs(decay).argmax('t').item()
-        decay = decay['t':(max_t,None)]
-        decay = decay.setaxis('t',lambda x: x-decay.getaxis('t')[0])
-        decay = decay['t':(None,3e-6)] # none seem to exceed this -- just for plotting, etc
-        fl.next('Plotting the decay slice for the %s blip'%thislabel)
-        fl.plot(abs(decay), linewidth=3, alpha=0.3, color='k', label='starts at %g s'%max_t)
-        fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
-        #defines fit function as p0exp(-(t-t0)*p1)+p2
-        p_ini = r_[decay['t',0].data.real.max(), 1/0.5e-6,0] #why is there a third number (0) here?
-        print(p_ini)
-        fl.plot(fitfunc(p_ini), ':', label='initial guess', alpha=0.5) 
+    #for thislabel,decay in [('initial',d['ch',1]['t':(refl_blip_ranges[0,0]-1e-6,refl_blip_ranges[1,0]-1e-6)]),
+     #       ('final',d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)])]:
+     #   max_t = abs(decay).argmax('t').item()
+     #   decay = decay['t':(max_t,None)]
+     #   decay = decay.setaxis('t',lambda x: x-decay.getaxis('t')[0])
+     #   decay = decay['t':(None,3e-6)] # none seem to exceed this -- just for plotting, etc
+     #   fl.next('Plotting the decay slice for the %s blip'%thislabel)
+     #   fl.plot(abs(decay), linewidth=3, alpha=0.3, color='k', label='starts at %g s'%max_t)
+     #   fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
+     #   #defines fit function as p0exp(-(t-t0)*p1)+p2
+     #   p_ini = r_[decay['t',0].data.real.max(), 1/0.5e-6,0] #why is there a third number (0) here?
+     #   print(p_ini)
+     #   fl.plot(fitfunc(p_ini), ':', label='initial guess', alpha=0.5) 
         #applies the fit function to the initial point of the decay
-        residual = lambda p: fitfunc(p).data.real - decay.data.real
-        print(residual)
+     #   residual = lambda p: fitfunc(p).data.real - decay.data.real
+     #   print(residual)
         #subtracts the difference from the fit and the real data
-        p_opt, success = leastsq(residual, x0=p_ini[:])
+     #   p_opt, success = leastsq(residual, x0=p_ini[:])
         #fitting the data with least squares
-        assert success > 0 & success < 5, "fit not successful"
-        Q = 1./p_opt[1]*2*pi*center_frq 
+     #   assert success > 0 & success < 5, "fit not successful"
+    decay = d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)]
+    f = fitdata(decay)
+    p[0],p[1],p[2] = sympy.symbols("p0,p1,p2",real=True)
+    decay.functional_form = p[0]*exp(-decay.fromaxis('t')*p[1])+p[2]
+    f.fit()
+    print("output:",f.output())
+    print("latex:",f.latex())
+    fl.next('fit')
+    fl.plot(decay,'o',label='data')
+    fl.plot(f.eval(100),label='fit')
+     #Q = 1./p_opt[1]*2*pi*center_frq 
         #relating the fit function to Q
-        fl.plot(fitfunc(p_opt), label='fit, Q=%0.1f'%Q, alpha=0.5)
-        fl.plot(decay.real, label='data (real)', alpha=0.5)
-        fl.plot(decay.imag, label='data (imag, not fit)', alpha=0.5)
+        #fl.plot(fitfunc(p_opt), label='fit, Q=%0.1f'%Q, alpha=0.5)
+        #fl.plot(decay.real, label='data (real)', alpha=0.5)
+        #fl.plot(decay.imag, label='data (imag, not fit)', alpha=0.5)
         #}}}
 fl.show()
 quit()
