@@ -19,16 +19,13 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
         #('200103_pulse_1','test_equip','capture1','square_wave_capture_v1',True),
-        ('201006_coilE_1','test_equip','capture1','square_wave_capture_v1',True)
+        ('201009_coilE_2','test_equip','capture1','square_wave_capture_v1',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
     print(d.getaxis('t'))
-    quit()
-            
-    d.set_units('t','s').name('Amplitude').set_units('V')
     fl.next('Raw signal %s'%searchstr)
-    #fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
+    fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
     fl.show();quit()
     # }}}
@@ -51,7 +48,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     axvline(x=center_frq/1e6)
     d.setaxis('t',lambda x: x-center_frq).register_axis({'t':0})
     if do_slice:
-        d = d['t':(-10e6,10e6)]
+        d = d['t':(10e6,18e6)]
     d.ift('t') #Inverse Fourier Transform back to time domain to display the decaying exponential
     fl.next('Absolute value of analytic signal, %s'%searchstr)
     fl.plot(abs(d['ch',0]), alpha=0.5, label='control') #plot the 'envelope' of the control 
@@ -84,10 +81,12 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     refl_blip_ranges = filter_range(refl_blip_ranges)  # repeats the filter range but for the reflected signal                
     refl_blip_ranges.sort(axis=0) # they are sorted by range size, not first/last
     logger.info(strm("after filter",refl_blip_ranges))
-    assert refl_blip_ranges.shape[0] == 2, "seems to be more than two tuning blips "
+    #fl.show();quit()
+    #assert refl_blip_ranges.shape[0] == 2, "seems to be more than two tuning blips "
     for thisrange in refl_blip_ranges:
         fl.plot(abs(d['ch',1]['t':tuple(thisrange)]), alpha=0.1, color='k',
                 linewidth=10)
+    #fl.show();quit()    
     # }}}
     
     # {{{ apply a linear phase to find any remaining fine offset of the pulse,
@@ -106,7 +105,8 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.next('frequency domain\n%s'%searchstr)
     fl.plot(d['t':(None,40e6)], label='demod and sliced',
             alpha=0.5)
-    # }}}
+    
+    #fl.show();quit()# }}}
     
     # {{{ use the "standard cost function" to determine the
     #     t=0 (treat decay as an FID)
@@ -146,6 +146,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
 
     # {{{ 
     fl.next('after all corrections are complete')
+    d['ch',1] *= -1
     for j in range(2):
         fl.plot(d['ch',j].real,
                 label='ch %d real'%(j+1), alpha=0.5)
@@ -153,12 +154,13 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
                 label='ch %d imag'%(j+1), alpha=0.5)
         fl.plot(abs(d['ch',j]), linewidth=3, color='k',
                 label='ch %d abs'%(j+1), alpha=0.3)
+    #fl.show();quit()    
     # }}}
 
     #{{{ to plot the transfer function, we need to pick an impulse
         # of finite width, or else we get a bunch of noise
     if show_transfer_func:
-        transf_range = (-0.5e-6,3e-6)
+        transf_range = (6.93e-6,7.87e-6)
         fl.next('the transfer function')
         impulse = exp(-d.fromaxis('t')**2/2/(0.03e-6)**2) #impulse function
         ## the following gives a possibility for a causal impulse
@@ -173,16 +175,17 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(response.real, alpha=0.5, label='response, real')
         fl.plot(response.imag, alpha=0.5, label='response, imag')
         fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
+    #fl.show();quit()
     #}}}
 
     #{{{ fits curve to find Q
     dw = diff(d.getaxis('t')[0:2]).item()
-    for thislabel,decay in [('initial',d['ch',1]['t':(refl_blip_ranges[0,0]-1e-6,refl_blip_ranges[1,0]-1e-6)]),
-            ('final',d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)])]:
+    for thislabel,decay in [('initial',d['ch',1]['t':(0,0.35e-6)]),
+            ('final',d['ch',1]['t':(0,0.35e-6)])]:
         max_t = abs(decay).argmax('t').item()
         decay = decay['t':(max_t,None)]
         decay = decay.setaxis('t',lambda x: x-decay.getaxis('t')[0])
-        decay = decay['t':(None,2e6)] # none seem to exceed this -- just for plotting, etc
+        decay = decay['t':(None,0.35e6)] # none seem to exceed this -- just for plotting, etc
         fl.next('Plotting the decay slice for the %s blip'%thislabel)
         fl.plot(abs(decay), linewidth=3, alpha=0.3, color='k', label='starts at %g s'%max_t)
         fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
