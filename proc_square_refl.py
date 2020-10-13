@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import minimize,leastsq
 from proc_scripts import *
 from proc_scripts import postproc_dict
+from sympy import symbols
 do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
@@ -205,17 +206,28 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
      #   p_opt, success = leastsq(residual, x0=p_ini[:])
         #fitting the data with least squares
      #   assert success > 0 & success < 5, "fit not successful"
-    decay = d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)]
-    f = fitdata(decay)
-    p[0],p[1],p[2] = sympy.symbols("p0,p1,p2",real=True)
-    decay.functional_form = p[0]*exp(-decay.fromaxis('t')*p[1])+p[2]
-    f.fit()
+    for thislabel,decay in [('initial',d['ch',1]['t':(refl_blip_ranges[0,0]-1e-6,refl_blip_ranges[1,0]-1e-6)]),
+            ('final',d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)])]:
+        max_t = abs(decay).argmax('t').item()
+        decay = decay['t':(max_t,None)]
+        decay = decay.setaxis('t',lambda x: x-decay.getaxis('t')[0])
+        decay = decay['t':(None,3e-6)] # none seem to exceed this -- just for plotting, etc
+        fl.next('Plotting the decay slice for the %s blip'%thislabel)
+        fl.plot(abs(decay), linewidth=3, alpha=0.3, color='k', label='starts at %g s'%max_t)
+        t=decay.fromaxis('t')
+        f = fitdata(decay)
+        A,B,C,t = sympy.symbols("A B C t",real=True)
+        f.functional_form = C + A*sympy.exp(-t*B)
+        fl.next('fit')
+        fl.plot(d,'o',label='data')
+        f.fit()
+        fl.plot(f.eval(100),label='fit',human_units=False)
+    #text(0.75, 0.25, f.latex(), transform=gca.transAxes, size='large',
+    #        horizontalalignment='center',color='k')
     print("output:",f.output())
     print("latex:",f.latex())
-    fl.next('fit')
-    fl.plot(decay,'o',label='data')
-    fl.plot(f.eval(100),label='fit')
-     #Q = 1./p_opt[1]*2*pi*center_frq 
+    Q = 1./f.output('B')*2*pi*center_frq
+    print(Q)
         #relating the fit function to Q
         #fl.plot(fitfunc(p_opt), label='fit, Q=%0.1f'%Q, alpha=0.5)
         #fl.plot(decay.real, label='data (real)', alpha=0.5)
