@@ -15,7 +15,7 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
-        ["200306_DNP_lg_probe_w34.*", 'test_equip', 'signal',
+        ["201013_w8_2RM1AT_large_probe_DNP.*", 'test_equip', 'signal',
             'spincore_ODNP_v1', (-300,300), (None,0.05)]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
@@ -55,7 +55,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     #}}}
     #{{{plotting enhancement vs power
     fl.next('enhancement')
-    enhancement = s['t2':(-50,50)].sum('t2').real
+    enhancement = s['t2':(0,250)].sum('t2').real
     enhancement /= enhancement['power',0]
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
