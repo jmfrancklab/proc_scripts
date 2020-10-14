@@ -10,15 +10,16 @@ rcParams["savefig.transparent"] = True
 # {{{ input parameters
 filter_bandwidth = 5e3
 t2 = symbols('t2')
-test_for_flat_echo = False # test for flat echo and exit
+test_for_flat_echo = False# test for flat echo and exit
 write_h5 = False
 read_h5 = True 
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
-        ('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
+        #('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
         #('w8_201008','test_equip',3,False,0,'T1CPMG_201008_w8.h5','process_data_AG')
         #('free4AT_201008','test_equip',6,False,0,'T1CPMG_201008_FreeAT.h5','process_data_AG'),
-        #('freeD2O_201008','test_equip',9,False,0,'T1CPMG_201008_FreeD20.h5','process_data_AG'),
+        ('freeD2O_201014','test_equip',2,True,0,'T1CPMG_201014_FreeD20.h5','process_data_AG'),
+        #('free4AT_201014','test_equip',7,True,0,'T1CPMG_201014_FreeAT_1.h5','process_data_AG')
         #('w8_200731','test_equip',5,False,0,'T1CPMG_200731.h5','process_data_AG')
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
@@ -66,10 +67,11 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         #fl.show();quit()
         #}}}
         #{{{slice out signal and sum along t2
-        s = s['t2':(-500,500)]
+        s = s['t2':(-300,300)]
         s.sum('t2')
         fl.next('summed along t2')
         fl.image(s)
+        #fl.show();quit()
         #}}}
         #{{{save to hdf5 file
         s.name(searchstr) # use searchstr as the node name withing the HDF5 file
@@ -88,16 +90,17 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         s_ILT=s.C
         s_ILT.rename('indirect','tau1').setaxis('tau1',vd_list)
         s_ILT.rename('tE','tau2').setaxis('tau2',tE_axis)
-        s_ILT = s_ILT.nnls(('tau1','tau2'),
+        s_ILT = s_ILT.C.nnls(('tau1','tau2'),
                (Nx_ax,Ny_ax),
                (lambda x1,x2: 1.-2*exp(-x1/x2),
                 lambda y1,y2: exp(-y1/y2)),
                          l='BRD')
         s_ILT.setaxis('T1',log10(Nx_ax.data)).set_units('T1',None)
         s_ILT.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
-        figure()
-        title(r'$T_{1} - T_{2} distribution$ for w8 1 AT per 2 RM')
-        image(s_ILT)
+        #figure()
+        #title(r'$T_{1} - T_{2} distribution$ for free AT in soln')
+        fl.next('free D20 in solution')
+        fl.image(s_ILT)
         xlabel(r'$log(T_2/$s$)$')
         ylabel(r'$log(T_1/$s$)$')
         fl.show();quit()

@@ -24,6 +24,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
+    fl.show();quit()
     s.ift('t2')
     if spincore:
         s.reorder('nScans',first=True)

@@ -16,18 +16,17 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc, clock_correction in [
-        ('freeSL_201007','test_equip',5,'ag_IR2H',None)
-        #('w8_200731', 'test_equip', 2, 
-        #    'ag_IR2H'),
-        #('w8_200309', 'test_equip',2,'ag_IR2H',None),
-        #('ag_oct182019_w0_3','test_equip',2,'ab_ir2h',None)
+        #('freeSL_201007','test_equip',5,'ag_IR2H',None)
+        #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
+        ('free4AT_201014', 'test_equip',5,'ab_ir2h',None),
+        #('ag_oct182019_w0_3','test_equip',2,'ag_IR2H',None)
         ]:
     fl.basename = searchstr
     if clock_correction is None:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
-            dimname='indirect')
+            dimname='indirect',fl=fl)
     else:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
@@ -35,6 +34,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
             dimname='indirect',
             clock_correction=clock_correction)
     #{{{filter data
+    fl.show();quit()
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
     #{{{hermitian function test and apply best shift
