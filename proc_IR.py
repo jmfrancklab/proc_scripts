@@ -18,8 +18,9 @@ coh_err = {'ph1':1,# coherence channels to use for error
 for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
-        ('free4AT_201014', 'test_equip',5,'ab_ir2h',None),
-        #('ag_oct182019_w0_3','test_equip',2,'ag_IR2H',None)
+        #('free4AT_201014','test_equip',3,'ag_IR2H',None)
+        ('free4AT_201014', 'test_equip',3,'ab_ir2h',None),
+        #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
         ]:
     fl.basename = searchstr
     if clock_correction is None:
@@ -33,8 +34,8 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect',
             clock_correction=clock_correction)
-    #{{{filter data
-    fl.show();quit()
+    #fl.show();quit()
+        #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
     #{{{hermitian function test and apply best shift
@@ -50,7 +51,6 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     fl.next('frequency domain after')
     s.ft('t2')
     fl.image(s)
-    fl.show();quit()
     s.ift('t2')
     #}}}
     #{{{zeroth order phase correction

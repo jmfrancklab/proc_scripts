@@ -143,7 +143,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     #    d['ch',j] /= ph0
     #fl.basename = None
     print(ndshape(d))
-    ph0 = d['t':(0.32e-6,6.46e-6)].mean('t')
+    ph0 = d['t':(2e-6,6.46e-6)].mean('t')
     ph0 = ph0['ch',0].item()
     ph0 /= abs(ph0)
     d /= ph0
@@ -151,7 +151,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
 
     # {{{ 
     fl.next('after all corrections are complete')
-    d['ch',1] *= -1
+    #d['ch',1] *= -1
     for j in range(2):
         fl.plot(d['ch',j].real,
                 label='ch %d real'%(j+1), alpha=0.5)
@@ -180,27 +180,21 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
     #}}}
     #{{{ fits curve to find Q
-    decay = d['ch',1].imag
+    decay = d['ch',1]
     decay = decay['t':(0,2e-6)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
-    t=decay.fromaxis('t')
     f = fitdata(decay)
     A,B,C,t = sympy.symbols("A B C t",real=True)
     f.functional_form = C+A*sympy.exp(-t*B)
     fl.next('fit')
     fl.plot(decay,'o',label='data')
     f.fit()
-    fl.plot(f.eval(100),label='fit',human_units=False)
+    f.set_units('t','ns')
     print("output:",f.output())
     print("latex:",f.latex())
     Q = 1./f.output('B')*2*pi*center_frq
-    print(Q)
-        #relating the fit function to Q
-        #fl.plot(fitfunc(p_opt), label='fit, Q=%0.1f'%Q, alpha=0.5)
-        #fl.plot(decay.real, label='data (real)', alpha=0.5)
-        #fl.plot(decay.imag, label='data (imag, not fit)', alpha=0.5)
-        #}}}
+    fl.plot(f.eval(100).set_units('t','s'),label='fit, Q=%0.1f'%Q)
 fl.show()
 quit()
 
