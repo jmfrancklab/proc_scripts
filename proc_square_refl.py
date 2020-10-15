@@ -28,7 +28,6 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.next('Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
-    #fl.show();quit()
     # }}}
     
     # {{{ determining center frequency and convert to
@@ -54,8 +53,6 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.next('Absolute value of analytic signal, %s'%searchstr)
     fl.plot(abs(d['ch',0]), alpha=0.5, label='control') #plot the 'envelope' of the control 
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
-    
-    #fl.show();quit()# }}}
     
     #{{{determine the start and stop points for both the pulse, as well as the two tuning blips
     pulse_range = abs(d['ch',0]).contiguous(lambda x:  # returns list of limits for which the lambda function holds true
@@ -87,7 +84,6 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     for thisrange in refl_blip_ranges:
         fl.plot(abs(d['ch',1]['t':tuple(thisrange)]), alpha=0.1, color='k',
                 linewidth=10)
-    #fl.show();quit()    
     # }}}
     
     # {{{ apply a linear phase to find any remaining fine offset of the pulse,
@@ -106,9 +102,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.next('frequency domain\n%s'%searchstr)
     fl.plot(d['t':(None,40e6)], label='demod and sliced',
             alpha=0.5)
-    
-    #fl.show();quit()# }}}
-    
+     
     # {{{ use the "standard cost function" to determine the
     #     t=0 (treat decay as an FID)
     d.ift('t')
@@ -134,20 +128,25 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     d.setaxis('t', lambda x: x-time_zero).register_axis({'t':0})
     refl_blip_ranges -= time_zero
     pulse_range -= time_zero
-    #fl.show();quit()
     fl.next('before slicing frequencies')
     fl.plot(d)
     d = d['t':(-10e6,10e6)] # slice out frequencies with signal
     fl.next('after slicing')
     fl.plot(d)
+    #fl.show();quit()
     #}}}
     #d *= -1
     #{{{zeroth order phase correction
-    for j in range(2):
-        fl.basename = "channel %d"%(j+1)
-        ph0 = zeroth_order_ph(d['ch',j], fl=fl)
-        d['ch',j] /= ph0
-    fl.basename = None
+    #for j in range(2):
+    #    fl.basename = "channel %d"%(j+1)
+    #    ph0 = zeroth_order_ph(d['ch',j], fl=fl)
+    #    d['ch',j] /= ph0
+    #fl.basename = None
+    print(ndshape(d))
+    ph0 = d['t':(0.32e-6,6.46e-6)].mean('t')
+    ph0 = ph0['ch',0].item()
+    ph0 /= abs(ph0)
+    d /= ph0
     #}}}
 
     # {{{ 
@@ -160,9 +159,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
                 label='ch %d imag'%(j+1), alpha=0.5)
         fl.plot(abs(d['ch',j]), linewidth=3, color='k',
                 label='ch %d abs'%(j+1), alpha=0.3)
-    #fl.show();quit()    
     # }}}
-
     #{{{ to plot the transfer function, we need to pick an impulse
         # of finite width, or else we get a bunch of noise
     if show_transfer_func:
@@ -181,49 +178,20 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(response.real, alpha=0.5, label='response, real')
         fl.plot(response.imag, alpha=0.5, label='response, imag')
         fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
-    #fl.show();quit()
     #}}}
-    #d.ift('t')
     #{{{ fits curve to find Q
-    dw = diff(d.getaxis('t')[0:2]).item()
-    #for thislabel,decay in [('initial',d['ch',1]['t':(refl_blip_ranges[0,0]-1e-6,refl_blip_ranges[1,0]-1e-6)]),
-     #       ('final',d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)])]:
-     #   max_t = abs(decay).argmax('t').item()
-     #   decay = decay['t':(max_t,None)]
-     #   decay = decay.setaxis('t',lambda x: x-decay.getaxis('t')[0])
-     #   decay = decay['t':(None,3e-6)] # none seem to exceed this -- just for plotting, etc
-     #   fl.next('Plotting the decay slice for the %s blip'%thislabel)
-     #   fl.plot(abs(decay), linewidth=3, alpha=0.3, color='k', label='starts at %g s'%max_t)
-     #   fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
-     #   #defines fit function as p0exp(-(t-t0)*p1)+p2
-     #   p_ini = r_[decay['t',0].data.real.max(), 1/0.5e-6,0] #why is there a third number (0) here?
-     #   print(p_ini)
-     #   fl.plot(fitfunc(p_ini), ':', label='initial guess', alpha=0.5) 
-        #applies the fit function to the initial point of the decay
-     #   residual = lambda p: fitfunc(p).data.real - decay.data.real
-     #   print(residual)
-        #subtracts the difference from the fit and the real data
-     #   p_opt, success = leastsq(residual, x0=p_ini[:])
-        #fitting the data with least squares
-     #   assert success > 0 & success < 5, "fit not successful"
-    for thislabel,decay in [('initial',d['ch',1]['t':(refl_blip_ranges[0,0]-1e-6,refl_blip_ranges[1,0]-1e-6)]),
-            ('final',d['ch',1]['t':(refl_blip_ranges[1,0]-1e-6,None)])]:
-        max_t = abs(decay).argmax('t').item()
-        decay = decay['t':(max_t,None)]
-        decay = decay.setaxis('t',lambda x: x-decay.getaxis('t')[0])
-        decay = decay['t':(None,3e-6)] # none seem to exceed this -- just for plotting, etc
-        fl.next('Plotting the decay slice for the %s blip'%thislabel)
-        fl.plot(abs(decay), linewidth=3, alpha=0.3, color='k', label='starts at %g s'%max_t)
-        t=decay.fromaxis('t')
-        f = fitdata(decay)
-        A,B,C,t = sympy.symbols("A B C t",real=True)
-        f.functional_form = C + A*sympy.exp(-t*B)
-        fl.next('fit')
-        fl.plot(d,'o',label='data')
-        f.fit()
-        fl.plot(f.eval(100),label='fit',human_units=False)
-    #text(0.75, 0.25, f.latex(), transform=gca.transAxes, size='large',
-    #        horizontalalignment='center',color='k')
+    decay = d['ch',1].imag
+    decay = decay['t':(0,2e-6)]
+    fl.next('Plotting the decay slice')
+    fl.plot(decay, linewidth=3, alpha=0.3, color='k')
+    t=decay.fromaxis('t')
+    f = fitdata(decay)
+    A,B,C,t = sympy.symbols("A B C t",real=True)
+    f.functional_form = C+A*sympy.exp(-t*B)
+    fl.next('fit')
+    fl.plot(decay,'o',label='data')
+    f.fit()
+    fl.plot(f.eval(100),label='fit',human_units=False)
     print("output:",f.output())
     print("latex:",f.latex())
     Q = 1./f.output('B')*2*pi*center_frq
