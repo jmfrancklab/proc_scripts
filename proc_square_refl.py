@@ -1,4 +1,5 @@
 from pyspecdata import *
+from scipy.signal import tukey
 
 init_logging("debug")
 d = find_file(
@@ -63,11 +64,17 @@ with fl_ext() as fl:
     fl.next("show the frequency distribution")
     forplot = d.C
     forplot[lambda x: abs(x) < 1e-10] = 0
-    d["t":(0, 2e6)] = 0
-    d["t":(20e6, None)] = 0
-    fl.plot(abs(forplot), alpha=0.5, plottype="semilogy", label="orig")
-    fl.grid()
     frq_guess = abs(d["ch", 1]).argmax("t").item()
+    frq_range = r_[-10,10]*1e6 + frq_guess
+    d["t":(0, frq_range[0])] = 0
+    d["t":(frq_range[1], None)] = 0
+    # {{{ shouldn't have to do it this way, but something weird going on w/ aligndata
+    tukey_filter = d.fromaxis("t")["t":tuple(frq_range)].run(lambda x: tukey(len(x)))
+    d["t":tuple(frq_range)] *= tukey_filter
+    for j in d.getaxis('ch'):
+        fl.plot(abs(forplot)['ch':j], alpha=0.5, plottype="semilogy", label=f"CH{j} orig")
+        fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5, plottype="semilogy", label=f"CH{j} filtered")
+    fl.grid()
     df = diff(d.getaxis("t")[r_[0, 1]]).item()
     d.ift("t")
     # {{{ determine the frequency from the phase gradient during the pulse
