@@ -61,8 +61,10 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     #}}}
 
     #{{{ filter for ranges >0.1 μs -- use the compact list comprehension
-    def filter_range(x): return array([j for j in x if
-        diff(j).item() > 0.1e-6])
+    def filter_range(thisrange):                      
+        mask = diff(thisrange, axis=1) > 0.1e-6 * ones((1,2))  #filters out when the signal only goes 0.1-0.2 us above half max
+        thisrange = thisrange[mask].reshape((-1,2))
+        return thisrange
     pulse_range = filter_range(pulse_range)
     if not pulse_range.shape[0] == 1:
         logger.info(strm(("seems to be more than one pulse -- on starting at " 
@@ -78,7 +80,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
             x > 0.05*x.data.max()) 
     logger.info(strm("before filter",refl_blip_ranges))
     refl_blip_ranges = filter_range(refl_blip_ranges)  # repeats the filter range but for the reflected signal                
-    refl_blip_ranges.sort(axis=0) # they are sorted by range size, not first/last
+    #refl_blip_ranges.sort(axis=0) # they are sorted by range size, not first/last
     logger.info(strm("after filter",refl_blip_ranges))
     #assert refl_blip_ranges.shape[0] == 2, "seems to be more than two tuning blips "
     for thisrange in refl_blip_ranges:
@@ -143,8 +145,8 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     #    d['ch',j] /= ph0
     #fl.basename = None
     print(ndshape(d))
-    ph0 = d['t':(2e-6,6.46e-6)].mean('t')
-    ph0 = ph0['ch',0].item()
+    ph0 = d['t':(2e-6,5e-6)].mean('t')
+    ph0 = ph0['ch',1].item()
     ph0 /= abs(ph0)
     d /= ph0
     #}}}
@@ -159,6 +161,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
                 label='ch %d imag'%(j+1), alpha=0.5)
         fl.plot(abs(d['ch',j]), linewidth=3, color='k',
                 label='ch %d abs'%(j+1), alpha=0.3)
+        fl.grid()
     # }}}
     #{{{ to plot the transfer function, we need to pick an impulse
         # of finite width, or else we get a bunch of noise
