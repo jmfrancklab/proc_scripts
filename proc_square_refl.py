@@ -60,38 +60,43 @@ class fl_ext(figlist_var):
 
 with fl_ext() as fl:
     d.ft("t", shift=True)
+    #in the previous version we had multiplied data by 2 because the euation 1/2a*exp(iwt)+aexp(-iwt) and the 2
+    #negated the half.... this is not done here. before we did it because the demodulation looked weird w/o it.
+    #I am assuming this is not needed here as the demodulation either won't be used or is not affected anymore.
     d = d["t":(0, 50e6)]
     fl.next("show the frequency distribution")
     forplot = d.C
-    forplot[lambda x: abs(x) < 1e-10] = 0
-    frq_guess = abs(d["ch", 1]).argmax("t").item()
+    forplot[lambda x: abs(x) < 1e-10] = 0 #filter low frequency noise out
+    frq_guess = abs(d["ch", 1]).argmax("t").item() #this is to find the peak? argmax on reflection ch would be the peaks
     frq_range = r_[-10,10]*1e6 + frq_guess
-    d["t":(0, frq_range[0])] = 0
+    d["t":(0, frq_range[0])] = 0 #again filtering out noise outside of blips
     d["t":(frq_range[1], None)] = 0
     # {{{ shouldn't have to do it this way, but something weird going on w/ aligndata
-    tukey_filter = d.fromaxis("t")["t":tuple(frq_range)].run(lambda x: tukey(len(x)))
+    tukey_filter = d.fromaxis("t")["t":tuple(frq_range)].run(lambda x: tukey(len(x))) #what does tukey mean? why are we using this nomenclature?
     d["t":tuple(frq_range)] *= tukey_filter
     for j in d.getaxis('ch'):
         fl.plot(abs(forplot)['ch':j], alpha=0.5, plottype="semilogy", label=f"CH{j} orig")
-        fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5, plottype="semilogy", label=f"CH{j} filtered")
+        fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5, plottype="semilogy", label=f"CH{j} filtered") 
     fl.grid()
     df = diff(d.getaxis("t")[r_[0, 1]]).item()
     d.ift("t")
     # {{{ determine the frequency from the phase gradient during the pulse
     dt = diff(d.getaxis("t")[r_[0, 1]]).item()
-    pulse_slice = d["ch", 0].contiguous(lambda x: abs(x) > 0.5*abs(x).data.max())[0]
-    d.setaxis("t", lambda x: x - pulse_slice[0]).register_axis({"t": 0})
+    pulse_slice = d["ch", 0].contiguous(lambda x: abs(x) > 0.5*abs(x).data.max())[0] #defines pulse slice based on control signal
+    d.setaxis("t", lambda x: x - pulse_slice[0]).register_axis({"t": 0}) #resets t axis around pulse slice
     pulse_slice -= pulse_slice[0]
+    #{{{ Not sure what this portion is doing...is this similar to a time shift? or first order phase correction?
     d = d["t" : tuple(pulse_slice + r_[-0.5e-6, 2e-6])]
     pulse_middle = d["ch", 0]["t" : tuple(pulse_slice + r_[+0.5e-6, -0.5e-6])]
     ph_diff = pulse_middle["t", 1:] / pulse_middle["t", :-1]
     ph_diff.sum("t")
     ph_diff = ph_diff.angle.item()
     frq = ph_diff/dt/2/pi
+    #}}}
     # }}}
     print("frq:", frq)
-    d *= exp(-1j*2*pi*frq*d.fromaxis("t"))
-    ph0 = d["ch", 0].C.sum("t").item()
+    d *= exp(-1j*2*pi*frq*d.fromaxis("t")) #convolution
+    ph0 = d["ch", 0].C.sum("t").item() #pseudo 0th order phase correction
     ph0 /= abs(ph0)
     d /= ph0
     fl.next("analytic signal -- phase plot", twinx=True)
@@ -105,8 +110,9 @@ with fl_ext() as fl:
     fl.abs_re_plot(d)
     scalar_refl = d["ch", 1]["t":(2e-6, 6e-6)].mean("t").item()
     fl.next("blips")
-    blip_range = r_[-0.2e-6, 1.5e-6]
-    first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl
+    blip_range = r_[-0.2e-6, 1.5e-6] #defining decay slice
+    first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
+    #{{{ doing 0th order correction type thing again? why? we did this in lines 99-101...
     ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
     ph0_blip /= abs(ph0_blip)
     fl.abs_re_plot(first_blip/ph0_blip, "first")
