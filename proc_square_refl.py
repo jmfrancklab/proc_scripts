@@ -3,7 +3,7 @@ from scipy.optimize import minimize,leastsq
 from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
-do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
+do_slice = True # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
 logger = init_logging('info')
@@ -33,61 +33,77 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     # {{{ determining center frequency and convert to
     # analytic signal, show analytic signal
     d.ft('t',shift=True) #Fourier Transform into freq domain
-    d = 2*d['t':(0,None)] # throw out negative frequencies and low-pass (analytic signal -- 2 to preserve magnitude)
+    #d = 2*d['t':(0,None)] # throw out negative frequencies and low-pass (analytic signal -- 2 to preserve magnitude)
     #to negated the "1/2" in "(1/2)(aexp[iwt]+a*exp[-iwt])
     # ALSO -- everything should be less than 40 MHz for sure
     if do_slice:
-        d = d['t':(0,40e6)]
+        d = d['t':(0,50e6)]
+        d[lambda x: abs(x) < 1e-10] = 0
     else:
         d['t':(0,3e6)] = 0 # filter out low-frq noise, which becomes high-frq noise on demod
     center_frq = abs(d['ch',0]).argmax('t').item() # the center frequency is now the max of the freq peak    
     logger.info(strm(("initial guess at center frequency at %0.5f MHz"%(center_frq/1e6))))
     logger.info(strm(center_frq))
+    freq_guess = abs(d['ch',1]).argmax('t').item()
+    freq_range = r_[-10,10]*1e6 +freq_guess
+    d['t':(0,freq_range[0])] = 0
+    d['t':(freq_range[1],None)] = 0
     fl.next('frequency domain\n%s'%searchstr)
     fl.plot(abs(d['t':(None,40e6)]),label='Raw signal in freq domain,\nshows a bandwidth of about 20 MHz', alpha=0.5)
     axvline(x=center_frq/1e6)
-    d.setaxis('t',lambda x: x-center_frq).register_axis({'t':0})
-    if do_slice:
-        d = d['t':(10e6,18e6)]
+   # d.setaxis('t',lambda x: x-center_frq).register_axis({'t':0})
     d.ift('t') #Inverse Fourier Transform back to time domain to display the decaying exponential
+        # {{{ determine the frequency from the phase gradient during the pulse
+    dt = diff(d.getaxis("t")[r_[0, 1]]).item()
+    pulse_slice = d["ch", 0].contiguous(lambda x: abs(x) > 0.5*abs(x).data.max())[0] #defines pulse slice based on control signal
+    d.setaxis("t", lambda x: x - pulse_slice[0]).register_axis({"t": 0}) #resets t axis around pulse slice
+    pulse_slice -= pulse_slice[0]
+    #{{{ Not sure what this portion is doing...is this similar to a time shift? or first order phase correction?
+    d = d["t" : tuple(pulse_slice + r_[-0.5e-6, 2e-6])]
+    pulse_middle = d["ch", 0]["t" : tuple(pulse_slice + r_[+0.5e-6, -0.5e-6])]
+    ph_diff = pulse_middle["t", 1:] / pulse_middle["t", :-1]
+    ph_diff.sum("t")
+    ph_diff = ph_diff.angle.item()
+    frq = ph_diff/dt/2/pi
+    #}}}
+    # }}}
+    print("frq:", frq)
+    d *= exp(-1j*2*pi*frq*d.fromaxis("t")) #convolution
+    ph0 = d["ch", 0].C.sum("t").item() #pseudo 0th order phase correction
+    ph0 /= abs(ph0)
+    d /= ph0
     fl.next('Absolute value of analytic signal, %s'%searchstr)
     fl.plot(abs(d['ch',0]), alpha=0.5, label='control') #plot the 'envelope' of the control 
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
-    
     #{{{determine the start and stop points for both the pulse, as well as the two tuning blips
+    scalar_refl = d["ch", 1]["t":(2e-6, 6e-6)].mean("t").item()
+    blip_range = r_[-0.2e-6, 1.5e-6] #defining decay slice
+    first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
+    #{{{ doing 0th order correction type thing again? why? we did this in lines 99-101...
+    ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
+    ph0_blip /= abs(ph0_blip)
+    d1 = first_blip/ph0_blip
+    fl.next('after d1 shit')
+    fl.plot(d1.real)
+    fl.plot(d1.imag)
+    fl.plot(abs(d1))
+    fl.twinx(orig=False)
+    ax = gca()
+    gridandtick(ax)
+    ax.grid(False)
+    fl.twinx(orig=True)
+    fl.grid
+    second_blip = d['ch', 1:2]['t':tuple(blip_range + pulse_slice[1])].setaxis('t',lambda x: x - pulse_slice[1])
+    d2 = second_blip/ph0_blip
+    fl.next('second blip')
+    fl.plot(d2.real)
+    fl.plot(d2.imag)
+    fl.plot(abs(d2))
+
     pulse_range = abs(d['ch',0]).contiguous(lambda x:  # returns list of limits for which the lambda function holds true
             x > 0.5*x.data.max())                      # So will define pulse_range as all x values where the signal goes 
                                                        # above half the max of the signal
     #}}}
-
-    #{{{ filter for ranges >0.1 μs -- use the compact list comprehension
-    def filter_range(thisrange):                      
-        mask = diff(thisrange, axis=1) > 0.1e-6 * ones((1,2))  #filters out when the signal only goes 0.1-0.2 us above half max
-        thisrange = thisrange[mask].reshape((-1,2))
-        return thisrange
-    pulse_range = filter_range(pulse_range)
-    if not pulse_range.shape[0] == 1:
-        logger.info(strm(("seems to be more than one pulse -- on starting at " 
-                + ','.join(('start '+str(j[0])+' length '+str(diff(j)) for j in pulse_range)))))   # If there is more than one section that goes above half max
-    # it assumes theres more than one pulse 
-    pulse_range = pulse_range[0,:]
-    #}}}
-
-    #{{{plotting reflection blip
-    fl.plot(abs(d['ch',0]['t':tuple(pulse_range)]), alpha=0.1, color='k',  #shades in the section of pulse range (above half max) for 
-            linewidth=10)                                                  #control 
-    refl_blip_ranges = abs(d['ch',1]).contiguous(lambda x:
-            x > 0.05*x.data.max()) 
-    logger.info(strm("before filter",refl_blip_ranges))
-    refl_blip_ranges = filter_range(refl_blip_ranges)  # repeats the filter range but for the reflected signal                
-    #refl_blip_ranges.sort(axis=0) # they are sorted by range size, not first/last
-    logger.info(strm("after filter",refl_blip_ranges))
-    #assert refl_blip_ranges.shape[0] == 2, "seems to be more than two tuning blips "
-    for thisrange in refl_blip_ranges:
-        fl.plot(abs(d['ch',1]['t':tuple(thisrange)]), alpha=0.1, color='k',
-                linewidth=10)
-    # }}}
-    
     # {{{ apply a linear phase to find any remaining fine offset of the pulse,
     #     and demodulate
     f_shift = nddata(r_[-0.1e6:0.1e6:200j],'f_test')
@@ -132,10 +148,10 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     pulse_range -= time_zero
     fl.next('before slicing frequencies')
     fl.plot(d)
-    d = d['t':(-10e6,10e6)] # slice out frequencies with signal
+    #d = d['t':(-10e6,10e6)] # slice out frequencies with signal
     fl.next('after slicing')
     fl.plot(d)
-    #fl.show();quit()
+    fl.show();quit()
     #}}}
     #d *= -1
     #{{{zeroth order phase correction
