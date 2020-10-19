@@ -48,6 +48,13 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     freq_range = r_[-10,10]*1e6 +freq_guess
     d['t':(0,freq_range[0])] = 0
     d['t':(freq_range[1],None)] = 0
+    tukey_filter = d.fromaxis('t')['t':tuple(freq_range)].run(lambda x: tukey(len(x)))
+    d['t':tuple(freq_range)] *= tukey_filter
+    fl.next('showing freq dist.')
+    for j in d.getaxis('ch'):
+        fl.plot(abs(forplot)['ch':j],alpha=0.5,plottype='semilogy',label=f'CH{j} orig')
+        fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10],alpha=0.5,plottype='semilogy',label=f'CH{j} filtered')
+        fl.grid()
     fl.next('frequency domain\n%s'%searchstr)
     fl.plot(abs(d['t':(None,40e6)]),label='Raw signal in freq domain,\nshows a bandwidth of about 20 MHz', alpha=0.5)
     axvline(x=center_frq/1e6)
