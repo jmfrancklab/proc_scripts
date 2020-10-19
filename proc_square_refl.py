@@ -3,6 +3,7 @@ from scipy.optimize import minimize,leastsq
 from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
+from scipy.signal import tukey
 do_slice = True # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
@@ -52,7 +53,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     d['t':tuple(freq_range)] *= tukey_filter
     fl.next('showing freq dist.')
     for j in d.getaxis('ch'):
-        fl.plot(abs(forplot)['ch':j],alpha=0.5,plottype='semilogy',label=f'CH{j} orig')
+        #fl.plot(abs(forplot)['ch':j],alpha=0.5,plottype='semilogy',label=f'CH{j} orig')
         fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10],alpha=0.5,plottype='semilogy',label=f'CH{j} filtered')
         fl.grid()
     fl.next('frequency domain\n%s'%searchstr)
@@ -105,20 +106,21 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(d2.real,label='second blip real')
     fl.plot(d2.imag,label='second blip imag')
     fl.plot(abs(d2),label='second blip abs')
-    fl.show();quit()
     #{{{ fits curve to find Q
     decay = (abs(d1)+abs(d2))/2
     fl.next('decay')
     fl.plot(decay)
-    decay = decay['t':(40e-9,None)]
+    #decay_start = decay.argmax('t').item()
+    #decay = decay['t':(decay_start,None)]
+    decay = decay['t':(58e-9,None)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))
-    decay = decay['ch',None]
+    decay = decay['ch',0]
     print(ndshape(decay))
     f = fitdata(decay)
-    A,B,C,t = sympy.symbols("A B C t",real=True)
-    f.functional_form = C+A*sympy.exp(-t*B)
+    A,B,C,t = symbols("A B C t",real=True)
+    f.functional_form = C+A*e**(-t*B)
     fl.next('fit')
     fl.plot(decay,'o',label='data')
     f.fit()
