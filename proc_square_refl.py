@@ -84,9 +84,9 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     ph0_blip /= abs(ph0_blip)
     d1 = first_blip/ph0_blip
     fl.next('after d1 shit')
-    fl.plot(d1.real)
-    fl.plot(d1.imag)
-    fl.plot(abs(d1))
+    fl.plot(d1.real,label='first blip real')
+    fl.plot(d1.imag,label='first blip imag')
+    fl.plot(abs(d1),label='first blip abs')
     fl.twinx(orig=False)
     ax = gca()
     gridandtick(ax)
@@ -95,114 +95,20 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.grid
     second_blip = d['ch', 1:2]['t':tuple(blip_range + pulse_slice[1])].setaxis('t',lambda x: x - pulse_slice[1])
     d2 = second_blip/ph0_blip
-    fl.next('second blip')
-    fl.plot(d2.real)
-    fl.plot(d2.imag)
-    fl.plot(abs(d2))
-
-    pulse_range = abs(d['ch',0]).contiguous(lambda x:  # returns list of limits for which the lambda function holds true
-            x > 0.5*x.data.max())                      # So will define pulse_range as all x values where the signal goes 
-                                                       # above half the max of the signal
-    #}}}
-    # {{{ apply a linear phase to find any remaining fine offset of the pulse,
-    #     and demodulate
-    f_shift = nddata(r_[-0.1e6:0.1e6:200j],'f_test')
-    # perform and store 200 frequency de-modulations of signal
-    test_array = d['ch',0] * exp(-1j*2*pi*f_shift*d.fromaxis('t'))
-    # performs frequency shift to control signal
-    fine_adj_frq = test_array.sum('t').run(abs).argmax('f_test').item()
-    # when modulating by same frequency of the waveform,
-    # abs(sum(waveform)) will be a maximum
-    center_frq += fine_adj_frq
-    logger.info(strm(("found center frequency at %0.5f MHz"%(center_frq/1e6))))
-    d.ft('t') #Fourier Transform into freq domain
-    d.setaxis('t', lambda x: x - fine_adj_frq) #apply shift to x axis
-    fl.next('frequency domain\n%s'%searchstr)
-    fl.plot(d['t':(None,40e6)], label='demod and sliced',
-            alpha=0.5)
-     
-    # {{{ use the "standard cost function" to determine the
-    #     t=0 (treat decay as an FID)
-    d.ift('t')
-    first_blip = d['ch',1][
-            't':tuple(refl_blip_ranges[0]+r_[-1e-6,1e-6])].C
-    if standard_cost:
-        first_blip.ft('t')
-        fl.next('test time axis')
-        t_shift = nddata(r_[-0.2e-6:0.2e-6:1000j]+pulse_range[0],
-                't_shift').set_units('t_shift','s')
-        # perform and store 1000 time shifts 
-        test_data = first_blip * exp(
-                -1j*2*pi*t_shift*first_blip.fromaxis('t'))
-        test_data_ph = test_data.C.sum('t')
-        test_data_ph /= abs(test_data_ph)
-        test_data /= test_data_ph
-        test_data.run(real).run(abs).sum('t')
-        fl.plot(test_data,'.')
-        # determine time zero
-        time_zero = test_data.argmin('t_shift').item()
-    else:
-        time_zero = abs(first_blip).argmax('t').item()
-    d.setaxis('t', lambda x: x-time_zero).register_axis({'t':0})
-    refl_blip_ranges -= time_zero
-    pulse_range -= time_zero
-    fl.next('before slicing frequencies')
-    fl.plot(d)
-    #d = d['t':(-10e6,10e6)] # slice out frequencies with signal
-    fl.next('after slicing')
-    fl.plot(d)
+    fl.plot(d2.real,label='second blip real')
+    fl.plot(d2.imag,label='second blip imag')
+    fl.plot(abs(d2),label='second blip abs')
     fl.show();quit()
-    #}}}
-    #d *= -1
-    #{{{zeroth order phase correction
-    #for j in range(2):
-    #    fl.basename = "channel %d"%(j+1)
-    #    ph0 = zeroth_order_ph(d['ch',j], fl=fl)
-    #    d['ch',j] /= ph0
-    #fl.basename = None
-    print(ndshape(d))
-    ph0 = d['t':(2e-6,5e-6)].mean('t')
-    ph0 = ph0['ch',1].item()
-    ph0 /= abs(ph0)
-    d /= ph0
-    #}}}
-
-    # {{{ 
-    fl.next('after all corrections are complete')
-    #d['ch',1] *= -1
-    for j in range(2):
-        fl.plot(d['ch',j].real,
-                label='ch %d real'%(j+1), alpha=0.5)
-        fl.plot(d['ch',j].imag,
-                label='ch %d imag'%(j+1), alpha=0.5)
-        fl.plot(abs(d['ch',j]), linewidth=3, color='k',
-                label='ch %d abs'%(j+1), alpha=0.3)
-        fl.grid()
-    # }}}
-    #{{{ to plot the transfer function, we need to pick an impulse
-        # of finite width, or else we get a bunch of noise
-    if show_transfer_func:
-        transf_range = (-0.12e-6,3e-6)
-        fl.next('the transfer function')
-        impulse = exp(-d.fromaxis('t')**2/2/(0.03e-6)**2) #impulse function
-        ## the following gives a possibility for a causal impulse
-        fl.plot(impulse['t':transf_range], alpha=0.5, color='k', label='impulse')
-        #plots impulse function in range of transfer function
-        d.ft('t') #Fourier Transforms into freq domain
-        transf = d['ch',1]/d['ch',0] #defining transfer function
-        impulse.ft('t') #applies FT to impulse function
-        response = impulse*transf #defines response
-        response.ift('t') #Inverse Fourier transforms the response (which includes the impulse)
-        response = response['t':transf_range] #defines x axis range of response
-        fl.plot(response.real, alpha=0.5, label='response, real')
-        fl.plot(response.imag, alpha=0.5, label='response, imag')
-        fl.plot(abs(response), alpha=0.3, linewidth=3, label='response, abs')
-    #}}}
     #{{{ fits curve to find Q
-    decay = d['ch',1]
-    decay = decay['t':(0,2e-6)]
+    decay = (abs(d1)+abs(d2))/2
+    fl.next('decay')
+    fl.plot(decay)
+    decay = decay['t':(40e-9,None)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
+    print(decay.getaxis('ch'))
+    decay = decay['ch',None]
+    print(ndshape(decay))
     f = fitdata(decay)
     A,B,C,t = sympy.symbols("A B C t",real=True)
     f.functional_form = C+A*sympy.exp(-t*B)
