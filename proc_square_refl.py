@@ -18,19 +18,20 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('181103','probe',True),
         #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
-        ('200103_pulse_1','test_equip','capture1','square_wave_capture_v1',True),
+        ('201020_coilE_1','test_equip','capture1','square_wave_capture_v1',True),
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
-
+    print(ndshape(d))
     fl.next('Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
+    #fl.show();quit()
     # }}}
     
     # {{{ determining center frequency and convert to
     # analytic signal, show analytic signal
-    d.ft('t',shift=True) #Fourier Transform into freq domain
+    d.ft('t')#,shift=True) #Fourier Transform into freq domain
     d = 2*d['t':(0,None)] # throw out negative frequencies and low-pass (analytic signal -- 2 to preserve magnitude)
     #to negated the "1/2" in "(1/2)(aexp[iwt]+a*exp[-iwt])
     # ALSO -- everything should be less than 40 MHz for sure
@@ -79,7 +80,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     refl_blip_ranges = filter_range(refl_blip_ranges)  # repeats the filter range but for the reflected signal                
     refl_blip_ranges.sort(axis=0) # they are sorted by range size, not first/last
     logger.info(strm("after filter",refl_blip_ranges))
-    assert refl_blip_ranges.shape[0] == 2, "seems to be more than two tuning blips "
+    #assert refl_blip_ranges.shape[0] == 2, "seems to be more than two tuning blips "
     for thisrange in refl_blip_ranges:
         fl.plot(abs(d['ch',1]['t':tuple(thisrange)]), alpha=0.1, color='k',
                 linewidth=10)
@@ -107,8 +108,8 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j], fl=None)
         d['ch',j] /= ph0
-        fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5)
-        fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5)
+        fl.plot(d['ch',j].real, label='ch %d real'%(j+1), alpha=0.5,human_units=False)
+        fl.plot(d['ch',j].imag, label='ch %d imag'%(j+1), alpha=0.5,human_units=False)
     d.ift('t')
     #}}}
 
@@ -138,6 +139,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         fl.plot(test_data,'.')
         # determine time zero
         time_zero = test_data.argmin('t_shift').item()
+        fl.show();quit()
     else:
         time_zero = abs(first_blip).argmax('t').item()
     d.setaxis('t', lambda x: x-time_zero).register_axis({'t':0})
@@ -149,7 +151,6 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
                 label='ch %d abs'%(j+1), alpha=0.3)
     d = d['t':(-10e6,10e6)] # slice out frequencies with signal
     #}}}
-    
     #{{{zeroth order phase correction
     for j in range(2):
         ph0 = zeroth_order_ph(d['ch',j], fl=fl)
@@ -186,6 +187,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         decay = decay['t':(None,2e6)] # none seem to exceed this -- just for plotting, etc
         fl.next('Plotting the decay slice for the %s blip'%thislabel)
         fl.plot(abs(decay), linewidth=3, alpha=0.3, color='k', label='starts at %g s'%max_t)
+        fl.show();quit()
         fitfunc = lambda p: p[0]*exp(-decay.fromaxis('t')*p[1])+p[2] 
         #defines fit function as p0exp(-(t-t0)*p1)+p2
         p_ini = r_[decay['t',0].data.real.max(), 1/0.5e-6, 0] #why is there a third number (0) here?
