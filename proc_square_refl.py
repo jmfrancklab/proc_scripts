@@ -4,7 +4,7 @@ from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
 from scipy.signal import tukey
-do_slice = True # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
+do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
 standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
 show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
 logger = init_logging('info')
@@ -21,7 +21,9 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('200110','pulse_2',True),
         #('200312','chirp_coile_4',True),
         #('200103_pulse_1','test_equip','capture1','square_wave_capture_v1',True),
-        ('201009_coilE_1','test_equip','capture1','square_wave_capture_v1',True)
+        #('201020_sol_probe_1','test_equip','capture1','square_wave_capture_v1',True)
+        #('201009_coilE_4','test_equip','capture1','square_wave_capture_v1',True),
+        ('201021_sqwv_coile_6','test_equip','capture1','square_wave_capture_v1',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
@@ -29,12 +31,18 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.next('Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
+    #d.ft('t',shift=True)
+    #fl.next('freq domain for coil sphere removed untuned')
+    #fl.plot(d['ch',0],alpha=0.5,label='control')
+    #fl.plot(d['ch',1], alpha=0.5, label='reflection')
+    
+    fl.show();quit()
     # }}}
     
     # {{{ determining center frequency and convert to
     # analytic signal, show analytic signal
-    d.ft('t',shift=True) #Fourier Transform into freq domain
-    #d = 2*d['t':(0,None)] # throw out negative frequencies and low-pass (analytic signal -- 2 to preserve magnitude)
+    d.ft('t')#,shift=True) #Fourier Transform into freq domain
+    d = 2*d['t':(0,None)] # throw out negative frequencies and low-pass (analytic signal -- 2 to preserve magnitude)
     #to negated the "1/2" in "(1/2)(aexp[iwt]+a*exp[-iwt])
     # ALSO -- everything should be less than 40 MHz for sure
     if do_slice:
@@ -42,6 +50,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         d[lambda x: abs(x) < 1e-10] = 0
     else:
         d['t':(0,3e6)] = 0 # filter out low-frq noise, which becomes high-frq noise on demod
+        d[lambda x: abs(x) < 1e-10] = 0
     center_frq = abs(d['ch',0]).argmax('t').item() # the center frequency is now the max of the freq peak    
     logger.info(strm(("initial guess at center frequency at %0.5f MHz"%(center_frq/1e6))))
     logger.info(strm(center_frq))
@@ -83,9 +92,10 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.next('Absolute value of analytic signal, %s'%searchstr)
     fl.plot(abs(d['ch',0]), alpha=0.5, label='control') #plot the 'envelope' of the control 
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
+    #fl.show();quit()
     #{{{determine the start and stop points for both the pulse, as well as the two tuning blips
-    scalar_refl = d["ch", 1]["t":(2e-6, 6e-6)].mean("t").item()
-    blip_range = r_[-0.2e-6, 1.5e-6] #defining decay slice
+    scalar_refl = d["ch", 1]["t":(0.5e-6, 6e-6)].mean("t").item()
+    blip_range = r_[0.07e-6, 1.5e-6] #defining decay slice
     first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
     #{{{ doing 0th order correction type thing again? why? we did this in lines 99-101...
     ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
@@ -112,7 +122,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(decay)
     #decay_start = decay.argmax('t').item()
     #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(58e-9,None)]
+    decay = decay['t':(75e-9,None)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))

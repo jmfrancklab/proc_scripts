@@ -256,7 +256,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
         fl.image(s)
     return s
 
-def proc_square_wave_capture(s):
+def proc_capture(s):
     logging.info("loading pre-processing for square wave capture")
     s.set_units('t','s').name('Amplitude').set_units('V')
     return s
@@ -322,11 +322,12 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'ag_CPMG_strob':proc_bruker_CPMG_v1,
         'ag_T1CPMG_2h':proc_bruker_T1CPMG_v1,
+        'chirp':proc_capture
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
         'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_nutation_v1':proc_nutation,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
-        'square_wave_capture_v1':proc_square_wave_capture,
+        'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG}
 

@@ -7,7 +7,7 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 for searchstr,exp_type,nodename,postproc in [
-    ['201006_coilE_nutation_201006','test_equip','nutation','spincore_nutation_v1']
+    ['201020_Ni_solenoid_probe_nutation_2','test_equip','nutation','spincore_nutation_v1']
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict) 
