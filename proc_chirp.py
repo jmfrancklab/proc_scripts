@@ -14,18 +14,23 @@ logger = init_logging('info')
 fl = figlist_var()
  # {{{ load data, set units, show raw data
 for searchstr,exp_type,nodename,postproc,corrected_volt in [
-        ('201021_sqwv_coile_6','test_equip','capture1','chirp',True)
+        ('201023_chirp_coile_4','test_equip','capture1','chirp',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
     print(d.getaxis('t'))
     fl.next('Raw signal %s'%searchstr)
-    fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
+    fl.plot(d['ch',0], alpha=0.5, label='control')    
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
     d.ft('t',shift=True)
     fl.next('freq domain for coil sphere removed untuned')
     fl.plot(d['ch',0],alpha=0.5,label='control')
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
-    
+    d_control = d['ch',0]['t':(0,None)]
+    d_refl = d['ch',1]['t':(0,None)]
+    d = d_refl/d_control
+    fl.next('with sphere in teflon with superglue,tuned')
+    fl.plot(abs(d))
+    ylim(0,1)
     fl.show();quit()
 
