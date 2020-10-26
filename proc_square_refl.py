@@ -5,7 +5,7 @@ from sympy import symbols
 
 init_logging("debug")
 d = find_file(
-    "201026_sqwv_cap_probe_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201023_sqwv_coile_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 d.set_units("t", "s")
