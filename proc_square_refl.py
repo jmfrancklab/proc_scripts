@@ -3,7 +3,7 @@ from scipy.signal import tukey
 
 init_logging("debug")
 d = find_file(
-    "201009_coilE_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201026_sqwv_cap_probe_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 d.set_units("t", "s")
@@ -108,7 +108,7 @@ with fl_ext() as fl:
     fl.grid()
     fl.next("analytic signal -- abs,re")
     fl.abs_re_plot(d)
-    scalar_refl = d["ch", 1]["t":(2e-6, 6e-6)].mean("t").item()
+    scalar_refl = d["ch", 1]["t":(2e-6, 8e-6)].mean("t").item()
     fl.next("blips")
     blip_range = r_[-0.2e-6, 1.5e-6] #defining decay slice
     first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
@@ -120,3 +120,10 @@ with fl_ext() as fl:
         "t", lambda x: x - pulse_slice[1]
     )
     fl.abs_re_plot(secon_blip/ph0_blip, "second", show_angle=True)
+    d = abs(secon_blip+first_blip)/2
+    fl.next('decay slice')
+    fl.plot(d)
+    decay = d['t',(59e-6,None)]
+    fl.next('decay slice 2')
+    fl.plot(d)
+    fl.show();quit()
