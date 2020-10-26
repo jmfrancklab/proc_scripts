@@ -64,7 +64,6 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.next('frequency domain\n%s'%searchstr)
     fl.plot(abs(d['t':(None,40e6)]),label='Raw signal in freq domain,\nshows a bandwidth of about 20 MHz', alpha=0.5)
     axvline(x=center_frq/1e6)
-   # d.setaxis('t',lambda x: x-center_frq).register_axis({'t':0})
     d.ift('t') #Inverse Fourier Transform back to time domain to display the decaying exponential
         # {{{ determine the frequency from the phase gradient during the pulse
     dt = diff(d.getaxis("t")[r_[0, 1]]).item()
@@ -97,7 +96,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
     ph0_blip /= abs(ph0_blip)
     d1 = first_blip/ph0_blip
-    fl.next('after d1 shit')
+    fl.next('smoothed decay of first and second blip')
     fl.plot(d1.real,label='first blip real')
     fl.plot(d1.imag,label='first blip imag')
     fl.plot(abs(d1),label='first blip abs')
@@ -116,7 +115,6 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     #{{{ fits curve to find Q
     print(ndshape(d1))
     print(ndshape(d2))
-    #d2 = d2['t',:500]
     decay = (abs(d1)+abs(d2))/2
     fl.next('decay')
     fl.plot(decay)
