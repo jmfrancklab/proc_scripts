@@ -14,7 +14,7 @@ logger = init_logging('info')
 fl = figlist_var()
  # {{{ load data, set units, show raw data
 for searchstr,exp_type,nodename,postproc,corrected_volt in [
-        ('201023_chirp_coile_4','test_equip','capture1','chirp',True)
+        ('201026_chirp_cap_probe_2','test_equip','capture1','chirp',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
@@ -29,7 +29,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     d_control = d['ch',0]['t':(0,None)]
     d_refl = d['ch',1]['t':(0,None)]
     d = d_refl/d_control
-    fl.next('with sphere in teflon with superglue,tuned')
+    fl.next('c')
     fl.plot(abs(d))
     ylim(0,1)
     fl.show();quit()

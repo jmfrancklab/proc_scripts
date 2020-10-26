@@ -24,14 +24,15 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         #('200103_pulse_1','test_equip','capture1','square_wave_capture_v1',True),
         #('201020_sol_probe_1','test_equip','capture1','square_wave_capture_v1',True)
         #('201009_coilE_4','test_equip','capture1','square_wave_capture_v1',True),
-        ('201022_sqwv_coile_1','test_equip','capture1','square_wave_capture_v1',True)
+        ('201026_sqwv_cap_probe_1','test_equip','capture1','square_wave_capture_v1',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
     print(d.getaxis('t'))
-    fl.next('Raw signal %s'%searchstr)
+    fl.next('c')#'Raw signal %s'%searchstr)
     fl.plot(d['ch',0], alpha=0.5, label='control') # turning off human units forces plot in just V
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
+    #fl.show();quit()
     # }}}
     
     # {{{ determining center frequency and convert to
@@ -89,8 +90,8 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(abs(d['ch',1]), alpha=0.5, label='reflection') #plot the 'envelope' of the reflection so no more oscillating signal
     #fl.show();quit()
     #{{{determine the start and stop points for both the pulse, as well as the two tuning blips
-    scalar_refl = d["ch", 1]["t":(2e-6, 6e-6)].mean("t").item()
-    blip_range = r_[-0.1e-6, 1.0e-6] #defining decay slice
+    scalar_refl = d["ch", 1]["t":(2e-6, 8e-6)].mean("t").item()
+    blip_range = r_[-0.13e-6, 1.5e-6] #defining decay slice
     first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
     #{{{ doing 0th order correction type thing again? why? we did this in lines 99-101...
     ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
@@ -121,7 +122,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(decay)
     #decay_start = decay.argmax('t').item()
     #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(57e-9,None)]
+    decay = decay['t':(69e-9,1200)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))
@@ -129,7 +130,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     print(ndshape(decay))
     f = fitdata(decay)
     A,B,C,t = symbols("A B C t",real=True)
-    f.functional_form = C+A*e**(-t*B)
+    f.functional_form = A*e**(-t*B)
     fl.next('fit')
     fl.plot(decay,'o',label='data')
     f.fit()
