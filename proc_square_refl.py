@@ -5,7 +5,7 @@ from sympy import symbols
 
 init_logging("debug")
 d = find_file(
-    "201023_sqwv_coile_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201026_sqwv_coile_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 d.set_units("t", "s")
@@ -62,6 +62,7 @@ class fl_ext(figlist_var):
 
 with fl_ext() as fl:
     d.ft("t", shift=True)
+    d = 2*d['t':(0,None)]
     #in the previous version we had multiplied data by 2 because the euation 1/2a*exp(iwt)+aexp(-iwt) and the 2
     #negated the half.... this is not done here. before we did it because the demodulation looked weird w/o it.
     #I am assuming this is not needed here as the demodulation either won't be used or is not affected anymore.
@@ -127,7 +128,7 @@ with fl_ext() as fl:
     fl.plot(decay)
     #decay_start = decay.argmax('t').item()
     #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(69e-9,1200)]
+    decay = decay['t':(60e-9,1200)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))
@@ -142,7 +143,7 @@ with fl_ext() as fl:
     f.set_units('t','ns')
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('B')*2*pi*14710000
+    Q = 1./f.output('B')*2*pi*14760000
     fl.plot(f.eval(100).set_units('t','s'),label='fit, Q=%0.1f'%Q)
 fl.show()
 quit()
