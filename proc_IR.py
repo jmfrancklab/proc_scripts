@@ -19,7 +19,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
-        ('free4AT_201028', 'test_equip',2,'ag_IR2H',None),
+        ('free4AT20mM_201028', 'test_equip',2,'ab_ir2h',None),
         #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
         ]:
     fl.basename = searchstr
@@ -67,6 +67,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
     fl.image(s.C.convolve('t2',10))
+    #fl.show();quit()
     #}}}
     #{{{select t2 axis range and 
     s.ift('t2')

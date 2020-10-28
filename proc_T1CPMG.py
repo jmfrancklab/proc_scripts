@@ -18,7 +18,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         #('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
         #('w8_201008','test_equip',3,False,0,'T1CPMG_201008_w8.h5','process_data_AG')
         #('free4AT_201008','test_equip',6,False,0,'T1CPMG_201008_FreeAT.h5','process_data_AG'),
-        ('freeD2O_201014','test_equip',2,True,0,'T1CPMG_201014_FreeD20.h5','process_data_AG'),
+        ('freeD2O_201028','test_equip',3,True,0,'T1CPMG_201028_FreeD20.h5','process_data_AG'),
         #('free4AT_201014','test_equip',7,True,0,'T1CPMG_201014_FreeAT_1.h5','process_data_AG')
         #('w8_200731','test_equip',5,False,0,'T1CPMG_200731.h5','process_data_AG')
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
@@ -99,7 +99,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         s_ILT.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
         #figure()
         #title(r'$T_{1} - T_{2} distribution$ for free AT in soln')
-        fl.next('free D20 in solution')
+        fl.next('free 20 mM 4-AT in solution')
         fl.image(s_ILT)
         xlabel(r'$log(T_2/$s$)$')
         ylabel(r'$log(T_1/$s$)$')
