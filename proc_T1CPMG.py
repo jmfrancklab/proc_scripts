@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from proc_scripts import fl_mod, find_echo_center, center_echo, postproc_dict
 from sympy import symbols
+import sympy as sp
 from proc_scripts.fitting import decay
 logger = init_logging("debug")
 fl = fl_mod()
@@ -11,8 +12,8 @@ rcParams["savefig.transparent"] = True
 filter_bandwidth = 5e3
 t2 = symbols('t2')
 test_for_flat_echo = False# test for flat echo and exit
-write_h5 = False
-read_h5 = True 
+write_h5 = True
+read_h5 = False 
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir in [
         #('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
@@ -71,7 +72,44 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         s.sum('t2')
         fl.next('summed along t2')
         fl.image(s)
-        #fl.show();quit()
+        #}}}
+        #{{{CPMG decay curve
+        CPMG = s['indirect',-1]
+        fl.next('CPMG curve')
+        fl.plot(CPMG,'o')
+        fit_CPMG = fitdata(CPMG)
+        M0,R2,vd = symbols("M_0 R_2 tE",real=True)
+        fit_CPMG.functional_form = (M0)*sp.exp(-vd*R2)
+        logger.info(strm("Functional Form", fit_CPMG.functional_form))
+        logger.info(strm("Functional Form", fit_CPMG.functional_form))
+        fit_CPMG.fit()
+        print("output:",fit_CPMG.output())
+        print("latex:",fit_CPMG.latex())
+        T2 = 1./fit_CPMG.output('R_2')
+        fl.next('CPMG fit of T1CPMG for free D2O')
+        fl.plot(CPMG,'o',label='data')
+        fl.plot(fit_CPMG.eval(100),label='fit')
+        print("T2 IS:",T2)
+        fl.show();quit()
+        #{{{IR recovery curve
+        IR = s['tE',0]
+        fl.next('IR')
+        fl.plot(IR,'o')
+        f = fitdata(IR)
+        M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)
+        f.functional_form = Mi + (M0-Mi)*sp.exp(-vd*R1)
+        logger.info(strm("Functional Form", f.functional_form))
+        logger.info(strm("Functional Form", f.functional_form))
+        f.fit()
+        print("output:",f.output())
+        print("latex:",f.latex())
+        T1 = 1./f.output('R_1')
+        fl.next('fit for IR portion of T1CPMG')
+        fl.plot(IR,'o',label='fake data')
+        fl.plot(f.eval(100),label='fit',human_units=False)
+        T1 = 1./f.output('R_1')
+        #}}}
+        fl.show();quit()
         #}}}
         #{{{save to hdf5 file
         s.name(searchstr) # use searchstr as the node name withing the HDF5 file

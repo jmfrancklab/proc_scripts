@@ -112,6 +112,8 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     #s.reorder(['indirect','ph2','ph1','t2'])
     s.setaxis('indirect', s.get_prop('vd'))
     s.reorder(['ph1','ph2','indirect','t2'])
+    #s.setaxis('indirect','#')
+    #s.set_units('indirect','scan #')
     if fl is not None:
         fl.next('raw data with indirect set')
         fl.image(s)
