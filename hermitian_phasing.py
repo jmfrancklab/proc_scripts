@@ -21,10 +21,6 @@ for date,id_string,label_string in [
                 exp_type = 'test_equip'))
                 #exp_type = 'ODNP_NMR_comp'))
     print(ndshape(s))
-    nPoints = s.get_prop('acq_params')['nPoints']
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
     s.reorder('t',first=True)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1]).set_units('t2','s')
     s.setaxis('ph2',r_[0.,2.]/4)
