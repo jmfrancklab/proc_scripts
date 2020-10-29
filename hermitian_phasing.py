@@ -9,17 +9,17 @@ class flv(figlist_var):
 fl = flv()
 for date,id_string,label_string in [
         ('191031','echo_5_4','no microwaves'),
-        ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
-        ('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
-        ('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
+        #('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
+        #('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
+        #('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
         ]:
     title_string = 'unenhanced'
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
-                exp_type = 'test_equip'))
-    print ndshape(s)
+                exp_type = 'ODNP_NMR_comp'))
+    print(ndshape(s))
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
@@ -72,6 +72,8 @@ for date,id_string,label_string in [
     fl.next('crude centering')
     fl.show_complex(s)
     max_shift = diff(peak_location).item()/2
+    dt = diff(s.getaxis('t2')[r_[0,1]]).item()
+    max_shift = round(max_shift/dt)*dt
     fl.next('spectrum with crude centering')
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
@@ -90,18 +92,21 @@ for date,id_string,label_string in [
     fl.plot(abs(s_right), label='max right',alpha=0.5)
     # }}}
     shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
-    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:1000j],'R2'))
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:4e2:1000j],'R2'))
     s_foropt = s.C
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
     s_foropt /= t2_decay
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
+    print("max_shift",max_shift)
+    dt = diff(s_foropt.getaxis('t2')[r_[0,1]]).item()
     # {{{ demand an odd number of points
-    print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+    print(s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]])
     if ndshape(s_foropt)['t2'] % 2 == 0:
+        print("chopped to get odd")
         s_foropt = s_foropt['t2',:-1]
-    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
+    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
     # }}}
     # {{{ the middle point, at t=0 must be entirely real
     ph0 = s_foropt['t2':0.0]
@@ -139,9 +144,9 @@ for date,id_string,label_string in [
         s_sliced = s['t2':(0,None)].C
         s_leftslice = s['t2':(None,0)]['t2',::-1].run(conj)
         s_leftslice.setaxis('t2',lambda x: -1*x)
-        print "check time slices"
-        print s_sliced.getaxis('t2')[r_[0,-1]]
-        print s_leftslice.getaxis('t2')[r_[0,-1]]
+        print("check time slices")
+        print(s_sliced.getaxis('t2')[r_[0,-1]])
+        print(s_leftslice.getaxis('t2')[r_[0,-1]])
         fl.show_complex(s_sliced)
         fl.show_complex(s_leftslice)
         #assert s_leftslice.getaxis('t2')[0] != 0, "libraries have changed and left slice includes 0"
