@@ -104,10 +104,10 @@ def proc_spincore_IR(s):
     fl.image(s)
     fl.next('time domain (all $\\Delta p$)')
     s.ift('t2')
-    fl.image(s)
-    fl.next('frequency domain (all $\\Delta p$)')
+    #fl.image(s)
+    #fl.next('frequency domain (all $\\Delta p$)')
     s.ft('t2', pad=4096)
-    fl.image(s)
+    #fl.image(s)
     return s
 
 def proc_nutation(s):
