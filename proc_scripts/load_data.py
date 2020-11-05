@@ -52,6 +52,8 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     s.reorder(['indirect','t2'], first=False)
     if fl is not None:
         s_forplot = s.C
+        s_forplot.setaxis('indirect','#')
+        s_forplot.set_units('indirect','scan #')
         fl.next('FT + coherence domain')
         fl.image(s_forplot)
     if fl is not None:    
