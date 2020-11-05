@@ -15,7 +15,7 @@ fl = fl_mod()
 #    each dataset, which must be chosen from the
 #    L-curve.
 for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
-        ('w8_200224','test_equip',2,'ab_ir2h',0.008,(-150,150)),
+        ('freeD2O_201104','test_equip',2,'ab_ir2h',0.157,(-150,150)),
         #('w12_200224',2,(-150,150)),
         #('ag_oct182019_w0_10',3,(-150,150)),
         #('ag_oct182019_w0_8',3,(-150,150)),
@@ -86,7 +86,7 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     #}}}
     #{{{setting axis to incorporate SFO1 based off of 
     # acqu file of data
-    sfo1 = 272.05
+    sfo1 = 297.01
     arbitrary_reference = s.get_prop('acq')['BF1'] 
     logger.info(strm("SFO1 is",sfo1))
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)

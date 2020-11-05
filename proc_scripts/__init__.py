@@ -7,6 +7,7 @@ from .baseline import calc_baseline
 from .Utility import *
 from .CPMG_phasing import find_echo_center, center_echo
 from .fitting import recovery, decay
+from .STFT import stft, isftf, simu_waves, simu_freq_sawtooth 
 
 __all__ = ['zeroth_order_ph',
         'ph1_real_Abs',
@@ -23,6 +24,10 @@ __all__ = ['zeroth_order_ph',
         'find_echo_center',
         'center_echo',
         'recovery',
-        'decay'
+        'decay',
+        'stft',
+        'isftf',
+        'simu_waves',
+        'simu_freq_sawtooth'
         ]
 

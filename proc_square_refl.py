@@ -5,7 +5,7 @@ from sympy import symbols
 
 init_logging("debug")
 d = find_file(
-    "201023_sqwv_coile_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201009_coilE_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 d.set_units("t", "s")
@@ -137,13 +137,13 @@ with fl_ext() as fl:
     f = fitdata(decay)
     A,B,C,t = symbols("A B C t",real=True)
     f.functional_form = A*e**(-t*B)
-    fl.next('fit')
+    fl.next('fit for RM probe')
     fl.plot(decay,'o',label='data')
     f.fit()
     f.set_units('t','ns')
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('B')*2*pi*14710000
+    Q = 1./f.output('B')*2*pi*14800000
     fl.plot(f.eval(100).set_units('t','s'),label='fit, Q=%0.1f'%Q)
 fl.show()
 quit()

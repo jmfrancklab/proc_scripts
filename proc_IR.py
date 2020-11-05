@@ -19,7 +19,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
-        ('free4AT20mM_201028', 'test_equip',2,'ab_ir2h',None),
+        ('free4AT100mM_201104', 'test_equip',2,'ab_ir2h',None),
         #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
         ]:
     fl.basename = searchstr
@@ -78,8 +78,8 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     #{{{recovery curve and fitting
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
     # below, f_range needs to be defined
-    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
+    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)
     f,T1 = recovery(s_sliced, (-100,100),guess=None)
     fl.plot_curve(f,'inversion recovery curve')
-fl.show()
+    fl.show();quit()
 

@@ -14,7 +14,7 @@ logger = init_logging('info')
 fl = figlist_var()
  # {{{ load data, set units, show raw data
 for searchstr,exp_type,nodename,postproc,corrected_volt in [
-        ('201026_chirp_coile_4','ODNP_NMR_comp','capture1','chirp',True)
+        ('201021_chirp_coile_1','ODNP_NMR_comp','capture1','chirp',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
