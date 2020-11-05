@@ -38,6 +38,7 @@ for searchstr,exp_type,nodename,postproc in [
     s = s['t2':(-250,250)]
     fl.next('sliced')
     fl.image(s)
+    fl.show();quit()
     #}}}
     
     #{{{ phasing with zeroth order correction
