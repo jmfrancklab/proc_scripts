@@ -2,7 +2,7 @@
 from pyspecdata import *
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
-from line_profiler import LineProfiler
+#from line_profiler import LineProfiler
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the

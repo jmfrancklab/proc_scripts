@@ -7,7 +7,7 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 for searchstr,exp_type,nodename,postproc in [
-    ['201022_Large_probe_nutation_1','test_equip','nutation','spincore_nutation_v1']
+    ['201104_NiSO4_B12_resonator_nutation_2','test_equip','nutation','spincore_nutation_v1']
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict) 
@@ -31,6 +31,7 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('select $\\Delta p$ and convolve')
     s.convolve('t2',50)
     fl.image(s)
+    fl.show();quit()
     #}}}
     
     #{{{ slicing
