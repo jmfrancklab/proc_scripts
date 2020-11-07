@@ -1,3 +1,4 @@
+from pylab import *
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 class flv(figlist_var):
@@ -7,31 +8,30 @@ class flv(figlist_var):
         fl.plot(d.imag,'g',alpha=0.5,**kwargs)
         return
 fl = flv()
-for date,id_string,label_string in [
-        ('200113','echo_DNP_TEMPOL_1','microwaves'),
-        #('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
-        #('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
-        #('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
+for date,id_string,label_string,Rmax in [
+        ('200113','echo_DNP_TEMPOL_1','microwaves',5),
+        #('191031','echo_5_mw_30dBm','+30 dBm microwaves',4e2),
+        #('191031','echo_5_mw_34dBm','+34 dBm microwaves',4e2),
+        #('191031','echo_5_mw_36dBm_2','+36 dBm microwaves',4e2),
         ]:
     title_string = 'unenhanced'
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
-                exp_type = 'test_equip'))
-                #exp_type = 'ODNP_NMR_comp'))
+                exp_type = 'ODNP_NMR_comp'))
     print(ndshape(s))
     s.reorder('t',first=True)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1]).set_units('t2','s')
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
-    try:
+    if 'power' in s.dimlabels:
         s.getaxis('power')
         s.setaxis('power',r_[0:float(len(s.getaxis('power')))])
         print("Found power axis...")
         power_axis = True
-    except ValueError:
+    else:
         print("Did not find power axis...")
         power_axis = False
     s.ft(['ph1','ph2'])
@@ -60,7 +60,7 @@ for date,id_string,label_string in [
     fl.show_complex(s,human_units=False)
     max_data = abs(s.data).max()
     if power_axis:
-        pairs = s['power',-4].contiguous(lambda x: abs(x) > max_data*0.5)
+        pairs = s['power',-5].contiguous(lambda x: abs(x) > max_data*0.5)
     else:
         pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
     longest_pair = diff(pairs).argmax()
@@ -100,9 +100,9 @@ for date,id_string,label_string in [
     fl.plot(abs(s_right), label='max right',alpha=0.5)
     # }}}
     shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
-    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:4e2:1000j],'R2'))
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:Rmax:1000j],'R2'))
     if power_axis:
-        s_foropt = s['power',-4].C
+        s_foropt = s['power',-5].C
     else:
         s_foropt = s.C
     s_foropt.ft('t2')
@@ -137,8 +137,6 @@ for date,id_string,label_string in [
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
     fl.plot(best_R2,best_shift,'o')
-    print("OK")
-    fl.show();quit()
     # replace following with time shift function
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
