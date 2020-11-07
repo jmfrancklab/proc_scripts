@@ -8,7 +8,7 @@ class flv(figlist_var):
         return
 fl = flv()
 for date,id_string,label_string in [
-        ('191031','echo_5_4','no microwaves'),
+        ('200113','echo_DNP_TEMPOL_1','microwaves'),
         #('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
         #('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
         #('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
@@ -18,7 +18,8 @@ for date,id_string,label_string in [
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
-                exp_type = 'ODNP_NMR_comp'))
+                exp_type = 'test_equip'))
+                #exp_type = 'ODNP_NMR_comp'))
     print(ndshape(s))
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
@@ -29,6 +30,14 @@ for date,id_string,label_string in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
+    try:
+        s.getaxis('power')
+        s.setaxis('power',r_[0:float(len(s.getaxis('power')))])
+        print("Found power axis...")
+        power_axis = True
+    except ValueError:
+        print("Did not find power axis...")
+        power_axis = False
     s.ft(['ph1','ph2'])
     fl.next(id_string+'raw data - chunking coh')
     fl.image(s)
@@ -54,7 +63,10 @@ for date,id_string,label_string in [
     fl.next('frequency filtered')
     fl.show_complex(s,human_units=False)
     max_data = abs(s.data).max()
-    pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
+    if power_axis:
+        pairs = s['power',-4].contiguous(lambda x: abs(x) > max_data*0.5)
+    else:
+        pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
     axvline(x=peak_location[0],
@@ -93,10 +105,16 @@ for date,id_string,label_string in [
     # }}}
     shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
     t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:4e2:1000j],'R2'))
-    s_foropt = s.C
+    if power_axis:
+        s_foropt = s['power',-4].C
+    else:
+        s_foropt = s.C
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
+    print("*** *** ***")
+    print(ndshape(s_foropt))
+    print("*** *** ***")
     s_foropt /= t2_decay
     s_foropt = s_foropt['t2':(-max_shift,max_shift)]
     print("max_shift",max_shift)
@@ -123,6 +141,8 @@ for date,id_string,label_string in [
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
     fl.plot(best_R2,best_shift,'o')
+    print("OK")
+    fl.show();quit()
     # replace following with time shift function
     s.ft('t2')
     s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
