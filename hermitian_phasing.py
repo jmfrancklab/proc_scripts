@@ -45,7 +45,7 @@ for date,id_string,label_string,Rmax in [
     fl.next('frequency domain')
     fl.plot(abs(s), human_units=False)# no human units to make sure
     #                                   axvline matches
-    slice_f = (-1e3,1e3)
+    slice_f = (-2e3,2e3)
     axvline(x=slice_f[0],
             color='k')
     axvline(x=slice_f[1],
