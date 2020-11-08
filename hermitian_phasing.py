@@ -9,11 +9,12 @@ class flv(figlist_var):
         return
 fl = flv()
 for date,id_string,label_string,Rmax,whichslice in [
-        ('200113','echo_DNP_TEMPOL_1','microwaves',4e2,('power',-4)),
-        #('191031','echo_5_mw_30dBm','+30 dBm microwaves',4e2,None),
+        ('200113','echo_DNP_TEMPOL_1','microwaves',1e2,('power',8)),
+        ('191031','echo_5_mw_30dBm','+30 dBm microwaves',4e2,None),
         #('191031','echo_5_mw_34dBm','+34 dBm microwaves',4e2,None),
         #('191031','echo_5_mw_36dBm_2','+36 dBm microwaves',4e2,None),
         ]:
+    fl.basenaem = id_string
     title_string = 'unenhanced'
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
