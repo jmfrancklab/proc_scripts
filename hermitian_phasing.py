@@ -8,38 +8,30 @@ class flv(figlist_var):
         fl.plot(d.imag,'g',alpha=0.5,**kwargs)
         return
 fl = flv()
-for date,id_string,label_string,Rmax in [
-        ('200113','echo_DNP_TEMPOL_1','microwaves',5),
-        #('191031','echo_5_mw_30dBm','+30 dBm microwaves',4e2),
-        #('191031','echo_5_mw_34dBm','+34 dBm microwaves',4e2),
-        #('191031','echo_5_mw_36dBm_2','+36 dBm microwaves',4e2),
+for date,id_string,label_string,Rmax,whichslice in [
+        ('200113','echo_DNP_TEMPOL_1','microwaves',4e2,('power',-4)),
+        #('191031','echo_5_mw_30dBm','+30 dBm microwaves',4e2,None),
+        #('191031','echo_5_mw_34dBm','+34 dBm microwaves',4e2,None),
+        #('191031','echo_5_mw_36dBm_2','+36 dBm microwaves',4e2,None),
         ]:
     title_string = 'unenhanced'
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
-                exp_type = 'ODNP_NMR_comp'))
+                exp_type = 'ODNP_NMR_comp/old'))
     print(ndshape(s))
     s.reorder('t',first=True)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1]).set_units('t2','s')
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
-    if 'power' in s.dimlabels:
-        s.getaxis('power')
-        s.setaxis('power',r_[0:float(len(s.getaxis('power')))])
-        print("Found power axis...")
-        power_axis = True
-    else:
-        print("Did not find power axis...")
-        power_axis = False
+    if whichslice is not None:
+        s = s[whichslice]
     s.ft(['ph1','ph2'])
     fl.next(id_string+'raw data - chunking coh')
     fl.image(s)
     s = s['ph1',1]['ph2',0]
-    fl.next(id_string+'select pathway')
-    fl.show_complex(s)
     # {{{ slice only f-domain with signal
     s.ft('t2', shift=True)
     fl.next('frequency domain')
@@ -58,20 +50,17 @@ for date,id_string,label_string,Rmax in [
     # }}}
     fl.next('frequency filtered')
     fl.show_complex(s,human_units=False)
-    max_data = abs(s.data).max()
-    if power_axis:
-        pairs = s['power',-5].contiguous(lambda x: abs(x) > max_data*0.5)
-    else:
-        pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
+    pairs = s.contiguous(lambda x: abs(x) > abs(x.data).max()*0.5)
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
     axvline(x=peak_location[0],
             color='k')
     axvline(x=peak_location[1],
             color='k')
-    text(peak_location[1], max_data*0.75,
+    text(peak_location[1], 0.85,
             ' (lines delineate peak of echo)',
-            ha='left')
+            ha='left',
+            transform=gca().transAxes)
     s.setaxis('t2',lambda x: x-peak_location.mean())
     # at this point, I need to get an axis that's in register with 0
     # -- this is what gives rise to "zero not in middle" below
@@ -100,11 +89,8 @@ for date,id_string,label_string,Rmax in [
     fl.plot(abs(s_right), label='max right',alpha=0.5)
     # }}}
     shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
-    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:Rmax:1000j],'R2'))
-    if power_axis:
-        s_foropt = s['power',-5].C
-    else:
-        s_foropt = s.C
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[-Rmax:Rmax:1000j],'R2'))
+    s_foropt = s.C
     s_foropt.ft('t2')
     s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
@@ -151,22 +137,17 @@ for date,id_string,label_string,Rmax in [
     fl.show_complex(s_sliced)
     fl.next('Compare spectra')
     fl.plot(s_sliced.real,label='%s'%label_string)
-    checking_time_slices = False
-    if checking_time_slices:
-        # {{{ 
-        fl.next("edit superimposition to include a correction for T2 decay")
-        s_sliced = s['t2':(0,None)].C
-        s_leftslice = s['t2':(None,0)]['t2',::-1].run(conj)
-        s_leftslice.setaxis('t2',lambda x: -1*x)
-        print("check time slices")
-        print(s_sliced.getaxis('t2')[r_[0,-1]])
-        print(s_leftslice.getaxis('t2')[r_[0,-1]])
-        fl.show_complex(s_sliced)
-        fl.show_complex(s_leftslice)
-        #assert s_leftslice.getaxis('t2')[0] != 0, "libraries have changed and left slice includes 0"
-        #s_sliced['t2',1:ndshape(s_leftslice)['t2']+1] += s_leftslice
-        #s_sliced['t2',0:ndshape(s_leftslice)['t2']+1] *= 0.5
-        #s_sliced.ft('t2')
-        #fl.show_complex(s_sliced)
-        # }}}
+    checking_time_slices = True
+    print('best_R2',best_R2)
+    for test_R2 in r_[best_R2]:# I have this as a list so we can mess around and choose a list of R2
+        s_forplot = s / exp(-test_R2*s.fromaxis('t2'))
+        fl.next(f'show superimposition R2={test_R2}', legend=True)
+        fl.plot(abs(s_forplot), linewidth=3, alpha=0.5, label='abs')
+        fl.plot(s_forplot.real, alpha=0.5, label='real')
+        fl.plot(s_forplot.imag, alpha=0.5, label='imag')
+        s_flipped = s_forplot.C.run(conj)
+        s_flipped.setaxis('t2',lambda x: -x)
+        fl.plot(abs(s_flipped), linewidth=3, alpha=0.5, label='abs flip')
+        fl.plot(s_flipped.real, alpha=0.5, label='real flip')
+        fl.plot(s_flipped.imag, alpha=0.5, label='imag flip')
 fl.show()
