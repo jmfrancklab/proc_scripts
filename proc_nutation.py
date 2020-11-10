@@ -31,6 +31,7 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('select $\\Delta p$ and convolve')
     s.convolve('t2',50)
     fl.image(s)
+    fl.show();quit()
     #}}}
     
     #{{{ slicing
