@@ -72,7 +72,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, h5_name, h5_dir 
         s.sum('t2')
         fl.next('summed along t2')
         fl.image(s)
-        #s *= -1
+        s *= -1
         #}}}
         #{{{CPMG decay curve
         CPMG = s['indirect',-1]

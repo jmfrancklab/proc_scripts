@@ -5,7 +5,7 @@ from sympy import symbols
 
 init_logging("debug")
 d = find_file(
-    "201009_coilE_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201020_cap_probe_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 d.set_units("t", "s")
@@ -61,7 +61,7 @@ class fl_ext(figlist_var):
 
 
 with fl_ext() as fl:
-    d.ft("t", shift=True)
+    d.ft("t")#, shift=True)
     d = 2*d['t':(0,None)]
     #in the previous version we had multiplied data by 2 because the euation 1/2a*exp(iwt)+aexp(-iwt) and the 2
     #negated the half.... this is not done here. before we did it because the demodulation looked weird w/o it.
@@ -111,9 +111,9 @@ with fl_ext() as fl:
     fl.grid()
     fl.next("analytic signal -- abs,re")
     fl.abs_re_plot(d)
-    scalar_refl = d["ch", 1]["t":(2e-6, 8e-6)].mean("t").item()
+    scalar_refl = d["ch", 1]["t":(1e-6, 2e-6)].mean("t").item()
     fl.next("blips")
-    blip_range = r_[-0.2e-6, 1.5e-6] #defining decay slice
+    blip_range = r_[-0.1e-6, 1e-6] #defining decay slice
     first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
     #{{{ doing 0th order correction type thing again? why? we did this in lines 99-101...
     ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
@@ -137,7 +137,7 @@ with fl_ext() as fl:
     f = fitdata(decay)
     A,B,C,t = symbols("A B C t",real=True)
     f.functional_form = A*e**(-t*B)
-    fl.next('fit for RM probe')
+    fl.next('fit for B12 probe')
     fl.plot(decay,'o',label='data')
     f.fit()
     f.set_units('t','ns')

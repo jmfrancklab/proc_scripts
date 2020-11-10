@@ -14,34 +14,74 @@ logger = init_logging('info')
 fl = figlist_var()
  # {{{ load data, set units, show raw data
 for searchstr,exp_type,nodename,postproc,corrected_volt in [
-        ('201021_chirp_coile_1','ODNP_NMR_comp','capture1','chirp',True)
+        ('201106_chirp_shortingcap_1','ODNP_NMR_comp','capture1','chirp',True)
         ]:
-    d = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_dict) 
-    print(d.getaxis('t'))
-    fl.next('Raw signal %s'%searchstr)
-    fl.plot(d['ch',0], alpha=0.5, label='control')    
-    fl.plot(d['ch',1], alpha=0.5, label='reflection')
-    print(ndshape(d))
-    d.ft('t',shift=True)
-    fl.next('freq domain for coil sphere removed untuned')
-    fl.plot(d['ch',0],alpha=0.5,label='control')
-    fl.plot(d['ch',1], alpha=0.5, label='reflection')
-    print(ndshape(d))
-    #fl.show();quit()
-    for j in range(ndshape(d)['ch']):
-        d = d['t':(10e6,18e6)]
-    s = abs(d['ch',1])
-    init_freq = s.argmin('t')
-    d_control = d['ch',0]['t':(0,None)]
-    d_refl = d['ch',1]['t':(0,None)]
-    d = d_refl/d_control
-    fl.next('c')
-    fl.plot(abs(d))
-    ylim(0,1)
-    d = abs(d)
-    freq = d.argmin('t')
-    print(init_freq)
-    print(freq)
-    fl.show();quit()
+    a = find_file(searchstr, exp_type=exp_type, expno=nodename,
+            postproc=postproc, lookup=postproc_dict)
+for searchstr,exp_type,nodename,postproc,corrected_volt in [
+        ('201030_chirp_RM_probe_1','ODNP_NMR_comp','capture1','chirp',True)
+        ]:
+    b = find_file(searchstr,exp_type=exp_type,expno=nodename,
+            postproc=postproc,lookup=postproc_dict)
+for searchstr,exp_type,nodename,postproc,corrected_volt in [
+        ('201106_chirp_50ohm_1','ODNP_NMR_comp','capture1','chirp',True)
+        ]:
+    c = find_file(searchstr,exp_type=exp_type,expno=nodename,
+            postproc=postproc,lookup=postproc_dict)
+for searchstr,exp_type,nodename,postproc,corrected_volt in [
+        ('201106_chirp_empty_1','ODNP_NMR_comp','capture1','chirp',True)
+        ]:
+    d = find_file(searchstr,exp_type=exp_type,expno=nodename,
+            postproc=postproc,lookup=postproc_dict)
+fl.next('Raw signal')
+fl.plot(a['ch',0], alpha=0.5, label='shorting cap control')    
+fl.plot(a['ch',1], alpha=0.5, label='shorting cap refl')
+fl.plot(b['ch',0], alpha=0.5, label='RM probe control')    
+fl.plot(b['ch',1], alpha=0.5, label='RM probe refl')
+fl.plot(c['ch',0], alpha=0.5, label='50 ohm control')    
+fl.plot(c['ch',1], alpha=0.5, label='50 ohm refl')
+fl.plot(d['ch',0], alpha=0.5, label='open control')    
+fl.plot(d['ch',1], alpha=0.5, label='open refl')
+
+a.ft('t',shift=True)
+b.ft('t',shift=True)
+c.ft('t',shift=True)
+d.ft('t',shift=True)
+fl.next('freq domain for RM probe with control')
+fl.plot(a['ch',0],alpha=0.5,label='control shorting cap')
+fl.plot(a['ch',1], alpha=0.5, label='reflection shorting cap')
+fl.plot(b['ch',0],alpha=0.5,label='control RM probe')
+fl.plot(b['ch',1],alpha=0.5,label='reflection RM probe')
+fl.plot(c['ch',0],alpha=0.5,label='control 50 ohm')
+fl.plot(c['ch',1],alpha=0.5,label='reflection 50 ohm')
+fl.plot(d['ch',0],alpha=0.5,label='control open')
+fl.plot(d['ch',1],alpha=0.5,label='reflection open')
+for j in range(ndshape(a)['ch']):
+    a = a['t':(10e6,18e6)]
+a_control = a['ch',0]['t':(0,None)]
+a_refl = a['ch',1]['t':(0,None)]
+a = a_refl/a_control
+for j in range(ndshape(b)['ch']):
+    b = b['t':(10e6,18e6)]
+b_control = b['ch',0]['t':(0,None)]
+b_refl = b['ch',1]['t':(0,None)]
+b = b_refl/b_control
+for j in range(ndshape(c)['ch']):
+    c = c['t':(10e6,18e6)]
+c_control = c['ch',0]['t':(0,None)]
+c_refl = c['ch',1]['t':(0,None)]
+c = c_refl/c_control
+for j in range(ndshape(d)['ch']):
+    d = d['t':(10e6,18e6)]
+d_control = d['ch',0]['t':(0,None)]
+d_refl = d['ch',1]['t':(0,None)]
+d = d_refl/d_control
+
+fl.next('when divided by control for %s'%searchstr)
+fl.plot(abs(a),label='shorting cap')
+fl.plot(abs(b),label='RM probe')
+fl.plot(abs(c),label='50 ohm')
+fl.plot(abs(d),label='open')
+ylim(0,1.25)
+fl.show();quit()
 

@@ -40,8 +40,6 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     #}}}
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')
-    s.setaxis('indirect','#')
-    s.set_units('indirect','scan #')
     fl.image(s)
     s.ift('t2')
     best_shift = hermitian_function_test(s[
@@ -81,10 +79,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
     # below, f_range needs to be defined
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)
-    print(ndshape(s))
-    print(s.getaxis('indirect'))
     f,T1 = recovery(s_sliced, (-50,50),guess=None)
-    f.set_units('indirect',None)
     fl.plot_curve(f,'inversion recovery curve')
     fl.show();quit()
 
