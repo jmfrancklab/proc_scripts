@@ -12,7 +12,7 @@ logger = init_logging('info')
 # 2to3 JF 1/31
 
 fl = figlist_var()
- # {{{ load data, set units, show raw data
+ # {{{ load data, set units, show raw dataz
 for searchstr,exp_type,nodename,postproc,corrected_volt in [
         ('201106_chirp_shortingcap_1','ODNP_NMR_comp','capture1','chirp',True)
         ]:
@@ -83,5 +83,10 @@ fl.plot(abs(b),label='RM probe')
 fl.plot(abs(c),label='50 ohm')
 fl.plot(abs(d),label='open')
 ylim(0,1.25)
+fl.next('phase for controls')
+fl.plot(a.angle,label='shorting cap')
+fl.plot(b.angle,label='RM probe')
+fl.plot(c.angle,label='50 ohm')
+fl.plot(d.angle,label='open')
 fl.show();quit()
 
