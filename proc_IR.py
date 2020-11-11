@@ -15,13 +15,13 @@ coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
 
-for searchstr,exp_type,nodename, postproc, clock_correction in [
+for searchstr,exp_type,nodename, postproc, clock_correction,this_l in [
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
         #('free4AT100mM_201104', 'test_equip',2,'ab_ir2h',None),
         #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
-        ('w20_201111','test_equip',2,'ab_ir2h',None),
+        ('w3_201111','test_equip',2,'ab_ir2h',None,None),
         ]:
     fl.basename = searchstr
     if clock_correction is None:
@@ -82,5 +82,49 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)
     f,T1 = recovery(s_sliced, (-50,50),guess=None)
     fl.plot_curve(f,'inversion recovery curve')
-    fl.show();quit()
+        #{{{attempting ILT plot with NNLS_Tikhonov_190104
+    T1 = nddata(logspace(-3,3,150),'T1')
+    l = sqrt(logspace(-8.0,0.1,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+    if this_l is None:
+        def vec_lcurve(l):
+            return s.nnls('indirect',T1,lambda x,y: 1.0-2*exp(-x/y), l=l)
+
+        x=vec_lcurve(l) 
+
+        x_norm = x.get_prop('nnls_residual').data
+        r_norm = x.run(linalg.norm,'T1').data
+
+        with figlist_var() as fl:
+            fl.next('L-Curve')
+            figure(figsize=(15,10))
+            fl.plot(log10(r_norm[:,0]),log10(x_norm[:,0]),'.')
+            annotate_plot = True
+            show_lambda = True
+            if annotate_plot:
+                if show_lambda:
+                    for j,this_l in enumerate(l):
+                        annotate('%0.3f'%this_l, (log10(r_norm[j,0]),log10(x_norm[j,0])),
+                                ha='left',va='bottom',rotation=45)
+                else:
+                    for j,this_l in enumerate(l):
+                        annotate('%d'%j, (log10(r_norm[j,0]),log10(x_norm[j,0])),
+                                ha='left',va='bottom',rotation=45)
+        d_2d = s*nddata(r_[1,1,1],r'\Omega')
+    #}}}
+    #{{{setting axis to incorporate SFO1 based off of 
+    # acqu file of data
+    sfo1 = 251.76
+    arbitrary_reference = s.get_prop('acq')['BF1'] 
+    logger.info(strm("SFO1 is",sfo1))
+    s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
+    #}}}
+    #{{{creating plot off of solution to L curve
+    if this_l is not None:
+        soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
+        soln.reorder('t2',first=False)
+        soln.rename('T1','log(T1)')
+        soln.setaxis('log(T1)',log10(T1.data))
+        fl.next('solution')
+        fl.image(soln['t2':(100,300)])
+fl.show()
 
