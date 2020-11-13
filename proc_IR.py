@@ -96,7 +96,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
 
     T1 = nddata(logspace(-3,3,150),'T1')
     l = sqrt(logspace(-6.0,0.01,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
-    plot_Lcurve = False
+    plot_Lcurve =False
     if plot_Lcurve:
         def vec_lcurve(l):
             return s.C.nnls('indirect',T1,lambda x,y: 1.0-2*exp(-x/y), l=l)
@@ -123,20 +123,26 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
                                 ha='left',va='bottom',rotation=45)
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
     #fl.show();quit()
-    sfo1 = 251.76
-    arbitrary_reference = s.get_prop('acq')['BF1'] # will eventually be 
-    print("SFO1 is",sfo1)
-    s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-    this_l = 0.032 #pick number in l curve right before it curves up
+    offset = s.get_prop('proc')['OFFSET']
+    sfo1 = s.get_prop('acq')['BF1']
+    if not s.get_ft_prop('t2'):
+        s.ft('t2',shift=True)
+    s.setaxis('t2',lambda x:
+            x/sfo1).set_units('t2','ppm')
+    s.set_prop('x_inverted',True)
+    #arbitrary_reference = s.get_prop('acq')['BF1'] # will eventually be 
+    #print("SFO1 is",sfo1)
+    #s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
+    this_l = 0.039#pick number in l curve right before it curves up
     soln = s.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
     soln.reorder('t2',first=False)
     soln.rename('T1','log(T1)')
     soln.setaxis('log(T1)',log10(T1.data))
-    fl.next('water loading 20')
-    fl.image(soln['t2':(100,300)])
+    fl.next('free D2O')
+    fl.image(soln)
     #fl.show();quit()
     print("SAVING FILE")
-    np.savez(searchstr+'_'+str(nodename)+'_ILT_inv_1',
+    np.savez(searchstr+'_'+str(nodename)+'_ILT_inv',
             data=soln.data,
             logT1=soln.getaxis('log(T1)'),
             t2=soln.getaxis('t2'))               
