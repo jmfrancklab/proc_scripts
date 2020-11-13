@@ -21,7 +21,7 @@ def stft(x, fs, frame_size, hop):
     hop_samp = int(hop*fs)
     w = np.hanning(frame_samp) #Hanning window
     X = np.array([np.fft.fft(w*x[i:i+frame_samp])
-        for i in range(0, len(x)-fram_samp,
+        for i in range(0, len(x)-frame_samp,
             hop_samp)])
     return X
 
