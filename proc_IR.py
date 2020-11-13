@@ -15,13 +15,13 @@ coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
 
-for searchstr,exp_type,nodename, postproc, clock_correction,this_l in [
+for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
         #('free4AT100mM_201104', 'test_equip',2,'ab_ir2h',None),
         #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
-        ('w20_201111','test_equip',2,'ab_ir2h',None,None),
+        ('w3_201111','test_equip',2,'ab_ir2h',None),
         ]:
     fl.basename = searchstr
     if clock_correction is None:
@@ -71,30 +71,31 @@ for searchstr,exp_type,nodename, postproc, clock_correction,this_l in [
     #fl.show();quit()
     #}}}
     #{{{select t2 axis range and 
+    s.convolve('t2',5) 
     s.ift('t2')
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
     s.ft('t2')
     fl.next('where to cut')
-    s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 
+    s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] 
     fl.plot(s)
     #fl.show();quit()
     #{{{If visualizing via ILT
     fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
-        fl.plot(s['indirect',j]['t2':(-20,20)],
+        fl.plot(s['indirect',j]['t2':(-150,150)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
 
     #exponential curve
-    rec_curve = s['t2':(-20,20)].C.sum('t2')
+    rec_curve = s['t2':(-150,150)].C.sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
     #fl.show();quit()
     #attempting ILT plot with NNLS_Tikhonov_190104
 
     T1 = nddata(logspace(-3,3,150),'T1')
-    l = sqrt(logspace(-6.0,0.05,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+    l = sqrt(logspace(-6.0,0.01,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
     plot_Lcurve = False
     if plot_Lcurve:
         def vec_lcurve(l):
@@ -122,22 +123,20 @@ for searchstr,exp_type,nodename, postproc, clock_correction,this_l in [
                                 ha='left',va='bottom',rotation=45)
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
     #fl.show();quit()
-    sfo1 = 289.69
+    sfo1 = 251.76
     arbitrary_reference = s.get_prop('acq')['BF1'] # will eventually be 
     print("SFO1 is",sfo1)
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-    this_l = 0.033 #pick number in l curve right before it curves up
+    this_l = 0.032 #pick number in l curve right before it curves up
     soln = s.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
     soln.reorder('t2',first=False)
     soln.rename('T1','log(T1)')
     soln.setaxis('log(T1)',log10(T1.data))
     fl.next('water loading 20')
     fl.image(soln['t2':(100,300)])
-
-
     #fl.show();quit()
     print("SAVING FILE")
-    np.savez(searchstr+'_'+str(nodename)+'_ILT_inv',
+    np.savez(searchstr+'_'+str(nodename)+'_ILT_inv_1',
             data=soln.data,
             logT1=soln.getaxis('log(T1)'),
             t2=soln.getaxis('t2'))               
