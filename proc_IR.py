@@ -21,7 +21,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
         #('free4AT100mM_201104', 'test_equip',2,'ab_ir2h',None),
         #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
-        ('w3_201111','test_equip',2,'ab_ir2h',None),
+        ('freeD2O_201104','test_equip',2,'ab_ir2h',None),
         ]:
     fl.basename = searchstr
     if clock_correction is None:
@@ -83,12 +83,12 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     #{{{If visualizing via ILT
     fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
-        fl.plot(s['indirect',j]['t2':(-150,150)],
+        fl.plot(s['indirect',j]['t2':(-40,40)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
-
+    #quit()
     #exponential curve
-    rec_curve = s['t2':(-150,150)].C.sum('t2')
+    rec_curve = s['t2':(-40,40)].C.sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
     #fl.show();quit()
@@ -124,21 +124,19 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
     #fl.show();quit()
     offset = s.get_prop('proc')['OFFSET']
-    sfo1 = s.get_prop('acq')['BF1']
-    if not s.get_ft_prop('t2'):
-        s.ft('t2',shift=True)
+    this_l = 0.243#pick number in l curve right before it curves up
+    o1 = 297.023 #o1 for free D2O
+    sfo1 = 61.4226880 #in Hz
     s.setaxis('t2',lambda x:
-            x/sfo1).set_units('t2','ppm')
-    s.set_prop('x_inverted',True)
-    #arbitrary_reference = s.get_prop('acq')['BF1'] # will eventually be 
-    #print("SFO1 is",sfo1)
-    #s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-    this_l = 0.039#pick number in l curve right before it curves up
+            x-o1)
+    s.setaxis('t2',lambda x:
+            x/(-sfo1)).set_units('t2','ppm')
     soln = s.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
     soln.reorder('t2',first=False)
     soln.rename('T1','log(T1)')
     soln.setaxis('log(T1)',log10(T1.data))
     fl.next('free D2O')
+
     fl.image(soln)
     #fl.show();quit()
     print("SAVING FILE")
