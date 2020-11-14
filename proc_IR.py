@@ -1,3 +1,4 @@
+import numpy as np
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from proc_scripts import *
@@ -21,7 +22,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
         #('free4AT100mM_201104', 'test_equip',2,'ab_ir2h',None),
         #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
-        ('w3_201111','test_equip',2,'ab_ir2h',None),
+        ('w3_201111','NMR_Data_AG',2,'ab_ir2h',None),
         ]:
     fl.basename = searchstr
     if clock_correction is None:
@@ -41,17 +42,17 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     #}}}
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')
-    fl.image(s)
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
-    fl.image(s)
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     fl.next('frequency domain after')
     s.ft('t2')
-    fl.image(s)
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
     #}}}
     #{{{zeroth order phase correction
@@ -67,7 +68,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
-    fl.image(s.C.convolve('t2',10))
+    fl.image(s.C.convolve('t2',10).setaxis('indirect','#').set_units('indirect','scan #'))
     #fl.show();quit()
     #}}}
     #{{{select t2 axis range and 
@@ -94,12 +95,12 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     #fl.show();quit()
     #attempting ILT plot with NNLS_Tikhonov_190104
 
-    T1 = nddata(logspace(-3,3,150),'T1')
-    l = sqrt(logspace(-6.0,0.01,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+    T1 = nddata(np.logspace(-3,3,150),'T1')
+    l = sqrt(np.logspace(-6.0,0.01,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
     plot_Lcurve = False
     if plot_Lcurve:
         def vec_lcurve(l):
-            return s.C.nnls('indirect',T1,lambda x,y: 1.0-2*exp(-x/y), l=l)
+            return s.C.nnls('indirect',T1,lambda x,y: 1.0-2*np.exp(-x/y), l=l)
 
         x=vec_lcurve(l) 
 
@@ -123,12 +124,20 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
                                 ha='left',va='bottom',rotation=45)
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
     #fl.show();quit()
-    sfo1 = 251.76
-    arbitrary_reference = s.get_prop('acq')['BF1'] # will eventually be 
-    print("SFO1 is",sfo1)
-    s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
+    o1 = s.get_prop('acq')['O1']
+    bf1 = s.get_prop('acq')['BF1']
+    sfo = s.get_prop('acq')['SFO1']
+    arbitrary_reference = 0
+    print("O1 is",o1)
+    print(sfo,o1/1e6+bf1,bf1)
+    print([j for j in s.get_prop('acq').keys() if 'O' in j])
+    quit()
+    s.setaxis('t2',lambda x:x + o1 - arbitrary_reference)
+    s.setaxis('t2', lambda x:
+            x/sfo).set_units('t2','ppm')
+    s.set_prop('x_inverted',True)
     this_l = 0.032 #pick number in l curve right before it curves up
-    soln = s.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
+    soln = s.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
     soln.reorder('t2',first=False)
     soln.rename('T1','log(T1)')
     soln.setaxis('log(T1)',log10(T1.data))
@@ -156,11 +165,11 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     f,T1 = recovery(s_sliced, (-50,50),guess=None)
     fl.plot_curve(f,'inversion recovery curve')
         #{{{attempting ILT plot with NNLS_Tikhonov_190104
-    T1 = nddata(logspace(-3,3,150),'T1')
-    l = sqrt(logspace(-8.0,0.1,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+    T1 = nddata(np.logspace(-3,3,150),'T1')
+    l = sqrt(np.logspace(-8.0,0.1,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
     if this_l is None:
         def vec_lcurve(l):
-            return s.nnls('indirect',T1,lambda x,y: 1.0-2*exp(-x/y), l=l)
+            return s.nnls('indirect',T1,lambda x,y: 1.0-2*np.exp(-x/y), l=l)
 
         x=vec_lcurve(l) 
 
@@ -193,7 +202,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     #}}}
     #{{{creating plot off of solution to L curve
     if this_l is not None:
-        soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
+        soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
         soln.reorder('t2',first=False)
         soln.rename('T1','log(T1)')
         soln.setaxis('log(T1)',log10(T1.data))

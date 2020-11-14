@@ -1,5 +1,7 @@
 """This module includes routines for phasing NMR spectra."""
 from pyspecdata import *
+import numpy as np
+import pylab as plt 
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
 #from line_profiler import LineProfiler
@@ -29,7 +31,7 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     '''
-    cov_mat = cov(c_[
+    cov_mat = np.cov(c_[
         d.data.real.ravel(),
         d.data.imag.ravel()].T,
         aweights=abs(d.data).ravel()**2 # when running proc_square_refl, having
@@ -38,7 +40,7 @@ def zeroth_order_ph(d, fl=None):
         # slightly better than the magnitude -- this should be both a robust
         # test and a resolution for issue #23
         )
-    eigenValues, eigenVectors = eig(cov_mat)
+    eigenValues, eigenVectors = np.linalg.eig(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
     # next 3 lines from stackexchange -- sort by
@@ -64,7 +66,7 @@ def zeroth_order_ph(d, fl=None):
         rotation_vector = mean_vec + assymetry_mag*eigenVectors[:,0]
     else:
         rotation_vector = mean_vec - assymetry_mag*eigenVectors[:,0]
-    ph0 = arctan2(rotation_vector[1],rotation_vector[0])
+    ph0 = np.arctan2(rotation_vector[1],rotation_vector[0])
     if fl is not None:
         d_forplot = d.C
         fl.next('check covariance test')
@@ -75,7 +77,7 @@ def zeroth_order_ph(d, fl=None):
                 alpha=0.25,
                 label='before'
                 )
-        d_forplot /= exp(1j*ph0)
+        d_forplot /= np.exp(1j*ph0)
         fl.plot(
                 d_forplot.data.ravel().real,
                 d_forplot.data.ravel().imag,
@@ -85,8 +87,8 @@ def zeroth_order_ph(d, fl=None):
                 )
         fl.plot(0,0,'ko', alpha=0.5)
         fl.plot(mean_vec[0],mean_vec[1],'kx', label='mean', alpha=0.5)
-        evec_forplot = sqrt(eigenValues.reshape(1,2))*ones((2,1))*eigenVectors # scale by the std, not the variance!
-        evec_forplot += mean_vec.reshape((-1,1))*ones((1,2))
+        evec_forplot = sqrt(eigenValues.reshape(1,2))*np.ones((2,1))*eigenVectors # scale by the std, not the variance!
+        evec_forplot += mean_vec.reshape((-1,1))*np.ones((1,2))
         fl.plot(evec_forplot[0,0],evec_forplot[1,0],'o', alpha=0.5,
                 label='first evec')
         fl.plot(evec_forplot[0,1],evec_forplot[1,1],'o', alpha=0.5)
@@ -96,13 +98,13 @@ def zeroth_order_ph(d, fl=None):
         ell = Ellipse(xy=mean_vec,
                 width=2*sqrt(eigenValues[0]),
                 height=2*sqrt(eigenValues[1]),
-                angle=180/pi*arctan2(eigenVectors[1,0],
+                angle=180/pi*np.arctan2(eigenVectors[1,0],
                     eigenVectors[0,0]),
                 color='k', fill=False)
-        ax = gca()
+        ax = plt.gca()
         ax.set_aspect('equal', adjustable='box')
         ax.add_patch(ell)
-    return exp(1j*ph0)
+    return np.exp(1j*ph0)
 
 def ph1_real_Abs(s,dw):
     r''' Performs first order phase correction with cost function
@@ -130,8 +132,8 @@ def ph1_real_Abs(s,dw):
     '''
     fl.push_marker() 
     ph1 = nddata(r_[-5:5:70j]*dw,'phcorr')
-    dx = diff(ph1.getaxis('phcorr')[r_[0,1]]).item()
-    ph1 = exp(-1j*2*pi*ph1*s.fromaxis('t2'))
+    dx = np.diff(ph1.getaxis('phcorr')[r_[0,1]]).item()
+    ph1 = np.exp(-1j*2*pi*ph1*s.fromaxis('t2'))
     s_cost = s * ph1
     ph0 = s_cost.C.sum('t2')
     ph0 /= abs(ph0)
@@ -144,13 +146,13 @@ def ph1_real_Abs(s,dw):
     # }}}
     # {{{ apply the phase corrections
     def applyphase(arg,ph1):
-        arg *= exp(-1j*2*pi*ph1*arg.fromaxis('t2'))
+        arg *= np.exp(-1j*2*pi*ph1*arg.fromaxis('t2'))
         ph0 = arg.C.sum('t2')
         ph0 /= abs(ph0)
         arg /= ph0
         return arg
     def costfun(ph1):
-        if type(ph1) is ndarray:
+        if type(ph1) is np.ndarray:
             ph1 = ph1.item()
         temp = s.C
         retval = applyphase(temp,ph1).run(real).run(abs).sum('t2').item()
@@ -190,19 +192,19 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     max_val = data_for_peak.data.max()
     pairs = data_for_peak.contiguous(lambda x: abs(x) >
             max_val*down_from_max)
-    longest_pair = diff(pairs).argmax()
+    longest_pair = np.diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
     peak_center = peak_location.mean()
     s_foropt.setaxis('t2',lambda x: x-peak_center)
     s_foropt.register_axis({'t2':0})
-    max_shift = diff(peak_location).item()/2
+    max_shift = np.diff(peak_location).item()/2
     # }}}
-    # {{{ construct test arrays for T2 decay and shift
+    # {{{ construct test np.arrays for T2 decay and shift
     shift_t = nddata(r_[-1*shift_val:1*shift_val:1200j]*max_shift, 'shift')
     # }}}
     # {{{ time shift and correct for T2 decay
     s_foropt.ft('t2')
-    s_foropt *= exp(1j*2*pi*shift_t*
+    s_foropt *= np.exp(1j*2*pi*shift_t*
             s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
     # }}}
@@ -222,7 +224,7 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     print("SHAPE OF S_FOROPT")
     print(ndshape(s_foropt))
     # }}}
-    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).mean_all_but(['shift','R2'])
+    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(np.conj)).mean_all_but(['shift','R2'])
     # in the following, weight for the total signal recovered
     residual = residual / abs(center_point).mean_all_but(['shift','R2'])
     residual.reorder('shift')
