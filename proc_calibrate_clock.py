@@ -3,29 +3,35 @@ from align_slice import align_and_slice
 fl = figlist_var()
 apply_correction = True
 for date,id_string in [
-        ('200212','calibrate_clock_6'),
+        ('201105','calibrate_clock_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip' ))
+    s.setaxis('nScans',r_[0:len(s.getaxis('nScans'))])
+    s.setaxis('vd',r_[0:len(s.getaxis('vd'))])
     s.rename('t','t2').set_units('t2','s')
     centerpoint = abs(s).mean('nScans').mean('vd').argmax('t2').item()
     s.setaxis('t2', lambda x: x-centerpoint)
+    s.mean('nScans')
     fl.next('image raw -- time domain')
     fl.image(s, interpolation='bicubic')
     s.ft('t2', shift=True)
-    s = s['t2':(-0.15e3,0.15e3)]
+    fl.next('image raw -- f domain')
+    fl.image(s, interpolation='bicubic')
+    s = s['t2':(-0.03e3,0.03e3)]
+    fl.next('image raw -- f domain, zoom')
+    fl.image(s, interpolation='bicubic')
     if apply_correction:
         #clock_correction = 1.692
         #clock_correction = -1.089
-        clock_correction = 1.785
+        clock_correction = -1.21
         s *= exp(-1j*s.fromaxis('vd')*clock_correction)
     fl.next('image raw')
     fl.image(s)
     fl.next('image shifted and sliced')
     s = align_and_slice(s,convwidth=0,fl=fl)
-    s.mean('nScans')
     fl.image(s)
     fl.next('phase error vs vd')
     fl.plot(s.sum('t2').angle, 'o')
@@ -36,7 +42,7 @@ for date,id_string in [
     fl.plot(s,'o',human_units=False)
     # begin fit to return clock correction
     x = s.getaxis('vd')
-    raise RuntimeError("the following code should not be using leastsq -- this is a line, while leastsq is for non-linear fits")
+    #raise RuntimeError("the following code should not be using leastsq -- this is a line, while leastsq is for non-linear fits")
     fitfunc = lambda p, x: p[0]*x
     errfunc = lambda p_arg,x_arg,y_arg: fitfunc(p_arg, x_arg) - y_arg
     p_ini = [1.0]
