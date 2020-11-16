@@ -1,11 +1,11 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy import signal
 from proc_scripts import *
 from pyspecdata import *
 from proc_scripts import postproc_dict
 from scipy import signal
 import matplotlib.pyplot as plt
+
 
 
 fl = figlist_var()
@@ -21,13 +21,23 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     #fl.show();quit()
     d_data = d.data
     print(nddata(d_data))
-    dw = diff(d.getaxis('t')[:2]).item()
+    dw = np.diff(d.getaxis('t')[:2]).item()
     amp=2*sqrt(2)
     fs = 50e6
-    f, t, Zxx = signal.stft(d_data, fs, nperseg=1000)
-    plt.pcolormesh(t, f, np.abs(Zxx), vmin=0, vmax=amp, shading='gouraud')
-    plt.title('STFT magnitude')
-    plt.ylabel('Frequency [Hz]')
-    plt.xlabel('Time [sec]')
-    plt.show()
+    f, t, Zxx = signal.stft(d_data, fs, nperseg=512)
+    x = np.abs(Zxx)
+    fig = plt.figure()
+    spec = plt.pcolormesh(t,f,x,)
+    cbar = plt.colorbar(spec)
+    ax=fig.axes[0]
+    ax.grid(True)
+    ax.set_title('STFT magnitude')
+    ax.set_ylabel('Freq (Hz)')
+    ax.set_xlabel('time(s)')
+    ax.show()
+    #plt.pcolormesh(t,f,x,cmap='RdYlGn')
+    #plt.title('STFT magnitude')
+    #plt.ylabel('Frequency [Hz]')
+    #plt.xlabel('Time [sec]')
+    #plt.show()
 
