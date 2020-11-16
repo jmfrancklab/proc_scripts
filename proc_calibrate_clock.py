@@ -5,7 +5,7 @@ apply_correction = True
 for filename,nodename,thisdir,vdrange in [
         #('200212','calibrate_clock_6'),
         #('200917_calibrate_clock_1','signal','test_equip',slice(None,-1)),
-        ('200923_calibrate_clock_1','signal','test_equip',slice(None,-1)),
+        ('201105_calibrate_clock_1','signal','test_equip',slice(None,-1)),
         #('200922_calibrate_clock_2','signal','test_equip',slice(None)),
         ]:
     fl.basename = filename
@@ -18,9 +18,16 @@ for filename,nodename,thisdir,vdrange in [
     s.reorder('vd') # based on field variation, it does seem the repeats were
     # done in the outer loop, but I still like to present them as though from an
     # inner loop
-    centerpoint = abs(s).mean('nScans').mean('vd').argmax('t2').item()
+    try:
+        centerpoint = abs(s).mean('nScans').mean('vd').argmax('t2').item()
+    except:
+        centerpoint = abs(s).mean('vd').argmax('t2').item()
     s.setaxis('t2', lambda x: x-centerpoint)
-    s.mean('nScans')
+    try:
+        s.mean('nScans')
+    except:
+        print("Did not find nScans axis")
+    s.setaxis('vd',r_[0:len(s.getaxis('vd'))])
     fl.next('image raw -- time domain')
     fl.image(s, interpolation='bicubic')
     s.ft('t2', shift=True)
@@ -40,7 +47,6 @@ for filename,nodename,thisdir,vdrange in [
     fl.next('image shifted and sliced')
     fl.image(s)
     fl.next('mean and repeat align and slice')
-    s.mean('nScans')
     s = align_and_slice(s, convwidth=0)
     fl.image(s)
     fl.next('phase error vs vd')
