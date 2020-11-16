@@ -22,7 +22,7 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
         #('free4AT100mM_201104', 'test_equip',2,'ab_ir2h',None),
         #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
-        ('w3_201111','NMR_Data_AG',2,'ab_ir2h',None),
+        ('w20_201111','NMR_Data_AG',2,'ab_ir2h',None),
         ]:
     fl.basename = searchstr
     if clock_correction is None:
@@ -78,18 +78,18 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
     s['t2',0] *= 0.5
     s.ft('t2')
     fl.next('where to cut')
-    s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] 
+    s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 
     fl.plot(s)
     #fl.show();quit()
     #{{{If visualizing via ILT
     fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
-        fl.plot(s['indirect',j]['t2':(-150,150)],
+        fl.plot(s['indirect',j]['t2':(-60,60)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
 
     #exponential curve
-    rec_curve = s['t2':(-150,150)].C.sum('t2')
+    rec_curve = s['t2':(-60,60)].C.sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
     #fl.show();quit()
@@ -105,44 +105,43 @@ for searchstr,exp_type,nodename, postproc, clock_correction in [
         x=vec_lcurve(l) 
 
         x_norm = x.get_prop('nnls_residual').data
-        r_norm = x.C.run(linalg.norm,'T1').data
+        r_norm = x.C.run(np.linalg.norm,'T1').data
 
         with figlist_var() as fl:
             fl.next('L-Curve')
             figure(figsize=(15,10))
-            fl.plot(log10(r_norm[:,0]),log10(x_norm[:,0]),'.')
+            fl.plot(np.log10(r_norm[:,0]),np.log10(x_norm[:,0]),'.')
             annotate_plot = True
             show_lambda = True
             if annotate_plot:
                 if show_lambda:
                     for j,this_l in enumerate(l):
-                        annotate('%0.3f'%this_l, (log10(r_norm[j,0]),log10(x_norm[j,0])),
+                        annotate('%0.3f'%this_l, (np.log10(r_norm[j,0]),np.log10(x_norm[j,0])),
                                 ha='left',va='bottom',rotation=45)
                 else:
                     for j,this_l in enumerate(l):
-                        annotate('%d'%j, (log10(r_norm[j,0]),log10(x_norm[j,0])),
+                        annotate('%d'%j, (np.log10(r_norm[j,0]),np.log10(x_norm[j,0])),
                                 ha='left',va='bottom',rotation=45)
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
     #fl.show();quit()
     o1 = s.get_prop('acq')['O1']
     bf1 = s.get_prop('acq')['BF1']
     sfo = s.get_prop('acq')['SFO1']
-    arbitrary_reference = 0
+    arbitrary_reference = 297.01
     print("O1 is",o1)
     print(sfo,o1/1e6+bf1,bf1)
     print([j for j in s.get_prop('acq').keys() if 'O' in j])
-    quit()
     s.setaxis('t2',lambda x:x + o1 - arbitrary_reference)
     s.setaxis('t2', lambda x:
             x/sfo).set_units('t2','ppm')
     s.set_prop('x_inverted',True)
-    this_l = 0.032 #pick number in l curve right before it curves up
+    this_l = 0.039 #pick number in l curve right before it curves up
     soln = s.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
     soln.reorder('t2',first=False)
     soln.rename('T1','log(T1)')
-    soln.setaxis('log(T1)',log10(T1.data))
+    soln.setaxis('log(T1)',np.log10(T1.data))
     fl.next('water loading 20')
-    fl.image(soln['t2':(100,300)])
+    fl.image(soln)#['t2':(100,300)])
     #fl.show();quit()
     print("SAVING FILE")
     np.savez(searchstr+'_'+str(nodename)+'_ILT_inv_1',
