@@ -19,16 +19,21 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
     fl.plot(d['ch',0], alpha=0.5, label='control')    
     fl.plot(d['ch',1], alpha=0.5, label='reflection')
     #fl.show();quit()
+    d = d['ch',1]
     d_data = d.data
+    print("shape of d before stft",d_data.shape)
     dw = np.diff(d.getaxis('t')[:2]).item()
     amp=2*sqrt(2)
     fs = 50e6
     f, t, Zxx = signal.stft(d_data, fs, nperseg=100)
-    np.reshape(Zxx,(3,2))
     print("shapes of t, f, Z", t.shape,f.shape,Zxx.shape)
+    
+    #np.reshape(Zxx,(3,2))
     #quit()
+    #fl.next('after')
+    plt.figure()
     x = np.abs(Zxx)
-    plt.pcolormesh(t,f,x,cmap='RdYlGn')
+    plt.pcolormesh(t,f,x,shading='gouraud')
     plt.title('STFT magnitude')
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
