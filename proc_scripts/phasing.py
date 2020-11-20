@@ -2,6 +2,8 @@
 from pyspecdata import *
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
+import numpy as np
+import pyspecdata as pysp
 #from line_profiler import LineProfiler
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
@@ -29,7 +31,7 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     '''
-    cov_mat = cov(c_[
+    cov_mat = np.cov(c_[
         d.data.real.ravel(),
         d.data.imag.ravel()].T,
         aweights=abs(d.data).ravel()**2 # when running proc_square_refl, having
@@ -190,19 +192,19 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     max_val = data_for_peak.data.max()
     pairs = data_for_peak.contiguous(lambda x: abs(x) >
             max_val*down_from_max)
-    longest_pair = diff(pairs).argmax()
+    longest_pair = np.diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
     peak_center = peak_location.mean()
     s_foropt.setaxis('t2',lambda x: x-peak_center)
     s_foropt.register_axis({'t2':0})
-    max_shift = diff(peak_location).item()/2
+    max_shift = np.diff(peak_location).item()/2
     # }}}
     # {{{ construct test arrays for T2 decay and shift
     shift_t = nddata(r_[-1*shift_val:1*shift_val:1200j]*max_shift, 'shift')
     # }}}
     # {{{ time shift and correct for T2 decay
     s_foropt.ft('t2')
-    s_foropt *= exp(1j*2*pi*shift_t*
+    s_foropt *= np.exp(1j*2*pi*shift_t*
             s_foropt.fromaxis('t2'))
     s_foropt.ift('t2')
     # }}}
@@ -222,7 +224,7 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     print("SHAPE OF S_FOROPT")
     print(ndshape(s_foropt))
     # }}}
-    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).mean_all_but(['shift','R2'])
+    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(np.conj)).mean_all_but(['shift','R2'])
     # in the following, weight for the total signal recovered
     residual = residual / abs(center_point).mean_all_but(['shift','R2'])
     residual.reorder('shift')

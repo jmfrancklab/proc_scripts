@@ -3,6 +3,7 @@ from .Utility import dBm2power
 import os
 from sympy import symbols
 import logging
+import numpy as np
 fl=figlist_var()
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
@@ -239,7 +240,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))
     s.setaxis('power',r_[
-        0,dBm2power(array(s.get_prop('meter_powers'))+20)]
+        0,dBm2power(np.array(s.get_prop('meter_powers'))+20)]
         ).set_units('power','W')
     logging.info(strm("meter powers",s.get_prop('meter_powers')))
     logging.info(strm("actual powers",s.getaxis('power')))

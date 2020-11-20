@@ -15,25 +15,21 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 
-    fl.next('Raw signal %s'%searchstr)
-    fl.plot(d['ch',0], alpha=0.5, label='control')    
-    fl.plot(d['ch',1], alpha=0.5, label='reflection')
-    #fl.show();quit()
+    fl.next('Raw signal for channel 1')
+    fl.plot(d['ch',1], alpha=0.5, label='control')    
+    fl.next('Raw signal for channel 0')
+    fl.plot(d['ch',0], alpha=0.5, label='reflection')
     d = d['ch',1]
-    d_data = d.data
+    d_data = d.data.real
     print("shape of d before stft",d_data.shape)
     dw = np.diff(d.getaxis('t')[:2]).item()
     amp=2*sqrt(2)
-    fs = 50e6
-    f, t, Zxx = signal.stft(d_data, fs, nperseg=100)
+    fs= 1/dw
+    f, t, Zxx = signal.stft(d_data, fs, return_onesided=True, nperseg=1000)
     print("shapes of t, f, Z", t.shape,f.shape,Zxx.shape)
-    
-    #np.reshape(Zxx,(3,2))
-    #quit()
-    #fl.next('after')
     plt.figure()
     x = np.abs(Zxx)
-    plt.pcolormesh(t,f,x,shading='gouraud')
+    plt.pcolormesh(t,f,x, vmin=0, vmax=d_data.max(), shading='gouraud')
     plt.title('STFT magnitude')
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
