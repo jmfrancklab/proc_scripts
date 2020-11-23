@@ -14,9 +14,9 @@ t2 = symbols('t2')
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
-for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
-        ["201120_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-300,300), (None,0.05)]
+for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
+        ["201118_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-700,700), 0.1]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
@@ -27,16 +27,13 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
     logger.debug(strm(ndshape(s)))
-    s = slice_FID_from_echo(s)['t2':(None,0.05)]
-    # visualize time domain after filtering and phasing 
-    fl.side_by_side('time domain (after filtering and phasing)\n$\\rightarrow$ use to adjust time range', s, time_range)
-    s =s['t2':time_range] # slices out time range along t2 axis
+    s = slice_FID_from_echo(s,max_t=max_t,fl=fl)    # visualize time domain after filtering and phasing 
     #{{{apodizing and zero fill
     fl.next('apodize and zero fill')
-    R = 5.0/(time_range[-1]) # assume full decay by end time
+    R = 5.0/(max_t) # assume full decay by end time
     s *= exp(-s.fromaxis('t2')*R)
     s.ft('t2',pad=1024)
-    fl.image(s)
+    fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     #}}}
     #{{{select coherence channel in time domain
     s.ift('t2')
