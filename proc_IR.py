@@ -16,7 +16,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('201120_4AT100uM_cap_probe_IR_0POWER','test_equip','signal','ag_IR2H'),
+        ('CTAB_w8_41mM_201124','test_equip',2,'ag_IR2H'),
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
@@ -25,7 +25,7 @@ for searchstr,exp_type,nodename, postproc in [
         #('freeD2O_201104','test_equip',2,'ab_ir2h',None),
         ]:
     fl.basename = searchstr
-    clock_correction = 2.375295
+    clock_correction = None
     if clock_correction is None:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
@@ -42,17 +42,17 @@ for searchstr,exp_type,nodename, postproc in [
     #}}}
     #{{{hermitian function test and apply best shift
     fl.next('frequency domain before')
-    fl.image(s)
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
-    fl.image(s)
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     fl.next('frequency domain after')
     s.ft('t2')
-    fl.image(s)
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
     #}}}
     #{{{zeroth order phase correction
@@ -68,7 +68,8 @@ for searchstr,exp_type,nodename, postproc in [
     s /= ph0
     fl.next('frequency domain -- after hermitian function test and phasing')
     s.ft('t2')
-    fl.image(s.C.convolve('t2',10))
+    fl.image(s.C.convolve('t2',10).C.setaxis(
+'indirect','#').set_units('indirect','scan #'))
     #fl.show();quit()
     #}}}
     #{{{select t2 axis range and 
@@ -80,19 +81,19 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('where to cut')
     s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] 
     fl.plot(s)
-    #fl.show();quit()
+    fl.show();quit()
     #{{{If visualizing via ILT
     fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
-        fl.plot(s['indirect',j]['t2':(-40,40)],
+        fl.plot(s['indirect',j]['t2':(-300,300)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
     #quit()
     #exponential curve
-    rec_curve = s['t2':(-40,40)].C.sum('t2')
+    rec_curve = s['t2':(-300,300)].C.sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
-    #fl.show();quit()
+    fl.show();quit()
     #attempting ILT plot with NNLS_Tikhonov_190104
 
     T1 = nddata(logspace(-3,3,150),'T1')

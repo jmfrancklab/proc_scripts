@@ -16,7 +16,7 @@ t2 = symbols('t2')
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
         ["201118_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-700,700), 0.1]
+            'spincore_ODNP_v1', (-400,400), 0.07]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
@@ -34,6 +34,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     s *= exp(-s.fromaxis('t2')*R)
     s.ft('t2',pad=1024)
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+    print(s.getaxis('power'))
     #}}}
     #{{{select coherence channel in time domain
     s.ift('t2')
