@@ -16,7 +16,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('CTAB_w8_41mM_201124','test_equip',2,'ag_IR2H'),
+        ('CTAB_w15_41mM_201124','test_equip',2,'ab_ir2h'),
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
@@ -79,25 +79,25 @@ for searchstr,exp_type,nodename, postproc in [
     s['t2',0] *= 0.5
     s.ft('t2')
     fl.next('where to cut')
-    s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] 
+    s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 
     fl.plot(s)
-    fl.show();quit()
+    #fl.show();quit()
     #{{{If visualizing via ILT
     fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
-        fl.plot(s['indirect',j]['t2':(-300,300)],
+        fl.plot(s['indirect',j]['t2':(-60,60)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
     #quit()
     #exponential curve
-    rec_curve = s['t2':(-300,300)].C.sum('t2')
+    rec_curve = s['t2':(-60,60)].C.sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
-    fl.show();quit()
+    #fl.show();quit()
     #attempting ILT plot with NNLS_Tikhonov_190104
 
     T1 = nddata(logspace(-3,3,150),'T1')
-    l = sqrt(logspace(-6.0,0.01,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+    l = sqrt(logspace(-8.0,0.5,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
     plot_Lcurve =False
     if plot_Lcurve:
         def vec_lcurve(l):
@@ -126,9 +126,9 @@ for searchstr,exp_type,nodename, postproc in [
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
     #fl.show();quit()
     offset = s.get_prop('proc')['OFFSET']
-    this_l = 0.243#pick number in l curve right before it curves up
-    o1 = 297.023 #o1 for free D2O
-    sfo1 = 61.4226880 #in Hz
+    this_l = 0.422#pick number in l curve right before it curves up
+    o1 = 290.98 #o1 for free D2O
+    sfo1 = 61.42268198 #in Hz
     s.setaxis('t2',lambda x:
             x-o1)
     s.setaxis('t2',lambda x:
@@ -139,7 +139,7 @@ for searchstr,exp_type,nodename, postproc in [
     soln.setaxis('log(T1)',log10(T1.data))
     fl.next('free D2O')
 
-    fl.image(soln)
+    fl.image(soln.C.setaxis('t2','#').set_units('t2','scan #'))
     #fl.show();quit()
     print("SAVING FILE")
     np.savez(searchstr+'_'+str(nodename)+'_ILT_inv',

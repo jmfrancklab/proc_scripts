@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 fl = figlist_var()
  # {{{ load data, set units, show raw data
 for searchstr,exp_type,nodename,postproc,corrected_volt in [
-        ('201113_triwave_control_2','ODNP_NMR_comp','capture1','chirp',True)
+        ('201130_triwave_empty_RMprobe','ODNP_NMR_comp','capture1','chirp',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict) 

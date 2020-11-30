@@ -15,8 +15,8 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
-        ["201118_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-400,400), 0.07]
+        ["201124_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-500,500), 0.06]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
@@ -27,7 +27,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
     logger.debug(strm(ndshape(s)))
-    s = slice_FID_from_echo(s,max_t=max_t,fl=fl)    # visualize time domain after filtering and phasing 
+    s = slice_FID_from_echo(s,max_t=max_t,fl=fl)    # visualize time domain after filtering and phasing
     #{{{apodizing and zero fill
     fl.next('apodize and zero fill')
     R = 5.0/(max_t) # assume full decay by end time
@@ -40,6 +40,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     s.ift('t2')
     s = s['ph2',-2]['ph1',1]['t2':(0,None)]
     s.ft('t2')
+    
     #}}}
     #{{{plotting enhancement curve at lowest and highest powers 
     fl.next('compare highest power to no power')
@@ -53,10 +54,13 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     #}}}
     #{{{plotting enhancement vs power
     fl.next('enhancement')
-    enhancement = s['t2':(0,250)].sum('t2').real
+    enhancement = s['t2':(-400,400)].sum('t2').real
     enhancement /= enhancement['power',0]
-    fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
-    fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
+    fl.plot(enhancement['power',:idx_maxpower+1],'ko')#, human_units=False)
+    fl.plot(enhancement['power',idx_maxpower+1:],'ro')#, human_units=False)
     ylabel('Enhancement')
+    print(ndshape(enhancement))
+    enhancement = enhancement['power':1.26]
+    print(enhancement) 
     #}}}
 fl.show();quit()
