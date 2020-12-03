@@ -264,7 +264,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
 
 def proc_capture(s):
     logging.info("loading pre-processing for square wave capture")
-    s.set_units('t','s').name('Amplitude').set_units('V')
+    #s.set_units('t','s').name('Amplitude').set_units('V')
     return s
 
 def proc_DOSY_CPMG(s):
