@@ -7,10 +7,10 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 for searchstr,exp_type,nodename,postproc in [
-    ['201104_NiSO4_B12_resonator_nutation_2','test_equip','nutation','spincore_nutation_v1']
+    ['201207_Ni_capillary_probe_nutation_amp_1','test_equip','nutation','spincore_amp_nutation_v1']
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
-            lookup=postproc_dict) 
+            lookup=postproc_dict,fl=fl) 
     #fl.show();quit()
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
@@ -22,6 +22,12 @@ for searchstr,exp_type,nodename,postproc in [
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     logger.info(strm("best shift is",best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    fl.next('with time shift')
+    fl.image(s)
+    fl.next('freq domain after time correction')
+    s.ft('t2')
+    fl.image(s)
+    fl.show();quit()
     #}}}
     
     s.ft('t2',pad=4096)
@@ -31,14 +37,14 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('select $\\Delta p$ and convolve')
     s.convolve('t2',50)
     fl.image(s)
-    fl.show();quit()
+    #fl.show();quit()
     #}}}
     
     #{{{ slicing
     s = s['t2':(-250,250)]
     fl.next('sliced')
     fl.image(s)
-    fl.show();quit()
+    #fl.show();quit()
     #}}}
     
     #{{{ phasing with zeroth order correction

@@ -223,18 +223,41 @@ def proc_spincore_IR(s,clock_correction,fl=None):
     s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
     return s
 
-def proc_nutation(s):
+def proc_nutation(s,fl=None):
     logging.info("loading pre-processing for nutation")
     orig_t = s.getaxis('t')
-    s.set_units('p_90','s')
+    s.set_units('p90','s')
     s.reorder('t',first=True)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
     s.ft(['ph2','ph1'])
+    fl.next('after phase cycle FT')
+    fl.image(s)
     s.ft('t2',shift=True)
+    fl.next('freq domain')
+    fl.image(s)
     return s
+
+def proc_nutation_amp(s,fl=None):
+    logging.info("loading pre-processing for nutation")
+    orig_t = s.getaxis('t')
+    s.set_units('amp','unknown')
+    s.reorder('t',first=True)
+    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.setaxis('ph2',r_[0.,2.]/4)
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.reorder('t2',first=False)
+    s.ft(['ph2','ph1'])
+    fl.next('after phase cycle FT')
+    fl.image(s)
+    s.ft('t2',shift=True)
+    fl.next('freq domain')
+    fl.image(s)
+    return s
+
+
 
 def proc_spincore_ODNP_v1(s,fl=None):
     logging.info("loading pre-processing for ODNP")
@@ -335,5 +358,6 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_nutation_v1':proc_nutation,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'square_wave_capture_v1':proc_capture,
-        'DOSY_CPMG_v1':proc_DOSY_CPMG}
+        'DOSY_CPMG_v1':proc_DOSY_CPMG,
+        'spincore_amp_nutation_v1':proc_nutation_amp}
 

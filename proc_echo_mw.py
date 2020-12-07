@@ -15,8 +15,8 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
-        ["201201_4AT1mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-300,300), 0.046]
+        ["201124_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-300,300), 0.055]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
@@ -54,7 +54,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     #fl.show();quit()
     #}}}
     #{{{plotting enhancement vs power
-    fl.next('enhancement')
+    fl.next('enhancement for 695 uM 4-AT')
     enhancement = s['t2':(-400,400)].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
@@ -62,7 +62,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
     ylabel('Enhancement')
     print(ndshape(enhancement))
-    enhancement = enhancement['power':0.25]
+    enhancement = enhancement['power':4]
     print(enhancement) 
     #}}}
 fl.show();quit()

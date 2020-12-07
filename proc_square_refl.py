@@ -5,7 +5,7 @@ from sympy import symbols
 
 init_logging("debug")
 d = find_file(
-    "201020_cap_probe_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201207_sqwv_cap_probe_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 d.set_units("t", "s")
@@ -126,9 +126,10 @@ with fl_ext() as fl:
     decay = (abs(first_blip)+abs(secon_blip))/2
     fl.next('decay')
     fl.plot(decay)
+    #fl.show();quit()
     #decay_start = decay.argmax('t').item()
     #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(69e-9,1200)]
+    decay = decay['t':(59e-9,1200)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))
@@ -137,13 +138,13 @@ with fl_ext() as fl:
     f = fitdata(decay)
     A,B,C,t = symbols("A B C t",real=True)
     f.functional_form = A*e**(-t*B)
-    fl.next('fit for B12 probe')
+    fl.next('fit for capillary probe')
     fl.plot(decay,'o',label='data')
     f.fit()
     f.set_units('t','ns')
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('B')*2*pi*14800000
+    Q = 1./f.output('B')*2*pi*14913343
     fl.plot(f.eval(100).set_units('t','s'),label='fit, Q=%0.1f'%Q)
 fl.show()
 quit()
