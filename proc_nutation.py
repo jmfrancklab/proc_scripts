@@ -7,7 +7,7 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 for searchstr,exp_type,nodename,postproc in [
-    ['201207_Ni_capillary_probe_nutation_amp_1','test_equip','nutation','spincore_amp_nutation_v1']
+    ['201208_Ni_sol_probe_nutation_amp_2','test_equip','nutation','spincore_amp_nutation_v1']
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict,fl=fl) 
@@ -27,10 +27,10 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('freq domain after time correction')
     s.ft('t2')
     fl.image(s)
-    fl.show();quit()
+    #fl.show();quit()
     #}}}
     
-    s.ft('t2',pad=4096)
+    #s.ft('t2',pad=4096)
     
     #{{{ selecting coherence and convolving
     s = s['ph2',0]['ph1',1]
@@ -41,7 +41,7 @@ for searchstr,exp_type,nodename,postproc in [
     #}}}
     
     #{{{ slicing
-    s = s['t2':(-250,250)]
+    s = s['t2':(-10000,10000)]
     fl.next('sliced')
     fl.image(s)
     #fl.show();quit()
