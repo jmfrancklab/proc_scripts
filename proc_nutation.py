@@ -7,17 +7,26 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 for searchstr,exp_type,nodename,postproc in [
-    ['201208_Ni_sol_probe_nutation_amp_2','test_equip','nutation','spincore_amp_nutation_v1']
+    ['201209_Ni_sol_probe_nutation_1','test_equip','nutation','spincore_nutation_v1']
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict,fl=fl) 
+    #s = s['t2':(-1000,1000)]
     #fl.show();quit()
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
     s.ift('t2')
     # }}}
-    
+    s.setaxis('t2', lambda x: x-abs(s['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
+    fl.next('t domain after removing 1st couple pts')
+    #s = s['t2',2:]
+    fl.image(s)
+    fl.next('freq domain after filter')
+    s.ft('t2')
+    fl.image(s)
+    #fl.show();quit()
+    s.ift('t2')
     # {{{ centering of data using hermitian function test
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
     logger.info(strm("best shift is",best_shift))
@@ -41,7 +50,7 @@ for searchstr,exp_type,nodename,postproc in [
     #}}}
     
     #{{{ slicing
-    s = s['t2':(-10000,10000)]
+    s = s['t2':(-5000,15000)]
     fl.next('sliced')
     fl.image(s)
     #fl.show();quit()

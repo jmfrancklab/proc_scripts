@@ -5,11 +5,12 @@ from sympy import symbols
 
 init_logging("debug")
 d = find_file(
-    "201208_sqwv_sol_probe_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201208_Ni_sol_probe_6", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 d.set_units("t", "s")
-
+print(d.get_prop())
+quit()
 
 class fl_ext(figlist_var):
     def next(self, *arg, **kwargs):

@@ -2,13 +2,19 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('200302','alex_probe_water'),
+        ('201209','with_tune_limit_4uV_Vout'),
         ]:
     filename = date+'_'+id_string+'.h5'
-    nodename = 'signal'
+    nodename = 'capture1'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip'))
     print(ndshape(s))
+    fl.next('raw without tune limiter')
+    fl.plot(s)
+    s.ft('t')
+    fl.next('FTed abs')
+    fl.plot(abs(s))
+    fl.show();quit()
     nEchoes = s.get_prop('acq_params')['nEchoes']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']

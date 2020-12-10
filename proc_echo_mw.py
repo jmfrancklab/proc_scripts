@@ -15,12 +15,13 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
-        ["201124_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+        ["201208_Ni_sol_probe_6", 'ODNP_NMR_comp', 'signal',
             'spincore_ODNP_v1', (-300,300), 0.055]
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict)
+    quit()
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range) # visualize the frequency limits
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
