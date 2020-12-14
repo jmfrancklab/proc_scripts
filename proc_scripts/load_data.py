@@ -242,6 +242,8 @@ def proc_nutation(s,fl=None):
 
 def proc_nutation_amp(s,fl=None):
     logging.info("loading pre-processing for nutation")
+    print(s.get_prop('acq_params'))
+    return s
     orig_t = s.getaxis('t')
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.reorder(['ph1','ph2'])
@@ -255,6 +257,7 @@ def proc_nutation_amp(s,fl=None):
     s.ft('t2',shift=True)
     fl.next('freq domain')
     fl.image(s)
+    print(s.get_prop('acqs_params'))
     return s
 
 def proc_var_tau(s,fl=None):
@@ -364,6 +367,22 @@ def proc_DOSY_CPMG(s):
     s.ft('t2', shift=True).ift('t2') # this is overkill -- need a pyspecdata function that does this w/out the fft
     # }}}
     return s
+def proc_ESR_linewidth(s):
+    logging.infor("loading preprocessing for ESR linewidth calculation")
+    s.chunk_auto('harmonic','phase')
+    s = s['phase',0]
+    s -= s['$B_0$',:50].c.mean('$B_0$')
+    s_integral = s['harmonic',0].C.run_nopop(cumsum,'$B_0$')
+    x1,x2 = s_integral.getaxis('$B_0$')[r_[5,-5]]
+    y1 = s_integral.data[:5].mean()
+    y2 = s_integral.data[-5:].mean()
+    straight_baseline = (s.fromaxis('$B_0$')-x1)*(y2-y1)/(x2-x1)
+    s_integral -= straigh_baseline
+    s_integral /= s_integral.data.mean()
+    center_field = (s_integral * s.fromaxis('$B_0$')).mean('$B_0$').item()
+    s.setaxis('$B_0$',lambda x: x-center_field)
+    return s
+    
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
@@ -379,5 +398,6 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_var_tau_v1':proc_var_tau,
         'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG,
+        'ESR_linewidth':proc_ESR_linewidth,
 }
 
