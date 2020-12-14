@@ -384,8 +384,7 @@ def proc_ESR_linewidth(s):
     s.setaxis('$B_0$',lambda x: x-center_field)
     s_integral = s.C.run_nopop(cumsum,'$B_0$')
     print(s_integral)
-    return s
-    
+    return s    
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
