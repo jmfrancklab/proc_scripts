@@ -1,22 +1,21 @@
 from pyspecdata import *
 from proc_scripts import *
 from proc_scripts import postproc_dict
-from sympy import *
-import sympy as sympy
+import sympy as s
 from symfit import Parameter, Variable, Fit
 
 fl = fl_mod()
 for searchstr,exp_type,postproc in [
         ["201118_10mM4AT",'ESR','ESR_linewidth']
         ]:
-    s = find_file(searchstr+'.DSC',exp_type=exp_type,postproc=postproc,
-            lookup=postproc_dict)
+    d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
+                  lookup=postproc_dict)
     fl.next('linewidth for 10mM 4AT')
-    fl.plot(s)
-    s = s['$B_0$':(-9,9)]
+    fl.plot(d)
+    d = d['$B_0$':(-9, 9)]
     fl.next('sliced')
-    fl.plot(s)
-    s_integral =s.C.run_nopop(cumsum,'$B_0$')
+    fl.plot(d)
+    s_integral =d.C.run_nopop(cumsum, '$B_0$')
     #fl.next('absorbance')
     #fl.plot(s_integral)
     #{{{fitting with voigt
@@ -27,11 +26,11 @@ for searchstr,exp_type,postproc in [
     C = Parameter('C')
     B = Variable('B')
     x = B-B_center
-    z = (x+1j*gamma)/(sigma*sympy.sqrt(2))
-    w = (sympy.exp(-z**2))*sympy.erfc(-1j*z)
-    dVoigt = A*(((gamma*sympy.im(w))/((sigma**2)*sigma*sympy.sqrt(2*sympy.pi)))-((x*sympy.re(w))/((sigma**2)*sigma*sympy.sqrt(2*sympy.pi))))+C
-    ydata = s.data.real
-    xdata = s.getaxis('$B_0$')
+    z = (x+1j*gamma)/(sigma * s.sqrt(2))
+    w = (s.exp(-z ** 2)) * s.erfc(-1j * z)
+    dVoigt = A * (((gamma * s.im(w)) / ((sigma ** 2) * sigma * s.sqrt(2 * s.pi))) - ((x * s.re(w)) / ((sigma ** 2) * sigma * s.sqrt(2 * s.pi)))) + C
+    ydata = d.data.real
+    xdata = d.getaxis('$B_0$')
     print(dVoigt)
     #sigma = 0.1
     #gamma = 1.7
@@ -54,8 +53,8 @@ for searchstr,exp_type,postproc in [
     A = Parameter('A')
     #C = Parameter('C')
     B = Variable('B')
-    ydata = s.data.real
-    xdata = s.getaxis('$B_0$')
+    ydata = d.data.real
+    xdata = d.getaxis('$B_0$')
     l_deriv = -(A*(2*R*(B+B_center))/(((R**2)+((B+B_center)**2))**2)) 
     print(l_deriv)
     model = l_deriv
