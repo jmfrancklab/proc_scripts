@@ -16,7 +16,8 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('CTAB_w15_41mM_201124','test_equip',2,'ab_ir2h'),
+        ('w3_201111','test_equip',2,'ab_ir2h')
+        #('CTAB_w15_41mM_201124','test_equip',2,'ab_ir2h'),
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
         #('free4AT_201014','test_equip',3,'ag_IR2H',None)
@@ -36,7 +37,7 @@ for searchstr,exp_type,nodename, postproc in [
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
-    #fl.show();quit()
+    fl.show();quit()
         #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
