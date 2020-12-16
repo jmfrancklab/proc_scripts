@@ -1,72 +1,91 @@
 from pyspecdata import *
 from proc_scripts import *
 from proc_scripts import postproc_dict
-from sympy import *
-import sympy as sympy
+import symfit as s
+import pickle,os
+from pylab import ndarray
 from symfit import Parameter, Variable, Fit
+from symfit.core.minimizers import MINPACK
+from symfit.contrib.interactive_guess import InteractiveGuess
 
 fl = fl_mod()
 for searchstr,exp_type,postproc in [
         ["201118_10mM4AT",'ESR','ESR_linewidth']
         ]:
-    s = find_file(searchstr+'.DSC',exp_type=exp_type,postproc=postproc,
-            lookup=postproc_dict)
+    d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
+                  lookup=postproc_dict)
     fl.next('linewidth for 10mM 4AT')
-    fl.plot(s)
-    s = s['$B_0$':(-9,9)]
+    fl.plot(d)
+    d = d['$B_0$':(-9, 9)]
+    d.setaxis('$B_0$', lambda x: x+1) # for a positive B_center, b/c the interactive guess doesn't deal well with negative parameters
     fl.next('sliced')
-    fl.plot(s)
-    s_integral =s.C.run_nopop(cumsum,'$B_0$')
+    fl.plot(d)
+    s_integral =d.C.run_nopop(cumsum, '$B_0$')
     #fl.next('absorbance')
     #fl.plot(s_integral)
     #{{{fitting with voigt
-    B_center = Parameter('B_center')
-    sigma = Parameter('sigma')
-    gamma = Parameter('gamma')
-    A = Parameter('A')
-    C = Parameter('C')
+    B_center = Parameter('B_center', value=-0.2)
+    sigma = Parameter('sigma', value=3)
+    R = Parameter('R', value=7.0)
+    A = Parameter('A', value=3e4)
+    C = Parameter('C', value=0)
     B = Variable('B')
-    x = B-B_center
-    z = (x+1j*gamma)/(sigma*sympy.sqrt(2))
-    w = (sympy.exp(-z**2))*sympy.erfc(-1j*z)
-    dVoigt = A*(((gamma*sympy.im(w))/((sigma**2)*sigma*sympy.sqrt(2*sympy.pi)))-((x*sympy.re(w))/((sigma**2)*sigma*sympy.sqrt(2*sympy.pi))))+C
-    ydata = s.data.real
-    xdata = s.getaxis('$B_0$')
-    print(dVoigt)
-    model = dVoigt
-    print("MODEL IS")
-    print(model)
-    fit = Fit(model,xdata,ydata)
+    y_var = Variable('y')
+    if not os.path.exists('dVoigt.pickle'):
+        with open('dVoigt.pickle','wb') as fp:
+            # cache the expression, which takes some time to generate
+            print("no pickle file found -- generating")
+            z = ((B-B_center) + s.I*R)/sigma/s.sqrt(2)
+            faddeeva = s.simplify(s.exp(-z**2) * s.erfc(-s.I*z))
+            voigt = A*s.re(faddeeva)/sigma/s.sqrt(2*s.pi)
+            voigt = voigt.simplify()
+            dVoigt = voigt.diff(B).simplify()
+            pickle.dump(dVoigt,fp)
+    else:
+        with open('dVoigt.pickle','rb') as fp:
+            print("reading expression from pickle")
+            dVoigt = pickle.load(fp)
+    fl.next('plot guess')
+    print(A.value,"a value")
+    # {{{ need to re-do b/c defaults are stored in pickle
+    B_center.value = 1
+    # setting bounds on B_center fixes the interactive guess, but BFGS chokes on it
+    #B_center.min = -5
+    #B_center.max = 5
+    sigma.value = 0.5
+    #sigma.min = 0
+    R.value = 1.5
+    #R.min = 0
+    A.value = 1e3
+    #A.min = 0
+    C.value = 0
+    # }}}
+    model_lambda = s.lambdify([B],dVoigt.subs({
+        B_center:B_center.value,
+        R:R.value,
+        A:A.value,
+        sigma:sigma.value}),
+        modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
+    x_finer = r_[d.getaxis('$B_0$')[0]:d.getaxis('$B_0$')[-1]:500j]
+    result = model_lambda(x_finer)
+    print(type(result),result.shape)
+    guess_nddata = nddata(result, [-1], ['$B_0$']).setaxis(
+            '$B_0$',x_finer).set_units('$B_0$',d.get_units('$B_0$'))
+    fl.plot(d, label='data')
+    fl.plot(guess_nddata,':', label='guess')
+    fl.next('guess')
+    model = s.Model({y_var:dVoigt})
+    guess = InteractiveGuess(model, y=d.data.real, B=d.getaxis('$B_0$'), n_points=500)
+    guess.execute()
+    print(guess)
+    y_var = s.Variable('y')
+    print("about to run fit")
+    fit = s.Fit(model, d.getaxis('$B_0$'), d.data.real)
     fit_result = fit.execute()
-    y = model(B=xdata,A=400,C=fit_result.value(C),sigma=fit_result.value(sigma),gamma=fit_result.value(gamma),B_center=fit_result.value(B_center))
-    print(fit_result)
-    fl.next('with voigt fit')
-    fl.plot(xdata,ydata,'.')
-    fl.plot(xdata,y)
-    fl.show();quit()
-    #{{{fitting to lorentzian
-    B0,B,B_center,R,v,v0 = symbols('B0 B B_center R nu nu_0',real=True,positive=True)
-    lorentzian = 1/(1j*(B-B_center)+R)
-    B_center = Parameter('B_center')
-    R = Parameter('R')
-    A = Parameter('A')
-    #C = Parameter('C')
-    B = Variable('B')
-    ydata = s.data.real
-    xdata = s.getaxis('$B_0$')
-    l_deriv = -(A*(2*R*(B+B_center))/(((R**2)+((B+B_center)**2))**2)) 
-    print(l_deriv)
-    model = l_deriv
-    print(model)
-    fit = Fit(model,xdata,ydata)
-    fit_result = fit.execute()
-    y = model(B=xdata,A=fit_result.value(A),B_center=fit_result.value(B_center),
-            R=fit_result.value(R))
-    print(fit_result.value(R))
-    print(fit_result)
-    fl.next('fit for 5 mM 4AT')
-    fl.plot(xdata,ydata,'.')
-    fl.plot(xdata,y)
-    #}}}
-    fl.show();quit()
-
+    fl.next('data with fit')
+    plot(d, '.', label='data')
+    fit_nddata = nddata(
+            fit.model(B=x_finer, **fit_result.params).y,
+            [-1], ['$B_0$']).setaxis('$B_0$', x_finer)
+    fl.plot(fit_nddata, label='fit')
+fl.show()
