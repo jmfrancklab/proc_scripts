@@ -6,6 +6,7 @@ import pickle,os
 from pylab import ndarray
 from symfit import Parameter, Variable, Fit
 from symfit.core.minimizers import MINPACK
+from symfit.contrib.interactive_guess import InteractiveGuess
 
 fl = fl_mod()
 for searchstr,exp_type,postproc in [
@@ -16,6 +17,7 @@ for searchstr,exp_type,postproc in [
     fl.next('linewidth for 10mM 4AT')
     fl.plot(d)
     d = d['$B_0$':(-9, 9)]
+    d.setaxis('$B_0$', lambda x: x+1) # for a positive B_center, b/c the interactive guess doesn't deal well with negative parameters
     fl.next('sliced')
     fl.plot(d)
     s_integral =d.C.run_nopop(cumsum, '$B_0$')
@@ -46,7 +48,10 @@ for searchstr,exp_type,postproc in [
     fl.next('plot guess')
     print(A.value,"a value")
     # {{{ need to re-do b/c defaults are stored in pickle
-    B_center.value = -0.3
+    B_center.value = 1
+    # setting bounds on B_center fixes the interactive guess, but BFGS chokes on it
+    #B_center.min = -5
+    #B_center.max = 5
     sigma.value = 0.5
     #sigma.min = 0
     R.value = 1.5
@@ -68,9 +73,14 @@ for searchstr,exp_type,postproc in [
             '$B_0$',x_finer).set_units('$B_0$',d.get_units('$B_0$'))
     fl.plot(d, label='data')
     fl.plot(guess_nddata,':', label='guess')
+    fl.next('guess')
+    model = s.Model({y_var:dVoigt})
+    guess = InteractiveGuess(model, y=d.data.real, B=d.getaxis('$B_0$'), n_points=500)
+    guess.execute()
+    print(guess)
     y_var = s.Variable('y')
     print("about to run fit")
-    fit = s.Fit({y_var:dVoigt}, d.getaxis('$B_0$'), d.data.real)#, minimizer=MINPACK)
+    fit = s.Fit(model, d.getaxis('$B_0$'), d.data.real)#, minimizer=MINPACK)
     fit_result = fit.execute()
     fl.next('data with fit')
     plot(d, '.', label='data')
