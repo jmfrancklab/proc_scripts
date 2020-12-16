@@ -33,8 +33,6 @@ for searchstr,exp_type,postproc in [
     ydata = s.data.real
     xdata = s.getaxis('$B_0$')
     print(dVoigt)
-    #sigma = 0.1
-    #gamma = 1.7
     model = dVoigt
     print("MODEL IS")
     print(model)
