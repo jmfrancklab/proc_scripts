@@ -5,10 +5,10 @@ from sympy import symbols
 
 init_logging("debug")
 d = find_file(
-    "201207_sqwv_cap_probe_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201216_sqwv_cap_probe_2", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 s = find_file(
-    "201208_sqwv_sol_probe_1",exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201216_sqwv_sol_probe_2",exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 s.setaxis("ch", r_[1,2])
@@ -148,6 +148,7 @@ with fl_ext() as fl:
     for j in range(ndshape(s)["ch"]):
         fl.twinx(orig=True)
         fl.twinx(orig=False)
+        s.set_units('t','s')
         fl.plot(s["ch",j].angle,".",color=fl.plot(abs(s["ch",j]))[0].get_color(),alpha=0.1)
     fl.grid()
     fl.next("analytic signal -- abs,re")
