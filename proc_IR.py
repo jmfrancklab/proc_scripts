@@ -16,7 +16,8 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('w3_201111','test_equip',2,'ab_ir2h')
+        ('w6_hexane_201217','test_equip',2,'ab_ir2h')
+        #('w3_201111','test_equip',2,'ab_ir2h')
         #('CTAB_w15_41mM_201124','test_equip',2,'ab_ir2h'),
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
         #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
@@ -37,7 +38,7 @@ for searchstr,exp_type,nodename, postproc in [
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
-    fl.show();quit()
+    #fl.show();quit()
         #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
@@ -80,7 +81,7 @@ for searchstr,exp_type,nodename, postproc in [
     s['t2',0] *= 0.5
     s.ft('t2')
     fl.next('where to cut')
-    s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 
+    s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] 
     fl.plot(s)
     #fl.show();quit()
     #{{{If visualizing via ILT
@@ -127,9 +128,9 @@ for searchstr,exp_type,nodename, postproc in [
         d_2d = s*nddata(r_[1,1,1],r'\Omega')
     #fl.show();quit()
     offset = s.get_prop('proc')['OFFSET']
-    this_l = 0.422#pick number in l curve right before it curves up
-    o1 = 290.98 #o1 for free D2O
-    sfo1 = 61.42268198 #in Hz
+    this_l = 0.042#pick number in l curve right before it curves up
+    o1 = 297.01 #o1 for free D2O
+    sfo1 = s.get_prop('acq')['BF1']
     s.setaxis('t2',lambda x:
             x-o1)
     s.setaxis('t2',lambda x:
@@ -138,10 +139,9 @@ for searchstr,exp_type,nodename, postproc in [
     soln.reorder('t2',first=False)
     soln.rename('T1','log(T1)')
     soln.setaxis('log(T1)',log10(T1.data))
-    fl.next('free D2O')
-
-    fl.image(soln.C.setaxis('t2','#').set_units('t2','scan #'))
-    #fl.show();quit()
+    fl.next('w=6 in hexane')
+    fl.image(soln.C.set_units('t2','ppm'))
+    fl.show();quit()
     print("SAVING FILE")
     np.savez(searchstr+'_'+str(nodename)+'_ILT_inv',
             data=soln.data,
@@ -153,58 +153,13 @@ for searchstr,exp_type,nodename, postproc in [
 
     #}}}
     #{{{recovery curve and fitting
-    s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
+    #s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] # bc inverted at high powers
     # below, f_range needs to be defined
-    s_sliced.ift('t2')
-    fl.next('recovery curve')
-    fl.plot(s_sliced)
-    fl.show();quit()
+    #s_sliced.ift('t2')
+    #fl.next('recovery curve')
+    #fl.plot(s_sliced)
+    #fl.show();quit()
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)
-    f,T1 = recovery(s_sliced, (-50,50),guess=None)
+    f,T1 = recovery(s, (-60,60),guess=None)
     fl.plot_curve(f,'inversion recovery curve')
-        #{{{attempting ILT plot with NNLS_Tikhonov_190104
-    T1 = nddata(logspace(-3,3,150),'T1')
-    l = sqrt(logspace(-8.0,0.1,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
-    if this_l is None:
-        def vec_lcurve(l):
-            return s.nnls('indirect',T1,lambda x,y: 1.0-2*exp(-x/y), l=l)
-
-        x=vec_lcurve(l) 
-
-        x_norm = x.get_prop('nnls_residual').data
-        r_norm = x.run(linalg.norm,'T1').data
-
-        with figlist_var() as fl:
-            fl.next('L-Curve')
-            figure(figsize=(15,10))
-            fl.plot(log10(r_norm[:,0]),log10(x_norm[:,0]),'.')
-            annotate_plot = True
-            show_lambda = True
-            if annotate_plot:
-                if show_lambda:
-                    for j,this_l in enumerate(l):
-                        annotate('%0.3f'%this_l, (log10(r_norm[j,0]),log10(x_norm[j,0])),
-                                ha='left',va='bottom',rotation=45)
-                else:
-                    for j,this_l in enumerate(l):
-                        annotate('%d'%j, (log10(r_norm[j,0]),log10(x_norm[j,0])),
-                                ha='left',va='bottom',rotation=45)
-        d_2d = s*nddata(r_[1,1,1],r'\Omega')
-    #}}}
-    #{{{setting axis to incorporate SFO1 based off of 
-    # acqu file of data
-    sfo1 = 251.76
-    arbitrary_reference = s.get_prop('acq')['BF1'] 
-    logger.info(strm("SFO1 is",sfo1))
-    s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)
-    #}}}
-    #{{{creating plot off of solution to L curve
-    if this_l is not None:
-        soln = s.real.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
-        soln.reorder('t2',first=False)
-        soln.rename('T1','log(T1)')
-        soln.setaxis('log(T1)',log10(T1.data))
-        fl.next('solution')
-        fl.image(soln['t2':(100,300)])
-fl.show()
-
+    fl.show();quit()
