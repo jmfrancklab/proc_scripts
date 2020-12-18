@@ -130,7 +130,7 @@ with fl_ext() as fl:
     #fl.show();quit()
     #decay_start = decay.argmax('t').item()
     #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(59e-9,1200)]
+    decay = decay['t':(117e-9,1200)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))
@@ -139,13 +139,13 @@ with fl_ext() as fl:
     f = fitdata(decay)
     A,B,C,t = symbols("A B C t",real=True)
     f.functional_form = A*e**(-t*B)
-    fl.next('fit for solenoid probe')
+    fl.next('fit for capillary probe')
     fl.plot(decay,'o',label='data')
     f.fit()
     f.set_units('t','ns')
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('B')*2*pi*14913343
+    Q = 1./f.output('B')*2*pi*14894000
     fl.plot(f.eval(100).set_units('t','s'),label='fit, Q=%0.1f'%Q)
 fl.show()
 quit()
