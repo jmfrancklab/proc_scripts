@@ -5,7 +5,7 @@ from sympy import symbols
 
 init_logging("debug")
 d = find_file(
-    "201218_sqwv_cap_probe_1", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
+    "201228_sqwv_sol_probe_2", exp_type="ODNP_NMR_comp/test_equipment", expno="capture1"
 )
 d.setaxis("ch", r_[1, 2])
 d.set_units("t", "s")
@@ -130,7 +130,7 @@ with fl_ext() as fl:
     #fl.show();quit()
     #decay_start = decay.argmax('t').item()
     #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(117e-9,1200)]
+    decay = decay['t':(99e-9,1200)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))
