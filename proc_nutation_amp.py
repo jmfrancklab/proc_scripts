@@ -4,7 +4,7 @@ from pyspecdata import *
 zero_fill = False
 with figlist_var() as fl:
     for filename,fslice,tslice,plen,max_kHz in [
-            ('201228_Ni_sol_probe_nutation_amp_1',(-250,250),(-2,2),147e-6,300)
+            ('201228_Ni_sol_probe_nutation_amp_2',(-20e3,8e3),(-1.2,1.2),147e-6,300)
             ]:
         fl.basename = filename
         print('analyzing', filename)
@@ -21,7 +21,7 @@ with figlist_var() as fl:
         if 'p_90' in d.dimlabels:
             d.set_units('p_90','s')
         d.ft(['ph1','ph2'])
-        d = d['t2':(0e3,13e3)]
+        d = d['t2':(-23e3,11e3)]
         fl.next('frequency domain -- after slice')
         fl.image(d)
         #fl.show();quit()
