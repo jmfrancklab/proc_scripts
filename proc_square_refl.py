@@ -114,7 +114,7 @@ with fl_ext() as fl:
     fl.abs_re_plot(d)
     scalar_refl = d["ch", 1]["t":(1e-6, 2e-6)].mean("t").item()
     fl.next("blips")
-    blip_range = r_[-0.1e-6, 1e-6] #defining decay slice
+    blip_range = r_[-0.1e-6, 1.2e-6] #defining decay slice
     first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
     #{{{ doing 0th order correction type thing again? why? we did this in lines 99-101...
     ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
@@ -130,7 +130,7 @@ with fl_ext() as fl:
     #fl.show();quit()
     #decay_start = decay.argmax('t').item()
     #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(99e-9,1200)]
+    decay = decay['t':(98e-9,1200)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))
@@ -139,13 +139,13 @@ with fl_ext() as fl:
     f = fitdata(decay)
     A,B,C,t = symbols("A B C t",real=True)
     f.functional_form = A*e**(-t*B)
-    fl.next('fit for capillary probe')
+    fl.next('fit for solenoid probe')
     fl.plot(decay,'o',label='data')
     f.fit()
     f.set_units('t','ns')
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('B')*2*pi*14894000
+    Q = 1./f.output('B')*2*pi*14893722
     fl.plot(f.eval(100).set_units('t','s'),label='fit, Q=%0.1f'%Q)
 fl.show()
 quit()

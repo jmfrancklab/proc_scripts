@@ -4,7 +4,7 @@ import h5py as h5
 
 with figlist_var() as fl:
     for filename,expno,f_range in [
-            ("201218_Ni_cap_probe_var_tau_4",'var_tau',(-0.07,0.2e3))
+            ("201209_Ni_sol_probe_var_tau",'var_tau',(-13.5e3,0))
             ]:
         fl.basename = filename
         print("analyzing",filename)
@@ -26,7 +26,7 @@ with figlist_var() as fl:
             d.setaxis('ph1',r_[0:4]/4)
         print(ndshape(d))
         d.set_units('t2','s') # this should already be set -- why not?
-        d *= 2e-6/1.3399e5 # convert from SpinCore to V (amp)
+        d *= 2e-6/1.11e4 # convert from SpinCore to V (amp)
         d.set_units('V')
         fl.next('raw signal!')
         d.ft('t2', shift=True).ft(['ph1','ph2'])
@@ -41,15 +41,15 @@ with figlist_var() as fl:
         fl.next('echoes')
         fl.plot(d.real,alpha=0.2,linewidth=0.5)
         fl.plot(abs(d),alpha=0.5,linewidth=1)
-        fl.show();quit()
+        #fl.show();quit()
         #fl.plot(1.76e-5, 'x', label='estimated signal at 0')
-        NV = 2.01e-6*55.4*2*N_A # 400 μL, 55.4 M water molecs, 2 spins/molec
+        NV = 250e-6*55.4*2*N_A # 400 μL, 55.4 M water molecs, 2 spins/molec
         nu0 = 14.89e6 # check me on this
-        LambdaNMR = 1e-4 # 1 G/√W
+        LambdaNMR = 1.55e-4 # 1 G/√W
         I = 0.5
-        #Vsignal = LambdaNMR * NV * (gammabar_H*2*pi) * I * (I+1) * (hbar*2*pi*nu0)**2 * sqrt(50)
-        #Vsignal /= 3 * k_B * (273+20)
-        #axhline(y=Vsignal,alpha=0.2)
-        #print("Vsignal expected",Vsignal)
+        Vsignal = LambdaNMR * NV * (gammabar_H*2*pi) * I * (I+1) * (hbar*2*pi*nu0)**2 * sqrt(50)
+        Vsignal /= 3 * k_B * (273+20)
+        axhline(y=Vsignal,alpha=0.2)
+        print("Vsignal expected",Vsignal)
         #fl.plot(Vsignal, 'x', label='theoretical signal at 0')
-
+        fl.show();quit()

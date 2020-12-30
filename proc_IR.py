@@ -16,7 +16,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('w6_hexane_201217','test_equip',2,'ab_ir2h')
+        ('201211_4AT10mM_sol_probe_IR','test_equip','signal','spincore_IR_v1')
         #('w3_201111','test_equip',2,'ab_ir2h')
         #('CTAB_w15_41mM_201124','test_equip',2,'ab_ir2h'),
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
@@ -27,7 +27,7 @@ for searchstr,exp_type,nodename, postproc in [
         #('freeD2O_201104','test_equip',2,'ab_ir2h',None),
         ]:
     fl.basename = searchstr
-    clock_correction = None
+    clock_correction = 0
     if clock_correction is None:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
@@ -37,8 +37,8 @@ for searchstr,exp_type,nodename, postproc in [
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
-            dimname='indirect')
-    #fl.show();quit()
+            dimname='indirect',clock_correction=0)
+    fl.show();quit()
         #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
