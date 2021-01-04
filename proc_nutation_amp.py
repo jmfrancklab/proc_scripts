@@ -4,7 +4,7 @@ from pyspecdata import *
 zero_fill = False
 with figlist_var() as fl:
     for filename,fslice,tslice,plen,max_kHz in [
-            ('201228_Ni_sol_probe_nutation_amp_2',(-20e3,7e3),(-0.5,0.5),147e-6,300)
+            ('201228_Ni_sol_probe_nutation_amp_1',(-20e3,18e3),(-0.4,0.4),147e-6,300)
             ]:
         fl.basename = filename
         print('analyzing', filename)
@@ -12,7 +12,7 @@ with figlist_var() as fl:
         #d.chunk('t',['ph2','ph1','t2'],[2,4,-1])
         d.set_units('t2','s')
         d.ft('t2',shift=True)
-        fl.next('look for drift')
+        fl.next('time domain')
         fl.image(d.C.smoosh(['ph2','ph1'],'transient').reorder('transient').setaxis('transient','#').run(abs),
                 interpolation='bilinear')
         #fl.show();quit()
@@ -21,8 +21,8 @@ with figlist_var() as fl:
         if 'p_90' in d.dimlabels:
             d.set_units('p_90','s')
         d.ft(['ph1','ph2'])
-        d = d['t2':(-20e3,10e3)]
-        fl.next('frequency domain -- after slice')
+        #d = d['t2':(-20e3,10e3)]
+        fl.next('frequency domain')
         fl.image(d)
         #fl.show();quit()
         d.ift('t2')
