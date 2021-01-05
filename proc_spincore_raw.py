@@ -3,9 +3,9 @@ from scipy.optimize import leastsq,minimize,basinhopping
 from pylab import *
 import h5py as h5
 fl = figlist_var()
-GDS = True
+GDS = False
 for filename,expno,f_range in [
-        ('201229_input_referred_3','signal',(14.7e3,15e3))
+        ('201229_input_referred_3','signal',(-10e3,10e3))
         ]:
     fl.basename=filename
     print('analyizing',filename)
@@ -60,7 +60,7 @@ for filename,expno,f_range in [
         s = s['ph1',+1]['ph2',-2]
         s.ift('t2')
         fl.next('echoes')
-        fl.plot(s.real,alpha=0.2,linewidth=0.5)
-        fl.plot(abs(s),alpha=0.5,linewidth=1)
-        fl.plot(1.3e3, 'x',label='estimated signal at 0')
+        fl.plot(s.real.mean(['nScans']),alpha=0.2,linewidth=0.5)
+        fl.plot(abs(s).mean(['nScans']),alpha=0.5,linewidth=1)
+        #fl.plot(1.3e3, 'x',label='estimated signal at 0')
     fl.show();quit()
