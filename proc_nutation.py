@@ -7,12 +7,12 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 for searchstr,exp_type,nodename,postproc in [
-    ['201208_Ni_cap_probe_nutation_amp_2','nutation','nutation','spincore_nutation_v2']
+    ['201209_Ni_sol_probe_nutation_1','nutation','nutation','spincore_nutation_v1']
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict)#,fl=fl) 
     #s = s['t2':(-1000,1000)]
-    fl.show();quit()
+    #fl.show();quit()
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!

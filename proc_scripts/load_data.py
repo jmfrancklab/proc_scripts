@@ -233,11 +233,13 @@ def proc_nutation(s,fl=None):
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
     s.ft(['ph2','ph1'])
-    fl.next('after phase cycle FT')
-    fl.image(s)
+    if fl is not None:
+        fl.next('after phase cycle FT')
+        fl.image(s)
     s.ft('t2',shift=True)
-    fl.next('freq domain')
-    fl.image(s)
+    if fl is not None:
+        fl.next('freq domain')
+        fl.image(s)
     return s
 
 def proc_nutation_amp(s,fl=None):

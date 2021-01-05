@@ -1,10 +1,10 @@
 from pylab import *
 from pyspecdata import *
 
-zero_fill = False
+zero_fill = True
 with figlist_var() as fl:
     for filename,fslice,tslice,plen,max_kHz in [
-            ('201228_Ni_sol_probe_nutation_amp_1',(-20e3,18e3),(-0.4,0.4),147e-6,300)
+            ('201228_Ni_sol_probe_nutation_amp_2',(-21e3,18e3),(-0.5e-3,0.5e-3),147e-6,300)
             ]:
         fl.basename = filename
         print('analyzing', filename)
@@ -21,7 +21,7 @@ with figlist_var() as fl:
         if 'p_90' in d.dimlabels:
             d.set_units('p_90','s')
         d.ft(['ph1','ph2'])
-        #d = d['t2':(-20e3,10e3)]
+        #d = d['t2':(-0.03e3,0.05e3)]
         fl.next('frequency domain')
         fl.image(d)
         #fl.show();quit()

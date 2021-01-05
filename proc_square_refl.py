@@ -6,7 +6,7 @@ init_logging("debug")
 
 d = find_file('201218_sqwv_cap_probe_1',exp_type='ODNP_NMR_comp/test_equip',expno='capture1')
 s = find_file(
-    "201228_sqwv_sol_probe_2", exp_type="ODNP_NMR_comp/test_equip", expno="capture1"
+    "201228_sqwv_sol_probe_1", exp_type="ODNP_NMR_comp/test_equip", expno="capture1"
 )
 d.set_units('t','s').name('Amplitude').set_units('V')
 s.set_units('t','s').name('Amplitude').set_units('V')
@@ -86,8 +86,8 @@ with fl_ext() as fl:
     forplot_s[lambda x:abs(x) < 1e-10] = 0
     frq_guess = abs(d["ch", 1]).argmax("t").item() #this is to find the peak? argmax on reflection ch would be the peaks
     frq_guess_s = abs(s['ch',1]).argmax('t').item()
-    frq_range = r_[-10,10]*1e6 + frq_guess
-    frq_range_s = r_[-10,10]*1e6 + frq_guess_s
+    frq_range = r_[-30,30]*1e6 + frq_guess
+    frq_range_s = r_[-30,30]*1e6 + frq_guess_s
     d["t":(0, frq_range[0])] = 0 #again filtering out noise outside of blips
     s['t':(0,frq_range_s[0])] = 0
     d["t":(frq_range[1], None)] = 0
@@ -118,8 +118,9 @@ with fl_ext() as fl:
     pulse_slice -= pulse_slice[0]
     pulse_slice_s -= pulse_slice_s[0]
     #{{{ Not sure what this portion is doing...is this similar to a time shift? or first order phase correction?
-    d = d["t" : tuple(pulse_slice + r_[-0.5e-6, 2e-6])]
-    s = s['t':tuple(pulse_slice_s + r_[-0.5e-6, 2e-6])]
+    #fl.show();quit()
+    d = d["t" : tuple(pulse_slice + r_[-0.5e-6, 5e-6])]
+    s = s['t':tuple(pulse_slice_s + r_[-0.5e-6, 5e-6])]
     pulse_middle = d["ch", 0]["t" : tuple(pulse_slice + r_[+0.5e-6, -0.5e-6])]
     pulse_middle_s = s['ch',0]['t':tuple(pulse_slice_s + r_[+0.5e-6,-0.5e-6])]
     ph_diff = pulse_middle["t", 1:] / pulse_middle["t", :-1]
@@ -157,10 +158,10 @@ with fl_ext() as fl:
     fl.abs_re_plot(d,add_text="capillary probe")
     fl.abs_re_plot(s,add_text="solenoid probe")
     scalar_refl = d["ch", 1]["t":(1e-6, 2e-6)].mean("t").item()
-    scalar_refl = s['ch',1]['t':(1e-6,2e-6)].mean('t').item()
+    scalar_refl = s['ch',1]['t':(1e-6,1.2e-6)].mean('t').item()
     fl.show();quit()
     fl.next("blips")
-    blip_range = r_[-0.1e-6, 1.2e-6] #defining decay slice
+    blip_range = r_[-0.1e-6, 2e-6] #defining decay slice
     first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
     #{{{ doing 0th order correction type thing again? why? we did this in lines 99-101...
     ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
@@ -176,7 +177,7 @@ with fl_ext() as fl:
     #fl.show();quit()
     #decay_start = decay.argmax('t').item()
     #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(98e-9,1200)]
+    decay = decay['t':(41e-9,1200)]
     fl.next('Plotting the decay slice')
     fl.plot(decay, linewidth=3, alpha=0.3, color='k')
     print(decay.getaxis('ch'))
@@ -185,14 +186,13 @@ with fl_ext() as fl:
     f = fitdata(decay)
     A,B,C,t = symbols("A B C t",real=True)
     f.functional_form = A*e**(-t*B)
-    fl.next('fit for solenoid probe')
+    fl.next('fit for capillary probe')
     fl.plot(decay,'o',label='data')
     f.fit()
     f.set_units('t','ns')
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('B')*2*pi*14893722
+    Q = 1./f.output('B')*2*pi*14893772
     fl.plot(f.eval(100).set_units('t','s'),label='fit, Q=%0.1f'%Q)
-fl.show()
 quit()
 
