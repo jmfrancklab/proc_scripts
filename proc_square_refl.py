@@ -110,32 +110,32 @@ with fl_ext() as fl:
     s.ift('t')
     # {{{ determine the frequency from the phase gradient during the pulse
     dt = diff(d.getaxis("t")[r_[0, 1]]).item()
-    st = diff(s.getaxis('t')[r_[0, 1]]).item()
+    #st = diff(s.getaxis('t')[r_[0, 1]]).item()
     pulse_slice = d["ch", 0].contiguous(lambda x: abs(x) > 0.5*abs(x).data.max())[0] #defines pulse slice based on control signal
-    pulse_slice_s = s['ch',0].contiguous(lambda x: abs(x) > 0.5*abs(x).data.max())[0]
+    #pulse_slice_s = s['ch',0].contiguous(lambda x: abs(x) > 0.5*abs(x).data.max())[0]
     d.setaxis("t", lambda x: x - pulse_slice[0]).register_axis({"t": 0}) #resets t axis around pulse slice
-    s.setaxis('t', lambda x: x - pulse_slice_s[0]).register_axis({'t':0})
+    s.setaxis('t', lambda x: x - pulse_slice[0]).register_axis({'t':0})
     pulse_slice -= pulse_slice[0]
-    pulse_slice_s -= pulse_slice_s[0]
+    #pulse_slice_s -= pulse_slice_s[0]
     #{{{ Not sure what this portion is doing...is this similar to a time shift? or first order phase correction?
     #fl.show();quit()
     d = d["t" : tuple(pulse_slice + r_[-0.5e-6, 5e-6])]
-    s = s['t':tuple(pulse_slice_s + r_[-0.5e-6, 5e-6])]
+    s = s['t':tuple(pulse_slice + r_[-0.5e-6, 5e-6])]
     pulse_middle = d["ch", 0]["t" : tuple(pulse_slice + r_[+0.5e-6, -0.5e-6])]
-    pulse_middle_s = s['ch',0]['t':tuple(pulse_slice_s + r_[+0.5e-6,-0.5e-6])]
+    #pulse_middle_s = s['ch',0]['t':tuple(pulse_slice_s + r_[+0.5e-6,-0.5e-6])]
     ph_diff = pulse_middle["t", 1:] / pulse_middle["t", :-1]
-    ph_diff_s = pulse_middle_s['t',1:] / pulse_middle_s['t', :-1]
+    #ph_diff_s = pulse_middle_s['t',1:] / pulse_middle_s['t', :-1]
     ph_diff.sum("t")
-    ph_diff_s.sum('t')
+    #ph_diff_s.sum('t')
     ph_diff = ph_diff.angle.item()
-    ph_diff_s = ph_diff_s.angle.item()
+    #ph_diff_s = ph_diff_s.angle.item()
     frq = ph_diff/dt/2/pi
-    frq_s = ph_diff_s/st/2/pi
+    #frq_s = ph_diff_s/st/2/pi
     #}}}
     # }}}
     print("frq:", frq)
     d *= exp(-1j*2*pi*frq*d.fromaxis("t")) #convolution
-    s *= exp(-1j*2*pi*frq_s*s.fromaxis('t'))
+    s *= exp(-1j*2*pi*frq*s.fromaxis('t'))
     ph0 = d["ch", 0].C.sum("t").item() #pseudo 0th order phase correction
     ph0_s = s['ch',0].C.sum('t').item()
     ph0 /= abs(ph0)

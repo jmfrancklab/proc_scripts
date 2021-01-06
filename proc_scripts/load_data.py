@@ -211,15 +211,15 @@ def proc_spincore_IR(s,clock_correction,fl=None):
     s.ft('t2', shift=True)
     if fl is not None:
         fl.next('raw data -- coherence channels')
-        fl.image(s)
+        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
     if fl is not None:
         fl.next('time domain (all $\\Delta p$)')
-        fl.image(s)
+        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ft('t2', pad=4096)
     if fl is not None:
         fl.next('frequency domain (all $\\Delta p$)')
-        fl.image(s)
+        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
     return s
 

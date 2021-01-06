@@ -27,12 +27,12 @@ for searchstr,exp_type,nodename, postproc in [
         #('freeD2O_201104','test_equip',2,'ab_ir2h',None),
         ]:
     fl.basename = searchstr
-    clock_correction = 0
+    clock_correction = None
     if clock_correction is None:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
-            dimname='indirect',fl=fl)
+            dimname='indirect',clock_correction=0)
     else:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,

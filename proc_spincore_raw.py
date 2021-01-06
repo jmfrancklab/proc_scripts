@@ -3,9 +3,9 @@ from scipy.optimize import leastsq,minimize,basinhopping
 from pylab import *
 import h5py as h5
 fl = figlist_var()
-GDS = False
+GDS = True
 for filename,expno,f_range in [
-        ('201229_input_referred_3','signal',(-10e3,10e3))
+        ('201229_input_referred_3','signal',(14e3,15e3))
         ]:
     fl.basename=filename
     print('analyizing',filename)
@@ -27,18 +27,18 @@ for filename,expno,f_range in [
         fl.plot(abs(s),alpha=0.2)
         #fl.show();quit()
         ax2=subplot(2,1,2)
-        fl.plot(abs(s)['t':(14e3,15e3)],alpha=0.2)
+        fl.plot(abs(s)['t':(14e3,16e3)],alpha=0.2)
         s['t':(None,f_range[0])] = 0
         s['t':(f_range[1],None)] = 0
         s *= 2
         fl.plot(abs(s), ':',ax=ax1)
-        fl.plot(abs(s)['t':(14e3,15e3)],alpha=0.2,ax=ax2)
+        fl.plot(abs(s)['t':(14e3,16e3)],alpha=0.2,ax=ax2)
         fl.next('time domain')
         s.setaxis('t', lambda x: x-14e6)
         s.ift('t')
-        fl.plot(abs(s),alpha=0.5, linewidth=2)
-        fl.plot(s.real, alpha = 0.2, linewidth = 0.5)
-        fl.plot(s.imag, ':', alpha=0.2, linewidth = 0.5)
+        fl.plot(abs(s).mean(['nScans']),alpha=0.5, linewidth=2)
+        fl.plot(s.real.mean(['nScans']), alpha = 0.2, linewidth = 0.5)
+        #fl.plot(s.imag, ':', alpha=0.2, linewidth = 0.5)
     else:
         print(ndshape(s))
         s.get_prop('SW')
