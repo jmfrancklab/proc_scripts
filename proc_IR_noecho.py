@@ -15,7 +15,7 @@ fl = fl_mod()
 #    each dataset, which must be chosen from the
 #    L-curve.
 for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
-        ('w8_200224','test_equip',2,'ab_ir2h',0.008,(-150,150)),
+        ('w3_201111','test_equip',2,'ab_ir2h',0.055,(-150,150)),
         #('w12_200224',2,(-150,150)),
         #('ag_oct182019_w0_10',3,(-150,150)),
         #('ag_oct182019_w0_8',3,(-150,150)),
@@ -35,7 +35,7 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     s = find_file(searchstr, exp_type=exp_type, 
             expno=which_exp, 
             postproc=postproc, lookup=postproc_dict, 
-            dimname='indirect')
+            dimname='indirect',fl=fl)
     s.ift('t2')
     #{{{ select appropriate coherence channel
     s = s['ph2',0]['ph1',-1]
@@ -45,6 +45,7 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     s /= ph0
     #}}}
     s.ft('t2')
+
     #{{{exponential curve with fit
     f,T1 = recovery(s, f_range)
     fl.plot_curve(f,"inversion recovery curve")
@@ -56,8 +57,8 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     print("Estimated T1 is:", est_T1,"s")
     #}}}
     #{{{attempting ILT plot with NNLS_Tikhonov_190104
-    T1 = nddata(logspace(-3,1,150),'T1')
-    l = sqrt(logspace(-8.0,0.05,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+    T1 = nddata(logspace(-3,3,150),'T1')
+    l = sqrt(logspace(-8.0,0.1,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
     if this_l is None:
         def vec_lcurve(l):
             return s.nnls('indirect',T1,lambda x,y: 1.0-2*exp(-x/y), l=l)
@@ -86,7 +87,7 @@ for searchstr,exp_type,which_exp,postproc,this_l,f_range in [
     #}}}
     #{{{setting axis to incorporate SFO1 based off of 
     # acqu file of data
-    sfo1 = 272.05
+    sfo1 = 251.76
     arbitrary_reference = s.get_prop('acq')['BF1'] 
     logger.info(strm("SFO1 is",sfo1))
     s.setaxis('t2',lambda x:x + sfo1 - arbitrary_reference)

@@ -22,18 +22,18 @@ def find_echo_center(s, axis='t2',fl=None):
 def center_echo(s, echo_center, axis='t2',fl=None):
     s.setaxis(axis, lambda x: x-echo_center)
     s.register_axis({axis:0})
-    print("after register axis, t2 axis is", s.getaxis(axis))
+    logger.debug(strm("after register axis, t2 axis is", s.getaxis(axis)))
     s /= zeroth_order_ph(s[axis:0],fl=fl)
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
-    print("time bound is",time_bound)
-    return s
+    logger.debug(strm("time bound is",time_bound))
     axis_before = ndshape(s)[axis]
     s = s[axis:(-time_bound,time_bound)]
     axis_after = ndshape(s)[axis]
-    assert axis_after/axis_before > 0.75, "the echo is extremely lopsided -- either you houldn't be using this function, or the center is not actually at echo_center=%g, where you are claiming it is"%echo_center
+    print((axis_after/axis_before))
+    assert axis_after/axis_before > 0.5, "the echo is extremely lopsided -- either you houldn't be using this function, or the center is not actually at echo_center=%g, where you are claiming it is"%echo_center
     print("time bound is",time_bound)
     print("after setting axis to time bounds", s.getaxis(axis))
-    assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound %g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
+    #assert isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound %g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
     """optimize the first and second order phase of a CPMG pulse sequence
