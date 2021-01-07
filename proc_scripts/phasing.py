@@ -165,15 +165,13 @@ def ph1_real_Abs(s,dw):
 
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
 
-    r"""determine the center of the echo
+    r"""Determine the center of the echo by assuming that the echo has Hermitian symmetry.
+
+    As part of the algorithm, the center point must be set to entirely real.  This is done using :func:`zeroth_order_ph`
 
     .. todo::
         Alex: please update this using standard Parameters and
         Returns blocks
-    
-    .. note::
-        This should be using zeroth_order_ph, but it's not, implying that it's
-        not the most recent version of this code... what's up with that??
     """
     if s.get_ft_prop('t2', ['start','freq']) is None:
         # this sets the frequency startpoint appropriately for an FT --> it
@@ -218,7 +216,7 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
         n_points -= 1
     logger.info(strm(ndshape(s_foropt)))
     center_point = s_foropt['t2',n_points//2+1]
-    s_foropt /= center_point/abs(center_point)
+    s_foropt /= zeroth_order_ph(center_point)
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).mean_all_but(['shift','R2'])
     # in the following, weight for the total signal recovered
