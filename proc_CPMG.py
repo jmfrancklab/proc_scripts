@@ -24,7 +24,6 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
-    fl.show();quit()
     s.ift('t2')
     if spincore:
         s.reorder('nScans',first=True)
@@ -32,18 +31,29 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         s.mean('nScans')
         s.reorder('t2',first=True)
     #{{{ centering CPMG echo
+    nEchoes = s.get_prop('acq')['L'][25]
+    s.chunk('t2',['tE','t2'],[nEchoes,-1])
     center = find_echo_center(s)
     s = center_echo(s,center,fl=fl)
     logger.debug(strm(ndshape(s)))
     fl.next('centered echo')
-    fl.image(s)
+    fl.image(s.C.setaxis(
+'tE','#').set_units('tE','scan #'))
     #{{{select echo decay fit function
     s.ft('t2')
-    fl.next('before fitting')
-    fl.image(s)
+    s = s['ph1',1]['ph2',-2]
+    fl.next('selected coherence')
+    print(ndshape(s))
+    fl.image(s.C.setaxis(
+'tE','#').set_units('tE','scan #'))
     #fl.show();quit()
+    s = s.C.sum('t2')
+    fl.next('decay curve')
+    fl.plot(s)
+    fl.show();quit()
     f,T2 = decay(s, f_range, indirect='tE')
     fl.plot_curve(f,'T2 relaxation decay')
+    fl.show();quit()
     #}}}
     #{{{saving figure
     save_fig = False

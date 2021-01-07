@@ -281,8 +281,6 @@ def proc_var_tau(s,fl=None):
 
 
 def proc_spincore_ODNP_v1(s,fl=None):
-    print(s.get_prop('acq_params'))
-    quit()
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))

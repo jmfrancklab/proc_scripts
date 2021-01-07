@@ -16,7 +16,7 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 
 for searchstr,exp_type,nodename, postproc in [
-        ('201211_4AT10mM_sol_probe_IR','test_equip','signal','spincore_IR_v1')
+        ('w6_hexane_201217','test_equip',2,'ab_ir2h')
         #('w3_201111','test_equip',2,'ab_ir2h')
         #('CTAB_w15_41mM_201124','test_equip',2,'ab_ir2h'),
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
@@ -32,13 +32,13 @@ for searchstr,exp_type,nodename, postproc in [
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
-            dimname='indirect',clock_correction=0)
+            dimname='indirect',fl=fl)
     else:
         s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
-            dimname='indirect',clock_correction=0)
-    fl.show();quit()
+            dimname='indirect')
+    #fl.show();quit()
         #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
@@ -96,6 +96,12 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
     #fl.show();quit()
+    #{{{recovery curve and fitting
+    # below, f_range needs to be defined
+    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)
+    f,T1 = recovery(s, (-60,60),guess=None)
+    fl.plot_curve(f,'inversion recovery curve')
+    fl.show();quit()
     #attempting ILT plot with NNLS_Tikhonov_190104
 
     T1 = nddata(logspace(-3,3,150),'T1')
@@ -152,14 +158,4 @@ for searchstr,exp_type,nodename, postproc in [
 
 
     #}}}
-    #{{{recovery curve and fitting
-    #s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] # bc inverted at high powers
-    # below, f_range needs to be defined
-    #s_sliced.ift('t2')
-    #fl.next('recovery curve')
-    #fl.plot(s_sliced)
-    #fl.show();quit()
-    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)
-    f,T1 = recovery(s, (-60,60),guess=None)
-    fl.plot_curve(f,'inversion recovery curve')
-    fl.show();quit()
+
