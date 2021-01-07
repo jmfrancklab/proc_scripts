@@ -70,14 +70,10 @@ class fl_ext(figlist_var):
 
 
 with fl_ext() as fl:
-    fl.next('prior to slice in time domain')
-    fl.abs_re_plot(s,add_text='solenoid probe')
-    fl.abs_re_plot(d,add_text='capillary probe')
-    d.ft("t")#, shift=True)
-    s.ft('t')
-    fl.next('prio to slice freq domain')
-    fl.abs_re_plot(s, add_text='solenoid probe')
-    fl.abs_re_plot(d,add_text='capillary probe')
+    d.ft("t", shift=True)
+    s.ft('t',shift=True)
+    s_before = s
+    d_before = d
     d = 2*d['t':(0,None)]
     s = 2*s['t':(0,None)]
     #in the previous version we had multiplied data by 2 because the euation 1/2a*exp(iwt)+aexp(-iwt) and the 2
@@ -141,17 +137,16 @@ with fl_ext() as fl:
     print("frq_s:",frq_s)
     d *= exp(-1j*2*pi*frq*d.fromaxis("t")) #convolution
     s *= exp(-1j*2*pi*frq_s*s.fromaxis('t'))
-    fl.next('after slice and mix down')
-    fl.abs_re_plot(s,add_text='solenoid')
-    fl.abs_re_plot(d,add_text='capillary')
     s.ft('t')
     d.ft('t')
     fl.next('after slice and mix down freq domain')
-    fl.abs_re_plot(s,add_text='solenoid')
-    fl.abs_re_plot(d,add_text='capillary')
+    fl.abs_re_plot(s_before,add_text='solenoid before')
+    fl.abs_re_plot(d_before,add_text='capillary before')
+    fl.abs_re_plot(s,add_text='solenoid after')
+    fl.abs_re_plot(d,add_text='capillary after')
     d.ift('t')
     s.ift('t')
-    fl.show();quit()
+    #fl.show();quit()
     ph0 = d["ch", 0].C.sum("t").item() #pseudo 0th order phase correction
     ph0_s = s['ch',0].C.sum('t').item()
     ph0 /= abs(ph0)
