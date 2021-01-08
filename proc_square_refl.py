@@ -72,27 +72,43 @@ d.set_units("t", "s")
 
 with fl_ext() as fl:
     d.ft("t", shift=True)
+    d.ift('t')
+    d.ft('t')
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     d = d['t':(-50e6,50e6)] # slice out a reasonable range
-    d = 2*d['t':(0,None)] # multiply data by 2 because the equation
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    d['t':(None,0)]['t',:-1] = 0
+    d *= 2 # multiply data by 2 because the equation
     #                       1/2a*exp(iwt)+aexp(-iwt) and the 2 negated the
     #                       half.
     fl.next("show the frequency distribution")
     for j in d.getaxis('ch'):
         fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5,
                 plottype="semilogy", label=f"CH{j} {dataset_name}") 
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     frq_guess = abs(d["ch", 0]).argmax("t").item() # find the peak
     frq_range = r_[-frq_bw,frq_bw]*0.5 + frq_guess
-    d["t":(0, frq_range[0])] = 0 # throw out everything after the top of our slice
-    d["t":(frq_range[1], None)] = 0 # set everything else to zero
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    d["t":(0, frq_range[0])] = 0 # set everything else to zero
+    d["t":(frq_range[1], None)] = 0
     # {{{ shouldn't have to do it this way, but something weird going on w/ aligndata
-    tukey_filter = d.fromaxis("t")["t":tuple(frq_range)].run(lambda x: tukey(len(x)))
+    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
+    tukey_filter = d.fromaxis("t").C
+    tukey_filter = tukey_filter["t":tuple(frq_range)].run(lambda x: tukey(len(x)))
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
     d["t":tuple(frq_range)] *= tukey_filter
+    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     for j in d.getaxis('ch'):
         fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5,
                 plottype="semilogy", label=f"CH{j} filtered {dataset_name}") 
     fl.grid()
     df = diff(d.getaxis("t")[r_[0, 1]]).item()
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
     d.ift("t")
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     # {{{ slice out pulse and surrounding and start time axis with pulse
     dt = diff(d.getaxis("t")[r_[0, 1]]).item()
     pulse_slice = d["ch", 0].contiguous(lambda x:
@@ -115,9 +131,11 @@ with fl_ext() as fl:
     print("frq:", frq)
     d *= exp(-1j*2*pi*frq*d.fromaxis("t")) # mix down
     d.ft('t')
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     fl.next('after slice and mix down freq domain')
     fl.plot(abs(d), label=dataset_name)
     d.ift('t')
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     # {{{ zeroth order phase correction
     ph0 = d["ch", 0]['t':pulse_middle_slice].C.sum("t").item()
     ph0 /= abs(ph0)
@@ -139,10 +157,11 @@ with fl_ext() as fl:
     decay_start = decay.C.argmax('t').item()
     decay = decay['t':(decay_start,None)]
     f = fitdata(decay)
-    A,B,C,t = s.symbols("A B C t",real=True)
-    f.functional_form = A*s.exp(-t*B)+C
+    A,R,C,t = s.symbols("A R C t",real=True)
+    f.functional_form = A*s.exp(-t*R)+C
+    f.set_guess({A:0.3, R:1/20*2*pi*frq})
     f.fit()
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('B')*2*pi*frq
+    Q = 1./f.output('R')*2*pi*frq
     fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8, label='fit, Q=%0.1f'%Q)
