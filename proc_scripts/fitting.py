@@ -4,7 +4,7 @@ import sympy as sp
 def _fitcurve_initial(s,f_range,direct,indirect,guess):
     if not s.get_ft_prop(direct):
         raise ValueError("Your data should be in the frequency domain!")
-    curve = s[direct:f_range].sum(direct).real
+    curve = s.real
     return fitdata(curve)
 def _fitcurve_final(f,whichrate,guess):
     logger.info(strm("Functional form", f.functional_form))

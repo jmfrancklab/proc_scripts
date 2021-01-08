@@ -174,10 +174,51 @@ def proc_bruker_CPMG_v1(s,fl=None):
         fl.next('raw data before')
         fl.image(s)
     s.ft(['ph1','ph2'])
+    s.reorder(['ph1','ph2','indirect','t2'])
+    anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
+    anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
+    anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
+    for m in anavpt_matches:
+        if m is not None:
+            anavpt = int(m.groups()[0])
+    actual_SW = 20e6/anavpt # JF: check that this is based on the manual's definition of anavpt
+    bruker_final_t2_value = double(s.getaxis('t2')[-1].item())
+    s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
+    logger.debug(strm("the final t2 value according to the Bruker SW_h was",
+        bruker_final_t2_value, "but I determine it to be",
+        double(s.getaxis('t2')[-1].item()), "with anavpt"))
+    nEchoes = s.get_prop('acq')['L'][25]
+    dwdel1 = s.get_prop('acq')['DE']*1e-6
+    dwdel2 = (anavpt*0.05e-6)/2
+    #d12 is read as 0 if taken from parameters bc its too small
+    d12 = 20e-6     
+    d11 = s.get_prop('acq')['D'][11]
+    p90_s = s.get_prop('acq')['P'][1]*1e-6
+    quad_pts = ndshape(s)['t2'] # note tha twe have not yet chunked t2
+    nPoints = quad_pts/nEchoes
+    acq_time = dwdel2*nPoints*2
+    # {{{ these are hard-coded for the pulse sequence
+    #     if we need to, we could pull these from the pulse sequence, as we do
+    #     for anavpt above
+    tau_extra = 20e-6
+    tau_pad_start = tau_extra-dwdel1-6e-6
+    tau_pad_end = tau_extra-6e-6
+    twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
+    # JF: as you've used it here twice_tau should be the period from one 180 to another
+    # }}}
+    s.set_units('t2','us')
+    s.chunk('t2',['tE','t2'],[nEchoes,-1])
+    s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
+    s.ft('t2', shift=True)
+    s.reorder(['ph1','ph2','indirect'])
     if fl is not None:
-        fl.next('raw data ftd phase cycling')
+        fl.next('freq domain coh domain')
         fl.image(s)
-    s.ft('t2',shift=True)    
+    s.ift('t2')
+    if fl is not None:
+        fl.next('t2 chunked', figsize=(5,20))
+        fl.image(s)
+    s.ft('t2')
     return s
 
 def proc_Hahn_echoph(s, fl=None):

@@ -3,6 +3,8 @@ from scipy.optimize import basinhopping
 from proc_scripts import *
 from proc_scripts import postproc_dict
 from proc_scripts.fitting import decay
+from sympy import symbols
+import sympy as sympy
 fl = fl_mod()
 logger = init_logging('debug')
 dwdel1=6.5e-6
@@ -13,7 +15,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         #('freeSL_201001','test_equip',7,'ag_CPMG_strob','free SL',(-500,500),False),
         #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500),True),
         #('w8_200731','test_equip',3,'ag_CPMG_strob','water loading 8',(-500,500),False),
-        ('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-500,500),False),
+        ('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-200,200),False),
         #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
         #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
@@ -24,7 +26,8 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
-    fl.basename=searchstr
+    s = s['ph2',-2]['ph1',1]
+
     s.ift('t2')
     if spincore:
         s.reorder('nScans',first=True)
@@ -32,8 +35,6 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         s.mean('nScans')
         s.reorder('t2',first=True)
     #{{{ centering CPMG echo
-    nEchoes = s.get_prop('acq')['L'][25]
-    s.chunk('t2',['tE','t2'],[nEchoes,-1])
     center = find_echo_center(s)
     s = center_echo(s,center,fl=fl)
     logger.debug(strm(ndshape(s)))
@@ -42,20 +43,31 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
 'tE','#').set_units('tE','scan #'))
     #{{{select echo decay fit function
     s.ft('t2')
-    s = s['ph1',1]['ph2',-2]
     fl.next('selected coherence')
     print(ndshape(s))
     fl.image(s.C.setaxis(
 'tE','#').set_units('tE','scan #'))
-    #fl.show();quit()
+    s = s['t2':f_range]
     s = s.C.sum('t2')
+    CPMG = s['indirect',-1]
     fl.next('decay curve')
-    fl.plot(s)
+    fl.plot(CPMG,'o')
+    fit_CPMG = fitdata(CPMG)
+    M0,R2,vd = symbols("M_0 R_2 tE",real=True)
+    fit_CPMG.functional_form = (M0)*sympy.exp(-vd*R2)
+    logger.info(strm("Functional Form", fit_CPMG.functional_form))
+    logger.info(strm("Functional Form", fit_CPMG.functional_form))
+    fit_CPMG.fit()
+    print("output:",fit_CPMG.output())
+    print("latex:",fit_CPMG.latex())
+    T2 = 1./fit_CPMG.output('R_2')
+    fl.next('CPMG fit of T1CPMG for free D2O')
+    fl.plot(CPMG,'o',label='data')
+    fl.plot(fit_CPMG.eval(100),label='fit')
+    print("T2 IS:",T2)
     fl.show();quit()
-    f,T2 = decay(s, f_range, indirect='tE')
-    fl.plot_curve(f,'T2 relaxation decay')
-    fl.show();quit()
-    #}}}
+ 
+     #}}}
     #{{{saving figure
     save_fig = False
     if save_fig:
