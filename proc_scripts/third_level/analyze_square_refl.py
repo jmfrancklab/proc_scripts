@@ -1,5 +1,6 @@
-from pylab import *
-from pyspecdata import *
+import pylab as plb
+from pylab import r_, pi
+import pyspecdata as psp
 from scipy.signal import tukey
 from scipy.optimize import minimize,leastsq
 import sympy as s
@@ -38,7 +39,7 @@ def analyze_square_refl(d, label='', fl=None,
             fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5,
                     plottype="semilogy", label=f"CH{j} {label}") 
     frq_guess = abs(d["ch", 0]).argmax("t").item() # find the peak
-    frq_range = r_[-frq_bw,frq_bw]*0.5 + frq_guess
+    frq_range = r_[-frq_bw, frq_bw] * 0.5 + frq_guess
     d["t":(0, frq_range[0])] = 0 # set everything else to zero
     d["t":(frq_range[1], None)] = 0
     # {{{ shouldn't have to do it this way, but something weird going on w/ aligndata
@@ -50,12 +51,12 @@ def analyze_square_refl(d, label='', fl=None,
             fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5,
                     plottype="semilogy", label=f"CH{j} filtered {label}") 
         fl.grid()
-    df = diff(d.getaxis("t")[r_[0, 1]]).item()
+    df = plb.diff(d.getaxis("t")[r_[0, 1]]).item()
     d.ift("t")
     # {{{ slice out pulse and surrounding and start time axis with pulse
-    dt = diff(d.getaxis("t")[r_[0, 1]]).item()
+    dt = plb.diff(d.getaxis("t")[r_[0, 1]]).item()
     pulse_slice = d["ch", 0].contiguous(lambda x:
-            abs(x) > 0.5*abs(x).data.max())[0] # defines pulse slice based on control signal
+                                        abs(x) > 0.5 * abs(x).data.max())[0] # defines pulse slice based on control signal
     d.setaxis("t", lambda x: x - pulse_slice[0]).register_axis({"t": 0}) # set t=0 to the beginning of the pulse
     pulse_slice -= pulse_slice[0]
     d = d["t" : tuple(pulse_slice + r_[-0.5e-6, keep_after_pulse])] # take a slice that starts 0.5 μs before the pulse and ends 2 μs after the pulse
@@ -69,10 +70,10 @@ def analyze_square_refl(d, label='', fl=None,
     # ρe^{iΔφ} for each point -- average them
     ph_diff.sum("t")
     ph_diff = ph_diff.angle.item() # Δφ above
-    frq = ph_diff/dt/2/pi
+    frq = ph_diff / dt / 2 / pi
     # }}}
     print("frq:", frq)
-    d *= exp(-1j*2*pi*frq*d.fromaxis("t")) # mix down
+    d *= plb.exp(-1j * 2 * pi * frq * d.fromaxis("t")) # mix down
     d.ft('t')
     if fl is not None: fl.next('after slice and mix down freq domain')
     if fl is not None: fl.plot(abs(d), label=label)
@@ -85,7 +86,7 @@ def analyze_square_refl(d, label='', fl=None,
     # }}}
     if fl is not None:
         fl.basename = None
-        fl.next("analytic signal", twinx=True)
+        fl.next("analytic signal")
         colors = fl.complex_plot(d, label=label,
                 show_phase=show_analytic_signal_phase,
                 show_real=show_analytic_signal_real)
@@ -94,14 +95,14 @@ def analyze_square_refl(d, label='', fl=None,
         # "inverted" goes back
         # here, I could set a mixed transformation,
         # but I think it's more understandable to just do manually
-        ax = gca()
+        ax = plb.gca()
         print("the amplitude is",pulse_middle_amp)
-        _,y = ax.transData.transform(r_[0.0,pulse_middle_amp])
+        _,y = ax.transData.transform(r_[0.0, pulse_middle_amp])
         fontsize = 12
         nfigures = len(fl.figurelist)
         y -= fontsize*(nfigures/3)
-        _,y = ax.transAxes.inverted().transform(r_[0,y])
-        text(
+        _,y = ax.transAxes.inverted().transform(r_[0, y])
+        plb.text(
                 x=0.5,
                 y=y,
                 s=r'$\nu_{Tx}=%0.6f$ MHx'%(frq/1e6),
@@ -121,16 +122,16 @@ def analyze_square_refl(d, label='', fl=None,
         "t", lambda x: x - pulse_slice[1]
     )
     if fl is not None: fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False)
-    decay = abs(secon_blip)['ch',0] # we need the ch axis for the complex plot,
+    decay = abs(secon_blip)['ch', 0] # we need the ch axis for the complex plot,
     #                                 but it complicates things now
     decay_start = decay.C.argmax('t').item()
     decay = decay['t':(decay_start,None)]
-    f = fitdata(decay)
+    f = psp.fitdata(decay)
     A,R,C,t = s.symbols("A R C t",real=True)
     f.functional_form = A*s.exp(-t*R)+C
-    f.set_guess({A:0.3, R:1/20*2*pi*frq})
+    f.set_guess({A:0.3, R: 1 / 20 * 2 * pi * frq})
     f.fit()
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('R')*2*pi*frq
+    Q = 1. / f.output('R') * 2 * pi * frq
     if fl is not None: fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8, label='fit, Q=%0.1f'%Q)

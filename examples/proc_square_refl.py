@@ -11,8 +11,6 @@ class fl_ext(figlist_var):
     def complex_plot(fl, d, label="", show_phase=False, show_real=True):
         colors = []
         for j in range(ndshape(d)["ch"]):
-            if show_phase:
-                fl.twinx(orig=True)
             chlabel = d.getaxis("ch")[j]
             l = fl.plot(
                 abs(d["ch", j]),
@@ -37,6 +35,7 @@ class fl_ext(figlist_var):
                     alpha=0.5,
                     label="CH%d imag " % chlabel + label,
                 )
+            fl.grid()
             if show_phase:
                 fl.twinx(orig=False)
                 fl.plot(
@@ -48,8 +47,10 @@ class fl_ext(figlist_var):
                     label="CH%d angle " % chlabel + label,
                 )
                 ylabel("phase / cyc", size=10)
+                ax2=gca()
+                gridandtick(ax2, use_grid=False)
+                ax2.grid(False)
                 fl.twinx(orig=True)
-            fl.grid()
         return colors
 
 with fl_ext() as fl:
