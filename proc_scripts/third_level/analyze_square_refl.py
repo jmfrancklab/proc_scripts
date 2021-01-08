@@ -9,14 +9,19 @@ def analyze_square_refl(d, label='', fl=None,
         #                        axis after the pulse we want hanging around --
         #                        this can change depending on the Q
         blip_range = [-0.1e-6,None],
+        show_analytic_signal_phase = True,
+        show_analytic_signal_real = False,
         ):
     r"""
     Parameters
     ==========
     fl: figlist_var child class
         In addition to standard figlist_var methods, this must also include a
-        `complex_plot` method
+        `complex_plot` method that returns list "colors"
     """
+    if len(label)>0:
+        fl.basename = label
+    orig_basename = fl.basename
     if blip_range[-1] is None:
         blip_range[-1] = keep_after_pulse
     d.ft("t", shift=True)
@@ -79,8 +84,11 @@ def analyze_square_refl(d, label='', fl=None,
     d /= ph0
     # }}}
     if fl is not None:
+        fl.basename = None
         fl.next("analytic signal", twinx=True)
-        fl.complex_plot(d, label=label, show_phase=True)
+        colors = fl.complex_plot(d, label=label,
+                show_phase=show_analytic_signal_phase,
+                show_real=show_analytic_signal_real)
         # {{{ print the carrier
         # transform goes to "display", which is pixels
         # "inverted" goes back
@@ -89,18 +97,22 @@ def analyze_square_refl(d, label='', fl=None,
         ax = gca()
         print("the amplitude is",pulse_middle_amp)
         _,y = ax.transData.transform(r_[0.0,pulse_middle_amp])
-        y += 15 # 15px -- should be about 15 pt
+        fontsize = 12
+        nfigures = len(fl.figurelist)
+        y -= fontsize*(nfigures/3)
         _,y = ax.transAxes.inverted().transform(r_[0,y])
-        print("about to show text at",0.5,y)
         text(
                 x=0.5,
                 y=y,
                 s=r'$\nu_{Tx}=%0.6f$ MHx'%(frq/1e6),
-                va='bottom',
+                va='top',
                 ha='center',
+                size=fontsize,
                 transform=ax.transAxes, # display
+                color=colors[0],
                 )
         # }}}
+        fl.basename = orig_basename
     scalar_refl = d["ch", 1]["t":(keep_after_pulse, pulse_middle_slice[-1])].mean("t").item()
     if fl is not None: fl.next("blips")
     first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
