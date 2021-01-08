@@ -16,8 +16,9 @@ t2 = symbols('t2')
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
         ["201124_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-300,300), 0.055]
+            'spincore_ODNP_v1', (-500,500), 0.065]
         ]:
+    fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict)
@@ -34,13 +35,11 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     s *= exp(-s.fromaxis('t2')*R)
     s.ft('t2',pad=1024)
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
-    print(s.getaxis('power'))
     #}}}
     #{{{select coherence channel in time domain
     s.ift('t2')
     s = s['ph2',-2]['ph1',1]['t2':(0,None)]
     s.ft('t2')
-    
     #}}}
     #{{{plotting enhancement curve at lowest and highest powers 
     fl.next('compare highest power to no power')
@@ -51,18 +50,14 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     #{{{plotting full enhancement curve
     fl.next('full enhancement curve')
     fl.plot(s)
-    #fl.show();quit()
     #}}}
     #{{{plotting enhancement vs power
-    fl.next('enhancement for 695 uM 4-AT')
-    enhancement = s['t2':(-400,400)].sum('t2').real
+    fl.next('enhancement')
+    enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
     ylabel('Enhancement')
-    print(ndshape(enhancement))
-    enhancement = enhancement['power':4]
-    print(enhancement) 
     #}}}
 fl.show();quit()
