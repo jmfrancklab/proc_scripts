@@ -105,7 +105,7 @@ def analyze_square_refl(d, label='', fl=None,
         plb.text(
                 x=0.5,
                 y=y,
-                s=r'$\nu_{Tx}=%0.6f$ MHx'%(frq/1e6),
+                s=r'$\nu_{Tx}=%0.6f$ MHz'%(frq/1e6),
                 va='top',
                 ha='center',
                 size=fontsize,
@@ -121,9 +121,10 @@ def analyze_square_refl(d, label='', fl=None,
     secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
         "t", lambda x: x - pulse_slice[1]
     )
-    if fl is not None: fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False)
-    decay = abs(secon_blip)['ch', 0] # we need the ch axis for the complex plot,
-    #                                 but it complicates things now
+    if fl is not None: colors = fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False)
+    secon_blip = secon_blip['ch', 0] # we need the ch axis for the complex plot,
+    #                                  but it complicates things now
+    decay = abs(secon_blip)
     decay_start = decay.C.argmax('t').item()
     decay = decay['t':(decay_start,None)]
     f = psp.fitdata(decay)
@@ -133,5 +134,28 @@ def analyze_square_refl(d, label='', fl=None,
     f.fit()
     print("output:",f.output())
     print("latex:",f.latex())
+    # {{{ calculate frequency offset
+    decay_timescale = 3./f.output('R')
+    dt = plb.diff(decay.getaxis("t")[r_[0, 1]]).item()
+    phases = secon_blip['t':(decay_start,decay_timescale+decay_start)]
+    frq_offset = (phases['t',1:]/phases['t',:-1]*abs(phases['t',:-1])
+            ).sum('t').angle.item()/dt/2/pi
+    if fl is not None:
+        ax = fl.twinx(orig=False)
+        x = plb.mean(phases.getaxis('t'))/1e-9
+        y = plb.mean(phases.angle.data)/2/pi
+        ax.text(
+                x=x,
+                y=y,
+                s=' '*5+r'$\Delta\nu=%0.3g$ kHz'%(frq_offset/1e3),
+                va='bottom',
+                ha='left',
+                size=fontsize,
+                transform=ax.transData,
+                color=colors[-1],
+                )
+        fl.twinx(orig=True)
+    print('frq_offset',frq_offset,"for",label)
+    # }}}
     Q = 1. / f.output('R') * 2 * pi * frq
     if fl is not None: fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8, label='fit, Q=%0.1f'%Q)
