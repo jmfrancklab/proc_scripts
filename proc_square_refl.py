@@ -47,14 +47,9 @@ class fl_ext(figlist_var):
                     alpha=0.3,
                     label="CH%d angle " % chlabel + label,
                 )
+                ylabel("phase / cyc", size=10)
                 fl.twinx(orig=True)
-        fl.twinx(orig=False)
-        ylabel("phase / cyc", size=10)
-        ax = gca()
-        gridandtick(ax)
-        ax.grid(False)
-        fl.twinx(orig=True)
-        fl.grid()
+            fl.grid()
 
 filename, expno = ["201228_sqwv_sol_probe_1", "capture1"]
 #filename, expno = ['201218_sqwv_cap_probe_1', 'capture1']
@@ -74,9 +69,7 @@ with fl_ext() as fl:
     d.ft("t", shift=True)
     d.ift('t')
     d.ft('t')
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     d = d['t':(-50e6,50e6)] # slice out a reasonable range
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     d['t':(None,0)]['t',:-1] = 0
     d *= 2 # multiply data by 2 because the equation
     #                       1/2a*exp(iwt)+aexp(-iwt) and the 2 negated the
@@ -85,30 +78,20 @@ with fl_ext() as fl:
     for j in d.getaxis('ch'):
         fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5,
                 plottype="semilogy", label=f"CH{j} {dataset_name}") 
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     frq_guess = abs(d["ch", 0]).argmax("t").item() # find the peak
     frq_range = r_[-frq_bw,frq_bw]*0.5 + frq_guess
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     d["t":(0, frq_range[0])] = 0 # set everything else to zero
     d["t":(frq_range[1], None)] = 0
     # {{{ shouldn't have to do it this way, but something weird going on w/ aligndata
-    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
     tukey_filter = d.fromaxis("t").C
     tukey_filter = tukey_filter["t":tuple(frq_range)].run(lambda x: tukey(len(x)))
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
-    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
     d["t":tuple(frq_range)] *= tukey_filter
-    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     for j in d.getaxis('ch'):
         fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5,
                 plottype="semilogy", label=f"CH{j} filtered {dataset_name}") 
     fl.grid()
     df = diff(d.getaxis("t")[r_[0, 1]]).item()
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
-    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
     d.ift("t")
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     # {{{ slice out pulse and surrounding and start time axis with pulse
     dt = diff(d.getaxis("t")[r_[0, 1]]).item()
     pulse_slice = d["ch", 0].contiguous(lambda x:
@@ -131,19 +114,37 @@ with fl_ext() as fl:
     print("frq:", frq)
     d *= exp(-1j*2*pi*frq*d.fromaxis("t")) # mix down
     d.ft('t')
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     fl.next('after slice and mix down freq domain')
     fl.plot(abs(d), label=dataset_name)
     d.ift('t')
-    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     # {{{ zeroth order phase correction
-    ph0 = d["ch", 0]['t':pulse_middle_slice].C.sum("t").item()
-    ph0 /= abs(ph0)
+    ph0 = d["ch", 0]['t':pulse_middle_slice].C.mean("t").item()
+    pulse_middle_amp = abs(ph0)
+    ph0 /= pulse_middle_amp
     d /= ph0
     # }}}
     fl.next("analytic signal", twinx=True)
     fl.complex_plot(d, label=dataset_name, show_phase=True)
-    fl.grid()
+    # {{{ print the carrier
+    # transform goes to "display", which is pixels
+    # "inverted" goes back
+    # here, I could set a mixed transformation,
+    # but I think it's more understandable to just do manually
+    ax = gca()
+    print("the amplitude is",pulse_middle_amp)
+    _,y = ax.transData.transform(r_[0.0,pulse_middle_amp])
+    y += 15 # 15px -- should be about 15 pt
+    _,y = ax.transAxes.inverted().transform(r_[0,y])
+    print("about to show text at",0.5,y)
+    text(
+            x=0.5,
+            y=y,
+            s=r'$\nu_{Tx}=%0.6f$ MHx'%(frq/1e6),
+            va='bottom',
+            ha='center',
+            transform=ax.transAxes, # display
+            )
+    # }}}
     scalar_refl = d["ch", 1]["t":(keep_after_pulse, pulse_middle_slice[-1])].mean("t").item()
     fl.next("blips")
     first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
