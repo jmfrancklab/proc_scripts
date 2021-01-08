@@ -34,21 +34,21 @@ class fl_ext(figlist_var):
                 alpha=0.5,
                 label="CH%d abs " % chlabel + add_text,
             )
-            fl.plot(
-                d["ch", j].real,
-                linewidth=1,
-                color=l[0].get_color(),
-                alpha=0.5,
-                label="CH%d real " % chlabel + add_text,
-            )
-            fl.plot(
-                d["ch", j].imag,
-                "--",
-                linewidth=1,
-                color=l[0].get_color(),
-                alpha=0.5,
-                label="CH%d imag " % chlabel + add_text,
-            )
+            #fl.plot(
+            #    d["ch", j].real,
+            #    linewidth=1,
+            #    color=l[0].get_color(),
+            #    alpha=0.5,
+            #    label="CH%d real " % chlabel + add_text,
+            #)
+            #fl.plot(
+            #    d["ch", j].imag,
+            #    "--",
+            #    linewidth=1,
+            #    color=l[0].get_color(),
+            #    alpha=0.5,
+            #    label="CH%d imag " % chlabel + add_text,
+            #)
             if show_angle:
                 fl.twinx(orig=False)
                 fl.plot(
@@ -72,15 +72,14 @@ class fl_ext(figlist_var):
 with fl_ext() as fl:
     d.ft("t", shift=True)
     s.ft('t',shift=True)
-    s_before = s
-    d_before = d
+    d = d["t":(-50e6, 50e6)]
+    s = s['t':(-50e6,50e6)]
+    fl.next("freq domain before and after")
+    fl.plot(abs(d),label='before')
     d = 2*d['t':(0,None)]
     s = 2*s['t':(0,None)]
-    #in the previous version we had multiplied data by 2 because the euation 1/2a*exp(iwt)+aexp(-iwt) and the 2
-    #negated the half.... this is not done here. before we did it because the demodulation looked weird w/o it.
-    #I am assuming this is not needed here as the demodulation either won't be used or is not affected anymore.
-    d = d["t":(0, 50e6)]
-    s = s['t':(0,50e6)]
+    #we multiply data by 2 because the equation 1/2a*exp(iwt)+aexp(-iwt) and the 2
+    #negate the half
     fl.next("show the frequency distribution")
     forplot = d.C
     forplot_s = s.C
@@ -140,10 +139,16 @@ with fl_ext() as fl:
     s.ft('t')
     d.ft('t')
     fl.next('after slice and mix down freq domain')
+    d_before=d_before['ch',1]
+    d = d['ch',1]
+    fl.next('before and after on capillary probe')
+    fl.plot(d_before,label='before')
     #fl.abs_re_plot(s_before,add_text='solenoid before')
-    fl.abs_re_plot(d_before,add_text='capillary before')
+    #fl.abs_re_plot(d_before,add_text='capillary before')
     #fl.abs_re_plot(s,add_text='solenoid after')
-    fl.abs_re_plot(d,add_text='capillary after')
+    #fl.abs_re_plot(d,add_text='capillary after')
+    #fl.next('after')
+    fl.plot(d,label='after')
     d.ift('t')
     s.ift('t')
     fl.show();quit()
