@@ -1,63 +1,52 @@
+from pylab import *
 from pyspecdata import *
 from scipy.signal import tukey
 from scipy.optimize import minimize,leastsq
-from sympy import symbols
+import sympy as s
 init_logging("debug")
 
-d = find_file('201218_sqwv_cap_probe_1',exp_type='ODNP_NMR_comp/test_equip',expno='capture1')
-s = find_file(
-    "201228_sqwv_sol_probe_1", exp_type="ODNP_NMR_comp/test_equip", expno="capture1"
-)
-d.set_units('t','s').name('Amplitude').set_units('V')
-s.set_units('t','s').name('Amplitude').set_units('V')
-d.setaxis("ch", r_[1, 2])
-s.setaxis('ch',r_[1,2])
-d.set_units("t", "s")
-s.set_units("t","s")
-with figlist_var() as fl:
-    fl.next('Raw signal')
-    fl.plot(s['ch',0], alpha=0.5, label='solenoid control')
-    fl.plot(s['ch',1], alpha=0.5, label='solenoid reflection')
-    fl.plot(d['ch',0], alpha=0.5, label='capillary control')
-    fl.plot(d['ch',1], alpha=0.5, label='capillary reflection')
 class fl_ext(figlist_var):
     def next(self, *arg, **kwargs):
         kwargs.update({"figsize": (9, 6), "legend": True})
         super().next(*arg, **kwargs)
 
-    def abs_re_plot(fl, d, add_text="", show_angle=False):
+    def complex_plot(fl, d, label="", show_phase=False, show_real=True):
         for j in range(ndshape(d)["ch"]):
+            if show_phase:
+                fl.twinx(orig=True)
             chlabel = d.getaxis("ch")[j]
             l = fl.plot(
                 abs(d["ch", j]),
                 linewidth=3,
                 alpha=0.5,
-                label="CH%d abs " % chlabel + add_text,
+                label="CH%d abs " % chlabel + label,
             )
-            #fl.plot(
-            #    d["ch", j].real,
-            #    linewidth=1,
-            #    color=l[0].get_color(),
-            #    alpha=0.5,
-            #    label="CH%d real " % chlabel + add_text,
-            #)
-            #fl.plot(
-            #    d["ch", j].imag,
-            #    "--",
-            #    linewidth=1,
-            #    color=l[0].get_color(),
-            #    alpha=0.5,
-            #    label="CH%d imag " % chlabel + add_text,
-            #)
-            if show_angle:
+
+            if show_real:
+                fl.plot(
+                    d["ch", j].real,
+                    linewidth=1,
+                    color=l[0].get_color(),
+                    alpha=0.5,
+                    label="CH%d real " % chlabel + label,
+                )
+                fl.plot(
+                    d["ch", j].imag,
+                    "--",
+                    linewidth=1,
+                    color=l[0].get_color(),
+                    alpha=0.5,
+                    label="CH%d imag " % chlabel + label,
+                )
+            if show_phase:
                 fl.twinx(orig=False)
                 fl.plot(
                     d["ch", j].angle/2/pi,
                     ".",
                     linewidth=1,
                     color=l[0].get_color(),
-                    alpha=0.5,
-                    label="CH%d angle " % chlabel + add_text,
+                    alpha=0.3,
+                    label="CH%d angle " % chlabel + label,
                 )
                 fl.twinx(orig=True)
         fl.twinx(orig=False)
@@ -68,147 +57,112 @@ class fl_ext(figlist_var):
         fl.twinx(orig=True)
         fl.grid()
 
+filename, expno = ["201228_sqwv_sol_probe_1", "capture1"]
+#filename, expno = ['201218_sqwv_cap_probe_1', 'capture1']
+frq_bw = 15e6
+keep_after_pulse = 2e-6 # amount of the time axis after the pulse we
+#                         want hanging around -- this can change
+#                         depending on the Q
+blip_range = r_[-0.1e-6, keep_after_pulse] # where the blip is relative to the edge of the pulse
+dataset_name = 'capillary'
+d = find_file(filename,exp_type='ODNP_NMR_comp/test_equip',expno=expno)
+d.set_units('t','s').name('Amplitude').set_units('V')
+d.setaxis("ch", r_[1, 2])
+d.set_units("t", "s")
+
 
 with fl_ext() as fl:
     d.ft("t", shift=True)
-    s.ft('t',shift=True)
-    d = d["t":(-50e6, 50e6)]
-    s = s['t':(-50e6,50e6)]
-    fl.next("freq domain before and after")
-    fl.plot(abs(d),label='before')
-    d = 2*d['t':(0,None)]
-    s = 2*s['t':(0,None)]
-    #we multiply data by 2 because the equation 1/2a*exp(iwt)+aexp(-iwt) and the 2
-    #negate the half
+    d.ift('t')
+    d.ft('t')
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    d = d['t':(-50e6,50e6)] # slice out a reasonable range
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    d['t':(None,0)]['t',:-1] = 0
+    d *= 2 # multiply data by 2 because the equation
+    #                       1/2a*exp(iwt)+aexp(-iwt) and the 2 negated the
+    #                       half.
     fl.next("show the frequency distribution")
-    forplot = d.C
-    forplot_s = s.C
-    forplot[lambda x: abs(x) < 1e-10] = 0 #filter low frequency noise out
-    forplot_s[lambda x:abs(x) < 1e-10] = 0
-    frq_guess = abs(d["ch", 1]).argmax("t").item() #this is to find the peak? argmax on reflection ch would be the peaks
-    frq_guess_s = abs(s['ch',1]).argmax('t').item()
-    frq_range = r_[-30,30]*1e6 + frq_guess
-    frq_range_s = r_[-30,30]*1e6 + frq_guess_s
-    d["t":(0, frq_range[0])] = 0 #again filtering out noise outside of blips
-    s['t':(0,frq_range_s[0])] = 0
-    d["t":(frq_range[1], None)] = 0
-    s['t':(frq_range_s[1],None)] = 0
-    # {{{ shouldn't have to do it this way, but something weird going on w/ aligndata
-    tukey_filter = d.fromaxis("t")["t":tuple(frq_range)].run(lambda x: tukey(len(x)))
-    tukey_filter_s = s.fromaxis('t')['t':tuple(frq_range_s)].run(lambda x: tukey(len(x)))
-    d["t":tuple(frq_range)] *= tukey_filter
-    s['t':tuple(frq_range_s)] *= tukey_filter_s
     for j in d.getaxis('ch'):
-        fl.plot(abs(forplot)['ch':j], alpha=0.5, plottype="semilogy", label=f"CH{j} orig capillary")
-        fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5, plottype="semilogy", label=f"CH{j} filtered capillary") 
-    for j in s.getaxis('ch'):
-        fl.plot(abs(forplot_s)['ch':j], alpha=0.5, plottype='semilogy', label=f'CH{j} original solenoid')
-        fl.plot(abs(s)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5, plottype='semilogy', label=f'CH{j} filtered solenoid')
+        fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5,
+                plottype="semilogy", label=f"CH{j} {dataset_name}") 
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    frq_guess = abs(d["ch", 0]).argmax("t").item() # find the peak
+    frq_range = r_[-frq_bw,frq_bw]*0.5 + frq_guess
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    d["t":(0, frq_range[0])] = 0 # set everything else to zero
+    d["t":(frq_range[1], None)] = 0
+    # {{{ shouldn't have to do it this way, but something weird going on w/ aligndata
+    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
+    tukey_filter = d.fromaxis("t").C
+    tukey_filter = tukey_filter["t":tuple(frq_range)].run(lambda x: tukey(len(x)))
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
+    d["t":tuple(frq_range)] *= tukey_filter
+    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    for j in d.getaxis('ch'):
+        fl.plot(abs(d)['ch':j][lambda x: abs(x) > 1e-10], alpha=0.5,
+                plottype="semilogy", label=f"CH{j} filtered {dataset_name}") 
     fl.grid()
     df = diff(d.getaxis("t")[r_[0, 1]]).item()
-    sf = diff(s.getaxis('t')[r_[0, 1]]).item()
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    logger.debug(strm("here is the frequency axis",d.getaxis('t')))
     d.ift("t")
-    s.ift('t')
-    # {{{ determine the frequency from the phase gradient during the pulse
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    # {{{ slice out pulse and surrounding and start time axis with pulse
     dt = diff(d.getaxis("t")[r_[0, 1]]).item()
-    st = diff(s.getaxis('t')[r_[0, 1]]).item()
-    pulse_slice = d["ch", 0].contiguous(lambda x: abs(x) > 0.5*abs(x).data.max())[0] #defines pulse slice based on control signal
-    pulse_slice_s = s['ch',0].contiguous(lambda x: abs(x) > 0.5*abs(x).data.max())[0]
-    d.setaxis("t", lambda x: x - pulse_slice[0]).register_axis({"t": 0}) #resets t axis around pulse slice
-    s.setaxis('t', lambda x: x - pulse_slice[0]).register_axis({'t':0})
+    pulse_slice = d["ch", 0].contiguous(lambda x:
+            abs(x) > 0.5*abs(x).data.max())[0] # defines pulse slice based on control signal
+    d.setaxis("t", lambda x: x - pulse_slice[0]).register_axis({"t": 0}) # set t=0 to the beginning of the pulse
     pulse_slice -= pulse_slice[0]
-    pulse_slice_s -= pulse_slice_s[0]
-    d = d["t" : tuple(pulse_slice + r_[-0.5e-6, 5e-6])]
-    s = s['t':tuple(pulse_slice_s + r_[-0.5e-6, 5e-6])]
-    pulse_middle = d["ch", 0]["t" : tuple(pulse_slice + r_[+0.5e-6, -0.5e-6])]
-    pulse_middle_s = s['ch',0]['t':tuple(pulse_slice_s + r_[+0.5e-6,-0.5e-6])]
+    d = d["t" : tuple(pulse_slice + r_[-0.5e-6, keep_after_pulse])] # take a slice that starts 0.5 μs before the pulse and ends 2 μs after the pulse
+    # }}}
+    # {{{ determine ∂φ/∂t during the pulse, use to det frq
+    pulse_middle_slice = tuple(pulse_slice + r_[+0.5e-6, -0.5e-6])
+    pulse_middle = d["ch", 0]["t": pulse_middle_slice]
     ph_diff = pulse_middle["t", 1:] / pulse_middle["t", :-1]
-    ph_diff_s = pulse_middle_s['t',1:] / pulse_middle_s['t', :-1]
+    ph_diff *= abs(pulse_middle["t", :-1])
+    # at this point, we have something of the form
+    # ρe^{iΔφ} for each point -- average them
     ph_diff.sum("t")
-    ph_diff_s.sum('t')
-    ph_diff = ph_diff.angle.item()
-    ph_diff_s = ph_diff_s.angle.item()
+    ph_diff = ph_diff.angle.item() # Δφ above
     frq = ph_diff/dt/2/pi
-    frq_s = ph_diff_s/st/2/pi
-    #}}}
     # }}}
     print("frq:", frq)
-    print("frq_s:",frq_s)
-    d *= exp(-1j*2*pi*frq*d.fromaxis("t")) #convolution
-    s *= exp(-1j*2*pi*frq_s*s.fromaxis('t'))
-    s.ft('t')
+    d *= exp(-1j*2*pi*frq*d.fromaxis("t")) # mix down
     d.ft('t')
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
     fl.next('after slice and mix down freq domain')
-    d_before=d_before['ch',1]
-    d = d['ch',1]
-    fl.next('before and after on capillary probe')
-    fl.plot(d_before,label='before')
-    #fl.abs_re_plot(s_before,add_text='solenoid before')
-    #fl.abs_re_plot(d_before,add_text='capillary before')
-    #fl.abs_re_plot(s,add_text='solenoid after')
-    #fl.abs_re_plot(d,add_text='capillary after')
-    #fl.next('after')
-    fl.plot(d,label='after')
+    fl.plot(abs(d), label=dataset_name)
     d.ift('t')
-    s.ift('t')
-    fl.show();quit()
-    ph0 = d["ch", 0].C.sum("t").item() #pseudo 0th order phase correction
-    ph0_s = s['ch',0].C.sum('t').item()
+    logger.debug(strm("FT props:",['%s:%s'%(j,d.get_prop(j)) for j in d.get_prop() if 'FT' in j]))
+    # {{{ zeroth order phase correction
+    ph0 = d["ch", 0]['t':pulse_middle_slice].C.sum("t").item()
     ph0 /= abs(ph0)
-    ph0_s /= abs(ph0_s)
     d /= ph0
-    s /= ph0_s
-    fl.next("analytic signal -- phase plot", twinx=True)
-    for j in range(ndshape(d)["ch"]):
-        fl.twinx(orig=True)
-        l = fl.plot(abs(d["ch", j]))
-        fl.twinx(orig=False)
-        fl.plot(d["ch", j].angle, ".", color=l[0].get_color(), alpha=0.1,label='capillary probe angle')
-    for j in range(ndshape(s)['ch']):
-        fl.twinx(orig=True)
-        ls = fl.plot(abs(s['ch',j]))
-        fl.twinx(orig=False)
-        fl.plot(s['ch',j].angle,".",color=ls[0].get_color(),alpha=0.1,label='solenoid probe angle')
+    # }}}
+    fl.next("analytic signal", twinx=True)
+    fl.complex_plot(d, label=dataset_name, show_phase=True)
     fl.grid()
-    fl.next("analytic signal -- abs,re")
-    fl.abs_re_plot(d,add_text="capillary probe")
-    fl.abs_re_plot(s,add_text="solenoid probe")
-    scalar_refl = d["ch", 1]["t":(1e-6, 2e-6)].mean("t").item()
-    scalar_refl = s['ch',1]['t':(1e-6,1.2e-6)].mean('t').item()
-    fl.show();quit()
+    scalar_refl = d["ch", 1]["t":(keep_after_pulse, pulse_middle_slice[-1])].mean("t").item()
     fl.next("blips")
-    blip_range = r_[-0.1e-6, 2e-6] #defining decay slice
-    first_blip = -d["ch", 1:2]["t" : tuple(blip_range)] + scalar_refl #correcting first blip
-    #{{{ doing 0th order correction type thing again? why? we did this in lines 99-101...
-    ph0_blip = first_blip["t", abs(first_blip).argmax("t", raw_index=True).item()]
-    ph0_blip /= abs(ph0_blip)
-    fl.abs_re_plot(first_blip/ph0_blip, "first")
+    first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
+    fl.complex_plot(first_blip, "first", show_phase=True, show_real=False)
     secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
         "t", lambda x: x - pulse_slice[1]
     )
-    fl.abs_re_plot(secon_blip/ph0_blip, "second", show_angle=True)
-    decay = (abs(first_blip)+abs(secon_blip))/2
-    fl.next('decay')
-    fl.plot(decay)
-    #fl.show();quit()
-    #decay_start = decay.argmax('t').item()
-    #decay = decay['t':(decay_start,None)]
-    decay = decay['t':(41e-9,1200)]
-    fl.next('Plotting the decay slice')
-    fl.plot(decay, linewidth=3, alpha=0.3, color='k')
-    print(decay.getaxis('ch'))
-    decay = decay['ch',0]
-    print(ndshape(decay))
+    fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False)
+    decay = abs(secon_blip)['ch',0] # we need the ch axis for the complex plot,
+    #                                 but it complicates things now
+    decay_start = decay.C.argmax('t').item()
+    decay = decay['t':(decay_start,None)]
     f = fitdata(decay)
-    A,B,C,t = symbols("A B C t",real=True)
-    f.functional_form = A*e**(-t*B)
-    fl.next('fit for capillary probe')
-    fl.plot(decay,'o',label='data')
+    A,R,C,t = s.symbols("A R C t",real=True)
+    f.functional_form = A*s.exp(-t*R)+C
+    f.set_guess({A:0.3, R:1/20*2*pi*frq})
     f.fit()
-    f.set_units('t','ns')
     print("output:",f.output())
     print("latex:",f.latex())
-    Q = 1./f.output('B')*2*pi*14893772
-    fl.plot(f.eval(100).set_units('t','s'),label='fit, Q=%0.1f'%Q)
-quit()
-
+    Q = 1./f.output('R')*2*pi*frq
+    fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8, label='fit, Q=%0.1f'%Q)
