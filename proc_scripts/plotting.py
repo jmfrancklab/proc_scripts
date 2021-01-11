@@ -99,7 +99,7 @@ class fl_mod(figlist_var):
         draw_limits(thisrange,forplot)
         sca(ax2)
         self.image(forplot.C.cropped_log().C.setaxis(
-'power','#').set_units('power','scan #'))
+            'power','#').set_units('power','scan #'))
         draw_limits(thisrange,forplot)
         title('cropped log')
         return
