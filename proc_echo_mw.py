@@ -14,9 +14,9 @@ t2 = symbols('t2')
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
-for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
+for searchstr,exp_type,nodename,postproc,freq_range,time_range in [
         ["201124_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-500,500), 0.065]
+            'spincore_ODNP_v1', (-500,500), (0,None)]
         ]:
     fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
@@ -31,7 +31,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     s = slice_FID_from_echo(s,max_t=max_t,fl=fl)    # visualize time domain after filtering and phasing
     #{{{apodizing and zero fill
     fl.next('apodize and zero fill')
-    R = 5.0/(max_t) # assume full decay by end time
+    R = 5.0/(time_range[-1]) # assume full decay by end time
     s *= exp(-s.fromaxis('t2')*R)
     s.ft('t2',pad=1024)
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
