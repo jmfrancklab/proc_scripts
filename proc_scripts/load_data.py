@@ -288,7 +288,6 @@ def proc_nutation(s,fl=None):
 
 def proc_nutation_amp(s,fl=None):
     print("pre-processing for amplitude varied nutation")
-    return s
     orig_t = s.getaxis('t')
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.reorder(['ph1','ph2'])
@@ -297,34 +296,39 @@ def proc_nutation_amp(s,fl=None):
     s.set_units('t2','s')
     s.set_units('amp','unknown')
     s.ft(['ph2','ph1'])
-    fl.next('after phase cycle FT')
-    fl.image(s)
+    if fl is not None:
+        fl.next('after phase cycle FT')
+        fl.image(s)
     s.ft('t2',shift=True)
-    fl.next('freq domain')
-    fl.image(s)
-    print(s.get_prop('acqs_params'))
+    if fl is not None:
+        fl.next('freq domain')
+        fl.image(s)
     return s
 
 def proc_var_tau(s,fl=None):
+    print("preprocessing for varied tau experiment")
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.reorder(['ph1','ph2'])
     s.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
     s.set_units('t2','s')
     s.reorder(['ph1','ph2'])
-    fl.next('rawest data t domain')
-    fl.image(s)
-    fl.next('rawest data freq domain')
+    if fl is not None:
+        fl.next('rawest data t domain')
+        fl.image(s)
     s.ft('t2',shift=True)
-    fl.image(s)
+    if fl is not None:
+        fl.next('rawest data freq domain')
+        fl.image(s)
     s.ift('t2')
     s.ft(['ph1','ph2'])  
-    fl.next('FTed phase cycles')
-    fl.image(s)
+    if fl is not None:
+        fl.next('FTed phase cycles')
+        fl.image(s)
     return s
 
 
 def proc_spincore_ODNP_v1(s,fl=None):
-    logging.info("loading pre-processing for ODNP")
+    print("pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))
     s.setaxis('power',r_[
@@ -350,31 +354,25 @@ def proc_spincore_ODNP_v1(s,fl=None):
     return s
 
 def proc_capture(s):
-    logging.info("loading pre-processing for square wave capture")
-    #s.set_units('t','s').name('Amplitude').set_units('V')
+    print("pre-processing for square wave capture")
     return s
 
-def proc_DOSY_CPMG(s):
-    logging.info("loading pre-processing for DOSY-CPMG")
-    # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
+def proc_DOSY_CPMG(s,dwdel1,tau_extra):
+    print("pre-processing for DOSY-CPMG")
     l22 = int(s.get_prop('acq')['L'][22]) # b/c the l are integers by definition
     l25 = int(s.get_prop('acq')['L'][25])
     d12 = s.get_prop('acq')['D'][12]
     d11 = s.get_prop('acq')['D'][11]
     p1 = s.get_prop('acq')['P'][1]
     ppg = s.get_prop('pulprog')
-    # {{{ these are explanatory -- maybe comment them out?
     m = re.search(('.*dwdel1=.*'),ppg,flags=re.IGNORECASE)
     logging.info(strm(m.groups())) # show the line that sets dwdel1
-    # then look for de and depa
     logging.info(strm([(j,s.get_prop('acq')[j]) for j in s.get_prop('acq').keys() if 'de' in j.lower()]))
-    # I actually can't find depa
-    # }}}
     m = re.search('\ndefine list<grad_scalar> gl1 = {(.*)}',ppg)
     grad_list = array([float(j.group()) for j in re.finditer('([0-9.]+)',m.groups()[0])])
     m = re.search('([0-9.]+) G/mm', s.get_prop('gradient_calib'))
     grad_list *= float(m.groups()[0])*0.1
-    dwdel1 = 3.5e-6 # where does this come from? DE is actually larger than this?
+    dwdel1 = dwdel1     
     # {{{ find anavpt without hard-setting
     m = re.search('"anavpt=([0-9]+)"',ppg)
     if m is None:
@@ -386,14 +384,11 @@ def proc_DOSY_CPMG(s):
     quadrature_points = TD/2
     num_points_per_echo = quadrature_points/l25
     acq_time = dwdel2*num_points_per_echo*2
-    # {{{ so, in principle, later, we can/should do what I did above (w/ eval),
-    # but it's getting crazy now, so I stop for now
-    tau_extra = 20e-6
+    tau_extra = tau_extra
     tau_pad = tau_extra-6e-6
     tau_pad_start = tau_extra-dwdel1-6e-6
     tau_pad_end = tau_extra-6e-6
     tE = dwdel1 + 5e-6 + tau_pad_start + 1e-6 + num_points_per_echo*(dwdel2*2) + tau_pad_end
-    # }}}
     s.chunk('indirect',['indirect','phcyc'],[l22,-1])
     s.chunk('phcyc',['ph8','ph4','m','n'],[2,2,2,2])
     s.setaxis('ph8',r_[0.,2.]/4)
@@ -407,14 +402,11 @@ def proc_DOSY_CPMG(s):
     fl.image(abs(s))
     s.chunk('t2',['echo','t2'],[l25,-1])
     s.reorder(['m','n','ph4','ph8','indirect','echo','t2'])
-    s.ft('t2', shift=True).ift('t2') # this is overkill -- need a pyspecdata function that does this w/out the fft
-    # }}}
+    s.ft('t2', shift=True)
     return s
+
 def proc_ESR_linewidth(s):
-    logging.info("loading preprocessing for ESR linewidth calculation")
-    print(ndshape(s))
-    #s.chunk_auto(['$B_0$'],'phase')
-    #s = s['phase',0]
+    print("pre-processing for ESR linewidth calculation")
     s -= s['$B_0$',:50].C.mean('$B_0$')
     s_integral = s.C.run_nopop(cumsum,'$B_0$')
     x1,x2 = s_integral.getaxis('$B_0$')[r_[5,-5]]
