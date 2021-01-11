@@ -4,7 +4,7 @@ from pyspecdata import *
 zero_fill = True
 with figlist_var() as fl:
     for filename,fslice,tslice,plen,max_kHz in [
-            ('210111_Ni_sol_probe_nutation_amp_1',(-6e3,6e3),(-0.6e-3,0.6e-3),147e-6,3000)
+            ('210111_Ni_sol_probe_nutation_amp_3',(-28e3,23e3),(-2e-3,-1.3e-3),147e-6,300)
             ]:
         fl.basename = filename
         print('analyzing', filename)
@@ -21,7 +21,7 @@ with figlist_var() as fl:
         if 'p_90' in d.dimlabels:
             d.set_units('p_90','s')
         d.ft(['ph1','ph2'])
-        d = d['t2':(-6e3,7e3)]
+        #d = d['t2':(-20e3,25e3)]
         fl.next('frequency domain')
         fl.image(d)
         #fl.show();quit()
@@ -43,7 +43,7 @@ with figlist_var() as fl:
         d = d['ph1',1]['ph2',-2]
         fl.image(d)
         #fl.show();quit()
-        gridandtick(gca(),gridcolor=[1,1,1])
+        #gridandtick(gca(),gridcolor=[1,1,1])
         fl.next('FT')
         if zero_fill:
             d.ift('t2').ft('t2',pad=2**11)
@@ -64,6 +64,6 @@ with figlist_var() as fl:
         fl.next('absFT')
         title('FT to get $\gamma B_1/a$')
         fl.image(abs(d[ind_dim:(-1e3*max_kHz,1e3*max_kHz)]))
-        gridandtick(gca(), gridcolor=[1,1,1])
+        #gridandtick(gca(), gridcolor=[1,1,1])
         fl.show();quit()
                 
