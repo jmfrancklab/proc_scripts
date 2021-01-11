@@ -14,9 +14,9 @@ t2 = symbols('t2')
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
-for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
+for searchstr,exp_type,nodename,postproc,freq_range,time_range,max_t in [
         ["201124_4AT100uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-500,500), 0.065]
+            'spincore_ODNP_v1', (-500,500), (0,None),0.65]
         ]:
     fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
@@ -24,6 +24,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
             lookup=postproc_dict)
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range) # visualize the frequency limits
+    fl.show();quit()
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
