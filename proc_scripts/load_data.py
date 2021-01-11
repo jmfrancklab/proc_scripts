@@ -5,8 +5,8 @@ from sympy import symbols
 import logging
 import numpy as np
 fl=figlist_var()
-def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
-    print("preprocessing for IR acquired on bruker")
+def proc_bruker_deut_IR_v1(s,fl=fl):
+    logger.info(strm("preprocessing for IR acquired on bruker"))
     if fl is not None:
         fl.next('raw data')
         fl.image(s.C.setaxis(
@@ -16,8 +16,8 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     #                                                      is the one on the farthest right. Brackets with numbers are the number of 
     #                                                      phase cycle steps in each one. The number of steps is unknown in 'indirect' 
     #                                                      and is therefore -1.
-    s.setaxis('ph1',r_[0:2.]/4) #setting values of axis ph1 to line up
-    s.setaxis('ph2',r_[0:4.]/4) #setting values of axis ph1 to line up
+    s.setaxis('ph1',r_[0,2]/4) #setting values of axis ph1 to line up
+    s.setaxis('ph2',r_[0,4]/4) #setting values of axis ph1 to line up
     s.setaxis('indirect', s.get_prop('vd'))
     s.ft('t2',shift=True) #fourier transform
     if fl is not None:
@@ -29,18 +29,16 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
         s_forplot = s.C
         fl.next('FT')
         fl.image(s_forplot.C.setaxis('indirect','#').set_units('indirect','scan #'))
-    if fl is not None:    
         fl.next('time domain (all $\\Delta p$)')
         s_forplot.ift('t2')
         fl.image(s_forplot.C.setaxis('indirect','#').set_units('indirect','scan #'))
-    if fl is not None:    
         fl.next('frequency domain (all $\\Delta p$)')
         s_forplot.ft('t2',pad=4096)
         fl.image(s_forplot.C.setaxis('indirect','#').set_units('indirect','scan #'))
     return s
 
-def proc_bruker_deut_IR_mancyc(s, fl=None):
-    print("preprocessing IR acquired with ag_IR2H on bruker")
+def proc_bruker_deut_IR_v2(s, fl=None):
+    logger.info(strm("preprocessing IR acquired with ag_IR2H on bruker"))
     if fl is not None:
         fl.next('raw data')
         fl.image(s)
@@ -49,8 +47,8 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     #                                                      is the one on the farthest right. Brackets with numbers are the number 
     #                                                      of phase cycle steps in each one. The number of steps is unknown in 
     #                                                      'indirect' and is therefore -1.
-    s.setaxis('ph1',r_[0:2.]/4) #setting values of axis ph1 to line up
-    s.setaxis('ph2',r_[0:4.]/4) #setting values of axis ph1 to line up
+    s.setaxis('ph1',r_[0,2]/4) #setting values of axis ph1 to line up
+    s.setaxis('ph2',r_[0,4]/4) #setting values of axis ph1 to line up
     s.setaxis('indirect', s.get_prop('vd'))
     s.ft('t2',shift=True) #fourier transform
     s.ft(['ph1','ph2']) #fourier transforming from phase cycle dim to coherence dimension
@@ -72,7 +70,7 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     return s
 
 def proc_spincore_CPMG_v1(s, fl=None):
-    print("preprocessing of CPMG acquired on SpinCore")
+    logger.info(strm("preprocessing of CPMG acquired on SpinCore"))
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
@@ -102,7 +100,7 @@ def proc_spincore_CPMG_v1(s, fl=None):
     return s
 
 def proc_bruker_T1CPMG_v1(s,d12,fl=None):
-    print("pre-processing of T1CPMG acquired on Bruker")
+    logger.info(strm("pre-processing of T1CPMG acquired on Bruker"))
     assert s.get_prop('acq')['L'][21] == 2, "phase cycle isn't correct!"
     assert s.get_prop('acq')['L'][22] == 4, "phase cycle isn't correct!"
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
@@ -112,15 +110,12 @@ def proc_bruker_T1CPMG_v1(s,d12,fl=None):
     if fl is not None:
         fl.next('raw data(t2,coh)')
         fl.image(s)
-    #{{{removes CP aspect
-    s.ift(['ph1','ph2'])
-    s = s['ph2',[1,3]]
-    #}}}
     s.setaxis('indirect', s.get_prop('vd'))
     s.reorder(['ph1','ph2','indirect','t2'])
     if fl is not None:
         fl.next('raw data with indirect set')
         fl.image(s)
+    #{{{ determining SW from anavpt
     anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
     anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
     anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
@@ -128,6 +123,7 @@ def proc_bruker_T1CPMG_v1(s,d12,fl=None):
         if m is not None:
             anavpt = int(m.groups()[0])
     actual_SW = 20e6/anavpt # JF: check that this is based on the manual's definition of anavpt
+    #}}}
     bruker_final_t2_value = double(s.getaxis('t2')[-1].item())
     s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
     logger.debug(strm("the final t2 value according to the Bruker SW_h was",
@@ -168,10 +164,10 @@ def proc_bruker_T1CPMG_v1(s,d12,fl=None):
     return s
 
 def proc_bruker_CPMG_v1(s,d12,tau_extra,fl=None):
-    print("pre-processing CPMG acquired on Bruker")
+    logger.info(strm("pre-processing CPMG acquired on Bruker"))
     s.chunk('indirect',['ph1','ph2','indirect'],[4,2,-1])
-    s.setaxis('ph1',r_[0:4]/4.)
-    s.setaxis('ph2',r_[0:2]/2.)
+    s.setaxis('ph1',r_[0,4]/4.)
+    s.setaxis('ph2',r_[0,2]/2.)
     if fl is not None:
         fl.next('raw data before')
         fl.image(s)
@@ -224,7 +220,7 @@ def proc_bruker_CPMG_v1(s,d12,tau_extra,fl=None):
     return s
 
 def proc_Hahn_echoph(s, fl=None):
-    print("pre-processing for Hahn_echoph")
+    logger.info(strm("pre-processing for Hahn_echoph"))
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = 8 
@@ -248,7 +244,7 @@ def proc_Hahn_echoph(s, fl=None):
     return s
 
 def proc_spincore_IR(s,clock_correction,fl=None):
-    print("pre-processing for IR acquired on spincore")
+    logger.info(strm("pre-processing for IR acquired on spincore"))
     s.rename('vd','indirect')
     s.reorder(['ph1','ph2','indirect','t2'])
     s.ft(['ph2','ph1'])
@@ -268,7 +264,7 @@ def proc_spincore_IR(s,clock_correction,fl=None):
     return s
 
 def proc_nutation(s,fl=None):
-    print("pre-processing for p90 varied nutation")
+    logger.info(strm("pre-processing for p90 varied nutation"))
     orig_t = s.getaxis('t')
     s.set_units('p_90','s')
     s.reorder('t',first=True)
@@ -287,12 +283,12 @@ def proc_nutation(s,fl=None):
     return s
 
 def proc_nutation_amp(s,fl=None):
-    print("pre-processing for amplitude varied nutation")
+    logger.info(strm("pre-processing for amplitude varied nutation"))
     orig_t = s.getaxis('t')
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.reorder(['ph1','ph2'])
-    s.setaxis('ph2',r_[0.:2.]/4)
-    s.setaxis('ph1',r_[0.:4.]/4)
+    s.setaxis('ph2',r_[0.,2.]/4)
+    s.setaxis('ph1',r_[0.,4.]/4)
     s.set_units('t2','s')
     s.set_units('amp','unknown')
     s.ft(['ph2','ph1'])
@@ -306,10 +302,10 @@ def proc_nutation_amp(s,fl=None):
     return s
 
 def proc_var_tau(s,fl=None):
-    print("preprocessing for varied tau experiment")
+    logger.info(strm("preprocessing for varied tau experiment"))
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.reorder(['ph1','ph2'])
-    s.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
+    s.setaxis('ph2',r_[0,2]/4).setaxis('ph1',r_[0,4]/4)
     s.set_units('t2','s')
     s.reorder(['ph1','ph2'])
     if fl is not None:
@@ -328,7 +324,7 @@ def proc_var_tau(s,fl=None):
 
 
 def proc_spincore_ODNP_v1(s,fl=None):
-    print("pre-processing for ODNP")
+    logger.info(strm("pre-processing for ODNP"))
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))
     s.setaxis('power',r_[
@@ -354,11 +350,11 @@ def proc_spincore_ODNP_v1(s,fl=None):
     return s
 
 def proc_capture(s):
-    print("pre-processing for square wave capture")
+    logger.info(strm("pre-processing for square wave capture"))
     return s
 
 def proc_DOSY_CPMG(s,dwdel1,tau_extra):
-    print("pre-processing for DOSY-CPMG")
+    logger.info(strm("pre-processing for DOSY-CPMG"))
     l22 = int(s.get_prop('acq')['L'][22]) # b/c the l are integers by definition
     l25 = int(s.get_prop('acq')['L'][25])
     d12 = s.get_prop('acq')['D'][12]
@@ -406,11 +402,28 @@ def proc_DOSY_CPMG(s,dwdel1,tau_extra):
     return s
 
 def proc_ESR_linewidth(s):
-    print("pre-processing for ESR linewidth calculation")
+    logger.info(strm("pre-processing for ESR linewidth calculation"))
     s -= s['$B_0$',:50].C.mean('$B_0$')
     s_integral = s.C.run_nopop(cumsum,'$B_0$')
     x1,x2 = s_integral.getaxis('$B_0$')[r_[5,-5]]
-    y1 = s_integral.data[:5].mean()
+    y1 = s_integral.data[:5].mean()        """calculate the fit function along the axis taxis.
+        
+        Parameters
+        ----------
+        taxis: ndarray, int
+            :if ndarray: the new axis coordinates along which we want to calculate the fit.
+            :if int: number of evenly spaced points along the t-axis along the fit
+        set_what: 'str', optional
+            forcibly sets a specific symbol
+        set_to: double, optional
+            the specific value (int) you are assigning the symbol you included
+
+        Returns
+        -------
+        self: nddata
+            the fit function evaluated along the axis coordinates that were passed
+        """
+
     y2 = s_integral.data[-5:].mean()
     straight_baseline = (s.fromaxis('$B_0$')-x1)*(y2-y1)/(x2-x1)
     s_integral -= straight_baseline
@@ -418,11 +431,11 @@ def proc_ESR_linewidth(s):
     center_field = (s_integral * s.fromaxis('$B_0$')).mean('$B_0$').item()
     s.setaxis('$B_0$',lambda x: x-center_field)
     s_integral = s.C.run_nopop(cumsum,'$B_0$')
-    print(s_integral)
+    logger.info(strm(s_integral))
     return s    
 
-postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
-        'ab_ir2h':proc_bruker_deut_IR_mancyc,
+postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_v1,
+        'ab_ir2h':proc_bruker_deut_IR_v2,
         'ag_CPMG_strob':proc_bruker_CPMG_v1,
         'ag_T1CPMG_2h':proc_bruker_T1CPMG_v1,
         'chirp':proc_capture,
