@@ -285,22 +285,22 @@ def proc_nutation(s,fl=None):
 
 def proc_nutation_amp(s,fl=None):
     logging.info("loading pre-processing for nutation")
-    print(s.get_prop('acq_params'))
-    return s
-    orig_t = s.getaxis('t')
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    orig_t = s.getaxis('t2')
     s.reorder(['ph1','ph2'])
     s.setaxis('ph2',r_[0.:2.]/4)
     s.setaxis('ph1',r_[0.:4.]/4)
+    print(ndshape(s))
     s.set_units('t2','s')
     s.set_units('amp','unknown')
+    s.reorder(['ph1','ph2'])
     s.ft(['ph2','ph1'])
-    fl.next('after phase cycle FT')
-    fl.image(s)
+    if fl is not None:
+        fl.next('after phase cycle FT')
+        fl.image(s)
     s.ft('t2',shift=True)
-    fl.next('freq domain')
-    fl.image(s)
-    print(s.get_prop('acqs_params'))
+    if fl is not None:
+        fl.next('freq domain')
+        fl.image(s)
     return s
 
 def proc_var_tau(s,fl=None):

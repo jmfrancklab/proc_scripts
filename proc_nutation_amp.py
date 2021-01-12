@@ -1,29 +1,31 @@
 from pylab import *
 from pyspecdata import *
-
-zero_fill = True
+from proc_scripts import postproc_dict
+zero_fill = False
 with figlist_var() as fl:
-    for filename,fslice,tslice,plen,max_kHz in [
-            ('210111_Ni_sol_probe_nutation_amp_3',(-28e3,23e3),(-2e-3,-1.3e-3),147e-6,300)
+    for filename,postproc,fslice,tslice,plen,max_kHz in [
+            ('210111_Ni_sol_probe_nutation_amp_3','spincore_nutation_v2',
+                (-28e3,23e3),(-2e-3,-1.3e-3),147e-6,150)
             ]:
         fl.basename = filename
         print('analyzing', filename)
-        d = find_file(filename,exp_type='nutation',expno='nutation')
+        d = find_file(filename,exp_type='nutation',expno='nutation',postproc=postproc,
+                lookup=postproc_dict,fl=fl)
         #d.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-        d.set_units('t2','s')
-        d.ft('t2',shift=True)
-        fl.next('time domain')
-        fl.image(d.C.smoosh(['ph2','ph1'],'transient').reorder('transient').setaxis('transient','#').run(abs),
-                interpolation='bilinear')
+        #d.set_units('t2','s')
+        #d.ft('t2',shift=True)
+        #fl.next('time domain')
+        #fl.image(d.C.smoosh(['ph2','ph1'],'transient').reorder('transient').setaxis('transient','#').run(abs),
+        #        interpolation='bilinear')
         #fl.show();quit()
-        d.reorder(['ph1','ph2'])
-        d.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
-        if 'p_90' in d.dimlabels:
-            d.set_units('p_90','s')
-        d.ft(['ph1','ph2'])
+        #d.reorder(['ph1','ph2'])
+        #d.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
+        #if 'p_90' in d.dimlabels:
+        #    d.set_units('p_90','s')
+        #d.ft(['ph1','ph2'])
         #d = d['t2':(-20e3,25e3)]
-        fl.next('frequency domain')
-        fl.image(d)
+        #fl.next('frequency domain')
+        #fl.image(d)
         #fl.show();quit()
         d.ift('t2')
         print("max at",abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
@@ -38,7 +40,7 @@ with figlist_var() as fl:
         d.ft('t2')
         d = d['t2':fslice]
         fl.image(d)
-        #fl.show();quit()
+        fl.show();quit()
         fl.next('slice out echo pathway')
         d = d['ph1',1]['ph2',-2]
         fl.image(d)
