@@ -289,7 +289,6 @@ def proc_nutation_amp(s,fl=None):
     s.reorder(['ph1','ph2'])
     s.setaxis('ph2',r_[0.:2.]/4)
     s.setaxis('ph1',r_[0.:4.]/4)
-    print(ndshape(s))
     s.set_units('t2','s')
     s.set_units('amp','unknown')
     s.reorder(['ph1','ph2'])

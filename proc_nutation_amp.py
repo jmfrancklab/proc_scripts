@@ -4,7 +4,7 @@ from proc_scripts import postproc_dict
 zero_fill = False
 with figlist_var() as fl:
     for filename,postproc,fslice,tslice,plen,max_kHz in [
-            ('210111_Ni_sol_probe_nutation_amp_3','spincore_nutation_v2',
+            ('201228_Ni_sol_probe_nutation_amp_2','spincore_nutation_v2',
                 (-28e3,23e3),(-2e-3,-1.3e-3),147e-6,150)
             ]:
         fl.basename = filename
@@ -27,6 +27,8 @@ with figlist_var() as fl:
         #fl.next('frequency domain')
         #fl.image(d)
         #fl.show();quit()
+        print(d.get_prop('acq_params'))
+        quit()
         d.ift('t2')
         print("max at",abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
         d.setaxis('t2',lambda x: x-abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
