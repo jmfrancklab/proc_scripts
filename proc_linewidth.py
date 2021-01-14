@@ -7,6 +7,7 @@ from pylab import ndarray
 from symfit import Parameter, Variable, Fit
 from symfit.core.minimizers import MINPACK
 from symfit.contrib.interactive_guess import InteractiveGuess
+import numpy as np
 
 fl = fl_mod()
 for searchstr,exp_type,postproc in [
@@ -20,7 +21,7 @@ for searchstr,exp_type,postproc in [
     d.setaxis('$B_0$', lambda x: x+1) # for a positive B_center, b/c the interactive guess doesn't deal well with negative parameters
     fl.next('sliced')
     fl.plot(d)
-    s_integral =d.C.run_nopop(cumsum, '$B_0$')
+    s_integral =d.C.run_nopop(np.cumsum, '$B_0$')
     #fl.next('absorbance')
     #fl.plot(s_integral)
     #{{{fitting with voigt
@@ -88,4 +89,6 @@ for searchstr,exp_type,postproc in [
             fit.model(B=x_finer, **fit_result.params).y,
             [-1], ['$B_0$']).setaxis('$B_0$', x_finer)
     fl.plot(fit_nddata, label='fit')
+    print(fit_result)
+
 fl.show()
