@@ -16,15 +16,25 @@ A = Parameter('A', value=3e4)
 C = Parameter('C', value=0)
 B = Variable('B')
 y_var = Variable('y')
-for searchstr,exp_type,postproc,thisguess in [
-        ("201118_1mM4AT",'ESR','ESR_linewidth',
+for searchstr,exp_type,postproc,thisguess,interactive in [
+        ("201118_10mM4AT",'francklab_esr/alex','ESR_linewidth',
+            { # here, I entered based on the next, and then copied and pasted the result
+                A: 952.059548814867,
+                B_center: 0.645245462402653,
+                R: 1.1452099193249357,
+                sigma: 0.7520327837593248,
+                },
+            False
+            ),
+        ("201118_1mM4AT",'francklab_esr/alex','ESR_linewidth',
             {
 
-                A:         1.461514e+02,
+                A:         4e2,
                 B_center:  4.220642e-01,
                 R:         3.617994e-01,
                 sigma:     8.702270e-01,
-                }
+                },
+            False
             )
         ]:
     d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
@@ -33,7 +43,7 @@ for searchstr,exp_type,postproc,thisguess in [
     plt.title('linewidth for 10mM 4AT')
     plot(d)
     d = d['$B_0$':(-9, 9)]
-    plot(d, '--', alpha=0.5)
+    plot(d, '--', alpha=0.5, linewidth=4)
     d.setaxis('$B_0$', lambda x: x+1) # for a positive B_center, b/c the interactive guess doesn't deal well with negative parameters
     s_integral =d.C.run_nopop(np.cumsum, '$B_0$')
     #{{{fitting with voigt
@@ -44,9 +54,10 @@ for searchstr,exp_type,postproc,thisguess in [
             z = ((B-B_center) + s.I*R)/sigma/s.sqrt(2)
             faddeeva = s.simplify(s.exp(-z**2) * s.erfc(-s.I*z))
             voigt = A*s.re(faddeeva)/sigma/s.sqrt(2*s.pi)
-            voigt *= sigma**2 # so adjusting linewidth doesn't change amplitude
+            voigt *= sigma * R # so adjusting linewidth doesn't change amplitude
             voigt = voigt.simplify()
-            dVoigt = voigt.diff(B).simplify()
+            # add real below b/c lambdify was giving complex answer
+            dVoigt = s.re(s.re(voigt.diff(B)).simplify())
             pickle.dump(dVoigt,fp)
     else:
         with open('dVoigt.pickle','rb') as fp:
@@ -73,13 +84,15 @@ for searchstr,exp_type,postproc,thisguess in [
     plot(d, label='data')
     plot(guess_nddata,':', label='guess')
     model = s.Model({y_var:dVoigt})
-    guess = InteractiveGuess(model, y=d.data.real, B=d.getaxis('$B_0$'), n_points=500)
-    guess.execute()
-    print(guess)
+    if interactive:
+        guess = InteractiveGuess(model, y=d.data.real, B=d.getaxis('$B_0$'), n_points=500)
+        guess.execute()
+        print(guess)
     y_var = s.Variable('y')
     print("about to run fit")
     fit = s.Fit(model, d.getaxis('$B_0$'), d.data.real)#, minimizer=MINPACK) # really want to use minpack here, but gives "not proper array of floats
     fit_result = fit.execute()
+    print("fit is done")
     plt.figure()
     plt.title('data with fit')
     plot(d, '.', label='data')
