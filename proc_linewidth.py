@@ -9,7 +9,6 @@ from symfit.core.minimizers import MINPACK
 from symfit.contrib.interactive_guess import InteractiveGuess
 import numpy as np
 
-fl = fl_mod()
 B_center = Parameter('B_center', value=-0.2)
 sigma = Parameter('sigma', value=3)
 R = Parameter('R', value=7.0)
@@ -30,15 +29,13 @@ for searchstr,exp_type,postproc,thisguess in [
         ]:
     d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
                   lookup=postproc_dict)
-    fl.next('linewidth for 10mM 4AT')
-    fl.plot(d)
+    plt.figure()
+    plt.title('linewidth for 10mM 4AT')
+    plot(d)
     d = d['$B_0$':(-9, 9)]
+    plot(d, '--', alpha=0.5)
     d.setaxis('$B_0$', lambda x: x+1) # for a positive B_center, b/c the interactive guess doesn't deal well with negative parameters
-    fl.next('sliced')
-    fl.plot(d)
     s_integral =d.C.run_nopop(np.cumsum, '$B_0$')
-    #fl.next('absorbance')
-    #fl.plot(s_integral)
     #{{{fitting with voigt
     if not os.path.exists('dVoigt.pickle'):
         with open('dVoigt.pickle','wb') as fp:
@@ -55,7 +52,8 @@ for searchstr,exp_type,postproc,thisguess in [
         with open('dVoigt.pickle','rb') as fp:
             print("reading expression from pickle")
             dVoigt = pickle.load(fp)
-    fl.next('plot guess')
+    plt.figure()
+    plt.title('plot guess')
     print(A.value,"a value")
     # {{{ need to re-do b/c defaults are stored in pickle
     for k,v in thisguess.items():
@@ -72,9 +70,8 @@ for searchstr,exp_type,postproc,thisguess in [
     print(type(result),result.shape)
     guess_nddata = nddata(result, [-1], ['$B_0$']).setaxis(
             '$B_0$',x_finer).set_units('$B_0$',d.get_units('$B_0$'))
-    fl.plot(d, label='data')
-    fl.plot(guess_nddata,':', label='guess')
-    fl.next('guess')
+    plot(d, label='data')
+    plot(guess_nddata,':', label='guess')
     model = s.Model({y_var:dVoigt})
     guess = InteractiveGuess(model, y=d.data.real, B=d.getaxis('$B_0$'), n_points=500)
     guess.execute()
@@ -83,12 +80,13 @@ for searchstr,exp_type,postproc,thisguess in [
     print("about to run fit")
     fit = s.Fit(model, d.getaxis('$B_0$'), d.data.real)#, minimizer=MINPACK) # really want to use minpack here, but gives "not proper array of floats
     fit_result = fit.execute()
-    fl.next('data with fit')
+    plt.figure()
+    plt.title('data with fit')
     plot(d, '.', label='data')
     fit_nddata = nddata(
             fit.model(B=x_finer, **fit_result.params).y,
             [-1], ['$B_0$']).setaxis('$B_0$', x_finer)
-    fl.plot(fit_nddata, label='fit')
+    plot(fit_nddata, label='fit')
     print(fit_result)
 
-fl.show()
+plt.show()
