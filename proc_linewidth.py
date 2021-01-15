@@ -16,7 +16,10 @@ A = Parameter('A', value=3e4)
 C = Parameter('C', value=0)
 B = Variable('B')
 y_var = Variable('y')
-for searchstr,exp_type,postproc,thisguess,interactive in [
+conc_list = []
+R_list = []
+sigma_list = []
+for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
         ("201118_10mM4AT",'francklab_esr/alex','ESR_linewidth',
             { # here, I entered based on the next, and then copied and pasted the result
                 A: 952.059548814867,
@@ -24,7 +27,8 @@ for searchstr,exp_type,postproc,thisguess,interactive in [
                 R: 1.1452099193249357,
                 sigma: 0.7520327837593248,
                 },
-            False
+            False,
+            10e-3
             ),
         ("201118_1mM4AT",'francklab_esr/alex','ESR_linewidth',
             {
@@ -34,7 +38,8 @@ for searchstr,exp_type,postproc,thisguess,interactive in [
                 R:         3.617994e-01,
                 sigma:     8.702270e-01,
                 },
-            False
+            False,
+            1e-3
             )
         ]:
     d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
@@ -101,5 +106,12 @@ for searchstr,exp_type,postproc,thisguess,interactive in [
             [-1], ['$B_0$']).setaxis('$B_0$', x_finer)
     plot(fit_nddata, label='fit')
     print(fit_result)
-
+    conc_list.append(concentration)
+    R_list.append(fit_result.params['R'])
+    sigma_list.append(fit_result.params['sigma'])
+plt.figure()
+plot(conc_list,R_list,'x',label='R')
+plot(conc_list,sigma_list,'x',label=r'$\sigma$')
+plt.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
+plt.ylabel('concentration')
 plt.show()
