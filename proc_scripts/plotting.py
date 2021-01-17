@@ -23,7 +23,7 @@ def expand_limits(thisrange,s,axis='t2'):
             None else full_range[j] for j in [0,-1]])
     print(repr(retval))
     m = mean(retval)
-    s = m-retval
+    s = retval-m
     retval = 3*s+m
     sgn = [-1,1] # greater than or less than
     return tuple(full_range[j] if
@@ -95,10 +95,11 @@ class fl_mod(figlist_var):
         self.next(plotname, fig=thisfig)
         sca(ax1)
         forplot = s['t2':expand_limits(thisrange,s)]
-        self.image(forplot)
+        self.image(forplot.C.setaxis('power','#').set_units('power','scan #'))
         draw_limits(thisrange,forplot)
         sca(ax2)
-        self.image(forplot.C.cropped_log())
+        self.image(forplot.C.cropped_log().C.setaxis(
+            'power','#').set_units('power','scan #'))
         draw_limits(thisrange,forplot)
         title('cropped log')
         return
