@@ -1,10 +1,22 @@
+"""
+Preprocessing Routines
+======================
+
+Defines the preprocessing routines for various experiments.
+
+All preprocessing routines are defined such that they return data where t2 is
+Fourier Transformed to the frequency domain, and any phase cycling dimensions
+are Fourier Transformed into the coherence pathway domain.
+
+**No data is thrown out** in any of the routines, so that the raw data can
+always be reconstructed through IFT (and smooshing, if necessary).
+"""
 from pyspecdata import *
 from .Utility import dBm2power
 import os
 from sympy import symbols
 import logging
 import numpy as np
-fl=figlist_var()
 def proc_bruker_deut_IR_v1(s,fl=fl):
     logger.info(strm("preprocessing for IR acquired on bruker"))
     if fl is not None:
@@ -133,7 +145,6 @@ def proc_bruker_T1CPMG_v1(s,d12,fl=None):
     dwdel1 = s.get_prop('acq')['DE']*1e-6
     dwdel2 = (anavpt*0.05e-6)/2
     #d12 is read as 0 if taken from parameters bc its too small
-    d12 = d12     
     d11 = s.get_prop('acq')['D'][11]
     p90_s = s.get_prop('acq')['P'][1]*1e-6
     quad_pts = ndshape(s)['t2'] # note that we have not yet chunked t2
@@ -189,7 +200,6 @@ def proc_bruker_CPMG_v1(s,d12,tau_extra,fl=None):
     dwdel1 = s.get_prop('acq')['DE']*1e-6
     dwdel2 = (anavpt*0.05e-6)/2
     #d12 is read as 0 if taken from parameters bc its too small
-    d12 = d12     
     d11 = s.get_prop('acq')['D'][11]
     p90_s = s.get_prop('acq')['P'][1]*1e-6
     quad_pts = ndshape(s)['t2'] # note that we have not yet chunked t2
@@ -198,7 +208,6 @@ def proc_bruker_CPMG_v1(s,d12,tau_extra,fl=None):
     # {{{ these are hard-coded for the pulse sequence
     #     if we need to, we could pull these from the pulse sequence, as we do
     #     for anavpt above
-    tau_extra = tau_extra
     tau_pad_start = tau_extra-dwdel1-6e-6
     tau_pad_end = tau_extra-6e-6
     twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
@@ -368,7 +377,6 @@ def proc_DOSY_CPMG(s,dwdel1,tau_extra):
     grad_list = array([float(j.group()) for j in re.finditer('([0-9.]+)',m.groups()[0])])
     m = re.search('([0-9.]+) G/mm', s.get_prop('gradient_calib'))
     grad_list *= float(m.groups()[0])*0.1
-    dwdel1 = dwdel1     
     # {{{ find anavpt without hard-setting
     m = re.search('"anavpt=([0-9]+)"',ppg)
     if m is None:
@@ -380,7 +388,6 @@ def proc_DOSY_CPMG(s,dwdel1,tau_extra):
     quadrature_points = TD/2
     num_points_per_echo = quadrature_points/l25
     acq_time = dwdel2*num_points_per_echo*2
-    tau_extra = tau_extra
     tau_pad = tau_extra-6e-6
     tau_pad_start = tau_extra-dwdel1-6e-6
     tau_pad_end = tau_extra-6e-6
