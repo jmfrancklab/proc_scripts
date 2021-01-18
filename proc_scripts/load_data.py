@@ -297,7 +297,7 @@ def proc_nutation_amp(s,fl=None):
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,4.]/4)
     s.set_units('t2','s')
-    s.set_units('amp','unitless')
+    s.set_units('amp', None)
     s.ft(['ph2','ph1'])
     if fl is not None:
         fl.next('after phase cycle FT')
