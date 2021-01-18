@@ -11,7 +11,7 @@ import numpy as np
 
 fl = fl_mod()
 for searchstr,exp_type,postproc in [
-        ["210114_100mM_4AT",'ESR','ESR_linewidth']
+        ["210114_50mM_4AT",'ESR','ESR_linewidth']
         ]:
     d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
                   lookup=postproc_dict)
@@ -55,9 +55,9 @@ for searchstr,exp_type,postproc in [
     #B_center.max = 5
     sigma.value = 0.5
     #sigma.min = 0
-    R.value = 5
+    R.value = 1.5
     #R.min = 0
-    A.value = 3e3
+    A.value = 1e3
     #A.min = 0
     C.value = 0
     # }}}
