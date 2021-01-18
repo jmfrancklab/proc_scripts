@@ -117,11 +117,11 @@ def analyze_square_refl(d, label='', fl=None,
     scalar_refl = d["ch", 1]["t":(keep_after_pulse, pulse_middle_slice[-1])].mean("t").item()
     if fl is not None: fl.next("blips")
     first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
-    if fl is not None: fl.complex_plot(first_blip, "first", show_phase=True, show_real=False)
+    if fl is not None: fl.complex_plot(first_blip, "first", show_phase=False, show_real=False)
     secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
         "t", lambda x: x - pulse_slice[1]
     )
-    if fl is not None: colors = fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False)
+    if fl is not None: colors = fl.complex_plot(secon_blip, "second", show_phase=False, show_real=False)
     secon_blip = secon_blip['ch', 0] # we need the ch axis for the complex plot,
     #                                  but it complicates things now
     decay = abs(secon_blip)
