@@ -212,6 +212,7 @@ def proc_bruker_CPMG_v1(s,d12,tau_extra,fl=None):
     twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
     #twice_tau should be the period from one 180 to another
     # }}}
+    assert twice_tau = dwdel1 + 5e-6 +tau_pad_start + 1e-6 + dwdel2*nPoints + tau_pad_end + 1e-6 + 5e-6, "twice_tau is not equal to the time from one 180 pulse to the next" 
     s.set_units('t2','us')
     s.chunk('t2',['tE','t2'],[nEchoes,-1])
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
