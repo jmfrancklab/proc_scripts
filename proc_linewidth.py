@@ -11,13 +11,13 @@ import numpy as np
 
 fl = fl_mod()
 for searchstr,exp_type,postproc in [
-        ["201118_1mM4AT",'ESR','ESR_linewidth']
+        ["210114_100mM_4AT",'ESR','ESR_linewidth']
         ]:
     d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
                   lookup=postproc_dict)
     fl.next('linewidth for 10mM 4AT')
     fl.plot(d)
-    d = d['$B_0$':(-9, 9)]
+    d = d['$B_0$':(-10, 10)]
     d.setaxis('$B_0$', lambda x: x+1) # for a positive B_center, b/c the interactive guess doesn't deal well with negative parameters
     fl.next('sliced')
     fl.plot(d)
@@ -49,15 +49,15 @@ for searchstr,exp_type,postproc in [
     fl.next('plot guess')
     print(A.value,"a value")
     # {{{ need to re-do b/c defaults are stored in pickle
-    B_center.value = 1
+    B_center.value = 1 
     # setting bounds on B_center fixes the interactive guess, but BFGS chokes on it
     #B_center.min = -5
     #B_center.max = 5
     sigma.value = 0.5
     #sigma.min = 0
-    R.value = 1.5
+    R.value = 5
     #R.min = 0
-    A.value = 1e2
+    A.value = 3e3
     #A.min = 0
     C.value = 0
     # }}}
