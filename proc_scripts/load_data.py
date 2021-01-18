@@ -22,7 +22,7 @@ def proc_bruker_deut_IR_v1(s,fl=fl):
     if fl is not None:
         fl.next('raw data')
         fl.image(s.C.setaxis(
-'indirect','#').set_units('indirect','scan #'))
+            'indirect','#').set_units('indirect','scan #'))
     s.chunk('indirect',['ph2','ph1','indirect'],[4,2,-1]) #expands the indirect dimension into indirect, ph1, and ph2. 
     #                                                      Inner most dimension is the inner most in the loop in pulse sequence, 
     #                                                      is the one on the farthest right. Brackets with numbers are the number of 
@@ -111,7 +111,7 @@ def proc_spincore_CPMG_v1(s, fl=None):
     s.ft(['ph1'])
     return s
 
-def proc_bruker_T1CPMG_v1(s,d12,fl=None):
+def proc_bruker_T1CPMG_v1(s,fl=None):
     logger.info(strm("pre-processing of T1CPMG acquired on Bruker"))
     assert s.get_prop('acq')['L'][21] == 2, "phase cycle isn't correct!"
     assert s.get_prop('acq')['L'][22] == 4, "phase cycle isn't correct!"
@@ -144,7 +144,6 @@ def proc_bruker_T1CPMG_v1(s,d12,fl=None):
     nEchoes = s.get_prop('acq')['L'][25]
     dwdel1 = s.get_prop('acq')['DE']*1e-6
     dwdel2 = (anavpt*0.05e-6)/2
-    #d12 is read as 0 if taken from parameters bc its too small
     d11 = s.get_prop('acq')['D'][11]
     p90_s = s.get_prop('acq')['P'][1]*1e-6
     quad_pts = ndshape(s)['t2'] # note that we have not yet chunked t2
@@ -252,7 +251,7 @@ def proc_Hahn_echoph(s, fl=None):
         fl.image(abs(s))
     return s
 
-def proc_spincore_IR(s,clock_correction,fl=None):
+def proc_spincore_IR(s,fl=None):
     logger.info(strm("pre-processing for IR acquired on spincore"))
     s.rename('vd','indirect')
     s.reorder(['ph1','ph2','indirect','t2'])
@@ -269,7 +268,6 @@ def proc_spincore_IR(s,clock_correction,fl=None):
     if fl is not None:
         fl.next('frequency domain (all $\\Delta p$)')
         fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
-    s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
     return s
 
 def proc_nutation(s,fl=None):
@@ -299,7 +297,7 @@ def proc_nutation_amp(s,fl=None):
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,4.]/4)
     s.set_units('t2','s')
-    s.set_units('amp','unknown')
+    s.set_units('amp','unitless')
     s.ft(['ph2','ph1'])
     if fl is not None:
         fl.next('after phase cycle FT')
@@ -335,14 +333,14 @@ def proc_var_tau(s,fl=None):
 def proc_spincore_ODNP_v1(s,fl=None):
     logger.info(strm("pre-processing for ODNP"))
     prog_power = s.getaxis('power').copy()
-    logging.info(strm("programmed powers",prog_power))
+    logging.info("programmed powers",prog_power)
     s.setaxis('power',r_[
         0,dBm2power(np.array(s.get_prop('meter_powers'))+20)]
         ).set_units('power','W')
-    logging.info(strm("meter powers",s.get_prop('meter_powers')))
-    logging.info(strm("actual powers",s.getaxis('power')))
-    logging.info(strm("ratio of actual to programmed power",
-               s.getaxis('power')/prog_power))
+    logging.info("meter powers",s.get_prop('meter_powers'))
+    logging.info("actual powers",s.getaxis('power'))
+    logging.info("ratio of actual to programmed power",
+               s.getaxis('power')/prog_power)
     nPoints = s.get_prop('acq_params')['nPoints']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
@@ -370,9 +368,13 @@ def proc_DOSY_CPMG(s,dwdel1,tau_extra):
     d11 = s.get_prop('acq')['D'][11]
     p1 = s.get_prop('acq')['P'][1]
     ppg = s.get_prop('pulprog')
+    #{{{ these are explanatory -- maybe comment them out?
     m = re.search(('.*dwdel1=.*'),ppg,flags=re.IGNORECASE)
-    logging.info(strm(m.groups())) # show the line that sets dwdel1
-    logging.info(strm([(j,s.get_prop('acq')[j]) for j in s.get_prop('acq').keys() if 'de' in j.lower()]))
+    logging.info(m.groups()) # show the line that sets dwdel1
+    # then look for de and depa
+    logging.info([(j,s.get_prop('acq')[j]) for j in s.get_prop('acq').keys() if 'de' in j.lower()])
+    # I actually can't find depa
+    # }}}
     m = re.search('\ndefine list<grad_scalar> gl1 = {(.*)}',ppg)
     grad_list = array([float(j.group()) for j in re.finditer('([0-9.]+)',m.groups()[0])])
     m = re.search('([0-9.]+) G/mm', s.get_prop('gradient_calib'))
@@ -413,24 +415,7 @@ def proc_ESR_linewidth(s):
     s -= s['$B_0$',:50].C.mean('$B_0$')
     s_integral = s.C.run_nopop(cumsum,'$B_0$')
     x1,x2 = s_integral.getaxis('$B_0$')[r_[5,-5]]
-    y1 = s_integral.data[:5].mean()        """calculate the fit function along the axis taxis.
-        
-        Parameters
-        ----------
-        taxis: ndarray, int
-            :if ndarray: the new axis coordinates along which we want to calculate the fit.
-            :if int: number of evenly spaced points along the t-axis along the fit
-        set_what: 'str', optional
-            forcibly sets a specific symbol
-        set_to: double, optional
-            the specific value (int) you are assigning the symbol you included
-
-        Returns
-        -------
-        self: nddata
-            the fit function evaluated along the axis coordinates that were passed
-        """
-
+    y1 = s_integral.data[:5].mean()     
     y2 = s_integral.data[-5:].mean()
     straight_baseline = (s.fromaxis('$B_0$')-x1)*(y2-y1)/(x2-x1)
     s_integral -= straight_baseline
