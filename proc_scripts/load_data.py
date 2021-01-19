@@ -17,7 +17,7 @@ import os
 from sympy import symbols
 import logging
 import numpy as np
-def proc_bruker_deut_IR_v1(s,fl=fl):
+def proc_bruker_deut_IR_v1(s,fl=None):
     logger.info(strm("preprocessing for IR acquired on bruker"))
     if fl is not None:
         fl.next('raw data')
@@ -99,7 +99,7 @@ def proc_spincore_CPMG_v1(s, fl=None):
     acq_time_s = orig_t[nPoints]
     s.set_units('t','s')
     twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
-    t2_axis = linspace(0,acq_time_s,nPoints)
+    t2_axis = np.linspace(0,acq_time_s,nPoints)
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
@@ -209,10 +209,11 @@ def proc_bruker_CPMG_v1(s,d12,tau_extra,fl=None):
     #     for anavpt above
     tau_pad_start = tau_extra-dwdel1-6e-6
     tau_pad_end = tau_extra-6e-6
-    twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
+    ninety_through_180 = 2*p90_s/pi + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
+    between_180s = dwdel1 + 5e-6 + tau_pad_start + 1e-6 + dwdel2*nPoints + tau_pad_end + 1e-6 + 5e-6
     #twice_tau should be the period from one 180 to another
     # }}}
-    assert twice_tau = dwdel1 + 5e-6 +tau_pad_start + 1e-6 + dwdel2*nPoints + tau_pad_end + 1e-6 + 5e-6, "twice_tau is not equal to the time from one 180 pulse to the next" 
+    assert ninety_through_180 == between_180s, "time between the 90 pulse and 180 pulse is not equal to the time from one 180 pulse to the next" 
     s.set_units('t2','us')
     s.chunk('t2',['tE','t2'],[nEchoes,-1])
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
