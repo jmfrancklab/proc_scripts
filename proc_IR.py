@@ -4,6 +4,7 @@ from proc_scripts import *
 from proc_scripts.load_data import postproc_dict
 from proc_scripts.fitting import recovery
 from sympy import symbols
+from matplotlib import *
 fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
@@ -14,9 +15,10 @@ coh_sel = {'ph1':0,
 coh_err = {'ph1':1,# coherence channels to use for error
         'ph2':r_[0,2,3]}
 # }}}
+clock_correction = nddata(np.linspace(-3,3,2500),'clock_correction')
 
 for searchstr,exp_type,nodename, postproc in [
-        ('w6_hexane_201217','test_equip',2,'ab_ir2h')
+        ('210120_OHTEMPO10mM_sol_probe_IR','test_equip','signal','spincore_IR_v1')
         #('w3_201111','test_equip',2,'ab_ir2h')
         #('CTAB_w15_41mM_201124','test_equip',2,'ab_ir2h'),
         #('freeSL_201007','test_equip',5,'ag_IR2H',None)
@@ -27,25 +29,42 @@ for searchstr,exp_type,nodename, postproc in [
         #('freeD2O_201104','test_equip',2,'ab_ir2h',None),
         ]:
     fl.basename = searchstr
-    clock_correction = None
-    if clock_correction is None:
-        s = find_file(searchstr, exp_type=exp_type,
-            expno=nodename,
-            postproc=postproc, lookup=postproc_dict,
-            dimname='indirect',fl=fl)
-    else:
-        s = find_file(searchstr, exp_type=exp_type,
+    s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
-    #fl.show();quit()
-        #{{{filter data
+            #{{{filter data
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
-    #{{{hermitian function test and apply best shift
-    fl.next('frequency domain before')
-    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
+
+    #fl.show();quit()
     s.ift('t2')
+    fl.next('time domain cropped log')
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #').cropped_log())
+    #{{{rough centering
+    rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    fl.image(s.C.setaxis('indirect','#'))
+    #}}}
+    s.ft('t2')
+    fl.next('before clock correction')
+    fl.image(s.C.setaxis('indirect','#'))
+    s_clock = s['ph1',0]['ph2',1].sum('t2')
+    s.ift(['ph1','ph2'])
+    min_index = abs(s_clock).argmin('indirect',raw_index=True).item()
+    s_clock *= np.exp(-1j*clock_correction*s.fromaxis('indirect'))
+    s_clock['indirect',:min_index+1] *= -1
+    s_clock.sum('indirect').run(abs)
+    fl.next('clock correction')
+    fl.plot(s_clock,'.',alpha=0.7)
+    clock_correction = s_clock.argmax('clock_correction').item()
+    pyplot.axvline(x=clock_correction,alpha=0.5,color='r')
+    s *= np.exp(-1j*clock_correction*s.fromaxis('indirect'))
+    fl.next('after auto-clock correction')
+    s.ft(['ph1','ph2'])
+    fl.image(s.C.setaxis('indirect','#'))
+    s.ift('t2')
+    #{{{hermitian function test and apply best shift
     best_shift = hermitian_function_test(s[
         'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
     logger.info(strm("best shift is",best_shift))
@@ -83,7 +102,7 @@ for searchstr,exp_type,nodename, postproc in [
     fl.next('where to cut')
     s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] 
     fl.plot(s)
-    #fl.show();quit()
+    fl.show();quit()
     #{{{If visualizing via ILT
     fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
