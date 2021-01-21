@@ -5,9 +5,9 @@ zero_fill = False
 with figlist_var() as fl:
     for filename,postproc,fslice,tslice,max_kHz in [
             ('201228_Ni_sol_probe_nutation_amp_2','spincore_nutation_v2',
-                (-28e3,23e3),(-2e-3,2e-3),150)
+                (-28e3,23e3),(-2e-3,2e-3),150),
             ('210120_Ni_sol_probe_nutation_amp_3','spincore_nutation_v2',
-                (-20e3,20e3),(-0.5e-3,0.5e-3),200)
+                (-16e3,15e3),(-1e-3,1e-3),200),
             ]:
         fl.basename = filename + '(preproc)\n'
         print('analyzing', filename)
@@ -31,6 +31,12 @@ with figlist_var() as fl:
         d.setaxis('t2',lambda x: x-abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
         fl.next('time domain -- cropped log before t-slice')
         fl.image(d.C.cropped_log(), interpolation='bilinear')
+        # {{{ vlines
+        oom = det_oom(d.getaxis('t2'))
+        for x in tslice:
+            if x is not None:
+                axvline(x=x/10**oom, color='white', alpha=0.5)
+        # }}}
         if tslice is not None:
             d = d['t2':tslice]
         print("signal max: %g"%abs(d['ph1',1]['ph2',-2]).data.max())
@@ -40,6 +46,12 @@ with figlist_var() as fl:
             d.ft('t2')
         fl.next('frequency domain -- cropped log before f-slice')
         fl.image(d.C.cropped_log(), interpolation='bilinear')
+        # {{{ vlines
+        oom = det_oom(d.getaxis('t2'))
+        for x in fslice:
+            if x is not None:
+                axvline(x=x/10**oom, color='white', alpha=0.5)
+        # }}}
         d = d['t2':fslice]
         fl.next('frequency domain\nafter filter and t-slice')
         d = d['ph1',1]['ph2',-2]
