@@ -4,8 +4,8 @@ from proc_scripts import postproc_dict
 zero_fill = False
 with figlist_var() as fl:
     for filename,postproc,fslice,tslice,max_kHz in [
-            ('210120_Ni_sol_probe_nutation_amp_2','spincore_nutation_v2',
-                (-7e3,13e3),(-0.8e-3,0.8e-3),200)
+            ('210120_Ni_sol_probe_nutation_amp_3','spincore_nutation_v2',
+                (-20e3,20e3),(-0.5e-3,0.5e-3),200)
             ]:
         
         fl.basename = filename
@@ -15,10 +15,9 @@ with figlist_var() as fl:
         #print(d.get_prop('acq_params'))
         plen = d.get_prop('acq_params')['p90_us']
         plen *= 10**-6
-        d = d['t2':(-13e3,13e3)]
+        d = d['t2':(-20e3,20e3)]
         fl.next('frequency domain--after slice')
         fl.image(d)
-
         d.ift('t2')
         print("max at",abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
         d.setaxis('t2',lambda x: x-abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
@@ -61,6 +60,7 @@ with figlist_var() as fl:
         #fl.show();quit()
         fl.next('absFT')
         title('FT to get $\gamma B_1/a$')
+        #d.extend('t2',
         fl.image(abs(d[ind_dim:(-1e3*max_kHz,1e3*max_kHz)]))
         gridandtick(gca(), gridcolor=[1,1,1])
         fl.show();quit()
