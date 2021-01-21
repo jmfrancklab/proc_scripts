@@ -245,11 +245,11 @@ def proc_Hahn_echoph(s, fl=None):
         fl.image(abs(s))
     return s
 
-def proc_spincore_IR(s,clock_correction,fl=None):
+def proc_spincore_IR(s,fl=None):
     s.rename('vd','indirect')
     s.reorder(['ph1','ph2','indirect','t2'])
-    s.ft(['ph2','ph1'])
     s.ft('t2', shift=True)
+    s.ft(['ph2','ph1'])
     if fl is not None:
         fl.next('raw data -- coherence channels')
         fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
@@ -261,7 +261,6 @@ def proc_spincore_IR(s,clock_correction,fl=None):
     if fl is not None:
         fl.next('frequency domain (all $\\Delta p$)')
         fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
-    s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
     return s
 
 def proc_nutation(s,fl=None):
@@ -285,21 +284,21 @@ def proc_nutation(s,fl=None):
 
 def proc_nutation_amp(s,fl=None):
     logging.info("loading pre-processing for nutation")
-    orig_t = s.getaxis('t2')
-    s.reorder(['ph1','ph2'])
-    s.setaxis('ph2',r_[0.:2.]/4)
-    s.setaxis('ph1',r_[0.:4.]/4)
+    #orig_t = s.getaxis('t2')
+    #s.reorder(['ph1','ph2'])
+    #s.setaxis('ph2',r_[0.:2.]/4)
+    #s.setaxis('ph1',r_[0.:4.]/4)
+    #s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.set_units('t2','s')
-    s.set_units('amp','unknown')
-    s.reorder(['ph1','ph2'])
-    s.ft(['ph2','ph1'])
-    if fl is not None:
-        fl.next('after phase cycle FT')
-        fl.image(s)
     s.ft('t2',shift=True)
-    if fl is not None:
-        fl.next('freq domain')
-        fl.image(s)
+    fl.next('look for drift')
+    fl.image(s.C.smoosh(['ph2','ph1'],'transient').reorder('transient').setaxis('transient','#').run(abs),
+            interpolation='bilinear')
+    s.reorder(['ph1','ph2'])
+    s.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
+    if 'p_90' in s.dimlabels:
+        s.set_units('p_90','s')
+    s.ft(['ph1','ph2'])
     return s
 
 def proc_var_tau(s,fl=None):
