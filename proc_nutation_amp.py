@@ -3,9 +3,9 @@ from pyspecdata import *
 from proc_scripts import postproc_dict
 zero_fill = False
 with figlist_var() as fl:
-    for filename,postproc,fslice,tslice,plen,max_kHz in [
+    for filename,postproc,fslice,tslice,max_kHz in [
             ('210120_Ni_sol_probe_nutation_amp_2','spincore_nutation_v2',
-                (-7e3,13e3),(-0.8e-3,0.8e-3),250e-6,200)
+                (-7e3,13e3),(-0.8e-3,0.8e-3),200)
             ]:
         
         fl.basename = filename
