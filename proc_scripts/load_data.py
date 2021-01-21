@@ -291,9 +291,10 @@ def proc_nutation_amp(s,fl=None):
     #s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.set_units('t2','s')
     s.ft('t2',shift=True)
-    fl.next('look for drift')
-    fl.image(s.C.smoosh(['ph2','ph1'],'transient').reorder('transient').setaxis('transient','#').run(abs),
-            interpolation='bilinear')
+    if fl is not None:
+        fl.next('look for drift')
+        fl.image(s.C.smoosh(['ph2','ph1'],'transient').reorder('transient').setaxis('transient','#').run(abs),
+                interpolation='bilinear')
     s.reorder(['ph1','ph2'])
     s.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
     if 'p_90' in s.dimlabels:

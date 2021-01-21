@@ -9,14 +9,15 @@ with figlist_var() as fl:
             ('210120_Ni_sol_probe_nutation_amp_3','spincore_nutation_v2',
                 (-16e3,15e3),(-1e-3,1e-3),200),
             ]:
-        fl.basename = filename + '(preproc)\n'
         print('analyzing', filename)
+        fl.basename = filename + '(preproc)\n'
         d = find_file(filename,
                 exp_type='nutation',
                 expno='nutation',
                 postproc=postproc,
                 lookup=postproc_dict,
-                fl=fl)
+                fl=None)
+        fl.basename = filename
         plen = d.get_prop('acq_params')['p90_us']*1e-6
         if 'amp' in d.dimlabels:
             d.setaxis('amp', lambda x: x*plen)
@@ -25,7 +26,9 @@ with figlist_var() as fl:
             d.rename('amp',ind_dim)
         if 'p_90' in d.dimlabels:
             ind_dim = 'p_90'
-        fl.basename = filename
+        print(d.getaxis(ind_dim))
+        d.extend(ind_dim,0)
+        print(d.getaxis(ind_dim))
         d.ift('t2')
         print("max at",abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
         d.setaxis('t2',lambda x: x-abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
