@@ -4,64 +4,55 @@ from proc_scripts import postproc_dict
 zero_fill = False
 with figlist_var() as fl:
     for filename,postproc,fslice,tslice,max_kHz in [
+            ('201228_Ni_sol_probe_nutation_amp_2','spincore_nutation_v2',
+                (-28e3,23e3),(-2e-3,2e-3),150)
             ('210120_Ni_sol_probe_nutation_amp_3','spincore_nutation_v2',
                 (-20e3,20e3),(-0.5e-3,0.5e-3),200)
             ]:
-        
-        fl.basename = filename
+        fl.basename = filename + '(preproc)\n'
         print('analyzing', filename)
-        d = find_file(filename,exp_type='nutation',expno='nutation',postproc=postproc,
-                lookup=postproc_dict,fl=fl)
-        #print(d.get_prop('acq_params'))
-        plen = d.get_prop('acq_params')['p90_us']
-        plen *= 10**-6
-        d = d['t2':(-20e3,20e3)]
-        fl.next('frequency domain--after slice')
-        fl.image(d)
-        d.ift('t2')
-        print("max at",abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
-        d.setaxis('t2',lambda x: x-abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
-        fl.next('time domain--cropped log before slice')
-        fl.image(d.C.cropped_log())
-        #fl.show();quit()
-        if tslice is not None:
-            d = d['t2':tslice]
-        print("signal max: %g"%abs(d['ph1',1]['ph2',-2].data.max()))
-        fl.next('frequency domain after filter and t-slice')
-        d.ft('t2')
-        d = d['t2':fslice]
-        fl.image(d)
-        #fl.show();quit()
-        fl.next('slice out echo pathway')
-        d = d['ph1',1]['ph2',-2]
+        d = find_file(filename,
+                exp_type='nutation',
+                expno='nutation',
+                postproc=postproc,
+                lookup=postproc_dict,
+                fl=fl)
+        plen = d.get_prop('acq_params')['p90_us']*1e-6
         if 'amp' in d.dimlabels:
-            d.setaxis('amp',lambda x: x*plen)
+            d.setaxis('amp', lambda x: x*plen)
             d.set_units('amp','s')
             ind_dim = '\\tau_p a'
             d.rename('amp',ind_dim)
-        if'p_90' in d.dimlabels:
+        if 'p_90' in d.dimlabels:
             ind_dim = 'p_90'
-        fl.image(d)
-        fl.next('time domain')
+        fl.basename = filename
         d.ift('t2')
-        fl.image(d)
-        d.ft('t2')
-        #fl.show();quit()
-        gridandtick(gca(),gridcolor=[1,1,1])
-        fl.next('FT')
+        print("max at",abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
+        d.setaxis('t2',lambda x: x-abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
+        fl.next('time domain -- cropped log before t-slice')
+        fl.image(d.C.cropped_log(), interpolation='bilinear')
+        if tslice is not None:
+            d = d['t2':tslice]
+        print("signal max: %g"%abs(d['ph1',1]['ph2',-2]).data.max())
         if zero_fill:
-            d.ift('t2').ft('t2',pad=2**11)
-        title('FT to get $\gamma B_1/a$')
-        if zero_fill:
-            d.ft(ind_dim, shift=True,pad=2**11)
+            d.ft('t2',pad=2**11) # to improve smoothness of final result
         else:
-            d.ft(ind_dim,shift=True)
-        fl.image(d[ind_dim:(-1e3*max_kHz,1e3*max_kHz)])
-        #fl.show();quit()
-        fl.next('absFT')
+            d.ft('t2')
+        fl.next('frequency domain -- cropped log before f-slice')
+        fl.image(d.C.cropped_log(), interpolation='bilinear')
+        d = d['t2':fslice]
+        fl.next('frequency domain\nafter filter and t-slice')
+        d = d['ph1',1]['ph2',-2]
+        fl.image(d)
+        gridandtick(gca(), gridcolor=[1,1,1])
+        fl.next('FT')
         title('FT to get $\gamma B_1/a$')
-        #d.extend('t2',
+        if zero_fill:
+            d.ft(ind_dim, shift=True, pad=2**11)
+        else:
+            d.ft(ind_dim, shift=True)
+        fl.image(d[ind_dim:(-1e3*max_kHz,1e3*max_kHz)])
+        fl.next('abs FT')
+        title('FT to get $\gamma B_1/a$')
         fl.image(abs(d[ind_dim:(-1e3*max_kHz,1e3*max_kHz)]))
         gridandtick(gca(), gridcolor=[1,1,1])
-        fl.show();quit()
-                
