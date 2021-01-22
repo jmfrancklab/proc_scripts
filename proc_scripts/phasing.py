@@ -4,6 +4,7 @@ from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
 import numpy as np
 import pyspecdata as pysp
+from scipy import linalg
 #from line_profiler import LineProfiler
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
@@ -40,14 +41,16 @@ def zeroth_order_ph(d, fl=None):
         # slightly better than the magnitude -- this should be both a robust
         # test and a resolution for issue #23
         )
-    eigenValues, eigenVectors = eig(cov_mat)
+    eigenValues, eigenVectors = linalg.eig(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
+    print(type(mean_vec))
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
     idx = eigenValues.argsort()[::-1]   
     eigenValues = eigenValues[idx]
     eigenVectors = eigenVectors[:,idx] # first dimension x,y second evec #
+    print(type(eigenVectors))
     # determine the phase angle from direction of the
     # largest principle axis plus the mean
     # the vector in the direction of the largest
@@ -56,7 +59,8 @@ def zeroth_order_ph(d, fl=None):
     # that we only want to rotate when the distribution
     # is assymetric, so include only the excess of the
     # larger eval over the smaller
-    assymetry_mag = sqrt(eigenValues[0])-sqrt(eigenValues[1])
+    assymetry_mag = float(sqrt(eigenValues[0])-sqrt(eigenValues[1]))
+    print(type(assymetry_mag))
     try:
         assym_ineq = (assymetry_mag*eigenVectors[:,0]*mean_vec).sum()
     except:
@@ -66,7 +70,7 @@ def zeroth_order_ph(d, fl=None):
         rotation_vector = mean_vec + assymetry_mag*eigenVectors[:,0]
     else:
         rotation_vector = mean_vec - assymetry_mag*eigenVectors[:,0]
-    ph0 = arctan2(rotation_vector[1],rotation_vector[0])
+    ph0 = np.arctan2(rotation_vector[1],rotation_vector[0])
     if fl is not None:
         d_forplot = d.C
         fl.next('check covariance test')
@@ -104,7 +108,7 @@ def zeroth_order_ph(d, fl=None):
         ax = gca()
         ax.set_aspect('equal', adjustable='box')
         ax.add_patch(ell)
-    return exp(1j*ph0)
+    return np.exp(1j*ph0)
 
 def ph1_real_Abs(s,dw):
     r''' Performs first order phase correction with cost function

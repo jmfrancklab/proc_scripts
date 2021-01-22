@@ -9,7 +9,7 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 # {{{ input parameters
-filter_bandwidth = 5e3
+filter_bandwidth = 15e3
 coh_sel = {'ph1':0,
         'ph2':-1}
 coh_err = {'ph1':1,# coherence channels to use for error
@@ -34,7 +34,7 @@ for searchstr,exp_type,nodename, postproc in [
             postproc=postproc, lookup=postproc_dict,
             dimname='indirect')
             #{{{filter data
-    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
+    #s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     #}}}
 
     #fl.show();quit()
@@ -71,7 +71,7 @@ for searchstr,exp_type,nodename, postproc in [
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
     fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
-    fl.next('frequency domain after')
+    fl.next('frequency domain after hermitian test')
     s.ft('t2')
     fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
@@ -79,6 +79,7 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{zeroth order phase correction
     ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
     logger.info(strm(ndshape(ph0)))
+    #fl.show();quit()
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0, fl=fl)
@@ -101,20 +102,20 @@ for searchstr,exp_type,nodename, postproc in [
     s.ft('t2')
     fl.next('where to cut')
     s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']] 
-    fl.plot(s)
-    fl.show();quit()
+    fl.plot(s,)
+    #fl.show();quit()
     #{{{If visualizing via ILT
     fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
-        fl.plot(s['indirect',j]['t2':(-60,60)],
+        fl.plot(s['indirect',j]['t2':(0,186e4)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
     #quit()
     #exponential curve
-    rec_curve = s['t2':(-60,60)].C.sum('t2')
+    rec_curve = s['t2':(0,186e4)].C.sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
-    #fl.show();quit()
+    fl.show();quit()
     #{{{recovery curve and fitting
     # below, f_range needs to be defined
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)

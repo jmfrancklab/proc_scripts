@@ -7,7 +7,7 @@ fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 for searchstr,exp_type,nodename,postproc in [
-    ['201209_Ni_sol_probe_nutation_1','nutation','nutation','spincore_nutation_v1']
+    ['201211_Ni_sol_probe_nutation_1','nutation','nutation','spincore_nutation_v1']
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict)#,fl=fl) 
@@ -50,7 +50,7 @@ for searchstr,exp_type,nodename,postproc in [
     #}}}
     
     #{{{ slicing
-    s = s['t2':(-5000,15000)]
+    s = s['t2':(-5000,13000)]
     fl.next('sliced')
     fl.image(s)
     #fl.show();quit()

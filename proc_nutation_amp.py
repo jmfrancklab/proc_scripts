@@ -4,8 +4,8 @@ from proc_scripts import postproc_dict
 zero_fill = False
 with figlist_var() as fl:
     for filename,postproc,fslice,tslice,max_kHz in [
-            ('210120_Ni_sol_probe_nutation_amp_3','spincore_nutation_v2',
-                (-20e3,20e3),(-0.5e-3,0.5e-3),200)
+            ('210120_Ni_sol_probe_nutation_amp_1','spincore_nutation_v2',
+                (-15e3,15e3),(-0.75e-3,0.75e-3),200)
             ]:
         
         fl.basename = filename

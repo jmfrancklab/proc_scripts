@@ -1,5 +1,6 @@
 from pyspecdata import *
 from sympy import symbols
+import matplotlib.pyplot as plt
 def expand_limits(thisrange,s,axis='t2'):
     """" Used to expand limits of a range (typically used for slicing) by 3X
 
@@ -75,13 +76,13 @@ class fl_mod(figlist_var):
 
     """
     def real_imag(self,plotname,s):
-        thisfig,(ax1,ax2) = subplots(1,2)
+        thisfig,(ax1,ax2) = plt.subplots(1,2)
         self.next(plotname, fig=thisfig)
-        sca(ax1)
+        plt.sca(ax1)
         self.image(s.real)
         title('real')
         my_clim = gci().get_clim()
-        sca(ax2)
+        plt.sca(ax2)
         self.image(s)
         gci().set_clim(my_clim) #to match real
         title('imaginary')
@@ -91,13 +92,13 @@ class fl_mod(figlist_var):
         the figure list -- also a good test for objective
         figure list -- for each slice out 3x thisrange, and then
         show the lines for thisrange"""
-        thisfig,(ax1,ax2) = subplots(1,2)
+        thisfig,(ax1,ax2) = plt.subplots(1,2)
         self.next(plotname, fig=thisfig)
-        sca(ax1)
+        plt.sca(ax1)
         forplot = s['t2':expand_limits(thisrange,s)]
         self.image(forplot.C.setaxis('power','#').set_units('power','scan #'))
         draw_limits(thisrange,forplot)
-        sca(ax2)
+        plt.sca(ax2)
         self.image(forplot.C.cropped_log().C.setaxis(
 'power','#').set_units('power','scan #'))
         draw_limits(thisrange,forplot)
