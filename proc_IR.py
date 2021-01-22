@@ -44,6 +44,7 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{rough centering
     rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
+    fl.next(' rough centered')
     fl.image(s.C.setaxis('indirect','#'))
     #}}}
     s.ft('t2')
@@ -107,12 +108,12 @@ for searchstr,exp_type,nodename, postproc in [
     #{{{If visualizing via ILT
     fl.next('Plotting phased spectra')
     for j in range(ndshape(s)['indirect']):
-        fl.plot(s['indirect',j]['t2':(0,186e4)],
+        fl.plot(s['indirect',j]['t2':(-5e3,20e3)],
             alpha=0.5,
             label='vd=%g'%s.getaxis('indirect')[j])
     #quit()
     #exponential curve
-    rec_curve = s['t2':(0,186e4)].C.sum('t2')
+    rec_curve = s['t2':(-5e3,20e3)].C.sum('t2')
     fl.next('recovery curve')
     fl.plot(rec_curve,'o')
     fl.show();quit()

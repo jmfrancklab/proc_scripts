@@ -81,7 +81,7 @@ def zeroth_order_ph(d, fl=None):
                 alpha=0.25,
                 label='before'
                 )
-        d_forplot /= exp(1j*ph0)
+        d_forplot /= np.exp(1j*ph0)
         fl.plot(
                 d_forplot.data.ravel().real,
                 d_forplot.data.ravel().imag,
@@ -91,8 +91,8 @@ def zeroth_order_ph(d, fl=None):
                 )
         fl.plot(0,0,'ko', alpha=0.5)
         fl.plot(mean_vec[0],mean_vec[1],'kx', label='mean', alpha=0.5)
-        evec_forplot = sqrt(eigenValues.reshape(1,2))*ones((2,1))*eigenVectors # scale by the std, not the variance!
-        evec_forplot += mean_vec.reshape((-1,1))*ones((1,2))
+        evec_forplot = sqrt(eigenValues.reshape(1,2))*np.ones((2,1))*eigenVectors # scale by the std, not the variance!
+        evec_forplot += mean_vec.reshape((-1,1))*np.ones((1,2))
         fl.plot(evec_forplot[0,0],evec_forplot[1,0],'o', alpha=0.5,
                 label='first evec')
         fl.plot(evec_forplot[0,1],evec_forplot[1,1],'o', alpha=0.5)
@@ -102,10 +102,10 @@ def zeroth_order_ph(d, fl=None):
         ell = Ellipse(xy=mean_vec,
                 width=2*sqrt(eigenValues[0]),
                 height=2*sqrt(eigenValues[1]),
-                angle=180/pi*arctan2(eigenVectors[1,0],
+                angle=180/pi*np.arctan2(eigenVectors[1,0],
                     eigenVectors[0,0]),
                 color='k', fill=False)
-        ax = gca()
+        ax = plt.gca()
         ax.set_aspect('equal', adjustable='box')
         ax.add_patch(ell)
     return np.exp(1j*ph0)
