@@ -1,3 +1,4 @@
+from pylab import *
 from pyspecdata import *
 from scipy.optimize import minimize
 from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod
@@ -68,3 +69,4 @@ for searchstr,exp_type,nodename,postproc in [
     fl.real_imag('phased data',s)
     #}}}
 fl.show();quit()
+
