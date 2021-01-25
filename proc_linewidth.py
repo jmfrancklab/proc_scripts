@@ -20,17 +20,17 @@ conc_list = []
 R_list = []
 sigma_list = []
 for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
-        ("201118_10mM4AT",'francklab_esr/alex','ESR_linewidth',
+        ("210114_50mM_4AT",'ESR','ESR_linewidth',
             { # here, I entered based on the next, and then copied and pasted the result
                 A: 952.059548814867,
                 B_center: 0.645245462402653,
                 R: 1.1452099193249357,
                 sigma: 0.7520327837593248,
                 },
-            False,
-            10e-3
+            True,
+            50e-3
             ),
-        ("201118_1mM4AT",'francklab_esr/alex','ESR_linewidth',
+        ("201118_1mM4AT",'ESR','ESR_linewidth',
             {
 
                 A:         4e2,
