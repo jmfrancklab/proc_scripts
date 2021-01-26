@@ -8,7 +8,7 @@ class fl_ext(figlist_var):
         kwargs.update({"figsize": (9, 5.56), "legend": True})
         super().next(*arg, **kwargs)
 
-    def complex_plot(fl, d, label="", show_phase=False, show_real=True):
+    def complex_plot(fl, d, label="", show_phase=False, show_real=True,alpha=0.5):
         colors = []
         for j in range(ndshape(d)["ch"]):
             chlabel = d.getaxis("ch")[j]
@@ -16,15 +16,17 @@ class fl_ext(figlist_var):
                 l = fl.plot(
                         abs(d["ch", j]),
                         linewidth=3,
-                        alpha=0.5,
-                        label="controlled fwd pulse abs " + label,
+                        alpha=alpha,
+                        label="reflected pulse abs " + label,
+                        color='darkorange'
                         )
             else:
                 l = fl.plot(
                         abs(d["ch",j]),
                         linewidth=3,
-                        alpha=0.5,
+                        alpha=alpha,
                         label="reflected pulse abs" + label,
+                        color='darkorange'
                         )
             colors.append(l[0].get_color())
             if show_real:
@@ -33,14 +35,14 @@ class fl_ext(figlist_var):
                         d["ch", j].real,
                         linewidth=1,
                         color=colors[-1],
-                        alpha=0.5,
-                        label="fwd pulse real " + label,
+                        alpha=alpha,
+                        label="reflected real " + label,
                         )
                 else:
                     fl.plot(abs(d["ch",j].real),
                             linewidth=1,
                             color=colors[-1],
-                            alpha=0.5,
+                            alpha=alpha,
                             label="reflected real" + label,
                             )
 
@@ -50,7 +52,7 @@ class fl_ext(figlist_var):
                         "--",
                         linewidth=1,
                         color=colors[-1],
-                        alpha=0.5,
+                        alpha=alpha,
                         label="fwd pulse imag" + label,
                         )
                 else:
@@ -59,7 +61,7 @@ class fl_ext(figlist_var):
                         "--",
                         linewidth=1,
                         colors=colors[-1],
-                        alpha=0.5,
+                        alpha=alpha,
                         label="reflected imag" + label,
                         )
 

@@ -89,7 +89,7 @@ def analyze_square_refl(d, label='', fl=None,
         fl.next("analytic signal")
         colors = fl.complex_plot(d, label=label,
                 show_phase=show_analytic_signal_phase,
-                show_real=show_analytic_signal_real)
+                show_real=show_analytic_signal_real,alpha=0.5)
         # {{{ print the carrier
         # transform goes to "display", which is pixels
         # "inverted" goes back
@@ -98,7 +98,7 @@ def analyze_square_refl(d, label='', fl=None,
         ax = plb.gca()
         print("the amplitude is",pulse_middle_amp)
         _,y = ax.transData.transform(r_[0.0, pulse_middle_amp])
-        fontsize = 12
+        fontsize = 16
         nfigures = len(fl.figurelist)
         y -= fontsize*(nfigures/3)
         _,y = ax.transAxes.inverted().transform(r_[0, y])
@@ -117,11 +117,11 @@ def analyze_square_refl(d, label='', fl=None,
     scalar_refl = d["ch", 1]["t":(keep_after_pulse, pulse_middle_slice[-1])].mean("t").item()
     if fl is not None: fl.next("blips")
     first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
-    if fl is not None: fl.complex_plot(first_blip, "first", show_phase=True, show_real=False)
+    if fl is not None: fl.complex_plot(first_blip, "first", show_phase=False, show_real=True,alpha=0.2)
     secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
         "t", lambda x: x - pulse_slice[1]
     )
-    if fl is not None: colors = fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False)
+    if fl is not None: colors = fl.complex_plot(secon_blip, "second", show_phase=True, show_real=True,alpha=0.8)
     secon_blip = secon_blip['ch', 0] # we need the ch axis for the complex plot,
     #                                  but it complicates things now
     decay = abs(secon_blip)
@@ -143,7 +143,7 @@ def analyze_square_refl(d, label='', fl=None,
     if fl is not None:
         ax = fl.twinx(orig=False)
         x = plb.mean(phases.getaxis('t'))/1e-9
-        y = plb.mean(phases.angle.data)/2/pi
+        y = plb.mean(phases.angle.data)/1.25/pi
         ax.text(
                 x=x,
                 y=y,
@@ -158,5 +158,21 @@ def analyze_square_refl(d, label='', fl=None,
     print('frq_offset',frq_offset,"for",label)
     # }}}
     Q = 1. / f.output('R') * 2 * pi * frq
+    if fl is not None:
+        ax = fl.twinx(orig=False)
+        x = plb.mean(phases.getaxis('t'))/1e-9
+        y = plb.mean(phases.angle.data)/6/pi
+        ax.text(
+                x=x,
+                y=y,
+                s=' '*5+r'$Q=%d$'%(Q),
+                va='bottom',
+                ha='left',
+                size=fontsize,
+                transform=ax.transData,
+                color='k',
+                )
+        fl.twinx(orig=True)
+
     if fl is not None: fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8, label='fit, Q=%0.1f'%Q)
 
