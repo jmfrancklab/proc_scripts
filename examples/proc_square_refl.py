@@ -8,25 +8,27 @@ class fl_ext(figlist_var):
         kwargs.update({"figsize": (9, 5.56), "legend": True})
         super().next(*arg, **kwargs)
 
-    def complex_plot(fl, d, label="", show_phase=False, show_real=True,alpha=0.5):
+    def complex_plot(fl, d, label="", show_phase=False, show_real=True,alpha=0.5,linestyle=None,linewidth=3,color='k'):
         colors = []
         for j in range(ndshape(d)["ch"]):
             chlabel = d.getaxis("ch")[j]
             if j==0:
                 l = fl.plot(
                         abs(d["ch", j]),
-                        linewidth=3,
+                        linestyle=linestyle,
+                        linewidth=linewidth,
                         alpha=alpha,
                         label="reflected pulse abs " + label,
-                        color='darkorange'
+                        color=color
                         )
             else:
                 l = fl.plot(
                         abs(d["ch",j]),
-                        linewidth=3,
+                        linestyle=linestyle,
+                        linewidth=linewidth,
                         alpha=alpha,
                         label="reflected pulse abs" + label,
-                        color='darkorange'
+                        color=color
                         )
             colors.append(l[0].get_color())
             if show_real:

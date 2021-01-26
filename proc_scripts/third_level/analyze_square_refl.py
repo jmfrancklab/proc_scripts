@@ -4,6 +4,7 @@ import pyspecdata as psp
 from scipy.signal import tukey
 from scipy.optimize import minimize,leastsq
 import sympy as s
+import matplotlib.pyplot as plt
 def analyze_square_refl(d, label='', fl=None,
         frq_bw=15e6,
         keep_after_pulse=2e-6, # amount of the time
@@ -115,13 +116,19 @@ def analyze_square_refl(d, label='', fl=None,
         # }}}
         fl.basename = orig_basename
     scalar_refl = d["ch", 1]["t":(keep_after_pulse, pulse_middle_slice[-1])].mean("t").item()
+    if label == "hairpin probe":
+        color='darkorange'
+    if label == 'solenoid probe':
+        color='red'
+    basename=None    
     if fl is not None: fl.next("blips")
     first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
-    if fl is not None: fl.complex_plot(first_blip, "first", show_phase=False, show_real=True,alpha=0.2)
+    if fl is not None: fig,(ax1,ax2) = plt.subplots(2,1)
+    if fl is not None: fl.complex_plot(first_blip, "first", show_phase=False, show_real=False,alpha=0.2,linestyle="--",linewidth=1,color=color)
     secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
         "t", lambda x: x - pulse_slice[1]
     )
-    if fl is not None: colors = fl.complex_plot(secon_blip, "second", show_phase=True, show_real=True,alpha=0.8)
+    if fl is not None: colors = fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False,alpha=0.8,color=color)
     secon_blip = secon_blip['ch', 0] # we need the ch axis for the complex plot,
     #                                  but it complicates things now
     decay = abs(secon_blip)
@@ -174,5 +181,5 @@ def analyze_square_refl(d, label='', fl=None,
                 )
         fl.twinx(orig=True)
 
-    if fl is not None: fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8, label='fit, Q=%0.1f'%Q)
+    if fl is not None: fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8)#, label='fit, Q=%0.1f'%Q)
 
