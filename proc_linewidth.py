@@ -4,10 +4,12 @@ from proc_scripts import postproc_dict
 import symfit as s
 import pickle,os
 from pylab import ndarray
-from symfit import Parameter, Variable, Fit
+from symfit import Parameter, Variable, parameters, variables, Fit, Model
 from symfit.core.minimizers import MINPACK
 from symfit.contrib.interactive_guess import InteractiveGuess
 import numpy as np
+from itertools import cycle
+from scipy.optimize import nnls
 
 B_center = Parameter('B_center', value=-0.2)
 sigma = Parameter('sigma', value=3)
@@ -19,6 +21,10 @@ y_var = Variable('y')
 conc_list = []
 R_list = []
 sigma_list = []
+data = []
+A_list = []
+B_center_list = []
+C_list = []
 for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
         ("210114_3mM_4AT",'ESR','ESR_linewidth',
             {
@@ -139,9 +145,66 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
     conc_list.append(concentration)
     R_list.append(fit_result.params['R'])
     sigma_list.append(fit_result.params['sigma'])
+    A_list.append(fit_result.params['A'])
+    B_center_list.append(fit_result.params['B_center'])
+    data.append(d)
 plt.figure()
+print(data)
+print(data[0].dimlabels)
 plot(conc_list,R_list,'x',label='R')
 plot(conc_list,sigma_list,'x',label=r'$\sigma$')
 plt.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
 plt.ylabel('concentration')
 plt.show()
+
+#{{{ attempting global fitting
+thesecolors = cycle(list('bgrcmykw'))
+A = parameters('A')
+R = parameters('R')
+sigma = parameters('sigma')
+#B = parameters('B')
+B_center = parameters('B_center')
+y0,y1,y2,y3 = variables('y0, y1, y2, y3')
+B0_0,B0_1,B0_2,B0_3 = variables('B0_0, B0_1, B0_2, B0_3')
+#C = variables('C0, C1, C2, C3')
+model = Model({
+    y0: dVoigt.subs({A:A_list[0]}).subs({R:R_list[0]}).subs({sigma:sigma_list[0]}).subs({B_center:B_center_list[0]}),
+    y1: dVoigt.subs({A:A_list[1]}).subs({R:R_list[1]}).subs({sigma:sigma_list[1]}).subs({B_center:B_center_list[1]}),
+    y2: dVoigt.subs({A:A_list[2]}).subs({R:R_list[2]}).subs({sigma:sigma_list[2]}).subs({B_center:B_center_list[2]}),
+    y3: dVoigt.subs({A:A_list[3]}).subs({R:R_list[3]}).subs({sigma:sigma_list[3]}).subs({B_center:B_center_list[3]}),
+    })
+fit = Fit(model,
+        y0 = data[0].data.real,
+        y1 = data[1].data.real,
+        y2 = data[2].data.real,
+        y3 = data[3].data.real,
+        #B0_0 = data[0].getaxis('$B_0$'),
+        #B0_1 = data[1].getaxis('$B_0$'),
+        #B0_2 = data[2].getaxis('$B_0$'),
+        #B0_3 = data[3].getaxis('$B_0$'),
+        )
+fit_result = fit.execute()
+x_finer = r_[0:10.0:500j]
+y_fit = model(
+        A = fit_result.value(A),
+        R = fit_result.value(R),
+        sigma = fit_result.value(sigma),
+        B_center = fit_result.value(B_center),
+        B0_0 = x_finer,
+        B0_1 = x_finer,
+        B0_2 = x_finer,
+        B0_3 = x_finer,
+        )
+A = fit_result.value(A)
+R = fit_result.value(R)
+sigma = fit_result.value(sigma)
+B_center = fit_result.value(B_center)
+
+fl.next('global fit')
+for j in range(3):
+    thiscolor = next(thesecolors)
+    fl.plot(data[j].getaxis('$B_0$'),data[j].real,'.',c=thiscolor,alpha=0.7)
+    fl.plot(x_finer,y_fit[j],':',c=thiscolor,alpha=0.7,label='symfit,global')
+gridandtick(gca())
+legend()
+fl.show();quit()
