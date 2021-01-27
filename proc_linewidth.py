@@ -158,30 +158,34 @@ plt.ylabel('concentration')
 plt.show()
 
 #{{{ attempting global fitting
+w_H=70.302
+R2=0.3436
+R=R2 + C*k_H
 thesecolors = cycle(list('bgrcmykw'))
 A = parameters('A')
 R = parameters('R')
 sigma = parameters('sigma')
-#B = parameters('B')
+k_H = parameters('k_H')
 B_center = parameters('B_center')
 y0,y1,y2,y3 = variables('y0, y1, y2, y3')
-B0_0,B0_1,B0_2,B0_3 = variables('B0_0, B0_1, B0_2, B0_3')
-#C = variables('C0, C1, C2, C3')
+C = variables('C0, C1, C2, C3')
+k_H=w_H/C
+
 model = Model({
-    y0: dVoigt.subs({A:A_list[0]}).subs({R:R_list[0]}).subs({sigma:sigma_list[0]}).subs({B_center:B_center_list[0]}),
-    y1: dVoigt.subs({A:A_list[1]}).subs({R:R_list[1]}).subs({sigma:sigma_list[1]}).subs({B_center:B_center_list[1]}),
-    y2: dVoigt.subs({A:A_list[2]}).subs({R:R_list[2]}).subs({sigma:sigma_list[2]}).subs({B_center:B_center_list[2]}),
-    y3: dVoigt.subs({A:A_list[3]}).subs({R:R_list[3]}).subs({sigma:sigma_list[3]}).subs({B_center:B_center_list[3]}),
+    y0: dVoigt.subs({A:A_list[0]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[0]}).subs({B_center:B_center_list[0]}),
+    y1: dVoigt.subs({A:A_list[1]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[1]}).subs({B_center:B_center_list[1]}),
+    y2: dVoigt.subs({A:A_list[2]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[2]}).subs({B_center:B_center_list[2]}),
+    y3: dVoigt.subs({A:A_list[3]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[3]}).subs({B_center:B_center_list[3]}),
     })
 fit = Fit(model,
         y0 = data[0].data.real,
         y1 = data[1].data.real,
         y2 = data[2].data.real,
         y3 = data[3].data.real,
-        #B0_0 = data[0].getaxis('$B_0$'),
-        #B0_1 = data[1].getaxis('$B_0$'),
-        #B0_2 = data[2].getaxis('$B_0$'),
-        #B0_3 = data[3].getaxis('$B_0$'),
+        C0 = 3e-3
+        C1 = 5e-3
+        C2 = 7e-3
+        C3 = 10e-3
         )
 fit_result = fit.execute()
 x_finer = r_[0:10.0:500j]
@@ -190,10 +194,10 @@ y_fit = model(
         R = fit_result.value(R),
         sigma = fit_result.value(sigma),
         B_center = fit_result.value(B_center),
-        B0_0 = x_finer,
-        B0_1 = x_finer,
-        B0_2 = x_finer,
-        B0_3 = x_finer,
+        C0 = x_finer,
+        C1 = x_finer,
+        C2 = x_finer,
+        C3 = x_finer,
         )
 A = fit_result.value(A)
 R = fit_result.value(R)
