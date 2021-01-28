@@ -78,27 +78,28 @@ s.ft('t2')
 fl.image(s.C.setaxis(
 'vd','#').set_units('vd','scan #'))
 fl.next('recovery curve')
-s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']].convolve('t2',10)#*-1 # bc inverted at high powers
+s_signal = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
 s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
 # variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
-s_forerror.run(lambda x: abs(x)**2).mean_all_but(['vd']).run(sqrt)
-s_sliced.mean('t2')#.set_error(s_forerror.data)
-fl.plot(s_sliced,'o',label='real')
+print(ndshape(s_forerror))
+s_forerror.run(lambda x:abs(x)**2).mean_all_but(['vd','t2']).integrate('t2').run(sqrt)
+s_signal.integrate('t2').set_error(s_forerror.data)
+fl.plot(s_signal,'o',label='real')
 fl.plot(s_sliced.imag,'o',label='imaginary')
 fl.next('Spectrum - freq domain')
-s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']].convolve('t2',10)
+s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
 fl.plot(s)
 #s_sliced *= -1
 fitfunc = lambda p, x: p[0]*(1-2*np.exp(-x*p[1]))
-x = s_sliced.fromaxis('vd')
-errfunc = lambda p: fitfunc(p,x).data - s_sliced.data.real
+x = s_signal.fromaxis('vd')
+errfunc = lambda p: fitfunc(p,x).data - s_signal.data.real
 p_ini = [1.0,10.0]
 p_opt,success = leastsq(errfunc, p_ini[:])
 assert success in [1,2,3], "Fit did not succeed"
 T1 = 1./p_opt[1]
 print("T1:",T1,"s")
 
-f = fitdata(s_sliced)
+f = fitdata(s_signal)
 error = fitdata(s_forerror)
 M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd", real=True)
 error.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
@@ -109,8 +110,8 @@ print("output:",f.output())
 print("latex:",f.latex())
 T1 = 1./f.output('R_1')
 fl.next('fit')
-fl.plot(s_sliced,'o', label='actual data')
-fl.plot(s_sliced.imag,'--',label='actual imaginary')
+fl.plot(s_signal,'o', label='actual data')
+fl.plot(s_signal.imag,'--',label='actual imaginary')
 fl.plot(f.eval(100),label='fit')
 fl.plot(s_forerror,'o',label='error')
 fl.plot(error.eval(100),label='fit error')
