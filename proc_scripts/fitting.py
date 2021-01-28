@@ -1,6 +1,7 @@
 from pyspecdata import *
 from sympy import symbols
 import sympy as sp
+import numpy as np
 def _fitcurve_initial(s,f_range,direct,indirect,guess):
     if not s.get_ft_prop(direct):
         raise ValueError("Your data should be in the frequency domain!")
@@ -43,7 +44,7 @@ def recovery(s,f_range,direct='t2',indirect='indirect',guess=None):
         Give an nddata with all parameters set to the guess value.
     """
     curve = _fitcurve_initial(s,f_range,direct,indirect,guess)
-    sgn = sign(curve[indirect:(curve.getaxis(indirect).max())].item())
+    sgn = np.sign(curve[indirect:(curve.getaxis(indirect).max())].item())
     curve *= sgn
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 %s"%indirect,real=True)
     curve.functional_form = Mi + (M0-Mi)*sp.exp(-vd*R1)

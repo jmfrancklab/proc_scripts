@@ -160,6 +160,8 @@ plt.show()
 #{{{ attempting global fitting
 w_H=70.302
 R2=0.3436
+k_H = w_H/C
+
 R=R2 + C*k_H
 thesecolors = cycle(list('bgrcmykw'))
 A = parameters('A')
@@ -169,7 +171,6 @@ k_H = parameters('k_H')
 B_center = parameters('B_center')
 y0,y1,y2,y3 = variables('y0, y1, y2, y3')
 C = variables('C0, C1, C2, C3')
-k_H=w_H/C
 
 model = Model({
     y0: dVoigt.subs({A:A_list[0]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[0]}).subs({B_center:B_center_list[0]}),
@@ -182,10 +183,10 @@ fit = Fit(model,
         y1 = data[1].data.real,
         y2 = data[2].data.real,
         y3 = data[3].data.real,
-        C0 = 3e-3
-        C1 = 5e-3
-        C2 = 7e-3
-        C3 = 10e-3
+        C0 = 3e-3,
+        C1 = 5e-3,
+        C2 = 7e-3,
+        C3 = 10e-3,
         )
 fit_result = fit.execute()
 x_finer = r_[0:10.0:500j]
