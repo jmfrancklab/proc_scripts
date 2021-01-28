@@ -120,15 +120,15 @@ def analyze_square_refl(d, label='', fl=None,
         color='darkorange'
     if label == 'solenoid probe':
         color='red'
-    basename=None    
-    if fl is not None: fl.next("blips")
-    first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
-    if fl is not None: fig,(ax1,ax2) = plt.subplots(2,1)
-    if fl is not None: fl.complex_plot(first_blip, "first", show_phase=False, show_real=False,alpha=0.2,linestyle="--",linewidth=1,color=color)
-    secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
-        "t", lambda x: x - pulse_slice[1]
-    )
-    if fl is not None: colors = fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False,alpha=0.8,color=color)
+    if fl is not None:
+        fl.basename=None
+        fl.next("blips")
+        first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
+        fl.complex_plot(first_blip, "first", show_phase=False, show_real=False,alpha=0.2,linestyle="--",linewidth=1,color=color)
+        secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
+            "t", lambda x: x - pulse_slice[1]
+        )
+        fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False,alpha=0.8,color=color)
     secon_blip = secon_blip['ch', 0] # we need the ch axis for the complex plot,
     #                                  but it complicates things now
     decay = abs(secon_blip)
