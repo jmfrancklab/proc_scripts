@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery
+from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits
 from sympy import symbols, latex, Symbol
 from matplotlib import *
 import matplotlib.pyplot as plt
@@ -87,6 +87,7 @@ s_signal = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
 s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
 # variance along t2 gives error for the mean, then average it across all other dimension, then sqrt for stdev
 logger.info(strm(ndshape(s_forerror)))
+
 s_forerror.run(lambda x:abs(x)**2).mean_all_but(['vd','t2']).integrate('t2').run(sqrt)
 s_signal.integrate('t2').set_error(s_forerror.data)
 # }}}
@@ -104,7 +105,7 @@ p_opt,success = leastsq(errfunc, p_ini[:])
 assert success in [1,2,3], "Fit did not succeed"
 T1 = 1./p_opt[1]
 logger.info(strm("T1:",T1,"s"))
-
+s_signal = integrate_limits(s_signal)
 f = fitdata(s_signal)
 error = fitdata(s_forerror)
 M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd", real=True)
