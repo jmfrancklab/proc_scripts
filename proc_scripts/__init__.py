@@ -9,6 +9,7 @@ from .CPMG_phasing import find_echo_center, center_echo
 from .fitting import recovery, decay
 from .STFT import stft, isftf, simu_waves, simu_freq_sawtooth 
 from .integrate_limits import integrate_limits
+from .correlation_alignment import correl_align
 __all__ = ['zeroth_order_ph',
         'ph1_real_Abs',
         'hermitian_function_test',
@@ -29,6 +30,7 @@ __all__ = ['zeroth_order_ph',
         'isftf',
         'simu_waves',
         'simu_freq_sawtooth',
-        'integrate_limits'
+        'integrate_limits',
+        'correl_align'
         ]
 

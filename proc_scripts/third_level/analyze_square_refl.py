@@ -159,7 +159,7 @@ def analyze_square_refl(d, label='', fl=None,
                 ha='left',
                 size=fontsize,
                 transform=ax.transData,
-                color=colors[-1],
+                color=color,
                 )
         fl.twinx(orig=True)
     print('frq_offset',frq_offset,"for",label)
@@ -177,7 +177,7 @@ def analyze_square_refl(d, label='', fl=None,
                 ha='left',
                 size=fontsize,
                 transform=ax.transData,
-                color='k',
+                color=color,
                 )
         fl.twinx(orig=True)
 
