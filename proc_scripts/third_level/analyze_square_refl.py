@@ -16,9 +16,12 @@ def analyze_square_refl(d, label='', fl=None,
     r"""
     Parameters
     ==========
-    fl: figlist_var child class
-        In addition to standard figlist_var methods, this must also include a
-        `complex_plot` method that returns list "colors"
+    d:      data that is being input to the function
+    label:  str
+            label for the data being analyzed
+    fl:     figlist_var child class
+            In addition to standard figlist_var methods, this must also include a
+            `complex_plot` method that returns list "colors"
     """
     if len(label)>0:
         fl.basename = label

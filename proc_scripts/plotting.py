@@ -68,12 +68,24 @@ class fl_mod(figlist_var):
     plotname:   string with name of plot 
     s:          nddata being analyzed
     thisrange:  range along x axis to be analyzed
+    f:          fitdata 
+                data (a fitting instance), on which `f.fit()` has already been run
+    guess:      None or nddata
+                The result of `s.settoguess();s.eval(100)` where 100 can be
+                any integer.
+                Used to display the guess on the plot as well.
+    name:       str
+                the name of the plot
 
     Returns
     =======
     plot image side by side with the cropped log 
 
     """
+    def next(self, *arg, **kwargs):
+        kwargs.update({"figsize": (9, 6), "legend": True})
+        super().next(*arg, **kwargs)
+
     def real_imag(self,plotname,s):
         thisfig,(ax1,ax2) = subplots(1,2)
         self.next(plotname, fig=thisfig)
@@ -105,17 +117,6 @@ class fl_mod(figlist_var):
         return
     def plot_curve(fl, f, name, guess=None):
         """Plot the data with fit curve and fit equation.
-
-        Parameters
-        ----------
-        f: fitdata
-            data (a fitting instance), on which `f.fit()` has already been run
-        guess: None or nddata
-            The result of `s.settoguess();s.eval(100)` where 100 can be
-            any integer.
-            Used to display the guess on the plot as well.
-        name: str
-            the name of the plot
         """
         fl.next(name)
         fl.plot(f, 'o', label=f.name())
@@ -124,11 +125,11 @@ class fl_mod(figlist_var):
             fl.plot(guess, '-', label='initial guess')
         text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
                 horizontalalignment='center',color='k')
-    def next(self, *arg, **kwargs):
-        kwargs.update({"figsize": (9, 6), "legend": True})
-        super().next(*arg, **kwargs)
 
     def complex_plot(fl, d, label="", show_phase=False, show_real=True):
+        """Plots the absolute of the data with options to also plot the 
+        phasing, real, and imaginary components.
+        """
         colors = []
         for j in range(ndshape(d)["ch"]):
             chlabel = d.getaxis("ch")[j]
