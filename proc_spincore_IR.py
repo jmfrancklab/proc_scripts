@@ -107,15 +107,7 @@ s.reorder('t2',first=False)
 fl.next('after smooshing in order')
 fl.image(s)
 fl.basename='first pass'
-s = correl_align(s,align_phases=True,indirect_dim='vd',fig_title='first pass',fl=fl)
-fl.next('before second iteration')
-fl.image(s)
-fl.basename='second iteration'
-s = correl_align(s,align_phases=True,indirect_dim='vd',fig_title='second pass',fl=fl)
-fl.next('before third iteration')
-fl.image(s)
-fl.basename='third iteration'
-s = correl_align(s,align_phases=True,indirect_dim='vd',fig_title='third pass',fl=fl)
+s,energy_vals = correl_align(s,align_phases=True,indirect_dim='vd',fl=fl)
 fl.basename=None
 s.ift('t2')
 s.chunk('vd',['vd','ph2','ph1'],[-1,4,2])
@@ -127,11 +119,11 @@ s.reorder('ph2',first=True)
 s.reorder('t2',first=False)
 s *= phasing
 s.ft(['ph1','ph2'])
-fl.next('time domain-after 3 iters of corr')
+fl.next('time domain-after corr')
 fl.image(s)
 s.ft('t2')
 s *= -1
-fl.next('after 3 iters of alignment')
+fl.next('after alignment')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 #}}}
 fl.show();quit()
