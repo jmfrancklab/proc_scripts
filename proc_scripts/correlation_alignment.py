@@ -2,13 +2,13 @@ from pylab import*
 from pyspecdata import *
 from scipy.optimize import leastsq, minimize, basinhopping
 import numpy as np
-def correl_align(s, align_phases=False,indirect_dim='indirect',fl=None):
+def correl_align(s, align_phases=False,indirect_dim='indirect',fig_title='correlation alignment',fl=None):
     sig_energy = (abs(s)**2).data.mean().item()
     print("*** *** ***")
     print("Before",sig_energy)
     print("*** *** ***")
     if fl is not None:
-        fl.next('before correlation\nsig. energy=%g'%sig_energy)
+        fl.next('before correlation\nsig. energy=%g'%sig_energy + fig_title)
         fl.image(s)
     if align_phases:
         ph0 = s.C.sum('t2')
@@ -21,7 +21,7 @@ def correl_align(s, align_phases=False,indirect_dim='indirect',fl=None):
         temp = nddata(roll(temp.data.conj(),q,axis=0),['vd','t2'])
         correl +=s * temp
     if fl is not None:
-        fl.next('Look at correlation function - time domain')
+        fl.next('Look at correlation function - time domain' + fig_title)
         fl.image(correl)
     correl.setaxis('t2',s.getaxis('t2'))
     correl.setaxis('vd',s.getaxis('vd'))
@@ -31,7 +31,7 @@ def correl_align(s, align_phases=False,indirect_dim='indirect',fl=None):
     s *= np.exp(-1j*2*pi*f_shift*s.fromaxis('t2'))
     s.ft('t2')
     if fl is not None:
-        fl.next('after correlation\nbefore ph0 restore')
+        fl.next('after correlation\nbefore ph0 restore' + fig_title)
         fl.image(s)
     if align_phases:
         s *= ph0
@@ -40,7 +40,7 @@ def correl_align(s, align_phases=False,indirect_dim='indirect',fl=None):
     print("after",sig_energy)
     print("*** *** ***")
     if fl is not None:
-        fl.next('After correlation\nph0 restored sig energy=%g'%sig_energy)
+        fl.next('After correlation\nph0 restored sig energy=%g'%sig_energy + fig_title)
         fl.image(s)
     return s    
     # {{{ Apodization
