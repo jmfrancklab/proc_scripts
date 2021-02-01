@@ -59,7 +59,7 @@ def correl_align(s, align_phases=False,indirect_dim='indirect',fig_title='correl
     if fl is not None: 
         fl.next('correlation convergence')
         fl.plot(array(energy_vals),'x')
-        #gca().yaxis.set_major_formatter(to_percent)
+        gca().yaxis.set_major_formatter(to_percent)
     sig_energy = (abs(s)**2).data.mean().item()
     print("*** *** ***")
     print("after",sig_energy)
