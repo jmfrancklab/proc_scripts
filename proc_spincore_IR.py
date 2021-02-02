@@ -126,7 +126,7 @@ s *= -1
 fl.next('after alignment')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 #}}}
-fl.show();quit()
+#fl.show();quit()
 fl.next('recovery curve')
 s_signal = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
 # {{{ here we use the inactive coherence pathways to determine the error

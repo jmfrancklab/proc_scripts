@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib.ticker import FuncFormatter
 @FuncFormatter
 def to_percent(y, position):
-    s = '%.2'%(100 * y)
+    s = '%f'%(100 * y)
     if rcParams['text.usetex'] is True:
         return s + r'$\%$'
     else:
