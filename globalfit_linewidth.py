@@ -44,7 +44,7 @@ for j,C in enumerate(C_list):
     A_list.append(Parameter('A%d'%j, value = A_list_guess[j]))
     B_center_list.append(Parameter('B_center%d'%j, value = B_center_list_guess[j]))
     expressions.append(dVoigt.subs({A:A_list[j],B_center:B_center_list[j],
-        R:R2+C*k_H}))
+        R:R2+C*k_H,sigma:sigma}))
 for j,C in enumerate(C_list):
     guess_exp_lambda = s.lambdify([B],expressions[j].subs({A:A_list[j].value,
         B_center:B_center_list[j].value,
@@ -54,8 +54,8 @@ for j,C in enumerate(C_list):
     x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j]
     print(type(x_axis))
     guess = guess_exp_lambda(x_axis)
-    print(type(guess),guess.shape)
-    guess_nddata = nddata(guess, [-1], ['$B_0$']).setaxis(
+    print(type(result),result.shape)
+    guess_nddata = nddata(result, [-1], ['$B_0$']).setaxis(
             '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
     plot(datasets[j], label='data')
     plot(guess_nddata, ':', label='guess')
