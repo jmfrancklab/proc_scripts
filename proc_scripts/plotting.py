@@ -61,34 +61,43 @@ def draw_limits(thisrange,s):
 
 class fl_mod(figlist_var):
     """
-    Used to create an image for comparison where two images or plots are 
-    side by side in the same window. Takes characteristics from figlist_var
-    Parameters
-    ==========
-    plotname:   string with name of plot 
-    s:          nddata being analyzed
-    thisrange:  range along x axis to be analyzed
-    f:          fitdata 
-                data (a fitting instance), on which `f.fit()` has already been run
-    guess:      None or nddata
-                The result of `s.settoguess();s.eval(100)` where 100 can be
-                any integer.
-                Used to display the guess on the plot as well.
-    name:       str
-                the name of the plot
-
-    Returns
-    =======
-    plot image side by side with the cropped log 
-
+    Series of functions that allow complex plotting of data-whether a side by side plot
+    or plotting the absolute with overlaid phasing or plotting a fit curve.
+        Attributes
+        ----------
+        s:          nddata that is being plotted
+        label:      str
+                    name of the data being plotted
+        thisrange:  int
+                    range of x axis that is to be plotted
+        guess:      None or nddata
+                    The result of 's.settoguess();s.eval(100)' where 100 can be 
+                    any integer
+        show_phase: bool
+                    True or False- True to also display the phasing of 
+                    the data that is being plotted
+        show_real:  bool
+                    True or False- True to display the real of the data
+                    being plotted as a separate line
     """
     def next(self, *arg, **kwargs):
-        kwargs.update({"figsize": (9, 6), "legend": True})
-        super().next(*arg, **kwargs)
-
-    def real_imag(self,plotname,s):
+        kwargs.update({"figsize": (9,6), "legend":True})
+        return super().next(*arg,**kwargs)
+    def real_imag(self,label,s):
+        """
+        plots the real component of data in a subplot alongside the imaginary component
+            Parameters
+            ----------
+            label:   str,
+                        title for the data being plotted
+            s:          nddata,
+                        data being plotted
+            Returns
+            -------
+            side by side plot of the real and imaginary components of the input data
+        """                
         thisfig,(ax1,ax2) = subplots(1,2)
-        self.next(plotname, fig=thisfig)
+        self.next(label, fig=thisfig)
         sca(ax1)
         self.image(s.real)
         title('real')
@@ -98,13 +107,27 @@ class fl_mod(figlist_var):
         gci().set_clim(my_clim) #to match real
         title('imaginary')
         return
-    def side_by_side(self,plotname,s,thisrange):
+    def side_by_side(self,label,s,thisrange):
         """a bit of a hack to get the two subplots into
         the figure list -- also a good test for objective
         figure list -- for each slice out 3x thisrange, and then
-        show the lines for thisrange"""
+        show the lines for thisrange
+            Parameters
+            ----------
+            label:   str
+                        title for the data being plotted
+            s:          nddata
+                        data being plotted
+            thisrange:  int
+                        range that is being plotted or the limits of the data
+                        you want plotted
+            Returns
+            -------
+            plot of the cropped log of the nddata with expanded limits
+            nddata
+            """
         thisfig,(ax1,ax2) = subplots(1,2)
-        self.next(plotname, fig=thisfig)
+        self.next(label, fig=thisfig)
         sca(ax1)
         forplot = s['t2':expand_limits(thisrange,s)]
         self.image(forplot.C.setaxis('power','#').set_units('power','scan #'))
@@ -115,12 +138,25 @@ class fl_mod(figlist_var):
         draw_limits(thisrange,forplot)
         title('cropped log')
         return
-    def plot_curve(fl, f, name, guess=None):
-        """Plot the data with fit curve and fit equation.
+    def plot_curve(fl, f, label, guess=None):
+        """Plots the data with fit curve and fit equation.
+            Parameters
+            ----------
+            f:      fitdata
+                    data (a fitting instance), on which 'f.fit()' has already been run
+            label:   str
+                    a name for the plot
+            guess:  None or nddata
+                    The result of 's.settoguess();s.eval(100)' where 100 can be 
+                    any integer
+            Returns
+            -------
+            plot with the data and fitted curve as well as the guess
+            curve if made
         """
-        fl.next(name)
-        fl.plot(f, 'o', label=f.name())
-        fl.plot(f.eval(100), label='%s fit'%f.name())
+        fl.next(label)
+        fl.plot(f, 'o', label=f.label())
+        fl.plot(f.eval(100), label='%s fit'%f.label())
         if guess is not None:
             fl.plot(guess, '-', label='initial guess')
         text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
@@ -129,6 +165,21 @@ class fl_mod(figlist_var):
     def complex_plot(fl, d, label="", show_phase=False, show_real=True):
         """Plots the absolute of the data with options to also plot the 
         phasing, real, and imaginary components.
+        Parameters
+        ==========
+        d:          nddata to be plotted
+        label:      str
+                    label for the title of the plots
+        show_phase: bool
+                    True or False- True to also display the phasing of 
+                    the data that is being plotted
+        show_real:  bool
+                    True or False- True to display the real of the data
+                    being plotted as a separate line
+        Returns
+        =======
+        nddata and plot with the absolute value, and optional real/phasing
+        components overlaid on the plot.
         """
         colors = []
         for j in range(ndshape(d)["ch"]):
