@@ -4,15 +4,35 @@ from proc_scripts import postproc_dict
 zero_fill = False
 with figlist_var() as fl:
     for filename,postproc,fslice,tslice,max_kHz in [
-            ('210120_Ni_sol_probe_nutation_amp_1','spincore_nutation_v2',
-                (-15e3,15e3),(-0.75e-3,0.75e-3),200)
+            ('210201_Ni_sol_probe_gds_nutation_1','spincore_nutation_v2',
+                (-15.5e3,15e3),(-0.8e-3,0.8e-3),300)
             ]:
         
         fl.basename = filename
         print('analyzing', filename)
         d = find_file(filename,exp_type='nutation',expno='nutation',postproc=postproc,
-                lookup=postproc_dict,fl=fl)
+                lookup=postproc_dict)
         #print(d.get_prop('acq_params'))
+        if 'amp' in d.dimlabels:
+            print("amp is a dimlabel")
+            d.setaxis('amp',lambda x: x*plen)
+            d.set_units('amp','s')
+            ind_dim = '\\tau_p a'
+            d.rename('amp',ind_dim)
+        if'p_90' in d.dimlabels:
+            print("p_90 is indirect dim")
+            ind_dim = 'p_90'
+
+        d = d['ph1',1]['ph2',-2]
+
+        d.reorder('t2',first=False)
+        #d = d['repeats',0]
+        fl.next('raw data')
+        fl.image(d)
+        d.ift('t2')
+        fl.next('raw data time domain')
+        fl.image(d)
+        fl.show();quit()
         plen = d.get_prop('acq_params')['p90_us']
         plen *= 10**-6
         d = d['t2':(-20e3,20e3)]
