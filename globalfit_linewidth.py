@@ -7,7 +7,7 @@ from pylab import ndarray
 from symfit import Parameter,Variable, Fit, Model
 from symfit.core.minimizers import MINPACK
 import numpy as np
-
+fl = figlist_var()
 datasets = []
 C_list = []
 for thisfile,C in [
@@ -22,56 +22,43 @@ for thisfile,C in [
 with open('dVoigt.pickle','rb') as fp:
     print("reading expression for dVoigt from pickle")
     dVoigt = pickle.load(fp)
-
-sigma = sympy.symbols('sigma')
 sigma = Parameter('sigma', value= 5.9820375e-1)
-
-R2 = sympy.symbols('R2')
-R2 = Parameter('R2',value=0.3436)
-
-k_H = sympy.symbols('k_H')
-k_H = Parameter('k_H',value=70.302)
-
-R = sympy.symbols('R')
-R = Parameter('R', value = 70.6)
-
-A0,A1,A2,A3 = sympy.symbols('A0 A1 A2 A3')
-A0 = Parameter('A0' value=2.107721e02)
-A1 = Parameter('A1', value = 2.862171e02)
-A2 = Parameter('A2', value = 3.527704e02)
-A3 = Parameter('A3', value = 4.020849e02)
-
-BC0,BC1,BC2,BC3 = sympy.symbols('BC0 BC1 BC2 BC3')
-BC0 = Parameter('BC0', value = 2.391618e-01)
-BC1 = Parameter('BC1', value = 1.316801e-01)
-BC2 = Parameter('BC2', value = 9.543103e-03)
-BC3 = Parameter('BC3', value = 8.16337e-02)
-
-B = sympy.symbols('B')
+R2 = Parameter('R2', value = 0.3436)
+k_H = Parameter('k_H', value = 70.302)
+A_list_guess = [2.107721e02,
+        2.862171e02,
+        3.527704e02,
+        4.020849e02]
+B_center_list_guess = [2.391618e-01,
+        1.316801e-01,
+        9.543103e-03,
+        8.16337e-02]
 B = Parameter('B')
-
-for C in enumerate(C_list):
-    expression0 = dVoigt.subs({A:A0, B_center:BC0, R: R2 + k_H*C, sigma:sigma})
-    expression1 = dVoigt.subs({A:A1, B_center:BC1, R: R2 + k_H*C, sigma:sigma})
-    expression2 = dVoigt.subs({A:A2, B_center:BC2, R: R2 + k_H*C, sigma:sigma})
-    expression3 = dVoigt.subs({A:A3, B_center:BC3, R: R2 + k_H*C, sigma:sigma})
-
-
-
+R = Parameter('R')
+A = Parameter('A')
+B_center = Parameter('B_center')
+A_list = []
+B_center_list = []
 expressions = []
-for C in enumerate(C_list):
-    expressions.append(dVoigt.subs({A:A_list_guess[j],B_center:B_center_list_guess[j],
-        R:R2+C*k_H,sigma:sigma}))
-model_lambda = s.lambdify([B],expressions,
-    modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
-x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j]
-print(type(x_axis))
-result = model_lambda(x_axis)
-#print(type(result),result.shape)
-guess_nddata = nddata(result, [-1], ['$B_0$']).setaxis(
-        '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
-plot(datasets[j], label='data')
-plot(guess_nddata, ':', label='guess')
+for j,C in enumerate(C_list):
+    A_list.append(Parameter('A%d'%j, value = A_list_guess[j]))
+    B_center_list.append(Parameter('B_center%d'%j, value = B_center_list_guess[j]))
+    expressions.append(dVoigt.subs({A:A_list[j],B_center:B_center_list[j],
+        R:R2+C*k_H}))
+for j,C in enumerate(C_list):
+    guess_exp_lambda = s.lambdify([B],expressions[j].subs({A:A_list[j].value,
+        B_center:B_center_list[j].value,
+        R:R2.value+C*k_H.value,
+        sigma:sigma.value}),
+        modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
+    x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j]
+    print(type(x_axis))
+    guess = guess_exp_lambda(x_axis)
+    print(type(guess),guess.shape)
+    guess_nddata = nddata(guess, [-1], ['$B_0$']).setaxis(
+            '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
+    plot(datasets[j], label='data')
+    plot(guess_nddata, ':', label='guess')
 fl.show();quit()    
 
         
