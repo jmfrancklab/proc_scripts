@@ -144,8 +144,7 @@ def analyze_square_refl(d, label='', fl=None,
     # {{{ calculate frequency offset
     decay_timescale = 3./f.output('R')
     dt = plb.diff(decay.getaxis("t")[r_[0, 1]]).item()
-    phases = secon_blip['t':(200e-9,((54. / f.output('R') * 2 * pi * frq)e-9))
-)]
+    phases = secon_blip['t':(150*10**-9,((54. / f.output('R') * 2 * pi * frq)*10**-9))]
     frq_offset = (phases['t',1:]/phases['t',:-1]*abs(phases['t',:-1])
             ).sum('t').angle.item()/dt/2/pi
     if fl is not None:
