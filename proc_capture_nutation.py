@@ -16,6 +16,7 @@ with figlist_var() as fl:
 
         fl.next('freq domain')
         fl.plot(d)
+        d.ift('t')
         fl.next('analytic signal')
         for j in range(ndshape(d)['amplitudes']):
             fl.plot(abs(d['amplitudes',j]),alpha=0.5, linewidth=1,label = "amplitude%d"%j) 
