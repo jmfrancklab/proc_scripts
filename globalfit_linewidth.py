@@ -49,10 +49,10 @@ for j,C in enumerate(C_list):
 print(expressions[0].atoms(sp.Symbol))
 for j,C in enumerate(C_list):
     guess_exp_lambda = s.lambdify([B],expressions[j].subs({R2:R2.value,
-        A:A_list[j].value,
+        A[j]:A_list[j],
         k_H:k_H.value,
         sigma:sigma.value,
-        B_center:B_center_list[j].value}),
+        B_center[j]:B_center_list[j]})(B),
         modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
     x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j]
     print(type(x_axis))
