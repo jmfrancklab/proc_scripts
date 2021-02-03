@@ -57,25 +57,25 @@ for j,C in enumerate(C_list):
 for k,v in this_guess.items():
     k.value = v
 for j,C in enumerate(C_list):
+    print(A_list[j])
     guess_exp = expressions[j].subs({R2:R2.value,
-        A:A_list[j].value,
+        A_list[j]:A_list[j].value,
         k_H:k_H.value,
         sigma:sigma.value,
-        B_center:B_center_list[j].value})
+        B_center_list[j]:B_center_list[j].value})
     print(guess_exp.atoms(sp.Symbol))
-    quit()
 for j,C in enumerate(C_list):
     guess_exp_lambda = s.lambdify([B],expressions[j].subs({R2:R2.value,
-        A:A_list[j].value,
+        A_list[j]:A_list[j].value,
         k_H:k_H.value,
         sigma:sigma.value,
-        B_center:B_center_list[j].value}),
+        B_center_list[j]:B_center_list[j].value}),
         modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
     x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j]
     print(type(x_axis))
     guess = guess_exp_lambda(x_axis)
-    print(type(result),result.shape)
-    guess_nddata = nddata(result, [-1], ['$B_0$']).setaxis(
+    print(type(guess),guess.shape)
+    guess_nddata = nddata(guess, [-1], ['$B_0$']).setaxis(
             '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
     plot(datasets[j], label='data')
     plot(guess_nddata, ':', label='guess')
