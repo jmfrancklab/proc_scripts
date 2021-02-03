@@ -46,13 +46,26 @@ for j,C in enumerate(C_list):
     B_center_list.append(Parameter('B_center%d'%j, value = B_center_list_guess[j]))
     expressions.append(dVoigt.subs({A:A_list[j],B_center:B_center_list[j],
         R:R2+C*k_H,sigma:sigma}))
-print(expressions[0].atoms(sp.Symbol))
+    print(expressions[j].atoms(sp.Symbol))
+    this_guess = {A:A_list[j].value,
+            B_center:B_center_list[j].value,
+            R2:R2.value,
+            k_H: k_H.value,
+            sigma:sigma.value,}
+    print(this_guess) 
+#print(expressions[0].atoms(sp.Symbol))
+for k,v in this_guess.items():
+    k.value = v
+for j,C in enumerate(C_list):
+    guess_exp = expressions[j].subs(this_guess)
+    print(guess_exp.atoms(sp.Symbol))
+    quit()
 for j,C in enumerate(C_list):
     guess_exp_lambda = s.lambdify([B],expressions[j].subs({R2:R2.value,
-        A[j]:A_list[j],
+        A:A_list[j].value,
         k_H:k_H.value,
         sigma:sigma.value,
-        B_center[j]:B_center_list[j]})(B),
+        B_center:B_center_list[j].value}),
         modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
     x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j]
     print(type(x_axis))
