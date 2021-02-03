@@ -57,7 +57,11 @@ for j,C in enumerate(C_list):
 for k,v in this_guess.items():
     k.value = v
 for j,C in enumerate(C_list):
-    guess_exp = expressions[j].subs(this_guess)
+    guess_exp = expressions[j].subs({R2:R2.value,
+        A:A_list[j].value,
+        k_H:k_H.value,
+        sigma:sigma.value,
+        B_center:B_center_list[j].value})
     print(guess_exp.atoms(sp.Symbol))
     quit()
 for j,C in enumerate(C_list):
