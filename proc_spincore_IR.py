@@ -47,7 +47,10 @@ s.ift('t2')
 best_shift = hermitian_function_test(s[
     'ph2',1]['ph1',0])
 logger.info(strm("best shift is", best_shift))
-s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+s.ft('t2')
+s *= np.exp(1j*2*pi*best_shift*s.fromaxis('t2'))
+s.ift('t2')
+#s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
 #fl.next('time domain after hermitian test')
 #fl.image(s.C.setaxis(
 #'vd','#').set_units('vd','scan #'))
@@ -60,11 +63,11 @@ else:
     logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
     ph0 = ph0/abs(ph0)
 s /= ph0
-#fl.next('frequency domain -- after hermitian function test and phasing')
+fl.next('frequency domain -- after hermitian function test and phasing')
 s.ft('t2')
-#fl.image(s.C.setaxis(
-#'vd','#').set_units('vd','scan #'))
-s.ift('t2')
+fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
+#s.ift('t2')
 #fl.next('check phasing -- real')
 #fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 #gridandtick(plt.gca())
@@ -74,19 +77,18 @@ s.ift('t2')
 #gridandtick(plt.gca())
 #}}}
 #{{{slicing FID
-s = s['t2':(0,None)]
-s['t2',0] *= 0.5
+#s = s['t2':(0,None)]
+#s['t2',0] *= 0.5
 #fl.next('phased and FID sliced')
 #fl.image(s.C.setaxis(
 #'vd','#').set_units('vd','scan #'))
 #fl.next('phased and FID sliced -- frequency domain')
-s.ft('t2')
+#s.ft('t2')
 # }}}
 #fl.image(s.C.setaxis(
 #'vd','#').set_units('vd','scan #'))
 #}}}
 #{{{ Atttempting correlation alignment
-s = s['t2':(-2.5e3,2.5e3)]
 fl.next('before align')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 for j in range(ndshape(s)['vd']):
@@ -94,7 +96,7 @@ for j in range(ndshape(s)['vd']):
         s['vd',j] *= -1
 s.ift(['ph2','ph1'])
 phasing = ndshape([4,2],['ph2','ph1']).alloc()
-phasing.setaxis('ph1',r_[1,2]/4).setaxis('ph2',r_[0:4]/4)
+phasing.setaxis('ph1',r_[0,2]/4).setaxis('ph2',r_[0:4]/4)
 phasing.ft(['ph2','ph1'])
 phasing['ph2',1]['ph1',0] = 1
 phasing.ift(['ph1','ph2'])
@@ -106,10 +108,13 @@ s.setaxis('vd','#')
 s.reorder('t2',first=False)
 fl.next('after smooshing in order')
 fl.image(s)
+s = s['t2':(-1e3,1e3)]
+
 fl.basename='first pass'
-s,energy_vals = correl_align(s,align_phases=True,indirect_dim='vd',fl=fl)
+s, E_vals = correl_align(s,align_phases=True,indirect_dim='vd',fl=fl)
+fl.show();quit()
 fl.basename=None
-s.ift('t2')
+#s.ift('t2')
 s.chunk('vd',['vd','ph2','ph1'],[-1,4,2])
 s.setaxis('ph1',r_[0.,2.]/4)
 s.setaxis('ph2',r_[0.,1.,2.,3.]/4)
@@ -121,7 +126,7 @@ s *= phasing
 s.ft(['ph1','ph2'])
 fl.next('time domain-after corr')
 fl.image(s)
-s.ft('t2')
+#s.ift('t2')
 s *= -1
 fl.next('after alignment')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
