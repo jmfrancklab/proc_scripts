@@ -47,10 +47,7 @@ s.ift('t2')
 best_shift = hermitian_function_test(s[
     'ph2',1]['ph1',0])
 logger.info(strm("best shift is", best_shift))
-s.ft('t2')
-s *= np.exp(1j*2*pi*best_shift*s.fromaxis('t2'))
-s.ift('t2')
-#s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
 #fl.next('time domain after hermitian test')
 #fl.image(s.C.setaxis(
 #'vd','#').set_units('vd','scan #'))
@@ -63,11 +60,11 @@ else:
     logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
     ph0 = ph0/abs(ph0)
 s /= ph0
-fl.next('frequency domain -- after hermitian function test and phasing')
+#fl.next('frequency domain -- after hermitian function test and phasing')
 s.ft('t2')
-fl.image(s.C.setaxis(
-'vd','#').set_units('vd','scan #'))
-#s.ift('t2')
+#fl.image(s.C.setaxis(
+#'vd','#').set_units('vd','scan #'))
+s.ift('t2')
 #fl.next('check phasing -- real')
 #fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
 #gridandtick(plt.gca())
@@ -77,13 +74,13 @@ fl.image(s.C.setaxis(
 #gridandtick(plt.gca())
 #}}}
 #{{{slicing FID
-#s = s['t2':(0,None)]
-#s['t2',0] *= 0.5
+s = s['t2':(0,None)]
+s['t2',0] *= 0.5
 #fl.next('phased and FID sliced')
 #fl.image(s.C.setaxis(
 #'vd','#').set_units('vd','scan #'))
 #fl.next('phased and FID sliced -- frequency domain')
-#s.ft('t2')
+s.ft('t2')
 # }}}
 #fl.image(s.C.setaxis(
 #'vd','#').set_units('vd','scan #'))
@@ -131,7 +128,7 @@ s *= -1
 fl.next('after alignment')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 #}}}
-#fl.show();quit()
+fl.show();quit()
 fl.next('recovery curve')
 s_signal = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
 # {{{ here we use the inactive coherence pathways to determine the error
