@@ -12,7 +12,7 @@ def to_percent(y, position):
         return s + '%'
 def correl_align(s, align_phases=False,indirect_dim='indirect',fig_title='correlation alignment',maxiter=50,tol=1e-4,fl=None):
     N = ndshape(s)[indirect_dim]
-    sig_energy = (abs(s)**2).data.mean().item() / N
+    sig_energy = (abs(s)**2).data.sum().item() / N
     if fl is not None:
         fl.next('before correlation\nsig. energy=%g'%sig_energy + fig_title)
         fl.image(s)
