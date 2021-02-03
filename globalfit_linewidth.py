@@ -46,24 +46,14 @@ for j,C in enumerate(C_list):
     B_center_list.append(Parameter('B_center%d'%j, value = B_center_list_guess[j]))
     expressions.append(dVoigt.subs({A:A_list[j],B_center:B_center_list[j],
         R:R2+C*k_H,sigma:sigma}))
-    print(expressions[j].atoms(sp.Symbol))
-    this_guess = {A:A_list[j].value,
-            B_center:B_center_list[j].value,
-            R2:R2.value,
-            k_H: k_H.value,
-            sigma:sigma.value,}
-    print(this_guess) 
-#print(expressions[0].atoms(sp.Symbol))
 for k,v in this_guess.items():
     k.value = v
 for j,C in enumerate(C_list):
-    print(A_list[j])
     guess_exp = expressions[j].subs({R2:R2.value,
         A_list[j]:A_list[j].value,
         k_H:k_H.value,
         sigma:sigma.value,
         B_center_list[j]:B_center_list[j].value})
-    print(guess_exp.atoms(sp.Symbol))
 for j,C in enumerate(C_list):
     guess_exp_lambda = s.lambdify([B],expressions[j].subs({R2:R2.value,
         A_list[j]:A_list[j].value,
@@ -77,8 +67,10 @@ for j,C in enumerate(C_list):
     print(type(guess),guess.shape)
     guess_nddata = nddata(guess, [-1], ['$B_0$']).setaxis(
             '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
-    plot(datasets[j], label='data')
-    plot(guess_nddata, ':', label='guess')
+    fl.next('guess fit')
+    
+    fl.plot(datasets[j], label='dataset%d'%j)
+    fl.plot(guess_nddata, ':', label='guess%d'%j)
 fl.show();quit()    
 
         
