@@ -31,10 +31,10 @@ A_list_guess = [2.107721e02,
         2.862171e02,
         3.527704e02,
         4.020849e02]
-B_center_list_guess = [2.391618e-01,
-        1.316801e-01,
-        9.543103e-03,
-        8.16337e-02]
+B_center_list_guess = [2.391618e-01-1,# the -1 here comes from the fact that we mess with the x axis in the proc_linewidth code where these come from
+        1.316801e-01-1,
+        9.543103e-03-1,
+        8.16337e-02-1]
 B = Parameter('B')
 R = Parameter('R')
 A = Parameter('A')
@@ -42,8 +42,6 @@ B_center = Parameter('B_center')
 A_list = []
 B_center_list = []
 expressions = []
-y = []
-B_0 = []
 
 #}}}
 #{{{appending guess lists into parameter list and creating expression list
@@ -52,8 +50,6 @@ for j,C in enumerate(C_list):
     B_center_list.append(Parameter('B_center%d'%j, value = B_center_list_guess[j]))
     expressions.append(dVoigt.subs({A:A_list[j],B_center:B_center_list[j],
         R:R2+C*k_H,sigma:sigma}))
-    y.append(Variable('y%d'%j))
-    B_0.append(Variable('B_0%d'%j))
 #}}}
 #{{{lambdify the expressions and plot guesses with actual data
 for j,C in enumerate(C_list):
@@ -74,31 +70,27 @@ for j,C in enumerate(C_list):
     fl.plot(guess_nddata, ':', label='guess%d'%j)
 #}}}
 #{{{defining the model with the expressions
-    B = []
-    B.append(Variable('B%d'%j))
-    model = Model({y[j]:expressions[j].subs({R2:R2,
-        A_list[j]:A_list[j],
-        k_H:k_H,
-        sigma:sigma,
-        B_center_list[j]:B_center_list[j],
-        B:B[j]})})
-    kwargs = {str(B_0[j]):datasets[j].getaxis('$B_0$') for j in range(3)}
-    kwargs.update(
-            {str(y[j]):datasets[j].data.real for j in range(3)}
-            )
-    fit = Fit(model)
-    fit_result = fit.execute()
-    print("fit is done")
-    plt.figure()
-    plt.title('data with fit')
-    plot(d,'.',label='data')
-    fit_nddata = nddata(
-            fit.model(B=x_axis, **fit_result.params).y,
-            [-1],['$B_0$']).setaxis('$B_0$',x_axis)
-    plot(fit_nddata, label='fit')
-    print(fit_result)
-
-
-fl.show();quit()    
+B_list = [Variable('B%d'%j) for j in range(len(C_list))]
+y_list = [Variable('y%d'%j) for j in range(len(C_list))]
+model = Model({y_list[j]:expressions[j].subs({B:B_list[j]})
+    for j in range(len(C_list))})
+print([str(expressions[j].subs({B:B_list[j]}).atoms(s.Symbol))
+    for j in range(len(C_list))])
+kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
+kwargs.update(
+        {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
+        )
+fit = Fit(model,
+        **kwargs)
+fit_result = fit.execute()
+print("fit is done")
+plt.figure()
+plt.title('data with fit')
+plot(d,'.',label='data')
+fit_nddata = nddata(
+        fit.model(B=x_axis, **fit_result.params).y,
+        [-1],['$B_0$']).setaxis('$B_0$',x_axis)
+plot(fit_nddata, label='fit')
+print(fit_result)
 
         
