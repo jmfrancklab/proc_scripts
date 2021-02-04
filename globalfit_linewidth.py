@@ -35,7 +35,7 @@ B_center_list_guess = [2.391618e-01-1,# the -1 here comes from the fact that we 
         1.316801e-01-1,
         9.543103e-03-1,
         8.16337e-02-1]
-B = Parameter('B')
+B = Variable('B')
 R = Parameter('R')
 A = Parameter('A')
 B_center = Parameter('B_center')
@@ -72,8 +72,11 @@ for j,C in enumerate(C_list):
 #{{{defining the model with the expressions
 B_list = [Variable('B%d'%j) for j in range(len(C_list))]
 y_list = [Variable('y%d'%j) for j in range(len(C_list))]
+print("B looks like this:",B)
 model = Model({y_list[j]:expressions[j].subs({B:B_list[j]})
     for j in range(len(C_list))})
+print([str(B.subs({B:B_list[j]}).atoms(s.Symbol))
+    for j in range(len(C_list))])
 print([str(expressions[j].subs({B:B_list[j]}).atoms(s.Symbol))
     for j in range(len(C_list))])
 kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
