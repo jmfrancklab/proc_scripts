@@ -9,6 +9,7 @@ from symfit.core.minimizers import MINPACK
 import numpy as np
 import sympy as sp
 fl = figlist_var()
+#{{{ setting up parameters and parameter lists
 datasets = []
 C_list = []
 for thisfile,C in [
@@ -41,19 +42,20 @@ B_center = Parameter('B_center')
 A_list = []
 B_center_list = []
 expressions = []
+y = []
+B_0 = []
+
+#}}}
+#{{{appending guess lists into parameter list and creating expression list
 for j,C in enumerate(C_list):
     A_list.append(Parameter('A%d'%j, value = A_list_guess[j]))
     B_center_list.append(Parameter('B_center%d'%j, value = B_center_list_guess[j]))
     expressions.append(dVoigt.subs({A:A_list[j],B_center:B_center_list[j],
         R:R2+C*k_H,sigma:sigma}))
-for k,v in this_guess.items():
-    k.value = v
-for j,C in enumerate(C_list):
-    guess_exp = expressions[j].subs({R2:R2.value,
-        A_list[j]:A_list[j].value,
-        k_H:k_H.value,
-        sigma:sigma.value,
-        B_center_list[j]:B_center_list[j].value})
+    y.append(Variable('y%d'%j))
+    B_0.append(Variable('B_0%d'%j))
+#}}}
+#{{{lambdify the expressions and plot guesses with actual data
 for j,C in enumerate(C_list):
     guess_exp_lambda = s.lambdify([B],expressions[j].subs({R2:R2.value,
         A_list[j]:A_list[j].value,
@@ -68,9 +70,35 @@ for j,C in enumerate(C_list):
     guess_nddata = nddata(guess, [-1], ['$B_0$']).setaxis(
             '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
     fl.next('guess fit')
-    
     fl.plot(datasets[j], label='dataset%d'%j)
     fl.plot(guess_nddata, ':', label='guess%d'%j)
+#}}}
+#{{{defining the model with the expressions
+    B = []
+    B.append(Variable('B%d'%j))
+    model = Model({y[j]:expressions[j].subs({R2:R2,
+        A_list[j]:A_list[j],
+        k_H:k_H,
+        sigma:sigma,
+        B_center_list[j]:B_center_list[j],
+        B:B[j]})})
+    kwargs = {str(B_0[j]):datasets[j].getaxis('$B_0$') for j in range(3)}
+    kwargs.update(
+            {str(y[j]):datasets[j].data.real for j in range(3)}
+            )
+    fit = Fit(model)
+    fit_result = fit.execute()
+    print("fit is done")
+    plt.figure()
+    plt.title('data with fit')
+    plot(d,'.',label='data')
+    fit_nddata = nddata(
+            fit.model(B=x_axis, **fit_result.params).y,
+            [-1],['$B_0$']).setaxis('$B_0$',x_axis)
+    plot(fit_nddata, label='fit')
+    print(fit_result)
+
+
 fl.show();quit()    
 
         
