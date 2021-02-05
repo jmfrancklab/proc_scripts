@@ -90,6 +90,17 @@ kwargs.update(
 fit = Fit(model,
         **kwargs)
 fit_result = fit.execute()
+with open('fit_result.pickle','wb') as fp:
+        pickle.dump(fit_result,fp)
+print("fit is done, pickle dumped")
+plt.figure()
+plt.title('data with fit')
+plot(d,'.',label='data')
+fit_nddata = nddata(
+        fit.model(B=x_axis, **fit_result.params).y,
+        [-1],['$B_0$']).setaxis('$B_0$',x_axis)
+plot(fit_nddata, label='fit')
+print(fit_result)
 print("fit is done")
 x_axis =r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j] 
 y_fit = model(
@@ -118,13 +129,7 @@ for j in range(3):
     plt.plt(x_finer,y_fit[j],c=thiscolor,alpha=0.5)
 plt.xlabel('$B_0$/G')
 fl.show();quit()   
-#plt.figure()
-#plt.title('data with fit')
-#plot(d,'.',label='data')
-#fit_nddata = nddata(
-#        fit.model(B=x_axis, **fit_result.params).y,
-#        [-1],['$B_0$']).setaxis('$B_0$',x_axis)
-#plot(fit_nddata, label='fit')
-#print(fit_result)
+
+
 
         
