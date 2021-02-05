@@ -86,7 +86,9 @@ kwargs.update(
 fit = Fit(model,
         **kwargs)
 fit_result = fit.execute()
-print("fit is done")
+with open('fit_result.pickle','wb') as fp:
+        pickle.dump(fit_result,fp)
+print("fit is done, pickle dumped")
 plt.figure()
 plt.title('data with fit')
 plot(d,'.',label='data')
