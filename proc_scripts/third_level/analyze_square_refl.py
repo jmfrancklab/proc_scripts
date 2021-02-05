@@ -145,13 +145,16 @@ def analyze_square_refl(d, label='', fl=None,
     # {{{ calculate frequency offset
     decay_timescale = 3./f.output('R')
     dt = plb.diff(decay.getaxis("t")[r_[0, 1]]).item()
-    if label == 'hairpin probe':
-        end_blip = 500e-9
-    if label == 'solenoid probe':
-        end_blip = 1170e-9
+    end_blip =((54. / f.output('R') * 2 * pi * frq)*10**-9) 
     phases = secon_blip['t':(150*10**-9,(end_blip))]
-    frq_offset = (phases['t',1:]/phases['t',:-1]*abs(phases['t',:-1])
-            ).sum('t').angle.item()/dt/2/pi
+    est_offset = secon_blip['t':end_blip].angle/2/pi - secon_blip['t':1.5e-7].angle/2/pi
+    time = end_blip - 150e-9 
+    est_offset = est_offset/time
+    est_offset = est_offset/dt
+    print(est_offset.real)
+
+    frq_offset = ((phases['t',1:].angle/2/pi)/(phases['t',:-1].angle/2/pi)*abs(phases['t',:-1].angle/2/pi)
+            ).sum('t').item()/dt
     if fl is not None:
         ax = fl.twinx(orig=False)
         x = plb.mean(phases.getaxis('t'))/1e-9
@@ -159,7 +162,7 @@ def analyze_square_refl(d, label='', fl=None,
         ax.text(
                 x=x,
                 y=y,
-                s=' '*5+r'$\Delta\nu=%0.3g$ kHz'%(frq_offset/1e3),
+                s=' '*5+r'$\Delta\nu=%0.3g$ kHz'%(est_offset.data/1e3),
                 va='bottom',
                 ha='left',
                 size=fontsize,
@@ -167,7 +170,7 @@ def analyze_square_refl(d, label='', fl=None,
                 color=color,
                 )
         fl.twinx(orig=True)
-    print('frq_offset',frq_offset,"for",label)
+    #print('frq_offset',frq_offset,"for",label)
     # }}}
     Q = 1. / f.output('R') * 2 * pi * frq
     if fl is not None:
