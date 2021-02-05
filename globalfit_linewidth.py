@@ -81,53 +81,58 @@ print([str(B.subs({B:B_list[j]}).atoms(s.Symbol))
     for j in range(len(C_list))])
 print([str(expressions[j].subs({B:B_list[j]}).atoms(s.Symbol))
     for j in range(len(C_list))])
-kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
-kwargs.update(
-        {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
-        )
+#kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
+#kwargs.update(
+#        {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
+#        )
 #}}}
 #{{{Fitting the model
-fit = Fit(model,
-        **kwargs)
-fit_result = fit.execute()
-with open('fit_result.pickle','wb') as fp:
+#fit = Fit(model,
+#        **kwargs)
+#fit_result = fit.execute()
+if not os.path.exists('fit_result.pickle'):
+    with open('fit_result.pickle','wb') as fp:
+        print('generating pickle file')
         pickle.dump(fit_result,fp)
+else: 
+    with open('fit_result.pickle','rb') as fp:
+        print('reading fit result from pickle')
+        fit_result = pickle.load(fp)
 print("fit is done, pickle dumped")
-plt.figure()
-plt.title('data with fit')
-plot(d,'.',label='data')
-fit_nddata = nddata(
-        fit.model(B=x_axis, **fit_result.params).y,
-        [-1],['$B_0$']).setaxis('$B_0$',x_axis)
-plot(fit_nddata, label='fit')
 print(fit_result)
-print("fit is done")
 x_axis =r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j] 
 y_fit = model(
         R2 = fit_result.value(R2),
         k_H = fit_result.value(k_H),
         sigma = fit_result.value(sigma),
-        A0 = fit_result.value(A[0]),
-        A1 = fit_result.value(A[1]),
-        A2 = fit_result.value(A[2]),
-        A3 = fit_result.value(A[3]),
-        B_center0= fit_result.value(B_center[0]),
-        B_center1 = fit_result.value(B_center[1]),
-        B_center2 = fit_result.value(B_center[2]),
-        B_center3 = fit_result.value(B_center[3]),
+        A0 = 2.107721e2,#fit_result.value(A0),
+        A1 = 2.862171e2,#fit_result.value(A1),
+        A2 = 3.527704e2,#fit_result.value(A2),
+        A3 = 4.020849e2,#fit_result.value(A3),
+        B_center0= -7.608382e-1,#fit_result.value(B_center[0]),
+        B_center1 = -8.683199e-1,#fit_result.value(B_center[1]),
+        B_center2 = -9.904569e-1,#fit_result.value(B_center[2]),
+        B_center3 = -9.183663e-1,#fit_result.value(B_center[3]),
         B0 = x_axis,
         B1 = x_axis,
         B2 = x_axis,
         B3 = x_axis)
-for j in range(3):
+plt.figure()
+plt.title('data with fit')
 
+for j in range(4):
+    data_x = np.array(datasets[j].getaxis('$B_0$'))
+    data_y = np.array(datasets[j].data.real)
+    print(datasets[j].getaxis('$B_0$'))
+    print(datasets[j].real)
     thiscolor = next(thesecolors)
-    plt.figure()
-    plt.title('data with fit')
-    plt.plot(datasets[j].getaxis('$B_0$'),datasets[j].real,'o',c=thiscolor,alpha=0.6,
-            label='Concentration%d'%j)
-    plt.plt(x_finer,y_fit[j],c=thiscolor,alpha=0.5)
-plt.xlabel('$B_0$/G')
+    plt.plot(data_x,data_y,'.',c=thiscolor,alpha=0.2,
+            label='data C = %f'%C_list[j])
+    plt.plot(x_axis,y_fit[j],'--',c=thiscolor,alpha=0.6,
+            label='fit C = %f'%C_list[j])
+    plt.xlabel('$B_0$/G')
+    plt.ylabel('Intensity')
+    plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
 fl.show();quit()   
 
 
