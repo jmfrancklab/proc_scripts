@@ -100,7 +100,7 @@ else:
         fit_result = pickle.load(fp)
 print("fit is done, pickle dumped")
 print(fit_result)
-x_axis =r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j] 
+x_axis =r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:5280j] 
 y_fit = model(
         R2 = fit_result.value(R2),
         k_H = fit_result.value(k_H),
@@ -119,17 +119,20 @@ y_fit = model(
         B3 = x_axis)
 plt.figure()
 plt.title('data with fit')
-
+residual_y = []
 for j in range(4):
     data_x = np.array(datasets[j].getaxis('$B_0$'))
     data_y = np.array(datasets[j].data.real)
+    residual_x = data_x - x_axis
+    residual_y.append(data_y - y_fit[j])
     print(datasets[j].getaxis('$B_0$'))
     print(datasets[j].real)
     thiscolor = next(thesecolors)
-    plt.plot(data_x,data_y,'.',c=thiscolor,alpha=0.2,
+    plt.plot(data_x,data_y,c=thiscolor,alpha=0.2,
             label='data C = %f'%C_list[j])
     plt.plot(x_axis,y_fit[j],'--',c=thiscolor,alpha=0.6,
             label='fit C = %f'%C_list[j])
+    plt.plot(x_axis,residual_y[j],':',c=thiscolor,alpha=0.5)
     plt.xlabel('$B_0$/G')
     plt.ylabel('Intensity')
     plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
