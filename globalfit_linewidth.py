@@ -8,6 +8,8 @@ from symfit import Parameter,Variable, Fit, Model
 from symfit.core.minimizers import MINPACK
 import numpy as np
 import sympy as sp
+from itertools import cycle
+thesecolors = cycle(list('bgrcmykw'))
 fl = figlist_var()
 #{{{ setting up parameters and parameter lists
 datasets = []
@@ -83,17 +85,46 @@ kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list)
 kwargs.update(
         {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
         )
+#}}}
+#{{{Fitting the model
 fit = Fit(model,
         **kwargs)
 fit_result = fit.execute()
 print("fit is done")
-plt.figure()
-plt.title('data with fit')
-plot(d,'.',label='data')
-fit_nddata = nddata(
-        fit.model(B=x_axis, **fit_result.params).y,
-        [-1],['$B_0$']).setaxis('$B_0$',x_axis)
-plot(fit_nddata, label='fit')
-print(fit_result)
+x_axis =r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j] 
+y_fit = model(
+        R2 = fit_result.value(R2),
+        k_H = fit_result.value(k_H),
+        sigma = fit_result.value(sigma),
+        A0 = fit_result.value(A[0]),
+        A1 = fit_result.value(A[1]),
+        A2 = fit_result.value(A[2]),
+        A3 = fit_result.value(A[3]),
+        B_center0= fit_result.value(B_center[0]),
+        B_center1 = fit_result.value(B_center[1]),
+        B_center2 = fit_result.value(B_center[2]),
+        B_center3 = fit_result.value(B_center[3]),
+        B0 = x_axis,
+        B1 = x_axis,
+        B2 = x_axis,
+        B3 = x_axis)
+for j in range(3):
+
+    thiscolor = next(thesecolors)
+    plt.figure()
+    plt.title('data with fit')
+    plt.plot(datasets[j].getaxis('$B_0$'),datasets[j].real,'o',c=thiscolor,alpha=0.6,
+            label='Concentration%d'%j)
+    plt.plt(x_finer,y_fit[j],c=thiscolor,alpha=0.5)
+plt.xlabel('$B_0$/G')
+fl.show();quit()   
+#plt.figure()
+#plt.title('data with fit')
+#plot(d,'.',label='data')
+#fit_nddata = nddata(
+#        fit.model(B=x_axis, **fit_result.params).y,
+#        [-1],['$B_0$']).setaxis('$B_0$',x_axis)
+#plot(fit_nddata, label='fit')
+#print(fit_result)
 
         
