@@ -5,6 +5,7 @@ from scipy.signal import tukey
 from scipy.optimize import minimize,leastsq
 import sympy as s
 import matplotlib.pyplot as plt
+from pyspecdata import *
 def analyze_square_refl(d, label='', fl=None,
         frq_bw=15e6,
         keep_after_pulse=2e-6, # amount of the time
@@ -144,9 +145,11 @@ def analyze_square_refl(d, label='', fl=None,
     # {{{ calculate frequency offset
     decay_timescale = 3./f.output('R')
     dt = plb.diff(decay.getaxis("t")[r_[0, 1]]).item()
-    phases = secon_blip['t':(150*10**-9,((54. / f.output('R') * 2 * pi * frq)*10**-9))]
-    print(phases)
-    quit()
+    if label == 'hairpin probe':
+        end_blip = 500e-9
+    if label == 'solenoid probe':
+        end_blip = 1170e-9
+    phases = secon_blip['t':(150*10**-9,(end_blip))]
     frq_offset = (phases['t',1:]/phases['t',:-1]*abs(phases['t',:-1])
             ).sum('t').angle.item()/dt/2/pi
     if fl is not None:
