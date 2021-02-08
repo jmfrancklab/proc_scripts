@@ -3,12 +3,12 @@ from pylab import *
 
 with figlist_var() as fl:
     for filename, folder_name, nodename in [
-            ('210204_gds_p90_vary_1', 'nutation', 'capture1')
+            ('210202_gds_amp_vary_2', 'nutation', 'capture1')
             ]:
         d = find_file(filename, exp_type=folder_name, expno=nodename)
-        d.rename('amplitudes','p90')
-        print(d['p90',1].get_prop())
-        quit()
+        #print(ndshape(d))
+        #quit()
+        #d.rename('amplitudes','p90')
         fl.next('raw data')
         fl.plot(d)
         d.ft('t',shift=True)
@@ -19,14 +19,25 @@ with figlist_var() as fl:
 
         fl.next('freq domain')
         fl.plot(d)
-        d['t':(None,1.4e7)]=0
-        d['t':(1.6e7,None)]=0
+        #fl.show();quit()
+        d['t':(None,1.18e7)]=0
+        d['t':(1.8e7,None)]=0
         d.ift('t')
         fl.next('analytic signal')
-        for j in range(ndshape(d)['p90']):
-            fl.plot(abs(d['p90',j]),alpha=0.5, linewidth=1,label = "p90%d"%j)
+        #took out for loop and hard coding p90 times because only GDS parameters saved over
+        # the pp parameters
+        fl.plot(abs(d['amplitudes',0]),alpha=0.5, linewidth=1,label = "p90 = 0 amp")
+        fl.plot(abs(d['amplitudes',1]),alpha=0.5,linewidth=1,label = "p90=0.056 amp")
+        fl.plot(abs(d['amplitudes',2]),alpha=0.5,linewidth=1,label = "p90=0.111 amp")
+        fl.plot(abs(d['amplitudes',3]),alpha=0.5,linewidth=1,label = "p90=0.167 amp")
+        fl.plot(abs(d['amplitudes',4]),alpha=0.5,linewidth=1,label = "p90=0.222 amp")
+        fl.plot(abs(d['amplitudes',5]),alpha=0.5,linewidth=1,label = "p90=0.278 amp")
+        fl.plot(abs(d['amplitudes',6]),alpha=0.5,linewidth=1,label = "p90=0.333 amp")
+        fl.plot(abs(d['amplitudes',7]),alpha=0.5,linewidth=1,label = "p90=0.389 amp")
+        fl.plot(abs(d['amplitudes',8]),alpha=0.5,linewidth=1,label = "p90=0.444 amp")
+        fl.plot(abs(d['amplitudes',9]),alpha=0.5,linewidth=1,label = "p90=0.5 amp")
         fl.next('analytic signal in frequency domain')
         d.ft('t')
-        for j in range(ndshape(d)['p90']):
-            fl.plot(abs(d['p90',j]),alpha=0.5, linewidth=1,label = "p90%d"%j)
+        #for j in range(ndshape(d)['p90']):
+        #    fl.plot(abs(d['p90',j]),alpha=0.5, linewidth=1,label = "p90%d"%j)
 
