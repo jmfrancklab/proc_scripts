@@ -3,6 +3,7 @@ from scipy.optimize import leastsq,minimize
 from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align
 from sympy import symbols, latex, Symbol
 from matplotlib import *
+from scipy.signal import tukey
 import matplotlib.pyplot as plt
 import numpy as np
 from sympy import exp as s_exp
@@ -14,8 +15,8 @@ date = '210127'
 id_string = 'OHTEMPO10mM_cap_probe_IR_1'
 nodename = 'signal'
 filter_bandwidth = 5e3
-coh_sel = {'ph1':0,
-        'ph2':1}
+ph1_val = 0
+ph2_val = 1
 coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             should ideally be pathways that do NOT include any known
         #             artifacts
@@ -30,9 +31,11 @@ s.reorder(['ph2','ph1']).set_units('t2','s')
 s.ft('t2',shift=True)
 #fl.next('raw data')
 #fl.image(s.C.setaxis('vd','#'))
-#fl.next('raw data -- coherence channels')
+fl.next('raw data -- coherence channels')
 s.ft(['ph2','ph1'])
-#fl.image(s.C.setaxis('vd','#'))
+fl.image(s.C.setaxis('vd','#'))
+f_range = (-500,500)
+s = s['t2':f_range]
 s.ift('t2')
 #fl.next('time domain cropped log')
 #fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
@@ -42,16 +45,50 @@ rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
 s.setaxis(t2-rough_center)
 #fl.next('rough centering')
 #fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+apod = s.fromaxis('t2')* 0 
+apod['t2':(None,500)] = apod['t2':(None,500)].run(lambda x:tukey(len(x)))
+s *= apod
+#}}}
+#{{{ Atttempting correlation alignment
+fl.next('before align')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+for j in range(ndshape(s)['vd']):
+    if s['vd',j].C.sum('t2')<1:
+        s['vd',j] *= -1
 s.ft('t2')
+s.ift(['ph2','ph1'])
 s.ift('t2')
+s.ft('t2')
+fl.next('prior to alignment')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'), interpolation = 'bilinear')
+fl.basename='first pass'
+opt_shift,sigma = correl_align(s,indirect_dim='vd',ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
+fl.basename= None
+s.ift('t2')
+s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+fl.next('out of correl alignment')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+s.reorder('ph1',first=True)
+s.reorder('ph2',first=True)
+s.reorder('t2',first=False)
+s.ft(['ph1','ph2'])
+fl.next('time domain-after corr')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+s *= -1
+fl.next('after alignment')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+#}}}
+#{{{phasing the aligned data
+#s.ift('t2')
 best_shift = hermitian_function_test(s[
-    'ph2',1]['ph1',0])
+    'ph2',1]['ph1',0].C.mean('vd'))
 logger.info(strm("best shift is", best_shift))
 s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
 #fl.next('time domain after hermitian test')
 #fl.image(s.C.setaxis(
 #'vd','#').set_units('vd','scan #'))
-ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
+
+ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
 if len(ph0.dimlabels) > 0:
     assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
     ph0 = zeroth_order_ph(ph0)
@@ -60,77 +97,22 @@ else:
     logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
     ph0 = ph0/abs(ph0)
 s /= ph0
-#fl.next('frequency domain -- after hermitian function test and phasing')
-s.ft('t2')
-#fl.image(s.C.setaxis(
-#'vd','#').set_units('vd','scan #'))
-s.ift('t2')
-#fl.next('check phasing -- real')
-#fl.plot(s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']])
-#gridandtick(plt.gca())
-#fl.next('check phasing -- imag')
-#fl.plot(s[
-#    'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']].imag)
-#gridandtick(plt.gca())
 #}}}
 #{{{slicing FID
 s = s['t2':(0,None)]
 s['t2',0] *= 0.5
-#fl.next('phased and FID sliced')
-#fl.image(s.C.setaxis(
-#'vd','#').set_units('vd','scan #'))
-#fl.next('phased and FID sliced -- frequency domain')
+fl.next('phased and FID sliced')
+fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
+fl.next('phased and FID sliced -- frequency domain')
 s.ft('t2')
 # }}}
-#fl.image(s.C.setaxis(
-#'vd','#').set_units('vd','scan #'))
+fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
 #}}}
-#{{{ Atttempting correlation alignment
-fl.next('before align')
-fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-for j in range(ndshape(s)['vd']):
-    if s['vd',j].C.sum('t2')<1:
-        s['vd',j] *= -1
-s.ift(['ph2','ph1'])
-phasing = ndshape([4,2],['ph2','ph1']).alloc()
-phasing.setaxis('ph1',r_[0,2]/4).setaxis('ph2',r_[0:4]/4)
-phasing.ft(['ph2','ph1'])
-phasing['ph2',1]['ph1',0] = 1
-phasing.ift(['ph1','ph2'])
-s /= phasing
-fl.next('after FT coeff phase correction')
-fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'), interpolation='bilinear')
-s.smoosh(['vd','ph2','ph1'])
-s.setaxis('vd','#')
-s.reorder('t2',first=False)
-fl.next('after smooshing in order')
-fl.image(s)
-s = s['t2':(-1e3,1e3)]
 
-fl.basename='first pass'
-s, E_vals = correl_align(s,align_phases=True,indirect_dim='vd',fl=fl)
-fl.show();quit()
-fl.basename=None
-#s.ift('t2')
-s.chunk('vd',['vd','ph2','ph1'],[-1,4,2])
-s.setaxis('ph1',r_[0.,2.]/4)
-s.setaxis('ph2',r_[0.,1.,2.,3.]/4)
-s.setaxis('vd',r_[0:len(s.getaxis('vd'))])
-s.reorder('ph1',first=True)
-s.reorder('ph2',first=True)
-s.reorder('t2',first=False)
-s *= phasing
-s.ft(['ph1','ph2'])
-fl.next('time domain-after corr')
-fl.image(s)
-#s.ift('t2')
-s *= -1
-fl.next('after alignment')
-fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-#}}}
-fl.show();quit()
 fl.next('recovery curve')
-s_signal = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
+s_signal = s['ph2',ph2_val]['ph1',ph1_val]
 # {{{ here we use the inactive coherence pathways to determine the error
 #     associated with the data
 s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
@@ -146,7 +128,7 @@ logger.info(strm("here is what the error looks like",s_signal.get_error()))
 fl.plot(s_signal,'o',label='real')
 fl.plot(s_signal.imag,'o',label='imaginary')
 fl.next('Spectrum - freq domain')
-s = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
+s = s['ph2',ph2_val]['ph1',ph1_val]
 fl.plot(s)
 fitfunc = lambda p, x: p[0]*(1-2*np.exp(-x*p[1]))
 x = s_signal.fromaxis('vd')
@@ -175,3 +157,4 @@ plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='large',
         horizontalalignment='center',color='k')
 ax = plt.gca()
 fl.show();quit()
+

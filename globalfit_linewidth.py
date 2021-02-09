@@ -119,20 +119,22 @@ y_fit = model(
         B3 = x_axis)
 plt.figure()
 plt.title('data with fit')
+print(y_fit)
 residual_y = []
 for j in range(4):
-    data_x = np.array(datasets[j].getaxis('$B_0$'))
-    data_y = np.array(datasets[j].data.real)
+    data_x = (datasets[j].getaxis('$B_0$'))
+    data_y = (datasets[j].data.real)
+    print(data_y)
+    quit()
     residual_x = data_x - x_axis
-    residual_y.append(data_y - y_fit[j])
-    print(datasets[j].getaxis('$B_0$'))
-    print(datasets[j].real)
+    residual_y.append(data_y[j] - y_fit[j])
+    residual_y2 = data_y - y_fit[j]
     thiscolor = next(thesecolors)
     plt.plot(data_x,data_y,c=thiscolor,alpha=0.2,
             label='data C = %f'%C_list[j])
     plt.plot(x_axis,y_fit[j],'--',c=thiscolor,alpha=0.6,
             label='fit C = %f'%C_list[j])
-    plt.plot(x_axis,residual_y[j],':',c=thiscolor,alpha=0.5)
+    plt.plot(x_axis,residual_y2,':',c=thiscolor,alpha=0.5)
     plt.xlabel('$B_0$/G')
     plt.ylabel('Intensity')
     plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
