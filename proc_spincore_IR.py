@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align
+from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align, ph1_real_Abs
 from sympy import symbols, latex, Symbol
 from matplotlib import *
 from scipy.signal import tukey
@@ -49,6 +49,45 @@ apod = s.fromaxis('t2')* 0
 apod['t2':(None,500)] = apod['t2':(None,500)].run(lambda x:tukey(len(x)))
 s *= apod
 #}}}
+#{{{phasing the aligned data
+#s.ift('t2')
+best_shift = hermitian_function_test(s[
+    'ph2',1]['ph1',0].C.mean('vd'))
+logger.info(strm("best shift is", best_shift))
+s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+fl.next('time domain after hermitian test')
+fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
+
+ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
+if len(ph0.dimlabels) > 0:
+    assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+    ph0 = zeroth_order_ph(ph0)
+    logger.info(strm('phasing dimension as one'))
+else:
+    logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
+    ph0 = ph0/abs(ph0)
+s /= ph0
+s = ph1_real_Abs(s)
+fl.next('phased data time domain')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+fl.next('phased data freq domain')
+s.ft('t2')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+fl.show();quit()
+#}}}
+#{{{slicing FID
+#s = s['t2':(0,None)]
+#s['t2',0] *= 0.5
+#fl.next('phased and FID sliced')
+#fl.image(s.C.setaxis(
+#'vd','#').set_units('vd','scan #'))
+#fl.next('phased and FID sliced -- frequency domain')
+#s.ft('t2')
+#fl.image(s.C.setaxis(
+#'vd','#').set_units('vd','scan #'))
+#}}}
+s.ift('t2')
 #{{{ Atttempting correlation alignment
 fl.next('before aligning prior to null')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
@@ -111,37 +150,6 @@ s.ift('t2')
 s *= -1
 fl.next('after alignment')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-#}}}
-#{{{phasing the aligned data
-#s.ift('t2')
-best_shift = hermitian_function_test(s[
-    'ph2',1]['ph1',0].C.mean('vd'))
-logger.info(strm("best shift is", best_shift))
-s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-fl.next('time domain after hermitian test')
-fl.image(s.C.setaxis(
-'vd','#').set_units('vd','scan #'))
-
-ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
-if len(ph0.dimlabels) > 0:
-    assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-    ph0 = zeroth_order_ph(ph0)
-    logger.info(strm('phasing dimension as one'))
-else:
-    logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
-    ph0 = ph0/abs(ph0)
-s /= ph0
-#}}}
-#{{{slicing FID
-s = s['t2':(0,None)]
-s['t2',0] *= 0.5
-fl.next('phased and FID sliced')
-fl.image(s.C.setaxis(
-'vd','#').set_units('vd','scan #'))
-fl.next('phased and FID sliced -- frequency domain')
-s.ft('t2')
-fl.image(s.C.setaxis(
-'vd','#').set_units('vd','scan #'))
 #}}}
 
 fl.next('recovery curve')

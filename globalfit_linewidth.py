@@ -81,15 +81,15 @@ print([str(B.subs({B:B_list[j]}).atoms(s.Symbol))
     for j in range(len(C_list))])
 print([str(expressions[j].subs({B:B_list[j]}).atoms(s.Symbol))
     for j in range(len(C_list))])
-#kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
-#kwargs.update(
-#        {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
-#        )
+kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
+kwargs.update(
+        {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
+        )
 #}}}
 #{{{Fitting the model
-#fit = Fit(model,
-#        **kwargs)
-#fit_result = fit.execute()
+fit = Fit(model,
+        **kwargs)
+fit_result = fit.execute()
 if not os.path.exists('fit_result.pickle'):
     with open('fit_result.pickle','wb') as fp:
         print('generating pickle file')
@@ -100,23 +100,32 @@ else:
         fit_result = pickle.load(fp)
 print("fit is done, pickle dumped")
 print(fit_result)
+print(fit_result.atoms(s.Symbol))
+quit()
 x_axis =r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:5280j] 
+for key in fit_result.params:
+    print(fit_result.params[str(key)])
+print(fit_result.params[0])
+quit()
 y_fit = model(
         R2 = fit_result.value(R2),
         k_H = fit_result.value(k_H),
         sigma = fit_result.value(sigma),
-        A0 = 2.107721e2,#fit_result.value(A0),
-        A1 = 2.862171e2,#fit_result.value(A1),
-        A2 = 3.527704e2,#fit_result.value(A2),
-        A3 = 4.020849e2,#fit_result.value(A3),
-        B_center0= -7.608382e-1,#fit_result.value(B_center[0]),
-        B_center1 = -8.683199e-1,#fit_result.value(B_center[1]),
-        B_center2 = -9.904569e-1,#fit_result.value(B_center[2]),
-        B_center3 = -9.183663e-1,#fit_result.value(B_center[3]),
+        A0 = fit_result.value(A0),
+        A1 = fit_result.value(A1),
+        A2 = fit_result.value(A2),
+        A3 = fit_result.value(A3),
+        B_center0= fit_result.value(B_center[0]),
+        B_center1 = fit_result.value(B_center[1]),
+        B_center2 = fit_result.value(B_center[2]),
+        B_center3 = fit_result.value(B_center[3]),
         B0 = x_axis,
         B1 = x_axis,
         B2 = x_axis,
         B3 = x_axis)
+
+print(y_fit[j])
+quit()
 plt.figure()
 plt.title('data with fit')
 residual_y = []
