@@ -9,6 +9,7 @@ from symfit.core.minimizers import MINPACK
 import numpy as np
 import sympy as sp
 from itertools import cycle
+B_name = '$B_0$'
 thesecolors = cycle(list('bgrcmykw'))
 fl = figlist_var()
 #{{{ setting up parameters and parameter lists
@@ -87,37 +88,24 @@ kwargs.update(
         )
 #}}}
 #{{{Fitting the model
-#fit = Fit(model,
-#        **kwargs)
-#fit_result = fit.execute()
-if not os.path.exists('fit_result.pickle'):
+fit = Fit(model,
+        **kwargs)
+use_pickle = True
+if not use_pickle:
+    fit_result = fit.execute()
     with open('fit_result.pickle','wb') as fp:
         print('generating pickle file')
         pickle.dump(fit_result,fp)
 else: 
+    assert os.path.exists('fit_result.pickle')
     with open('fit_result.pickle','rb') as fp:
         print('reading fit result from pickle')
         fit_result = pickle.load(fp)
-print("fit is done, pickle dumped")
-x_axis =r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:5280j] 
-y_fit = model(
-        R2 = fit_result.value(R2),
-        k_H = fit_result.value(k_H),
-        sigma = fit_result.value(sigma),
-        A0 = fit_result.value(A_list[0]),
-        A1 = fit_result.value(A_list[1]),
-        A2 = fit_result.value(A_list[2]),
-        A3 = fit_result.value(A_list[3]),
-        B_center0= fit_result.value(B_center_list[0]),
-        B_center1 = fit_result.value(B_center_list[1]),
-        B_center2 = fit_result.value(B_center_list[2]),
-        B_center3 = fit_result.value(B_center_list[3]),
-        B0 = x_axis,
-        B1 = x_axis,
-        B2 = x_axis,
-        B3 = x_axis)
-print(y_fit[1])
-quit()
+# I do the following b/c it was yelling at me for not having B0, B1, etc.
+x_axes = {'B%d'%j:datasets[j].getaxis(B_name) for j in range(len(datasets))}
+#print(len(x_axes),x_axes)
+y_fit = fit.model(**x_axes,**fit_result.params)
+print("breakpoint")
 plt.figure()
 plt.title('data with fit')
 residual_y = []
