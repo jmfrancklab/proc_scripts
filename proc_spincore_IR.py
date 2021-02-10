@@ -29,28 +29,28 @@ s = nddata_hdf5(filename+'/'+nodename,
 vd_axis = s.getaxis('vd')
 s.reorder(['ph2','ph1']).set_units('t2','s')
 s.ft('t2',shift=True)
-#fl.next('raw data')
-#fl.image(s.C.setaxis('vd','#'))
+fl.next('raw data')
+fl.image(s.C.setaxis('vd','#'))
 fl.next('raw data -- coherence channels')
 s.ft(['ph2','ph1'])
 fl.image(s.C.setaxis('vd','#'))
 f_range = (-500,500)
 s = s['t2':f_range]
 s.ift('t2')
-#fl.next('time domain cropped log')
-#fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+fl.next('time domain cropped log')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
 #}}}
 #{{{centering, hermitian function test and zeroth order phasing
 rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
 s.setaxis(t2-rough_center)
-#fl.next('rough centering')
-#fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+fl.next('rough centering')
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 apod = s.fromaxis('t2')* 0 
 apod['t2':(None,500)] = apod['t2':(None,500)].run(lambda x:tukey(len(x)))
 s *= apod
 #}}}
 #{{{ Atttempting correlation alignment
-fl.next('before align')
+fl.next('before aligning prior to null')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 for j in range(ndshape(s)['vd']):
     if s['vd',j].C.sum('t2')<1:
@@ -62,10 +62,18 @@ s.ft('t2')
 fl.next('prior to alignment')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'), interpolation = 'bilinear')
 fl.basename='first pass'
-opt_shift,sigma = correl_align(s,indirect_dim='vd',ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
+s_final = s.C * 0
+s_before = s['vd',:2]
+s_after = s['vd',3:]
+opt_shift_after,sigma_after = correl_align(s_after,indirect_dim='vd',ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
+opt_shift_before,sigma_before = correl_align(s_before,indirect_dim='vd',ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
 fl.basename= None
 s.ift('t2')
-s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+s_before *= np.exp(-1j*2*pi*opt_shift_before*s_before.fromaxis('t2'))
+s_after *= np.exp(-1j*2*pi*opt_shift_after*s_after.fromaxis('t2'))
+s_final['vd',:2] = s_before
+s_final['vd',3:] = s_after
+s = s_final
 fl.next('out of correl alignment')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 s.reorder('ph1',first=True)
@@ -79,7 +87,7 @@ fl.next('after alignment')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 #}}}
 #{{{phasing the aligned data
-#s.ift('t2')
+s.ift('t2')
 best_shift = hermitian_function_test(s[
     'ph2',1]['ph1',0].C.mean('vd'))
 logger.info(strm("best shift is", best_shift))
