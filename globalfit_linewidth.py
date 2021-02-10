@@ -9,8 +9,9 @@ from symfit.core.minimizers import MINPACK
 import numpy as np
 import sympy as sp
 from itertools import cycle
+B_name = '$B_0$'
 thesecolors = cycle(list('bgrcmykw'))
-fl = figlist_var()
+# just not using figure list throughout, to be consistent
 #{{{ setting up parameters and parameter lists
 datasets = []
 C_list = []
@@ -67,9 +68,9 @@ for j,C in enumerate(C_list):
     print(type(guess),guess.shape)
     guess_nddata = nddata(guess, [-1], ['$B_0$']).setaxis(
             '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
-    fl.next('guess fit')
-    fl.plot(datasets[j], label='dataset%d'%j)
-    fl.plot(guess_nddata, ':', label='guess%d'%j)
+    plot(datasets[j], label='dataset%d'%j)
+    plot(guess_nddata, ':', label='guess%d'%j)
+plt.title('guess fit')
 #}}}
 #{{{defining the model with the expressions
 B_list = [Variable('B%d'%j) for j in range(len(C_list))]
@@ -81,26 +82,30 @@ print([str(B.subs({B:B_list[j]}).atoms(s.Symbol))
     for j in range(len(C_list))])
 print([str(expressions[j].subs({B:B_list[j]}).atoms(s.Symbol))
     for j in range(len(C_list))])
-#kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
-#kwargs.update(
-#        {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
-#        )
+kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
+kwargs.update(
+        {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
+        )
 #}}}
 #{{{Fitting the model
-#fit = Fit(model,
-#        **kwargs)
-#fit_result = fit.execute()
-if not os.path.exists('fit_result.pickle'):
+fit = Fit(model,
+        **kwargs)
+use_pickle = True
+if not use_pickle:
+    fit_result = fit.execute()
     with open('fit_result.pickle','wb') as fp:
         print('generating pickle file')
         pickle.dump(fit_result,fp)
 else: 
+    assert os.path.exists('fit_result.pickle')
     with open('fit_result.pickle','rb') as fp:
         print('reading fit result from pickle')
         fit_result = pickle.load(fp)
 print("fit is done, pickle dumped")
 print(fit_result)
-x_axis =r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:5280j] 
+#x_axes = {'B%d'%j:r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:5280j]
+#        for j in range(len(datasets))}
+x_axes = {'B%d'%j:datasets[j].getaxis('$B_0$')[0] for j in range(len(datasets))}
 y_fit = model(
         R2 = fit_result.value(R2),
         k_H = fit_result.value(k_H),
@@ -110,33 +115,29 @@ y_fit = model(
         A2 = 3.527704e2,#fit_result.value(A2),
         A3 = 4.020849e2,#fit_result.value(A3),
         B_center0= -7.608382e-1,#fit_result.value(B_center[0]),
-        B_center1 = -8.683199e-1,#fit_result.value(B_center[1]),
+        B_center1 = -8.683199e-1,#fit_result.value(B_center[1]), B_center2 = -9.904569e-1,#fit_result.value(B_center[2]),
         B_center2 = -9.904569e-1,#fit_result.value(B_center[2]),
         B_center3 = -9.183663e-1,#fit_result.value(B_center[3]),
-        B0 = x_axis,
-        B1 = x_axis,
-        B2 = x_axis,
-        B3 = x_axis)
+        **x_axes)
 plt.figure()
 plt.title('data with fit')
 residual_y = []
-for j in range(4):
-    data_x = np.array(datasets[j].getaxis('$B_0$'))
-    data_y = np.array(datasets[j].data.real)
-    residual_x = data_x - x_axis
-    residual_y.append(data_y - y_fit[j])
-    print(datasets[j].getaxis('$B_0$'))
-    print(datasets[j].real)
+for j in range(len(datasets)):
+    print('y_fit',y_fit[j])
+    fit_result = nddata(y_fit[j], [-1], [B_name]
+            ).setaxis(B_name, x_axes['B%d'%j])
     thiscolor = next(thesecolors)
-    plt.plot(data_x,data_y,c=thiscolor,alpha=0.2,
-            label='data C = %f'%C_list[j])
-    plt.plot(x_axis,y_fit[j],'--',c=thiscolor,alpha=0.6,
+    #plot(datasets[j],c=thiscolor,alpha=0.5,
+    #        label='data C = %f'%C_list[j])
+    plot(fit_result,'--',
+            c=thiscolor,alpha=0.5,
             label='fit C = %f'%C_list[j])
-    plt.plot(x_axis,residual_y[j],':',c=thiscolor,alpha=0.5)
-    plt.xlabel('$B_0$/G')
-    plt.ylabel('Intensity')
-    plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
-fl.show();quit()   
+    #plot(datasets[j]-fit_result,':',c=thiscolor,alpha=0.5,
+    #        label='residual C = %f'%C_list[j])
+plt.xlabel('$B_0$/G')
+plt.ylabel('Intensity')
+plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
+plt.show()
 
 
 
