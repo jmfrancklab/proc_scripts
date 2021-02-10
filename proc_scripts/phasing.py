@@ -110,7 +110,7 @@ def zeroth_order_ph(d, fl=None):
         ax.add_patch(ell)
     return np.exp(1j*ph0)
 
-def ph1_real_Abs(s,dw):
+def ph1_real_Abs(s,dw,fl = None):
     r''' Performs first order phase correction with cost function
     by taking the sum of the absolute value of the real [DeBrouwer2009].
 
@@ -134,32 +134,39 @@ def ph1_real_Abs(s,dw):
         Resonance (San Diego, Calif. : 1997), 201(2), 230–238.
         https://doi.org/10.1016/j.jmr.2009.09.017
     '''
-    fl.push_marker() 
+    if fl is not None: fl.push_marker() 
     ph1 = nddata(r_[-5:5:70j]*dw,'phcorr')
-    dx = diff(ph1.getaxis('phcorr')[r_[0,1]]).item()
-    ph1 = exp(-1j*2*pi*ph1*s.fromaxis('t2'))
+    dx = np.diff(ph1.getaxis('phcorr')[r_[0,1]]).item()
+    ph1 = np.exp(-1j*2*pi*ph1*s.fromaxis('t2'))
     s_cost = s * ph1
     ph0 = s_cost.C.sum('t2')
     ph0 /= abs(ph0)
     s_cost /= ph0
-    fl.next('phasing cost function')
-    s_cost.run(real).run(abs).sum('t2')
-    fl.plot(s_cost,'.')
-    ph1_opt = s_cost.argmin('phcorr').item()
+    if fl is not None:
+        fl.next('phasing cost function')
+    s_cost.run(np.real).run(abs).sum('t2')
+    print(ndshape(s_cost))
+    if fl is not None:
+        fl.plot(s_cost,'.')
+    quit()    
+    ph1_opt = s_cost.argmin('phcorr')#.data.item()
+    print("THIS IS PH1_OPT")
+    print(ph1_opt)
+    quit()
     print('optimal phase correction',repr(ph1_opt))
     # }}}
     # {{{ apply the phase corrections
     def applyphase(arg,ph1):
-        arg *= exp(-1j*2*pi*ph1*arg.fromaxis('t2'))
+        arg *= np.exp(-1j*2*pi*ph1*arg.fromaxis('t2'))
         ph0 = arg.C.sum('t2')
         ph0 /= abs(ph0)
         arg /= ph0
         return arg
     def costfun(ph1):
-        if type(ph1) is ndarray:
+        if type(ph1) is np.ndarray:
             ph1 = ph1.item()
         temp = s.C
-        retval = applyphase(temp,ph1).run(real).run(abs).sum('t2').item()
+        retval = applyphase(temp,ph1).run(np.real).run(abs).sum('t2').item()
         return retval
     print("rough opt cost function is",costfun(ph1_opt))
     r = minimize(costfun,ph1_opt,

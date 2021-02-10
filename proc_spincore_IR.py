@@ -68,7 +68,9 @@ else:
     logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
     ph0 = ph0/abs(ph0)
 s /= ph0
-s = ph1_real_Abs(s)
+dw = np.diff(s.getaxis('t2')[r_[0,-1]]).item()
+s = ph1_real_Abs(s,dw,fl=fl)
+fl.show();quit()
 fl.next('phased data time domain')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
 fl.next('phased data freq domain')
