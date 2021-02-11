@@ -55,7 +55,6 @@ for j,C in enumerate(C_list):
     expressions.append(dVoigt.subs({A:A_list[j],B_center:B_center_list[j],
         R:R2+C*k_H,sigma:sigma}))
 #}}}
-
 #{{{starting lmfit attempt
 for j,C in enumerate(C_list):
     expression = s.lambdify([B],expressions[j].subs({R2:R2.value,
