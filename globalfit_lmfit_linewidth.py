@@ -9,7 +9,7 @@ from symfit.core.minimizers import MINPACK
 import numpy as np
 import sympy as sp
 from itertools import cycle
-from lmfit import Parameters, minimize
+from lmfit import Parameters, minimize,Minimizer
 B_name = '$B_0$'
 thesecolors = cycle(list('bgrcmykw'))
 fl = figlist_var()
@@ -62,30 +62,49 @@ for j,C in enumerate(C_list):
         A_list[j]:A_list[j].value,
         k_H:k_H.value,
         sigma:sigma.value,
-        B_center_list[j]:B_center_list[j].value}),
+        B_center_list[j]:B_center_list[j].value,
+        R:R2+C*k_H}),
         modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
-fit_params = Parameters()
-for j, C in enumerate(C_list):
-    fit_params.add('A%d'%j, value = A_list_guess[j])
-    fit_params.add('B_center%d'%j, value = B_center_list_guess[j])
-    fit_params.add('C%d'%j, value = C_list[j])
-    fit_params.add('R%d'%j)
-    fit_params.add('sigma', value = 5.9820375e-1)
-    fit_params.add('k_H', value = 70.302)
-    fit_params.add('R2', value = 0.3436)
-    x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:5280j]
-    def fit_function(fit_params, x=None, dat0=datasets[0].data.real, dat1=datasets[1].data.real, dat2=datasets[2].data.real, dat3=datasets[3].data.real):
-        parsvals = pars.valuesdict()
-        A = parvals['A%d'%j]
-        B_center = parvals['B_center%d'%j]
-        R = parvals['R2'] + parvals['C%d'%j]*parvals['k_H']
-        sigma = parvals['sigma']
-        model[j] = expression[j]
-        resid[j] = dat[j] - model[j]
-        return np.concatenate(resid[j])
-out = minimize(fit_function, fit_params,args = x_axis, kws= {'data': datasets[j].data.real})
-fit = residual(out.params, x_axis)
+    params = Parameters()
+    params.add('A%d'%j, value = A_list_guess[j])
+    params.add('B_center%d'%j, value = B_center_list_guess[j])
+    params.add('R2', value = 0.3436)
+    params.add('k_H', value = 70.302)
+    params.add('sigma',value= 5.9820375e-1)
+    params.add('R')
+
+    def dVoigt(pars, B,data=None):
+        A = pars['A%d'%j]
+        B_center = pars['B_center%d'%j]
+        sigma = pars['sigma']
+        R2 = pars['R2']
+        k_H = pars['k_H']
+        R = pars['R']
+        model = expression[j]
+        if data == None:
+            return model
+        return model-data
+    B = datasets[j].getaxis('$B_0$')
+    data = datasets[j].data.real
+    fit_params = Parameters()
+    fit_params.add('A%d'%j)
+    fit_params.add('B')
+    fit_params.add('B_center%d'%j)
+    fit_params.add('k_H')
+    fit_params.add('R2')
+    fit_params.add('sigma')
+    fitter = Minimizer(dVoigt, fit_params,fcn_args=(B), fcn_kws={'data':data})
+    fitter.minimize()
+    quit()
+    def fit_function(params,B,data):
+        y = dVoigt(params, B)
+        return data - y
+    y = dVoigt({'A%d'%j:A_list_guess[j], 'B_center%d'%j:B_center_list[j],
+        'R2': 0.3436, 'k_H': 70.302, 'sigma': 5.9820375e-1, 'R': R2 + C*k_H},B)
+    fitter = Minimizer(fit_function, params,fcn_args = (x_axis, datasets[j]))
+    fit = fitter.minimize()
 quit()
+
 #{{{lambdify the expressions and plot guesses with actual data
 for j,C in enumerate(C_list):
     guess_exp_lambda = s.lambdify([B],expressions[j].subs({R2:R2.value,
