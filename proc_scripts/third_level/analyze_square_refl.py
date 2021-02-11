@@ -150,9 +150,9 @@ def analyze_square_refl(d, label='', fl=None,
     est_offset = secon_blip['t':end_blip].angle/2/pi - secon_blip['t':1.5e-7].angle/2/pi
     time = end_blip - 150e-9 
     est_offset = est_offset/time
-    est_offset = est_offset/dt
     print(est_offset.real)
-
+    #AG: I really don't know what this equation is below or how it relates to the offset maybe we can discuss
+    #this in individual meeting
     frq_offset = ((phases['t',1:].angle/2/pi)/(phases['t',:-1].angle/2/pi)*abs(phases['t',:-1].angle/2/pi)
             ).sum('t').item()/dt
     if fl is not None:

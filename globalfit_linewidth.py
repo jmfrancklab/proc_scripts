@@ -62,7 +62,7 @@ for j,C in enumerate(C_list):
         sigma:sigma.value,
         B_center_list[j]:B_center_list[j].value}),
         modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
-    x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:500j]
+    x_axis = r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:5280j]
     print(type(x_axis))
     guess = guess_exp_lambda(x_axis)
     print(type(guess),guess.shape)
@@ -114,13 +114,13 @@ for j in range(4):
     print(datasets[j].data.real)
     print(y_fit[j])
     print(residual_y[j])
-    quit()
     thiscolor = next(thesecolors)
     plt.plot(datasets[j].getaxis('$B_0$'),datasets[j].data.real,c=thiscolor,alpha=0.2,
             label='data C = %f'%C_list[j])
-    plt.plot(x_axis,y_fit[j],'--',c=thiscolor,alpha=0.6,
+    plt.plot(datasets[j].getaxis('$B_0$'),y_fit[j],'--',c=thiscolor,alpha=0.6,
             label='fit C = %f'%C_list[j])
-    plt.plot(x_axis,residual_y[j],':',c=thiscolor,alpha=0.5)
+    plt.plot(datasets[j].getaxis('$B_0$'),residual_y[j],':',c=thiscolor,alpha=0.5,
+            label='residual C = %f'%C_list[j])
     plt.xlabel('$B_0$/G')
     plt.ylabel('Intensity')
     plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
