@@ -103,21 +103,9 @@ else:
         fit_result = pickle.load(fp)
 print("fit is done, pickle dumped")
 print(fit_result)
-#x_axes = {'B%d'%j:r_[datasets[j].getaxis('$B_0$')[0]:datasets[j].getaxis('$B_0$')[-1]:5280j]
-#        for j in range(len(datasets))}
-x_axes = {'B%d'%j:datasets[j].getaxis('$B_0$')[0] for j in range(len(datasets))}
+x_axes = {'B%d'%j:datasets[j].getaxis('$B_0$') for j in range(len(datasets))}
 y_fit = model(
-        R2 = fit_result.value(R2),
-        k_H = fit_result.value(k_H),
-        sigma = fit_result.value(sigma),
-        A0 = 2.107721e2,#fit_result.value(A0),
-        A1 = 2.862171e2,#fit_result.value(A1),
-        A2 = 3.527704e2,#fit_result.value(A2),
-        A3 = 4.020849e2,#fit_result.value(A3),
-        B_center0= -7.608382e-1,#fit_result.value(B_center[0]),
-        B_center1 = -8.683199e-1,#fit_result.value(B_center[1]), B_center2 = -9.904569e-1,#fit_result.value(B_center[2]),
-        B_center2 = -9.904569e-1,#fit_result.value(B_center[2]),
-        B_center3 = -9.183663e-1,#fit_result.value(B_center[3]),
+        **fit_result.params,
         **x_axes)
 plt.figure()
 plt.title('data with fit')
@@ -127,16 +115,17 @@ for j in range(len(datasets)):
     fit_result = nddata(y_fit[j], [-1], [B_name]
             ).setaxis(B_name, x_axes['B%d'%j])
     thiscolor = next(thesecolors)
-    #plot(datasets[j],c=thiscolor,alpha=0.5,
-    #        label='data C = %f'%C_list[j])
+    plot(datasets[j],c=thiscolor,alpha=0.5,
+            label='data C = %f'%C_list[j])
     plot(fit_result,'--',
             c=thiscolor,alpha=0.5,
             label='fit C = %f'%C_list[j])
-    #plot(datasets[j]-fit_result,':',c=thiscolor,alpha=0.5,
-    #        label='residual C = %f'%C_list[j])
+    plot(datasets[j]-fit_result,':',c=thiscolor,alpha=0.5,
+            label='residual C = %f'%C_list[j])
 plt.xlabel('$B_0$/G')
 plt.ylabel('Intensity')
 plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
+gridandtick(plt.gca())
 plt.show()
 
 
