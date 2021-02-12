@@ -11,7 +11,7 @@ import sympy as sp
 from itertools import cycle
 B_name = '$B_0$'
 thesecolors = cycle(list('bgrcmykw'))
-fl = figlist_var()
+# just not using figure list throughout, to be consistent
 #{{{ setting up parameters and parameter lists
 datasets = []
 C_list = []
@@ -68,9 +68,9 @@ for j,C in enumerate(C_list):
     print(type(guess),guess.shape)
     guess_nddata = nddata(guess, [-1], ['$B_0$']).setaxis(
             '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
-    fl.next('guess fit')
-    fl.plot(datasets[j], label='dataset%d'%j)
-    fl.plot(guess_nddata, ':', label='guess%d'%j)
+    plot(datasets[j], label='dataset%d'%j)
+    plot(guess_nddata, ':', label='guess%d'%j)
+plt.title('guess fit')
 #}}}
 #{{{defining the model with the expressions
 B_list = [Variable('B%d'%j) for j in range(len(C_list))]
@@ -101,30 +101,32 @@ else:
     with open('fit_result.pickle','rb') as fp:
         print('reading fit result from pickle')
         fit_result = pickle.load(fp)
-# I do the following b/c it was yelling at me for not having B0, B1, etc.
-x_axes = {'B%d'%j:datasets[j].getaxis(B_name) for j in range(len(datasets))}
-#print(len(x_axes),x_axes)
-y_fit = fit.model(**x_axes,**fit_result.params)
-print("breakpoint")
+print("fit is done, pickle dumped")
+print(fit_result)
+x_axes = {'B%d'%j:datasets[j].getaxis('$B_0$') for j in range(len(datasets))}
+y_fit = model(
+        **fit_result.params,
+        **x_axes)
 plt.figure()
 plt.title('data with fit')
 residual_y = []
-for j in range(4):
-    residual_y.append(datasets[j].data.real - y_fit[j])
-    print(datasets[j].data.real)
-    print(y_fit[j])
-    print(residual_y[j])
+for j in range(len(datasets)):
+    print('y_fit',y_fit[j])
+    fit_result = nddata(y_fit[j], [-1], [B_name]
+            ).setaxis(B_name, x_axes['B%d'%j])
     thiscolor = next(thesecolors)
-    plt.plot(datasets[j].getaxis('$B_0$'),datasets[j].data.real,c=thiscolor,alpha=0.2,
+    plot(datasets[j],c=thiscolor,alpha=0.5,
             label='data C = %f'%C_list[j])
-    plt.plot(datasets[j].getaxis('$B_0$'),y_fit[j],'--',c=thiscolor,alpha=0.6,
+    plot(fit_result,'--',
+            c=thiscolor,alpha=0.5,
             label='fit C = %f'%C_list[j])
-    plt.plot(datasets[j].getaxis('$B_0$'),residual_y[j],':',c=thiscolor,alpha=0.5,
+    plot(datasets[j]-fit_result,':',c=thiscolor,alpha=0.5,
             label='residual C = %f'%C_list[j])
-    plt.xlabel('$B_0$/G')
-    plt.ylabel('Intensity')
-    plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
-fl.show();quit()   
+plt.xlabel('$B_0$/G')
+plt.ylabel('Intensity')
+plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
+gridandtick(plt.gca())
+plt.show()
 
 
 
