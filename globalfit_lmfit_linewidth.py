@@ -84,7 +84,8 @@ for j,C in enumerate(C_list):
             sigma:pars['sigma'].value,
             B_center_list[j]:pars['B_center%d'%j].value}),
             modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
-     
+        x_axis = x_axis
+        model = model(x_axis)
         if data is None:
             return model
         return model - datasets[j].data.real
