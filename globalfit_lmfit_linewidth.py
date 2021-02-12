@@ -13,7 +13,7 @@ from lmfit import Parameters, minimize,Minimizer
 B_name = '$B_0$'
 thesecolors = cycle(list('bgrcmykw'))
 fl = figlist_var()
-#{{{ setting up parameters and parameter lists
+#{{{ starting with sympy expression
 datasets = []
 C_list = []
 for thisfile,C in [
@@ -47,64 +47,11 @@ A_list = []
 B_center_list = []
 expressions = []
 
-#}}}
-#{{{appending guess lists into parameter list and creating expression list
 for j,C in enumerate(C_list):
     A_list.append(Parameter('A%d'%j, value = A_list_guess[j]))
     B_center_list.append(Parameter('B_center%d'%j, value = B_center_list_guess[j]))
     expressions.append(dVoigt.subs({A:A_list[j],B_center:B_center_list[j],
         R:R2+C*k_H,sigma:sigma}))
-#}}}
-#{{{starting lmfit attempt
-for j,C in enumerate(C_list):
-    expression = s.lambdify([B],expressions[j].subs({R2:R2.value,
-        A_list[j]:A_list[j].value,
-        k_H:k_H.value,
-        sigma:sigma.value,
-        B_center_list[j]:B_center_list[j].value,
-        R:R2+C*k_H}),
-        modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
-    params = Parameters()
-    params.add('A%d'%j, value = A_list_guess[j])
-    params.add('B_center%d'%j, value = B_center_list_guess[j])
-    params.add('R2', value = 0.3436)
-    params.add('k_H', value = 70.302)
-    params.add('sigma',value= 5.9820375e-1)
-    params.add('R')
-
-    def dVoigt(pars, B,data=None):
-        A = pars['A%d'%j]
-        B_center = pars['B_center%d'%j]
-        sigma = pars['sigma']
-        R2 = pars['R2']
-        k_H = pars['k_H']
-        R = pars['R']
-        model = expression[j]
-        if data == None:
-            return model
-        return model-data
-    B = datasets[j].getaxis('$B_0$')
-    data = datasets[j].data.real
-    fit_params = Parameters()
-    fit_params.add('A%d'%j)
-    fit_params.add('B')
-    fit_params.add('B_center%d'%j)
-    fit_params.add('k_H')
-    fit_params.add('R2')
-    fit_params.add('sigma')
-    fitter = Minimizer(dVoigt, fit_params,fcn_args=(B), fcn_kws={'data':data})
-    fitter.minimize()
-    quit()
-    def fit_function(params,B,data):
-        y = dVoigt(params, B)
-        return data - y
-    y = dVoigt({'A%d'%j:A_list_guess[j], 'B_center%d'%j:B_center_list[j],
-        'R2': 0.3436, 'k_H': 70.302, 'sigma': 5.9820375e-1, 'R': R2 + C*k_H},B)
-    fitter = Minimizer(fit_function, params,fcn_args = (x_axis, datasets[j]))
-    fit = fitter.minimize()
-quit()
-
-#{{{lambdify the expressions and plot guesses with actual data
 for j,C in enumerate(C_list):
     guess_exp_lambda = s.lambdify([B],expressions[j].subs({R2:R2.value,
         A_list[j]:A_list[j].value,
@@ -118,60 +65,30 @@ for j,C in enumerate(C_list):
     print(type(guess),guess.shape)
     guess_nddata = nddata(guess, [-1], ['$B_0$']).setaxis(
             '$B_0$', x_axis).set_units('$B_0$',datasets[j].get_units('$B_0$'))
-    fl.next('guess fit')
-    fl.plot(datasets[j], label='dataset%d'%j)
-    fl.plot(guess_nddata, ':', label='guess%d'%j)
-#}}}
-#{{{defining the model with the expressions
-B_list = [Variable('B%d'%j) for j in range(len(C_list))]
-y_list = [Variable('y%d'%j) for j in range(len(C_list))]
-print("B looks like this:",B)
-model = Model({y_list[j]:expressions[j].subs({B:B_list[j]})
-    for j in range(len(C_list))})
-print([str(B.subs({B:B_list[j]}).atoms(s.Symbol))
-    for j in range(len(C_list))])
-print([str(expressions[j].subs({B:B_list[j]}).atoms(s.Symbol))
-    for j in range(len(C_list))])
-kwargs = {str(B_list[j]):datasets[j].getaxis('$B_0$') for j in range(len(C_list))}
-kwargs.update(
-        {str(y_list[j]):datasets[j].data.real for j in range(len(C_list))}
-        )
-#}}}
-#{{{Fitting the model
-fit = Fit(model,
-        **kwargs)
-use_pickle = True
-if not use_pickle:
-    fit_result = fit.execute()
-    with open('fit_result.pickle','wb') as fp:
-        print('generating pickle file')
-        pickle.dump(fit_result,fp)
-else: 
-    assert os.path.exists('fit_result.pickle')
-    with open('fit_result.pickle','rb') as fp:
-        print('reading fit result from pickle')
-        fit_result = pickle.load(fp)
-# I do the following b/c it was yelling at me for not having B0, B1, etc.
-x_axes = {'B%d'%j:datasets[j].getaxis(B_name) for j in range(len(datasets))}
-#print(len(x_axes),x_axes)
-y_fit = fit.model(**x_axes,**fit_result.params)
-print("breakpoint")
-plt.figure()
-plt.title('data with fit')
-residual_y = []
-for j in range(4):
-    residual_y.append(datasets[j].data.real - y_fit[j])
-    print(datasets[j].data.real)
-    print(y_fit[j])
-    print(residual_y[j])
-    thiscolor = next(thesecolors)
-    plt.plot(datasets[j].getaxis('$B_0$'),datasets[j].data.real,c=thiscolor,alpha=0.2,
-            label='data C = %f'%C_list[j])
-    plt.plot(datasets[j].getaxis('$B_0$'),y_fit[j],'--',c=thiscolor,alpha=0.6,
-            label='fit C = %f'%C_list[j])
-    plt.plot(datasets[j].getaxis('$B_0$'),residual_y[j],':',c=thiscolor,alpha=0.5,
-            label='residual C = %f'%C_list[j])
-    plt.xlabel('$B_0$/G')
-    plt.ylabel('Intensity')
-    plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
-fl.show();quit()  
+    #}}}
+#{{{starting lmfit attempt
+p_true = Parameters()
+B = datasets[j].getaxis('$B_0$')
+
+for j,C in enumerate(C_list):
+    p_true.add('A%d'%j, value = A_list_guess[j])
+    p_true.add('B_center%d'%j,value = B_center_list_guess[j])
+    p_true.add('sigma',value=5.9820375e-1)
+    p_true.add('R2', value= 0.3436)
+    p_true.add('k_H',value=70.302)
+    p_true.add('R')
+    def residual(pars, B, data=None):
+        model = guess_nddata
+        if data is None:
+            return model
+        return model - datasets[j]
+fit_params = Parameters()
+print(expressions[1].atoms(s.Symbol))
+for j,C in enumerate(C_list):
+    fit_params.add('A%d'%j)
+    fit_params.add('B_center%d'%j)
+    fit_params.add('sigma')
+    fit_params.add('R2')
+    fit_params.add('k_H')
+    fit_params.add('B')
+    out = minimize(residual, fit_params, args=(B,), kws={'data':datasets[j]})
