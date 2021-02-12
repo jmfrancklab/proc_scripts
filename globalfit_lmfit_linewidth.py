@@ -68,7 +68,7 @@ for j,C in enumerate(C_list):
     #}}}
 #{{{starting lmfit attempt
 p_true = Parameters()
-B = datasets[j].getaxis('$B_0$')
+B = (datasets[j].getaxis('$B_0$') for j in range(4))
 
 for j,C in enumerate(C_list):
     p_true.add('A%d'%j, value = A_list_guess[j])
@@ -78,10 +78,16 @@ for j,C in enumerate(C_list):
     p_true.add('k_H',value=70.302)
     p_true.add('R')
     def residual(pars, B, data=None):
-        model = guess_nddata
+        model =s.lambdify([B],expressions[j].subs({R2:pars['R2'].value,
+            A_list[j]:pars['A%d'%j].value,
+            k_H:pars['k_H'].value,
+            sigma:pars['sigma'].value,
+            B_center_list[j]:pars['B_center%d'%j].value}),
+            modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
+     
         if data is None:
             return model
-        return model - datasets[j]
+        return model - datasets[j].data.real
 fit_params = Parameters()
 print(expressions[1].atoms(s.Symbol))
 for j,C in enumerate(C_list):
@@ -91,4 +97,4 @@ for j,C in enumerate(C_list):
     fit_params.add('R2')
     fit_params.add('k_H')
     fit_params.add('B')
-    out = minimize(residual, fit_params, args=(B,), kws={'data':datasets[j]})
+    out = minimize(residual, fit_params, args=(B,), kws={'data':datasets[j] for j in range(4)})
