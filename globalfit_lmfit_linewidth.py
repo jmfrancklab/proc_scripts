@@ -28,24 +28,12 @@ for thisfile,C in [
 with open('dVoigt.pickle','rb') as fp:
     print("reading expression for dVoigt from pickle")
     dVoigt = pickle.load(fp)
-sigma = Parameter('sigma', value= 5.9820375e-1)
-R2 = Parameter('R2', value = 0.3436)
-k_H = Parameter('k_H', value = 70.302)
-A_list_guess = [2.107721e02,
-        2.862171e02,
-        3.527704e02,
-        4.020849e02]
-B_center_list_guess = [2.391618e-01-1,# the -1 here comes from the fact that we mess with the x axis in the proc_linewidth code where these come from
-        1.316801e-01-1,
-        9.543103e-03-1,
-        8.16337e-02-1]
-B = Variable('B')
-R = Parameter('R')
-A = Parameter('A')
-B_center = Parameter('B_center')
-A_list = []
-B_center_list = []
-expressions = []
+global_var = ([j for j in voigt_expr.atoms(s.Symbol) if str(j) in ['sigma','r']])
+for j in range(4):
+    for this_symbol in voigt_expr.atoms(s.Symbol)-global_var:
+        fit_params.add('%s_%d'%(this_symbol,j))
+for j in fit_params:
+    print("fit param ---",j)
 
 for j,C in enumerate(C_list):
     A_list.append(Parameter('A%d'%j, value = A_list_guess[j]))
@@ -78,14 +66,15 @@ for j,C in enumerate(C_list):
     p_true.add('k_H',value=70.302)
     p_true.add('R')
     def residual(pars, B, data=None):
-        model =s.lambdify([B],expressions[j].subs({R2:pars['R2'].value,
+        model_fn =s.lambdify([B],expressions[j].subs({R2:pars['R2'].value,
             A_list[j]:pars['A%d'%j].value,
             k_H:pars['k_H'].value,
             sigma:pars['sigma'].value,
             B_center_list[j]:pars['B_center%d'%j].value}),
             modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
         x_axis = x_axis
-        model = model(x_axis)
+        model = model_fn(x_axis)
+        model_nddata = nddata(
         if data is None:
             return model
         return model - datasets[j].data.real

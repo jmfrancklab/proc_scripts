@@ -125,11 +125,11 @@ def analyze_square_refl(d, label='', fl=None,
         fl.basename=None
         fl.next("blips")
         first_blip = -d["ch", 1:2]["t":tuple(blip_range)] + scalar_refl # correcting first blip
-        fl.complex_plot(first_blip, "first", show_phase=False, show_real=False,alpha=0.2,linestyle="--",linewidth=1,color=color)
+        fl.complex_plot(first_blip, "first"+"_"+label, show_phase=False, show_real=False,alpha=0.2,linestyle="--",linewidth=1,color=color)
         secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
             "t", lambda x: x - pulse_slice[1]
         )
-        fl.complex_plot(secon_blip, "second", show_phase=True, show_real=False,alpha=0.8,color=color)
+        fl.complex_plot(secon_blip, "second"+"_"+label, show_phase=True, show_real=False,alpha=0.8,color=color)
     secon_blip = secon_blip['ch', 0] # we need the ch axis for the complex plot,
     #                                  but it complicates things now
     decay = abs(secon_blip)
@@ -144,17 +144,21 @@ def analyze_square_refl(d, label='', fl=None,
     print("latex:",f.latex())
     # {{{ calculate frequency offset
     decay_timescale = 3./f.output('R')
-    dt = plb.diff(decay.getaxis("t")[r_[0, 1]]).item()
-    end_blip =((54. / f.output('R') * 2 * pi * frq)*10**-9) 
-    phases = secon_blip['t':(150*10**-9,(end_blip))]
-    est_offset = secon_blip['t':end_blip].angle/2/pi - secon_blip['t':1.5e-7].angle/2/pi
-    time = end_blip - 150e-9 
-    est_offset = est_offset/time
-    print(est_offset.real)
+    end_blip =((54. / f.output('R') * 2 * pi * frq)*10**-9)
+    phases = secon_blip['t':(150e-9,(end_blip))]
+    phase_diff = phases
+    phase_diff = phase_diff['t',1:] / phase_diff['t',:-1]
+    dt = np.diff(phases.getaxis('t')[:2]).item()
+    phase_diff.mean('t') # favors points with a greater magnitude
+    off_frequency = phase_diff.angle.item() / dt / 2 / pi
+    print(off_frequency.real)
     #AG: I really don't know what this equation is below or how it relates to the offset maybe we can discuss
     #this in individual meeting
-    frq_offset = ((phases['t',1:].angle/2/pi)/(phases['t',:-1].angle/2/pi)*abs(phases['t',:-1].angle/2/pi)
-            ).sum('t').item()/dt
+    frq_offset = ((phases['t',1:].angle/2/pi)/(phases['t',:-1].angle/2/pi)*abs(phases['t',:-1].angle/2/pi)).sum('t').item()/dt
+    phaseplot = secon_blip['t':(150e-9,end_blip)].fromaxis('t')
+    phaseplot -= phaseplot['t',0]
+    phaseplot *= 2*pi*off_frequency
+    phaseplot += secon_blip['t':(150e-9,end_blip)].angle
     if fl is not None:
         ax = fl.twinx(orig=False)
         x = plb.mean(phases.getaxis('t'))/1e-9
@@ -162,7 +166,7 @@ def analyze_square_refl(d, label='', fl=None,
         ax.text(
                 x=x,
                 y=y,
-                s=' '*5+r'$\Delta\nu=%0.3g$ kHz'%(est_offset.data/1e3),
+                s=' '*5+r'$\Delta\nu=%0.3g$ kHz'%(off_frequency/1e3),
                 va='bottom',
                 ha='left',
                 size=fontsize,
@@ -175,8 +179,8 @@ def analyze_square_refl(d, label='', fl=None,
     Q = 1. / f.output('R') * 2 * pi * frq
     if fl is not None:
         ax = fl.twinx(orig=False)
-        x = plb.mean(phases.getaxis('t'))/1e-9
-        y = plb.mean(phases.angle.data)/6/pi
+        x = 300e-9
+        y = plb.mean(phases.angle.data)/1.25/pi
         ax.text(
                 x=x,
                 y=y,
@@ -190,4 +194,8 @@ def analyze_square_refl(d, label='', fl=None,
         fl.twinx(orig=True)
 
     if fl is not None: fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8)#, label='fit, Q=%0.1f'%Q)
+    if fl is not None:
+        fl.plot(phaseplot, alpha=0.5,linestyle=":",linewidth=1)
+
+
 
