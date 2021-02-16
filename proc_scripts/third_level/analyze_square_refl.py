@@ -129,7 +129,7 @@ def analyze_square_refl(d, label='', fl=None,
         secon_blip = d["ch", 1:2]["t" : tuple(blip_range + pulse_slice[1])].setaxis(
             "t", lambda x: x - pulse_slice[1]
         )
-        fl.complex_plot(secon_blip, "second"+"_"+label, show_phase=True, show_real=False,alpha=0.8,color=color)
+        colors = fl.complex_plot(secon_blip, "second"+"_"+label, show_phase=False, show_real=False,alpha=0.8,color=color)
     secon_blip = secon_blip['ch', 0] # we need the ch axis for the complex plot,
     #                                  but it complicates things now
     decay = abs(secon_blip)
@@ -144,43 +144,50 @@ def analyze_square_refl(d, label='', fl=None,
     print("latex:",f.latex())
     # {{{ calculate frequency offset
     decay_timescale = 3./f.output('R')
-    end_blip =((54. / f.output('R') * 2 * pi * frq)*10**-9)
-    phases = secon_blip['t':(150e-9,(end_blip))]
-    phase_diff = phases
-    phase_diff = phase_diff['t',1:] / phase_diff['t',:-1]
+    end_blip = ((54. / f.output('R') * 2 * pi * frq)*1e-9)
+    phases = secon_blip['t':(150e-9,end_blip)]
+    phase_diff = phases['t',1:] / phases['t',:-1]
     dt = np.diff(phases.getaxis('t')[:2]).item()
     phase_diff.mean('t') # favors points with a greater magnitude
-    off_frequency = phase_diff.angle.item() / dt / 2 / pi
-    print(off_frequency.real)
-    #AG: I really don't know what this equation is below or how it relates to the offset maybe we can discuss
-    #this in individual meeting
-    frq_offset = ((phases['t',1:].angle/2/pi)/(phases['t',:-1].angle/2/pi)*abs(phases['t',:-1].angle/2/pi)).sum('t').item()/dt
-    phaseplot = secon_blip['t':(150e-9,end_blip)].fromaxis('t')
-    phaseplot -= phaseplot['t',0]
-    phaseplot *= 2*pi*off_frequency
-    phaseplot += secon_blip['t':(150e-9,end_blip)].angle
+    frq_offset = phase_diff.angle.item() / dt / 2 / pi
+    print(frq_offset.real)
+    frq_line_plot = phases.fromaxis('t')
+    frq_line_plot -= frq_line_plot['t',0]
+    frq_line_plot *= 2*pi*frq_offset # so this contains 2πνt
+    frq_line_plot = np.exp(1j*frq_line_plot)
+    frq_line_plot *= phases['t',0]
     if fl is not None:
-        ax = fl.twinx(orig=False)
+        ax2 = fl.twinx(orig=False)
+        fl.plot(
+                phases.angle/2/pi,
+            ".",
+            linewidth=1,
+            color=colors[-1],
+            alpha=0.3,
+            label="reflected angle " + label,
+            )
+        fl.plot(frq_line_plot.angle/2/pi, color=colors[-1],
+                linewidth=1)
         x = plb.mean(phases.getaxis('t'))/1e-9
-        y = plb.mean(phases.angle.data)/1.25/pi
-        ax.text(
+        y = np.angle(plb.mean(phases.data))/2/pi
+        ax2.text(
                 x=x,
                 y=y,
-                s=' '*5+r'$\Delta\nu=%0.3g$ kHz'%(off_frequency/1e3),
+                s=' '*5+r'$\Delta\nu=%0.3g$ kHz'%(frq_offset/1e3),
                 va='bottom',
                 ha='left',
                 size=fontsize,
-                transform=ax.transData,
+                transform=ax2.transData,
                 color=color,
                 )
-        fl.twinx(orig=True)
+        ax = fl.twinx(orig=True)
     #print('frq_offset',frq_offset,"for",label)
     # }}}
     Q = 1. / f.output('R') * 2 * pi * frq
     if fl is not None:
-        ax = fl.twinx(orig=False)
-        x = 300e-9
-        y = plb.mean(phases.angle.data)/1.25/pi
+        ax = fl.twinx(orig=True)
+        x = (54e-9 + 4. / f.output('R'))/1e-9
+        y = 0.1
         ax.text(
                 x=x,
                 y=y,
@@ -191,11 +198,13 @@ def analyze_square_refl(d, label='', fl=None,
                 transform=ax.transData,
                 color=color,
                 )
-        fl.twinx(orig=True)
-
     if fl is not None: fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8)#, label='fit, Q=%0.1f'%Q)
     if fl is not None:
-        fl.plot(phaseplot, alpha=0.5,linestyle=":",linewidth=1)
-
-
+        fl.twinx(orig=True)
+        fl.plot(f.eval(100).set_units('t','s'),'k--',
+                alpha=0.8)
+        ax.grid(False)
+        ax2.set_ylabel("phase / cyc", size=10)
+        ax2.set_ylim(-0.5,0.5)
+        gridandtick(ax2)
 

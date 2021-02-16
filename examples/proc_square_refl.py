@@ -72,7 +72,7 @@ class fl_ext(figlist_var):
                 fl.twinx(orig=False)
                 if j==0:
                     fl.plot(
-                            d["ch", j]['t':(150e-9,None)].angle/2/pi,
+                            d["ch", j].angle/2/pi,
                         ".",
                         linewidth=1,
                         color=colors[-1],
@@ -80,7 +80,7 @@ class fl_ext(figlist_var):
                         label="reflected angle " + label,
                         )
                 else:
-                    fl.plot(d["ch",j]['t':(100e-9,None)].angle/2/pi,
+                    fl.plot(d["ch",j].angle/2/pi,
                             ".",
                             linewidth=1,
                             color=colors[-1],
