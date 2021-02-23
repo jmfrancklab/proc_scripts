@@ -26,6 +26,8 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 filename = date+'_'+id_string+'.h5'
 s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type='test_equip'))
+print(ndshape(s))
+quit()
 vd_axis = s.getaxis('vd')
 s.reorder(['ph2','ph1']).set_units('t2','s')
 s.ft('t2',shift=True)
