@@ -41,7 +41,7 @@ with figlist_var() as fl:
         one_eightypulse = d['t':(5.311e-5,8.8e-5)]
         ninety_pulse = ninety_pulse.sum('t')
         fl.next('integrate 90 pulse')
-        line1 = ninety_pulse.polyfit('p90',order=1,force_y_intercept=None)
+        line1,fit1 = ninety_pulse.polyfit('p90',order=1,force_y_intercept=None)
         fl.plot(ninety_pulse,'o')
         f1= fitdata(ninety_pulse)
         m, b, p90 = symbols("m b p90",real=True)
@@ -50,8 +50,11 @@ with figlist_var() as fl:
         print("output:",f1.output())
         print("latex:",f1.latex())
         fl.plot(f1.eval(100),label='fit')
+        fl.plot(fit1,label='polyfit fit')
+        print("polyfit for 90 pulse output",line1)
         one_eightypulse = one_eightypulse.sum('t')
         fl.next('integrate 180 pulse')
+        line2,fit2 = one_eightypulse.polyfit('p90',order=1,force_y_intercept=None)
         f2 = fitdata(one_eightypulse)
         m, b, p90 = symbols("m b p90",real=True)
         f2.functional_form = m*p90 + b
@@ -59,5 +62,7 @@ with figlist_var() as fl:
         print("output:",f2.output())
         print("latex:",f2.latex())
         fl.plot(f2.eval(100),label="fit")
+        print("polyfit for 180 pulse:",line2)
+        fl.plot(fit2,label='polyfit fit')
         fl.plot(one_eightypulse,'o')
 
