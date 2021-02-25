@@ -10,7 +10,7 @@ def to_percent(y, position):
         return s + r'$\%$'
     else:
         return s + '%'
-def correl_align(s, align_phases=False,indirect_dim='indirect',fig_title='correlation alignment',maxiter=100,tol=1e-4,ph1_selection=1,ph2_selection=1, sigma = 20,fl=None):
+def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_title='correlation alignment',ph1_selection=1,ph2_selection=1, sigma = 20,fl=None):
     """
     Align transients collected with chunked phase cycling dimensions along an indirect
     dimension based on maximizing the correlation across all the transients and repeat
@@ -130,7 +130,7 @@ def correl_align(s, align_phases=False,indirect_dim='indirect',fig_title='correl
 
         this_E = (abs(s_copy.C.sum(indirect_dim))**2).data.sum().item() / N**2
         energy_vals.append(this_E / sig_energy)
-        print('averaged signal energy (per transient):', this_E)
+        logger.info(strm('averaged signal energy (per transient):', this_E))
         if last_E is not None:
             energy_diff = (this_E - last_E)/sig_energy
             logger.info(strm(energy_diff))

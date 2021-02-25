@@ -26,21 +26,21 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 filename = date+'_'+id_string+'.h5'
 s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type='test_equip'))
-print(ndshape(s))
-quit()
 vd_axis = s.getaxis('vd')
 s.reorder(['ph2','ph1']).set_units('t2','s')
 s.ft('t2',shift=True)
 fl.next('raw data')
 fl.image(s.C.setaxis('vd','#'))
-fl.next('raw data -- coherence channels')
+fl.next('freq domain -- cropped log')
 s.ft(['ph2','ph1'])
-fl.image(s.C.setaxis('vd','#'))
-f_range = (-500,500)
+fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+f_range = (-4000,4000)
 s = s['t2':f_range]
 s.ift('t2')
 fl.next('time domain cropped log')
 fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+t_range = (0,35e-3)
+s = s['t2':t_range]
 #}}}
 #{{{centering, hermitian function test and zeroth order phasing
 rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
@@ -71,6 +71,7 @@ else:
     ph0 = ph0/abs(ph0)
 s /= ph0
 dw = np.diff(s.getaxis('t2')[r_[0,-1]]).item()
+print("THIS IS SHAPE OF S",ndshape(s))
 s = ph1_real_Abs(s,dw,fl=fl)
 fl.show();quit()
 fl.next('phased data time domain')
