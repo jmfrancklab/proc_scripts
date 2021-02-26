@@ -7,14 +7,18 @@ from numpy import *
 fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
-for searchstr,exp_type,nodename,postproc,freq_slice in [
+max_kHz = 200
+for searchstr,exp_type,nodename,postproc,freq_slice,p90_varied in [
     #['201211_Ni_sol_probe_nutation_1','nutation','nutation',
-    #    'spincore_nutation_v1',(-5000,13000)],
-    ['210201_Ni_sol_probe_gds_nutation_1','nutation','nutation',
-        'spincore_nutation_v2',(-500,1300)]
+    #    'spincore_nutation_v1',(-5000,13000),True],
+    ['210201_Ni_sol_probe_nutation_amp_2','nutation','nutation',
+        'spincore_nutation_v2',(-11e3,15e3),False]
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict)#,fl=fl) 
+    plen = s.get_prop('acq_params')['p90_us']
+    plen *= 10**-6
+    
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
@@ -28,19 +32,21 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     fl.image(s)
     s.ift('t2')
     # {{{ centering of data using hermitian function test
-    best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
-    logger.info(strm("best shift is",best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('with time shift')
-    fl.image(s)
-    fl.next('freq domain after time correction')
-    s.ft('t2')
-    fl.image(s)
+    if p90_varied:
+        best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
+        logger.info(strm("best shift is",best_shift))
+        s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+        fl.next('with time shift')
+        fl.image(s)
+        fl.next('freq domain after time correction')
+        s.ft('t2')
+        fl.image(s)
     #}}}
     #{{{ selecting coherence and convolving
     s = s['ph2',0]['ph1',1]
-    fl.next('select $\\Delta p$ and convolve')
-    s.convolve('t2',50)
+    fl.next('select $\\Delta p$')
+    if p90_varied:
+        s.convolve('t2',50)
     fl.image(s)
     #}}}
     #{{{ slicing
@@ -48,9 +54,14 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     fl.next('sliced')
     fl.image(s)
     #}}}
-    
+    if 'amp' in s.dimlabels:
+        s.setaxis('amp',lambda x:x*plen)
+        s.set_units('amp','s')
+        ind_dim = '\\tau_p a'
+        s.rename('amp',ind_dim)
+    if'p_90' in s.dimlabels:
+        ind_dim = 'p_90'
     #{{{ phasing with zeroth order correction
-    s.ift('t2')
     fl.next('final time domain')
     ph0 = zeroth_order_ph(s['t2':0], fl=None)
     s /= ph0
@@ -60,5 +71,13 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     fl.image(s)
     fl.real_imag('phased data',s)
     #}}}
+    fl.next('FT')
+    title('FT to get $\gamma B_1/a$')
+    s.ft(ind_dim,shift=True)
+    fl.image(s[ind_dim:(-1e3*max_kHz,1e3*max_kHz)])
+    fl.next('absFT')
+    title('FT to get $\gamma B_1/a$')
+    fl.image(abs(s[ind_dim:(-1e3*max_kHz,1e3*max_kHz)]))
+    gridandtick(gca(),gridcolor=[1,1,1])
 fl.show();quit()
 
