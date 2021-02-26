@@ -1,6 +1,7 @@
 from pyspecdata import *
 from sympy import symbols
 import matplotlib.pyplot as plt
+import numpy as np
 def expand_limits(thisrange,s,axis='t2'):
     """" Used to expand limits of a range (typically used for slicing) by 3X
 
@@ -20,10 +21,10 @@ def expand_limits(thisrange,s,axis='t2'):
     """
     thisrange = list(thisrange)
     full_range = s.getaxis(axis)[r_[0,-1]]
-    retval = array([thisrange[j] if thisrange[j] is not
+    retval = np.array([thisrange[j] if thisrange[j] is not
             None else full_range[j] for j in [0,-1]])
     print(repr(retval))
-    m = mean(retval)
+    m = np.mean(retval)
     s = retval-m
     retval = 3*s+m
     sgn = [-1,1] # greater than or less than
@@ -48,17 +49,17 @@ def draw_limits(thisrange,s):
     the limits for the t2 axis for plotting purposes
     """
     full_range = s.getaxis('t2')[r_[0,-1]]
-    dw = diff(s.getaxis('t2')[:2]).item()
+    dw = np.diff(s.getaxis('t2')[:2]).item()
     print("I find the full range to be",full_range)
     sgn = [-1,1] # add or subtract
     pairs = [[thisrange[j],full_range[j]+0.5*dw*sgn[j]] for j in range(2)]
     pairs[0] = pairs[0][::-1] # flip first
-    my_xlim = gca().get_xlim() # following messes w/ xlim for some reason
+    my_xlim = plt.gca().get_xlim() # following messes w/ xlim for some reason
     for j in pairs:
         if None not in j:
             print("drawing a vspan at",j)
-            axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
-    gca().set_xlim(my_xlim)
+            plt.axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
+    plt.gca().set_xlim(my_xlim)
 
 class fl_mod(figlist_var):
     """
@@ -123,5 +124,5 @@ class fl_mod(figlist_var):
         fl.plot(f.eval(100), label='%s fit'%f.name())
         if guess is not None:
             fl.plot(guess, '-', label='initial guess')
-        text(0.75, 0.25, f.latex(), transform=gca().transAxes, size='large',
+        text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes, size='large',
                 horizontalalignment='center',color='k')

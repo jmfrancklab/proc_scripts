@@ -146,11 +146,13 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
         fl.next('phasing cost function')
     s_cost.run(np.real).run(abs).sum('t2')
     #print(ndshape(s_cost))
-    #s_cost.smoosh(['ph1','ph2','vd'],'transients')
+    s_cost = s_cost['ph2',1]['ph1',0]
+    print(ndshape(s_cost))
     #print(ndshape(s_cost))
     if fl is not None:
         fl.plot(s_cost,'.')
-    ph1_opt = s_cost.argmin('phcorr').item()
+    s_cost.smoosh(['vd','phcorr'],'transients')
+    ph1_opt = np.asarray(s_cost.argmin('transients').item())
     #mins = []
     #for j in range(len(s_cost.getaxis('transients'))):
     #    s_avg_min = s_cost['transients',j].argmin('phcorr')
@@ -162,7 +164,7 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
     print('optimal phase correction',repr(ph1_opt))
     # }}}
     # {{{ apply the phase corrections
-    #s_cost.chunk('transients',['ph2','ph1','vd'],[4,2,-1])
+    #s_cost.chunk('transients',['vd','phcorr'],[30,-1])
     def applyphase(arg,ph1):
         arg *= np.exp(-1j*2*pi*ph1*arg.fromaxis('t2'))
         ph0 = arg.C.sum('t2')
@@ -170,14 +172,15 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
         arg /= ph0
         return arg
     def costfun(ph1):
+        print("PH1 IS THIS:",ph1)
         if type(ph1) is np.ndarray:
-            ph1 = ph1.item()
+            ph1 = ph1[0].item()
         temp = s.C
         retval = applyphase(temp,ph1).run(np.real).run(abs).sum('t2').item()
         return retval
     r = minimize(costfun,
-            ph1_opt,
-            bounds=[(ph1_opt-dx,ph1_opt+dx)])
+            ph1_opt)#,
+            #bounds=(ph1_opt-dx,ph1_opt+dx))
     assert r.success
     s = applyphase(s,r.x.item())
     fl.plot(r.x,r.fun,'x')

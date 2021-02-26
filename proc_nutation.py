@@ -7,26 +7,25 @@ from numpy import *
 fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
-for searchstr,exp_type,nodename,postproc in [
-    ['201211_Ni_sol_probe_nutation_1','nutation','nutation','spincore_nutation_v1']
+for searchstr,exp_type,nodename,postproc,freq_slice in [
+    #['201211_Ni_sol_probe_nutation_1','nutation','nutation',
+    #    'spincore_nutation_v1',(-5000,13000)],
+    ['210201_Ni_sol_probe_gds_nutation_1','nutation','nutation',
+        'spincore_nutation_v2',(-500,1300)]
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict)#,fl=fl) 
-    #s = s['t2':(-1000,1000)]
-    #fl.show();quit()
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
     s.ift('t2')
-    # }}}
     s.setaxis('t2', lambda x: x-abs(s['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
-    fl.next('t domain after removing 1st couple pts')
-    #s = s['t2',2:]
+    #}}}
+    fl.next('t domain centered')
     fl.image(s)
-    fl.next('freq domain after filter')
+    fl.next('freq domain centered')
     s.ft('t2')
     fl.image(s)
-    #fl.show();quit()
     s.ift('t2')
     # {{{ centering of data using hermitian function test
     best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
@@ -37,24 +36,17 @@ for searchstr,exp_type,nodename,postproc in [
     fl.next('freq domain after time correction')
     s.ft('t2')
     fl.image(s)
-    #fl.show();quit()
     #}}}
-    
-    #s.ft('t2',pad=4096)
-    
     #{{{ selecting coherence and convolving
     s = s['ph2',0]['ph1',1]
     fl.next('select $\\Delta p$ and convolve')
     s.convolve('t2',50)
     fl.image(s)
-    #fl.show();quit()
     #}}}
-    
     #{{{ slicing
-    s = s['t2':(-5000,13000)]
+    s = s['t2':freq_slice]
     fl.next('sliced')
     fl.image(s)
-    #fl.show();quit()
     #}}}
     
     #{{{ phasing with zeroth order correction

@@ -88,7 +88,7 @@ def proc_spincore_CPMG_v1(s, fl=None):
     acq_time_s = orig_t[nPoints]
     s.set_units('t','s')
     twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
-    t2_axis = linspace(0,acq_time_s,nPoints)
+    t2_axis = np.linspace(0,acq_time_s,nPoints)
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
@@ -182,11 +182,11 @@ def proc_bruker_CPMG_v1(s,fl=None):
         if m is not None:
             anavpt = int(m.groups()[0])
     actual_SW = 20e6/anavpt # JF: check that this is based on the manual's definition of anavpt
-    bruker_final_t2_value = double(s.getaxis('t2')[-1].item())
+    bruker_final_t2_value = np.double(s.getaxis('t2')[-1].item())
     s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
     logger.debug(strm("the final t2 value according to the Bruker SW_h was",
         bruker_final_t2_value, "but I determine it to be",
-        double(s.getaxis('t2')[-1].item()), "with anavpt"))
+        np.double(s.getaxis('t2')[-1].item()), "with anavpt"))
     nEchoes = s.get_prop('acq')['L'][25]
     dwdel1 = s.get_prop('acq')['DE']*1e-6
     dwdel2 = (anavpt*0.05e-6)/2

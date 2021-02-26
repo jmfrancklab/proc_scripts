@@ -32,26 +32,24 @@ with figlist_var() as fl:
         d.ift('t2')
         fl.next('raw data time domain')
         fl.image(d)
-        fl.show();quit()
         plen = d.get_prop('acq_params')['p90_us']
         plen *= 10**-6
         d = d['t2':(-20e3,20e3)]
         fl.next('frequency domain--after slice')
         fl.image(d)
-        d.ift('t2')
+        print(ndshape(d))
         print("max at",abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
         d.setaxis('t2',lambda x: x-abs(d['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
         fl.next('time domain--cropped log before slice')
         fl.image(d.C.cropped_log())
-        #fl.show();quit()
         if tslice is not None:
             d = d['t2':tslice]
+        print(ndshape(d))
         print("signal max: %g"%abs(d['ph1',1]['ph2',-2].data.max()))
         fl.next('frequency domain after filter and t-slice')
         d.ft('t2')
         d = d['t2':fslice]
         fl.image(d)
-        #fl.show();quit()
         fl.next('slice out echo pathway')
         d = d['ph1',1]['ph2',-2]
         if 'amp' in d.dimlabels:
@@ -66,7 +64,6 @@ with figlist_var() as fl:
         d.ift('t2')
         fl.image(d)
         d.ft('t2')
-        #fl.show();quit()
         gridandtick(gca(),gridcolor=[1,1,1])
         fl.next('FT')
         if zero_fill:
@@ -77,7 +74,6 @@ with figlist_var() as fl:
         else:
             d.ft(ind_dim,shift=True)
         fl.image(d[ind_dim:(-1e3*max_kHz,1e3*max_kHz)])
-        #fl.show();quit()
         fl.next('absFT')
         title('FT to get $\gamma B_1/a$')
         #d.extend('t2',

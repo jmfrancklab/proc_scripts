@@ -27,8 +27,7 @@ B_center_list = []
 C_list = []
 for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
         ("210114_3mM_4AT",'ESR','ESR_linewidth',
-            {
-                A:2.107721e02,
+            {A:2.107721e02,
                 B_center: 2.391618e-01,
                 R: 5.076452e-01,
                 sigma: 6.672132e-01,
@@ -37,8 +36,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
             3e-3
             ),
         ("210114_5mM_4AT",'ESR','ESR_linewidth',
-            {
-                A:2.862171e02,
+            {A:2.862171e02,
                 B_center: 1.316801e-01,
                 R: 7.333833e-01,
                 sigma: 5.831063e-01,
@@ -47,8 +45,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
             5e-3
             ),
         ("210114_7mM_4AT",'ESR','ESR_linewidth',
-            {
-                A: 3.527704e02,
+            {A: 3.527704e02,
                 B_center: 9.543103e-03,
                 R: 8.813178e-01,
                 sigma: 5.54451e-01,
@@ -67,9 +64,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
             10e-3
             ),
         ("201118_1mM4AT",'ESR','ESR_linewidth',
-            {
-
-                A:         4e2,
+            {A: 4e2,
                 B_center:  4.220642e-01,
                 R:         3.617994e-01,
                 sigma:     8.702270e-01,
@@ -106,7 +101,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
             dVoigt = pickle.load(fp)
     plt.figure()
     plt.title('plot guess')
-    print(A.value,"a value")
+    logger.info(strm(A.value,"A value"))
     # {{{ need to re-do b/c defaults are stored in pickle
     for k,v in thisguess.items():
         k.value = v
@@ -119,7 +114,6 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
         modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
     x_finer = r_[d.getaxis('$B_0$')[0]:d.getaxis('$B_0$')[-1]:500j]
     result = model_lambda(x_finer)
-    print(type(result),result.shape)
     guess_nddata = nddata(result, [-1], ['$B_0$']).setaxis(
             '$B_0$',x_finer).set_units('$B_0$',d.get_units('$B_0$'))
     plot(d, label='data')
@@ -128,12 +122,12 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
     if interactive:
         guess = InteractiveGuess(model, y=d.data.real, B=d.getaxis('$B_0$'), n_points=500)
         guess.execute()
-        print(guess)
+        logger.info(strm(guess))
     y_var = s.Variable('y')
-    print("about to run fit")
-    fit = s.Fit(model, d.getaxis('$B_0$'), d.data.real)#, minimizer=MINPACK) # really want to use minpack here, but gives "not proper array of floats
+    logger.info(strm("about to run fit"))
+    fit = s.Fit(model, d.getaxis('$B_0$'), d.data.real) # really want to use minpack here, but gives "not proper array of floats
     fit_result = fit.execute()
-    print("fit is done")
+    logger.info(strm("fit is done"))
     plt.figure()
     plt.title('data with fit')
     plot(d, '.', label='data')
@@ -141,7 +135,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
             fit.model(B=x_finer, **fit_result.params).y,
             [-1], ['$B_0$']).setaxis('$B_0$', x_finer)
     plot(fit_nddata, label='fit')
-    print(fit_result)
+    logger.info(Strm(fit_result))
     conc_list.append(concentration)
     R_list.append(fit_result.params['R'])
     sigma_list.append(fit_result.params['sigma'])
@@ -149,67 +143,10 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
     B_center_list.append(fit_result.params['B_center'])
     data.append(d)
 plt.figure()
-print(data)
-print(data[0].dimlabels)
 plot(conc_list,R_list,'x',label='R')
 plot(conc_list,sigma_list,'x',label=r'$\sigma$')
 plt.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
 plt.ylabel('concentration')
 plt.show()
 
-#{{{ attempting global fitting
-w_H=70.302
-R2=0.3436
-k_H = w_H/C
 
-R=R2 + C*k_H
-thesecolors = cycle(list('bgrcmykw'))
-A = parameters('A')
-R = parameters('R')
-sigma = parameters('sigma')
-k_H = parameters('k_H')
-B_center = parameters('B_center')
-y0,y1,y2,y3 = variables('y0, y1, y2, y3')
-C = variables('C0, C1, C2, C3')
-
-model = Model({
-    y0: dVoigt.subs({A:A_list[0]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[0]}).subs({B_center:B_center_list[0]}),
-    y1: dVoigt.subs({A:A_list[1]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[1]}).subs({B_center:B_center_list[1]}),
-    y2: dVoigt.subs({A:A_list[2]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[2]}).subs({B_center:B_center_list[2]}),
-    y3: dVoigt.subs({A:A_list[3]}).subs({R:R2+1e-3*k_H}).subs({sigma:sigma_list[3]}).subs({B_center:B_center_list[3]}),
-    })
-fit = Fit(model,
-        y0 = data[0].data.real,
-        y1 = data[1].data.real,
-        y2 = data[2].data.real,
-        y3 = data[3].data.real,
-        C0 = 3e-3,
-        C1 = 5e-3,
-        C2 = 7e-3,
-        C3 = 10e-3,
-        )
-fit_result = fit.execute()
-x_finer = r_[0:10.0:500j]
-y_fit = model(
-        A = fit_result.value(A),
-        R = fit_result.value(R),
-        sigma = fit_result.value(sigma),
-        B_center = fit_result.value(B_center),
-        C0 = x_finer,
-        C1 = x_finer,
-        C2 = x_finer,
-        C3 = x_finer,
-        )
-A = fit_result.value(A)
-R = fit_result.value(R)
-sigma = fit_result.value(sigma)
-B_center = fit_result.value(B_center)
-
-fl.next('global fit')
-for j in range(3):
-    thiscolor = next(thesecolors)
-    fl.plot(data[j].getaxis('$B_0$'),data[j].real,'.',c=thiscolor,alpha=0.7)
-    fl.plot(x_finer,y_fit[j],':',c=thiscolor,alpha=0.7,label='symfit,global')
-gridandtick(gca())
-legend()
-fl.show();quit()

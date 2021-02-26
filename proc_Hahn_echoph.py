@@ -5,14 +5,12 @@ from proc_scripts.load_data import postproc_dict
 from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
-logger = init_logging('debug')
-
+logger = init_logging('info')
 
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
         ('200302_alex_probe_water', 'test_equip', 'signal', 
             'spincore_Hahn_echoph_v1','microwaves off',(-5e3,5e3)),
         ]:
-    
     #{{{loads raw data and plots
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=postproc_dict)
@@ -56,9 +54,9 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     #}}}
     #{{{visualize final processed data
     fl.next('processed data')
-    fl.plot(s_uncorrected['ph2',-2]['ph1',1],
-            label='without time-axis correction',c='k')
-    fl.plot(s,label='with time-axis correction',c='r')
+    fl.plot(s_uncorrected['ph2',-2]['ph1',1],'ko',
+            label='without time-axis correction')
+    fl.plot(s,'ro',label='with time-axis correction')
     fl.next('Spectrum FT')
     fl.plot(s.real, alpha=0.5, label='real - %s'%label_str)
     fl.plot(s.imag, alpha=0.5, label='imag - %s'%label_str)
