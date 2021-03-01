@@ -99,7 +99,7 @@ def proc_spincore_CPMG_v1(s, fl=None):
         fl.image(s)
     s.ft(['ph1'])
     return s
-def proc_bruker_T1CPMG_v1(s,fl=None):
+def proc_bruker_T1CPMG_v1(s, fl=None):
     assert s.get_prop('acq')['L'][21] == 2, "phase cycle isn't correct!"
     assert s.get_prop('acq')['L'][22] == 4, "phase cycle isn't correct!"
     s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4])
@@ -116,11 +116,9 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     #s.reorder(['indirect','ph2','ph1','t2'])
     s.setaxis('indirect', s.get_prop('vd'))
     s.reorder(['ph1','ph2','indirect','t2'])
-    #s.setaxis('indirect','#')
-    #s.set_units('indirect','scan #')
     if fl is not None:
         fl.next('raw data with indirect set')
-        fl.image(s)
+        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     anavpt_info = [j for j in s.get_prop('pulprog').split('\n') if 'anavpt' in j.lower()]
     anavpt_re = re.compile(r'.*\banavpt *= *([0-9]+)')
     anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
@@ -128,16 +126,16 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
         if m is not None:
             anavpt = int(m.groups()[0])
     actual_SW = 20e6/anavpt # JF: check that this is based on the manual's definition of anavpt
-    bruker_final_t2_value = double(s.getaxis('t2')[-1].item())
+    bruker_final_t2_value = np.double(s.getaxis('t2')[-1].item())
     s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
     logger.debug(strm("the final t2 value according to the Bruker SW_h was",
         bruker_final_t2_value, "but I determine it to be",
-        double(s.getaxis('t2')[-1].item()), "with anavpt"))
+        np.double(s.getaxis('t2')[-1].item()), "with anavpt"))
     nEchoes = s.get_prop('acq')['L'][25]
     dwdel1 = s.get_prop('acq')['DE']*1e-6
     dwdel2 = (anavpt*0.05e-6)/2
     #d12 is read as 0 if taken from parameters bc its too small
-    d12 = 20e-6     
+    d12 = s.get_prop('acq')['D'][12]
     d11 = s.get_prop('acq')['D'][11]
     p90_s = s.get_prop('acq')['P'][1]*1e-6
     quad_pts = ndshape(s)['t2'] # note tha twe have not yet chunked t2
@@ -146,7 +144,7 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     # {{{ these are hard-coded for the pulse sequence
     #     if we need to, we could pull these from the pulse sequence, as we do
     #     for anavpt above
-    tau_extra = 20e-6
+    tau_extra = d12
     tau_pad_start = tau_extra-dwdel1-6e-6
     tau_pad_end = tau_extra-6e-6
     twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
@@ -159,11 +157,11 @@ def proc_bruker_T1CPMG_v1(s,fl=None):
     s.reorder(['ph1','ph2','indirect'])
     if fl is not None:
         fl.next('freq domain coh domain')
-        fl.image(s)
+        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
     if fl is not None:
         fl.next('t2 chunked', figsize=(5,20))
-        fl.image(s)
+        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ft('t2')
     return s
 def proc_bruker_CPMG_v1(s,fl=None):
@@ -246,8 +244,8 @@ def proc_Hahn_echoph(s, fl=None):
     return s
 
 def proc_spincore_IR(s,fl=None):
-    s.rename('vd','indirect')
-    s.reorder(['ph1','ph2','indirect','t2'])
+    vd_axis = s.getaxis('vd')
+    s.reorder(['ph2','ph1']).set_units('t2','s')
     s.ft('t2', shift=True)
     s.ft(['ph2','ph1'])
     if fl is not None:
@@ -441,5 +439,6 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG,
         'ESR_linewidth':proc_ESR_linewidth,
+
 }
 
