@@ -301,20 +301,22 @@ def proc_nutation_amp(s,fl=None):
     return s
 
 def proc_var_tau(s,fl=None):
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.reorder(['ph1','ph2'])
-    s.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
-    s.set_units('t2','s')
-    s.reorder(['ph1','ph2'])
-    fl.next('rawest data t domain')
-    fl.image(s)
-    fl.next('rawest data freq domain')
-    s.ft('t2',shift=True)
-    fl.image(s)
-    s.ift('t2')
-    s.ft(['ph1','ph2'])  
-    fl.next('FTed phase cycles')
-    fl.image(s)
+    s.get_prop('SW')
+    if 'ph1' not in s.dimlabels:
+        s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+        s.setaxis('ph2',r_[0,2]/4)
+        s.setaxis('ph1',r_[0:4]/4)
+    s.set_units('t2','s') # this should already be set -- why not?
+    s *= 2e-6/1.11e4 # convert from SpinCore to V (amp)
+    s.set_units('V')
+    if fl is not None:
+        fl.next('raw signal!')
+    s.ft('t2', shift=True).ft(['ph1','ph2'])
+    s.reorder(['ph1','ph2','tau'])
+    if fl is not None:
+        fl.plot(abs(s).smoosh(['ph2','ph1','tau'],'transients'), alpha=0.2)
+        fl.next('raw signal')
+        fl.image(s)
     return s
 
 
