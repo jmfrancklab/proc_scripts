@@ -11,10 +11,6 @@ init_logging('debug')
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-date = '210127'
-id_string = 'OHTEMPO10mM_cap_probe_IR_1'
-nodename = 'signal'
-filter_bandwidth = 5e3
 ph1_val = 0
 ph2_val = 1
 coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
@@ -24,34 +20,119 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 # }}}
 for thisfile,exp_type,nodename,postproc,f_range,t_range in [
         ('210127_OHTEMPO10mM_cap_probe_IR_1','test_equip','signal','spincore_IR_v1',
-            (-4e3,4e3),(0,35e-3))
+            (-0.5e3,0.5e3),(0,67e-3))
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
-            postproc=postproc,lookup=postproc_dict)
-    dw = np.diff(s.getaxis('t2')[r_[0,-1]]).item()
-    s = ph1_real_Abs(s,dw,fl=fl)
-    fl.next('freq domain -- cropped log')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+            postproc=postproc,lookup=postproc_dict,fl=fl)
+    s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
-    fl.next('time domain cropped log')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
-    s = s['t2':t_range]
+    fl.next('raw data')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    for j in range(ndshape(s)['vd']):
+        if s['vd',j].C.sum('t2')<1:
+            s['vd',j] *= -1
+    s_final = s.C * 0
+    s.ft('t2')
+    fl.next('before splitting and correl align')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    s.ift('t2')
+    fl.next('t domain for apod')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    #{{{time shift and apodization
+    t0 = s['ph2',ph2_val]['ph1',ph1_val].C.mean_all_but('t2').argmax('t2').item()
+    s.setaxis('t2', lambda x: x - t0)
+    apod = s.fromaxis('t2') * 0
+    apod['t2':(None,30e-3)] = apod['t2':(None,30e-3)].run(lambda x: tukey(len(x)))
+    s *= apod
+    #}}}
+    #{{{subplot for imaging before alignment
+    s.ft('t2')
+    s.reorder('ph1',first=True)
+    s.reorder('ph2',first=True)
+    s.reorder('t2',first=False)
+    fl.next('freq domain - before corr, overview')
+    fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
+    fig,(ax1,ax2) = plt.subplots(1,2)
+    fl.next('filtered and apodized -- before alignment', fig=fig)
+    fl.image(s['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
+'vd','#').set_units('vd','scan #'),ax=ax1)
+    fl.image(abs(s)['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
+'vd','#').set_units('vd','scan #'),ax=ax2)
+    #}}}
+    #{{{ pre-alignment
+    s_before = s['vd',:2]
+    s_after = s['vd',3:]
+    s_after.ift(['ph2','ph1'])
+    s_after.ift('t2')
+    s_after.ft('t2')
+    fl.next('before alignment - FT')
+    fl.image(s_after.C.setaxis(
+'vd','#').set_units('vd','scan #'), interpolation='bilinear')
+    s_before.ift(['ph2','ph1'])
+    s_before.ift('t2')
+    s_before.ft('t2')
+    fl.next('prior to alignment')
+    fl.image(s_before, interpolation = 'bilinear')
+    #}}}
+    #{{{alignment for before and after null
+    fl.basename='first pass'
+    opt_shift_before,sigma_before = correl_align(s_before,indirect_dim='vd',
+            ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
+    fl.basename = None
+    fl.basename ='first pass after null'
+    opt_shift_after,sigma_after = correl_align(s_after,indirect_dim='vd',
+            ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
+    fl.basename = None
+    s_before.ift('t2')
+    s_before *= np.exp(-1j*2*pi*opt_shift_before*s_before.fromaxis('t2'))
+    fl.next('out of correl alignment before')
+    fl.image(s_before)
+    s_after.ift('t2')
+    s_after *= np.exp(-1j*2*pi*opt_shift_after*s_after.fromaxis('t2'))
+    fl.next('out of correl alignment after')
+    fl.image(s_after.C.setaxis(
+'vd','#').set_units('vd','scan #'))
+    s_before.reorder('ph1',first=True)
+    s_before.reorder('ph2',first=True)
+    s_before.reorder('t2',first=False)
+    s_before.ft(['ph1','ph2'])
+    s_after.reorder('ph1',first=True)
+    s_after.reorder('ph2',first=True)
+    s_after.reorder('t2',first=False)
+    s_after.ft(['ph1','ph2'])
+    #}}}
+    #{{{recombining before and after null after alignment
+    s_final['vd',:2] = s_before
+    s_final['vd',3:] = s_after
+    s = s_final
+    fl.next('coherence domain-after corr')
+    s.ft('t2')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    s.ift('t2')
+    s *= -1
+    fl.next('time domain-after corr')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    s.ft('t2')
+    #}}}
     #{{{centering, hermitian function test and zeroth order phasing
     rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     fl.next('rough centering')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    apod = s.fromaxis('t2')* 0 
-    apod['t2':(None,500)] = apod['t2':(None,500)].run(lambda x:tukey(len(x)))
-    s *= apod
     #}}}
     #{{{phasing the aligned data
+    s.ift('t2')
     best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
     logger.info(strm("best shift is", best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+    fl.next('frequency domain after hermitian test')
+    s.ft('t2')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+    s.ift('t2')
     ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
@@ -63,6 +144,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range in [
     s /= ph0
     fl.next('phased data time domain')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    s = s['t2':t_range]
     fl.next('phased data freq domain')
     s.ft('t2')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
@@ -80,67 +162,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range in [
     #}}}
     s.ift('t2')
     #{{{ Attempting correlation alignment
-    fl.next('before aligning prior to null')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    for j in range(ndshape(s)['vd']):
-        if s['vd',j].C.sum('t2')<1:
-            s['vd',j] *= -1
-    s_final = s.C * 0
-    s.ft('t2')
-    fl.next('before splitting and correl align')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    s_before = s['vd',:2]
-    s_after = s['vd',3:]
-    fl.next('prior to alignment s_before- coherence dimension')
-    fl.image(s_before)
-    fl.next('prior to alignment s_after- coherence dimension')
-    fl.image(s_after.C.setaxis('vd','#').set_units('vd','scan #'))
-    s_before.ift(['ph2','ph1'])
-    s_before.ift('t2')
-    s_before.ft('t2')
-    fl.next('prior to alignment')
-    fl.image(s_before, interpolation = 'bilinear')
-    fl.basename='first pass'
-    opt_shift_before,sigma_before = correl_align(s_before,indirect_dim='vd',
-            ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
-    fl.basename= None
-    s_before.ift('t2')
-    s_before *= np.exp(-1j*2*pi*opt_shift_before*s_before.fromaxis('t2'))
-    fl.next('out of correl alignment')
-    fl.image(s_before)
-    s_before.reorder('ph1',first=True)
-    s_before.reorder('ph2',first=True)
-    s_before.reorder('t2',first=False)
-    s_before.ft(['ph1','ph2'])
-    s_after.ift(['ph2','ph1'])
-    s_after.ift('t2')
-    s_after.ft('t2')
-    fl.next('prior to alignment')
-    fl.image(s_after.C.setaxis('vd','#').set_units('vd','scan #'), 
-            interpolation = 'bilinear')
-    fl.basename='first pass'
-    opt_shift_after,sigma_after = correl_align(s_after,indirect_dim='vd',
-            ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
-    fl.basename= None
-    s_after.ift('t2')
-    s_after *= np.exp(-1j*2*pi*opt_shift_after*s_after.fromaxis('t2'))
-    fl.next('out of correl alignment')
-    fl.image(s_after.C.setaxis('vd','#').set_units('vd','scan #'))
-    s_after.reorder('ph1',first=True)
-    s_after.reorder('ph2',first=True)
-    s_after.reorder('t2',first=False)
-    s_after.ft(['ph1','ph2'])
-    s_final['vd',:2] = s_before
-    s_final['vd',3:] = s_after
-    s = s_final
-
-    fl.next('coherence domain-after corr')
-    s.ft('t2')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    s.ift('t2')
-    s *= -1
-    fl.next('after alignment')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    #fl.show();quit()
     #}}}
 
     fl.next('recovery curve')

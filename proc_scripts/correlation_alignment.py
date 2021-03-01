@@ -65,7 +65,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
     for_nu_center = for_nu_center['ph1',ph1_selection]['ph2',ph2_selection]
     nu_center = for_nu_center.mean(indirect_dim).C.argmax('t2')
     logger.info(strm("Center frequency", nu_center))
-    for my_iter in range(maxiter):
+    for my_iter in range(100):
         i += 1
         print("*** *** ***")
         print("CORRELATION ALIGNMENT ITERATION NO. ",i)

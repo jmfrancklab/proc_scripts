@@ -250,15 +250,15 @@ def proc_spincore_IR(s,fl=None):
     s.ft(['ph2','ph1'])
     if fl is not None:
         fl.next('raw data -- coherence channels')
-        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
+        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     s.ift('t2')
     if fl is not None:
         fl.next('time domain (all $\\Delta p$)')
-        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
+        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     s.ft('t2', pad=4096)
     if fl is not None:
         fl.next('frequency domain (all $\\Delta p$)')
-        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
+        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     return s
 
 def proc_nutation(s,fl=None):
