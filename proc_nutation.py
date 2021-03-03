@@ -9,16 +9,16 @@ t2 = symbols('t2')
 logger = init_logging("info")
 max_kHz = 200
 for searchstr,exp_type,nodename,postproc,freq_slice,p90_varied in [
-    #['201211_Ni_sol_probe_nutation_1','nutation','nutation',
-    #    'spincore_nutation_v1',(-5000,13000),True],
-    ['210201_Ni_sol_probe_nutation_amp_2','nutation','nutation',
-        'spincore_nutation_v2',(-11e3,15e3),False]
+    ['201211_Ni_sol_probe_nutation_1','nutation','nutation',
+        'spincore_nutation_v1',(-5000,13000),True],
+    #['210302_Ni_cap_probe_nutation_1','nutation','nutation',
+    #    'spincore_nutation_v1',(-4e3,1.2e4),True]
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict)#,fl=fl) 
-    plen = s.get_prop('acq_params')['p90_us']
-    plen *= 10**-6
-    
+    if not p90_varied:
+        plen = s.get_prop('acq_params')['p90_us']
+        plen *= 10**-6
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
@@ -53,6 +53,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice,p90_varied in [
     s = s['t2':freq_slice]
     fl.next('sliced')
     fl.image(s)
+    fl.show();quit()
     #}}}
     if 'amp' in s.dimlabels:
         s.setaxis('amp',lambda x:x*plen)
@@ -67,7 +68,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice,p90_varied in [
     s /= ph0
     fl.image(s)
     fl.next('phased')
-    s.ft('t2',pad=4096)
+    #s.ft('t2',pad=4096)
     fl.image(s)
     fl.real_imag('phased data',s)
     #}}}
