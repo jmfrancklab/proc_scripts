@@ -161,9 +161,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range in [
     #'vd','#').set_units('vd','scan #'))
     #}}}
     s.ift('t2')
-    #{{{ Attempting correlation alignment
-    #fl.show();quit()
-    #}}}
 
     fl.next('recovery curve')
     s_signal = s['ph2',ph2_val]['ph1',ph1_val]
