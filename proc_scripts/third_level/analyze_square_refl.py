@@ -6,6 +6,8 @@ from scipy.optimize import minimize,leastsq
 import sympy as s
 import matplotlib.pyplot as plt
 from pyspecdata import *
+from proc_scripts import *
+fl = fl_ext()
 def analyze_square_refl(d, label='', fl=None,
         frq_bw=15e6,
         keep_after_pulse=2e-6, # amount of the time
@@ -74,7 +76,7 @@ def analyze_square_refl(d, label='', fl=None,
     ph_diff = ph_diff.angle.item() # Δφ above
     frq = ph_diff / dt / 2 / pi
     # }}}
-    print("frq:", frq)
+    logger.info(strm("frq:", frq))
     d *= plb.exp(-1j * 2 * pi * frq * d.fromaxis("t")) # mix down
     d.ft('t')
     if fl is not None: fl.next('after slice and mix down freq domain')
@@ -98,7 +100,7 @@ def analyze_square_refl(d, label='', fl=None,
         # here, I could set a mixed transformation,
         # but I think it's more understandable to just do manually
         ax = plb.gca()
-        print("the amplitude is",pulse_middle_amp)
+        logger.info(strm("the amplitude is",pulse_middle_amp))
         _,y = ax.transData.transform(r_[0.0, pulse_middle_amp])
         fontsize = 16
         nfigures = len(fl.figurelist)
@@ -140,8 +142,8 @@ def analyze_square_refl(d, label='', fl=None,
     f.functional_form = A*s.exp(-t*R)+C
     f.set_guess({A:0.3, R: 1 / 20 * 2 * pi * frq})
     f.fit()
-    print("output:",f.output())
-    print("latex:",f.latex())
+    logger.info(strm("output:",f.output()))
+    logger.info(strm("latex:",f.latex()))
     # {{{ calculate frequency offset
     decay_timescale = 3./f.output('R')
     end_blip =((54. / f.output('R') * 2 * pi * frq)*10**-9)
@@ -151,7 +153,7 @@ def analyze_square_refl(d, label='', fl=None,
     dt = np.diff(phases.getaxis('t')[:2]).item()
     phase_diff.mean('t') # favors points with a greater magnitude
     off_frequency = phase_diff.angle.item() / dt / 2 / pi
-    print(off_frequency.real)
+    logger.info(strm(off_frequency.real))
     #AG: I really don't know what this equation is below or how it relates to the offset maybe we can discuss
     #this in individual meeting
     frq_offset = ((phases['t',1:].angle/2/pi)/(phases['t',:-1].angle/2/pi)*abs(phases['t',:-1].angle/2/pi)).sum('t').item()/dt
