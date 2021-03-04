@@ -36,6 +36,51 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range in [
     s.ft('t2')
     fl.next('before splitting and correl align')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    #{{{centering, hermitian function test and zeroth order phasing
+    rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    fl.next('rough centering')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    #}}}
+    #{{{phasing the aligned data
+    s.ift('t2')
+    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+    logger.info(strm("best shift is", best_shift))
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    fl.next('time domain after hermitian test')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+    fl.next('frequency domain after hermitian test')
+    s.ft('t2')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+    s.ift('t2')
+    ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
+    if len(ph0.dimlabels) > 0:
+        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+        ph0 = zeroth_order_ph(ph0)
+        logger.info(strm('phasing dimension as one'))
+    else:
+        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
+        ph0 = ph0/abs(ph0)
+    s /= ph0
+    fl.next('phased data time domain')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    s = s['t2':t_range]
+    fl.next('phased data freq domain')
+    s.ft('t2')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    #}}}
+    #{{{slicing FID not sure if needed
+    #s = s['t2':(0,None)]
+    #s['t2',0] *= 0.5
+    #fl.next('phased and FID sliced')
+    #fl.image(s.C.setaxis(
+    #'vd','#').set_units('vd','scan #'))
+    #fl.next('phased and FID sliced -- frequency domain')
+    #s.ft('t2')
+    #fl.image(s.C.setaxis(
+    #'vd','#').set_units('vd','scan #'))
+    #}}}
+
     s.ift('t2')
     fl.next('t domain for apod')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
@@ -104,64 +149,16 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range in [
     s_after.ft(['ph1','ph2'])
     #}}}
     #{{{recombining before and after null after alignment
-    s_final['vd',:2] = s_before
-    s_final['vd',3:] = s_after
+    s_final['vd',:2]['t2',:68] = s_before
+    s_final['vd',3:]['t2',103:] = s_after
     s = s_final
     fl.next('coherence domain-after corr')
     s.ft('t2')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     s.ift('t2')
-    s *= -1
     fl.next('time domain-after corr')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    s.ft('t2')
     #}}}
-    #{{{centering, hermitian function test and zeroth order phasing
-    rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
-    fl.next('rough centering')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    #}}}
-    #{{{phasing the aligned data
-    s.ift('t2')
-    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
-    logger.info(strm("best shift is", best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('time domain after hermitian test')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
-    fl.next('frequency domain after hermitian test')
-    s.ft('t2')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
-    s.ift('t2')
-    ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
-    if len(ph0.dimlabels) > 0:
-        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-        ph0 = zeroth_order_ph(ph0)
-        logger.info(strm('phasing dimension as one'))
-    else:
-        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
-        ph0 = ph0/abs(ph0)
-    s /= ph0
-    fl.next('phased data time domain')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    s = s['t2':t_range]
-    fl.next('phased data freq domain')
-    s.ft('t2')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    #}}}
-    #{{{slicing FID not sure if needed
-    #s = s['t2':(0,None)]
-    #s['t2',0] *= 0.5
-    #fl.next('phased and FID sliced')
-    #fl.image(s.C.setaxis(
-    #'vd','#').set_units('vd','scan #'))
-    #fl.next('phased and FID sliced -- frequency domain')
-    #s.ft('t2')
-    #fl.image(s.C.setaxis(
-    #'vd','#').set_units('vd','scan #'))
-    #}}}
-    s.ift('t2')
-
     fl.next('recovery curve')
     s_signal = s['ph2',ph2_val]['ph1',ph1_val]
     # {{{ here we use the inactive coherence pathways to determine the error
