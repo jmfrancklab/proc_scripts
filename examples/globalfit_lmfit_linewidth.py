@@ -76,7 +76,7 @@ for j,C in enumerate(C_list):
             modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
         x_axis = x_axis
         model = model_fn(x_axis)
-        model_nddata = nddata(
+        model_nddata = nddata(model,'x')
         if data is None:
             return model
         return model - datasets[j].data.real
