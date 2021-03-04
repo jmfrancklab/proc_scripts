@@ -6,34 +6,40 @@ from proc_scripts.fitting import decay
 from sympy import symbols
 import sympy as sympy
 fl = fl_mod()
-logger = init_logging('debug')
-dwdel1=6.5e-6
-TD=8
-tau_extra=20e-6
+logger = init_logging('info')
 for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
-        #('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500),False),
-        #('freeSL_201001','test_equip',7,'ag_CPMG_strob','free SL',(-500,500),False),
-        #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500),True),
-        #('w8_200731','test_equip',3,'ag_CPMG_strob','water loading 8',(-500,500),False),
-        ('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-200,200),False),
-        #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
-        #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
-        #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
-        #('200305_CPMG_3p7_3','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
-        #('200305_CPMG_3p8_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
-        #('200305_CPMG_3p9_2','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
-        #('200305_CPMG_4p0_1','test_equip','signal','spincore_CPMG_v1','deadtime=5',(-500,500)),
+        ('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500),False),
+        #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500),True),
+        #('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-200,200),False),
+        #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500),True),
+        #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500),True),
+        #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500),True),
+        #('200305_CPMG_3p7_3','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500),True),
+        #('200305_CPMG_3p8_2','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500),True),
+        #('200305_CPMG_3p9_2','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500),True),
+        #('200305_CPMG_4p0_1','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500),True),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
-    s = s['ph2',-2]['ph1',1]
-
     s.ift('t2')
+#{{{Spincore data requires some reordering of dimensions while bruker data does not.
+    #For this reason we make spincore an argument above for the proper processing
     if spincore:
         s.reorder('nScans',first=True)
         s = s['ph1',1]
         s.mean('nScans')
         s.reorder('t2',first=True)
+    else:
+        s = s['ph2',-2]['ph1',1]
+#}}}        
     #{{{ centering CPMG echo
     center = find_echo_center(s)
     s = center_echo(s,center,fl=fl)
@@ -41,15 +47,18 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
     fl.next('centered echo')
     fl.image(s.C.setaxis(
 'tE','#').set_units('tE','scan #'))
+    #}}}
     #{{{select echo decay fit function
     s.ft('t2')
     fl.next('selected coherence')
-    print(ndshape(s))
     fl.image(s.C.setaxis(
 'tE','#').set_units('tE','scan #'))
     s = s['t2':f_range]
     s = s.C.sum('t2')
-    CPMG = s['indirect',-1]
+    if spincore:
+        CPMG=s
+    else:
+        CPMG = s['indirect',-1]
     fl.next('decay curve')
     fl.plot(CPMG,'o')
     fit_CPMG = fitdata(CPMG)
@@ -58,16 +67,14 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
     logger.info(strm("Functional Form", fit_CPMG.functional_form))
     logger.info(strm("Functional Form", fit_CPMG.functional_form))
     fit_CPMG.fit()
-    print("output:",fit_CPMG.output())
-    print("latex:",fit_CPMG.latex())
+    logger.info(strm("output:",fit_CPMG.output()))
+    logger.info(strm("latex:",fit_CPMG.latex()))
     T2 = 1./fit_CPMG.output('R_2')
     fl.next('CPMG fit of T1CPMG for free D2O')
     fl.plot(CPMG,'o',label='data')
     fl.plot(fit_CPMG.eval(100),label='fit')
-    print("T2 IS:",T2)
-    fl.show();quit()
- 
-     #}}}
+    logger.info(strm("T2 IS:",T2))
+    #}}}
     #{{{saving figure
     save_fig = False
     if save_fig:

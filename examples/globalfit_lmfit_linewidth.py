@@ -57,6 +57,8 @@ for j,C in enumerate(C_list):
 #{{{starting lmfit attempt
 p_true = Parameters()
 B = (datasets[j].getaxis('$B_0$') for j in range(4))
+print(type(B))
+quit()
 
 for j,C in enumerate(C_list):
     p_true.add('A%d'%j, value = A_list_guess[j])
@@ -74,7 +76,7 @@ for j,C in enumerate(C_list):
             modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
         x_axis = x_axis
         model = model_fn(x_axis)
-        model_nddata = nddata(
+        model_nddata = nddata(model,'x')
         if data is None:
             return model
         return model - datasets[j].data.real

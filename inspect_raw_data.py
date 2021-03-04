@@ -1,11 +1,13 @@
 from pyspecdata import *
 import os
 from sympy import symbols
+import matplotlib.pyplot as plt
+import numpy as np
 t2 = symbols('t2')
 fig_dict={}
 clock_correction = 1.0829/998.253
 for j in ['raw data','select coherence']:
-    fig,axlist = subplots(nrows=3,ncols=2)
+    fig,axlist = plt.subplots(nrows=3,ncols=2)
     fig_dict[j] = axlist.ravel()
 for j in range(1,7):
     fname = search_filename("200122_IR_water_%s"%j,'test_equip')
@@ -22,10 +24,11 @@ for j in range(1,7):
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     s.ft('t2',shift=True).reorder(['ph2','ph1'])#.ft(['ph1','ph2'])
-    s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-    sca(fig_dict['raw data'][j-1])
-    image(s['t2':(-200,200)],interpolation='bicubic')
-    sca(fig_dict['select coherence'][j-1])
+    s *= np.exp(-1j*s.fromaxis('vd')*clock_correction)
+    plt.sca(fig_dict['raw data'][j-1])
+    image(s['t2':(-200,200)].C.setaxis('vd','#').set_units('vd','scan #'),
+            interpolation='bicubic')
+    plt.sca(fig_dict['select coherence'][j-1])
     s = s['ph1',0]['ph2',1]
-    image(s['t2':(-200,200)])
+    image(s['t2':(-200,200)].C.setaxis('vd','#').set_units('vd','scan #'))
 show()

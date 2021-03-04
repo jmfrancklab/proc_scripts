@@ -3,6 +3,8 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
+import numpy as np
+import matplotlib.pyplot as plt
 rcParams["savefig.transparent"] = True
 logger = init_logging("info")
 fl = fl_mod()
@@ -24,7 +26,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range,max_t in [
             lookup=postproc_dict)
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range) # visualize the frequency limits
-    fl.show();quit()
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
@@ -33,7 +34,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range,max_t in [
     #{{{apodizing and zero fill
     fl.next('apodize and zero fill')
     R = 5.0/(max_t) # assume full decay by end time
-    s *= exp(-s.fromaxis('t2')*R)
+    s *= np.exp(-s.fromaxis('t2')*R)
     s.ft('t2',pad=1024)
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     #}}}
@@ -44,7 +45,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range,max_t in [
     #}}}
     #{{{plotting enhancement curve at lowest and highest powers 
     fl.next('compare highest power to no power')
-    idx_maxpower = argmax(s.getaxis('power'))
+    idx_maxpower = np.argmax(s.getaxis('power'))
     fl.plot(s['power',0])
     fl.plot(s['power',idx_maxpower])
     #}}}
@@ -59,6 +60,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,time_range,max_t in [
     enhancement.set_units('power','W')
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
-    ylabel('Enhancement')
+    plt.ylabel('Enhancement')
     #}}}
 fl.show();quit()

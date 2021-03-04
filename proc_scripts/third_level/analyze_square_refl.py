@@ -74,7 +74,7 @@ def analyze_square_refl(d, label='', fl=None,
     ph_diff = ph_diff.angle.item() # Δφ above
     frq = ph_diff / dt / 2 / pi
     # }}}
-    print("frq:", frq)
+    logger.info(strm("frq:", frq))
     d *= plb.exp(-1j * 2 * pi * frq * d.fromaxis("t")) # mix down
     d.ft('t')
     if fl is not None: fl.next('after slice and mix down freq domain')
@@ -98,7 +98,7 @@ def analyze_square_refl(d, label='', fl=None,
         # here, I could set a mixed transformation,
         # but I think it's more understandable to just do manually
         ax = plb.gca()
-        print("the amplitude is",pulse_middle_amp)
+        logger.info(strm("the amplitude is",pulse_middle_amp))
         _,y = ax.transData.transform(r_[0.0, pulse_middle_amp])
         fontsize = 16
         nfigures = len(fl.figurelist)
@@ -140,8 +140,8 @@ def analyze_square_refl(d, label='', fl=None,
     f.functional_form = A*s.exp(-t*R)+C
     f.set_guess({A:0.3, R: 1 / 20 * 2 * pi * frq})
     f.fit()
-    print("output:",f.output())
-    print("latex:",f.latex())
+    logger.info(strm("output:",f.output()))
+    logger.info(strm("latex:",f.latex()))
     # {{{ calculate frequency offset
     decay_timescale = 3./f.output('R')
     end_blip = ((54. / f.output('R') * 2 * pi * frq)*1e-9)
@@ -150,12 +150,24 @@ def analyze_square_refl(d, label='', fl=None,
     dt = np.diff(phases.getaxis('t')[:2]).item()
     phase_diff.mean('t') # favors points with a greater magnitude
     frq_offset = phase_diff.angle.item() / dt / 2 / pi
-    print(frq_offset.real)
+    logger(str(frq_offset.real))
     frq_line_plot = phases.fromaxis('t')
     frq_line_plot -= frq_line_plot['t',0]
     frq_line_plot *= 2*pi*frq_offset # so this contains 2πνt
     frq_line_plot = np.exp(1j*frq_line_plot)
     frq_line_plot *= phases['t',0]
+    if fl is not None:
+        ax2 = fl.twinx(orig=False)
+        fl.plot(
+                phases.angle/2/pi,
+            ".",
+            linewidth=1,
+            color=colors[-1],
+            alpha=0.3,
+            label="reflected angle " + label,
+            )
+        fl.plot(frq_line_plot.angle/2/pi, color=colors[-1],
+                linewidth=1)
     if fl is not None:
         ax2 = fl.twinx(orig=False)
         fl.plot(

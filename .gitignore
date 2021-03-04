@@ -3,6 +3,7 @@
 *.swp
 *.pyc
 *.bak
+*.pickle
 tags
 __pycache__
 data_files.log
