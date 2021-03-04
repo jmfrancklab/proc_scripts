@@ -63,18 +63,7 @@ def draw_limits(thisrange,s):
 
 class fl_mod(figlist_var):
     """
-    Used to create an image for comparison where two images or plots are 
-    side by side in the same window. Takes characteristics from figlist_var
-    Parameters
-    ==========
-    plotname:   string with name of plot 
-    s:          nddata being analyzed
-    thisrange:  range along x axis to be analyzed
-
-    Returns
-    =======
-    plot image side by side with the cropped log 
-
+    Extends figlist_var with various new convenience functions.
     """
     def real_imag(self,plotname,s):
         thisfig,(ax1,ax2) = plt.subplots(1,2)
@@ -126,37 +115,10 @@ class fl_mod(figlist_var):
             fl.plot(guess, '-', label='initial guess')
         text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes, size='large',
                 horizontalalignment='center',color='k')
-class fl_ext(figlist_var):
-    """
-    Used to simultaneously plot the real, imaginary, and absolute
-    with the option of plotting the phase angles for each dataset.
-    Parameters
-    ==========
-    label:      string with name of dataset 
-    d:          nddata being analyzed
-    show_phase: bool
-                displays phase angles
-    show_real:  bool
-                displays the real 
-    alpha:      int
-                opaqueness of lines
-    linestyle:  str
-                linestyle for dataset
-    linewidth:  str
-                width of line for dataset
-    color:      str
-                color for dataset being plotted
-    Returns
-    =======
-    plot of dataset(s) with optional real and phase angles plotted
-    on top.
-
-    """
 
     def next(self, *arg, **kwargs):
         kwargs.update({"figsize": (9, 5.56), "legend": True})
         super().next(*arg, **kwargs)
-
     def complex_plot(fl, d, label="", show_phase=False, show_real=True,alpha=0.5,linestyle=None,linewidth=3,color='k'):
         colors = []
         for j in range(ndshape(d)["ch"]):
@@ -221,7 +183,7 @@ class fl_ext(figlist_var):
                 fl.twinx(orig=False)
                 if j==0:
                     fl.plot(
-                            d["ch", j]['t':(150e-9,None)].angle/2/pi,
+                            d["ch", j].angle/2/pi,
                         ".",
                         linewidth=1,
                         color=colors[-1],
@@ -229,7 +191,7 @@ class fl_ext(figlist_var):
                         label="reflected angle " + label,
                         )
                 else:
-                    fl.plot(d["ch",j]['t':(100e-9,None)].angle/2/pi,
+                    fl.plot(d["ch",j].angle/2/pi,
                             ".",
                             linewidth=1,
                             color=colors[-1],
