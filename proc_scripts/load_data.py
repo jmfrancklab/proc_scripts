@@ -4,12 +4,10 @@ import os
 from sympy import symbols
 import logging
 import numpy as np
-fl=figlist_var()
+logger=init_logging('info')
 #to use type s = load_data("nameoffile")
-def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
-    print("this is the 90 time")
-    #print(s.get_prop('acq')['P'][1])
-    print(ndshape(s))
+def proc_bruker_deut_IR_withecho_mancyc(s,fl=None):
+    logger.info(strm("this is the 90 time"))
     if fl is not None:
         fl.next('raw data')
         fl.image(s.C.setaxis(
@@ -39,12 +37,15 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=fl):
     return s
 
 def proc_bruker_deut_IR_mancyc(s, fl=None):
-    print("this is the d1")
-    print(s.get_prop('acq')['D'][1])
+    logger.info(strm("this is the d1",s.get_prop('acq')['D'][1]))
     if fl is not None:
         fl.next('raw data')
         fl.image(s)
-    s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4]) #expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
+    s.chunk('indirect',['indirect','ph1','ph2'],[-1,2,4]) #expands the indirect dimension into indirect, ph1, and ph2. 
+                                                          #inner most dimension is the inner most in the loop in pulse sequence, 
+                                                          #is the one on the farthest right. Brackets with numbers are the number 
+                                                          #of phase cycle steps in each one. the number of steps is unknown in 
+                                                          #'indirect' and is therefore -1.
     s.setaxis('ph1',r_[0:2.]/4) #setting values of axis ph1 to line up
     s.setaxis('ph2',r_[0:4.]/4) #setting values of axis ph1 to line up
     s.setaxis('indirect', s.get_prop('vd'))
@@ -69,7 +70,6 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     return s
 
 def proc_spincore_CPMG_v1(s, fl=None):
-    print(ndshape(s))
     logger.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
@@ -80,7 +80,6 @@ def proc_spincore_CPMG_v1(s, fl=None):
     deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
     deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
     marker_s = s.get_prop('acq_params')['marker_us']*1e-6
-    print(marker_s)
     tau1_s = s.get_prop('acq_params')['tau1_us']*1e-6
     pad_start_s = s.get_prop('acq_params')['pad_start_us']*1e-6
     pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
@@ -89,16 +88,24 @@ def proc_spincore_CPMG_v1(s, fl=None):
     s.set_units('t','s')
     twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
     t2_axis = np.linspace(0,acq_time_s,nPoints)
+    tE_axis = r_[1:nEchoes+1]*twice_tau
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
     s.setaxis('ph1',r_[0.,2.]/4)
+    s.setaxis('tE',tE_axis)
+    s.setaxis('t2',t2_axis)
+    s.reorder(['ph1','tE','nScans','t2'])
+    s.ft(['ph1'])
+    s.reorder('nScans',first=True)
+    if fl is not None:
+        fl.next('time domain')
+        fl.image(s)
     s.ft('t2', shift=True)
     if fl is not None:
-        fl.next('raw data - chunking ft')
+        fl.next('frequency domain coh domain')
         fl.image(s)
-    s.ft(['ph1'])
     return s
+
 def proc_bruker_T1CPMG_v1(s, fl=None):
     assert s.get_prop('acq')['L'][21] == 2, "phase cycle isn't correct!"
     assert s.get_prop('acq')['L'][22] == 4, "phase cycle isn't correct!"
@@ -113,7 +120,6 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     s.ift(['ph1','ph2'])
     s = s['ph2',[1,3]]
     #}}}
-    #s.reorder(['indirect','ph2','ph1','t2'])
     s.setaxis('indirect', s.get_prop('vd'))
     s.reorder(['ph1','ph2','indirect','t2'])
     if fl is not None:
@@ -148,7 +154,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     tau_pad_start = tau_extra-dwdel1-6e-6
     tau_pad_end = tau_extra-6e-6
     twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
-    # JF: as you've used it here twice_tau should be the period from one 180 to another
+    # twice_tau should be the period from one 180 to another
     # }}}
     s.set_units('t2','us')
     s.chunk('t2',['tE','t2'],[nEchoes,-1])
@@ -164,6 +170,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
         fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s.ft('t2')
     return s
+
 def proc_bruker_CPMG_v1(s,fl=None):
     s.chunk('indirect',['ph1','ph2','indirect'],[4,2,-1])
     s.setaxis('ph1',r_[0:4]/4.)
@@ -202,7 +209,7 @@ def proc_bruker_CPMG_v1(s,fl=None):
     tau_pad_start = tau_extra-dwdel1-6e-6
     tau_pad_end = tau_extra-6e-6
     twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
-    # JF: as you've used it here twice_tau should be the period from one 180 to another
+    # twice_tau should be the period from one 180 to another
     # }}}
     s.set_units('t2','us')
     s.chunk('t2',['tE','t2'],[nEchoes,-1])
@@ -282,11 +289,6 @@ def proc_nutation(s,fl=None):
 
 def proc_nutation_amp(s,fl=None):
     logging.info("loading pre-processing for nutation")
-    #orig_t = s.getaxis('t2')
-    #s.reorder(['ph1','ph2'])
-    #s.setaxis('ph2',r_[0.:2.]/4)
-    #s.setaxis('ph1',r_[0.:4.]/4)
-    #s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.set_units('t2','s')
     s.ft('t2',shift=True)
     if fl is not None:
@@ -319,7 +321,6 @@ def proc_var_tau(s,fl=None):
         fl.image(s)
     return s
 
-
 def proc_spincore_ODNP_v1(s,fl=None):
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
@@ -348,7 +349,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
 
 def proc_capture(s):
     logging.info("loading pre-processing for square wave capture")
-    #s.set_units('t','s').name('Amplitude').set_units('V')
+    s.set_units('t','s').name('Amplitude').set_units('V')
     return s
 
 def proc_DOSY_CPMG(s):
@@ -407,11 +408,9 @@ def proc_DOSY_CPMG(s):
     s.ft('t2', shift=True).ift('t2') # this is overkill -- need a pyspecdata function that does this w/out the fft
     # }}}
     return s
+
 def proc_ESR_linewidth(s):
     logging.info("loading preprocessing for ESR linewidth calculation")
-    print(ndshape(s))
-    #s.chunk_auto(['$B_0$'],'phase')
-    #s = s['phase',0]
     s -= s['$B_0$',:50].C.mean('$B_0$')
     s_integral = s.C.run_nopop(np.cumsum,'$B_0$')
     x1,x2 = s_integral.getaxis('$B_0$')[r_[5,-5]]
@@ -423,7 +422,7 @@ def proc_ESR_linewidth(s):
     center_field = (s_integral * s.fromaxis('$B_0$')).mean('$B_0$').item()
     s.setaxis('$B_0$',lambda x: x-center_field)
     s_integral = s.C.run_nopop(np.cumsum,'$B_0$')
-    print(s_integral)
+    logger.info(strm(s_integral))
     return s    
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,

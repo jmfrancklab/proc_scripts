@@ -17,12 +17,15 @@ coh_err = {'ph1':1,# coherence channels to use for error
 # }}}
 clock_correction = nddata(np.linspace(-3,3,2500),'clock_correction')
 
+"""
+coh_sel will depend on whether the dataset is FID based detection 
+or echo based detection. When ab_ir2h is used it is FID based
+hence the coherence selection of ph1:0,ph2:-1
+"""    
+
 for searchstr,exp_type,nodename, postproc, ILT,freq_range  in [
-        ('w3_201111','test_equip',2,'ab_ir2h', False,(-5e3,20e3))
+        #('w3_201111','test_equip',2,'ab_ir2h', False,(-5e3,20e3))
         #('CTAB_w15_41mM_201124','test_equip',2,'ab_ir2h'),
-        #('freeSL_201007','test_equip',5,'ag_IR2H',None)
-        #('w8_200731', 'test_equip', 2, 'ag_IR2H',None),
-        #('free4AT_201014','test_equip',3,'ag_IR2H',None)
         #('free4AT100mM_201104', 'test_equip',2,'ab_ir2h',None),
         #('ag_oct182019_w0_8','test_equip',3,'ab_ir2h',None)
         #('freeD2O_201104','test_equip',2,'ab_ir2h',None),
@@ -31,7 +34,7 @@ for searchstr,exp_type,nodename, postproc, ILT,freq_range  in [
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename,
             postproc=postproc, lookup=postproc_dict,
-            dimname='indirect')
+            dimname='indirect',fl=fl)
     s.ift('t2')
     fl.next('time domain cropped log')
     fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #').cropped_log())

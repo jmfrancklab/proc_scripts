@@ -5,7 +5,7 @@ from scipy.optimize import minimize
 import numpy as np
 import pyspecdata as pysp
 from scipy import linalg
-#from line_profiler import LineProfiler
+logger=init_logging('info')
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
@@ -44,13 +44,11 @@ def zeroth_order_ph(d, fl=None):
     eigenValues, eigenVectors = linalg.eig(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
-    print(type(mean_vec))
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
     idx = eigenValues.argsort()[::-1]   
     eigenValues = eigenValues[idx]
     eigenVectors = eigenVectors[:,idx] # first dimension x,y second evec #
-    print(type(eigenVectors))
     # determine the phase angle from direction of the
     # largest principle axis plus the mean
     # the vector in the direction of the largest
@@ -60,7 +58,6 @@ def zeroth_order_ph(d, fl=None):
     # is assymetric, so include only the excess of the
     # larger eval over the smaller
     assymetry_mag = float(sqrt(eigenValues[0])-sqrt(eigenValues[1]))
-    print(type(assymetry_mag))
     try:
         assym_ineq = (assymetry_mag*eigenVectors[:,0]*mean_vec).sum()
     except:
@@ -145,23 +142,13 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
     if fl is not None:
         fl.next('phasing cost function')
     s_cost.run(np.real).run(abs).sum('t2')
-    #print(ndshape(s_cost))
     s_cost = s_cost['ph2',1]['ph1',0]
-    print(ndshape(s_cost))
-    #print(ndshape(s_cost))
     if fl is not None:
         fl.plot(s_cost,'.')
     s_cost.smoosh(['vd','phcorr'],'transients')
     ph1_opt = np.asarray(s_cost.argmin('transients').item())
-    #mins = []
-    #for j in range(len(s_cost.getaxis('transients'))):
-    #    s_avg_min = s_cost['transients',j].argmin('phcorr')
-    #    mins.append(s_avg_min)
-    #s_cost_min = sum(mins) / len(mins)
-    #ph1_opt = s_cost_min
-    print("THIS IS PH1_OPT")
-    print(ph1_opt)
-    print('optimal phase correction',repr(ph1_opt))
+    logger.info(strm("THIS IS PH1_OPT",ph1_opt))
+    logger.info(strm('optimal phase correction',repr(ph1_opt)))
     # }}}
     # {{{ apply the phase corrections
     #s_cost.chunk('transients',['vd','phcorr'],[30,-1])
@@ -172,22 +159,20 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
         arg /= ph0
         return arg
     def costfun(ph1):
-        print("PH1 IS THIS:",ph1)
+        logger.info(strm("PH1 IS THIS:",ph1))
         if type(ph1) is np.ndarray:
             ph1 = ph1[0].item()
         temp = s.C
         retval = applyphase(temp,ph1).run(np.real).run(abs).sum('t2').item()
         return retval
     r = minimize(costfun,
-            ph1_opt)#,
-            #bounds=(ph1_opt-dx,ph1_opt+dx))
+            ph1_opt)
     assert r.success
     s = applyphase(s,r.x.item())
     fl.plot(r.x,r.fun,'x')
     fl.pop_marker()
     return s
-
-#@profile
+    #}}}
 def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     r"""determine the center of the echo
 
@@ -242,8 +227,7 @@ def hermitian_function_test(s, down_from_max=0.5, shift_val=1.0, fl=None):
     logger.info(strm(ndshape(s_foropt)))
     center_point = s_foropt['t2',n_points//2+1]
     s_foropt /= center_point/abs(center_point)
-    print("SHAPE OF S_FOROPT")
-    print(ndshape(s_foropt))
+    logger.info(strm("SHAPE OF S_FOROPT",ndshape(s_foropt)))
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(np.conj)).mean_all_but(['shift','R2'])
     # in the following, weight for the total signal recovered

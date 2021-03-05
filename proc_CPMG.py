@@ -8,12 +8,12 @@ import sympy as sympy
 fl = fl_mod()
 logger = init_logging('info')
 for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
-        ('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500),False),
+        #('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500),False),
         #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1',
         #    'deadtime=5',(-500,500),True),
         #('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-200,200),False),
-        #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1',
-        #    'deadtime=5',(-500,500),True),
+        ('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1',
+            'deadtime=5',(-500,500),True),
         #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1',
         #    'deadtime=5',(-500,500),True),
         #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1',
@@ -33,8 +33,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
 #{{{Spincore data requires some reordering of dimensions while bruker data does not.
     #For this reason we make spincore an argument above for the proper processing
     if spincore:
-        s.reorder('nScans',first=True)
-        s = s['ph1',1]
+        s = s['ph1',1] #the spincore version only has one phasing dimension 'nPhaseSteps'
         s.mean('nScans')
         s.reorder('t2',first=True)
     else:

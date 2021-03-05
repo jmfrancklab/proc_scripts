@@ -2,6 +2,7 @@ from pyspecdata import *
 from sympy import symbols
 import sympy as sp
 import numpy as np
+logger=init_logging('info')
 def _fitcurve_initial(s,direct):
     if not s.get_ft_prop(direct):
         raise ValueError("Your data should be in the frequency domain!")
@@ -17,8 +18,8 @@ def _fitcurve_final(f,whichrate,guess):
         # we could return this as well, and then pass it to the fit_curve
         # function
     f.fit()
-    print("output:",f.output())
-    print("latex:",f.latex())
+    logger.info(strm("output:",f.output()))
+    logger.info(strm("latex:",f.latex()))
     if guess is None:
         return f,1./f.output(whichrate)
     else:

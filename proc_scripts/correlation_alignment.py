@@ -3,6 +3,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq, minimize, basinhopping
 import numpy as np
 from matplotlib.ticker import FuncFormatter
+logger= init_logging('info')
 @FuncFormatter
 def to_percent(y, position):
     s = '%.2g'%(100 * y)
@@ -67,9 +68,9 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
     logger.info(strm("Center frequency", nu_center))
     for my_iter in range(100):
         i += 1
-        print("*** *** ***")
-        print("CORRELATION ALIGNMENT ITERATION NO. ",i)
-        print("*** *** ***")
+        logger.info(strm("*** *** ***"))
+        logger.info(strm("CORRELATION ALIGNMENT ITERATION NO. ",i))
+        logger.info(strm("*** *** ***"))
         if align_phases:
             ph0 = s.C.sum('t2')
             ph0 /= abs(ph0)
