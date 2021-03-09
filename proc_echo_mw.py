@@ -5,6 +5,7 @@ from proc_scripts import postproc_dict
 from sympy import symbols
 import numpy as np
 import matplotlib.pyplot as plt
+from sympy import exp as s_exp
 rcParams["savefig.transparent"] = True
 logger = init_logging("info")
 fl = fl_mod()

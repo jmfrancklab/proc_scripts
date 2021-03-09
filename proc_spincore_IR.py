@@ -29,29 +29,48 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range in [
     s.ift('t2')
     fl.next('raw data')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    for j in range(ndshape(s)['vd']):
-        if s['vd',j].C.sum('t2')<1:
-            s['vd',j] *= -1
-    s_final = s.C * 0
-    s.ft('t2')
+    #for j in range(ndshape(s)['vd']):
+    #    if s['vd',j].C.sum('t2')<1:
+    #        s['vd',j] *= -1
+    #s_final = s.C * 0
+    #s.ft('t2')
     fl.next('before splitting and correl align')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     #{{{centering, hermitian function test and zeroth order phasing
-    #rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
-    #s.setaxis(t2-rough_center)
-    #fl.next('rough centering')
-    #fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
+    s.setaxis(t2-rough_center)
+    fl.next('rough centering')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
-    #{{{phasing the aligned data
-    s.ift('t2')
-    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
-    logger.info(strm("best shift is", best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('time domain after hermitian test')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
-    fl.next('frequency domain after hermitian test')
+    #{{{ clock correction
+    clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
     s.ft('t2')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+    fl.next('before clock correction')
+    fl.image(s.C.setaxis('vd','#'))
+    s_clock=s['ph1',0]['ph2',1].sum('t2')
+    s.ift(['ph1','ph2'])
+    min_index = abs(s_clock).argmin('vd',raw_index=True).item()
+    s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+    s_clock['vd',:min_index+1] *=-1
+    s_clock.sum('vd').run(abs)
+    fl.next('clock correction')
+    fl.plot(s_clock,'.',alpha=0.7)
+    clock_corr = s_clock.argmax('clock_corr').item()
+    pyplot.axvline(x=clock_corr, alpha=0.5, color='r')
+    s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+    fl.next('after auto-clock correction')
+    s.ft(['ph1','ph2'])
+    fl.image(s.C.setaxis('vd','#'))
+    #{{{phasing the aligned data
+    #s.ift('t2')
+    #best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+    #logger.info(strm("best shift is", best_shift))
+    #s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    #fl.next('time domain after hermitian test')
+    #fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+    #fl.next('frequency domain after hermitian test')
+    #s.ft('t2')
+    #fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
     s.ift('t2')
     ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
     if len(ph0.dimlabels) > 0:
@@ -70,15 +89,20 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range in [
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
     #{{{slicing FID not sure if needed
-    #s = s['t2':(0,None)]
-    #s['t2',0] *= 0.5
-    #fl.next('phased and FID sliced')
-    #fl.image(s.C.setaxis(
-    #'vd','#').set_units('vd','scan #'))
-    #fl.next('phased and FID sliced -- frequency domain')
-    #s.ft('t2')
-    #fl.image(s.C.setaxis(
-    #'vd','#').set_units('vd','scan #'))
+    s.ift('t2')
+    s = s['t2':(0,None)]
+    s['t2',0] *= 0.5
+    fl.next('phased and FID sliced')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    fl.next('phased and FID sliced -- frequency domain')
+    s.ft('t2')
+    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    fl.next('signal vs vd')
+    s_sliced = s['ph1',0]['ph2',1].convolve('t2',10)
+    s_sliced.sum('t2')
+    fl.plot(s_sliced,'o')
+    fl.plot(s_sliced.imag,'o')
+    fl.show();quit()
     #}}}
 
     s.ift('t2')
