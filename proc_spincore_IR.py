@@ -19,8 +19,8 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         'ph2':r_[0,2,3]}
 # }}}
 for thisfile,exp_type,nodename,postproc,f_range,t_range in [
-        ('210127_OHTEMPO10mM_cap_probe_IR_1','test_equip','signal','spincore_IR_v1',
-            (-0.5e3,0.5e3),(0,67e-3))
+        ('210309_TEMPOL_150uM_cap_probe_0dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.08e3,0.02e3),(0,76e-3))
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
@@ -37,10 +37,10 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range in [
     fl.next('before splitting and correl align')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     #{{{centering, hermitian function test and zeroth order phasing
-    rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
-    fl.next('rough centering')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    #rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
+    #s.setaxis(t2-rough_center)
+    #fl.next('rough centering')
+    #fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
     #{{{phasing the aligned data
     s.ift('t2')
