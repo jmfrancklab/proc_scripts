@@ -18,8 +18,8 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
-        ["210309_TEMPOL150uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-1000,1000),0.65]
+        ["210310_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-2000,2000),0.06]
         ]:
     fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
@@ -31,6 +31,8 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
     logger.debug(strm(ndshape(s)))
+    fl.next('time domain')
+    fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     s = slice_FID_from_echo(s,max_t=max_t,fl=None)    # visualize time domain after filtering and phasing
     #{{{apodizing and zero fill
     fl.next('apodize and zero fill')
