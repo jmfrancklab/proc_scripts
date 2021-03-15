@@ -3,8 +3,7 @@ from scipy.optimize import basinhopping
 from proc_scripts import *
 from proc_scripts import postproc_dict
 from proc_scripts.fitting import decay
-from sympy import symbols
-import sympy as sympy
+import sympy as sp
 fl = fl_mod()
 logger = init_logging('info')
 for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
@@ -40,7 +39,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
         s = s['ph2',-2]['ph1',1]
 #}}}        
     #{{{ centering CPMG echo
-    center = find_echo_center(s)
+    center = hermitian_function_test(s)
     s = center_echo(s,center,fl=fl)
     logger.debug(strm(ndshape(s)))
     fl.next('centered echo')
@@ -61,8 +60,8 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
     fl.next('decay curve')
     fl.plot(CPMG,'o')
     fit_CPMG = fitdata(CPMG)
-    M0,R2,vd = symbols("M_0 R_2 tE",real=True)
-    fit_CPMG.functional_form = (M0)*sympy.exp(-vd*R2)
+    M0,R2,vd = sp.symbols("M_0 R_2 tE",real=True)
+    fit_CPMG.functional_form = (M0)*sp.exp(-vd*R2)
     logger.info(strm("Functional Form", fit_CPMG.functional_form))
     logger.info(strm("Functional Form", fit_CPMG.functional_form))
     fit_CPMG.fit()

@@ -4,23 +4,6 @@ from proc_scripts import *
 import math
 import numpy as np
 logger=init_logging('info')
-def find_echo_center(s, axis='t2',fl=None):
-    """Centers and phases a CPMG echo and returns the centered echo
-    
-    Parameters
-    ----------
-    axis: str
-        name of the axis you are centering on
-        (the direct dimension)
-
-    Returns
-    -------
-    s: nddata
-        contains echo-like data with two or more dimensions
-    """
-    echo_center = hermitian_function_test(s, fl=fl)
-    logger.info(strm("echo center is",echo_center))
-    return echo_center 
 def center_echo(s, echo_center, axis='t2',fl=None):
     s.setaxis(axis, lambda x: x-echo_center)
     s.register_axis({axis:0})

@@ -32,7 +32,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
                 R: 5.076452e-01,
                 sigma: 6.672132e-01,
                 },
-            False,
+            True,
             3e-3
             ),
         ("210114_5mM_4AT",'ESR','ESR_linewidth',

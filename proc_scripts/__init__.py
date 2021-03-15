@@ -5,7 +5,7 @@ from .plotting import expand_limits,draw_limits,fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
 from .baseline import calc_baseline
 from .Utility import *
-from .CPMG_phasing import find_echo_center, center_echo
+from .CPMG_phasing import center_echo
 from .fitting import recovery, decay
 from .STFT import stft, isftf, simu_waves, simu_freq_sawtooth 
 from .integrate_limits import integrate_limits
@@ -13,7 +13,6 @@ from .correlation_alignment import correl_align
 __all__ = ['zeroth_order_ph',
         'ph1_real_Abs',
         'hermitian_function_test',
-        #'align_and_slice',
         'expand_limits',
         'draw_limits',
         'fl_mod',
@@ -22,7 +21,6 @@ __all__ = ['zeroth_order_ph',
         'dBm2power',
         'power2dBm',
         'Vpp2power',
-        'find_echo_center',
         'center_echo',
         'recovery',
         'decay',
