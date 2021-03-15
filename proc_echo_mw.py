@@ -18,8 +18,10 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
-        ["210310_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-2000,2000),0.06]
+        #["210311_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+        #    'spincore_ODNP_v1', (-6000,6000),0.06]
+        ["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
+            'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
     fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
