@@ -25,16 +25,10 @@ with figlist_var() as fl:
         #{{{ plotting abs
         #took out for loop and hard coding p90 times because only GDS parameters saved over
         # the pp parameters
-        fl.plot(abs(d['p90',0]),alpha=0.5, linewidth=1,label = "p90 = 0.1 us")
-        fl.plot(abs(d['p90',1]),alpha=0.5,linewidth=1,label = "p90=1.76 us")
-        fl.plot(abs(d['p90',2]),alpha=0.5,linewidth=1,label = "p90=3.41 us")
-        fl.plot(abs(d['p90',3]),alpha=0.5,linewidth=1,label = "p90=5.07 us")
-        fl.plot(abs(d['p90',4]),alpha=0.5,linewidth=1,label = "p90=6.72 us")
-        fl.plot(abs(d['p90',5]),alpha=0.5,linewidth=1,label = "p90=8.38 us")
-        fl.plot(abs(d['p90',6]),alpha=0.5,linewidth=1,label = "p90=10.03 us")
-        fl.plot(abs(d['p90',7]),alpha=0.5,linewidth=1,label = "p90=11.69 us")
-        fl.plot(abs(d['p90',8]),alpha=0.5,linewidth=1,label = "p90=13.34 us")
-        fl.plot(abs(d['p90',9]),alpha=0.5,linewidth=1,label = "p90=15 us")
+        print(ndshape(d))
+        print(len(d.getaxis('p90')))
+        for j in range(len(d.getaxis('p90'))):
+            fl.plot(abs(d['p90',j]),alpha=0.5, linewidth=1)
         #}}}
         d = abs(d)
         #{{{integrating 90 pulse and fitting to line

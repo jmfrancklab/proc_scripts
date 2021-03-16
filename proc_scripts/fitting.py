@@ -2,15 +2,15 @@ from pyspecdata import *
 from sympy import symbols
 import sympy as sp
 import numpy as np
-logger=init_logging('info')
+import logging
 def _fitcurve_initial(s,direct):
     if not s.get_ft_prop(direct):
         raise ValueError("Your data should be in the frequency domain!")
     curve = s.real
     return fitdata(curve)
 def _fitcurve_final(f,whichrate,guess):
-    logger.info(strm("Functional form", f.functional_form))
-    logger.info(strm("Functional form", f.functional_form))
+    logging.info(strm("Functional form", f.functional_form))
+    logging.info(strm("Functional form", f.functional_form))
     if guess is not None:
         f.set_guess(guess)
         f.settoguess()
@@ -18,8 +18,8 @@ def _fitcurve_final(f,whichrate,guess):
         # we could return this as well, and then pass it to the fit_curve
         # function
     f.fit()
-    logger.info(strm("output:",f.output()))
-    logger.info(strm("latex:",f.latex()))
+    logging.info(strm("output:",f.output()))
+    logging.info(strm("latex:",f.latex()))
     if guess is None:
         return f,1./f.output(whichrate)
     else:

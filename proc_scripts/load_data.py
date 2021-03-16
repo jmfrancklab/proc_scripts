@@ -4,10 +4,10 @@ import os
 from sympy import symbols
 import logging
 import numpy as np
-logger=init_logging('info')
+import logging
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s,fl=None):
-    logger.info(strm("this is the 90 time"))
+    logging.info(strm("this is the 90 time"))
     if fl is not None:
         fl.next('raw data')
         fl.image(s.C.setaxis(
@@ -37,7 +37,7 @@ def proc_bruker_deut_IR_withecho_mancyc(s,fl=None):
     return s
 
 def proc_bruker_deut_IR_mancyc(s, fl=None):
-    logger.info(strm("this is the d1",s.get_prop('acq')['D'][1]))
+    logging.info(strm("this is the d1",s.get_prop('acq')['D'][1]))
     if fl is not None:
         fl.next('raw data')
         fl.image(s)
@@ -70,7 +70,7 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     return s
 
 def proc_spincore_CPMG_v1(s, fl=None):
-    logger.info("loading pre-processing for CPMG preprocessing")
+    logging.info("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
@@ -134,7 +134,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     actual_SW = 20e6/anavpt # JF: check that this is based on the manual's definition of anavpt
     bruker_final_t2_value = np.double(s.getaxis('t2')[-1].item())
     s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
-    logger.debug(strm("the final t2 value according to the Bruker SW_h was",
+    logging.debug(strm("the final t2 value according to the Bruker SW_h was",
         bruker_final_t2_value, "but I determine it to be",
         np.double(s.getaxis('t2')[-1].item()), "with anavpt"))
     nEchoes = s.get_prop('acq')['L'][25]
@@ -189,7 +189,7 @@ def proc_bruker_CPMG_v1(s,fl=None):
     actual_SW = 20e6/anavpt # JF: check that this is based on the manual's definition of anavpt
     bruker_final_t2_value = np.double(s.getaxis('t2')[-1].item())
     s.setaxis('t2',1./actual_SW*r_[0:ndshape(s)['t2']]) # reset t2 axis to true values based on anavpt
-    logger.debug(strm("the final t2 value according to the Bruker SW_h was",
+    logging.debug(strm("the final t2 value according to the Bruker SW_h was",
         bruker_final_t2_value, "but I determine it to be",
         np.double(s.getaxis('t2')[-1].item()), "with anavpt"))
     nEchoes = s.get_prop('acq')['L'][25]
@@ -422,7 +422,7 @@ def proc_ESR_linewidth(s):
     center_field = (s_integral * s.fromaxis('$B_0$')).mean('$B_0$').item()
     s.setaxis('$B_0$',lambda x: x-center_field)
     s_integral = s.C.run_nopop(np.cumsum,'$B_0$')
-    logger.info(strm(s_integral))
+    logging.info(strm(s_integral))
     return s    
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,

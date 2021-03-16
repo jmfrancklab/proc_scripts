@@ -1,5 +1,5 @@
 from pyspecdata import *
-logger=init_logging('info')
+import logging
 def calc_baseline(this_d,
         ph1lim, 
         npts=5,
@@ -56,10 +56,10 @@ def calc_baseline(this_d,
         d_test = apply_corr(ini_vec)
         return abs(d_test.real).sum('t2').data.item()
     max_val = abs(this_d_tdom.data).max()
-    logger.info(strm(max_val))
+    logging.info(strm(max_val))
     mybounds = r_[-max_val,max_val][newaxis,:]*ones(npts*2)[:,newaxis]
-    logger.info(strm(shape(mybounds)))
-    logger.info(strm(mybounds))
+    logging.info(strm(shape(mybounds)))
+    logging.info(strm(mybounds))
     mybounds = r_[
             r_[-pi,pi,-ph1lim,ph1lim].reshape(-1,2),
             mybounds]

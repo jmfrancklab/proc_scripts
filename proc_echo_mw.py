@@ -17,9 +17,9 @@ t2 = symbols('t2')
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
-for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
+for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         #["210311_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-        #    'spincore_ODNP_v1', (-6000,6000),0.06]
+        #    'spincore_ODNP_v1', (-6000,6000),(None,0.06)]
         ["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
             'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -35,10 +35,10 @@ for searchstr,exp_type,nodename,postproc,freq_range,max_t in [
     logger.debug(strm(ndshape(s)))
     fl.next('time domain')
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
-    s = slice_FID_from_echo(s,max_t=max_t,fl=None)    # visualize time domain after filtering and phasing
+    s = slice_FID_from_echo(s,max_t=t_range[-1],fl=None)    # visualize time domain after filtering and phasing
     #{{{apodizing and zero fill
     fl.next('apodize and zero fill')
-    R = 5.0/(max_t) # assume full decay by end time
+    R = 5.0/(t_range[-1]) # assume full decay by end time
     s *= np.exp(-s.fromaxis('t2')*R)
     s.ft('t2',pad=1024)
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))

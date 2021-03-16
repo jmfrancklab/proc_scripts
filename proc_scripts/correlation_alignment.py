@@ -3,7 +3,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq, minimize, basinhopping
 import numpy as np
 from matplotlib.ticker import FuncFormatter
-logger= init_logging('info')
+import logging
 @FuncFormatter
 def to_percent(y, position):
     s = '%.2g'%(100 * y)
@@ -38,6 +38,10 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
     sigma:          int
                     sigma value for the gaussian fitting. Related to the linewidth
                     of the given data.
+    fl:             boolean 
+                    fl=fl to show the plots and figures produced by this function
+                    otherwise, fl=None
+                    
     Returns
     =======
     f_shift:    array
@@ -65,12 +69,12 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
     for_nu_center.ft(['ph1','ph2'])
     for_nu_center = for_nu_center['ph1',ph1_selection]['ph2',ph2_selection]
     nu_center = for_nu_center.mean(indirect_dim).C.argmax('t2')
-    logger.info(strm("Center frequency", nu_center))
+    logging.info(strm("Center frequency", nu_center))
     for my_iter in range(100):
         i += 1
-        logger.info(strm("*** *** ***"))
-        logger.info(strm("CORRELATION ALIGNMENT ITERATION NO. ",i))
-        logger.info(strm("*** *** ***"))
+        logging.info(strm("*** *** ***"))
+        logging.info(strm("CORRELATION ALIGNMENT ITERATION NO. ",i))
+        logging.info(strm("*** *** ***"))
         if align_phases:
             ph0 = s.C.sum('t2')
             ph0 /= abs(ph0)
@@ -98,12 +102,12 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
             correl += s_copy2 * s_copy.C.run(lambda x, axis=None: roll(x,j,axis=axis),
                 indirect_dim).run(conj)
         if my_iter == 0:
-            logger.info(strm("holder"))
+            logging.info(strm("holder"))
             if fl is not None:
                 fl.next('Look at correlation function - time domain')
                 fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'))
         if my_iter ==0:
-            logger.info(strm("holder"))
+            logging.info(strm("holder"))
             if fl is not None:
                 fl.next('correlation function\ntime domain, after apod')
                 fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'))
@@ -112,32 +116,32 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
         correl.ft(['DeltaPh1','DeltaPh2'])
         correl = correl['DeltaPh1',ph1_selection]['DeltaPh2',ph2_selection] + correl['DeltaPh1',0]['DeltaPh2',0]
         if my_iter ==0:
-            logger.info(strm("holder"))
+            logging.info(strm("holder"))
             if fl is not None:
                 fl.next('correlation function \nfreq domain, after apod')
                 fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'))
         f_shift = correl.run(real).argmax('t2')
-        #f_shift = nddata(f_shift.data,[indirect_dim])
         s_copy = s.C
         s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis('t2'))
         s.ft('t2')
         s_copy.ft('t2')
         if my_iter ==0:
-            logger.info(strm("holder"))
+            logging.info(strm("holder"))
             if fl is not None:
                 fl.next('after correlation\nbefore ph0 restore')
                 fl.image(s_copy.C.setaxis('vd','#').set_units('vd','scan #'))
-        logger.info(strm('signal energy per transient (recalc to check that it stays the same):',(abs(s_copy**2).data.sum().item() / N)))
+        logging.info(strm('signal energy per transient (recalc to check that it stays the same):',(abs(s_copy**2).data.sum().item() / N)))
 
         this_E = (abs(s_copy.C.sum(indirect_dim))**2).data.sum().item() / N**2
         energy_vals.append(this_E / sig_energy)
-        logger.info(strm('averaged signal energy (per transient):', this_E))
+        logging.info(strm('averaged signal energy (per transient):', this_E))
         if last_E is not None:
             energy_diff = (this_E - last_E)/sig_energy
-            logger.info(strm(energy_diff))
+            logging.info(strm(energy_diff))
             if abs(energy_diff) < tol:
                 break
         last_E = this_E
+        #assert my_iter > 3, "at least 4 iterations must be run"
     if fl is not None: 
         fl.next('correlation convergence')
         fl.plot(array(energy_vals),'x')

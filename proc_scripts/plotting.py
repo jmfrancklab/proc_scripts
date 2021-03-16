@@ -2,7 +2,7 @@ from pyspecdata import *
 from sympy import symbols
 import matplotlib.pyplot as plt
 import numpy as np
-logger=init_logging('info')
+import logging
 def expand_limits(thisrange,s,axis='t2'):
     """" Used to expand limits of a range (typically used for slicing) by 3X
 
@@ -50,14 +50,14 @@ def draw_limits(thisrange,s):
     """
     full_range = s.getaxis('t2')[r_[0,-1]]
     dw = np.diff(s.getaxis('t2')[:2]).item()
-    logger.info(strm("I find the full range to be",full_range))
+    logging.info(strm("I find the full range to be",full_range))
     sgn = [-1,1] # add or subtract
     pairs = [[thisrange[j],full_range[j]+0.5*dw*sgn[j]] for j in range(2)]
     pairs[0] = pairs[0][::-1] # flip first
     my_xlim = plt.gca().get_xlim() # following messes w/ xlim for some reason
     for j in pairs:
         if None not in j:
-            logger.info(strm("drawing a vspan at",j))
+            logging.info(strm("drawing a vspan at",j))
             plt.axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
     plt.gca().set_xlim(my_xlim)
 

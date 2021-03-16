@@ -3,9 +3,26 @@ from pyspecdata import *
 from sympy import symbols
 
 
-def slice_FID_from_echo(s, max_t=None, ph1=1, ph2=-2, fl=None):
-    best_shift = hermitian_function_test(s[
-        'ph2',ph2]['ph1',ph1])
+def slice_FID_from_echo(s, max_t=None, pathway={'ph1':1, 'ph2':-2}, fl=None):
+    """takes the best shift from hermitian function test and applies it to dataset.
+    This is followed by zeroth order phase correcting and slicing form the center of 
+    the echo onward to the t_range defined
+    Parameters
+    ==========
+    max_t:  int
+            where the slice ends in the time domain.
+    ph1:    int
+            the selection of ph1 in the coherence pathway
+    ph2:    int
+            selection of ph2 in coherence pathway
+    Returns
+    =======
+    s:      phase corrected and sliced data
+    """
+    myslice = s
+    for k, v in pathway.items():
+        myslice = s[k,v]
+    best_shift = hermitian_function_test(myslice)
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0}, nearest=False)
     coh_slice = s['t2':0]['ph2',ph2]['ph1',ph1]

@@ -3,21 +3,31 @@ from sympy import symbols
 from proc_scripts import *
 import math
 import numpy as np
-logger=init_logging('info')
+import logging
+
 def center_echo(s, echo_center, axis='t2',fl=None):
+    """
+    Centers echo given the echo center and checks for lopsidedness
+    Parameters
+    ==========
+    echo_center:    int
+            center of echo
+    axis:           str
+            axis along which the echo is being centered
+    """        
     s.setaxis(axis, lambda x: x-echo_center)
     s.register_axis({axis:0})
-    logger.debug(strm("after register axis, t2 axis is", s.getaxis(axis)))
+    logging.debug(strm("after register axis, t2 axis is", s.getaxis(axis)))
     s /= zeroth_order_ph(s[axis:0],fl=fl)
     time_bound = min(abs(s.getaxis(axis)[r_[0,-1]]))
-    logger.debug(strm("time bound is",time_bound))
+    logging.debug(strm("time bound is",time_bound))
     axis_before = ndshape(s)[axis]
     s = s[axis:(-time_bound,time_bound)]
     axis_after = ndshape(s)[axis]
-    logger.info(strm(axis_after/axis_before))
+    logging.info(strm(axis_after/axis_before))
     assert axis_after/axis_before > 0.5, "the echo is extremely lopsided -- either you houldn't be using this function, or the center is not actually at echo_center=%g, where you are claiming it is"%echo_center
-    logger.info(strm("time bound is",time_bound))
-    logger.info(strm("after setting axis to time bounds", s.getaxis(axis)))
+    logging.info(strm("time bound is",time_bound))
+    logging.info(strm("after setting axis to time bounds", s.getaxis(axis)))
     assert np.isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound %g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
@@ -36,7 +46,7 @@ def minimize_CPMG_imag(s, axis='t2', fl=None):
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        logger.info(strm(iteration, x, f, int(accepted)))
+        logging.info(strm(iteration, x, f, int(accepted)))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
@@ -52,7 +62,7 @@ def minimize_CPMG_imag(s, axis='t2', fl=None):
     logging.info(strm("RELATIVE PHASE SHIFT WAS %0.1f\\us and %0.1f$^\circ$", firstorder, angle(zeroorder_rad)/pi*180))
     if s['tE',0].data[:].sum().real < 0:
         s *= -1
-    logger.info(strm(ndshape(s)))
+    logging.info(strm(ndshape(s)))
     if fl is not None:
         fl.next('after phased - real ft')
         fl.image(s.real)
