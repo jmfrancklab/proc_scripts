@@ -39,5 +39,4 @@ with fl as figlist_var():
     fl.plot(abs(a),label='shorting cap')
     #}}}
     ylim(0,y_lim)
-    fl.show();quit()
 

@@ -20,7 +20,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
             lookup=postproc_dict) 
     print(s.dimlabels)
     if 'amp' in s.dimlabels:
-        plen = (s.get_prop('acq_params')['p90_us'])*10**-6
+        plen = s.get_prop('acq_params')['p90_us']*1e-6
         logger.info(strm('pulse length is:',plen))
     # {{{ do the rough centering before anything else!
     # in particular -- if you don't do this before convolution, the
@@ -63,7 +63,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
         s.set_units('amp','s')
         ind_dim = '\\tau_p a'
         s.rename('amp',ind_dim)
-    if'p_90' in s.dimlabels:
+    if 'p_90' in s.dimlabels:
         ind_dim = 'p_90'
     #{{{ phasing with zeroth order correction
     fl.next('final time domain')

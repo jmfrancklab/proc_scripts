@@ -49,22 +49,34 @@ def zeroth_order_ph(d, fl=None):
         ax = gca()
         ax.set_aspect('equal', adjustable='box')
     return exp(1j*ph0)
-def hermitian_function_test(s, down_from_max=0.5):
-    r"""determine the center of the echo"""
+def hermitian_function_test(s, axis='t2', down_from_max=0.5):
+    """Determine the center of the echo based on Hermitian symmetry
+    
+    Parameters
+    ----------
+    axis: str
+        name of the axis you are centering on
+        (the direct dimension)
+
+    Returns
+    -------
+    s: nddata
+        contains echo-like data with two or more dimensions
+    """
     # {{{ determine where the "peak" of the echo is,
     # and use it to determine the max
     # shift
     s = s.C # need to copy, since I'm manipulating the axis here,
     # and am assuming the axis of the source data is not manipulated
-    data_for_peak = abs(s).mean_all_but(['t2'])
+    data_for_peak = abs(s).mean_all_but([axis])
     max_val = data_for_peak.data.max()
     pairs = data_for_peak.contiguous(lambda x: abs(x) >
             max_val*down_from_max)
     longest_pair = diff(pairs).argmax()
     peak_location = pairs[longest_pair,:]
     peak_center = peak_location.mean()
-    s.setaxis('t2',lambda x: x-peak_center)
-    s.register_axis({'t2':0})
+    s.setaxis(axis,lambda x: x-peak_center)
+    s.register_axis({axis:0})
     max_shift = diff(peak_location).item()/2
     # }}}
     # {{{ construct test arrays for T2 decay and shift
@@ -72,22 +84,22 @@ def hermitian_function_test(s, down_from_max=0.5):
     # }}}
     s_foropt = s.C
     # {{{ time shift and correct for T2 decay
-    s_foropt.ft('t2')
+    s_foropt.ft(axis)
     s_foropt *= exp(1j*2*pi*shift_t*
-            s_foropt.fromaxis('t2'))
-    s_foropt.ift('t2')
+            s_foropt.fromaxis(axis))
+    s_foropt.ift(axis)
     # }}}
     # {{{ make sure there's and odd number of points
     # and set phase of center point to 0
-    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
-    n_points = ndshape(s_foropt)['t2']
+    s_foropt = s_foropt[axis:(-max_shift,max_shift)]
+    n_points = ndshape(s_foropt)[axis]
     if n_points % 2 == 0:
-        s_foropt = s_foropt['t2',:-1]
+        s_foropt = s_foropt[axis,:-1]
         n_points -= 1
-    center_point = s_foropt['t2',n_points//2+1]
+    center_point = s_foropt[axis,n_points//2+1]
     s_foropt /= center_point/abs(center_point)
     # }}}
-    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).mean_all_but(['shift','R2'])
+    residual = abs(s_foropt - s_foropt[axis,::-1].runcopy(conj)).mean_all_but(['shift','R2'])
     # in the following, weight for the total signal recovered
     residual = residual / abs(center_point).mean_all_but(['shift','R2'])
     residual.reorder('shift')
