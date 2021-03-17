@@ -20,8 +20,8 @@ t2 = symbols('t2')
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         #["210311_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
         #    'spincore_ODNP_v1', (-6000,6000),(None,0.06)]
-        ["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
-            'spincore_ODNP_v1', (-5000,5000),0.06]
+        ["210316_TEMPOL1mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
+            'spincore_ODNP_v1', (-5000,5000),(None,0.06)]
         ]:
     fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
