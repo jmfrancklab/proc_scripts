@@ -6,11 +6,11 @@ import numpy as np
 import logging
 
 def center_echo(s, echo_center, axis='t2',fl=None):
-    """
-    Centers echo given the echo center and checks for lopsidedness
+    """Slices out a symmetric echo.  Will generate an error if the echo appears to be extremely lopsided.
+
     Parameters
     ==========
-    echo_center:    int
+    echo_center:    float
             center of echo
     axis:           str
             axis along which the echo is being centered

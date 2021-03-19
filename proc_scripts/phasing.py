@@ -57,37 +57,54 @@ def zeroth_order_ph(d, fl=None):
     # that we only want to rotate when the distribution
     # is assymetric, so include only the excess of the
     # larger eval over the smaller
-    rotation_vector = eigenVectors[:,0] + mean_vec
+    assymetry_mag = float(sqrt(eigenValues[0])-sqrt(eigenValues[1]))
+    try:
+        assym_ineq = (assymetry_mag*eigenVectors[:,0]*mean_vec).sum()
+    except:
+        raise ValueError(strm("check the sizes of the following:",size(assymetry_mag),size(eigenVectors),size(mean_vec)))
+    if assym_ineq > 0:
+        # we want the eigenvector on the far side of the ellipse
+        rotation_vector = mean_vec + assymetry_mag*eigenVectors[:,0]
+    else:
+        rotation_vector = mean_vec - assymetry_mag*eigenVectors[:,0]
     ph0 = np.arctan2(rotation_vector[1],rotation_vector[0])
-    if fl:
-        eigenVectors *= (eigenValues.reshape(-1,2)*ones((2,1)))/eigenValues.max()*abs(d.data).max()
+    if fl is not None:
         d_forplot = d.C
         fl.next('check covariance test')
         fl.plot(
-                d_forplot.data.real,
-                d_forplot.data.imag,
+                d_forplot.data.ravel().real,
+                d_forplot.data.ravel().imag,
                 '.',
                 alpha=0.25,
                 label='before'
                 )
-        d_forplot /= exp(1j*ph0)
+        d_forplot /= np.exp(1j*ph0)
         fl.plot(
-                d_forplot.data.real,
-                d_forplot.data.imag,
+                d_forplot.data.ravel().real,
+                d_forplot.data.ravel().imag,
                 '.',
                 alpha=0.25,
                 label='after'
                 )
-        fl.plot(0,0,'ko',alpha=0.5)
-        fl.plot(mean_vec[0],mean_vec[1],'kx', label='mean',alpha=0.5)
-        evec_forplot = eigenVectors + mean_vec.reshape((-1,1))*ones((1,2))
-        fl.plot(evec_forplot[0,0],evec_forplot[1,0],'o',alpha=0.5,
+        fl.plot(0,0,'ko', alpha=0.5)
+        fl.plot(mean_vec[0],mean_vec[1],'kx', label='mean', alpha=0.5)
+        evec_forplot = sqrt(eigenValues.reshape(1,2))*np.ones((2,1))*eigenVectors # scale by the std, not the variance!
+        evec_forplot += mean_vec.reshape((-1,1))*np.ones((1,2))
+        fl.plot(evec_forplot[0,0],evec_forplot[1,0],'o', alpha=0.5,
                 label='first evec')
-        fl.plot(evec_forplot[0,1],evec_forplot[1,1],'o',alpha=0.5)
-        fl.plot(rotation_vector[0],rotation_vector[1],'o',alpha=0.5,
+        fl.plot(evec_forplot[0,1],evec_forplot[1,1],'o', alpha=0.5)
+        fl.plot(rotation_vector[0],rotation_vector[1],'o', alpha=0.5,
                 label='rotation vector')
-        ax = gca()
-        ax.set_aspect('equal',adjustable='box')
+        norms = sqrt((evec_forplot**2).sum(axis=0))
+        ell = Ellipse(xy=mean_vec,
+                width=2*sqrt(eigenValues[0]),
+                height=2*sqrt(eigenValues[1]),
+                angle=180/pi*np.arctan2(eigenVectors[1,0],
+                    eigenVectors[0,0]),
+                color='k', fill=False)
+        ax = plt.gca()
+        ax.set_aspect('equal', adjustable='box')
+        ax.add_patch(ell)
     return np.exp(1j*ph0)
 def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
     r''' Performs first order phase correction with cost function

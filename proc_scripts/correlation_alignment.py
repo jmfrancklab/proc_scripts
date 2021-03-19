@@ -138,10 +138,9 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
         if last_E is not None:
             energy_diff = (this_E - last_E)/sig_energy
             logging.info(strm(energy_diff))
-            if abs(energy_diff) < tol:
+            if abs(energy_diff) < tol and my_iter > 4:
                 break
         last_E = this_E
-        #assert my_iter > 3, "at least 4 iterations must be run"
     if fl is not None: 
         fl.next('correlation convergence')
         fl.plot(array(energy_vals),'x')
