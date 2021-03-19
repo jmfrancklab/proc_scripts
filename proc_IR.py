@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align, ph1_real_Abs, postproc_dict
+from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align, ph1_real_Abs, postproc_dict,DCCT
 from sympy import symbols, latex, Symbol
 from matplotlib import *
 from scipy.signal import tukey
@@ -125,8 +125,11 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     s.ft(['ph1','ph2'])
     fl.next(r'after correlation, DCCT')
     fl.image(as_scan_nbr(s))
-    fl.show(); quit()
-    fl.next('recovery curve')
+    if 'ph2' in s.dimlabels:
+        s.reorder(['ph1','ph2','vd','t2'])
+    else:
+        s.reorder(['ph1','vd','t2'])
+    fl.next('Integrated data - recovery curve')
     s_signal = select_pathway(s,signal_pathway)
     # {{{ here we use the inactive coherence pathways to determine the error
     #     associated with the data
@@ -142,6 +145,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
     fl.plot(s_signal,'o',label='real')
     fl.plot(s_signal.imag,'o',label='imaginary')
+    fl.show();quit()
     fl.next('Spectrum - freq domain')
     s = s['ph2',ph2_val]['ph1',ph1_val]
     fl.plot(s)
