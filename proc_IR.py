@@ -17,10 +17,11 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             should ideally be pathways that do NOT include any known
         #             artifacts
         'ph2':r_[0,2,3]}
+clock_correction=False
 # }}}
 for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
-        ('210309_TEMPOL_150uM_cap_probe_0dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.08e3,0.02e3),(0,76e-3),False),
+        ('210311_TEMPOL_500uM_cap_probe_33dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.119e3,0.225e3),(0,76e-3),False),
         #('w3_201111','test_equip',2,'ab_ir2h',(-200,200),(0,60e-3),False)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -38,7 +39,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     fl.next('rough centering')
     fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
-    if postproc=='spincore_IR_v1':
+    if clock_correction:
         #{{{ clock correction
         clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
         s.ft('t2')
@@ -86,32 +87,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     fl.image(s.C.setaxis(
 'vd','#').set_units('vd','scan #'))
     #}}}
-    #{{{slicing FID not sure if needed
     s.ift('t2')
-    s = s['t2':(0,None)]
-    s['t2',0] *= 0.5
-    fl.next('phased and FID sliced')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    fl.next('phased and FID sliced -- frequency domain')
-    s.ft('t2')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    #fl.show();quit()
-    fl.next('signal vs vd')
-    s_sliced = s['ph1',0]['ph2',1]
-    s_sliced.sum('t2')
-    fl.plot(s_sliced,'o')
-    fl.plot(s_sliced.imag,'o')
-    #}}}
-
-    s.ift('t2')
-    fl.next('t domain for apod')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    #{{{time shift and apodization
-    t0 = s['ph2',ph2_val]['ph1',ph1_val].C.mean_all_but('t2').argmax('t2').item()
-    s.setaxis('t2', lambda x: x - t0)
-    apod = s.fromaxis('t2') * 0
-    apod['t2':(None,30e-3)] = apod['t2':(None,30e-3)].run(lambda x: tukey(len(x)))
-    s *= apod
     #}}}
     if postproc == 'spincore_IR_v1':
         #{{{subplot for imaging before alignment
@@ -123,27 +99,27 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         fl.image(s.C.setaxis(
     'vd','#').set_units('vd','scan #'))
         fig,(ax1,ax2) = plt.subplots(1,2)
-        fl.next('filtered and apodized -- before alignment', fig=fig)
+        fl.next('before alignment', fig=fig)
         fl.image(s['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
     'vd','#').set_units('vd','scan #'),ax=ax1)
         fl.image(abs(s)['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
     'vd','#').set_units('vd','scan #'),ax=ax2)
+        fl.next('time domain before alignment')
+        s.ift('t2')
+        fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
+        s.ft('t2')
         #}}}
         #{{{ pre-alignment
         s_final = s.C
-        s_before = s['vd',:2]
-        s_after = s['vd',3:]
+        s_before = s['vd',:3].C
+        s_after = s['vd',3:].C
         s_after.ift(['ph2','ph1'])
         s_after.ift('t2')
         s_after.ft('t2')
-        fl.next('before alignment - FT')
-        fl.image(s_after.C.setaxis(
-    'vd','#').set_units('vd','scan #'), interpolation='bilinear')
         s_before.ift(['ph2','ph1'])
         s_before.ift('t2')
         s_before.ft('t2')
-        fl.next('prior to alignment')
-        fl.image(s_before, interpolation = 'bilinear')
         #}}}
         #{{{alignment for before and after null
         fl.basename='first pass'
@@ -156,13 +132,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         fl.basename = None
         s_before.ift('t2')
         s_before *= np.exp(-1j*2*pi*opt_shift_before*s_before.fromaxis('t2'))
-        fl.next('out of correl alignment before')
-        fl.image(s_before)
         s_after.ift('t2')
         s_after *= np.exp(-1j*2*pi*opt_shift_after*s_after.fromaxis('t2'))
-        fl.next('out of correl alignment after')
-        fl.image(s_after.C.setaxis(
-    'vd','#').set_units('vd','scan #'))
         s_before.reorder('ph1',first=True)
         s_before.reorder('ph2',first=True)
         s_before.reorder('t2',first=False)
@@ -173,9 +144,15 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         s_after.ft(['ph1','ph2'])
         #}}}
         #{{{recombining before and after null after alignment
-        s_final['vd',:2] = s_before
-        s_final['vd',3:] = s_after
-        s = s_final
+        s_final['vd',:3] = s_before.C
+        s_final['vd',3:] = s_after.C
+        s = s_final.C
+        fig,(ax1,ax2) = plt.subplots(1,2)
+        fl.next('after alignment', fig=fig)
+        fl.image(s['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
+    'vd','#').set_units('vd','scan #'),ax=ax1)
+        fl.image(abs(s)['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
+    'vd','#').set_units('vd','scan #'),ax=ax2)
         fl.next('coherence domain-after corr')
         fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
         s.ift('t2')
