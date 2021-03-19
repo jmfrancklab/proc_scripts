@@ -96,7 +96,13 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd', raw_index=True).item()
     print("zero crossing at",zero_crossing)
     s.ift(['ph1','ph2'])
-    fl.next(r'before correlation, $\varphi$ domain')
+    # {{{ so that the filter is in range, do a rough alignment
+    frq_max = abs(s).argmax('t2')
+    s.ift('t2')
+    s *= np.exp(-1j*2*pi*frq_max*s.fromaxis('t2'))
+    s.ft('t2')
+    # }}}
+    fl.next(r'after rough align, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
     fl.basename='correlation subroutine -- before zero crossing:'
     # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
@@ -108,7 +114,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     s.ft('t2')
     fl.basename='correlation subroutine -- after zero crossing:'
     opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
-            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],fl=fl)
+            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+            sigma=50, fl=fl)
     s.ift('t2')
     s['vd',zero_crossing+1:] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
