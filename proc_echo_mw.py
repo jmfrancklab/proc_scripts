@@ -20,10 +20,10 @@ t2 = symbols('t2')
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         #["210311_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
         #    'spincore_ODNP_v1', (-6000,6000),(None,0.06)]
-        ["210316_TEMPOL1mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
-            'spincore_ODNP_v1', (-5000,5000),(None,0.06)]
+        ["210318_TEMPOL500uM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
+            'spincore_ODNP_v1', (-6000,6000),(None,0.06)]
         ]:
-    fl.basename = searchstr
+    #fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict,fl=fl)
@@ -59,12 +59,13 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.plot(s)
     #}}}
     #{{{plotting enhancement vs power
-    fl.next('enhancement')
+    fl.next('1mM TEMPOL ODNP Enhancement Curve')
     enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
     plt.ylabel('Enhancement')
+    plt.savefig('enhancement.png',transparent=True)
     #}}}
 fl.show();quit()

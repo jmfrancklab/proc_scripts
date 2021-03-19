@@ -147,6 +147,7 @@ plot(conc_list,R_list,'x',label='R')
 plot(conc_list,sigma_list,'x',label=r'$\sigma$')
 plt.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
 plt.ylabel('concentration')
+plt.savefig('RvsC.png',transparent=True)
 plt.show()
 
 

@@ -127,6 +127,7 @@ plt.xlabel('$B_0$/G')
 plt.ylabel('Intensity')
 plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
 gridandtick(plt.gca())
+plt.savefig('gloabalfit.png',transparent=True)
 plt.show()
 
 
