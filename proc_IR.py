@@ -159,6 +159,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         fl.next('time domain-after corr')
         fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
         #}}}
+        fl.show();quit()
     fl.next('recovery curve')
     s_signal = s['ph2',ph2_val]['ph1',ph1_val]
     # {{{ here we use the inactive coherence pathways to determine the error
