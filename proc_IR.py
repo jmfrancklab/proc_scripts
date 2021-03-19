@@ -26,25 +26,31 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
+    # {{{ since we need to relabel vd frequently, make a method
+    def as_scan_nbr(d):
+        return d.C.setaxis('vd','#').set_units('vd','scan #')
+    # }}}
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
     fl.next('time domain cropped log')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    fl.image(as_scan_nbr(s))
+    # no rough centering anymore -- if anything, we should preproc based on τ,
+    # etc, but otherwise let the hermitian test handle it
     #{{{centering, hermitian function test and zeroth order phasing
     rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
     fl.next('rough centering')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+    fl.image(as_scan_nbr(s))
     #}}}
     if clock_correction:
         #{{{ clock correction
         clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
         s.ft('t2')
         fl.next('before clock correction')
-        fl.image(s.C.setaxis('vd','#'))
+        fl.image(as_scan_nbr(s))
         s_clock=s['ph1',0]['ph2',1].sum('t2')
         s.ift(['ph1','ph2'])
         min_index = abs(s_clock).argmin('vd',raw_index=True).item()
@@ -66,10 +72,10 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     logger.info(strm("best shift is", best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+    fl.image(as_scan_nbr(s).cropped_log())
     fl.next('frequency domain after hermitian test')
     s.ft('t2')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
+    fl.image(as_scan_nbr(s).cropped_log())
     s.ift('t2')
     ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
     if len(ph0.dimlabels) > 0:
@@ -154,10 +160,10 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         fl.image(abs(s)['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
     'vd','#').set_units('vd','scan #'),ax=ax2)
         fl.next('coherence domain-after corr')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+        fl.image(as_scan_nbr(s))
         s.ift('t2')
         fl.next('time domain-after corr')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+        fl.image(as_scan_nbr(s))
         #}}}
     fl.next('recovery curve')
     s_signal = s['ph2',ph2_val]['ph1',ph1_val]
