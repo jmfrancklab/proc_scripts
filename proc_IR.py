@@ -11,8 +11,12 @@ init_logging('debug')
 fl = figlist_var()
 t2 = symbols('t2')
 # {{{ input parameters
-ph1_val = 0
-ph2_val = 1
+def select_pathway(s,pathway):
+    retval = s
+    for k,v in pathway.items():
+        retval = retval[k,v]
+    return retval
+signal_pathway = {'ph1':0,'ph2':1}
 coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             should ideally be pathways that do NOT include any known
         #             artifacts
@@ -25,26 +29,36 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         #('w3_201111','test_equip',2,'ab_ir2h',(-200,200),(0,60e-3),False)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
-            postproc=postproc,lookup=postproc_dict,fl=fl)
+            postproc=postproc,lookup=postproc_dict)
+    # {{{ since we need to relabel vd frequently, make a method
+    def as_scan_nbr(d):
+        return d.C.setaxis('vd','#').set_units('vd','scan #')
+    # }}}
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
-    fl.next('time domain cropped log')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    #{{{centering, hermitian function test and zeroth order phasing
-    rough_center = abs(s).convolve('t2',10).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
-    fl.next('rough centering')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-    #}}}
+    fl.next('time domain')
+    fl.image(as_scan_nbr(s))
+    # no rough centering anymore -- if anything, we should preproc based on τ,
+    # etc, but otherwise let the hermitian test handle it
+    #{{{phasing the aligned data
+    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+    logger.info(strm("best shift is", best_shift))
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    fl.next('time domain after hermitian test')
+    fl.image(as_scan_nbr(s))
+    fl.next('frequency domain after hermitian test')
+    s.ft('t2')
+    fl.image(as_scan_nbr(s))
+    s.ift('t2')
     if clock_correction:
         #{{{ clock correction
         clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
         s.ft('t2')
         fl.next('before clock correction')
-        fl.image(s.C.setaxis('vd','#'))
+        fl.image(as_scan_nbr(s))
         s_clock=s['ph1',0]['ph2',1].sum('t2')
         s.ift(['ph1','ph2'])
         min_index = abs(s_clock).argmin('vd',raw_index=True).item()
@@ -61,17 +75,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
         #}}}
-    #{{{phasing the aligned data
-    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
-    logger.info(strm("best shift is", best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('time domain after hermitian test')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
-    fl.next('frequency domain after hermitian test')
-    s.ft('t2')
-    fl.image(s.C.setaxis('vd','#').set_units('vd','scan #').cropped_log())
-    s.ift('t2')
-    ph0 = s['t2':0]['ph2',ph2_val]['ph1',ph1_val]
+    ph0 = select_pathway(s['t2':0], signal_pathway)
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0)
@@ -82,86 +86,48 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     s /= ph0
     fl.next('phased data frequency domain')
     s.ft('t2')
-    fl.image(s.C.convolve('t2',10).setaxis('vd','#').set_units('vd','scan #'))
-    fl.next('phased data freq domain')
-    fl.image(s.C.setaxis(
-'vd','#').set_units('vd','scan #'))
+    fl.image(as_scan_nbr(s))
     #}}}
+    #}}}
+    if 'ph2' in s.dimlabels:
+        s.reorder(['ph1','ph2','vd','t2'])
+    else:
+        s.reorder(['ph1','vd','t2'])
+    zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd', raw_index=True).item()
+    print("zero crossing at",zero_crossing)
+    s.ift(['ph1','ph2'])
+    # {{{ so that the filter is in range, do a rough alignment
+    frq_max = abs(s).argmax('t2')
     s.ift('t2')
-    #}}}
-    if postproc == 'spincore_IR_v1':
-        #{{{subplot for imaging before alignment
-        s.ft('t2')
-        s.reorder('ph1',first=True)
-        s.reorder('ph2',first=True)
-        s.reorder('t2',first=False)
-        fl.next('freq domain - before corr, overview')
-        fl.image(s.C.setaxis(
-    'vd','#').set_units('vd','scan #'))
-        fig,(ax1,ax2) = plt.subplots(1,2)
-        fl.next('before alignment', fig=fig)
-        fl.image(s['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
-    'vd','#').set_units('vd','scan #'),ax=ax1)
-        fl.image(abs(s)['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
-    'vd','#').set_units('vd','scan #'),ax=ax2)
-        fl.next('time domain before alignment')
-        s.ift('t2')
-        fl.image(s.C.setaxis(
-'vd','#').set_units('vd','scan #'))
-        s.ft('t2')
-        #}}}
-        #{{{ pre-alignment
-        s_final = s.C
-        s_before = s['vd',:3].C
-        s_after = s['vd',3:].C
-        s_after.ift(['ph2','ph1'])
-        s_after.ift('t2')
-        s_after.ft('t2')
-        s_before.ift(['ph2','ph1'])
-        s_before.ift('t2')
-        s_before.ft('t2')
-        #}}}
-        #{{{alignment for before and after null
-        fl.basename='first pass'
-        opt_shift_before,sigma_before = correl_align(s_before,indirect_dim='vd',
-                ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
-        fl.basename = None
-        fl.basename ='first pass after null'
-        opt_shift_after,sigma_after = correl_align(s_after,indirect_dim='vd',
-                ph1_selection=ph1_val,ph2_selection=ph2_val,fl=fl)
-        fl.basename = None
-        s_before.ift('t2')
-        s_before *= np.exp(-1j*2*pi*opt_shift_before*s_before.fromaxis('t2'))
-        s_after.ift('t2')
-        s_after *= np.exp(-1j*2*pi*opt_shift_after*s_after.fromaxis('t2'))
-        s_before.reorder('ph1',first=True)
-        s_before.reorder('ph2',first=True)
-        s_before.reorder('t2',first=False)
-        s_before.ft(['ph1','ph2'])
-        s_after.reorder('ph1',first=True)
-        s_after.reorder('ph2',first=True)
-        s_after.reorder('t2',first=False)
-        s_after.ft(['ph1','ph2'])
-        #}}}
-        #{{{recombining before and after null after alignment
-        s_final['vd',:3] = s_before.C
-        s_final['vd',3:] = s_after.C
-        s = s_final.C
-        fig,(ax1,ax2) = plt.subplots(1,2)
-        fl.next('after alignment', fig=fig)
-        fl.image(s['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
-    'vd','#').set_units('vd','scan #'),ax=ax1)
-        fl.image(abs(s)['ph2',ph2_val]['ph1',ph1_val].C.setaxis(
-    'vd','#').set_units('vd','scan #'),ax=ax2)
-        fl.next('coherence domain-after corr')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-        s.ift('t2')
-        fl.next('time domain-after corr')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
-        #}}}
-        fl.show();quit()
+    s *= np.exp(-1j*2*pi*frq_max*s.fromaxis('t2'))
+    s.ft('t2')
+    # }}}
+    fl.next(r'after rough align, $\varphi$ domain')
+    fl.image(as_scan_nbr(s))
+    fl.basename='correlation subroutine -- before zero crossing:'
+    # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
+    opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
+            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+            sigma=50, fl=fl)
+    s.ift('t2')
+    s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s.ft('t2')
+    fl.basename='correlation subroutine -- after zero crossing:'
+    opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
+            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+            sigma=50, fl=fl)
+    s.ift('t2')
+    s['vd',zero_crossing+1:] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s.ft('t2')
+    fl.basename = None
+    fl.next(r'after correlation, $\varphi$ domain')
+    fl.image(as_scan_nbr(s))
+    s.ft(['ph1','ph2'])
+    fl.next(r'after correlation, DCCT')
+    fl.image(as_scan_nbr(s))
+    fl.show(); quit()
     fl.next('recovery curve')
-    s_signal = s['ph2',ph2_val]['ph1',ph1_val]
+    s_signal = select_pathway(s,signal_pathway)
     # {{{ here we use the inactive coherence pathways to determine the error
     #     associated with the data
     s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
