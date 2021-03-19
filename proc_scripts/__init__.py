@@ -10,7 +10,7 @@ from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
 __all__ = ['calc_baseline',
         'center_echo',
-        'correl_align'
+        'correl_align',
         'dBm2power',
         'decay',
         'draw_limits',
