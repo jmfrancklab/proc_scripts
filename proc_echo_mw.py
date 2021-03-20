@@ -6,7 +6,11 @@ from sympy import symbols
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import exp as s_exp
-rcParams["savefig.transparent"] = True
+plt.rcParams.update({
+    "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
+    "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+})
 logger = init_logging("info")
 fl = fl_mod()
 t2 = symbols('t2')
@@ -66,6 +70,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
     plt.ylabel('Enhancement')
-    plt.savefig('enhancement.png',transparent=True)
+    plt.savefig('enhancement.png')
     #}}}
 fl.show();quit()
