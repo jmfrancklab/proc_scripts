@@ -22,10 +22,10 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             artifacts
         'ph2':r_[0,2,3]}
 # }}}
-clock_correciton=False
+clock_correction=False
 for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
-        ('210309_TEMPOL_150uM_cap_probe_0dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.08e3,0.02e3),(0,76e-3),False),
+        ('210322_TEMPOL_100mM_cap_probe_IR_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.330e3,0.065e3),(0,76e-3),False),
         #('w3_201111','test_equip',2,'ab_ir2h',(-200,200),(0,60e-3),False)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -86,10 +86,10 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     s.ft('t2')
     fl.image(as_scan_nbr(s))
     #}}}
-    if 'ph2' in s.dimlabesl:
+    if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
-        s.reorder(]'ph1','vd','t2'])
+        s.reorder(['ph1','vd','t2'])
     zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     logger.info(strm('zero crossing at',zero_crossing))
     s.ift(['ph1','ph2'])
@@ -108,10 +108,10 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
             sigma=50,fl=fl)
     s.ift('t2')
-    s['vd',:zero_crossin+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
-    fl.basename='correlation subroutine -- after zero crossing:')
-    opt_shift,sigma = correl_align(s['vd',zero_crossing+1],indirect_dim='vd',
+    fl.basename='correlation subroutine -- after zero crossing'
+    opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
             sigma=50,fl=fl)
     s.ift('t2')
@@ -143,7 +143,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     fl.plot(s_signal,'o',label='real')
     fl.plot(s_signal.imag,'o',label='imaginary')
     fl.next('Spectrum - freq domain')
-    s = s['ph2',ph2_val]['ph1',ph1_val]
+    s = select_pathway(s,signal_pathway)
     fl.plot(s)
     x = s_signal.fromaxis('vd')
     f = fitdata(s_signal)
@@ -164,6 +164,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='large',
             horizontalalignment='center',color='k')
     ax = plt.gca()
+    logger.info(strm("YOUR T1 IS:",T1))
     fl.show()
     if ILT:
         T1 = nddata(logspace(-3,3,150),'T1')

@@ -58,7 +58,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
     sig_energy = (abs(s)**2).data.sum().item() / N
     if fl is not None:
         fl.next('before correlation\nsig. energy=%g'%sig_energy + fig_title)
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
     energy_diff = 1.
     i = 0
     energy_vals = []
@@ -105,12 +105,12 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
             logging.info(strm("holder"))
             if fl is not None:
                 fl.next('Look at correlation function - time domain')
-                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'))
+                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
         if my_iter ==0:
             logging.info(strm("holder"))
             if fl is not None:
                 fl.next('correlation function\ntime domain, after apod')
-                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'))
+                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
         correl.ft_clear_startpoints('t2')
         correl.ft('t2', shift=True, pad=2**14)
         correl.ft(['DeltaPh1','DeltaPh2'])
@@ -119,7 +119,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
             logging.info(strm("holder"))
             if fl is not None:
                 fl.next('correlation function \nfreq domain, after apod')
-                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'))
+                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
         f_shift = correl.run(real).argmax('t2')
         s_copy = s.C
         s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis('t2'))
@@ -129,7 +129,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
             logging.info(strm("holder"))
             if fl is not None:
                 fl.next('after correlation\nbefore ph0 restore')
-                fl.image(s_copy.C.setaxis('vd','#').set_units('vd','scan #'))
+                fl.image(s_copy.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
         logging.info(strm('signal energy per transient (recalc to check that it stays the same):',(abs(s_copy**2).data.sum().item() / N)))
 
         this_E = (abs(s_copy.C.sum(indirect_dim))**2).data.sum().item() / N**2
@@ -147,6 +147,6 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
         gca().yaxis.set_major_formatter(to_percent)
     if fl is not None:
         fl.next('after correlation\nph0 restored sig. energy=%g'%sig_energy)
-        fl.image(s_copy.C.setaxis('vd','#').set_units('vd','scan #'))
+        fl.image(s_copy.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
         return f_shift,sigma    
 

@@ -6,6 +6,18 @@ import logging
 import numpy as np
 import logging
 #to use type s = load_data("nameoffile")
+"""Used to preprocess data based on type of experiment performed. Returns all data FTed
+into the frequency domain with the phase cycles also FTed (coherence domain). Data is
+not sliced or altered in anyway.
+
+Parameters
+==========
+self:   nddata or h5 file
+
+Returns
+=======
+nddata that has been FTed and in coherence domain
+"""
 def proc_bruker_deut_IR_withecho_mancyc(s,fl=None):
     logging.info(strm("this is the 90 time"))
     if fl is not None:
@@ -53,8 +65,7 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     s.reorder(['indirect','t2'], first=False)
     if fl is not None:
         s_forplot = s.C
-        s_forplot.setaxis('indirect','#')
-        s_forplot.set_units('indirect','scan #')
+        s_forplot.setaxis('indirect','#').set_units('indirect','scan #')
         fl.next('FT + coherence domain')
         fl.image(s_forplot)
     if fl is not None:    
@@ -89,6 +100,11 @@ def proc_spincore_CPMG_v1(s, fl=None):
     tE_axis = r_[1:nEchoes+1]*twice_tau
     s.setaxis('nScans',r_[0:nScans])
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
+    # OK, so I made some changes and then realized that we need to assume that
+    # the pulse sequence correctly balances the evolution between 2*p90_s/pi
+    # (cavanagh chpt 3 this is the evolution during the 90 -- I'm not positive
+    # if my expression is correct or not -- please do check/change, and leave
+    # this comment in some form) and the center of the 180 pulse appropriately
     s.setaxis('ph1',r_[0.,2.]/4)
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
@@ -407,7 +423,7 @@ def proc_DOSY_CPMG(s):
     # }}}
     return s
 
-def proc_ESR_linewidth(s):
+def proc_ESR(s):
     logging.info("loading preprocessing for ESR linewidth calculation")
     s -= s['$B_0$',:50].C.mean('$B_0$')
     s_integral = s.C.run_nopop(np.cumsum,'$B_0$')
@@ -437,7 +453,7 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_var_tau_v1':proc_var_tau,
         'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG,
-        'ESR_linewidth':proc_ESR_linewidth,
+        'ESR_linewidth':proc_ESR,
 
 }
 
