@@ -25,8 +25,6 @@ with figlist_var() as fl:
         #{{{ plotting abs
         #took out for loop and hard coding p90 times because only GDS parameters saved over
         # the pp parameters
-        print(ndshape(d))
-        print(len(d.getaxis('p90')))
         for j in range(len(d.getaxis('p90'))):
             fl.plot(abs(d['p90',j]),alpha=0.5, linewidth=1)
         #}}}
@@ -41,11 +39,11 @@ with figlist_var() as fl:
         m, b, p90 = symbols("m b p90",real=True)
         f1.functional_form = m*p90 + b
         f1.fit()
-        print("output:",f1.output())
-        print("latex:",f1.latex())
+        logger.info(strm("output:",f1.output()))
+        logger.info(strm("latex:",f1.latex()))
         fl.plot(f1.eval(100),label='fit')
         fl.plot(fit1,label='polyfit fit')
-        print("polyfit for 90 pulse output",line1)
+        logger.info(strm("polyfit for 90 pulse output",line1))
         #}}}
         #{{{integrating 180 pulse and fitting to line
         one_eightypulse = d['t':oneeighty_range]
@@ -56,10 +54,10 @@ with figlist_var() as fl:
         m, b, p90 = symbols("m b p90",real=True)
         f2.functional_form = m*p90 + b
         f2.fit()
-        print("output:",f2.output())
-        print("latex:",f2.latex())
+        logger.info(strm("output:",f2.output()))
+        logger.info(strm("latex:",f2.latex()))
         fl.plot(f2.eval(100),label="fit")
-        print("polyfit for 180 pulse:",line2)
+        logger.info(strm("polyfit for 180 pulse:",line2))
         fl.plot(fit2,label='polyfit fit')
         fl.plot(one_eightypulse,'o')
         #}}}

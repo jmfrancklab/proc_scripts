@@ -18,7 +18,6 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict) 
-    print(s.dimlabels)
     if 'amp' in s.dimlabels:
         plen = s.get_prop('acq_params')['p90_us']*1e-6
         logger.info(strm('pulse length is:',plen))
@@ -27,7 +26,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     # convolution doesn't work properly!
     s.ift('t2')
     # {{{ centering of data using hermitian function test
-    if 'p90' in s.dimlabels:
+    else:
         best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
         logger.info(strm("best shift is",best_shift))
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
@@ -49,7 +48,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     #{{{ selecting coherence and convolving
     s = s['ph2',0]['ph1',1]
     fl.next('select $\\Delta p$')
-    if 'p90' in s.dimlabels:
+    else:
         s.convolve('t2',50)
     fl.image(s)
     #}}}
@@ -63,7 +62,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
         s.set_units('amp','s')
         ind_dim = '\\tau_p a'
         s.rename('amp',ind_dim)
-    if 'p_90' in s.dimlabels:
+    else:
         ind_dim = 'p_90'
     #{{{ phasing with zeroth order correction
     fl.next('final time domain')

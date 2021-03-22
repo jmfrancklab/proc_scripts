@@ -34,4 +34,4 @@ with figlist_var() as fl:
         axhline(y=Vsignal,alpha=0.2)
         logger.info(strm("Vsignal expected",Vsignal))
         fl.plot(Vsignal, 'x', label='theoretical signal at 0')
-        fl.show();quit()
+

@@ -13,6 +13,10 @@ rcParams["savefig.transparent"] = True
 filter_bandwidth = 5e3
 t2 = symbols('t2')
 test_for_flat_echo = False# test for flat echo and exit
+#Below we give the option of JUST writing the processed 
+#data to a file (write_h5) and then the option of reading
+#and plotting/imaging the processed result (read_h5) as 
+#time saver.
 write_h5 = False#writes the hdf5 file
 read_h5 = True #reads the completed hdf5 file 
 # }}}
@@ -27,6 +31,8 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
         ]:
+    #If file is not processed yet, write_h5 should be True above in the input parameters
+    #If file is already written one can declare write_h5 as False to save time
     if write_h5:
         #before running go into the preprocessing in load_data as some parameters are hardcoded. Double check these
         s = find_file(searchstr,exp_type=exp_type,
@@ -116,6 +122,8 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         s.hdf5_write(h5_name, directory=getDATADIR(h5_dir))
         logger.info("saving as hdf5 file with shape:",strm(ndshape(s)))
         #}}}
+    #if read_h5 is True there must already be a written h5 file for the file that 
+    #is to be plotted/imaged that already exists. 
     if read_h5:
         s = nddata_hdf5(h5_name+'/'+searchstr,getDATADIR(exp_type=h5_dir)) 
         #{{{attempting ILT plot with NNLS_Tikhonov_190104
