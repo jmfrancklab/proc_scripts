@@ -4,7 +4,8 @@ from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+from pylab import *
 from sympy import exp as s_exp
 rcParams["savefig.transparent"] = True
 logger = init_logging("info")
@@ -29,6 +30,12 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
             lookup=postproc_dict,fl=fl)
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range) # visualize the frequency limits
+    rcParams.update({
+        "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
+        "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
+        "savefig.facecolor": (1.0,1.0,1.0,0.0),
+        })
+
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
@@ -63,19 +70,14 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
-    plt.rcParams.update({
-        "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
-        "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
-        "savefig.facecolor": (1.0,1.0,1.0,0.0),
-        })
-    plt.title('1mM TEMPOL ODNP Enhancement')
     #plt.figure(figsize=(4,4))
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     #fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
-    plt.ylabel('enhancement')
-    plt.xlabel('Power(Watts)')
-    plt.legend()
+    ylabel('enhancement')
+    xlabel('Power(Watts)')
+    #plt.legend()
+    gca().set_facecolor('#ffffffcc')
 
-    plt.savefig('enhancement.png',transparent=True)
+    savefig('enhancement.png')
     #}}}
 fl.show();quit()
