@@ -24,8 +24,8 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 # }}}
 clock_correction=False
 for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
-        ('210322_TEMPOL_100mM_cap_probe_IR_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.330e3,0.065e3),(0,76e-3),False),
+        ('210322_TEMPOL_100mM_cap_probe_FIR_27dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.325e3,0.067e3),(0,76e-3),False),
         #('w3_201111','test_equip',2,'ab_ir2h',(-200,200),(0,60e-3),False)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,

@@ -18,10 +18,10 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        #["210311_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-        #    'spincore_ODNP_v1', (-6000,6000),(None,0.06)]
-        ["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
-            'spincore_ODNP_v1', (-5000,5000),0.06]
+        ["210316_TEMPOL1mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-6000,6000),(None,0.06)]
+        #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
+        #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
     fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
@@ -71,8 +71,9 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.figure(figsize=(4,4))
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
+    plt.title('1 mM TEMPOL Enhancement Curve')
     plt.ylabel('Enhancement')
-    plt.savefig("temp.png")
+    plt.savefig("enhancement.png")
     plt.show()
     #}}}
 

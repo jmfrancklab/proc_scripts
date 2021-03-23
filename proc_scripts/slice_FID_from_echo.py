@@ -3,7 +3,7 @@ from pyspecdata import *
 from sympy import symbols
 
 
-def slice_FID_from_echo(s, max_t=None, pathway={'ph1':1, 'ph2':-2}, fl=None):
+def slice_FID_from_echo(s, max_t=None, signal_pathway={'ph1':1, 'ph2':-2}, fl=None):
     """takes the best shift from hermitian function test and applies it to dataset.
     This is followed by zeroth order phase correcting and slicing form the center of 
     the echo onward to the t_range defined
@@ -19,13 +19,16 @@ def slice_FID_from_echo(s, max_t=None, pathway={'ph1':1, 'ph2':-2}, fl=None):
     =======
     s:      phase corrected and sliced data
     """
-    myslice = s
-    for k, v in pathway.items():
-        myslice = s[k,v]
-    best_shift = hermitian_function_test(myslice)
+    def select_pathway(s,pathway):
+        myslice = s
+        for k, v in pathway.items():
+            myslice = myslice[k,v]
+        return myslice    
+    best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0}, nearest=False)
-    coh_slice = s['t2':0]['ph2',ph2]['ph1',ph1]
+    coh_slice = select_pathway(s['t2':0],signal_pathway)
+    print(coh_slice.dimlabels)
     if len(coh_slice.dimlabels) > 0:
         assert len(coh_slice.dimlabels) == 1, repr(ndshape(coh_slice.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(coh_slice, fl=fl)
@@ -39,7 +42,7 @@ def slice_FID_from_echo(s, max_t=None, pathway={'ph1':1, 'ph2':-2}, fl=None):
     s = s['t2':(0,max_t)]
     s['t2':0] *= 0.5
     if 'power' in s.dimlabels:
-        if s['t2':0]['ph2',ph2]['ph1',ph1]['power',0].real < 0:
+        if select_pathway(s['t2':0]['power',0],signal_pathway).real < 0:
             s *= -1
     elif 'vd' in s.dimlabels:
         if s['t2':0]['ph2',ph2]['ph1',ph1]['vd',-1].real < 0:

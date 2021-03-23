@@ -99,11 +99,13 @@ def analyze_square_refl(d, label='', fl=None,
         # but I think it's more understandable to just do manually
         ax = plb.gca()
         logger.info(strm("the amplitude is",pulse_middle_amp))
-        _,y = ax.transData.transform(r_[0.0, pulse_middle_amp])
+        _,y = ax.transData.transform(r_[0.0, pulse_middle_amp]) # _ and y are now the display coords for the data coords of 0 
+                                                                # and the middle of the pulse amp. same "spot" but now in the display 
+                                                                # coordinate system.
         fontsize = 16
         nfigures = len(fl.figurelist)
-        y -= fontsize*(nfigures/3)
-        _,y = ax.transAxes.inverted().transform(r_[0, y])
+        y -= fontsize*(nfigures/3) #adjusting y in display coordinates
+        _,y = ax.transAxes.inverted().transform(r_[0, y]) #going now from display coordinate system into Axes coordinate system
         plb.text(
                 x=0.5,
                 y=y,
