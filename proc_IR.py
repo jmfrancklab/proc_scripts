@@ -24,9 +24,9 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 # }}}
 clock_correction=False
 for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
-        ('210322_TEMPOL_100mM_cap_probe_FIR_27dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.325e3,0.067e3),(0,76e-3),False),
-        #('w3_201111','test_equip',2,'ab_ir2h',(-200,200),(0,60e-3),False)
+        #('210322_TEMPOL_100mM_cap_probe_FIR_27dBm','inv_rec','signal','spincore_IR_v1',
+        #    (-0.325e3,0.067e3),(0,76e-3),False),
+        ('w3_201111','test_equip',2,'ab_ir2h',(-600,600),(0,60e-3),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
@@ -151,7 +151,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd", real=True)
     error.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
     f.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
-    error.fit()
+    #error.fit()
     f.fit()
     logger.info(strm("output:",f.output()))
     logger.info(strm("latex:",f.latex()))
@@ -160,59 +160,60 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     fl.plot(s_signal,'o', label='actual data')
     fl.plot(s_signal.imag,'o',label='actual imaginary')
     fl.plot(f.eval(100),label='fit')
-    fl.plot(error.eval(100),label='fit error')
+    #fl.plot(error.eval(100),label='fit error')
     plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='large',
             horizontalalignment='center',color='k')
     ax = plt.gca()
     logger.info(strm("YOUR T1 IS:",T1))
     fl.show()
     if ILT:
-        T1 = nddata(logspace(-3,3,150),'T1')
-        l = sqrt(logspace(-8.0,0.5,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
+        T1 = nddata(np.logspace(-5,5,150),'T1')
+        l = sqrt(np.logspace(-8.0,0.5,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
         plot_Lcurve =False
         if plot_Lcurve:
             def vec_lcurve(l):
-                return s.C.nnls('indirect',T1,lambda x,y: 1.0-2*exp(-x/y), l=l)
+                return s.C.nnls('vd',T1,lambda x,y: 1.0-2*np.exp(-x/y), l=l)
 
             x=vec_lcurve(l) 
 
             x_norm = x.get_prop('nnls_residual').data
-            r_norm = x.C.run(linalg.norm,'T1').data
+            r_norm = x.C.run(np.linalg.norm,'T1').data
 
             with figlist_var() as fl:
                 fl.next('L-Curve')
-                figure(figsize=(15,10))
-                fl.plot(log10(r_norm[:,0]),log10(x_norm[:,0]),'.')
+                plt.figure(figsize=(15,10))
+                fl.plot(np.log10(r_norm[:,0]),np.log10(x_norm[:,0]),'.')
                 annotate_plot = True
                 show_lambda = True
                 if annotate_plot:
                     if show_lambda:
                         for j,this_l in enumerate(l):
-                            annotate('%0.3f'%this_l, (log10(r_norm[j,0]),log10(x_norm[j,0])),
+                            plt.annotate('%0.3f'%this_l, (np.log10(r_norm[j,0]),np.log10(x_norm[j,0])),
                                     ha='left',va='bottom',rotation=45)
                     else:
                         for j,this_l in enumerate(l):
-                            annotate('%d'%j, (log10(r_norm[j,0]),log10(x_norm[j,0])),
+                            plt.annotate('%d'%j, (np.log10(r_norm[j,0]),np.log10(x_norm[j,0])),
                                     ha='left',va='bottom',rotation=45)
             d_2d = s*nddata(r_[1,1,1],r'\Omega')
+        #fl.show();quit()
         offset = s.get_prop('proc')['OFFSET']
-        this_l = 0.042#pick number in l curve right before it curves up
-        o1 = 297.01 #o1 for free D2O
+        this_l = 0.178#pick number in l curve right before it curves up
+        #o1 = 297.01 #o1 for free D2O
         sfo1 = s.get_prop('acq')['BF1']
-        s.setaxis('t2',lambda x:
-                x-o1)
+        #s.setaxis('t2',lambda x:
+        #        x-o1)
         s.setaxis('t2',lambda x:
                 x/(-sfo1)).set_units('t2','ppm')
-        soln = s.real.C.nnls('indirect',T1, lambda x,y: 1.0-2.*exp(-x/y),l=this_l)
+        soln = s.real.C.nnls('vd',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
         soln.reorder('t2',first=False)
         soln.rename('T1','log(T1)')
-        soln.setaxis('log(T1)',log10(T1.data))
-        fl.next('w=6 in hexane')
-        fl.image(soln.C.set_units('t2','ppm'))
+        soln.setaxis('log(T1)',np.log10(T1.data))
+        fl.next('w=3')
+        fl.image(soln.C.setaxis('t2','#').set_units('t2','ppm'))
         logger.info(strm("SAVING FILE"))
-        np.savez(searchstr+'_'+str(nodename)+'_ILT_inv',
+        np.savez(thisfile+'_'+str(nodename)+'_ILT_inv',
                 data=soln.data,
                 logT1=soln.getaxis('log(T1)'),
                 t2=soln.getaxis('t2'))               
         logger.info(strm("FILE SAVED"))
-
+        fl.show()
