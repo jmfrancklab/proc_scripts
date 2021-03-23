@@ -13,12 +13,12 @@ rcParams["savefig.transparent"] = True
 filter_bandwidth = 5e3
 t2 = symbols('t2')
 test_for_flat_echo = False# test for flat echo and exit
-#Below we give the option of JUST writing the processed 
-#data to a file (write_h5) and then the option of reading
-#and plotting/imaging the processed result (read_h5) as 
-#time saver.
-write_h5 = False#writes the hdf5 file
-read_h5 = True #reads the completed hdf5 file 
+# Below we give the option of JUST writing the processed 
+# data to a file (write_h5) and then the option of reading
+# and plotting/imaging the processed result (read_h5) as 
+# time saver.
+write_h5 = False # writes the hdf5 file
+read_h5 = True # reads the completed hdf5 file 
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_name, h5_dir in [
         #('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
@@ -31,8 +31,9 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
         ]:
-    #If file is not processed yet, write_h5 should be True above in the input parameters
-    #If file is already written one can declare write_h5 as False to save time
+    # If file is not processed yet, write_h5 should be True above in the input
+    # parameters
+    # If file is already written one can declare write_h5 as False to save time
     if write_h5:
         #before running go into the preprocessing in load_data as some parameters are hardcoded. Double check these
         s = find_file(searchstr,exp_type=exp_type,

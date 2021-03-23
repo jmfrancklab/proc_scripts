@@ -4,9 +4,12 @@ from sympy import symbols
 
 
 def slice_FID_from_echo(s, max_t=None, signal_pathway={'ph1':1, 'ph2':-2}, fl=None):
-    """takes the best shift from hermitian function test and applies it to dataset.
-    This is followed by zeroth order phase correcting and slicing form the center of 
-    the echo onward to the t_range defined
+    """Automatically slices the FID out of an echo.
+
+    Determines the proper position for :math:`t=0` from hermitian function test.
+    This is followed by zeroth order phase correcting and slicing from the center of 
+    the echo (:math:`t=0` onward to the t_range defined
+
     Parameters
     ==========
     max_t:  int
@@ -15,6 +18,7 @@ def slice_FID_from_echo(s, max_t=None, signal_pathway={'ph1':1, 'ph2':-2}, fl=No
             the selection of ph1 in the coherence pathway
     ph2:    int
             selection of ph2 in coherence pathway
+
     Returns
     =======
     s:      phase corrected and sliced data
