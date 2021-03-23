@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import fl_mod, find_echo_center, center_echo, postproc_dict
+from proc_scripts import fl_mod, center_echo, postproc_dict
 from sympy import symbols
 import sympy as sp
 from proc_scripts.fitting import decay
@@ -50,12 +50,16 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         s.ift('t2')
         if flat_echo:
            s['t2',16]=0
+           # {{{ (FROM REVIEW) find echo center no longer exists!
            avg_center=find_echo_center(s,fl=fl)
+           # }}}
         else:    
             centers = []
             for j in range(ndshape(s)['indirect']):
                 s_slice = s['indirect',j]
+                # {{{ (FROM REVIEW) find echo center no longer exists!
                 this_center = find_echo_center(s_slice,fl=fl)
+                # }}}
                 centers.append(this_center)
             logger.info(centers)
             avg_center = sum(centers)/len(centers)

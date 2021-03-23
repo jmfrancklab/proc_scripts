@@ -27,15 +27,18 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     s.ift('t2')
     if 'amp' not in s.dimlabels:
         # {{{ centering of data using hermitian function test
+        # {{{ (FROM REVIEW) I still don't understand why this is only done for
+        #                   an amplitude-varied only
         best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
         logger.info(strm("best shift is",best_shift))
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+        # }}}
         fl.next('with time shift')
         fl.image(s)
         fl.next('freq domain after time correction')
         s.ft('t2')
         fl.image(s)
-        s.ift('t2')
+        s.ift('t2') # make sure everything is in the same domain
         #}}}
     else:
         s.setaxis('t2', lambda x: x-abs(s['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
