@@ -1,11 +1,3 @@
-from pyspecdata import *
-from .Utility import dBm2power
-import os
-from sympy import symbols
-import logging
-import numpy as np
-import logging
-#to use type s = load_data("nameoffile")
 """Used to preprocess data based on type of experiment performed. Returns all data FTed
 into the frequency domain with the phase cycles also FTed (coherence domain). Data is
 not sliced or altered in anyway.
@@ -18,6 +10,14 @@ Returns
 =======
 nddata that has been FTed and in coherence domain
 """
+from pyspecdata import *
+from .Utility import dBm2power
+import os
+from sympy import symbols
+import logging
+import numpy as np
+import logging
+#to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s,fl=None):
     logging.info(strm("this is the 90 time"))
     if fl is not None:

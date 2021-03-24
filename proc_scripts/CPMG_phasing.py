@@ -6,7 +6,9 @@ import numpy as np
 import logging
 
 def center_echo(s, echo_center, axis='t2',fl=None):
-    """Slices out a symmetric echo.  Will generate an error if the echo appears to be extremely lopsided.
+    """Slices out a symmetric echo.
+
+    Will generate an error if the echo appears to be extremely lopsided.
 
     Parameters
     ==========

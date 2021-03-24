@@ -6,25 +6,25 @@ from proc_scripts.fitting import decay
 import sympy as sp
 fl = fl_mod()
 logger = init_logging('info')
-for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
-        #('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500),False),
+for searchstr, exp_type, nodename, postproc, label_str, f_range, in [
+        #('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500)),
         #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1',
-        #    'deadtime=5',(-500,500),True),
-        #('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-200,200),False),
+        #    'deadtime=5',(-500,500)),
+        #('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-200,200)),
         #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1',
-        #    'deadtime=5',(-500,500),True),
+        #    'deadtime=5',(-500,500)),
         ('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1',
-            'deadtime=5',(-500,500),True),
+            'deadtime=5',(-500,500)),
         #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1',
-        #    'deadtime=5',(-500,500),True),
+        #    'deadtime=5',(-500,500)),
         #('200305_CPMG_3p7_3','test_equip','signal','spincore_CPMG_v1',
-        #    'deadtime=5',(-500,500),True),
+        #    'deadtime=5',(-500,500)),
         #('200305_CPMG_3p8_2','test_equip','signal','spincore_CPMG_v1',
-        #    'deadtime=5',(-500,500),True),
+        #    'deadtime=5',(-500,500)),
         #('200305_CPMG_3p9_2','test_equip','signal','spincore_CPMG_v1',
-        #    'deadtime=5',(-500,500),True),
+        #    'deadtime=5',(-500,500)),
         #('200305_CPMG_4p0_1','test_equip','signal','spincore_CPMG_v1',
-        #    'deadtime=5',(-500,500),True),
+        #    'deadtime=5',(-500,500)),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
@@ -53,10 +53,12 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, spincore in [
 'tE','#').set_units('tE','scan #'))
     s = s['t2':f_range]
     s = s.C.sum('t2')
+    # {{{ (FROM REVIEW) what is going on here???
     if spincore:
         CPMG=s
     else:
         CPMG = s['indirect',-1]
+    # }}}
     fl.next('decay curve')
     fl.plot(CPMG,'o')
     fit_CPMG = fitdata(CPMG)

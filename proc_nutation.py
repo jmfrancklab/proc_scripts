@@ -25,18 +25,22 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
     s.ift('t2')
-    # {{{ centering of data using hermitian function test
-    else:
+    if 'amp' not in s.dimlabels:
+        # {{{ centering of data using hermitian function test
+        # {{{ (FROM REVIEW) I still don't understand why this is only done for
+        #                   an amplitude-varied only
         best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
         logger.info(strm("best shift is",best_shift))
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+        # }}}
         fl.next('with time shift')
         fl.image(s)
         fl.next('freq domain after time correction')
         s.ft('t2')
         fl.image(s)
-    #}}}
-    if 'amp' in s.dimlabels:
+        s.ift('t2') # make sure everything is in the same domain
+        #}}}
+    else:
         s.setaxis('t2', lambda x: x-abs(s['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
     #}}}
     fl.next('t domain centered')
@@ -60,8 +64,10 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
         s.set_units('amp','s')
         ind_dim = '\\tau_p a'
         s.rename('amp',ind_dim)
-    else:
+    elif 'p_90' in s.dimlabels:
         ind_dim = 'p_90'
+    else:
+        raise ValueError("not sure what the indirect dimenison is!!")
     #{{{ phasing with zeroth order correction
     fl.next('final time domain')
     ph0 = zeroth_order_ph(s['t2':0], fl=None)
