@@ -26,10 +26,11 @@ clock_correction=False
 for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         #('210322_TEMPOL_100mM_cap_probe_FIR_27dBm','inv_rec','signal','spincore_IR_v1',
         #    (-0.325e3,0.067e3),(0,76e-3),False),
-        ('w3_201111','test_equip',2,'ab_ir2h',(-600,600),(0,60e-3),True)
+        ('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
+
     #{{{ since we need to relabel vd frequently- we make a method
     def as_scan_nbr(d):
         return d.C.setaxis('vd','#').set_units('vd','scan #')
@@ -39,10 +40,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     s.ift('t2')
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
-    fl.next('time domain cropped log')
-    fl.image(as_scan_nbr(s))
     #{{{phasing the aligned data
-    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+    best_shift = hermitian_function_test(s['ph2',1]['ph1',0])#.C.mean('vd'))
     logger.info(strm("best shift is", best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
@@ -127,8 +126,23 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         s.reorder(['ph1','ph2','vd','t2'])
     else:
         s.reorder(['ph1','vd','t2'])
+    
+    s.convolve('t2',5)
+    s.ift('t2')
+    s = s['t2':t_range]
+    s['t2',0] *= 0.5
+    s.ft('t2')
+    fl.next('where to cut')
+    s_signal = select_pathway(s,signal_pathway)*-1
+    fl.plot(s_signal)
+    fl.next('plotting phased spectra')
+    for j in range(ndshape(s_signal)['vd']):
+        fl.plot(s_signal['vd',j]['t2':(-300,300)],
+                alpha=0.5,
+                label='vd=%g'%s.getaxis('vd')[j])
+    
     fl.next('Integrated data - recovery curve')
-    s_signal = select_pathway(s,signal_pathway)
+    #s_signal = select_pathway(s,signal_pathway)
     # {{{ Here we use the inactive coherence pathways to determine the error
     #   associated with the data
     s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
@@ -151,7 +165,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd", real=True)
     error.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
     f.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
-    #error.fit()
+    error.fit()
     f.fit()
     logger.info(strm("output:",f.output()))
     logger.info(strm("latex:",f.latex()))
@@ -160,16 +174,16 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     fl.plot(s_signal,'o', label='actual data')
     fl.plot(s_signal.imag,'o',label='actual imaginary')
     fl.plot(f.eval(100),label='fit')
-    #fl.plot(error.eval(100),label='fit error')
+    fl.plot(error.eval(100),label='fit error')
     plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='large',
             horizontalalignment='center',color='k')
     ax = plt.gca()
     logger.info(strm("YOUR T1 IS:",T1))
     fl.show()
     if ILT:
-        T1 = nddata(np.logspace(-5,5,150),'T1')
+        T1 = nddata(np.logspace(-3,3,150),'T1')
         l = sqrt(np.logspace(-8.0,0.5,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
-        plot_Lcurve =False
+        plot_Lcurve = False
         if plot_Lcurve:
             def vec_lcurve(l):
                 return s.C.nnls('vd',T1,lambda x,y: 1.0-2*np.exp(-x/y), l=l)
@@ -197,23 +211,26 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
             d_2d = s*nddata(r_[1,1,1],r'\Omega')
         #fl.show();quit()
         offset = s.get_prop('proc')['OFFSET']
-        this_l = 0.178#pick number in l curve right before it curves up
+        this_l = 0.032#pick number in l curve right before it curves up
         #o1 = 297.01 #o1 for free D2O
+        o1 = s.get_prop('acq')['O1']
         sfo1 = s.get_prop('acq')['BF1']
-        #s.setaxis('t2',lambda x:
-        #        x-o1)
         s.setaxis('t2',lambda x:
-                x/(-sfo1)).set_units('t2','ppm')
+                x+o1)
+        s.setaxis('t2',lambda x:
+                x/(sfo1)).set_units('t2','ppm')
+        s.set_prop('x_inverted',True)
         soln = s.real.C.nnls('vd',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
         soln.reorder('t2',first=False)
         soln.rename('T1','log(T1)')
         soln.setaxis('log(T1)',np.log10(T1.data))
         fl.next('w=3')
-        fl.image(soln.C.setaxis('t2','#').set_units('t2','ppm'))
+        fl.image(soln)#.C.setaxis('t2','#').set_units('t2','ppm'))
         logger.info(strm("SAVING FILE"))
-        np.savez(thisfile+'_'+str(nodename)+'_ILT_inv',
-                data=soln.data,
-                logT1=soln.getaxis('log(T1)'),
-                t2=soln.getaxis('t2'))               
+        #np.savez(thisfile+'_'+str(nodename)+'_ILT_inv',
+        #        data=soln.data,
+        #        logT1=soln.getaxis('log(T1)'),
+        #        t2=soln.getaxis('t2'))               
         logger.info(strm("FILE SAVED"))
         fl.show()
+
