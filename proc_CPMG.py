@@ -7,14 +7,14 @@ import sympy as sp
 fl = fl_mod()
 logger = init_logging('info')
 for searchstr, exp_type, nodename, postproc, label_str, f_range, in [
-        #('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500)),
+        ('w8_200917','test_equip',6,'ag_CPMG_strob','water loading 8',(-500,500)),
         #('200221_CPMG_TEMPOLgel_2p9_1','test_equip','signal','spincore_CPMG_v1',
         #    'deadtime=5',(-500,500)),
         #('freeSL_201007','test_equip',3,'ag_CPMG_strob','free SL',(-200,200)),
         #('200305_CPMG_3p5_2','test_equip','signal','spincore_CPMG_v1',
         #    'deadtime=5',(-500,500)),
-        ('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1',
-            'deadtime=5',(-500,500)),
+        #('200305_CPMG_3p6_2','test_equip','signal','spincore_CPMG_v1',
+        #    'deadtime=5',(-500,500)),
         #('200305_CPMG_3p7_2','test_equip','signal','spincore_CPMG_v1',
         #    'deadtime=5',(-500,500)),
         #('200305_CPMG_3p7_3','test_equip','signal','spincore_CPMG_v1',
@@ -54,10 +54,10 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, in [
     s = s['t2':f_range]
     s = s.C.sum('t2')
     # {{{ (FROM REVIEW) what is going on here???
-    if spincore:
-        CPMG=s
+    if 'indirect' in s.dimlabels:
+        CPMG=s['indirect',-1]
     else:
-        CPMG = s['indirect',-1]
+        CPMG=s
     # }}}
     fl.next('decay curve')
     fl.plot(CPMG,'o')

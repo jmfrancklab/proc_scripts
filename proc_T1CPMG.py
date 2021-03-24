@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import fl_mod, center_echo, postproc_dict
+from proc_scripts import fl_mod, center_echo, hermitian_function_test, postproc_dict
 from sympy import symbols
 import sympy as sp
 from proc_scripts.fitting import decay
@@ -17,8 +17,8 @@ test_for_flat_echo = False# test for flat echo and exit
 # data to a file (write_h5) and then the option of reading
 # and plotting/imaging the processed result (read_h5) as 
 # time saver.
-write_h5 = False # writes the hdf5 file
-read_h5 = True # reads the completed hdf5 file 
+write_h5 = True # writes the hdf5 file
+read_h5 = False # reads the completed hdf5 file 
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_name, h5_dir in [
         #('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
@@ -51,14 +51,14 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         if flat_echo:
            s['t2',16]=0
            # {{{ (FROM REVIEW) find echo center no longer exists!
-           avg_center=find_echo_center(s,fl=fl)
+           avg_center=hermitian_function_test(s)
            # }}}
         else:    
             centers = []
             for j in range(ndshape(s)['indirect']):
                 s_slice = s['indirect',j]
                 # {{{ (FROM REVIEW) find echo center no longer exists!
-                this_center = find_echo_center(s_slice,fl=fl)
+                this_center = hermitian_function_test(s_slice)
                 # }}}
                 centers.append(this_center)
             logger.info(centers)

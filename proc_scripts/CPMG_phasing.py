@@ -6,7 +6,8 @@ import numpy as np
 import logging
 
 def center_echo(s, echo_center, axis='t2',fl=None):
-    """Slices out a symmetric echo.
+    """Centers data around echo center given, and applies
+    a zeroth order phase correction.
 
     Will generate an error if the echo appears to be extremely lopsided.
 
@@ -27,10 +28,10 @@ def center_echo(s, echo_center, axis='t2',fl=None):
     s = s[axis:(-time_bound,time_bound)]
     axis_after = ndshape(s)[axis]
     logging.info(strm(axis_after/axis_before))
-    assert axis_after/axis_before > 0.5, "the echo is extremely lopsided -- either you houldn't be using this function, or the center is not actually at echo_center=%g, where you are claiming it is"%echo_center
+    assert axis_after/axis_before > 0.5, "the echo is extremely lopsided -- either you shouldn't be using this function, or the center is not actually at echo_center=%g, where you are claiming it is"%echo_center
     logging.info(strm("time bound is",time_bound))
     logging.info(strm("after setting axis to time bounds", s.getaxis(axis)))
-    assert np.isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound %g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],np.diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
+    #assert np.isclose(s.getaxis(axis)[0],-s.getaxis(axis)[-1]),"echo is not symmetric! you are using the wrong code!! (first point is %g, last point %g, dwell time %g, and time_bound %g"%(s.getaxis(axis)[0],s.getaxis(axis)[-1],np.diff(s.getaxis(axis)[r_[0,1]]).item(),time_bound)
     return s
 def minimize_CPMG_imag(s, axis='t2', fl=None):
     """optimize the first and second order phase of a CPMG pulse sequence

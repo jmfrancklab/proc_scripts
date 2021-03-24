@@ -22,11 +22,11 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             artifacts
         'ph2':r_[0,2,3]}
 # }}}
-clock_correction=False
+clock_correction=True
 for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
-        #('210322_TEMPOL_100mM_cap_probe_FIR_27dBm','inv_rec','signal','spincore_IR_v1',
-        #    (-0.325e3,0.067e3),(0,76e-3),False),
-        ('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
+        ('210324_TEMPOL_2mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.16e3,0.17e3),(0,76e-3),False),
+        #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
@@ -209,7 +209,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
                             plt.annotate('%d'%j, (np.log10(r_norm[j,0]),np.log10(x_norm[j,0])),
                                     ha='left',va='bottom',rotation=45)
             d_2d = s*nddata(r_[1,1,1],r'\Omega')
-        #fl.show();quit()
         offset = s.get_prop('proc')['OFFSET']
         this_l = 0.032#pick number in l curve right before it curves up
         #o1 = 297.01 #o1 for free D2O

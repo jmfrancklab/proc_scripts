@@ -11,24 +11,36 @@ max_kHz = 200
 for searchstr,exp_type,nodename,postproc,freq_slice in [
     #['201211_Ni_sol_probe_nutation_1','nutation','nutation',
     #    'spincore_nutation_v1',(-5000,13000)],
-    #['210302_Ni_cap_probe_nutation_1','nutation','nutation',
+    #['210302_210302_Ni_cap_probe_nutation_1','nutation','nutation',
     #    'spincore_nutation_v1',(-4e3,1.2e4)]
     ['210120_Ni_sol_probe_nutation_amp_3','nutation','nutation',
         'spincore_nutation_v2',(-15.2e3,11.01e3)]
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
-            lookup=postproc_dict) 
+            lookup=postproc_dict,fl=fl)
     if 'amp' in s.dimlabels:
         plen = s.get_prop('acq_params')['p90_us']*1e-6
         logger.info(strm('pulse length is:',plen))
-    # {{{ do the rough centering before anything else!
+        s.ift('t2')
+        print(ndshape(s))
+        best_shift = hermitian_function_test(s['ph1',1]['ph2',0])
+        logger.info("best shift is:",best_shift)
+        s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
+        fl.next('with time shift')
+        fl.image(s)
+        fl.next('freq domain after time correction')
+        s.ft('t2')
+        fl.image(s)
+        s.ift('t2') # make sure everything is in the same domain
+        #}}}
+    fl.show();quit()
+    # {{{ do the centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
-    s.ift('t2')
-    if 'amp' not in s.dimlabels:
+    else:
         # {{{ centering of data using hermitian function test
         # {{{ (FROM REVIEW) I still don't understand why this is only done for
-        #                   an amplitude-varied only
+        #                   an p90-varied only
         best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
         logger.info(strm("best shift is",best_shift))
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
@@ -40,8 +52,6 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
         fl.image(s)
         s.ift('t2') # make sure everything is in the same domain
         #}}}
-    else:
-        s.setaxis('t2', lambda x: x-abs(s['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
     #}}}
     fl.next('t domain centered')
     fl.image(s)
