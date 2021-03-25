@@ -33,7 +33,6 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
         fl.image(s)
         s.ift('t2') # make sure everything is in the same domain
         #}}}
-    fl.show();quit()
     # {{{ do the centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
@@ -98,5 +97,5 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     title('FT to get $\gamma B_1/a$')
     fl.image(abs(s[ind_dim:(-1e3*max_kHz,1e3*max_kHz)]))
     gridandtick(gca(),gridcolor=[1,1,1])
-fl.show();quit()
+fl.show()
 

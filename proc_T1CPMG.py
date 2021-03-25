@@ -66,7 +66,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
             fl.next('abs vs imag',legend=True)
             fl.plot(abs(s),'-',label='abs')
             fl.plot(s.imag,'--',label='imag')
-            fl.show();quit()
+            fl.show();quit() # this flag is used to ask for a partial test, and so this is the *only* valid way to use quit
             #}}}
         fl.next('s centered')
         fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))

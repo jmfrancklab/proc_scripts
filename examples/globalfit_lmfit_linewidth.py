@@ -58,7 +58,6 @@ for j,C in enumerate(C_list):
 p_true = Parameters()
 B = (datasets[j].getaxis('$B_0$') for j in range(4))
 print(type(B))
-quit()
 
 for j,C in enumerate(C_list):
     p_true.add('A%d'%j, value = A_list_guess[j])

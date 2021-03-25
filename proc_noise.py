@@ -74,4 +74,4 @@ for date,id_string,label_str in [
     fl.plot(noise['t2':frq_slice],alpha=0.5, color=c, label=label_str,
             human_units=False)
     plt.ylim(0,1e-4)
-fl.show();quit()
+fl.show()
