@@ -7,7 +7,11 @@ import numpy as np
 #import matplotlib.pyplot as plt
 from pylab import *
 from sympy import exp as s_exp
-rcParams["savefig.transparent"] = True
+plt.rcParams.update({
+    "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
+    "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+})
 logger = init_logging("info")
 fl = fl_mod()
 t2 = symbols('t2')
@@ -72,12 +76,8 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     enhancement.set_units('power','W')
     #plt.figure(figsize=(4,4))
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
-    #fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
-    ylabel('enhancement')
-    xlabel('Power(Watts)')
-    #plt.legend()
-    gca().set_facecolor('#ffffffcc')
-
-    savefig('enhancement.png')
+    fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
+    plt.ylabel('Enhancement')
+    plt.savefig('enhancement.png')
     #}}}
 fl.show();quit()
