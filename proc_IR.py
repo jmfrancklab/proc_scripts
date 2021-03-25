@@ -21,11 +21,10 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             should ideally be pathways that do NOT include any known
         #             artifacts
         'ph2':r_[0,2,3]}
-clock_correction=False
 # }}}
-for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
+for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT,clock_correction in [
         ('210325_TEMPOL_10mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-240.0,200.0),(0,44e-3),False),
+            (-240.0,200.0),(0,44e-3),False,True),
         #('210311_TEMPOL_500uM_cap_probe_33dBm','inv_rec','signal','spincore_IR_v1',
         #    (-0.119e3,0.225e3),(0,76e-3),False),
         #('w3_201111','test_equip',2,'ab_ir2h',(-200,200),(0,60e-3),False)
