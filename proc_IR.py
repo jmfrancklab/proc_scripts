@@ -24,8 +24,10 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 clock_correction=False
 # }}}
 for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
-        ('210311_TEMPOL_500uM_cap_probe_33dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.119e3,0.225e3),(0,76e-3),False),
+        ('210325_TEMPOL_10mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-240.0,200.0),(0,44e-3),False),
+        #('210311_TEMPOL_500uM_cap_probe_33dBm','inv_rec','signal','spincore_IR_v1',
+        #    (-0.119e3,0.225e3),(0,76e-3),False),
         #('w3_201111','test_equip',2,'ab_ir2h',(-200,200),(0,60e-3),False)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -106,16 +108,20 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     fl.image(as_scan_nbr(s))
     fl.basename='correlation subroutine -- before zero crossing:'
     # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
-            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-            sigma=50, fl=fl)
-    s.ift('t2')
-    s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    s.ft('t2')
+    logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
+    if zero_crossing > 1:
+        opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
+                ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+                sigma=50)
+        s.ift('t2')
+        s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+        s.ft('t2')
+    else:
+        logger.warning("You have 1 point or less before your zero crossing!!!!")
     fl.basename='correlation subroutine -- after zero crossing:'
     opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-            sigma=50, fl=fl)
+            sigma=50)
     s.ift('t2')
     s['vd',zero_crossing+1:] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
