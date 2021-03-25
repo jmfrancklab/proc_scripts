@@ -37,11 +37,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     #}}}
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
-    fl.next('Raw Data -- frequency domain')
-    fl.image(as_scan_nbr(s))
-    fl.next('Raw Data -- time domain')
     s.ift('t2')
-    fl.image(as_scan_nbr(s))
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
     #{{{phasing the aligned data
@@ -85,8 +81,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
         logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = ph0/abs(ph0)
     s /= ph0
-    fl.next('phased data -- time domain')
-    fl.image(as_scan_nbr(s))
     fl.next('phased data -- frequency domain')
     s.ft('t2')
     fl.image(as_scan_nbr(s))

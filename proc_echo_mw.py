@@ -18,7 +18,7 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210324_TEMPOL_2mM_cap_probe_DNP_1", 'ODNP_NMR_comp', 'signal',
+        ["210317_TEMPOL10mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
             'spincore_ODNP_v1', (-6000,6000),(None,0.06)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
