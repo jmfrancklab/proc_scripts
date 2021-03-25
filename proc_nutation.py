@@ -37,7 +37,8 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     # {{{ do the centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
-    else:
+    s.ift('t2')
+    if 'amp' not in s.dimlabels:
         # {{{ centering of data using hermitian function test
         # {{{ (FROM REVIEW) I still don't understand why this is only done for
         #                   an p90-varied only
@@ -52,6 +53,8 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
         fl.image(s)
         s.ift('t2') # make sure everything is in the same domain
         #}}}
+    else:
+        s.setaxis('t2', lambda x: x-abs(s['ph1',1]['ph2',-2]).mean_all_but('t2').argmax('t2').item())
     #}}}
     fl.next('t domain centered')
     fl.image(s)

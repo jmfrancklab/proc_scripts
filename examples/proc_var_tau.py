@@ -1,3 +1,4 @@
+"""PLEASE PROVIDE A DOCSTRING HERE TO DESCRIBE WHAT THIS FILE DOES"""
 from pylab import *
 from pyspecdata import *
 from proc_scripts.load_data import postproc_dict

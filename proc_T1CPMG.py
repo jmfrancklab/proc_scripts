@@ -50,16 +50,12 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         s.ift('t2')
         if flat_echo:
            s['t2',16]=0
-           # {{{ (FROM REVIEW) find echo center no longer exists!
            avg_center=hermitian_function_test(s)
-           # }}}
         else:    
             centers = []
             for j in range(ndshape(s)['indirect']):
                 s_slice = s['indirect',j]
-                # {{{ (FROM REVIEW) find echo center no longer exists!
                 this_center = hermitian_function_test(s_slice)
-                # }}}
                 centers.append(this_center)
             logger.info(centers)
             avg_center = sum(centers)/len(centers)
@@ -77,7 +73,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         fl.next('s centered in frequency domain')
         s.ft('t2')
         fl.image(s.C.setaxis(
-'indirect','#').set_units('indirect','scan #'))
+            'indirect','#').set_units('indirect','scan #'))
         #}}}
         #{{{slice out signal and sum along t2
         s = s['t2':freq_slice]

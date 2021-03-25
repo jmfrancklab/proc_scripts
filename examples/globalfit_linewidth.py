@@ -1,3 +1,4 @@
+"""This example actually does not work"""
 from pyspecdata import *
 from proc_scripts import *
 from proc_scripts import postproc_dict
@@ -127,7 +128,3 @@ plt.ylabel('Intensity')
 plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
 gridandtick(plt.gca())
 plt.show()
-
-
-
-        

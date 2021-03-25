@@ -1,3 +1,7 @@
+"""This example uses symfit to individually fit several Voigt-shaped ESR spectra
+
+This example does work.
+"""
 from pyspecdata import *
 from proc_scripts import *
 from proc_scripts import postproc_dict
@@ -148,5 +152,3 @@ plot(conc_list,sigma_list,'x',label=r'$\sigma$')
 plt.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
 plt.ylabel('concentration')
 plt.show()
-
-

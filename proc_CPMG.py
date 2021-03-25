@@ -29,28 +29,29 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, in [
     s = find_file(searchstr, exp_type=exp_type,
             expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
     s.ift('t2')
-#{{{Spincore data requires some reordering of dimensions while bruker data does not.
-    #For this reason we make spincore an argument above for the proper processing
+    #{{{ Different versions of the pulse program (notably bruker vs. spincore)
+    #    phase cycle the pulses with different numbers of steps, so we need to deal
+    #    with that here
     if 'ph2' in s.dimlabels:
         s = s['ph2',-2]['ph1',1]
     else:
         s = s['ph1',1] #the spincore version only has one phasing dimension 'nPhaseSteps'
+    if 'nScans' in s.dimlabels:
         s.mean('nScans')
-        s.reorder('t2',first=True)
-#}}}        
+    #}}}        
     #{{{ centering CPMG echo
     center = hermitian_function_test(s)
     s = center_echo(s,center,fl=fl)
     logger.debug(strm(ndshape(s)))
     fl.next('centered echo')
     fl.image(s.C.setaxis(
-'tE','#').set_units('tE','scan #'))
+        'tE','#').set_units('tE','scan #'))
     #}}}
     #{{{select echo decay fit function
     s.ft('t2')
     fl.next('selected coherence')
     fl.image(s.C.setaxis(
-'tE','#').set_units('tE','scan #'))
+        'tE','#').set_units('tE','scan #'))
     s = s['t2':f_range]
     s = s.C.sum('t2')
     # {{{ (FROM REVIEW) what is going on here???
