@@ -150,7 +150,6 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
     logging.info(strm('optimal phase correction',repr(ph1_opt)))
     # }}}
     # {{{ apply the phase corrections
-    #s_cost.chunk('transients',['vd','phcorr'],[30,-1])
     def applyphase(arg,ph1):
         arg *= np.exp(-1j*2*pi*ph1*arg.fromaxis('t2'))
         ph0 = arg.C.sum('t2')
