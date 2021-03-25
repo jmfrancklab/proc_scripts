@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align, ph1_real_Abs, postproc_dict
+from proc_scripts import hermitian_function_test, zeroth_order_ph, integrate_limits, correl_align, ph1_real_Abs, postproc_dict
 from sympy import symbols, latex, Symbol
 from matplotlib import *
 from scipy.signal import tukey
@@ -23,21 +23,24 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         'ph2':r_[0,2,3]}
 # }}}
 clock_correction=True
-for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
-        ('210324_TEMPOL_2mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.16e3,0.17e3),(0,76e-3),False),
+for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
+        ('210325_TEMPOL_10mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.239e3,0.045e3),(0,44e-3),False,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
-
     #{{{ since we need to relabel vd frequently- we make a method
     def as_scan_nbr(d):
         return d.C.setaxis('vd','#').set_units('vd','scan #')
     #}}}
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
+    fl.next('Raw Data -- frequency domain')
+    fl.image(as_scan_nbr(s))
+    fl.next('Raw Data -- time domain')
     s.ift('t2')
+    fl.image(as_scan_nbr(s))
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
     #{{{phasing the aligned data
@@ -81,7 +84,9 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = ph0/abs(ph0)
     s /= ph0
-    fl.next('phased data frequency domain')
+    fl.next('phased data -- time domain')
+    fl.image(as_scan_nbr(s))
+    fl.next('phased data -- frequency domain')
     s.ft('t2')
     fl.image(as_scan_nbr(s))
     #}}}
@@ -89,6 +94,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
         s.reorder(['ph1','ph2','vd','t2'])
     else:
         s.reorder(['ph1','vd','t2'])
+        
     zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     logger.info(strm('zero crossing at',zero_crossing))
     s.ift(['ph1','ph2'])
@@ -120,29 +126,35 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     fl.next(r'after correlation, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
     s.ft(['ph1','ph2'])
-    fl.next(r'after correlation,DCCT')
-    fl.image(as_scan_nbr(s))
     if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
         s.reorder(['ph1','vd','t2'])
-    
-    s.convolve('t2',5)
+    fl.next('after correlation -- frequency domain')
+    fl.image(as_scan_nbr(s))
     s.ift('t2')
-    s = s['t2':t_range]
+    fl.next('after correlation -- time domain')
+    fl.image(as_scan_nbr(s))
+    s = s['t2':(0,t_range[-1])]
     s['t2',0] *= 0.5
+    # visualize time domain after filtering and phasing
+    fl.next('FID sliced -- time domain')
+    fl.image(as_scan_nbr(s))
     s.ft('t2')
+    fl.next('FID sliced -- frequency domain')
+    fl.image(as_scan_nbr(s))
+    s.convolve('t2',5)
     fl.next('where to cut')
-    s_signal = select_pathway(s,signal_pathway)*-1
+    s_signal = select_pathway(s,signal_pathway)
     fl.plot(s_signal)
     fl.next('plotting phased spectra')
     for j in range(ndshape(s_signal)['vd']):
-        fl.plot(s_signal['vd',j]['t2':(-300,300)],
+        fl.plot(s_signal['vd',j]['t2':(-100,144)],
                 alpha=0.5,
                 label='vd=%g'%s.getaxis('vd')[j])
     
     fl.next('Integrated data - recovery curve')
-    #s_signal = select_pathway(s,signal_pathway)
+    s_signal = select_pathway(s,signal_pathway)
     # {{{ Here we use the inactive coherence pathways to determine the error
     #   associated with the data
     s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
@@ -162,9 +174,13 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,ILT in [
     x = s_signal.fromaxis('vd')
     f = fitdata(s_signal)
     error = fitdata(s_forerror)
-    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd", real=True)
-    error.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
-    f.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
+    M0,Mi,R1,vd,W = symbols("M_0 M_inf R_1 vd W", real=True)
+    if IR:
+        error.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
+        f.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
+    else:
+        error.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
+        f.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
     error.fit()
     f.fit()
     logger.info(strm("output:",f.output()))

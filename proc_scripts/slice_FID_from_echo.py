@@ -49,6 +49,6 @@ def slice_FID_from_echo(s, max_t=None, signal_pathway={'ph1':1, 'ph2':-2}, fl=No
         if select_pathway(s['t2':0]['power',0],signal_pathway).real < 0:
             s *= -1
     elif 'vd' in s.dimlabels:
-        if s['t2':0]['ph2',ph2]['ph1',ph1]['vd',-1].real < 0:
+        if select_pathway(s['t2':0]['vd',-1],signal_pathway).real < 0:
             s *= -1
     return s

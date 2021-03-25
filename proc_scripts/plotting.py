@@ -86,11 +86,16 @@ class fl_mod(figlist_var):
         self.next(plotname, fig=thisfig)
         plt.sca(ax1)
         forplot = s['t2':expand_limits(thisrange,s)]
-        self.image(forplot.C.setaxis('power','#').set_units('power','scan #'))
+        if 'power' in s.dimlabels:
+            self.image(forplot.C.setaxis('power','#').set_units('power','scan #'))
+        else:
+            self.image(forplot.C.setaxis('vd','#').set_units('vd','scan #'))
         draw_limits(thisrange,forplot)
         plt.sca(ax2)
-        self.image(forplot.C.cropped_log().C.setaxis(
-'power','#').set_units('power','scan #'))
+        if 'power' in s.dimlabels:
+            self.image(forplot.C.cropped_log().C.setaxis('power','#').set_units('power','scan #'))
+        else:
+            self.image(forplot.C.setaxis('vd','#').set_units('vd','scan #'))
         draw_limits(thisrange,forplot)
         title('cropped log')
         return
