@@ -91,7 +91,8 @@ kwargs.update(
 #{{{Fitting the model
 fit = Fit(model,
         **kwargs)
-use_pickle = True
+use_pickle = False
+
 if not use_pickle:
     fit_result = fit.execute()
     with open('fit_result.pickle','wb') as fp:
@@ -121,10 +122,11 @@ for j in range(len(datasets)):
     plot(fit_result,'--',
             c=thiscolor,alpha=0.5,
             label='fit C = %f'%C_list[j])
-    plot(datasets[j]-fit_result,':',c=thiscolor,alpha=0.5,
-            label='residual C = %f'%C_list[j])
+    #plot(datasets[j]-fit_result,':',c=thiscolor,alpha=0.5,
+    #        label='residual C = %f'%C_list[j])
 plt.xlabel('$B_0$/G')
 plt.ylabel('Intensity')
 plt.legend(**dict(bbox_to_anchor=(1,1),loc=1,borderaxespad=0))
 gridandtick(plt.gca())
+plt.savefig('gloabalfit.png',transparent=True)
 plt.show()

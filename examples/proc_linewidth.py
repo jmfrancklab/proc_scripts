@@ -36,7 +36,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
                 R: 5.076452e-01,
                 sigma: 6.672132e-01,
                 },
-            True,
+            False,
             3e-3
             ),
         ("210114_5mM_4AT",'ESR','ESR_linewidth',
@@ -139,7 +139,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
             fit.model(B=x_finer, **fit_result.params).y,
             [-1], ['$B_0$']).setaxis('$B_0$', x_finer)
     plot(fit_nddata, label='fit')
-    logger.info(Strm(fit_result))
+    logger.info(strm(fit_result))
     conc_list.append(concentration)
     R_list.append(fit_result.params['R'])
     sigma_list.append(fit_result.params['sigma'])
@@ -151,4 +151,5 @@ plot(conc_list,R_list,'x',label='R')
 plot(conc_list,sigma_list,'x',label=r'$\sigma$')
 plt.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
 plt.ylabel('concentration')
+plt.savefig('RvsC.png',transparent=True)
 plt.show()

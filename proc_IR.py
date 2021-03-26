@@ -1,7 +1,7 @@
 BRUKER PROCESSING BRANCH
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from proc_scripts import hermitian_function_test, zeroth_order_ph, integrate_limits, correl_align, ph1_real_Abs, postproc_dict
+from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align, ph1_real_Abs, postproc_dict,DCCT
 from sympy import symbols, latex, Symbol
 from matplotlib import *
 from scipy.signal import tukey
@@ -16,7 +16,7 @@ def select_pathway(s,pathway):
     retval = s
     for k,v in pathway.items():
         retval = retval[k,v]
-    return retval    
+    return retval
 signal_pathway = {'ph1':0,'ph2':1}
 coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             should ideally be pathways that do NOT include any known
@@ -40,8 +40,12 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ift('t2')
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
+    fl.next('time domain')
+    fl.image(as_scan_nbr(s))
+    # no rough centering anymore -- if anything, we should preproc based on τ,
+    # etc, but otherwise let the hermitian test handle it
     #{{{phasing the aligned data
-    best_shift = hermitian_function_test(s['ph2',1]['ph1',0])#.C.mean('vd'))
+    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
     logger.info(strm("best shift is", best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('time domain after hermitian test')
@@ -72,7 +76,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
         fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
         #}}}
-    ph0 = select_pathway(s['t2':0],signal_pathway)
+    ph0 = select_pathway(s['t2':0], signal_pathway)
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0)
@@ -85,35 +89,38 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ft('t2')
     fl.image(as_scan_nbr(s))
     #}}}
+    #}}}
     if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
         s.reorder(['ph1','vd','t2'])
-        
-    zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
-    logger.info(strm('zero crossing at',zero_crossing))
+    zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd', raw_index=True).item()
+    print("zero crossing at",zero_crossing)
     s.ift(['ph1','ph2'])
-    #{{{so the filter is in range, we do a rough alignment
-    frq_max=abs(s).argmax('t2')
+    # {{{ so that the filter is in range, do a rough alignment
+    frq_max = abs(s).argmax('t2')
     s.ift('t2')
     s *= np.exp(-1j*2*pi*frq_max*s.fromaxis('t2'))
     s.ft('t2')
-    #}}}
-    fl.next(r'after rough alignment, $\varphi$ domain')
+    # }}}
+    fl.next(r'after rough align, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
     fl.basename='correlation subroutine -- before zero crossing:'
-    #for the following, should be modified so we can pass a mask, rather
-    #specifying ph1 and ph2, as we do here
-    opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
-            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-            sigma=50,fl=fl)
-    s.ift('t2')
-    s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    s.ft('t2')
-    fl.basename='correlation subroutine -- after zero crossing'
+    # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
+    logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
+    if zero_crossing > 1:
+        opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
+                ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+                sigma=50)
+        s.ift('t2')
+        s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+        s.ft('t2')
+    else:
+        logger.warning("You have 1 point or less before your zero crossing!!!!")
+    fl.basename='correlation subroutine -- after zero crossing:'
     opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-            sigma=50,fl=fl)
+            sigma=50)
     s.ift('t2')
     s['vd',zero_crossing+1:] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
@@ -121,6 +128,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.next(r'after correlation, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
     s.ft(['ph1','ph2'])
+    fl.next(r'after correlation, DCCT')
+    fl.image(as_scan_nbr(s))
     if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
@@ -138,20 +147,10 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ft('t2')
     fl.next('FID sliced -- frequency domain')
     fl.image(as_scan_nbr(s))
-    s.convolve('t2',5)
-    fl.next('where to cut')
-    s_signal = select_pathway(s,signal_pathway)
-    fl.plot(s_signal)
-    fl.next('plotting phased spectra')
-    for j in range(ndshape(s_signal)['vd']):
-        fl.plot(s_signal['vd',j]['t2':(-100,144)],
-                alpha=0.5,
-                label='vd=%g'%s.getaxis('vd')[j])
-    
     fl.next('Integrated data - recovery curve')
     s_signal = select_pathway(s,signal_pathway)
-    # {{{ Here we use the inactive coherence pathways to determine the error
-    #   associated with the data
+    # {{{ here we use the inactive coherence pathways to determine the error
+    #     associated with the data
     s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
     logger.info(strm(ndshape(s_forerror)))
     frq_slice = integrate_limits(s_signal)
@@ -163,6 +162,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
     fl.plot(s_signal,'o',label='real')
     fl.plot(s_signal.imag,'o',label='imaginary')
+    fl.show();quit()
     fl.next('Spectrum - freq domain')
     s = select_pathway(s,signal_pathway)
     fl.plot(s)

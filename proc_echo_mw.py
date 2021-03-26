@@ -4,9 +4,14 @@ from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+from pylab import *
 from sympy import exp as s_exp
-rcParams["savefig.transparent"] = True
+plt.rcParams.update({
+    "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
+    "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+})
 logger = init_logging("info")
 fl = fl_mod()
 t2 = symbols('t2')
@@ -23,12 +28,18 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
-    fl.basename = searchstr
+    #fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict,fl=fl)
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range) # visualize the frequency limits
+    rcParams.update({
+        "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
+        "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
+        "savefig.facecolor": (1.0,1.0,1.0,0.0),
+        })
+
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
@@ -59,7 +70,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.plot(s)
     #}}}
     #{{{plotting enhancement vs power
-    fl.next('enhancement')
+    fl.next('1mM TEMPOL ODNP Enhancement Curve')
     enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')

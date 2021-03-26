@@ -148,5 +148,5 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
     if fl is not None:
         fl.next('after correlation\nph0 restored sig. energy=%g'%sig_energy)
         fl.image(s_copy.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
-        return f_shift,sigma    
+    return f_shift,sigma    
 

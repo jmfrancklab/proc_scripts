@@ -8,10 +8,12 @@ from .CPMG_phasing import center_echo
 from .fitting import recovery, decay
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
+from .DCCT_func import DCCT
 __all__ = ['calc_baseline',
         'center_echo',
         'correl_align',
         'dBm2power',
+        'DCCT',
         'decay',
         'draw_limits',
         'expand_limits',
