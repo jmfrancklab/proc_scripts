@@ -1,4 +1,3 @@
-BRUKER PROCESSING BRANCH
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
 from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align, ph1_real_Abs, postproc_dict,DCCT
@@ -26,7 +25,7 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 clock_correction=True
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
         ('210325_TEMPOL_10mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.239e3,0.045e3),(0,44e-3),False,False),
+            (-0.24e3,0.2e3),(0,44e-3),False,True),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -139,7 +138,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ift('t2')
     fl.next('after correlation -- time domain')
     fl.image(as_scan_nbr(s))
-    s = s['t2':(0,t_range[-1])]
+    s = s['t2':(0,None)]
     s['t2',0] *= 0.5
     # visualize time domain after filtering and phasing
     fl.next('FID sliced -- time domain')
@@ -147,6 +146,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ft('t2')
     fl.next('FID sliced -- frequency domain')
     fl.image(as_scan_nbr(s))
+    #fl.show();quit()
     fl.next('Integrated data - recovery curve')
     s_signal = select_pathway(s,signal_pathway)
     # {{{ here we use the inactive coherence pathways to determine the error
@@ -162,7 +162,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
     fl.plot(s_signal,'o',label='real')
     fl.plot(s_signal.imag,'o',label='imaginary')
-    fl.show();quit()
     fl.next('Spectrum - freq domain')
     s = select_pathway(s,signal_pathway)
     fl.plot(s)
@@ -220,17 +219,23 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
                             plt.annotate('%d'%j, (np.log10(r_norm[j,0]),np.log10(x_norm[j,0])),
                                     ha='left',va='bottom',rotation=45)
             d_2d = s*nddata(r_[1,1,1],r'\Omega')
-        offset = s.get_prop('proc')['OFFSET']
-        this_l = 0.032#pick number in l curve right before it curves up
+        #fl.show()
+        #offset = s.get_prop('proc')['OFFSET']
+        this_l = 0.004#pick number in l curve right before it curves up
         #o1 = 297.01 #o1 for free D2O
-        o1 = s.get_prop('acq')['O1']
-        sfo1 = s.get_prop('acq')['BF1']
-        s.setaxis('t2',lambda x:
-                x+o1)
-        s.setaxis('t2',lambda x:
-                x/(sfo1)).set_units('t2','ppm')
-        s.set_prop('x_inverted',True)
-        soln = s.real.C.nnls('vd',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
+        #o1 = s.get_prop('acq')['O1']
+        #sfo1 = s.get_prop('acq')['BF1']
+        #s.setaxis('t2',lambda x:
+        #        x+o1)
+        #s.setaxis('t2',lambda x:
+        #        x/(sfo1)).set_units('t2','ppm')
+        #s.set_prop('x_inverted',True)
+        if IR:
+            soln = s.real.C.nnls('vd',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
+        else:
+            #here I hard code w based off the fit
+            soln = s.real.C.nnls('vd',T1,lambda x,y: 
+                    (1.0-(2.*(np.exp(-1909.)**(y**-1)))*np.exp(-y/x)),l=this_l)
         soln.reorder('t2',first=False)
         soln.rename('T1','log(T1)')
         soln.setaxis('log(T1)',np.log10(T1.data))
