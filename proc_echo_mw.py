@@ -73,11 +73,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
-    plt.rcParams.update({
-        "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
-        "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
-        "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
-    })
     plt.figure(figsize=(4,4))
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
