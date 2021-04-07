@@ -4,7 +4,7 @@ from proc_scripts import *
 from proc_scripts import postproc_dict
 from sympy import symbols
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from pylab import *
 from sympy import exp as s_exp
 plt.rcParams.update({
@@ -24,11 +24,11 @@ t2 = symbols('t2')
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         ["210325_TEMPOL_10mM_cap_probe_DNP_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-6000,6000),(None,0.06)]
+            'spincore_ODNP_v1', (-500,100),(None,0.03)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
-    #fl.basename = searchstr
+    fl.basename = searchstr
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict,fl=fl)
@@ -39,7 +39,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
         "savefig.facecolor": (1.0,1.0,1.0,0.0),
         })
-
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
@@ -70,7 +69,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.plot(s)
     #}}}
     #{{{plotting enhancement vs power
-    fl.next('1mM TEMPOL ODNP Enhancement Curve')
+    fl.next('10 mM TEMPOL ODNP Enhancement Curve')
     enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
@@ -82,9 +81,48 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.figure(figsize=(4,4))
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
-    plt.title('2.5 mM TEMPOL Enhancement Curve')
+    plt.title('10 mM TEMPOL Enhancement Curve')
     plt.ylabel('Enhancement')
-    #plt.savefig("enhancement.png")
     plt.show()
+    T1p = nddata(r_[0.31,0.28,0.29,0.30,0.32,0.33,0.35],[-1],
+            ['power']).setaxis('power',r_[0,0.25,0.5,1,1.5,2,2.5])
+    fl.next(r'$T_{1}$(p) for 10 mM TEMPOL')
+    fl.plot(T1p,'o')
+    R1w = 1/2.8
+    R1p = nddata(r_[0.95,1.00,1.04,1.10,1.16,1.19,1.24],[-1],
+            ['power']).setaxis('power',r_[0.001,0.251,0.501,1.0,1.58,2.0,2.5])
+    #{{{making Flinear and fitting
+    Flinear = (R1p - R1p['power':0] + R1w) ** -1
+    polyorder = 3
+    coeff,_ = Flinear.polyfit('power',order=polyorder)
+    power = nddata(np.linspace(0,R1p.getaxis('power')[-1],25),'power')
+    Flinear_fine = 0
+    for j in range(polyorder + 1):
+        Flinear_fine += coeff[j] * power **j
+    fl.next('Flinear')
+    fl.plot(Flinear,'o',label='Flinear')
+    fl.plot(Flinear_fine,label='Flinear_fine')
+    plt.title('polynomial fit of linear equation')
+    plt.ylabel("$F_{linear}$")
+    fl.next('R1p vs power')
+    R1p_fine = (Flinear_fine ** -1) + R1p['power':0]-R1w
+    fl.plot(R1p,"x")
+    fl.plot(R1p_fine)
+    plt.title("relaxation rates")
+    plt.ylabel("$R_1(p)$")
+    plt.show()
+    #{{{plotting without correcting for heating
+    ksigs_noT = (1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.0025)
+    ksigs_noT_max = (1-(-76.2))/(659.33*0.0025)
+    fl.next(r'ksigs_noT vs power')
+    fl.plot(ksigs_noT,'o',label='NOT corrected for heating')
     #}}}
+    #{{{plotting with correction for heating
+    ksigs_T=((1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.0025))*R1p_fine
+    fl.plot(ksigs_T,'--',label='with heating correction')
+    plt.title('ksigmas(p) vs Power')
+    plt.ylabel('ksigmas(p)')
+    fl.show();quit()
+
+        #}}}
 

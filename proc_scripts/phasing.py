@@ -275,7 +275,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     sum_abs_imag = abs(s_FID.imag).sum('t2').mean_all_but(['shift'])
     best_abs_real = (sum_abs_real/sum_abs_imag).argmin('shift').item()
     if fl:
-        fig, (ax1,ax2,ax3) = subplots(3,1)
+        fig, (ax1,ax2,ax3) = plt.subplots(3,1)
         fl.next('mirror tests', fig=fig)
         def real_imag_mirror(forplot, ax):
             l = fl.plot(forplot.real, alpha=0.5, ax=ax, label='real')
@@ -283,7 +283,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
             residual = forplot['t2':(-max_shift,max_shift)]
             if ndshape(residual)['t2'] % 2 == 0:
                 residual = residual['t2',:-1]
-            fl.plot(abs(residual-residual['t2',::-1].runcopy(conj))*20, ax=ax, label='residual x 20')
+            fl.plot(abs(residual-residual['t2',::-1].runcopy(np.conj))*20, ax=ax, label='residual x 20',human_units=False)
             ax.legend()
         #{{{show test for best_shift
         forplot = s['shift':best_shift].C.mean_all_but(['shift','t2'])
@@ -306,16 +306,16 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         fl.next('cost functions')
         def rescale(forplot):
             retval = forplot.C
-            retval -= reval.data.min()
-            retval /= reval.data.max()
+            retval -= retval.data.min()
+            retval /= retval.data.max()
             return retval
         fl.plot(rescale(residual), label='hermitian test')
         fl.plot(rescale(sum_abs_real/sum_abs_imag),label=r'$\frac{\int |A| d\nu}{\int |D| d\nu}$')
         pythagoras = sqrt(rescale(sum_abs_real/sum_abs_imag)**2+rescale(residual)**2)
         fl.plot(pythagoras,label='pythagoras sum')
         absolute_best_shift = pythagoras.argmin('shift').item()
-        fl.plot(rescale(data_for_peak.rename('t2','shift').set_units('shift','s')),label='absolute value')
+        fl.plot(rescale(data_for_peak.rename('t2','shift').set_units('shift','s')),label='absolute value',human_units=False)
         for n in range(-1,5):
-            axvline(x=(absolute_best_shift+n*dt)/1e-3,color='k',alpha=0.1)
-        xlim(array(rel_shift)*max_shift/1e-3)
+            plt.axvline(x=(absolute_best_shift+n*dt)/1e-3,color='k',alpha=0.1)
+        plt.xlim(np.array(rel_shift)*max_shift/1e-3)
     return best_shift+peak_center    

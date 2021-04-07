@@ -24,8 +24,8 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 # }}}
 clock_correction=True
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210325_TEMPOL_10mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.24e3,0.2e3),(0,44e-3),False,True),
+        ('210316_TEMPOL_1mM_cap_probe_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.256e3,-0.017e3),(0,44e-3),False,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -44,37 +44,38 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
     #{{{phasing the aligned data
-    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
-    logger.info(strm("best shift is", best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('time domain after hermitian test')
-    fl.image(as_scan_nbr(s))
-    fl.next('frequency domain after hermitian test')
-    s.ft('t2')
-    fl.image(as_scan_nbr(s))
-    s.ift('t2')
-    if clock_correction:
-        #{{{ clock correction
-        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
-        s.ft('t2')
-        fl.next('before clock correction')
+    if nodename == 'signal':
+        best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+        logger.info(strm("best shift is", best_shift))
+        s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+        fl.next('time domain after hermitian test')
         fl.image(as_scan_nbr(s))
-        s_clock=s['ph1',0]['ph2',1].sum('t2')
-        s.ift(['ph1','ph2'])
-        min_index = abs(s_clock).argmin('vd',raw_index=True).item()
-        s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
-        s_clock['vd',:min_index+1] *=-1
-        s_clock.sum('vd').run(abs)
-        fl.next('clock correction')
-        fl.plot(s_clock,'.',alpha=0.7)
-        clock_corr = s_clock.argmax('clock_corr').item()
-        pyplot.axvline(x=clock_corr, alpha=0.5, color='r')
-        s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
-        fl.next('after auto-clock correction')
-        s.ft(['ph1','ph2'])
-        fl.image(s.C.setaxis('vd','#'))
+        fl.next('frequency domain after hermitian test')
+        s.ft('t2')
+        fl.image(as_scan_nbr(s))
         s.ift('t2')
-        #}}}
+        if clock_correction:
+            #{{{ clock correction
+            clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
+            s.ft('t2')
+            fl.next('before clock correction')
+            fl.image(as_scan_nbr(s))
+            s_clock=s['ph1',0]['ph2',1].sum('t2')
+            s.ift(['ph1','ph2'])
+            min_index = abs(s_clock).argmin('vd',raw_index=True).item()
+            s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+            s_clock['vd',:min_index+1] *=-1
+            s_clock.sum('vd').run(abs)
+            fl.next('clock correction')
+            fl.plot(s_clock,'.',alpha=0.7)
+            clock_corr = s_clock.argmax('clock_corr').item()
+            pyplot.axvline(x=clock_corr, alpha=0.5, color='r')
+            s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+            fl.next('after auto-clock correction')
+            s.ft(['ph1','ph2'])
+            fl.image(s.C.setaxis('vd','#'))
+            s.ift('t2')
+            #}}}
     ph0 = select_pathway(s['t2':0], signal_pathway)
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
@@ -94,7 +95,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     else:
         s.reorder(['ph1','vd','t2'])
     zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd', raw_index=True).item()
-    print("zero crossing at",zero_crossing)
+    logger.info(strm("zero crossing at",zero_crossing))
     s.ift(['ph1','ph2'])
     # {{{ so that the filter is in range, do a rough alignment
     frq_max = abs(s).argmax('t2')
@@ -105,7 +106,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.next(r'after rough align, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
     fl.basename='correlation subroutine -- before zero crossing:'
-    # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
+    #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
     logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
     if zero_crossing > 1:
         opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
@@ -138,7 +139,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ift('t2')
     fl.next('after correlation -- time domain')
     fl.image(as_scan_nbr(s))
-    s = s['t2':(0,None)]
+    s = s['t2':(0,t_range[-1])]
     s['t2',0] *= 0.5
     # visualize time domain after filtering and phasing
     fl.next('FID sliced -- time domain')
@@ -146,7 +147,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ft('t2')
     fl.next('FID sliced -- frequency domain')
     fl.image(as_scan_nbr(s))
-    #fl.show();quit()
     fl.next('Integrated data - recovery curve')
     s_signal = select_pathway(s,signal_pathway)
     # {{{ here we use the inactive coherence pathways to determine the error
@@ -162,6 +162,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
     fl.plot(s_signal,'o',label='real')
     fl.plot(s_signal.imag,'o',label='imaginary')
+    #fl.show();quit()
     fl.next('Spectrum - freq domain')
     s = select_pathway(s,signal_pathway)
     fl.plot(s)
@@ -219,23 +220,17 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
                             plt.annotate('%d'%j, (np.log10(r_norm[j,0]),np.log10(x_norm[j,0])),
                                     ha='left',va='bottom',rotation=45)
             d_2d = s*nddata(r_[1,1,1],r'\Omega')
-        #fl.show()
-        #offset = s.get_prop('proc')['OFFSET']
-        this_l = 0.004#pick number in l curve right before it curves up
+        offset = s.get_prop('proc')['OFFSET']
+        this_l = 0.032#pick number in l curve right before it curves up
         #o1 = 297.01 #o1 for free D2O
-        #o1 = s.get_prop('acq')['O1']
-        #sfo1 = s.get_prop('acq')['BF1']
-        #s.setaxis('t2',lambda x:
-        #        x+o1)
-        #s.setaxis('t2',lambda x:
-        #        x/(sfo1)).set_units('t2','ppm')
-        #s.set_prop('x_inverted',True)
-        if IR:
-            soln = s.real.C.nnls('vd',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
-        else:
-            #here I hard code w based off the fit
-            soln = s.real.C.nnls('vd',T1,lambda x,y: 
-                    (1.0-(2.*(np.exp(-1909.)**(y**-1)))*np.exp(-y/x)),l=this_l)
+        o1 = s.get_prop('acq')['O1']
+        sfo1 = s.get_prop('acq')['BF1']
+        s.setaxis('t2',lambda x:
+                x+o1)
+        s.setaxis('t2',lambda x:
+                x/(sfo1)).set_units('t2','ppm')
+        s.set_prop('x_inverted',True)
+        soln = s.real.C.nnls('vd',T1, lambda x,y: 1.0-2.*np.exp(-x/y),l=this_l)
         soln.reorder('t2',first=False)
         soln.rename('T1','log(T1)')
         soln.setaxis('log(T1)',np.log10(T1.data))
