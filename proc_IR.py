@@ -151,12 +151,21 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s_signal = select_pathway(s,signal_pathway)
     # {{{ here we use the inactive coherence pathways to determine the error
     #     associated with the data
-    s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
-    logger.info(strm(ndshape(s_forerror)))
+    #{{{adding in new integration for error
+    t = s.getaxis('t2')
+    dt = t[1]-t[0]
+    error_slice = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
+    logger.info(strm("THIS IS SHAPE OF ERROR SLICE",ndshape(error_slice)))
+    n_indirect = error_slice.data.size / ndshape(error_slice)['t2']
+    print("VALUE OF SUM OF ABS",sum(abs(error_slice.data)))
+    myerror = (dt**2)*sum(abs(error_slice.data)**2)
+    myerror = sqrt(error_slice/n_indirect)
+    #}}}
     frq_slice = integrate_limits(s_signal)
     s_signal = s_signal['t2':frq_slice]
-    s_forerror = s_forerror['t2':frq_slice]
-    s_forerror.run(lambda x:abs(x)**2).mean_all_but(['vd','t2']).integrate('t2').run(sqrt)
+    assert s_signal.data.size == myerror.data.size/n_indirect
+    print("IT WORKED!!!")
+    quit()
     s_signal.integrate('t2').set_error(s_forerror.data)
     # }}}
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
