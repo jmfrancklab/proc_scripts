@@ -6,9 +6,11 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval    
-def integral_w_errors(s,sig_path,error_path, indirect='vd'):
-     frq_slice = integrate_limits(s)
-     s = s['t2':frq_slice]
+def integral_w_errors(self,sig_path,error_path, indirect='vd'):
+     frq_slice = integrate_limits(self)
+     s = self['t2':frq_slice]
+     t = self.getaxis('t2')
+     dt = t[1]-t[0]
      errors = []
      all_labels = set(self.dimlabels)
      all_labels -= set([indirect])
@@ -21,7 +23,8 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd'):
      for j in range(len(error_path)):
          s_forerror = select_pathway(s,error_path[j])
          s_forerror.run(lambda x: abs(x)**2).mean_all_but([indirect,'t2']).integrate('t2')
-         collected_pathways['pathways',j] = s_forerror
+         s_forerror *= dt
+         collected_variance['pathways',j] = s_forerror
      collected_variance.mean('pathways')
      s = select_pathway(s,sig_path)
      return s.integrate('t2').set_error(collected_variance.data)
