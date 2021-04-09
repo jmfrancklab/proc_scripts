@@ -1,12 +1,12 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import fl_mod, center_echo, hermitian_function_test, postproc_dict
+from proc_scripts import fl_mod, center_echo, hermitian_function_test, postproc_dict, DCCT
 from sympy import symbols
 import sympy as sp
 from proc_scripts.fitting import decay
 import matplotlib.pyplot as plt
 logger = init_logging("debug")
-fl = fl_mod()
+fl = figlist_var()
 plt.rcParams['figure.figsize'] = [8.0, 6.0]
 rcParams["savefig.transparent"] = True
 # {{{ input parameters
@@ -22,15 +22,17 @@ read_h5 = False # reads the completed hdf5 file
 # }}}
 for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_name, h5_dir in [
         #('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
-        #('w8_201008','test_equip',3,False,0,'T1CPMG_201008_w8.h5','process_data_AG')
+        #('w8_201008','test_equip',3,False,False,(None,None),'T1CPMG_201008_w8.h5','process_data_AG')
         #('free4AT_201008','test_equip',6,False,0,'T1CPMG_201008_FreeAT.h5','process_data_AG'),
-        ('free4AT100mM_201104','test_equip',3,True,None,(-2e3,2e3),
-            'T1CPMG_201104_Free4AT100mM.h5','process_data_AG'),
-        #('free4AT_201014','test_equip',7,True,0,'T1CPMG_201014_FreeAT_1.h5','process_data_AG')
-        #('w8_200731','test_equip',5,False,0,'T1CPMG_200731.h5','process_data_AG')
+        #('free4AT100mM_201104','test_equip',3,True,None,(-2e3,2e3),
+        #    'T1CPMG_201104_Free4AT100mM.h5','process_data_AG'),
+        #('free4AT_201014','test_equip',7,True,None,(None,None),'T1CPMG_201014_FreeAT_1.h5','process_data_AG')
+        #('w8_200731','test_equip',5,False,0,(None,None),'T1CPMG_200731.h5','process_data_AG')
         #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
         #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
+        ('w3_201111','test_equip',3,False,False,(-76,76),'w3_T1CPMG','process_data_AG')
         ]:
+
     # If file is not processed yet, write_h5 should be True above in the input
     # parameters
     # If file is already written one can declare write_h5 as False to save time
@@ -38,16 +40,26 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         #before running go into the preprocessing in load_data as some parameters are hardcoded. Double check these
         s = find_file(searchstr,exp_type=exp_type,
                 expno=nodename,lookup=postproc_dict, fl=fl)
+        fl.show();quit()
         fl.next('selected coherence')
         s = s['ph2',-1]['ph1',0]
-        if clock_correction is not None:
+        if clock_correction:
             s *= np.exp(-1j*s.fromaxis('indirect')*clock_correction)
         fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
         # this section is hard coded for flat echoes. I print the shape of s
         # to get the length of t2 and ensure it is an odd number. I then take 
         # the middle index and set this to 0. We will find a way to not have
         # this hard coded but for now this is what we have. 9/1/20
+        #s=s['t2':freq_slice]
         s.ift('t2')
+        if test_for_flat_echo:
+            #{{{Used to test if echo is flat or not
+            s = s['tE',20]['indirect',1]
+            fl.next('abs vs imag',legend=True)
+            fl.plot(abs(s),'-',label='abs')
+            fl.plot(s.imag,'--',label='imag')
+            fl.show();quit() # this flag is used to ask for a partial test, and so this is the *only* valid way to use quit
+        
         if flat_echo:
            s['t2',16]=0
            avg_center=hermitian_function_test(s)
@@ -60,13 +72,6 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
             logger.info(centers)
             avg_center = sum(centers)/len(centers)
         s = center_echo(s, avg_center, fl=fl)
-        if test_for_flat_echo:
-            #{{{Used to test if echo is flat or not
-            s = s['tE',20]['indirect',1]
-            fl.next('abs vs imag',legend=True)
-            fl.plot(abs(s),'-',label='abs')
-            fl.plot(s.imag,'--',label='imag')
-            fl.show();quit() # this flag is used to ask for a partial test, and so this is the *only* valid way to use quit
             #}}}
         fl.next('s centered')
         fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
@@ -81,6 +86,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, h5_n
         fl.next('summed along t2')
         fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
         s *= -1
+        fl.show();quit()
         #}}}
         #{{{CPMG decay curve
         CPMG = s['indirect',-1]

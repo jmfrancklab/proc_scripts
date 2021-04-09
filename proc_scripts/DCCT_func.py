@@ -4,23 +4,34 @@ import matplotlib.lines as lines
 from matplotlib.patches import FancyArrow, FancyArrowPatch
 from pyspecdata.plot_funcs.image import imagehsv
 
-label_spacing_multiplier = 50
-allow_for_text_default = 10
-allow_for_ticks_default = 70
-text_height = 20
 
-def DCCT(this_nddata,this_fig_obj,x=[],y=[],custom_scaling=False,**kwargs):
+def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
+        grid_bottom = 0.0,
+        bottom_pad = 0.15,
+        grid_top = 1.0,
+        top_pad = 0.3,
+        total_spacing = 0.1,
+        label_spacing_multiplier = 50,
+        allow_for_text_default = 10,
+        allow_for_ticks_default = 70,
+        text_height = 20,
+        LHS_pad = 0.01,
+        RHS_pad = 0.05,
+        shareaxis = False,
+        **kwargs):
+    """DCCT plot
+
+    Parameters
+    ==========
+    shareaxis: boolean
+        subplots scale together, but currently, this means there must be tick labels on both top and bottom
+    """
     this_nddata = this_nddata.C
     my_data = this_nddata.C
     my_data.human_units()
     print("DIMLABELS ARE",my_data.dimlabels)
-    grid_bottom = 0.0
-    bottom_pad = 0.15
     grid_bottom += bottom_pad
-    grid_top = 1.0
-    top_pad = 0.3
     grid_top -= top_pad
-    total_spacing = 0.2
     a_shape = ndshape(this_nddata)
     num_dims = len(a_shape.dimlabels[:-2])
     divisions = []
@@ -41,39 +52,49 @@ def DCCT(this_nddata,this_fig_obj,x=[],y=[],custom_scaling=False,**kwargs):
     majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=4, steps=[1,2,5,10])
     minorLocator = lambda: mticker.AutoMinorLocator(n=5)
 
-    LHS_pad = 0.01
-    RHS_pad = 0.05
-    LHS_labels = 0.13*num_dims
+    LHS_labels,_ = fig.transFigure.inverted().transform(
+            (label_spacing_multiplier*num_dims + allow_for_ticks_default, 0))
     width = 1.-(LHS_pad+RHS_pad+LHS_labels)
 
     for j,b in enumerate(axes_bottom):
-        ax_list.append(axes([LHS_labels+LHS_pad,b,width,axes_height])) # lbwh
-        if j == 0:
-            print("OK")
-            #AG: I ran the code with these 3 commented out and it still looks good
-            #are these necessary or can we delete them?
-            ax_list[-1].xaxis.set_major_locator(majorLocator())
-            ax_list[-1].xaxis.set_minor_locator(minorLocator())
-            ax_list[-1].set_ylabel(None)
-        elif (j == len(axes_bottom)-1):
-            ax_list[-1].xaxis.set_major_locator(majorLocator())
-            ax_list[-1].set_xlabel(None)
-            #for the minor ticks, use no labels; default NullFormatter
-            ax_list[-1].xaxis.set_minor_locator(minorLocator())
-            ax_list[-1].xaxis.tick_top()
-            labels = [item.get_text() for item in ax_list[-1].get_xticklabels()]
-            empty_string_labels = ['']*len(labels)
-            ax_list[-1].set_xticklabels(empty_string_labels)
-            ax_list[-1].set_xlabel(None)
+        if j !=0 and shareaxis:
+            ax_list.append(axes([LHS_labels+LHS_pad,b,width,axes_height],
+                sharex=ax_list[0],
+                sharey=ax_list[0],
+                )) # lbwh
         else:
-            ax_list[-1].xaxis.set_ticks([])
-            ax_list[-1].get_xaxis().set_visible(False)
-            ax_list[-1].set_xlabel(None)
-        ax_list[-1].set_ylabel(a_shape.dimlabels[-2])
-        ax_list[-1].yaxis.set_minor_locator(minorLocator())
-        ax_list[-1].yaxis.set_ticks_position('both')
-        for tick in ax_list[-1].get_yticklabels():
+            ax_list.append(axes([LHS_labels+LHS_pad,b,width,axes_height])) # lbwh
+    # {{{ adjust tick settings -- AFTER extents are set
+    # {{{ bottom subplot
+    ax_list[0].xaxis.set_major_locator(majorLocator())
+    ax_list[0].xaxis.set_minor_locator(minorLocator())
+    ax_list[0].set_ylabel(None)
+    ax_list[0].set_xlabel(my_data.unitify_axis(my_data.dimlabels[-1]),
+                labelpad=20)
+    # }}}
+    # {{{ intermediate subplots
+    for j in range(1,len(axes_bottom)-1):
+        ax_list[j].xaxis.set_ticks([])
+        ax_list[j].get_xaxis().set_visible(False)
+        ax_list[j].set_xlabel(None)
+    # }}}
+    # {{{ top subplot
+    ax_list[-1].xaxis.set_major_locator(majorLocator())
+    #for the minor ticks, use no labels; default NullFormatter
+    ax_list[-1].xaxis.set_minor_locator(minorLocator())
+    ax_list[-1].xaxis.tick_top()
+    if not shareaxis:
+        ax_list[-1].set_xticklabels([])
+    # }}}
+    # {{{ all subplots
+    for j in range(0,len(axes_bottom)):
+        ax_list[j].set_ylabel(a_shape.dimlabels[-2])
+        ax_list[j].yaxis.set_minor_locator(minorLocator())
+        ax_list[j].yaxis.set_ticks_position('both')
+        for tick in ax_list[j].get_yticklabels():
             tick.set_rotation(0)
+    # }}}
+    # }}}
 
     if len(a_shape.dimlabels) > 3:
         A = this_nddata.smoosh(a_shape.dimlabels[:-2],'smooshed',noaxis=True)
@@ -154,14 +175,6 @@ def DCCT(this_nddata,this_fig_obj,x=[],y=[],custom_scaling=False,**kwargs):
                 0,y_space-arrow_width_px])
             a = FancyArrow(x_arrow-arrow_width/2,y_arrow,dx,dy,arrow_width, alpha=0.1, color='k')
             fig.add_artist(a)
-            labels = [item.get_text() for item in ax1.get_xticklabels()]
-            empty_string_labels = ['']*len(labels)
-            ax1.set_xticklabels(empty_string_labels)
-            ax1.set_xlabel(None)
-            ax1.tick_params(bottom=False)
-            ax1.set_ylabel(None)
-            ax1.set_yticklabels(empty_string_labels)
-            ax1.tick_params(left=False)
 
     imagehsvkwargs = {}
     for k,v in list(kwargs.items()):
@@ -210,8 +223,6 @@ def DCCT(this_nddata,this_fig_obj,x=[],y=[],custom_scaling=False,**kwargs):
         sca(ax_list[j])
         imshow(K,extent=myext,**kwargs)
         ax_list[j].set_ylabel(None)
-        if not j == 0:
-            ax_list[j].set_xlabel(None)
     # to drop into ax_list, just do
     # A.smoosh(a_shape.dimlabels, 'smooshed', noaxis=True)
     # in ax_list[0] put A['smooshed',0], etc
@@ -239,10 +250,8 @@ def DCCT(this_nddata,this_fig_obj,x=[],y=[],custom_scaling=False,**kwargs):
                 decorate_axes(idx_slice,new_remaining_dim,depth)
     print("call recursive function")
     decorate_axes(idx,remaining_dim,depth)
-    place_labels(axes([LHS_labels+LHS_pad,axes_bottom[0],width,0]),
+    place_labels(ax_list[0],
             "%s"%(a_shape.dimlabels[-2]), label_placed,this_label_num=depth-1, 
             check_for_label_num = False, allow_for_text = -50)
-    axes([LHS_labels+LHS_pad,axes_bottom[0],
-        width,0]).set_xlabel(my_data.unitify_axis(my_data.dimlabels[-1]),
-                labelpad=20)
-    return 
+    return LHS_pad+LHS_labels,axes_bottom[-1]+axes_height,width,top_pad-RHS_pad
+

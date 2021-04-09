@@ -1,23 +1,26 @@
 from pylab import *
 from pyspecdata import *
 from scipy.optimize import minimize
-from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod
+from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod,DCCT
 from sympy import symbols
 from numpy import *
-fl = fl_mod()
+fl = figlist_var()#fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
 max_kHz = 200
-for searchstr,exp_type,nodename,postproc,freq_slice in [
+for searchstr,exp_type,nodename,postproc,freq_slice,t_slice in [
     #['201211_Ni_sol_probe_nutation_1','nutation','nutation',
     #    'spincore_nutation_v1',(-5000,13000)],
     #['210302_210302_Ni_cap_probe_nutation_1','nutation','nutation',
     #    'spincore_nutation_v1',(-4e3,1.2e4)]
-    ['210120_Ni_sol_probe_nutation_amp_3','nutation','nutation',
-        'spincore_nutation_v2',(-15.2e3,11.01e3)]
+    ['210409_Ni_sol_probe_nutation_1','nutation','nutation',
+        'spincore_nutation_v3',(16e3,30e3),(0.015,0.025)]
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
             lookup=postproc_dict,fl=fl)
+    s = s['t2':freq_slice]
+    fl.next('data')
+    fl.image(s)
     if 'amp' in s.dimlabels:
         plen = s.get_prop('acq_params')['p90_us']*1e-6
         logger.info(strm('pulse length is:',plen))
@@ -62,14 +65,15 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     fl.image(s)
     s.ift('t2')
     #{{{ selecting coherence and convolving
-    s = s['ph2',0]['ph1',1]
+    #s = s['ph2',0]['ph1',1]
     fl.next('select $\\Delta p$')
     fl.image(s)
     #}}}
     #{{{ slicing
-    s = s['t2':freq_slice]
-    fl.next('sliced')
-    fl.image(s)
+    #fl.show();quit()
+    #s = s['t2':freq_slice]
+    #fl.next('sliced')
+    #fl.image(s)
     #}}}
     if 'amp' in s.dimlabels:
         s.setaxis('amp',lambda x:x*plen)
@@ -87,7 +91,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     fl.image(s)
     fl.next('phased')
     fl.image(s)
-    fl.real_imag('phased data',s)
+    #fl.real_imag('phased data',s)
     #}}}
     fl.next('FT')
     title('FT to get $\gamma B_1/a$')
@@ -97,5 +101,6 @@ for searchstr,exp_type,nodename,postproc,freq_slice in [
     title('FT to get $\gamma B_1/a$')
     fl.image(abs(s[ind_dim:(-1e3*max_kHz,1e3*max_kHz)]))
     gridandtick(gca(),gridcolor=[1,1,1])
+    DCCT(s,figure())
 fl.show()
 

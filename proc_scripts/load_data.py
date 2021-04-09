@@ -17,6 +17,9 @@ from sympy import symbols
 import logging
 import numpy as np
 import logging
+from pylab import *
+from .DCCT_func import DCCT
+
 #to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s,fl=None):
     logging.info(strm("this is the 90 time"))
@@ -171,6 +174,8 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     # twice_tau should be the period from one 180 to another
     # }}}
     s.set_units('t2','us')
+    if fl is not None:
+        DCCT(s,fl.next('Raw Data'))
     s.chunk('t2',['tE','t2'],[nEchoes,-1])
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
     s.ft('t2', shift=True).ft(['ph1','ph2'])
@@ -287,14 +292,14 @@ def proc_nutation(s,fl=None):
     orig_t = s.getaxis('t')
     s.set_units('p_90','s')
     s.reorder('t',first=True)
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.chunk('t',['ph2','ph1','t2'],[2,2,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.setaxis('ph1',r_[0.,2.]/4)
     s.reorder('t2',first=False)
     s.ft(['ph2','ph1'])
     if fl is not None:
         fl.next('after phase cycle FT')
-        fl.image(s)
+        fl.image(s['ph1',1]['ph2',0].C.human_units())
     s.ft('t2',shift=True)
     if fl is not None:
         fl.next('freq domain')
@@ -314,6 +319,23 @@ def proc_nutation_amp(s,fl=None):
     if 'p_90' in s.dimlabels:
         s.set_units('p_90','s')
     s.ft(['ph1','ph2'])
+    return s
+
+def proc_nutation_chunked(s,fl=None):
+    logging.info("loading pre-processing for nutation")
+    s.reorder(['ph1','ph2'])
+    s.set_units('t2','s')
+    s.set_units('p_90','s')
+    #s.reorder('t2',first=True)
+    s.ft(['ph1','ph2'])
+    s.reorder(['ph1','ph2','p_90'])
+    if fl is not None:
+        fl.next('Raw Data - Time Domain')
+        fl.image(s.C.human_units())
+    s.ft('t2',shift=False)
+    if fl is not None:
+        fl.next('Raw Data- Frequency Domain')
+        fl.image(s)
     return s
 
 def proc_var_tau(s,fl=None):
@@ -448,7 +470,8 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
         'spincore_IR_v1':proc_spincore_IR,
         'spincore_nutation_v1':proc_nutation,
-        'spincore_nutation_v2':proc_nutation_amp,        
+        'spincore_nutation_v2':proc_nutation_amp,
+        'spincore_nutation_v3':proc_nutation_chunked,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
         'spincore_var_tau_v1':proc_var_tau,
         'square_wave_capture_v1':proc_capture,
@@ -456,4 +479,3 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ESR_linewidth':proc_ESR,
 
 }
-
