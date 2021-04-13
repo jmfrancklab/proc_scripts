@@ -46,13 +46,15 @@ def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
      # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
      # where N₂ is the number of points in the indirect dimension
      s_forerror = select_pathway(s,error_path[j])
+     if j==0: N2 = ndshape(s_forerror)[direct]
      # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
      # mean sums all elements (there are N₁N₂ elements)
-     N2 = ndshape(s_forerror)[direct]
      s_forerror.run(lambda x: abs(x)**2).mean_all_but([indirect,direct]).integrate(direct)
-     print("the variance seems to be",s_forerror/(df*N2))
      s_forerror *= df # Δf
      collected_variance['pathways',j] = s_forerror
     collected_variance.mean('pathways') # mean the variance above across all pathways
+    # {{{ variance calculation for debug
+    print("the variance seems to be",collected_variance/(df*N2))
+    # }}}
     s = select_pathway(s,sig_path)
     return s.integrate(direct).set_error(sqrt(collected_variance.data))
