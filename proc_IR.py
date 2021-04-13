@@ -17,6 +17,7 @@ def select_pathway(s,pathway):
         retval = retval[k,v]
     return retval
 signal_pathway = {'ph1':0,'ph2':1}
+excluded_pathways = [(0,0),(0,3)] # exclude ph1 ph2, since it usually has a receiver glitch, 0,-1 is FID-like
 coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             should ideally be pathways that do NOT include any known
         #             artifacts
@@ -149,12 +150,13 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.image(as_scan_nbr(s))
     fl.next('Integrated data - recovery curve')
     # }}}
-    sig_path = signal_pathway
-    error_path = [{'ph1':0 , 'ph2':0},{'ph1':1,'ph2':0},
-            {'ph1':1,'ph2':1},{'ph1':1,'ph2':2},
-            {'ph1':0,'ph2':2},{'ph1':1,'ph2':3},
-            {'ph1':0,'ph2':3}]
-    s_signal = integral_w_errors(s,sig_path,error_path)
+    # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
+            - set(excluded_pathways)
+            - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
+    error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
+    # }}}
+    s_signal = integral_w_errors(s,signal_pathway,error_path)
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
     fl.plot(s_signal,'o',label='real')
     fl.plot(s_signal.imag,'o',label='imaginary')
