@@ -57,6 +57,7 @@ for bounds in [(0,200), # seem reasonable to me
     manual_bounds.integrate('t2')
     # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
     propagated_variance = N * df**2 * fake_data_noise_std**2
+    print("manually calculated integral error is",sqrt(propagated_variance))
     manual_bounds.set_error(sqrt(propagated_variance))
     fl.plot(manual_bounds, '.', capsize=6,
             label=r'bounds $%4g\rightarrow%4g$'%bounds,

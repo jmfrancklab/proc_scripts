@@ -51,10 +51,12 @@ def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
      # mean sums all elements (there are N₁N₂ elements)
      s_forerror.run(lambda x: abs(x)**2).mean_all_but([indirect,direct]).integrate(direct)
      s_forerror *= df # Δf
+     s_forerror /= sqrt(2)
      collected_variance['pathways',j] = s_forerror
     collected_variance.mean('pathways') # mean the variance above across all pathways
     # {{{ variance calculation for debug
-    print("the variance seems to be",collected_variance/(df*N2))
+    print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
+    print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s,sig_path)
     return s.integrate(direct).set_error(sqrt(collected_variance.data))
