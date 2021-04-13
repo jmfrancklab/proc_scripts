@@ -91,6 +91,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice,t_slice in [
     fl.image(s)
     fl.next('phased')
     fl.image(s)
+    fl.show();quit()
     #fl.real_imag('phased data',s)
     #}}}
     fl.next('FT')
