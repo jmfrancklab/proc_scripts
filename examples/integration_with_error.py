@@ -26,6 +26,8 @@ data /= 0.5*0.25 # the dt in the integral for both dims
 data /= sqrt(ndshape(data)['ph1']*ndshape(data)['ph2']) # normalization
 # }}}
 print("check the std after FT",std(data['ph1',0]['ph2',0].data.real))
+# the sqrt on the next line accounts for the var(real)+var(imag)
+print("check the std after FT -- manually",data['ph1',0]['ph2',0].C.run(lambda x: abs(x)**2).mean_all_but('t2').mean('t2').run(sqrt)/sqrt(2))
 data.ft('t2', shift=True)
 fl.next('before integration')
 fl.image(data, alpha=0.5)
