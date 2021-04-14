@@ -49,14 +49,15 @@ for bounds in [(0,200), # seem reasonable to me
     (-95.90625,295.7109375) # what's currently picked by the automatic routine
     ]:
     manual_bounds = data['ph1',0]['ph2',1]['t2':bounds]
-    std_off_pathway = data['ph1',0]['ph2',0]['t2':bounds].C.run(lambda x: abs(x)**2).mean_all_but('t2').mean('t2').run(sqrt)/sqrt(2)
+    std_off_pathway = data['ph1',0]['ph2',0]['t2':bounds].C.run(lambda x: abs(x)**2).mean_all_but('t2').mean('t2').run(sqrt)
     print("here is the std calculated from an off pathway",std_off_pathway,"does it match",fake_data_noise_std,"?")
     N = ndshape(manual_bounds)['t2']
     df = diff(data.getaxis('t2')[r_[0,1]]).item()
     print(ndshape(manual_bounds),"df is",df,"N is",N,"N*df is",N*df)
     manual_bounds.integrate('t2')
     # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
-    propagated_variance = N * df**2 * fake_data_noise_std**2
+    # the 2 has to do w/ real/imag/abs -- see check_integration_error
+    propagated_variance = N * df**2 * fake_data_noise_std**2 * 2
     print("manually calculated integral error is",sqrt(propagated_variance))
     manual_bounds.set_error(sqrt(propagated_variance))
     fl.plot(manual_bounds, '.', capsize=6,
