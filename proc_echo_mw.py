@@ -76,7 +76,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.figure(figsize=(4,4))
     fl.plot(1-(enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
     fl.plot(1-(enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
-    plt.title('150 uM TEMPOL')
+    plt.title('150 μM TEMPOL')
     plt.ylabel('1-Enhancement')
     plt.show()
     fl.show();quit()
