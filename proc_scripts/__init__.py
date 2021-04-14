@@ -9,6 +9,7 @@ from .fitting import recovery, decay
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
 from .DCCT_func import DCCT
+from .integral_w_error import integral_w_errors
 __all__ = ['calc_baseline',
         'center_echo',
         'correl_align',
@@ -19,6 +20,7 @@ __all__ = ['calc_baseline',
         'expand_limits',
         'fl_mod',
         'hermitian_function_test',
+        'integral_w_errors',
         'integrate_limits',
         'ph1_real_Abs',
         'power2dBm',

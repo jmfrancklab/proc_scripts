@@ -1,26 +1,30 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, integrate_limits, correl_align, ph1_real_Abs, postproc_dict,DCCT
+from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, correl_align, ph1_real_Abs, postproc_dict,DCCT,integral_w_errors
 from sympy import symbols, latex, Symbol
 from matplotlib import *
 from scipy.signal import tukey
 import matplotlib.pyplot as plt
 import numpy as np
 from sympy import exp as s_exp
-init_logging('debug')
-fl = figlist_var()
-t2 = symbols('t2')
-# {{{ input parameters
 def select_pathway(s,pathway):
     retval = s
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval
+init_logging('debug')
+fl = figlist_var()
+t2 = symbols('t2')
+# {{{ input parameters
+this_l = 0.032 # pick number in l curve right before it curves up
+l = sqrt(np.logspace(-8.0,0.5,35)) # play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
 signal_pathway = {'ph1':0,'ph2':1}
+excluded_pathways = [(0,0),(0,3)] # exclude ph1 ph2, since it usually has a receiver glitch, 0,-1 is FID-like
 coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         #             should ideally be pathways that do NOT include any known
         #             artifacts
         'ph2':r_[0,2,3]}
+save_npz = False
 # }}}
 clock_correction=True
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
@@ -43,7 +47,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.image(as_scan_nbr(s))
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
-    #{{{phasing the aligned data
+    #{{{ phasing the aligned data
     if nodename == 'signal':
         best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
         logger.info(strm("best shift is", best_shift))
@@ -106,7 +110,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.next(r'after rough align, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
     fl.basename='correlation subroutine -- before zero crossing:'
-    #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
+    # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
     logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
     if zero_crossing > 1:
         opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
@@ -148,35 +152,27 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.next('FID sliced -- frequency domain')
     fl.image(as_scan_nbr(s))
     fl.next('Integrated data - recovery curve')
-    s_signal = select_pathway(s,signal_pathway)
-    # {{{ here we use the inactive coherence pathways to determine the error
-    #     associated with the data
-    s_forerror = s['ph2',coh_err['ph2']]['ph1',coh_err['ph1']]
-    logger.info(strm(ndshape(s_forerror)))
-    frq_slice = integrate_limits(s_signal)
-    s_signal = s_signal['t2':frq_slice]
-    s_forerror = s_forerror['t2':frq_slice]
-    s_forerror.run(lambda x:abs(x)**2).mean_all_but(['vd','t2']).integrate('t2').run(sqrt)
-    s_signal.integrate('t2').set_error(s_forerror.data)
     # }}}
+    # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
+            - set(excluded_pathways)
+            - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
+    error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
+    # }}}
+    s_signal = integral_w_errors(s,signal_pathway,error_path)
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
     fl.plot(s_signal,'o',label='real')
     fl.plot(s_signal.imag,'o',label='imaginary')
-    #fl.show();quit()
     fl.next('Spectrum - freq domain')
     s = select_pathway(s,signal_pathway)
     fl.plot(s)
     x = s_signal.fromaxis('vd')
     f = fitdata(s_signal)
-    error = fitdata(s_forerror)
     M0,Mi,R1,vd,W = symbols("M_0 M_inf R_1 vd W", real=True)
     if IR:
-        error.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
         f.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
     else:
-        error.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
         f.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
-    error.fit()
     f.fit()
     logger.info(strm("output:",f.output()))
     logger.info(strm("latex:",f.latex()))
@@ -185,7 +181,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.plot(s_signal,'o', label='actual data')
     fl.plot(s_signal.imag,'o',label='actual imaginary')
     fl.plot(f.eval(100),label='fit')
-    fl.plot(error.eval(100),label='fit error')
     plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='large',
             horizontalalignment='center',color='k')
     ax = plt.gca()
@@ -193,7 +188,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.show()
     if ILT:
         T1 = nddata(np.logspace(-3,3,150),'T1')
-        l = sqrt(np.logspace(-8.0,0.5,35)) #play around with the first two numbers to get good l curve,number in middle is how high the points start(at 5 it starts in hundreds.)
         plot_Lcurve = False
         if plot_Lcurve:
             def vec_lcurve(l):
@@ -221,8 +215,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
                                     ha='left',va='bottom',rotation=45)
             d_2d = s*nddata(r_[1,1,1],r'\Omega')
         offset = s.get_prop('proc')['OFFSET']
-        this_l = 0.032#pick number in l curve right before it curves up
-        #o1 = 297.01 #o1 for free D2O
         o1 = s.get_prop('acq')['O1']
         sfo1 = s.get_prop('acq')['BF1']
         s.setaxis('t2',lambda x:
@@ -235,12 +227,13 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
         soln.rename('T1','log(T1)')
         soln.setaxis('log(T1)',np.log10(T1.data))
         fl.next('w=3')
-        fl.image(soln)#.C.setaxis('t2','#').set_units('t2','ppm'))
+        fl.image(soln)
         logger.info(strm("SAVING FILE"))
-        #np.savez(thisfile+'_'+str(nodename)+'_ILT_inv',
-        #        data=soln.data,
-        #        logT1=soln.getaxis('log(T1)'),
-        #        t2=soln.getaxis('t2'))               
+        if save_npz:
+            np.savez(thisfile+'_'+str(nodename)+'_ILT_inv',
+                    data=soln.data,
+                    logT1=soln.getaxis('log(T1)'),
+                    t2=soln.getaxis('t2'))               
         logger.info(strm("FILE SAVED"))
         fl.show()
 
