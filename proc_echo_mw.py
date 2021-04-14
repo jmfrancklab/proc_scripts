@@ -23,8 +23,8 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210309_TEMPOL150uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-500,100),(None,0.03)]
+        ["210414_TEMPOL6mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-400,400),(None,0.03)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -74,10 +74,10 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
     plt.figure(figsize=(4,4))
-    fl.plot(1-(enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
-    fl.plot(1-(enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
+    fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
+    fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
     plt.title('150 μM TEMPOL')
-    plt.ylabel('1-Enhancement')
+    plt.ylabel('Enhancement')
     plt.show()
     fl.show();quit()
     T1p = nddata(r_[0.31,0.28,0.29,0.30,0.32,0.33,0.35],[-1],

@@ -28,7 +28,7 @@ save_npz = False
 # }}}
 clock_correction=True
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210414_6mM_TEMPOL_cap_probe_IR_0dBm','inv_rec','signal','spincore_IR_v1',
+        ('210414_6mM_TEMPOL_cap_probe_IR_32dBm_1','inv_rec','signal','spincore_IR_v1',
             (-0.051e3,0.061e3),(0,44e-3),False,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
