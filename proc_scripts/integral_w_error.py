@@ -28,7 +28,7 @@ def integral_w_errors(self,sig_path,error_path, bounds = (0,200), indirect='vd',
                 data with error associated with coherence pathways
                 not included in the signal pathway
     """
-    frq_slice = integrate_limits(self,convwidth=50)
+    frq_slice = integrate_limits(self,convwidth=10)
     logging.debug(strm('frq_slice is',frq_slice))
     s = self[direct:bounds]
     f = self.getaxis(direct)
