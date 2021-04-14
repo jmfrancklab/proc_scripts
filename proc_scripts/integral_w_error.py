@@ -30,7 +30,7 @@ def integral_w_errors(self,sig_path,error_path, bounds = (0,200), indirect='vd',
     """
     frq_slice = integrate_limits(self,convwidth=10)
     logging.debug(strm('frq_slice is',frq_slice))
-    s = self[direct:bounds]
+    s = self[direct:frq_slice]
     f = self.getaxis(direct)
     df = f[1]-f[0]
     all_labels = set(self.dimlabels)
