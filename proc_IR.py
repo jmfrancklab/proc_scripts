@@ -28,8 +28,8 @@ save_npz = False
 # }}}
 clock_correction=True
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210316_TEMPOL_1mM_cap_probe_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.256e3,-0.017e3),(0,44e-3),False,False),
+        ('210414_6mM_TEMPOL_cap_probe_IR_0dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.051e3,0.061e3),(0,44e-3),False,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -38,6 +38,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     def as_scan_nbr(d):
         return d.C.setaxis('vd','#').set_units('vd','scan #')
     #}}}
+    #fl.show();quit()
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
@@ -143,6 +144,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ift('t2')
     fl.next('after correlation -- time domain')
     fl.image(as_scan_nbr(s))
+    #fl.show();quit()
     s = s['t2':(0,t_range[-1])]
     s['t2',0] *= 0.5
     # visualize time domain after filtering and phasing
@@ -151,6 +153,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ft('t2')
     fl.next('FID sliced -- frequency domain')
     fl.image(as_scan_nbr(s))
+    #s *= -1    
     fl.next('Integrated data - recovery curve')
     # }}}
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
