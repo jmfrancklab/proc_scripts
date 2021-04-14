@@ -60,7 +60,7 @@ fl.next("raw data")
 fl.image(data, alpha=0.5)
 fl.next("real part of raw data")
 fl.image(data.real, alpha=0.5)
-fl.next("manual limits", legend=True)
+fl.next("compare manual vs. automatic", legend=True)
 # here I plot w/ manually chosen integration bounds:
 for bounds in [
     (60, 140),  # seem reasonable to me
