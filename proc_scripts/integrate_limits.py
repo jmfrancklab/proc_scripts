@@ -6,7 +6,6 @@ import logging
 
 def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     signal_sign = s.C.sum(axis).run(np.real).run(np.sign)
-    print(ndshape(s))
     temp = s.real * signal_sign
     fl.push_marker()
     if fl is not None:
