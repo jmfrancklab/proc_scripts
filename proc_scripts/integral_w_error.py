@@ -6,7 +6,7 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval    
-def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
+def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2', fl=None):
     """Calculates the propagation of error for the given signal and returns
     signal with the error associated.
     
@@ -24,18 +24,18 @@ def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
     
     Returns
     =======
-    self:       nddata
+    s:       nddata
                 data with error associated with coherence pathways
                 not included in the signal pathway
     """
-    frq_slice = integrate_limits(self)
+    frq_slice = integrate_limits(select_pathway(s,sig_path), fl=fl)
     logging.debug(strm('frq_slice is',frq_slice))
-    s = self[direct:frq_slice]
+    s = s[direct:frq_slice]
     logging.debug('Done slicing')
-    f = self.getaxis(direct)
+    f = s.getaxis(direct)
     df = f[1]-f[0]
     errors = []
-    all_labels = set(self.dimlabels)
+    all_labels = set(s.dimlabels)
     all_labels -= set([indirect,direct])
     extra_dims = [j for j in all_labels if not j.startswith('ph')]
     if len(extra_dims) > 0:

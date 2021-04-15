@@ -64,7 +64,7 @@ fl.next("compare manual vs. automatic", legend=True)
 # here I plot w/ manually chosen integration bounds:
 for bounds in [
     (60, 140),  # seem reasonable to me
-    (-90.91113281, 307.69921875),  # what's currently picked by the automatic routine
+    #(-90.91113281, 307.69921875),  # what's currently picked by the automatic routine
 ]:
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":bounds]
     std_off_pathway = (
@@ -111,7 +111,7 @@ error_pathway = (
     - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
 )
 error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
-data = integral_w_errors(data, signal_pathway, error_pathway)
+data = integral_w_errors(data, signal_pathway, error_pathway, fl=fl)
 fl.plot(data, ".", label="auto: real", capsize=6)
 fl.plot(data.imag, ".", label="auto: imaginary", capsize=6)
 fl.show()
