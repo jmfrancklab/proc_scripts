@@ -14,7 +14,7 @@ from symfit.contrib.interactive_guess import InteractiveGuess
 import numpy as np
 from itertools import cycle
 from scipy.optimize import nnls
-
+fl=figlist_var()
 B_center = Parameter('B_center', value=-0.2)
 sigma = Parameter('sigma', value=3)
 R = Parameter('R', value=7.0)
@@ -30,58 +30,60 @@ A_list = []
 B_center_list = []
 C_list = []
 for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
-        ("210114_3mM_4AT",'ESR','ESR_linewidth',
+        ("210218_1mM_TEMPOL_2",'ESR','ESR_linewidth',
             {A:2.107721e02,
                 B_center: 2.391618e-01,
                 R: 5.076452e-01,
                 sigma: 6.672132e-01,
                 },
-            False,
-            3e-3
-            ),
-        ("210114_5mM_4AT",'ESR','ESR_linewidth',
-            {A:2.862171e02,
-                B_center: 1.316801e-01,
-                R: 7.333833e-01,
-                sigma: 5.831063e-01,
-                },
-            False,
-            5e-3
-            ),
-        ("210114_7mM_4AT",'ESR','ESR_linewidth',
-            {A: 3.527704e02,
-                B_center: 9.543103e-03,
-                R: 8.813178e-01,
-                sigma: 5.54451e-01,
-                },
-            False,
-            7e-3
-            ),
-        ("210114_10mM_4AT",'ESR','ESR_linewidth',
-            { # here, I entered based on the next, and then copied and pasted the result
-                A: 4.020849e02,
-                B_center: 8.16337e-02,
-                R: 1.009644,
-                sigma: 5.880406e-01,
-                },
-            False,
-            10e-3
-            ),
-        ("201118_1mM4AT",'ESR','ESR_linewidth',
-            {A: 4e2,
-                B_center:  4.220642e-01,
-                R:         3.617994e-01,
-                sigma:     8.702270e-01,
-                },
-            False,
+            True,
             1e-3
-            )
+            ),
+        #("210114_5mM_4AT",'ESR','ESR_linewidth',
+        #    {A:2.862171e02,
+        #        B_center: 1.316801e-01,
+        #        R: 7.333833e-01,
+        #        sigma: 5.831063e-01,
+        #        },
+        #    False,
+        #    5e-3
+        #    ),
+        #("210114_7mM_4AT",'ESR','ESR_linewidth',
+        #    {A: 3.527704e02,
+        #        B_center: 9.543103e-03,
+        #        R: 8.813178e-01,
+        #        sigma: 5.54451e-01,
+        #        },
+        #    False,
+        #    7e-3
+        #    ),
+        #("210114_10mM_4AT",'ESR','ESR_linewidth',
+        #    { # here, I entered based on the next, and then copied and pasted the result
+        #        A: 4.020849e02,
+        #        B_center: 8.16337e-02,
+        #        R: 1.009644,
+        #        sigma: 5.880406e-01,
+        #        },
+        #    False,
+        #    10e-3
+        #    ),
+        #("201118_1mM4AT",'ESR','ESR_linewidth',
+        #    {A: 4e2,
+        ##        B_center:  4.220642e-01,
+        #        R:         3.617994e-01,
+        #        sigma:     8.702270e-01,
+        #        },
+        #    False,
+        #    1e-3
+        #    )
         ]:
     d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
                   lookup=postproc_dict)
     plt.figure()
-    plt.title('linewidth for 10mM 4AT')
+    plt.title('linewidth for 1mM TEMPOL')
     plot(d)
+    fl.show()
+    quit()
     d = d['$B_0$':(-9, 9)]
     plot(d, '--', alpha=0.5, linewidth=4)
     d.setaxis('$B_0$', lambda x: x+1) # for a positive B_center, b/c the interactive guess doesn't deal well with negative parameters
