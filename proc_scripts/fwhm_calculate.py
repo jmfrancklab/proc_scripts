@@ -3,7 +3,7 @@ import numpy as np
 import logging
 def fwhm_calculator(self, axis='t2',fl=None):
     signal_sign = self.C.sum(axis).run(np.real).run(np.sign)
-    temp = s.real * signal_sign
+    temp = self.real * signal_sign
     # pulled from apodization code
     sigma = nddata(np.linspace(1e-5,1e3,1000),'sigma').set_units('sigma','s')
     s_avg = self.C.mean_all_but('t2')
