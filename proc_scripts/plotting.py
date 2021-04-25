@@ -83,8 +83,10 @@ class fl_mod(figlist_var):
         figure list -- for each slice out 3x thisrange, and then
         show the lines for thisrange"""
         thisfig,(ax1,ax2) = plt.subplots(1,2)
-        self.next(plotname, fig=thisfig)
+        #self.next('',fig=thisfig)
+        thisfig.suptitle(plotname,y=1.05)
         plt.sca(ax1)
+        title('show frequency limits')
         forplot = s['t2':expand_limits(thisrange,s)]
         if 'power' in s.dimlabels:
             self.image(forplot.C.setaxis('power','#').set_units('power','scan #'))
@@ -92,12 +94,12 @@ class fl_mod(figlist_var):
             self.image(forplot.C.setaxis('vd','#').set_units('vd','scan #'))
         draw_limits(thisrange,forplot)
         plt.sca(ax2)
+        title('cropped log')
         if 'power' in s.dimlabels:
             self.image(forplot.C.cropped_log().C.setaxis('power','#').set_units('power','scan #'))
         else:
             self.image(forplot.C.setaxis('vd','#').set_units('vd','scan #'))
         draw_limits(thisrange,forplot)
-        title('cropped log')
         return
     def plot_curve(fl, f, name, guess=None):
         """Plot the data with fit curve and fit equation.
@@ -122,8 +124,9 @@ class fl_mod(figlist_var):
                 horizontalalignment='center',color='k')
 
     def next(self, *arg, **kwargs):
-        kwargs.update({"figsize": (9, 5.56), "legend": True})
+       # kwargs.update({"figsize": (9, 5.56), "legend": True})
         super().next(*arg, **kwargs)
+
     def complex_plot(fl, d, label="", show_phase=False, show_real=True,alpha=0.5,linestyle=None,linewidth=3,color='k'):
         colors = []
         for j in range(ndshape(d)["ch"]):

@@ -379,7 +379,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
     s.ft('t2',shift=True)
     s.ft(['ph1','ph2']) # Fourier Transforms coherence channels
     if fl is not None:
-        fl.next('all data: frequency domain')
+        fl.next('\nall data: frequency domain')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     return s
 

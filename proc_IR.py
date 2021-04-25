@@ -28,8 +28,8 @@ save_npz = False
 # }}}
 clock_correction=True
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210414_6mM_TEMPOL_cap_probe_IR_32dBm_1','inv_rec','signal','spincore_IR_v1',
-            (-0.051e3,0.061e3),(0,44e-3),False,False),
+        ('210422_210422_T177R1a_pR_KI_FIR_34dBm','Sam','signal','spincore_IR_v1',
+            (-0.051e3,0.061e3),(0,44e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -51,7 +51,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     #{{{ phasing the aligned data
     if nodename == 'signal':
         best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
-        logger.info(strm("best shift is", best_shift))
+        #logger.info(strm("best shift is", best_shift))
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
         fl.next('time domain after hermitian test')
         fl.image(as_scan_nbr(s))
@@ -73,6 +73,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
             s_clock.sum('vd').run(abs)
             fl.next('clock correction')
             fl.plot(s_clock,'.',alpha=0.7)
+            print(max(s_clock.data))
+            plot('signal: ',s_clock.data.max())
             clock_corr = s_clock.argmax('clock_corr').item()
             pyplot.axvline(x=clock_corr, alpha=0.5, color='r')
             s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
@@ -85,9 +87,9 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     if len(ph0.dimlabels) > 0:
         assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
         ph0 = zeroth_order_ph(ph0)
-        logger.info(strm('phasing dimension as one'))
+        #logger.info(strm('phasing dimension as one'))
     else:
-        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
+        #logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
         ph0 = ph0/abs(ph0)
     s /= ph0
     fl.next('phased data -- frequency domain')
@@ -100,7 +102,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     else:
         s.reorder(['ph1','vd','t2'])
     zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd', raw_index=True).item()
-    logger.info(strm("zero crossing at",zero_crossing))
+    #logger.info(strm("zero crossing at",zero_crossing))
     s.ift(['ph1','ph2'])
     # {{{ so that the filter is in range, do a rough alignment
     frq_max = abs(s).argmax('t2')
@@ -112,7 +114,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.image(as_scan_nbr(s))
     fl.basename='correlation subroutine -- before zero crossing:'
     # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
+    #logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
     if zero_crossing > 1:
         opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
                 ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
@@ -120,8 +122,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
         s.ift('t2')
         s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
         s.ft('t2')
-    else:
-        logger.warning("You have 1 point or less before your zero crossing!!!!")
+    #else:
+        #logger.warning("You have 1 point or less before your zero crossing!!!!")
     fl.basename='correlation subroutine -- after zero crossing:'
     opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
@@ -163,7 +165,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
     s_signal = integral_w_errors(s,signal_pathway,error_path)
-    logger.info(strm("here is what the error looks like",s_signal.get_error()))
+    #logger.info(strm("here is what the error looks like",s_signal.get_error()))
     fl.plot(s_signal,'o',label='real')
     fl.plot(s_signal.imag,'o',label='imaginary')
     fl.next('Spectrum - freq domain')
@@ -177,8 +179,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     else:
         f.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
     f.fit()
-    logger.info(strm("output:",f.output()))
-    logger.info(strm("latex:",f.latex()))
+    #logger.info(strm("output:",f.output()))
+    #logger.info(strm("latex:",f.latex()))
     T1 = 1./f.output('R_1')
     fl.next('fit')
     fl.plot(s_signal,'o', label='actual data')
@@ -187,7 +189,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='large',
             horizontalalignment='center',color='k')
     ax = plt.gca()
-    logger.info(strm("YOUR T1 IS:",T1))
+    #logger.info(strm("YOUR T1 IS:",T1))
     fl.show()
     if ILT:
         T1 = nddata(np.logspace(-3,3,150),'T1')
@@ -231,12 +233,12 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
         soln.setaxis('log(T1)',np.log10(T1.data))
         fl.next('w=3')
         fl.image(soln)
-        logger.info(strm("SAVING FILE"))
+        #logger.info(strm("SAVING FILE"))
         if save_npz:
             np.savez(thisfile+'_'+str(nodename)+'_ILT_inv',
                     data=soln.data,
                     logT1=soln.getaxis('log(T1)'),
                     t2=soln.getaxis('t2'))               
-        logger.info(strm("FILE SAVED"))
+        #logger.info(strm("FILE SAVED"))
         fl.show()
-
+# In[]
