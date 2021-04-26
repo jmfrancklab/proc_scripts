@@ -15,7 +15,13 @@ plt.rcParams.update({
 logger = init_logging("info")
 fl = fl_mod()
 t2 = symbols('t2')
+def select_pathway(s,pathway):
+    retval = s
+    for k,v in pathway.items():
+        retval = retval[k,v]
+    return retval
 
+signal_pathway = {'ph1':1,'ph2':-2}
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
 # list of integrals for ODNP
@@ -32,6 +38,8 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict,fl=fl)
+    def as_scan_nbr(s):
+        return s.C.setaxis('power','#').set_units('power','scan #')
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range) # visualize the frequency limits
     rcParams.update({
@@ -47,6 +55,40 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     s = slice_FID_from_echo(s,max_t=t_range[-1],fl=None)    # visualize time domain after filtering and phasing
     #{{{apodizing and zero fill
+    print(s.dimlabels)
+    s.ft('t2')
+    s.reorder(['ph1','ph2','power','t2'])
+    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('power',raw_index=True).item()
+    logger.info(strm("zero corssing at",zero_crossing))
+    s.ift(['ph1','ph2'])
+    frq_max = abs(s).argmax('t2')
+    s.ift('t2')
+    s *= np.exp(-1j*2*pi*frq_max*s.fromaxis('t2'))
+    s.ft('t2')
+    fl.next(r'after rough alignment, $\varphi$ domain')
+    fl.image(as_scan_nbr(s))
+    fl.basename='correlation subroutine --before zero crossing:'
+    logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
+    if zero_crossing > 1:
+        opt_shift,sigma = correl_align(s['power',:zero_crossing+1],indirect_dim='power',
+                ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+                sigma=50)
+    else:
+        logger.warning("You have 1 point or less before your zero crossing!!!!")
+    fl.next(r'after correlation, $\varphi$ domain')
+    fl.image(as_scan_nbr(s))
+    s.ft(['ph1','ph2'])
+    fl.next('after correlation alignment FTed ph')
+    fl.image(as_scan_nbr(s))
+    s.reorder(['ph1','ph2','power','t2'])
+    fl.next('after correlation -- frequency domain')
+    fl.image(as_scan_nbr(s))
+    s.ift('t2')
+    fl.next('after correlation -- time domain')
+    fl.image(as_scan_nbr(s))
+    #fl.show()
+    #:w
+    #quit()
     fl.next('apodize and zero fill')
     R = 5.0/(t_range[-1]) # assume full decay by end time
     s *= np.exp(-s.fromaxis('t2')*R)
