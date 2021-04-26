@@ -23,8 +23,8 @@ t2 = symbols('t2')
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210414_TEMPOL6mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-400,400),(None,0.03)]
+        ["210421_5mM_4AT_DNP_cap_probe", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-500,400),(None,0.03)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -79,16 +79,16 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.title('150 μM TEMPOL')
     plt.ylabel('Enhancement')
     plt.show()
-    fl.show();quit()
-    T1p = nddata(r_[0.31,0.28,0.29,0.30,0.32,0.33,0.35],[-1],
-            ['power']).setaxis('power',r_[0,0.25,0.5,1,1.5,2,2.5])
-    fl.next(r'$T_{1}$(p) for 10 mM TEMPOL')
+    #fl.show();quit()
+    T1p = nddata(r_[0.44,0.46,0.48,0.51,0.53,0.54],[-1],
+            ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0,2.5])
+    fl.next(r'$T_{1}$(p) for 5 mM 4AT')
     fl.plot(T1p,'o')
     R1w = 1/2.8
-    R1p = nddata(r_[0.95,1.00,1.04,1.10,1.16,1.19,1.24],[-1],
-            ['power']).setaxis('power',r_[0.001,0.251,0.501,1.0,1.58,2.0,2.5])
+    R1p = nddata(r_[2.27,2.17,2.07,1.98,1.88,1.84],[-1],
+            ['power']).setaxis('power',r_[0.001,0.501,1.0,1.58,2.0,2.5])
     #{{{making Flinear and fitting
-    Flinear = (R1p - R1p['power':0] + R1w) ** -1
+    Flinear = (R1p - R1p['power':0] + R1w)
     polyorder = 3
     coeff,_ = Flinear.polyfit('power',order=polyorder)
     power = nddata(np.linspace(0,R1p.getaxis('power')[-1],25),'power')
@@ -101,20 +101,21 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.title('polynomial fit of linear equation')
     plt.ylabel("$F_{linear}$")
     fl.next('R1p vs power')
-    R1p_fine = (Flinear_fine ** -1) + R1p['power':0]-R1w
+    R1p_fine = (Flinear_fine) + R1p['power':0]-R1w
     fl.plot(R1p,"x")
     fl.plot(R1p_fine)
     plt.title("relaxation rates")
     plt.ylabel("$R_1(p)$")
     plt.show()
     #{{{plotting without correcting for heating
-    ksigs_noT = (1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.0025)
-    ksigs_noT_max = (1-(-76.2))/(659.33*0.0025)
+    ksigs_noT = (1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.005*T1p['power':0])
+    ksigs_noT_max = (1-(-125.2))/(659.33*0.005)
     fl.next(r'ksigs_noT vs power')
     fl.plot(ksigs_noT,'o',label='NOT corrected for heating')
     #}}}
+    T1p_fine = R1p_fine**-1
     #{{{plotting with correction for heating
-    ksigs_T=((1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.0025))*R1p_fine
+    ksigs_T=(1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.005*T1p_fine)
     fl.plot(ksigs_T,'--',label='with heating correction')
     plt.title('ksigmas(p) vs Power')
     plt.ylabel('ksigmas(p)')
