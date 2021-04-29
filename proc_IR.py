@@ -27,18 +27,20 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 save_npz = False
 # }}}
 clock_correction=True
+W = 2 #repetition delay used for FIR
+
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210421_5mM_4AT_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.051e3,0.061e3),(0,44e-3),False,False),
+        ('210324_TEMPOL_2mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.005e3,0.045e3),(None,60e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
+    #fl.show();quit()
     #{{{ since we need to relabel vd frequently- we make a method
     def as_scan_nbr(d):
         return d.C.setaxis('vd','#').set_units('vd','scan #')
     #}}}
-    #fl.show();quit()
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
@@ -110,18 +112,18 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     # }}}
     fl.next(r'after rough align, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
-    fl.basename='correlation subroutine -- before zero crossing:'
-    # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
-    if zero_crossing > 1:
-        opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
-                ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-                sigma=50)
-        s.ift('t2')
-        s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-        s.ft('t2')
-    else:
-        logger.warning("You have 1 point or less before your zero crossing!!!!")
+    #fl.basename='correlation subroutine -- before zero crossing:'
+    #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
+    #logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
+    #if zero_crossing > 1:
+    #    opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
+    #            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+    #            sigma=50)
+    #    s.ift('t2')
+    #    s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    #    s.ft('t2')
+    #else:
+    #    logger.warning("You have 1 point or less before your zero crossing!!!!")
     fl.basename='correlation subroutine -- after zero crossing:'
     opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
@@ -144,6 +146,25 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ift('t2')
     fl.next('after correlation -- time domain')
     fl.image(as_scan_nbr(s))
+    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+    logger.info(strm("best shift is", best_shift))
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    fl.next('time domain after hermitian test')
+    fl.image(as_scan_nbr(s))
+    fl.next('frequency domain after hermitian test')
+    s.ft('t2')
+    fl.image(as_scan_nbr(s))
+    s.ift('t2')
+    ph0 = select_pathway(s['t2':0], signal_pathway)
+    if len(ph0.dimlabels) > 0:
+        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
+        ph0 = zeroth_order_ph(ph0)
+        logger.info(strm('phasing dimension as one'))
+    else:
+        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
+        ph0 = ph0/abs(ph0)
+    s /= ph0
+
     #fl.show();quit()
     s = s['t2':(0,t_range[-1])]
     s['t2',0] *= 0.5
@@ -171,9 +192,9 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.plot(s)
     x = s_signal.fromaxis('vd')
     f = fitdata(s_signal)
-    M0,Mi,R1,vd,W = symbols("M_0 M_inf R_1 vd W", real=True)
+    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd", real=True)
     if IR:
-        f.functional_form = Mi + (M0-Mi)*s_exp(-vd*R1)
+        f.functional_form = Mi - 2*Mi*s_exp(-vd*R1)
     else:
         f.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
     f.fit()

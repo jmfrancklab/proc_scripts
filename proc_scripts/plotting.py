@@ -83,7 +83,7 @@ class fl_mod(figlist_var):
         figure list -- for each slice out 3x thisrange, and then
         show the lines for thisrange"""
         thisfig,(ax1,ax2) = plt.subplots(1,2)
-        self.next(plotname, fig=thisfig)
+
         plt.sca(ax1)
         forplot = s['t2':expand_limits(thisrange,s)]
         if 'power' in s.dimlabels:
@@ -98,6 +98,7 @@ class fl_mod(figlist_var):
             self.image(forplot.C.setaxis('vd','#').set_units('vd','scan #'))
         draw_limits(thisrange,forplot)
         title('cropped log')
+        self.next(plotname, fig=figure())
         return
     def plot_curve(fl, f, name, guess=None):
         """Plot the data with fit curve and fit equation.

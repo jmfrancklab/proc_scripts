@@ -2,7 +2,8 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
 from proc_scripts import postproc_dict
-from sympy import symbols
+from sympy import symbols, Symbol, latex,limit,init_printing
+from matplotlib import *
 import numpy as np
 import matplotlib.pyplot as plt
 from pylab import *
@@ -29,8 +30,8 @@ signal_pathway = {'ph1':1,'ph2':-2}
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210421_5mM_4AT_DNP_cap_probe", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-500,400),(None,0.03)]
+        ["210316_TEMPOL1mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-6000,6000),(None,0.03)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -47,16 +48,23 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
         "savefig.facecolor": (1.0,1.0,1.0,0.0),
         })
+    #fl.show();quit()
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
     logger.debug(strm(ndshape(s)))
     fl.next('time domain')
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+    #fl.show();quit()
     s = slice_FID_from_echo(s,max_t=t_range[-1],fl=None)    # visualize time domain after filtering and phasing
+    fl.next('FID sliced t domain')
+    fl.image(as_scan_nbr(s))
     #{{{apodizing and zero fill
     print(s.dimlabels)
     s.ft('t2')
+    fl.next('FID sliced freq domain')
+    fl.image(as_scan_nbr(s))
+    #fl.show();quit()
     s.reorder(['ph1','ph2','power','t2'])
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('power',raw_index=True).item()
     logger.info(strm("zero corssing at",zero_crossing))
@@ -73,8 +81,20 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         opt_shift,sigma = correl_align(s['power',:zero_crossing+1],indirect_dim='power',
                 ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
                 sigma=50)
+        s.ift('t2')
+        s['power',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+        s.ft('t2')
     else:
         logger.warning("You have 1 point or less before your zero crossing!!!!")
+    #fl.basename = 'correlation subroutine -- after zero crossing'
+    #print(ndshape(s))
+    #opt_shift,sigma = correl_align(s['power',zero_crossing+1:],indirect_dim='power',
+    #        ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+    #        sigma=50)
+    #s.ift('t2')
+    #s['power',zero_crossing+1:] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    #s.ft('t2')
+    fl.basename = None
     fl.next(r'after correlation, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
     s.ft(['ph1','ph2'])
@@ -86,9 +106,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     s.ift('t2')
     fl.next('after correlation -- time domain')
     fl.image(as_scan_nbr(s))
-    #fl.show()
-    #:w
-    #quit()
     fl.next('apodize and zero fill')
     R = 5.0/(t_range[-1]) # assume full decay by end time
     s *= np.exp(-s.fromaxis('t2')*R)
@@ -111,24 +128,35 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.plot(s)
     #}}}
     #{{{plotting enhancement vs power
-    fl.next('10 mM TEMPOL ODNP')
+    fl.next('1.25 mM TEMPOL ODNP')
     enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
     plt.figure(figsize=(4,4))
     fl.plot(enhancement['power',:idx_maxpower+1],'ko', human_units=False)
     fl.plot(enhancement['power',idx_maxpower+1:],'ro', human_units=False)
-    plt.title('150 μM TEMPOL')
+    plt.title('1.25 mM TEMPOL')
     plt.ylabel('Enhancement')
-    plt.show()
-    #fl.show();quit()
-    T1p = nddata(r_[0.44,0.46,0.48,0.51,0.53,0.54],[-1],
-            ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0,2.5])
-    fl.next(r'$T_{1}$(p) for 5 mM 4AT')
+    line = enhancement['power',:idx_maxpower+1]
+    x = line.fromaxis('power')
+    f=fitdata(line)
+    A,B,C,power = symbols("A B  C power")
+    f.functional_form = A*s_exp(-B*power)+C
+    f.fit()
+    fl.plot(f.eval(100),label='fit')
+    plt.text(0.75,0.25,f.latex(),transform=plt.gca().transAxes,size='large',
+            horizontalalignment='center')
+    #plt.show()
+    init_printing(use_unicode=True)
+    print(limit(f.latex(),power,U221E))
+    quit()
+    T1p = nddata(r_[1.298857,1.401268,1.478219,1.568843,1.638806,1.692369],[-1],
+            ['power']).setaxis('power',r_[0.001,0.502,1.0,1.58,2.0,2.5])
+    fl.next(r'$T_{1}$(p) for 1.25 mM TEMPOL')
     fl.plot(T1p,'o')
-    R1w = 1/2.8
-    R1p = nddata(r_[2.27,2.17,2.07,1.98,1.88,1.84],[-1],
-            ['power']).setaxis('power',r_[0.001,0.501,1.0,1.58,2.0,2.5])
+    R1w = 1/2.5
+    R1p = nddata(r_[0.769908,0.713639,0.67649,0.637412,0.6102,0.59088],[-1],
+            ['power']).setaxis('power',r_[0.001,0.502,1.0,1.5,2.0,2.5])
     #{{{making Flinear and fitting
     Flinear = (R1p - R1p['power':0] + R1w)
     polyorder = 3
@@ -144,20 +172,22 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.ylabel("$F_{linear}$")
     fl.next('R1p vs power')
     R1p_fine = (Flinear_fine) + R1p['power':0]-R1w
+    lit = nddata(r_[0.85,0.81,0.77,0.745,0.725,0.69],[-1],
+            ['power']).setaxis('power',r_[0.001,0.502,1.0,1.5,2.0,2.5])
+    fl.plot(lit,'o',label='literature values')
     fl.plot(R1p,"x")
     fl.plot(R1p_fine)
     plt.title("relaxation rates")
     plt.ylabel("$R_1(p)$")
-    plt.show()
     #{{{plotting without correcting for heating
-    ksigs_noT = (1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.005*T1p['power':0])
-    ksigs_noT_max = (1-(-125.2))/(659.33*0.005)
+    ksigs_noT = (1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.00125*T1p['power':0])
+    ksigs_noT_max = (1-(-42))/(659.33*0.00125)
     fl.next(r'ksigs_noT vs power')
     fl.plot(ksigs_noT,'o',label='NOT corrected for heating')
     #}}}
     T1p_fine = R1p_fine**-1
     #{{{plotting with correction for heating
-    ksigs_T=(1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.005*T1p_fine)
+    ksigs_T=(1-(enhancement['power',:idx_maxpower+1]))/(659.33*0.00125*T1p_fine)
     fl.plot(ksigs_T,'--',label='with heating correction')
     plt.title('ksigmas(p) vs Power')
     plt.ylabel('ksigmas(p)')

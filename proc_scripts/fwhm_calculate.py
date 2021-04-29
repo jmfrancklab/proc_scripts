@@ -1,4 +1,5 @@
 from pylab import subplots
+from pyspecdata import *
 import numpy as np
 import logging
 def fwhm_calculator(self, axis='t2',fl=None):
@@ -16,8 +17,8 @@ def fwhm_calculator(self, axis='t2',fl=None):
         fl.plot(signal_E, human_units=False)
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
     fwhm = filter_width
-    fl.push_marker()
     if fl is not None:
+        fl.push_marker()
         fig, (ax1,ax2) = subplots(2,1)
         fl.next("integration diagnostic", fig=fig)
         fl.plot(temp, ax=ax1)
