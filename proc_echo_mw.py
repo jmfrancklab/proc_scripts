@@ -30,8 +30,8 @@ signal_pathway = {'ph1':1,'ph2':-2}
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210316_TEMPOL1mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-6000,6000),(None,0.03)]
+        ["210317_TEMPOL10mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-10000,9000),(None,0.065)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -146,9 +146,9 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.plot(f.eval(100),label='fit')
     plt.text(0.75,0.25,f.latex(),transform=plt.gca().transAxes,size='large',
             horizontalalignment='center')
-    #plt.show()
+    plt.show()
     init_printing(use_unicode=True)
-    print(limit(f.latex(),power,U221E))
+    print(limit((4.92*s_exp(-5.9*power))-4.59,power,8734))
     quit()
     T1p = nddata(r_[1.298857,1.401268,1.478219,1.568843,1.638806,1.692369],[-1],
             ['power']).setaxis('power',r_[0.001,0.502,1.0,1.58,2.0,2.5])
