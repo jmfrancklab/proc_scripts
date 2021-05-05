@@ -1,6 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize
-from proc_scripts import hermitian_function_test, zeroth_order_ph, recovery, correl_align, ph1_real_Abs, postproc_dict,DCCT,integral_w_errors
+from proc_scripts import *
+from proc_scripts import postproc_dict
 from sympy import symbols, latex, Symbol
 from matplotlib import *
 from scipy.signal import tukey
@@ -13,7 +14,7 @@ def select_pathway(s,pathway):
         retval = retval[k,v]
     return retval
 init_logging('debug')
-fl = figlist_var()
+fl = fl_mod()
 t2 = symbols('t2')
 # {{{ input parameters
 this_l = 0.032 # pick number in l curve right before it curves up
@@ -27,11 +28,11 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 save_npz = False
 # }}}
 clock_correction=True
-W = 2 #repetition delay used for FIR
+W = 1 #repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210324_TEMPOL_2mM_cap_probe_FIR_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.005e3,0.045e3),(None,60e-3),True,False),
+        ('210317_TEMPOL_10mM_cap_probe_33dBm','inv_rec','signal','spincore_IR_v1',
+            (-6e3,6e3),(None,83e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -44,10 +45,14 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
+    rx_offset_corr = s['t2':(0.02,None)]
+    rx_offset_corr = rx_offset_corr.mean(['t2'])
+    s -= rx_offset_corr
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
     fl.next('time domain')
     fl.image(as_scan_nbr(s))
+    #fl.show();quit()
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
     #{{{ phasing the aligned data
@@ -83,15 +88,17 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
             fl.image(s.C.setaxis('vd','#'))
             s.ift('t2')
             #}}}
-    ph0 = select_pathway(s['t2':0], signal_pathway)
-    if len(ph0.dimlabels) > 0:
-        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-        ph0 = zeroth_order_ph(ph0)
-        logger.info(strm('phasing dimension as one'))
-    else:
-        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
-        ph0 = ph0/abs(ph0)
+    s.ift(['ph1','ph2'])
+    phasing = s['t2',0].C
+    phasing.data *= 0
+    phasing.ft(['ph1','ph2'])
+    phasing['ph1',0]['ph2',1] = 1
+    phasing.ift(['ph1','ph2'])
+    fl.next('zeroth order corrected')
+    ph0 = s['t2':0]/phasing
+    ph0 /= abs(ph0)
     s /= ph0
+    s.ft(['ph1','ph2'])
     fl.next('phased data -- frequency domain')
     s.ft('t2')
     fl.image(as_scan_nbr(s))
@@ -112,18 +119,18 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     # }}}
     fl.next(r'after rough align, $\varphi$ domain')
     fl.image(as_scan_nbr(s))
-    #fl.basename='correlation subroutine -- before zero crossing:'
+    fl.basename='correlation subroutine -- before zero crossing:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    #logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
-    #if zero_crossing > 1:
-    #    opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
-    #            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-    #            sigma=50)
-    #    s.ift('t2')
-    #    s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    #    s.ft('t2')
-    #else:
-    #    logger.warning("You have 1 point or less before your zero crossing!!!!")
+    logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
+    if zero_crossing > 1:
+        opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
+                ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+                sigma=50)
+        s.ift('t2')
+        s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+        s.ft('t2')
+    else:
+        logger.warning("You have 1 point or less before your zero crossing!!!!")
     fl.basename='correlation subroutine -- after zero crossing:'
     opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
@@ -146,25 +153,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ift('t2')
     fl.next('after correlation -- time domain')
     fl.image(as_scan_nbr(s))
-    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
-    logger.info(strm("best shift is", best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('time domain after hermitian test')
-    fl.image(as_scan_nbr(s))
-    fl.next('frequency domain after hermitian test')
-    s.ft('t2')
-    fl.image(as_scan_nbr(s))
-    s.ift('t2')
-    ph0 = select_pathway(s['t2':0], signal_pathway)
-    if len(ph0.dimlabels) > 0:
-        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-        ph0 = zeroth_order_ph(ph0)
-        logger.info(strm('phasing dimension as one'))
-    else:
-        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
-        ph0 = ph0/abs(ph0)
-    s /= ph0
-
     #fl.show();quit()
     s = s['t2':(0,t_range[-1])]
     s['t2',0] *= 0.5
@@ -174,7 +162,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s.ft('t2')
     fl.next('FID sliced -- frequency domain')
     fl.image(as_scan_nbr(s))
-    #s *= -1    
+    #s *= -1  
+    s['vd':(None,0.3)] *= -1
     fl.next('Integrated data - recovery curve')
     # }}}
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
@@ -191,8 +180,9 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s = select_pathway(s,signal_pathway)
     fl.plot(s)
     x = s_signal.fromaxis('vd')
+    print(ndshape(s))
     f = fitdata(s_signal)
-    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd", real=True)
+    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")
     if IR:
         f.functional_form = Mi - 2*Mi*s_exp(-vd*R1)
     else:
@@ -209,6 +199,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
             horizontalalignment='center',color='k')
     ax = plt.gca()
     logger.info(strm("YOUR T1 IS:",T1))
+    print("YOUR T1 IS:",T1)
     fl.show()
     if ILT:
         T1 = nddata(np.logspace(-3,3,150),'T1')

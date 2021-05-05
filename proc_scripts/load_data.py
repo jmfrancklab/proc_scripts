@@ -284,7 +284,7 @@ def proc_spincore_IR(s,fl=None):
     s.ft('t2', pad=4096)
     if fl is not None:
         fl.next('frequency domain (all $\\Delta p$)')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'),black=False)
     return s
 
 def proc_nutation(s,fl=None):
