@@ -21,11 +21,11 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval
-T1p = nddata(r_[0.436,0.465,0.482,0.507,0.527],[-1],
-        ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
+T1p = nddata(r_[0.277, 0.280, 0.312],[-1],
+        ['power']).setaxis('power',r_[0.001,0.5,1.0])
 R1w = 1/2.172
-R1p = nddata(r_[2.292,2.150,2.073,1.971,1.897],[-1],
-        ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
+R1p = nddata(r_[3.61,3.567,3.217],[-1],
+        ['power']).setaxis('power',r_[0.001,0.5,1.0])
 signal_pathway = {'ph1':1,'ph2':-2}
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
@@ -34,8 +34,8 @@ signal_pathway = {'ph1':1,'ph2':-2}
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210414_TEMPOL6mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-11000,11000),(None,0.083)]
+        ["210317_TEMPOL10mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-12000,12000),(None,0.083)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -61,7 +61,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft('t2')
-    fl.next('look at data T')
+    fl.next('')
     fl.image(s.C.setaxis('power','#'))
     s.ift('t2') # inverse fourier transform into time domain
     logger.debug(strm("THIS IS THE SHAPE"))
@@ -144,7 +144,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.next('apodized and zero fill')
     R = 5.0/(t_range[-1]) # assume full decay by end time
     s *= np.exp(-s.fromaxis('t2')*R)
-    s.ft('t2',pad=1781)
+    s.ft('t2',pad=1963)
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     #}}}
     #{{{select coherence channel in time domain
@@ -198,42 +198,50 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     for j in range(polyorder + 1):
         Flinear_fine += coeff[j] * power **j
     fl.next('Flinear')
+    Flinear.set_units('power',enhancement.get_units('power'))
     fl.plot(Flinear,'o',label='Flinear')
-    Flinear_fine.set_units('power',Flinear.get_units('power'))
+    Flinear_fine.set_units('power',enhancement.get_units('power'))
     fl.plot(Flinear_fine,label='Flinear_fine')
     plt.title('polynomial fit of linear equation')
     plt.ylabel("$F_{linear}$")
     #fl.show();quit()
     fl.next('R1p vs power')
     R1p_fine = ((Flinear_fine)**-1) + R1p['power':0.001]-R1w
+    print("UNITS OF R1P:",R1p.get_units('power'))
     fl.plot(R1p,"x")
     R1p_fine.set_units('power',R1p.get_units('power'))
+    print("UNITS OF R1P_FINE:",R1p_fine.get_units('power'))
     fl.plot(R1p_fine)
     plt.title("relaxation rates")
     plt.ylabel("$R_1(p)$")
     #{{{plotting without correcting for heating
-    ksigs_T=(0.0015167/0.006)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
-    ksigs_noT = (0.0015167/0.006)*((enhancement['power',:idx_maxpower+1])*(T1p['power':0]**-1))
+    ksigs_T=(0.0015167/0.01)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
+    #ksigs_noT = (0.0015167/0.006)*((enhancement['power',:idx_maxpower+1])*(T1p['power':0]**-1))
     fl.next('ksig_smax for 2.25 mM TEMPOL')
-    ksigs_noT.setaxis('power',ksigs_T.getaxis('power')),
-    ksigs_noT.set_units('power','mW')
+    ksigs_T.set_units('power','mW')
+    print("UNITS OF KSIGS_t:",ksigs_T.get_units('power'))
+    #ksigs_noT.setaxis('power',ksigs_T.getaxis('power')),
+    #ksigs_noT.set_units('power','mW')
     #fl.plot(ksigs_noT,color='r',label='NOT corrected for heating')
     #}}}
     #{{{plotting with correction for heating
-    x = ksigs_T.fromaxis('power')
-    fitting_line = fitdata(ksigs_T['power':(0.25,None)])
+    x = enhancement['power',:idx_maxpower+1].fromaxis('power')
+    fitting_line = fitdata(ksigs_T)#['power':(0.25,None)])
     k,p_half,power = symbols("k, p_half, power",real=True)
     fitting_line.functional_form = (k*power)/(p_half+power)
     fitting_line.fit()
-    fl.plot(ksigs_T,'o',label='with heating correction')
-    fl.plot(ksigs_T.imag,'o',label='imaginary')
+    fl.plot(ksigs_T,'o',label='with heating correction',human_units=False)
+    fl.plot(ksigs_T.imag,'o',label='imaginary',human_units=False)
+    print("UNITS OF KSIGS_t IMAG:",ksigs_T.imag.get_units('power'))
     #fl.plot(ksigs_T.imag,'o',label='imaginary')
-    fit = fitting_line.eval(100)
-    fit.set_units('power','W')
+    fit = fitting_line.eval(25)
+    print("fit units:",fit.get_units('power'))
+    fit.set_units('power','mW')
+    print("fit units after changing:", fit.get_units('power'))
     fl.plot(fit,label='fit',human_units=False)
     plt.text(0.75, 0.25, fitting_line.latex(), transform=plt.gca().transAxes,size='large',
             horizontalalignment='center',color='k')
-    ax = plt.gca()
+    #ax = plt.gca()
     plt.title('ksigmas(p) vs Power')
     plt.ylabel('ksigmas(p)')
     fl.show();quit()
