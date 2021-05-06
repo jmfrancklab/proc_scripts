@@ -215,7 +215,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.title("relaxation rates")
     plt.ylabel("$R_1(p)$")
     #{{{plotting without correcting for heating
-    ksigs_T=(0.0015167/0.01)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
+    ksigs_T=(0.0015167/0.00856)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
     #ksigs_noT = (0.0015167/0.006)*((enhancement['power',:idx_maxpower+1])*(T1p['power':0]**-1))
     fl.next('ksig_smax for 2.25 mM TEMPOL')
     ksigs_T.set_units('power','mW')
@@ -226,7 +226,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #}}}
     #{{{plotting with correction for heating
     x = enhancement['power',:idx_maxpower+1].fromaxis('power')
-    fitting_line = fitdata(ksigs_T)#['power':(0.25,None)])
+    fitting_line = fitdata(ksigs_T['power':(0.04,None)])
     k,p_half,power = symbols("k, p_half, power",real=True)
     fitting_line.functional_form = (k*power)/(p_half+power)
     fitting_line.fit()
