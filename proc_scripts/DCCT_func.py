@@ -18,6 +18,9 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         LHS_pad = 0.01,
         RHS_pad = 0.05,
         shareaxis = False,
+        cmap = None,
+        pass_frq_slice = False,
+        frq_slice=[],
         **kwargs):
     """DCCT plot
 
@@ -26,8 +29,14 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     shareaxis: boolean
         subplots scale together, but currently, this means there must be tick labels on both top and bottom
     """
-    this_nddata = this_nddata.C
     my_data = this_nddata.C
+    real_data = False
+    if cmap is not None:
+        assert all(isclose(my_data.data.imag,0)), "In order to use a color map, you must pass real data"
+        if type(cmap) == str:
+            cmap = get_cmap(cmap)
+            my_data.data = my_data.data.real
+            real_data= True
     my_data.human_units()
     print("DIMLABELS ARE",my_data.dimlabels)
     grid_bottom += bottom_pad
@@ -215,14 +224,29 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             raise ValueError("I don't understand the value you've set for the origin keyword argument")
         kwargs['origin'] = origin# required so that imshow now displays the image correctly
         
-        if custom_scaling:
-            scaling = 60.6856
-            K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=scaling)
-        if not custom_scaling:
-            K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=abs(A).data.max())
+        if real_data:
+            dwargs['cmap'] = cmap
+            K = A['smooshed',j].data / abs(A).data.max()
+        else:    
+            if custom_scaling:
+                scaling = 60.6856
+                K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=scaling)
+            if not custom_scaling:
+                K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=abs(A).data.max())
         sca(ax_list[j])
         imshow(K,extent=myext,**kwargs)
         ax_list[j].set_ylabel(None)
+        print(ndshape(A))
+        if pass_frq_slice:
+            start_y = A.getaxis(A.dimlabels[1])[0]
+            stop_y = A.getaxis(A.dimlabels[1])[-1]
+            ax_list[j].fill([x[0],frq_slice[0],frq_slice[0],x[0]],
+                [start_y,start_y,stop_y,stop_y],
+                fill=None,alpha=0.7,hatch='//')
+            ax_list[j].fill([frq_slice[-1],x[-1],x[-1],frq_slice[-1]],
+                    [start_y,start_y,stop_y,stop_y],
+                    fill=None,alpha=0.7,hatch='//')
+
     # to drop into ax_list, just do
     # A.smoosh(a_shape.dimlabels, 'smooshed', noaxis=True)
     # in ax_list[0] put A['smooshed',0], etc

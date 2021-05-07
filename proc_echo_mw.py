@@ -21,10 +21,10 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval
-T1p = nddata(r_[0.436,0.465,0.482,0.507,0.527],[-1],
+T1p = nddata(r_[0.461,0.464,0.482,0.508,0.525],[-1],
         ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
 R1w = 1/2.172
-R1p = nddata(r_[2.292,2.150,2.073,1.971,1.897],[-1],
+R1p = nddata(r_[2.167,2.156,2.077,1.969,1.905],[-1],
         ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
 signal_pathway = {'ph1':1,'ph2':-2}
 # slice out the FID from the echoes,
@@ -190,7 +190,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #{{{making Flinear and fitting
     Flinear = ((R1p - R1p['power':0.001] + R1w)**-1)
     print(Flinear)
-    polyorder = 3
+    polyorder = 1
     coeff,_ = Flinear.polyfit('power',order=polyorder)
     power = nddata(np.linspace(0,R1p.getaxis('power')[-1],25),'power')
     #power = enhancement['power',:idx_maxpower+1].fromaxis('power')    
@@ -198,10 +198,10 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     for j in range(polyorder + 1):
         Flinear_fine += coeff[j] * power **j
     fl.next('Flinear')
-    Flinear.set_units('power','mW')
-    fl.plot(Flinear,'o',label='Flinear',human_units=False)
-    Flinear_fine.set_units('power','mW')
-    fl.plot(Flinear_fine,label='Flinear_fine',human_units=False)
+    Flinear.set_units('power',enhancement.get_units('power'))
+    fl.plot(Flinear,'o',label='Flinear')
+    Flinear_fine.set_units('power',enhancement.get_units('power'))
+    fl.plot(Flinear_fine,label='Flinear_fine')
     plt.title('polynomial fit of linear equation')
     plt.ylabel("$F_{linear}$")
     #fl.show();quit()
@@ -215,7 +215,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.title("relaxation rates")
     plt.ylabel("$R_1(p)$")
     #{{{plotting without correcting for heating
-    ksigs_T=(0.0015167/0.00513)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
+    ksigs_T=(0.0015167/0.00313)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
     #ksigs_noT = (0.0015167/0.006)*((enhancement['power',:idx_maxpower+1])*(T1p['power':0]**-1))
     fl.next('ksig_smax for 2.25 mM TEMPOL')
     ksigs_T.set_units('power','mW')
@@ -226,7 +226,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #}}}
     #{{{plotting with correction for heating
     x = enhancement['power',:idx_maxpower+1].fromaxis('power')
-    fitting_line = fitdata(ksigs_T['power':(0.035,None)])
+    fitting_line = fitdata(ksigs_T['power':(0.15,None)])
     k,p_half,power = symbols("k, p_half, power",real=True)
     fitting_line.functional_form = (k*power)/(p_half+power)
     fitting_line.fit()
@@ -234,7 +234,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.plot(ksigs_T.imag,'o',label='imaginary',human_units=False)
     print("UNITS OF KSIGS_t IMAG:",ksigs_T.imag.get_units('power'))
     #fl.plot(ksigs_T.imag,'o',label='imaginary')
-    fit = fitting_line.eval(100)
+    fit = fitting_line.eval(25)
     print("fit units:",fit.get_units('power'))
     fit.set_units('power','mW')
     print("fit units after changing:", fit.get_units('power'))

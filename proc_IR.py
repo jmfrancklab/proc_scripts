@@ -28,15 +28,18 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 save_npz = False
 # }}}
 clock_correction=True
-W = 1 #repetition delay used for FIR
+W = 1#repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210317_TEMPOL_10mM_cap_probe_33dBm','inv_rec','signal','spincore_IR_v1',
-            (-6e3,6e3),(None,83e-3),True,False),
+        ('210414_6mM_TEMPOL_cap_probe_IR_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.05e3,0.09e3),(None,83e-3),False,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
+    print(ndshape(s))
+    s.set_units('t2','kHz')
+    fl.side_by_side('freq',s,f_range)
     #fl.show();quit()
     #{{{ since we need to relabel vd frequently- we make a method
     def as_scan_nbr(d):
