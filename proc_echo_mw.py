@@ -21,10 +21,10 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval
-T1p = nddata(r_[0.461,0.464,0.482,0.508,0.525],[-1],
+T1p = nddata(r_[1.831,1.970,2.116,2.257,2.318],[-1],
         ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
 R1w = 1/2.172
-R1p = nddata(r_[2.167,2.156,2.077,1.969,1.905],[-1],
+R1p = nddata(r_[0.546,0.508,0.473,0.443,0.431],[-1],
         ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
 signal_pathway = {'ph1':1,'ph2':-2}
 # slice out the FID from the echoes,
@@ -34,8 +34,8 @@ signal_pathway = {'ph1':1,'ph2':-2}
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210414_TEMPOL6mM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-11000,11000),(None,0.083)]
+        ["210311_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-8000,8000),(None,0.083)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -215,7 +215,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.title("relaxation rates")
     plt.ylabel("$R_1(p)$")
     #{{{plotting without correcting for heating
-    ksigs_T=(0.0015167/0.00313)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
+    ksigs_T=(0.0015167/0.0005)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
     #ksigs_noT = (0.0015167/0.006)*((enhancement['power',:idx_maxpower+1])*(T1p['power':0]**-1))
     fl.next('ksig_smax for 2.25 mM TEMPOL')
     ksigs_T.set_units('power','mW')
@@ -226,7 +226,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #}}}
     #{{{plotting with correction for heating
     x = enhancement['power',:idx_maxpower+1].fromaxis('power')
-    fitting_line = fitdata(ksigs_T['power':(0.15,None)])
+    fitting_line = fitdata(ksigs_T['power':(0.035,None)])
     k,p_half,power = symbols("k, p_half, power",real=True)
     fitting_line.functional_form = (k*power)/(p_half+power)
     fitting_line.fit()

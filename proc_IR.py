@@ -28,18 +28,18 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 save_npz = False
 # }}}
 clock_correction=True
-W = 1#repetition delay used for FIR
+W = 6#repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210414_6mM_TEMPOL_cap_probe_IR_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.05e3,0.09e3),(None,83e-3),False,False),
+        ('210311_TEMPOL_500uM_cap_probe_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.07e3,-0.01e3),(None,83e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
     print(ndshape(s))
-    s.set_units('t2','kHz')
-    fl.side_by_side('freq',s,f_range)
+    #s.set_units('t2','kHz')
+    #fl.side_by_side('freq',s,f_range)
     #fl.show();quit()
     #{{{ since we need to relabel vd frequently- we make a method
     def as_scan_nbr(d):
@@ -166,7 +166,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     fl.next('FID sliced -- frequency domain')
     fl.image(as_scan_nbr(s))
     #s *= -1  
-    s['vd':(None,0.3)] *= -1
+    s['vd':(None,1)] *= -1
     fl.next('Integrated data - recovery curve')
     # }}}
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
