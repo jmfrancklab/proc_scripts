@@ -21,11 +21,11 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval
-T1p = nddata(r_[1.831,1.970,2.116,2.257,2.318],[-1],
-        ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
-R1w = 1/2.172
-R1p = nddata(r_[0.546,0.508,0.473,0.443,0.431],[-1],
-        ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
+T1p = nddata(r_[1.831,1.838,1.842,1.97,2.116,2.184,2.257,2.318],[-1],
+        ['power']).setaxis('power',r_[0.001,0.05,0.1,0.5,1,1.26,1.58,2])
+R1w = 1/2.207
+R1p = nddata(r_[0.546,0.544,0.543,0.508,0.473,0.458,0.443,0.431],[-1],
+        ['power']).setaxis('power',r_[0.001,0.05,0.1,0.5,1.0,1.26,1.58,2])
 signal_pathway = {'ph1':1,'ph2':-2}
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
@@ -34,8 +34,8 @@ signal_pathway = {'ph1':1,'ph2':-2}
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210311_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-8000,8000),(None,0.083)]
+        ["210318_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-7000,7000),(None,0.083)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -180,9 +180,9 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
     plt.figure(figsize=(4,4))
-    fl.plot((1-enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
-    fl.plot((1-enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
-    plt.title('150 uM TEMPOL')
+    fl.plot((enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
+    fl.plot((enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
+    plt.title('1 mM TEMPOL')
     plt.ylabel('Enhancement')
     show()
     fl.next(r'$T_{1}$(p) vs power')
@@ -226,7 +226,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #}}}
     #{{{plotting with correction for heating
     x = enhancement['power',:idx_maxpower+1].fromaxis('power')
-    fitting_line = fitdata(ksigs_T['power':(0.035,None)])
+    fitting_line = fitdata(ksigs_T)#['power':(0.035,None)])
     k,p_half,power = symbols("k, p_half, power",real=True)
     fitting_line.functional_form = (k*power)/(p_half+power)
     fitting_line.fit()

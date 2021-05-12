@@ -31,8 +31,8 @@ clock_correction=True
 W = 6#repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210311_TEMPOL_500uM_cap_probe_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.07e3,-0.01e3),(None,83e-3),True,False),
+        ('210512_water_cap_probe_IR_33dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.291e3,0.615e3),(None,83e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
