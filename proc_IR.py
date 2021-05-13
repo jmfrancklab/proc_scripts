@@ -32,7 +32,7 @@ W = 6#repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
         ('210512_water_cap_probe_IR_33dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.291e3,0.615e3),(None,83e-3),True,False),
+            (-0.473e3,0.8e3),(None,83e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -59,6 +59,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
     #{{{ phasing the aligned data
+    print("EDIT")
     if nodename == 'signal':
         best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
         logger.info(strm("best shift is", best_shift))
