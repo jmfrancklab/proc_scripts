@@ -28,11 +28,13 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 save_npz = False
 # }}}
 clock_correction=True
-W = 6#repetition delay used for FIR
+W = 6.2#repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210311_TEMPOL_500uM_cap_probe_34dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.07e3,-0.01e3),(None,83e-3),True,False),
+        ('210322_water_control_FIR_noPower','inv_rec','signal','spincore_IR_v1',
+            (-0.218e3,-0.052e3),(None,83e-3),False,False),
+        #('210511_water_TempControl_probe_FIR_noPower','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',
+        #    (-0.2e3,-0.2e3),(None,83e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -42,6 +44,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     #fl.side_by_side('freq',s,f_range)
     #fl.show();quit()
     #{{{ since we need to relabel vd frequently- we make a method
+    #s.ft('t2',shift=True)
     def as_scan_nbr(d):
         return d.C.setaxis('vd','#').set_units('vd','scan #')
     #}}}
@@ -60,7 +63,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     # etc, but otherwise let the hermitian test handle it
     #{{{ phasing the aligned data
     if nodename == 'signal':
-        best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+        best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'), down_from_max=1.)
         logger.info(strm("best shift is", best_shift))
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
         fl.next('time domain after hermitian test')
