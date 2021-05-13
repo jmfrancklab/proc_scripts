@@ -44,7 +44,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     #fl.side_by_side('freq',s,f_range)
     #fl.show();quit()
     #{{{ since we need to relabel vd frequently- we make a method
-    #s.ft('t2',shift=True)
     def as_scan_nbr(d):
         return d.C.setaxis('vd','#').set_units('vd','scan #')
     #}}}
