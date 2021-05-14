@@ -93,6 +93,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
         s_copy.setaxis('DeltaPh1','#')
         correl = s_copy * 0 
         for ph1_index in range(ph1_len):
+            print("PH1 INDEX IS:",ph1_index)
             s_copy['DeltaPh1',ph1_index] = s_copy['DeltaPh1',ph1_index].run(lambda x, 
                 axis=None: roll(x, ph1_index,axis=axis),'ph1')
         for ph2_index in range(ph2_len):
