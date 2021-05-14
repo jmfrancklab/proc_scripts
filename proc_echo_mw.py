@@ -2,6 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
 from proc_scripts import postproc_dict
+from proc_scripts.correlation_alignment_ODNP import correl_align
 from sympy import symbols, Symbol, latex,limit,init_printing
 from matplotlib import *
 import numpy as np
@@ -16,26 +17,32 @@ plt.rcParams.update({
 logger = init_logging("info")
 fl = fl_mod()
 t2 = symbols('t2')
+
 def select_pathway(s,pathway):
     retval = s
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval
+    def as_scan_nbr(s):
+        return s.C.setaxis('power','#').set_units('power','scan #')
+                           
 T1p = nddata(r_[1.831,1.970,2.116,2.257,2.318],[-1],
         ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
 R1w = 1/2.172
 R1p = nddata(r_[0.546,0.508,0.473,0.443,0.431],[-1],
         ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
+
 signal_pathway = {'ph1':1,'ph2':-2}
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
 # list of integrals for ODNP
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
+
 # leave this as a loop, so you can load multiple files
-for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210311_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-8000,8000),(None,0.083)]
+for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers in [
+        ['210513_S175R1a_pR_DDM_ODNP', 'odnp', 'signal',
+            'spincore_ODNP_v1', (-2000,2000),(None,0.04),20]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -43,8 +50,6 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
             lookup=postproc_dict,fl=fl)
-    def as_scan_nbr(s):
-        return s.C.setaxis('power','#').set_units('power','scan #')
     fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
             s,freq_range) # visualize the frequency limits
     #fl.show();quit()
@@ -54,6 +59,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         "savefig.facecolor": (1.0,1.0,1.0,0.0),
         })
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
+    figure()
     fl.next('look at data')
     fl.image(s.C.setaxis('power','#'))
     s.ift('t2')
@@ -69,6 +75,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.side_by_side('time domain',s,t_range)
     #fl.show();quit()
     best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
+# In[]
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0}, nearest=False)
     coh_slice = select_pathway(s['t2':0],signal_pathway)
@@ -161,6 +168,15 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #{{{plotting full enhancement curve
     fl.next('full enhancement curve')
     fl.plot(s)
+
+#    plt.figure(figsize=(15,15))
+#    for i in range(23):
+#        plt.plot(s['power',i].C.data,'-',linewidth=3,alpha=0.5,
+#                 label = '%0.2f dBm'%s.getaxis('power')[i])
+#        plt.xlim(925,1030)
+#        plt.legend(bbox_to_anchor=(1.05,1),loc = 'upper left')
+    
+
     print(s.get_units('power'))
     s.set_units('power','mW')
     #fl.side_by_side('Real of E(p)',as_scan_nbr(s.real),(-500,300),human_units=False)
@@ -192,7 +208,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     print(Flinear)
     polyorder = 1
     coeff,_ = Flinear.polyfit('power',order=polyorder)
-    power = nddata(np.linspace(0,R1p.getaxis('power')[-1],25),'power')
+    power = nddata(np.linspace(0,R1p.getaxis('power')[-1],nPowers),'power')
     #power = enhancement['power',:idx_maxpower+1].fromaxis('power')    
     Flinear_fine = 0
     for j in range(polyorder + 1):
@@ -244,7 +260,8 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #ax = plt.gca()
     plt.title('ksigmas(p) vs Power')
     plt.ylabel('ksigmas(p)')
-    fl.show();quit()
+    fl.show()
 
         #}}}
 
+# In[]

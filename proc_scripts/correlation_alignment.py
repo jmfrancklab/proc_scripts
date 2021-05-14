@@ -87,8 +87,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
         s_copy *= exp(-(s_copy.fromaxis('t2')-nu_center)**2/(2*sigma**2))
         s_copy.ift('t2')
         s_copy2 = s.C
-        s_copy *= nddata(r_[1.,1.,1.,1.],'DeltaPh1')
-        s_copy *= nddata(r_[1.,1.],'DeltaPh2')
+        s_copy *= nddata(r_[1.,1.,1.,1.],'DeltaPh2')
+        s_copy *= nddata(r_[1.,1.],'DeltaPh1')
         s_copy.setaxis('DeltaPh2','#')
         s_copy.setaxis('DeltaPh1','#')
         correl = s_copy * 0 
