@@ -31,8 +31,8 @@ clock_correction=True
 W = 6.2#repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210322_water_control_FIR_noPower','inv_rec','signal','spincore_IR_v1',
-            (-0.218e3,-0.052e3),(None,83e-3),False,False),
+        ('210318_TEMPOL_500uM_cap_probe_0dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.003e3,0.087e3),(None,83e-3),True,False),
         #('210511_water_TempControl_probe_FIR_noPower','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',
         #    (-0.2e3,-0.2e3),(None,83e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
@@ -62,7 +62,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     # etc, but otherwise let the hermitian test handle it
     #{{{ phasing the aligned data
     if nodename == 'signal':
-        best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'), down_from_max=1.)
+        best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
         logger.info(strm("best shift is", best_shift))
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
         fl.next('time domain after hermitian test')
