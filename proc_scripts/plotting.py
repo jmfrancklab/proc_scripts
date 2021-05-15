@@ -4,6 +4,64 @@ import matplotlib.pyplot as plt
 import numpy as np
 import logging
 
+def expand_limits(thisrange,s,axis='t2'):
+    """" Used to expand limits of a range (typically used for slicing) by 3X
+
+    Parameters
+    ----------
+    thisrange: tuple of 2 floats
+        slice range you are interested in extending
+    s: nddata
+        the data you are planning on slicing
+    axis: str
+        name of the axis along which the slice range will be applied
+
+    Returns
+    -------
+    retval: tuple of 2 floats
+        the expanded range
+    """
+    thisrange = list(thisrange)
+    full_range = s.getaxis(axis)[r_[0,-1]]
+    retval = np.array([thisrange[j] if thisrange[j] is not
+            None else full_range[j] for j in [0,-1]])
+    m = np.mean(retval)
+    s = retval-m
+    retval = 3*s+m
+    sgn = [-1,1] # greater than or less than
+    return tuple(full_range[j] if
+            retval[j]*sgn[j] > full_range[j]*sgn[j]
+            else
+            retval[j] for j in range(2))
+
+def draw_limits(thisrange,s):
+    """
+    determines the range of the t2 axis and pairs it with the range given
+    returns the x axis limits for plotting
+
+    Parameters
+    ----------
+    thisrange: tuple of 2 floats
+        slice range you are interested in extending
+    s: nddata
+        the data you are planning on slicing
+    Returns
+    -------
+    the limits for the t2 axis for plotting purposes
+    """
+    full_range = s.getaxis('t2')[r_[0,-1]]
+    dw = np.diff(s.getaxis('t2')[:2]).item()
+    logging.info(strm("I find the full range to be",full_range))
+    sgn = [-1,1] # add or subtract
+    pairs = [[thisrange[j],full_range[j]+0.5*dw*sgn[j]] for j in range(2)]
+    pairs[0] = pairs[0][::-1] # flip first
+    my_xlim = plt.gca().get_xlim() # following messes w/ xlim for some reason
+    for j in pairs:
+        if None not in j:
+            logging.info(strm("drawing a vspan at",j))
+            plt.axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
+    plt.gca().set_xlim(my_xlim)
+
 class fl_mod(figlist_var):
     """
     Extends figlist_var with various new convenience functions.
@@ -154,61 +212,3 @@ class fl_mod(figlist_var):
                 ax2.grid(False)
                 fl.twinx(orig=True)
         return colors
-
-def expand_limits(thisrange,s,axis='t2'):
-    """" Used to expand limits of a range (typically used for slicing) by 3X
-
-    Parameters
-    ----------
-    thisrange: tuple of 2 floats
-        slice range you are interested in extending
-    s: nddata
-        the data you are planning on slicing
-    axis: str
-        name of the axis along which the slice range will be applied
-
-    Returns
-    -------
-    retval: tuple of 2 floats
-        the expanded range
-    """
-    thisrange = list(thisrange)
-    full_range = s.getaxis(axis)[r_[0,-1]]
-    retval = np.array([thisrange[j] if thisrange[j] is not
-            None else full_range[j] for j in [0,-1]])
-    m = np.mean(retval)
-    s = retval-m
-    retval = 3*s+m
-    sgn = [-1,1] # greater than or less than
-    return tuple(full_range[j] if
-            retval[j]*sgn[j] > full_range[j]*sgn[j]
-            else
-            retval[j] for j in range(2))
-
-def draw_limits(thisrange,s):
-    """
-    determines the range of the t2 axis and pairs it with the range given
-    returns the x axis limits for plotting
-
-    Parameters
-    ----------
-    thisrange: tuple of 2 floats
-        slice range you are interested in extending
-    s: nddata
-        the data you are planning on slicing
-    Returns
-    -------
-    the limits for the t2 axis for plotting purposes
-    """
-    full_range = s.getaxis('t2')[r_[0,-1]]
-    dw = np.diff(s.getaxis('t2')[:2]).item()
-    logging.info(strm("I find the full range to be",full_range))
-    sgn = [-1,1] # add or subtract
-    pairs = [[thisrange[j],full_range[j]+0.5*dw*sgn[j]] for j in range(2)]
-    pairs[0] = pairs[0][::-1] # flip first
-    my_xlim = plt.gca().get_xlim() # following messes w/ xlim for some reason
-    for j in pairs:
-        if None not in j:
-            logging.info(strm("drawing a vspan at",j))
-            plt.axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
-    plt.gca().set_xlim(my_xlim)
