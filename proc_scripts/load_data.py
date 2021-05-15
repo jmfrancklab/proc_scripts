@@ -274,9 +274,9 @@ def proc_spincore_IR(s,fl=None):
     s.reorder(['ph2','ph1']).set_units('t2','s')
     s.ft('t2', shift=True)
     s.ft(['ph2','ph1'])
-    if fl is not None:
-        fl.next('raw data -- coherence channels')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+#    if fl is not None:
+#        fl.next('raw data -- coherence channels')
+#        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
     s.ift('t2')
     if fl is not None:
         fl.next('time domain (all $\\Delta p$)')
