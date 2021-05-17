@@ -34,8 +34,8 @@ signal_pathway = {'ph1':1,'ph2':-2}
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
-        ["210318_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-8000,6000),(None,0.083)]
+        ["210517_4OHTempo_TempControl_probe_DNP_1", 'ODNP_NMR_comp', 'signal',
+            'spincore_ODNP_v1', (-600,100),(None,0.083)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -45,19 +45,19 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
             lookup=postproc_dict,fl=fl)
     def as_scan_nbr(s):
         return s.C.setaxis('power','#').set_units('power','scan #')
-    #fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
-    #        s,freq_range) # visualize the frequency limits
-    #fl.show();quit()
+    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+            s,freq_range) # visualize the frequency limits
+   # fl.show();quit()
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
         "savefig.facecolor": (1.0,1.0,1.0,0.0),
         })
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
+    s.ift('t2')
     fl.next('look at data')
     fl.image(s.C.setaxis('power','#'))
-    s.ift('t2')
-    rx_offset_corr = s['t2':(0.02,None)]
+    rx_offset_corr = s['t2':(0.065,None)]
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft('t2')
@@ -68,7 +68,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     logger.debug(strm(ndshape(s)))
     fl.side_by_side('time domain',s,t_range)
     #fl.show();quit()
-    best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
+    best_shift = hermitian_function_test(select_pathway(s,signal_pathway),down_from_max=0.9)
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0}, nearest=False)
     coh_slice = select_pathway(s['t2':0],signal_pathway)
@@ -142,15 +142,16 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     if select_pathway(s['t2':0]['power',0],signal_pathway).real < 0:
         s *= -1
     fl.next('apodized and zero fill')
-    R = 5.0/(t_range[-1]) # assume full decay by end time
-    s *= np.exp(-s.fromaxis('t2')*R)
-    s.ft('t2',pad=1963)
+    #R = 5.0/(t_range[-1]) # assume full decay by end time
+    #s *= np.exp(-s.fromaxis('t2')*R)
+    s.ft('t2',pad=2048)
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     #}}}
     #{{{select coherence channel in time domain
     s.ift('t2')
     s = s['ph2',-2]['ph1',1]['t2':(0,None)]
     s.ft('t2')
+    s['power',:zero_crossing+1] *= -1
     #}}}
     #{{{plotting enhancement curve at lowest and highest powers 
     fl.next('compare highest power to no power')
@@ -168,17 +169,20 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #}}}
     #{{{plotting enhancement vs power
     fl.next('150 uM TEMPOL ODNP')
-    enhancement = s['t2':freq_range].sum('t2').real
+    #enhancement = s['t2':freq_range].sum('t2').real
+    enhancement = s['t2':(-50,50)].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
-    enhancement *= -1
-    enhancement = 1-(enhancement/enhancement.data.max())
+    #enhancement *= -1
+    #enhancement = 1-(enhancement/enhancement.data.max())
     plt.figure(figsize=(4,4))
     fl.plot((enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
     fl.plot((enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
+    fl.show();quit()
     plt.title('1.07 mM TEMPOL')
     plt.ylabel('Enhancement')
     show()
+    quit()
     fl.next(r'$T_{1}$(p) vs power')
     fl.plot(T1p,'o')
     #{{{making Flinear and fitting
