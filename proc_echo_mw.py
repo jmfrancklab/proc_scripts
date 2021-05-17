@@ -25,7 +25,7 @@ T1p = nddata(r_[1.831,1.838,1.842,1.97,2.116,2.184,2.257,2.318],[-1],
         ['power']).setaxis('power',r_[0.001,0.05,0.1,0.5,1,1.26,1.58,2])
 R1w = 1/2.207
 R1p = nddata(r_[0.546,0.544,0.543,0.508,0.473,0.458,0.443,0.431],[-1],
-        ['power']).setaxis('power',r_[0.001,0.05,0.1,0.5,1.0,1.26,1.58,2])
+        ['power']).setaxis('power',r_[0.001,0.05,0.1,0.5,1,1.26,1.58,2])
 signal_pathway = {'ph1':1,'ph2':-2}
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
@@ -35,7 +35,7 @@ signal_pathway = {'ph1':1,'ph2':-2}
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
         ["210318_TEMPOL500uM_DNP_cap_probe_1", 'ODNP_NMR_comp', 'signal',
-            'spincore_ODNP_v1', (-7000,7000),(None,0.083)]
+            'spincore_ODNP_v1', (-8000,6000),(None,0.083)]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -45,8 +45,8 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
             lookup=postproc_dict,fl=fl)
     def as_scan_nbr(s):
         return s.C.setaxis('power','#').set_units('power','scan #')
-    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
-            s,freq_range) # visualize the frequency limits
+    #fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+    #        s,freq_range) # visualize the frequency limits
     #fl.show();quit()
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
@@ -163,26 +163,20 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     fl.plot(s)
     print(s.get_units('power'))
     s.set_units('power','mW')
-    #fl.side_by_side('Real of E(p)',as_scan_nbr(s.real),(-500,300),human_units=False)
     fl.next('real(E(p))')
     fl.image(as_scan_nbr(s.real))
-    #print(ndshape(s))
-    #s_min = s.real.data.min()
-    #s_max = s.real.data.max()
-    #d = (s.real-s_min)/(s_max-s_min)
-    #fl.next('normalized real')
-    #fl.image(d.C.setaxis(
-#'power','#').set_units('power','scan #'))
     #}}}
     #{{{plotting enhancement vs power
     fl.next('150 uM TEMPOL ODNP')
     enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
+    enhancement *= -1
+    enhancement = 1-(enhancement/enhancement.data.max())
     plt.figure(figsize=(4,4))
     fl.plot((enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
     fl.plot((enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
-    plt.title('1 mM TEMPOL')
+    plt.title('1.07 mM TEMPOL')
     plt.ylabel('Enhancement')
     show()
     fl.next(r'$T_{1}$(p) vs power')
@@ -190,7 +184,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #{{{making Flinear and fitting
     Flinear = ((R1p - R1p['power':0.001] + R1w)**-1)
     print(Flinear)
-    polyorder = 1
+    polyorder = 3
     coeff,_ = Flinear.polyfit('power',order=polyorder)
     power = nddata(np.linspace(0,R1p.getaxis('power')[-1],25),'power')
     #power = enhancement['power',:idx_maxpower+1].fromaxis('power')    
@@ -215,9 +209,9 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     plt.title("relaxation rates")
     plt.ylabel("$R_1(p)$")
     #{{{plotting without correcting for heating
-    ksigs_T=(0.0015167/0.0005)*(enhancement['power',:idx_maxpower+1])*(R1p_fine)
+    ksigs_T=(0.0015167/0.000427)*(1-enhancement['power',:idx_maxpower+1])*(R1p_fine)
     #ksigs_noT = (0.0015167/0.006)*((enhancement['power',:idx_maxpower+1])*(T1p['power':0]**-1))
-    fl.next('ksig_smax for 2.25 mM TEMPOL')
+    fl.next('ksig_smax for 500 uM TEMPOL')
     ksigs_T.set_units('power','mW')
     print("UNITS OF KSIGS_t:",ksigs_T.get_units('power'))
     #ksigs_noT.setaxis('power',ksigs_T.getaxis('power')),
@@ -226,7 +220,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range in [
     #}}}
     #{{{plotting with correction for heating
     x = enhancement['power',:idx_maxpower+1].fromaxis('power')
-    fitting_line = fitdata(ksigs_T)#['power':(0.035,None)])
+    fitting_line = fitdata(ksigs_T)#['power':(0.05,None)])
     k,p_half,power = symbols("k, p_half, power",real=True)
     fitting_line.functional_form = (k*power)/(p_half+power)
     fitting_line.fit()
