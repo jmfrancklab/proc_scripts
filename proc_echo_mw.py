@@ -12,7 +12,8 @@ from sympy import exp as s_exp
 plt.rcParams.update({
     "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
     "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
-    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),
+    "figure.figsize": (20,20)# clear
 })
 logger = init_logging("info")
 fl = fl_mod()
@@ -43,12 +44,12 @@ signal_pathway = {'ph1':1,'ph2':-2}
 for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers,plot_all in [
 #        ['210513_S175R1a_pR_DDM_ODNP', 'odnp', 'signal',
 #         'spincore_ODNP_v1', (-200,200),(None,75e-3), 20, False],
-        ['210513_F195R1a_pR_DDM_ODNP', 'odnp', 'signal',
-         'spincore_ODNP_v1', (-150,150), (None,75e-3), 20, False],
+#        ['210513_F195R1a_pR_DDM_ODNP', 'odnp', 'signal',
+#         'spincore_ODNP_v1', (-200,200), (None,75e-3), 20, False],
 #        ['210514_S175R1a_pR_DHPC_ODNP', 'odnp', 'signal',
 #         'spincore_ODNP_v1', (-200,200), (None,75e-3), 20, False],
-#        ['210514_F195R1a_pR_DHPC_ODNP', 'odnp', 'signal',
-#         'spincore_ODNP_v1', (-200,200), (None,75e-3), 20, False]
+        ['210514_F195R1a_pR_DHPC_ODNP', 'odnp', 'signal',
+         'spincore_ODNP_v1', (-250,250), (None,75e-3), 20, False]
         ]:
     fl.basename = '_'.join(searchstr.split('_')[1:])
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
@@ -61,6 +62,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers,plot_all in 
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
         "savefig.facecolor": (1.0,1.0,1.0,0.0),
+        "figure.figsize": (20,20)
         })
              
     s = s['t2':freq_range] # slice out the frequency range along t2 axis
@@ -157,7 +159,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers,plot_all in 
         fl.image(as_scan_nbr(s))
     s.ft(['ph1','ph2'])
     if plot_all:
-        fl.next('after correlation alignment FTed ph')
+        fl.next("after correlation alignment FT'd ph")
         fl.image(as_scan_nbr(s))
     s.reorder(['ph1','ph2','power','t2'])
     if plot_all:
@@ -208,8 +210,10 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers,plot_all in 
 
     print(s.get_units('power'))
     s.set_units('power','mW')
+
     #fl.side_by_side('Real of E(p)',as_scan_nbr(s.real),(-500,300),human_units=False)
-    fl.next('\n$Re[E(p,\nu2)]$')
+    fl.next('\n'+r'$Re[E(p,\nu)]$')
+    plt.figure(figsize=(10,7))
     fl.image(as_scan_nbr(s.real))
 
     #print(ndshape(s))
@@ -230,7 +234,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers,plot_all in 
     fl.plot((1-enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
     plt.ylabel('E')
     fl.show()
-## In[]
+# In[]
 #    fl.next(r'$T_{1}$(p) vs power')
 #    fl.plot(T1p,'o')
 #    #{{{making Flinear and fitting
