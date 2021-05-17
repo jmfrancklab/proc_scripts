@@ -28,13 +28,13 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
 save_npz = False
 # }}}
 clock_correction=True
-W = 6.2#repetition delay used for FIR
+W = 8#repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210322_water_control_FIR_noPower','inv_rec','signal','spincore_IR_v1',
-            (-0.218e3,-0.052e3),(None,83e-3),False,False),
-        #('210511_water_TempControl_probe_FIR_noPower','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',
-        #    (-0.2e3,-0.2e3),(None,83e-3),True,False),
+       # ('210322_water_control_FIR_noPower','inv_rec','signal','spincore_IR_v1',
+        #    (-0.146e3,-0.06e3),(None,83e-3),False,False),
+        ('210512_water_TempControl_probe_FIR_33dBm','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',
+            (-0.3e3,0.3e3),(None,83e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -50,9 +50,9 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
-    rx_offset_corr = s['t2':(0.02,None)]
-    rx_offset_corr = rx_offset_corr.mean(['t2'])
-    s -= rx_offset_corr
+    #rx_offset_corr = s['t2':(0.02,None)]
+    #rx_offset_corr = rx_offset_corr.mean(['t2'])
+    #s -= rx_offset_corr
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
     fl.next('time domain')
@@ -62,7 +62,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
     # etc, but otherwise let the hermitian test handle it
     #{{{ phasing the aligned data
     if nodename == 'signal':
-        best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'), down_from_max=1.)
+        best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
         logger.info(strm("best shift is", best_shift))
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
         fl.next('time domain after hermitian test')
