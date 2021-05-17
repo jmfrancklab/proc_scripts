@@ -31,8 +31,8 @@ clock_correction=True
 W = 6.2#repetition delay used for FIR
 
 for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-        ('210318_TEMPOL_500uM_cap_probe_0dBm','inv_rec','signal','spincore_IR_v1',
-            (-0.003e3,0.087e3),(None,83e-3),True,False),
+        ('210316_TEMPOL_1mM_cap_probe_34dBm','inv_rec','signal','spincore_IR_v1',
+            (-0.15e3,-0.1e3),(None,83e-3),True,False),
         #('210511_water_TempControl_probe_FIR_noPower','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',
         #    (-0.2e3,-0.2e3),(None,83e-3),True,False),
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
