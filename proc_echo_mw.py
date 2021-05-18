@@ -42,14 +42,22 @@ signal_pathway = {'ph1':1,'ph2':-2}
 
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers,plot_all in [
+        ['210518_F195R1a_pR_DHPC_ODNP','odnp','signal',
+         'spincore_ODNP_v1',(-300,300),(None,75e-3),23,True]
+#        ['200131_echo_DNP_pR_1','odnp','signal',
+#         'spincore_ODNP_v1',(-200,200),(None,75e-3),23,False]
+#        ['210422_210422_T177R1a_pR_KH2PO4_ONDP.h5','odnp', 'signal',
+#         'spincore_ODNP_v1', (-200,200),(None,75e-3), 20, False],
+#        ['210422_210422_T177R1a_pR_KI_ONDP.h5','odnp', 'signal',
+#         'spincore_ODNP_v1', (-200,200),(None,75e-3), 20, False],
 #        ['210513_S175R1a_pR_DDM_ODNP', 'odnp', 'signal',
 #         'spincore_ODNP_v1', (-200,200),(None,75e-3), 20, False],
 #        ['210513_F195R1a_pR_DDM_ODNP', 'odnp', 'signal',
 #         'spincore_ODNP_v1', (-200,200), (None,75e-3), 20, False],
 #        ['210514_S175R1a_pR_DHPC_ODNP', 'odnp', 'signal',
 #         'spincore_ODNP_v1', (-200,200), (None,75e-3), 20, False],
-        ['210514_F195R1a_pR_DHPC_ODNP', 'odnp', 'signal',
-         'spincore_ODNP_v1', (-250,250), (None,75e-3), 20, False]
+#        ['210514_F195R1a_pR_DHPC_ODNP', 'odnp', 'signal',
+#         'spincore_ODNP_v1', (-250,250), (None,75e-3), 20, False]
         ]:
     fl.basename = '_'.join(searchstr.split('_')[1:])
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
