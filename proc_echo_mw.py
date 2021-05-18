@@ -23,7 +23,7 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval
-    def as_scan_nbr(s):
+def as_scan_nbr(s):
         return s.C.setaxis('power','#').set_units('power','scan #')
                            
 T1p = nddata(r_[1.831,1.970,2.116,2.257,2.318],[-1],
@@ -41,8 +41,8 @@ signal_pathway = {'ph1':1,'ph2':-2}
 
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers in [
-        ['210513_S175R1a_pR_DDM_ODNP', 'odnp', 'signal',
-            'spincore_ODNP_v1', (-2000,2000),(None,0.04),20]
+        ["210518_F195R1a_pR_DHPC_ODNP", 'odnp', 'signal',
+            'spincore_ODNP_v1', (-300,300), (None,50e-3),23]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
         #    'spincore_ODNP_v1', (-5000,5000),0.06]
         ]:
@@ -75,7 +75,7 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers in [
     fl.side_by_side('time domain',s,t_range)
     #fl.show();quit()
     best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
-# In[]
+
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0}, nearest=False)
     coh_slice = select_pathway(s['t2':0],signal_pathway)
@@ -191,16 +191,16 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers in [
 #'power','#').set_units('power','scan #'))
     #}}}
     #{{{plotting enhancement vs power
-    fl.next('150 uM TEMPOL ODNP')
+    fl.next('E(p)')
     enhancement = s['t2':freq_range].sum('t2').real
     enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
     plt.figure(figsize=(4,4))
     fl.plot((1-enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
     fl.plot((1-enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
-    plt.title('150 uM TEMPOL')
     plt.ylabel('Enhancement')
     show()
+# In[]
     fl.next(r'$T_{1}$(p) vs power')
     fl.plot(T1p,'o')
     #{{{making Flinear and fitting
