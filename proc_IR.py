@@ -33,6 +33,7 @@ coh_err = {'ph1':1,# coherence pathways to use for error -- note that this
         'ph2':r_[0,2,3]}
 save_npz = False
 clock_correction=True
+<<<<<<< HEAD
 # }}}
 
 T1_values = np.zeros((6)) # for now, just set to a higher number and filled with first value.
@@ -54,6 +55,17 @@ for i,(thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT,W,plot_all) in
 #for i,(thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT,W,plot_all) in enumerate([
 #        ['210514_F195R1a_pR_DHPC_IR_34dBm','odnp','signal','spincore_IR_v1',
 #        (-100,100), (None,50e-3), False, False, 3.5, False]]):    
+=======
+W = 6.2#repetition delay used for FIR
+
+for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
+       # ('210322_water_control_FIR_noPower','inv_rec','signal','spincore_IR_v1',
+        #    (-0.146e3,-0.06e3),(None,83e-3),False,False),
+        ('210517_4OHTempo_TempControl_probe_FIR_34dBm.','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',
+            (-0.4e3,0.4e3),(None,20e-3),False,False),
+        #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
+        ]:
+>>>>>>> 73bd74b04ec1601bbc37903868f47768c7eabb34
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
     print(ndshape(s))
@@ -70,9 +82,9 @@ for i,(thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT,W,plot_all) in
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
-    rx_offset_corr = s['t2':(0.02,None)]
-    rx_offset_corr = rx_offset_corr.mean(['t2'])
-    s -= rx_offset_corr
+    #rx_offset_corr = s['t2':(0.02,None)]
+    #rx_offset_corr = rx_offset_corr.mean(['t2'])
+    #s -= rx_offset_corr
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
     #if plot_all:
