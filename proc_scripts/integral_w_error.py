@@ -42,7 +42,7 @@ def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
      raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
              +str(extra_dims))
     collected_variance = ndshape(
-         [ndshape(s)['vd'],len(error_path)],['vd','pathways']).alloc()
+         [ndshape(s)[indirect],len(error_path)],[indirect,'pathways']).alloc()
     for j in range(len(error_path)):
      # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
      # where N₂ is the number of points in the indirect dimension

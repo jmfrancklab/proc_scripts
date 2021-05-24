@@ -33,6 +33,7 @@ R1p = nddata(r_[0.546,0.508,0.473,0.443,0.431],[-1],
         ['power']).setaxis('power',r_[0.001,0.5,1.0,1.5,2.0])
 C = 0.001
 signal_pathway = {'ph1':1,'ph2':-2}
+excluded_pathways = [(0,3),(0,0)]
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
 # list of integrals for ODNP
@@ -40,8 +41,8 @@ signal_pathway = {'ph1':1,'ph2':-2}
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
 for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers in [
-        ['210316_TEMPOL1mM_DNP_cap_probe_1','ODNP_NMR_comp/test_equipment','signal',
-            'spincore_ODNP_v1',(-9000,9000),(None,0.083),25]
+        ['210309_TEMPOL150uM_DNP_cap_probe_1','ODNP_NMR_comp/test_equipment','signal',
+            'spincore_ODNP_v1',(-2500,2500),(None,0.083),25]
         #["210518_F195R1a_pR_DHPC_ODNP", 'odnp', 'signal',
         #    'spincore_ODNP_v1', (-300,300), (None,50e-3),23]
         #["201203_4AT10mM_DNP_cap_probe_1",'ODNP_NMR_comp','signal',
@@ -148,34 +149,44 @@ for searchstr,exp_type,nodename,postproc,freq_range,t_range,nPowers in [
     fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     #}}}
     #{{{select coherence channel in time domain
-    s.ift('t2')
-    s = s['ph2',-2]['ph1',1]['t2':(0,None)]
-    s.ft('t2')
+    # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
+            - set(excluded_pathways)
+            - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
+    error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
+    # }}}
+    enhancement = integral_w_errors(s,signal_pathway,error_path,indirect='power')
+     
+    #s.ift('t2')
+    #s = s['ph2',-2]['ph1',1]['t2':(0,None)]
+    #s.ft('t2')
     s['power',:zero_crossing+1] *= -1
     #}}}
     #{{{plotting enhancement curve at lowest and highest powers 
-    fl.next('compare highest power to no power')
+    #fl.next('compare highest power to no power')
     idx_maxpower = np.argmax(s.getaxis('power'))
-    fl.plot(s['power',0])
-    fl.plot(s['power',idx_maxpower])
+    #fl.plot(s['power',0])
+    #fl.plot(s['power',idx_maxpower])
     #}}}
     #{{{plotting full enhancement curve
-    fl.next('full enhancement curve')
-    fl.plot(s)
+    #fl.next('full enhancement curve')
+    #fl.plot(s)
     s.set_units('power','mW')
-    fl.next('real(E(p))')
-    fl.image(as_scan_nbr(s.real))
+    #fl.next('real(E(p))')
+    #fl.image(as_scan_nbr(s.real))
     #}}}
     #{{{plotting enhancement vs power
     fl.next('E(p)')
-    enhancement = s['t2':freq_range].sum('t2').real
-    enhancement /= enhancement['power',0]
+    print(ndshape(s))
+    #enhancement = s['t2':freq_range].sum('t2').real
+    #enhancement /= enhancement['power',0]
     enhancement.set_units('power','W')
     plt.figure(figsize=(4,4))
     fl.plot((enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
     fl.plot((enhancement['power',idx_maxpower+1:]),'ro', human_units=False)
     plt.title('%s'%searchstr)
     plt.ylabel('Enhancement')
+    show()
     fl.next(r'$T_{1}$(p) vs power')
     fl.plot(T1p,'o')
     #{{{making Flinear and fitting
