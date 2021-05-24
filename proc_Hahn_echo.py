@@ -9,7 +9,6 @@ for date,id_string in [
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip'))
-    print(ndshape(s))
     nEchoes = s.get_prop('acq_params')['nEchoes']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPoints = s.get_prop('acq_params')['nPoints']
@@ -30,18 +29,12 @@ for date,id_string in [
         fl.next('data plot')
         fl.plot(s['ph1',1]['ph2',0])
         fl.plot(s.imag['ph1',1]['ph2',0])
-    fl.show();quit()    
-    fl.next('raw data-real')
-    fl.plot(s.real,alpha=0.4,label='real')
-    fl.plot(s.imag,alpha=0.4,label='imaginary')
-    s.ft('t',shift=True)
-    print(ndshape(s));quit()
-    #s.ft(['ph1','ph2'])
+    else:
+        s.ft('t2',shift=True)
+        s.ft(['ph1','ph2'])
     fl.next('coherence domain')
     fl.image(s)
-    fl.show();quit()
-    s.mean_all_but('t')
-    s.convolve('t',10)
+    s.mean_all_but('t2')
     fl.next('Absolute value -- FT for capillary probe')
     fl.plot(s.real,alpha=0.4,label='real')
     fl.plot(s.imag,alpha=0.4,label='imaginary')

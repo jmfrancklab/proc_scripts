@@ -14,7 +14,7 @@ for j in range(1,7):
     assert len(fname)==1
     fname = os.path.split(os.path.normpath(fname[0]))
     dirname,fname = fname
-    print("looking for nutation node in",fname,"in",dirname)
+    logger.info(strm("looking for nutation node in",fname,"in",dirname))
     s = nddata_hdf5(fname+'/signal', directory=dirname)
     # data should be chunked before storage
     s.chunk('t',['ph2','ph1','t2'],[4,2,-1])
@@ -23,7 +23,7 @@ for j in range(1,7):
     s.set_units('t2','s')
     rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
     s.setaxis(t2-rough_center)
-    s.ft('t2',shift=True).reorder(['ph2','ph1'])#.ft(['ph1','ph2'])
+    s.ft('t2',shift=True).reorder(['ph2','ph1'])
     s *= np.exp(-1j*s.fromaxis('vd')*clock_correction)
     plt.sca(fig_dict['raw data'][j-1])
     image(s['t2':(-200,200)].C.setaxis('vd','#').set_units('vd','scan #'),

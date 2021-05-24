@@ -173,12 +173,10 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     twice_tau = 2*p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end +1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
-    s.set_units('t2','us')
-    if fl is not None:
-        DCCT(s,fl.next('Raw Data'))
     s.chunk('t2',['tE','t2'],[nEchoes,-1])
     s.setaxis('tE', (1+r_[0:nEchoes])*twice_tau)
-    s.ft('t2', shift=True).ft(['ph1','ph2'])
+    s.ft('t2', shift=True)
+    s.ft(['ph1','ph2'])
     s.reorder(['ph1','ph2','indirect'])
     if fl is not None:
         fl.next('freq domain coh domain')

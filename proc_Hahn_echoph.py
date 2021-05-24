@@ -6,14 +6,19 @@ from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging('info')
-
+def select_pathway(s,pathway):
+    retval = s
+    for k, v in pathway.items():
+        retval = retval[k,v]
+    return retval
+signal_pathway = {'ph1':1,'ph2':0}
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
         ('200302_alex_probe_water', 'test_equip', 'signal', 
-            'spincore_Hahn_echoph_v1','microwaves off',(-5e3,5e3)),
+            'spincore_Hahn_echoph_v1','microwaves off',(-2.5e3,2.5e3)),
         ]:
     #{{{loads raw data and plots
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_dict)
+            postproc=postproc, lookup=postproc_dict,fl=fl)
     s.mean('nScans')    
     #}}}
     #{{{rough centering of sliced data 
@@ -24,10 +29,10 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     logger.debug(strm(ndshape(s)))
     #}}}
     #{{{ apply phase corrections
-    best_shift = hermitian_function_test(s)
+    best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
     logger.info(strm("best shift is",best_shift))
     s_uncorrected = s.C.ft('t2')
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0},nearest=False)
     ph0 = s['t2':0]['ph2',0]['ph1',1]
     logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
@@ -53,6 +58,7 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     s.ft('t2')
     #}}}
     #{{{visualize final processed data
+    s = select_pathway(s,signal_pathway)
     fl.next('processed data')
     fl.plot(s_uncorrected['ph2',-2]['ph1',1],'ko',
             label='without time-axis correction')
