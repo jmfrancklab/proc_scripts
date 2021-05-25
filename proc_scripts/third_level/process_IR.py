@@ -25,12 +25,12 @@ def process_IR(s, label='', fl=None,
         coh_err = {'ph1':1,'ph2':r_[0,2,3]},
         clock_correction = True,
         W=6.2,
-        f_range = (-0.291e3,0.615e3),
+        f_range = (None,None),
         t_range = (None,83e-3),
         IR = True,
         ILT=False,
-        plot_all=True,
-        nodename='signal'):
+        plot_all=True
+        ):
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
     s.ift('t2')
@@ -44,43 +44,42 @@ def process_IR(s, label='', fl=None,
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
     #{{{ phasing the aligned data
-    if nodename == 'signal':
-        best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
-        logger.info(strm("best shift is", best_shift))
-        s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-        if plot_all:
-            fl.next('time domain after hermitian test')
-            fl.image(as_scan_nbr(s))
+    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+    logger.info(strm("best shift is", best_shift))
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    if plot_all:
+        fl.next('time domain after hermitian test')
+        fl.image(as_scan_nbr(s))
+    s.ft('t2')
+    if plot_all:
+        fl.next('frequency domain after hermitian test')
+        fl.image(as_scan_nbr(s))
+    s.ift('t2')
+    if clock_correction:
+        #{{{ clock correction
+        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
         s.ft('t2')
         if plot_all:
-            fl.next('frequency domain after hermitian test')
+            fl.next('before clock correction')
             fl.image(as_scan_nbr(s))
+        s_clock=s['ph1',0]['ph2',1].sum('t2')
+        s.ift(['ph1','ph2'])
+        min_index = abs(s_clock).argmin('vd',raw_index=True).item()
+        s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+        s_clock['vd',:min_index+1] *=-1
+        s_clock.sum('vd').run(abs)
+        if plot_all:
+            fl.next('clock correction')
+            fl.plot(s_clock,'.',alpha=0.7)
+        clock_corr = s_clock.argmax('clock_corr').item()
+        plt.axvline(x=clock_corr, alpha=0.5, color='r')
+        s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+        s.ft(['ph1','ph2'])
+        if plot_all:
+            fl.next('after auto-clock correction')
+            fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
-        if clock_correction:
-            #{{{ clock correction
-            clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
-            s.ft('t2')
-            if plot_all:
-                fl.next('before clock correction')
-                fl.image(as_scan_nbr(s))
-            s_clock=s['ph1',0]['ph2',1].sum('t2')
-            s.ift(['ph1','ph2'])
-            min_index = abs(s_clock).argmin('vd',raw_index=True).item()
-            s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
-            s_clock['vd',:min_index+1] *=-1
-            s_clock.sum('vd').run(abs)
-            if plot_all:
-                fl.next('clock correction')
-                fl.plot(s_clock,'.',alpha=0.7)
-            clock_corr = s_clock.argmax('clock_corr').item()
-            plt.axvline(x=clock_corr, alpha=0.5, color='r')
-            s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
-            s.ft(['ph1','ph2'])
-            if plot_all:
-                fl.next('after auto-clock correction')
-                fl.image(s.C.setaxis('vd','#'))
-            s.ift('t2')
-            #}}}
+        #}}}
     s.ift(['ph1','ph2'])
     phasing = s['t2',0].C
     phasing.data *= 0
@@ -204,7 +203,8 @@ def process_IR(s, label='', fl=None,
     plt.legend(bbox_to_anchor=(1,1.01),loc='upper left')
     logger.info(strm("YOUR T1 IS:",T1))
     fl.show()
-
+    return T1
+    
     if ILT:
         T1 = nddata(np.logspace(-3,3,150),'T1')
         plot_Lcurve = False
