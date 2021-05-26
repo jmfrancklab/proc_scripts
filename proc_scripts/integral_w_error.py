@@ -6,7 +6,7 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval    
-def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
+def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,return_frq_slice=False):
     """Calculates the propagation of error for the given signal and returns
     signal with the error associated.
     
@@ -28,14 +28,13 @@ def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
                 data with error associated with coherence pathways
                 not included in the signal pathway
     """
-    print("NDSHAPE OF DATA",ndshape(self))
-    frq_slice = integrate_limits(self,axis=direct)
+    frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
     logging.debug(strm('frq_slice is',frq_slice))
-    s = self[direct:frq_slice]
-    f = self.getaxis(direct)
+    s = s[direct:frq_slice]
+    f = s.getaxis(direct)
     df = f[1]-f[0]
     errors = []
-    all_labels = set(self.dimlabels)
+    all_labels = set(s.dimlabels)
     all_labels -= set([indirect,direct])
     extra_dims = [j for j in all_labels if not j.startswith('ph')]
     if len(extra_dims) > 0:
@@ -52,7 +51,6 @@ def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
      # mean sums all elements (there are N₁N₂ elements)
      s_forerror.run(lambda x: abs(x)**2).mean_all_but([indirect,direct]).integrate(direct)
      s_forerror *= df # Δf
-     s_forerror /= sqrt(2)
      collected_variance['pathways',j] = s_forerror
     collected_variance.mean('pathways') # mean the variance above across all pathways
     # {{{ variance calculation for debug
@@ -60,4 +58,7 @@ def integral_w_errors(self,sig_path,error_path, indirect='vd', direct='t2'):
     print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s,sig_path)
-    return s.integrate(direct).set_error(sqrt(collected_variance.data))
+    if not return_frq_slice:
+        return s.integrate(direct).set_error(sqrt(collected_variance.data))
+    elif return_frq_slice:
+        return s.integrate(direct).set_error(sqrt(collected_variance.data)), frq_slice

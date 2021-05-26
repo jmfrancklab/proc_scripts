@@ -32,15 +32,14 @@ T1_list = []
 #        ]:
 #    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
 #            postproc=postproc,lookup=postproc_dict,fl=fl)
-   #fl.show();quit()
 #    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl) 
 #    T1_list.append(T1)
 #T1_list.pop(-1)
 searchstr ='210525_TEMPOL7uM_cap_probe_DNP' 
 d = find_file(searchstr,exp_type='ODNP_NMR_comp/test_equipment',
-        expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=None)
-enhancement,idx_maxpower = process_enhancement(d, searchstr = searchstr,freq_range=(-8e2,8e2),
-        fl=fl)
+        expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
+enhancement,idx_maxpower = process_enhancement(d, searchstr = searchstr,freq_range=(-2e3,2e3),
+        t_range=(0,0.06),fl=fl)
 T1p = nddata(T1_list,[-1],['power']).setaxis('power',power_list)
 R1p = T1p**-1   
 fl.next(r'$T_{1}$(p) vs power')
