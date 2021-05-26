@@ -370,9 +370,9 @@ def proc_spincore_ODNP_v1(s,fl=None):
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     s.set_units('t','s')
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.chunk('t',['ph2','ph1','t2'],[2,2,-1])
     s.labels({'ph2':r_[0.,2.]/4,
-        'ph1':r_[0.,1.,2.,3.]/4})
+        'ph1':r_[0.,2.]/4})
     s.reorder(['ph2','ph1'])
     s.ft('t2',shift=True)
     s.ft(['ph1','ph2']) # Fourier Transforms coherence channels

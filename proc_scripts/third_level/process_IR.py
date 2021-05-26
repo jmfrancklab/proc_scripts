@@ -29,7 +29,7 @@ def process_IR(s, label='', fl=None,
         t_range = (None,83e-3),
         IR = True,
         ILT=False,
-        plot_all=True
+        plot_all=False
         ):
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s = s['t2':f_range]
@@ -39,8 +39,9 @@ def process_IR(s, label='', fl=None,
     s -= rx_offset_corr
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
-    fl.next('time domain')
-    fl.image(as_scan_nbr(s))
+    if fl is not None:
+        fl.next('time domain')
+        fl.image(as_scan_nbr(s))
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
     #{{{ phasing the aligned data
@@ -86,7 +87,6 @@ def process_IR(s, label='', fl=None,
     phasing.ft(['ph1','ph2'])
     phasing['ph1',0]['ph2',1] = 1
     phasing.ift(['ph1','ph2'])
-    
     ph0 = s['t2':0]/phasing
     ph0 /= abs(ph0)
     s /= ph0
@@ -179,8 +179,9 @@ def process_IR(s, label='', fl=None,
         fl.plot(s_signal,'o',label='real')
         fl.plot(s_signal.imag,'o',label='imaginary')
     s = select_pathway(s,signal_pathway)
-    fl.next('Spectrum - freq domain')
-    fl.plot(s)
+    if fl is not None:
+        fl.next('Spectrum - freq domain')
+        fl.plot(s)
     x = s_signal.fromaxis('vd')
     f = fitdata(s_signal)
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")
@@ -192,15 +193,15 @@ def process_IR(s, label='', fl=None,
     logger.info(strm("output:",f.output()))
     logger.info(strm("latex:",f.latex()))
     T1 = 1./f.output('R_1')
-
-    fl.next('fit',legend=True)
-    fl.plot(s_signal,'o', label='actual data')
-    fl.plot(s_signal.imag,'o',label='actual imaginary')
-    fl.plot(f.eval(100),label='fit')
-    plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='medium',
-            horizontalalignment='center',verticalalignment='center',color='k',
-            position=(0.33,0.95),fontweight='bold')
-    plt.legend(bbox_to_anchor=(1,1.01),loc='upper left')
+    if fl is not None:
+        fl.next('fit',legend=True)
+        fl.plot(s_signal,'o', label='actual data')
+        fl.plot(s_signal.imag,'o',label='actual imaginary')
+        fl.plot(f.eval(100),label='fit')
+        plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='medium',
+                horizontalalignment='center',verticalalignment='center',color='k',
+                position=(0.33,0.95),fontweight='bold')
+        plt.legend(bbox_to_anchor=(1,1.01),loc='upper left')
     logger.info(strm("YOUR T1 IS:",T1))
     fl.show()
     return T1

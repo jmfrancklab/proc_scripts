@@ -36,7 +36,7 @@ class fl_mod(figlist_var):
         if 'power' in s.dimlabels:
             self.image(forplot.C.setaxis('power','#').set_units('power','scan #'))
         else:
-            self.image(forplot.C.setaxis('vd','#').set_units('vd','scan #'))
+            self.image(forplot)
         draw_limits(thisrange,forplot)
         plt.sca(ax2)
         if 'power' in s.dimlabels:

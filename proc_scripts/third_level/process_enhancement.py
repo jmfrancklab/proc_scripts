@@ -3,7 +3,7 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
 from proc_scripts import postproc_dict
 from proc_scripts.correlation_alignment_ODNP import correl_align
-from sympy import symbols, Symbol, latex,limit,init_printing
+from sympy import symbols
 from matplotlib import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,8 +29,8 @@ def as_scan_nbr(s):
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
-def process_enhancement(s, searchstr=searchstr, signal_pathway = {'ph1':1,'ph2':-2},
-        excluded_pathways = [(0,3),(0,0)], freq_range=(None,None),
+def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
+        excluded_pathways = [(0,1),(0,0)], freq_range=(None,None),
         t_range=(0,0.083),fl=None):
     if fl is not None:
         fl.basename = searchstr
@@ -148,29 +148,31 @@ def process_enhancement(s, searchstr=searchstr, signal_pathway = {'ph1':1,'ph2':
     # }}}
     enhancement = integral_w_errors(s,signal_pathway,error_path,indirect='power')
      
-    #s.ift('t2')
-    #s = s['ph2',-2]['ph1',1]['t2':(0,None)]
-    #s.ft('t2')
+    s.ift('t2')
+    s = s['ph2',-2]['ph1',1]['t2':(0,None)]
+    s.ft('t2')
     s['power',:zero_crossing+1] *= -1
     #}}}
     #{{{plotting enhancement curve at lowest and highest powers 
-    #fl.next('compare highest power to no power')
     idx_maxpower = np.argmax(s.getaxis('power'))
-    #fl.plot(s['power',0])
-    #fl.plot(s['power',idx_maxpower])
+    if fl is not None:
+        fl.next('compare highest power to no power')
+        fl.plot(s['power',0])
+        fl.plot(s['power',idx_maxpower])
     #}}}
     #{{{plotting full enhancement curve
-    #fl.next('full enhancement curve')
-    #fl.plot(s)
+        fl.next('full enhancement curve')
+        fl.plot(s)
     s.set_units('power','mW')
-    #fl.next('real(E(p))')
-    #fl.image(as_scan_nbr(s.real))
+    if fl is not None:
+        fl.next('real(E(p))')
+        fl.image(as_scan_nbr(s.real))
     #}}}
     #{{{plotting enhancement vs power
+    enhancement = s['t2':freq_range].sum('t2').real
+    enhancement /= enhancement['power',0]
     if fl is not None:
         fl.next('E(p)')
-    #enhancement = s['t2':freq_range].sum('t2').real
-    #enhancement /= enhancement['power',0]
         enhancement.set_units('power','W')
         plt.figure(figsize=(4,4))
         fl.plot((enhancement['power',:idx_maxpower+1]),'ko', human_units=False)
@@ -178,4 +180,4 @@ def process_enhancement(s, searchstr=searchstr, signal_pathway = {'ph1':1,'ph2':
         plt.title('%s'%searchstr)
         plt.ylabel('Enhancement')
     show()
-    return enhancement
+    return enhancement,idx_maxpower
