@@ -172,7 +172,7 @@ def process_IR(s, label='', fl=None,
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
-    s_signal = integral_w_errors(s,signal_pathway,error_path)
+    s_signal = integral_w_errors(s,signal_pathway,error_path,fl=fl)
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
     if plot_all:
         fl.next('Integrated data - recovery curve')
@@ -203,7 +203,6 @@ def process_IR(s, label='', fl=None,
                 position=(0.33,0.95),fontweight='bold')
         plt.legend(bbox_to_anchor=(1,1.01),loc='upper left')
     logger.info(strm("YOUR T1 IS:",T1))
-    fl.show()
     return T1
     
     if ILT:
