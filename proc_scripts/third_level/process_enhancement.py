@@ -120,7 +120,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     if fl is not None:
         fl.next('after correlation alignment FTed ph')
         fl.image(as_scan_nbr(s))
-    s.reorder(['ph1','ph2','power','t2'])
+    s.reorder(['ph2','ph1','power','t2'])
     if fl is not None:
         fl.next('after correlation -- frequency domain')
         fl.image(as_scan_nbr(s))

@@ -379,6 +379,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
     if fl is not None:
         fl.next('all data: frequency domain')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+    s.C.setaxis('power','#').set_units('power','scan #')
     return s
 
 def proc_capture(s):
