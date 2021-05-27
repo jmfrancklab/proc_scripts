@@ -38,7 +38,7 @@ T1_list = []
 searchstr ='210525_TEMPOL7uM_cap_probe_DNP' 
 d = find_file(searchstr,exp_type='ODNP_NMR_comp/test_equipment',
         expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
-enhancement,idx_maxpower = process_enhancement(d, searchstr = searchstr,freq_range=(-2e3,2e3),
+enhancement,idx_maxpower = process_enhancement(d.real, searchstr = searchstr,freq_range=(-2e3,2e3),
         t_range=(0,0.03),fl=fl)
 T1p = nddata(T1_list,[-1],['power']).setaxis('power',power_list)
 R1p = T1p**-1   

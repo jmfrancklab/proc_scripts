@@ -24,7 +24,7 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     
     Returns
     =======
-    self:       nddata
+    s:       nddata
                 data with error associated with coherence pathways
                 not included in the signal pathway
     """

@@ -138,7 +138,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     s = s['t2':(0,None)]
     s['t2':0] *= 0.5
     s.ft('t2')
-    # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    # {{{ this is the generazl way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
@@ -146,6 +146,10 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     # }}}
     s_,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='power', fl=fl, return_frq_slice=True)
+    if fl is not None:
+        fl.next('real E(p)')
+        fl.plot(s['power',:]['t2':(-250,250)]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real)
+    fl.show();quit()    
     s = s_.C
     idx_maxpower = np.argmax(s.getaxis('power'))
     if fl is not None:
