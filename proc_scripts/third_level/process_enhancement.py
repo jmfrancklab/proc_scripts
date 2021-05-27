@@ -33,7 +33,7 @@ def as_scan_nbr(s):
 # leave this as a loop, so you can load multiple files
 def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
         excluded_pathways = [(0,1),(0,0)], freq_range=(None,None),
-        t_range=(0,0.083),fl=None):
+        t_range=(0,0.023),fl=None):
     if fl is not None:
         fl.basename = searchstr
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
@@ -135,10 +135,12 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
         fl.next('after correlation -- frequency domain')
         fl.image(as_scan_nbr(s))
     s.ift('t2')
+    d=s.C
     s = s['t2':(0,None)]
     s['t2':0] *= 0.5
+    
     s.ft('t2')
-    # {{{ this is the generazl way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
@@ -147,6 +149,44 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     s_,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='power', fl=fl, return_frq_slice=True)
     if fl is not None:
+        with figlist_var() as fl:
+            left_pad,bottom_pad,width_pad,top_pad = DCCT(d,fl.next('dummy'),just_2D=True)
+            pass_frq_slice=True
+            frq_slice=frq_slice
+            fl.next('diagnostic 1D plot')
+            fl.plot(s['power',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
+            axvline(x=frq_slice[0],c='k',linestyle=':',alpha=0.8)
+            axvline(x=frq_slice[-1],c='k',linestyle=':',alpha=0.8)
+            fl.next('')
+            x = s.getaxis('t2')
+            dx = x[1]-x[0]
+            y = s.getaxis('power')
+            dy = y[1]-y[0]
+            start_y = s.getaxis('power')[0]
+            stop_y = s.getaxis('power')[-1]+25
+            figure()
+            ax = plt.axes([left_pad,bottom_pad,width_pad,top_pad])
+            yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
+            majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=2, steps=[1,10])
+            minorLocator = lambda: mticker.AutoMinorLocator(n=4)
+            ax.xaxis.set_major_locator(majorLocator())
+            ax.xaxis.set_minor_locator(minorLocator())
+            ax.set_ylabel(None)
+            fl.image(s['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real.run(complex128).C.setaxis(
+'power','#').set_units('power','scan #'),black=False)
+            x1 = x[0]-dx
+            y1 = start_y-dy
+            x2 = frq_slice[-1]+dx
+            tall = 500#(y[-1]+dy)-(y[0]-dy) 
+            wide = frq_slice[0]-x1
+            wide2 = (x[-1]+dx)-x2
+            p = patches.Rectangle((x1,y1),wide,tall,angle=0.0,linewidth=1,fill=None,
+                    hatch='//',ec='k')
+            ax.add_patch(p)
+            q = patches.Rectangle((x2,y1),wide2,tall,angle=0.0,linewidth=1,
+                    fill=None,hatch='//',ec='k')
+            ax.add_patch(q)
+
         fl.next('real E(p)')
         fl.plot(s['power',:]['t2':(-250,250)]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real)
     fl.show();quit()    
