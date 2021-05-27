@@ -51,7 +51,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
         fl.next('look at data')
         fl.image(s.C.setaxis('power','#'))
     s.ift(['ph1','ph2'])    
-    rx_offset_corr = s['t2':(0.02,None)]
+    rx_offset_corr = s['t2':(0.008,None)]
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft('t2')
@@ -79,7 +79,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
     s /= ph0
     s.ft(['ph1','ph2'])
-    #{{{apodizing and zero fill
+   #{{{apodizing and zero fill
     logger.info(strm(s.dimlabels))
     if fl is not None:
         fl.next('phase corrected')
@@ -88,7 +88,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     logger.info(strm("zero corssing at",zero_crossing))
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
-    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
+    power_axis_W[:] = 1e-3*10**(power_axis_dBm/10)
     power_axis_W = r_[0,power_axis_W]
     s.ift(['ph1','ph2'])
     s.ft('t2')
@@ -134,8 +134,6 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     if fl is not None:
         fl.next('after correlation -- frequency domain')
         fl.image(as_scan_nbr(s))
-    s.ift('t2')
-    s.ft('t2')
     s.ift('t2')
     s = s['t2':(0,None)]
     s['t2':0] *= 0.5
