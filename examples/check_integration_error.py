@@ -46,10 +46,14 @@ for j in range(n_repeats):
     data /= sqrt(ndshape(data)["t2"]) * dt
     # }}}
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":bounds]
+    print(ndshape(manual_bounds))
+    quit()
     N = ndshape(manual_bounds)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
     manual_bounds.integrate("t2")
     # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
+    print(ndshape(manual_bounds))
+    quit()
     all_results["repeats", j] = manual_bounds
     print("#%d"%j)
 std_off_pathway = (

@@ -200,6 +200,8 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
         fl.next('full enhancement curve')
         fl.plot(s)
     s /= max(s.data)
+    print(ndshape(s))
+    quit()
     s.setaxis('power',power_axis_W)
     thiscolor = next(thesecolors)
     if fl is not None:
