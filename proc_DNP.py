@@ -16,9 +16,9 @@ nPowers=25
 #}}}
 T1_list = []
 #for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-#       ('210525_TEMPOL7uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','0p001_Watts','spincore_IR_v1',
+#       ('210527_TEMPOL_150uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','FIR_0dBm','spincore_IR_v1',
 #           (-0.5e3,0.8e3),(None,83e-3),True,False),
-#        ('210525_TEMPOL7uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','0p5_Watts','spincore_IR_v1',
+#        ('210527_TEMPOL150uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','FIR_27dBm','spincore_IR_v1',
 #           (-0.5e3,0.8e3),(None,83e-3),True,False),
 #        ('210525_TEMPOL7uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','1_Watts','spincore_IR_v1',
 #           (-0.5e3,0.8e3),(None,83e-3),True,False),
@@ -33,11 +33,12 @@ T1_list = []
 #    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
 #            postproc=postproc,lookup=postproc_dict,fl=fl)
 #    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl) 
+#fl.show();quit()
 #    T1_list.append(T1)
 #T1_list.pop(-1)
 searchstr ='210525_TEMPOL7uM_cap_probe_DNP' 
 d = find_file(searchstr,exp_type='ODNP_NMR_comp/test_equipment',
-        expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
+        expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=None)
 enhancement,idx_maxpower = process_enhancement(d, searchstr = searchstr,freq_range=(-2e3,2e3),
         t_range=(0,0.03),fl=fl)
 T1p = nddata(T1_list,[-1],['power']).setaxis('power',power_list)

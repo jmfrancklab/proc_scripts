@@ -172,12 +172,13 @@ def process_IR(s, label='', fl=None,
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
-    s_signal = integral_w_errors(s,signal_pathway,error_path,fl=fl)
+    s_signal,frq_slice = integral_w_errors(s,signal_pathway,error_path,
+            fl=fl,return_frq_slice=True)
     logger.info(strm("here is what the error looks like",s_signal.get_error()))
     if plot_all:
         fl.next('Integrated data - recovery curve')
-        fl.plot(s_signal,'o',label='real')
-        fl.plot(s_signal.imag,'o',label='imaginary')
+        fl.plot(s_signal,'o',capsize=6, label='real')
+        fl.plot(s_signal.imag,'o',capsize=6,label='imaginary')
     s = select_pathway(s,signal_pathway)
     if fl is not None:
         fl.next('Spectrum - freq domain')
@@ -195,8 +196,8 @@ def process_IR(s, label='', fl=None,
     T1 = 1./f.output('R_1')
     if fl is not None:
         fl.next('fit',legend=True)
-        fl.plot(s_signal,'o', label='actual data')
-        fl.plot(s_signal.imag,'o',label='actual imaginary')
+        fl.plot(s_signal,'o', capsize=6, label='actual data')
+        fl.plot(s_signal.imag,'o',capsize=6,label='actual imaginary')
         fl.plot(f.eval(100),label='fit')
         plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='medium',
                 horizontalalignment='center',verticalalignment='center',color='k',

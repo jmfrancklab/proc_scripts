@@ -31,27 +31,27 @@ def as_scan_nbr(s):
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
-def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
-        excluded_pathways = [(0,1),(0,0)], freq_range=(None,None),
-        t_range=(0,0.023),fl=None):
-    if fl is not None:
-        fl.basename = searchstr
-        fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
-                s,freq_range) # visualize the frequency limits
+def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
+        excluded_pathways = [(0,0),(0,1)], freq_range=(None,None),
+        t_range=(0,0.083),fl=None):
+    #if fl is not None:
+    #    fl.basename = searchstr
+    #    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+    #            s,freq_range) # visualize the frequency limits
+    #fl.show();quit()
     s.ift('t2')
-    if fl is not None:
-        fl.basename = searchstr
-        fl.side_by_side('show time limits',s,t_range)
+    s.reorder(['ph1','ph2','power','t2'])
+    #if fl is not None:
+    #    fl.basename = searchstr
+    #    fl.side_by_side('show time limits',s,t_range)
+    #fl.show();quit()
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
         "savefig.facecolor": (1.0,1.0,1.0,0.0),
         })
-    if fl is not None:
-        fl.next('look at data')
-        fl.image(s.C.setaxis('power','#'))
     s.ift(['ph1','ph2'])    
-    rx_offset_corr = s['t2':(0.008,None)]
+    rx_offset_corr = s['t2':(0.02,None)]
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft('t2')
@@ -84,6 +84,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     if fl is not None:
         fl.next('phase corrected')
         fl.image(as_scan_nbr(s))
+    #fl.show();quit()
     s.reorder(['ph1','ph2','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     power_axis_dBm = array(s.get_prop('meter_powers'))
@@ -92,13 +93,17 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     power_axis_W = r_[0,power_axis_W]
     s.ift(['ph1','ph2'])
     s.ft('t2')
+    if fl is not None:
+        fl.next('phased-frequency domain')
+        fl.image(as_scan_nbr(s))
+    #fl.show();quit()    
     frq_max = abs(s).argmax('t2')
     s.ift('t2')
     s *= np.exp(-1j*2*pi*frq_max*s.fromaxis('t2'))
     s.ft('t2')
     if fl is not None:
-        fl.next(r'after rough alignment, $\varphi$ domain')
-        fl.image(as_scan_nbr(s))
+       fl.next(r'after rough alignment, $\varphi$ domain')
+       fl.image(as_scan_nbr(s))
     fl.basename='correlation subroutine --before zero crossing:'
     logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
     if zero_crossing > 1:
@@ -126,7 +131,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     if fl is not None:
         fl.next('after correlation alignment FTed ph')
         fl.image(as_scan_nbr(s))
-    s.reorder(['ph2','ph1','power','t2'])
+    s.reorder(['ph1','ph2','power','t2'])
     if fl is not None:
         fl.next('after correlation -- time domain')
         fl.image(as_scan_nbr(s))
@@ -134,11 +139,11 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
     if fl is not None:
         fl.next('after correlation -- frequency domain')
         fl.image(as_scan_nbr(s))
+    #fl.show();quit()
     s.ift('t2')
     d=s.C
     s = s['t2':(0,None)]
     s['t2':0] *= 0.5
-    
     s.ft('t2')
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
@@ -154,7 +159,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
             pass_frq_slice=True
             frq_slice=frq_slice
             fl.next('diagnostic 1D plot')
-            fl.plot(s['power',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
+            fl.plot(s['power',:]['t2':(-250,250)]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
             axvline(x=frq_slice[0],c='k',linestyle=':',alpha=0.8)
             axvline(x=frq_slice[-1],c='k',linestyle=':',alpha=0.8)
             fl.next('')
@@ -189,7 +194,6 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':-2},
 
         fl.next('real E(p)')
         fl.plot(s['power',:]['t2':(-250,250)]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real)
-    fl.show();quit()    
     s = s_.C
     idx_maxpower = np.argmax(s.getaxis('power'))
     if fl is not None:
