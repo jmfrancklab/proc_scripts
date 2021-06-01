@@ -181,7 +181,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     down_from_max:  float
         Slice determine the portion of the time axis where the echo
         is at this fraction of the echo max, and use this as the 
-        "peak location" of the echo.
+        "peak bounds" of the echo.
 
         Use the width of this peak location as the width of the window
         used for the Hermitian function test calculation
@@ -201,12 +201,12 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     data_for_peak /= max_val
     pairs = data_for_peak.contiguous(lambda x: abs(x) >
             down_from_max)
-    peak_location = pairs[0,:] #gives the longest pair
-    peak_center = peak_location.mean()
+    peak_bounds = pairs[0,:] #gives the longest pair
+    peak_center = data_for_peak['t2':(0.1e-3,None)].argmax('t2').item()
     s.setaxis('t2',lambda x: x-peak_center)
     s.register_axis({'t2':0})
     logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
-    max_shift = np.diff(peak_location).item()/2
+    max_shift = np.min(abs(peak_center-peak_bounds))
     #}}}
     #{{{construct test arrays for T2 decay and shift
     if np.isscalar(rel_shift):
@@ -304,15 +304,19 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         fig, (ax1,ax2,ax3) = plt.subplots(3,1)
         fl.next('mirror tests', fig=fig)
         def real_imag_mirror(forplot, ax):
-            l = fl.plot(forplot.real, alpha=0.5, ax=ax, label='real')
-            fl.plot(forplot.C.setaxis('t2', lambda x: -x), color=l[-1].get_color(),alpha=0.2,ax=ax)
+            l = fl.plot(forplot.real, alpha=0.5, ax=ax, label='real',
+                    human_units=False)
+            fl.plot(forplot.C.setaxis('t2', lambda x: -x), color=l[-1].get_color(),alpha=0.2,ax=ax,
+                    human_units=False)
             l=fl.plot(forplot.imag,alpha=0.5,ax=ax)
             fl.plot(-forplot.imag.C.setaxis('t2',lambda x: -x),color=l[-1].get_color(),
-                    alpha=0.2,ax=ax)
+                    alpha=0.2,ax=ax,
+                    human_units=False)
             residual = forplot['t2':(-max_shift,max_shift)]
             if ndshape(residual)['t2'] % 2 == 0:
                 residual = residual['t2',:-1]
-            fl.plot(abs(residual-residual['t2',::-1].runcopy(np.conj))*20, ax=ax, label='residual x 20')
+            fl.plot(abs(residual-residual['t2',::-1].runcopy(np.conj))*20, ax=ax, label='residual x 20',
+                    human_units=False)
             ax.legend()
         #{{{show test for best_shift
         forplot = s['shift':best_shift].C.mean_all_but(['shift','t2'])
@@ -340,11 +344,14 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
             return retval
         fl.twinx(orig=True)
         residual.name('hermitian test')
-        fl.plot(residual,c='k')
+        fl.plot(residual,c='k',
+                human_units=False)
         fl.twinx(orig=False,color='red')
-        fl.plot([],c='k')
+        fl.plot([],c='k',
+                human_units=False)
         data_for_peak *= max_val
         data_for_peak.name('absolute value')
-        fl.plot(data_for_peak.C.rename('t2','shift').set_units('shift','s'),c='red')
+        fl.plot(data_for_peak.C.rename('t2','shift').set_units('shift','s'),c='red',
+                human_units=False)
         xlim(np.array(rel_shift)*max_shift/1e-3)
     return best_shift+peak_center,max_shift    
