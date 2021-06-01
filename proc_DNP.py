@@ -6,6 +6,8 @@ from proc_scripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
 fl = fl_mod()
 # {{{ input parameters
+thisfile = '210528_TEMPOL_3uM_cap_probe_DNP'
+exp_type='ODNP_NMR_comp/test_equipment'
 save_npz = False
 power_list = r_[0.001,0.5,1,1.5,2]
 R1w = 1/2.172
@@ -14,33 +16,33 @@ signal_pathway = {'ph1':1,'ph2':-2}
 excluded_pathways = [(0,3),(0,0)]
 nPowers=25
 #}}}
+#{{{process IR datasets and create list of T1s
 T1_list = []
-#for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-#       ('210527_TEMPOL_150uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','FIR_0dBm','spincore_IR_v1',
-#           (-0.5e3,0.8e3),(None,83e-3),True,False),
-#        ('210527_TEMPOL150uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','FIR_27dBm','spincore_IR_v1',
-#           (-0.5e3,0.8e3),(None,83e-3),True,False),
-#        ('210525_TEMPOL7uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','1_Watts','spincore_IR_v1',
-#           (-0.5e3,0.8e3),(None,83e-3),True,False),
-#        ('210525_TEMPOL7uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','1p5_Watts','spincore_IR_v1',
-#           (-0.5e3,0.8e3),(None,83e-3),True,False),
-#        ('210525_TEMPOL7uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','2_Watts','spincore_IR_v1',
-#           (-0.5e3,0.8e3),(None,83e-3),True,False),
-#        ('210525_TEMPOL7uM_cap_probe_DNP','ODNP_NMR_comp/test_equipment','2p5_Watts','spincore_IR_v1',
-#           (-0.5e3,0.8e3),(None,83e-3),True,False),
-
+#for nodename,postproc,f_range,t_range,IR,ILT in [
+#       ('FIR_0W','spincore_IR_v1',
+#           (-1e3,1.5e3),(None,50e-3),True,False),
+#        ('FIR_0p5W','spincore_IR_v1',
+#           (-1e3,1.3e3),(None,50e-3),True,False),
+#        ('FIR_1W','spincore_IR_v1',
+#           (-0.8e3,1.5e3),(None,50e-3),True,False),
+#        ('FIR_1p5W','spincore_IR_v1',
+#           (-0.8e3,1.5e3),(None,50e-3),True,False),
+#        ('FIR_2W','spincore_IR_v1',
+#           (-1e3,1.5e3),(None,50e-3),True,False),
 #        ]:
 #    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
 #            postproc=postproc,lookup=postproc_dict,fl=fl)
-#    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl) 
-#fl.show();quit()
-#    T1_list.append(T1)
-#T1_list.pop(-1)
-searchstr ='210525_TEMPOL7uM_cap_probe_DNP' 
-d = find_file(searchstr,exp_type='ODNP_NMR_comp/test_equipment',
-        expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=None)
-enhancement,idx_maxpower = process_enhancement(d, searchstr = searchstr,freq_range=(-2e3,2e3),
-        t_range=(0,0.03),fl=fl)
+#    fl.show()
+#    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl)    T1_list.append(T1)
+    #}}}
+#{{{process enhancement
+d = find_file(thisfile,exp_type=exp_type,
+        expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
+enhancement,idx_maxpower = process_enhancement(d, searchstr = thisfile,
+        freq_range=(-3e3,3e3),
+        t_range=(0,0.05),fl=fl)
+#}}}
+#{{{create R1(p) to correct for T1 heating
 T1p = nddata(T1_list,[-1],['power']).setaxis('power',power_list)
 R1p = T1p**-1   
 fl.next(r'$T_{1}$(p) vs power')

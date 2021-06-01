@@ -280,10 +280,13 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         def real_imag_mirror(forplot, ax):
             l = fl.plot(forplot.real, alpha=0.5, ax=ax, label='real')
             fl.plot(forplot.C.setaxis('t2', lambda x: -x), color=l[-1].get_color(),alpha=0.2,ax=ax)
+            l=fl.plot(forplot.imag,alpha=0.5,ax=ax)
+            fl.plot(-forplot.imag.C.setaxis('t2',lambda x: -x),color=l[-1].get_color(),
+                    alpha=0.2,ax=ax)
             residual = forplot['t2':(-max_shift,max_shift)]
             if ndshape(residual)['t2'] % 2 == 0:
                 residual = residual['t2',:-1]
-            fl.plot(abs(residual-residual['t2',::-1].runcopy(np.conj))*20, ax=ax, label='residual x 20',human_units=False)
+            fl.plot(abs(residual-residual['t2',::-1].runcopy(np.conj))*20, ax=ax, label='residual x 20')
             ax.legend()
         #{{{show test for best_shift
         forplot = s['shift':best_shift].C.mean_all_but(['shift','t2'])
@@ -309,13 +312,13 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
             retval -= retval.data.min()
             retval /= retval.data.max()
             return retval
-        fl.plot(rescale(residual), label='hermitian test')
-        fl.plot(rescale(sum_abs_real/sum_abs_imag),label=r'$\frac{\int |A| d\nu}{\int |D| d\nu}$')
-        pythagoras = sqrt(rescale(sum_abs_real/sum_abs_imag)**2+rescale(residual)**2)
-        fl.plot(pythagoras,label='pythagoras sum')
-        absolute_best_shift = pythagoras.argmin('shift').item()
-        fl.plot(rescale(data_for_peak.rename('t2','shift').set_units('shift','s')),label='absolute value',human_units=False)
-        for n in range(-1,5):
-            plt.axvline(x=(absolute_best_shift+n*dt)/1e-3,color='k',alpha=0.1)
-        plt.xlim(np.array(rel_shift)*max_shift/1e-3)
-    return best_shift+peak_center    
+        fl.twinx(orig=True)
+        residual.name('hermitian test')
+        fl.plot(residual,c='k')
+        fl.twinx(orig=False,color='red')
+        fl.plot([],c='k')
+        data_for_peak *= max_val
+        data_for_peak.name('absolute value')
+        fl.plot(data_for_peak.C.rename('t2','shift').set_units('shift','s'),c='red')
+        xlim(array(rel_shift)*max_shift/1e-3)
+    return best_shift+peak_center,max_shift    

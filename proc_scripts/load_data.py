@@ -368,6 +368,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
                s.getaxis('power')/prog_power))
     nPoints = s.get_prop('acq_params')['nPoints']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nScans = s.get_prop('acq_params')['nScans']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     s.set_units('t','s')
     s.chunk('t',['ph2','ph1','t2'],[2,2,-1])

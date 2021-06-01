@@ -11,7 +11,9 @@ def to_percent(y, position):
         return s + r'$\%$'
     else:
         return s + '%'
-def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_title='correlation alignment',ph1_selection=1,ph2_selection=1, sigma = 20,fl=None):
+def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
+        fig_title='correlation alignment',ph1_selection=1,ph2_selection=1, 
+        shift_bounds=False, max_shift = 100., sigma=20.,fl=None):
     """
     Align transients collected with chunked phase cycling dimensions along an indirect
     dimension based on maximizing the correlation across all the transients and repeat
@@ -35,6 +37,15 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
                     index position of the coherence pathway in phase program 1
     ph2_selection:  int
                     index position of the coherence pathway in phase program 2
+    shift_bounds:   boolean
+                    keeps f_shift to be within a specified
+                    limit (upper and lower bounds given by max_shift)
+                    which should be around the location of the expected
+                    signal
+    max_shift:      float
+                    specifies the upper and lower bounds to the range over
+                    which f_shift will be taken from the correlation function.
+                    shift_bounds must be True
     sigma:          int
                     sigma value for the gaussian fitting. Related to the linewidth
                     of the given data.
@@ -93,7 +104,6 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
         s_copy.setaxis('DeltaPh1','#')
         correl = s_copy * 0 
         for ph1_index in range(ph1_len):
-            print("PH1 INDEX IS:",ph1_index)
             s_copy['DeltaPh1',ph1_index] = s_copy['DeltaPh1',ph1_index].run(lambda x, 
                 axis=None: roll(x, ph1_index,axis=axis),'ph1')
         for ph2_index in range(ph2_len):
@@ -121,7 +131,10 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',fig_titl
             if fl is not None:
                 fl.next('correlation function \nfreq domain, after apod')
                 fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
-        f_shift = correl.run(real).argmax('t2')
+        if shift_bounds:
+            f_shift = correl['t2':(-max_shift,max_shift)].run(real).argmax('t2')
+        if not shift_bounds:
+            f_shift = correl.run(real).argmax('t2')
         s_copy = s.C
         s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis('t2'))
         s.ft('t2')

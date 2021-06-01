@@ -36,35 +36,40 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
         t_range=(0,0.083),fl=None):
     #if fl is not None:
     #    fl.basename = searchstr
-    #    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+    ##    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
     #            s,freq_range) # visualize the frequency limits
-    #fl.show();quit()
     s.ift('t2')
     s.reorder(['ph1','ph2','power','t2'])
     #if fl is not None:
     #    fl.basename = searchstr
     #    fl.side_by_side('show time limits',s,t_range)
-    #fl.show();quit()
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
         "savefig.facecolor": (1.0,1.0,1.0,0.0),
         })
-    s.ift(['ph1','ph2'])    
-    rx_offset_corr = s['t2':(0.02,None)]
+    s.ift(['ph1','ph2'])   
+    t_start = t_range[-1]/4
+    t_start *= 3
+    rx_offset_corr = s['t2':(t_start,None)]
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft('t2')
+    s.ft(['ph1','ph2'])
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('power',raw_index=True).item()
     s = s['t2':freq_range]    
-    s.ft(['ph1','ph2'])
-    if fl is not None:
-        fl.next('')
-        fl.image(s.C.setaxis('power','#'))
     s.ift('t2') # inverse fourier transform into time domain
-    best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
-    s.setaxis('t2',lambda x: x-best_shift)
-    s.register_axis({'t2':0}, nearest=False)
+    best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
+    s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
+    #if fl is not None:
+    #    fl.next('after hermitian test phase correction')
+    #    fl.image(s.C.setaxis(
+#'power','#').set_units('power','scan #'))
+    #    s.ft('t2')
+    #    fl.next('after hermitian test phase correction')
+    #    fl.image(s.C.setaxis(
+#'power','#').set_units('power','scan #'))
+    #    s.ift('t2')
     logger.info(strm("applying zeroth order correction"))
     s.ift(['ph1','ph2'])
     phasing = s['t2',0].C
@@ -72,103 +77,85 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     phasing.ft(['ph1','ph2'])
     phasing['ph1',1]['ph2',0] = 1
     phasing.ift(['ph1','ph2'])
-    if fl is not None:
-        fl.next('zeroth order corrected')
     ph0 = s['t2':0]/phasing
     ph0 /= abs(ph0)
-    logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
     s /= ph0
     s.ft(['ph1','ph2'])
    #{{{apodizing and zero fill
     logger.info(strm(s.dimlabels))
-    if fl is not None:
-        fl.next('phase corrected')
-        fl.image(as_scan_nbr(s))
-    #fl.show();quit()
+    #if fl is not None:
+    #    fl.next('phase corrected')
+    #    s.ft('t2')
+    #    fl.image(as_scan_nbr(s))
     s.reorder(['ph1','ph2','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-3*10**(power_axis_dBm/10)
     power_axis_W = r_[0,power_axis_W]
+    s.setaxis('power',power_axis_W)
     s.ift(['ph1','ph2'])
     s.ft('t2')
-    if fl is not None:
-        fl.next('phased-frequency domain')
-        fl.image(as_scan_nbr(s))
-    #fl.show();quit()    
-    frq_max = abs(s).argmax('t2')
-    s.ift('t2')
-    s *= np.exp(-1j*2*pi*frq_max*s.fromaxis('t2'))
-    s.ft('t2')
-    if fl is not None:
-       fl.next(r'after rough alignment, $\varphi$ domain')
-       fl.image(as_scan_nbr(s))
-    fl.basename='correlation subroutine --before zero crossing:'
-    logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
-    if zero_crossing > 1:
-        opt_shift,sigma = correl_align(s['power',:zero_crossing+1],indirect_dim='power',
-                ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-                sigma=50)
-        s.ift('t2')
-        s['power',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-        s.ft('t2')
-    else:
-        logger.warning("You have 1 point or less before your zero crossing!!!!")
-    fl.basename = 'correlation subroutine -- after zero crossing'
+    #if fl is not None:
+    #    fl.next('phased-frequency domain')
+    #    fl.image(as_scan_nbr(s))
     opt_shift,sigma = correl_align(s,indirect_dim='power',
-            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-            sigma=100)
+            ph1_selection=1,ph2_selection=0,sigma=0.1)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
-    fl.basename = None
-    if fl is not None:
-        fl.next(r'after correlation, $\varphi$ domain')
-        fl.image(as_scan_nbr(s))
+    fl.basename= None
+    #if fl is not None:
+    #    fl.next(r'after correlation, $\varphi$ domain')
+    #    fl.image(as_scan_nbr(s))
     s.ift('t2')
     s.ft(['ph1','ph2'])
-    if fl is not None:
-        fl.next('after correlation alignment FTed ph')
-        fl.image(as_scan_nbr(s))
+    #if fl is not None:
+    #    fl.next('after correlation alignment FTed ph')
+    #    fl.image(as_scan_nbr(s))
     s.reorder(['ph1','ph2','power','t2'])
-    if fl is not None:
-        fl.next('after correlation -- time domain')
-        fl.image(as_scan_nbr(s))
+    #if fl is not None:
+    #    fl.next('after correlation -- time domain')
+    #    fl.image(as_scan_nbr(s))
     s.ft('t2')    
-    if fl is not None:
-        fl.next('after correlation -- frequency domain')
-        fl.image(as_scan_nbr(s))
-    #fl.show();quit()
+    #if fl is not None:
+    #    fl.next('after correlation -- frequency domain')
+    #    fl.image(as_scan_nbr(s))
     s.ift('t2')
     d=s.C
-    s = s['t2':(0,None)]
-    s['t2':0] *= 0.5
-    s.ft('t2')
+    #d['power',zero_crossing] *= -1
+    #d *= -1
+    d.ft('t2')
+    d.ift('t2')
+    d = d['t2':(0,None)]
+    d['t2':0] *= 0.5
+    d.ft('t2')
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
-    error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
+    error_pathway = (set(((j,k) for j in range(ndshape(d)['ph1']) for k in range(ndshape(d)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
     # }}}
-    s_,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
+    d_,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             indirect='power', fl=fl, return_frq_slice=True)
     if fl is not None:
+        fl.next('dummy')
         with figlist_var() as fl:
-            left_pad,bottom_pad,width_pad,top_pad = DCCT(d,fl.next('dummy'),just_2D=True)
+            fl.next('extra')
+            left_pad,bottom_pad,width_pad,top_pad = DCCT(s,fl.next('dummy'),just_2D=True)
             pass_frq_slice=True
             frq_slice=frq_slice
             fl.next('diagnostic 1D plot')
-            fl.plot(s['power',:]['t2':(-250,250)]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
+            fl.plot(d['power',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
             axvline(x=frq_slice[0],c='k',linestyle=':',alpha=0.8)
             axvline(x=frq_slice[-1],c='k',linestyle=':',alpha=0.8)
             fl.next('')
-            x = s.getaxis('t2')
+            x = d.getaxis('t2')
             dx = x[1]-x[0]
-            y = s.getaxis('power')
+            y = d.getaxis('power')
             dy = y[1]-y[0]
-            start_y = s.getaxis('power')[0]
-            stop_y = s.getaxis('power')[-1]+25
+            start_y = d.getaxis('power')[0]
+            stop_y = d.getaxis('power')[-1]+25
             figure()
             ax = plt.axes([left_pad,bottom_pad,width_pad,top_pad])
             yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
@@ -177,7 +164,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
             ax.xaxis.set_major_locator(majorLocator())
             ax.xaxis.set_minor_locator(minorLocator())
             ax.set_ylabel(None)
-            fl.image(s['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real.run(complex128).C.setaxis(
+            fl.image(d['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real.run(complex128).C.setaxis(
 'power','#').set_units('power','scan #'),black=False)
             x1 = x[0]-dx
             y1 = start_y-dy
@@ -191,25 +178,18 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
             q = patches.Rectangle((x2,y1),wide2,tall,angle=0.0,linewidth=1,
                     fill=None,hatch='//',ec='k')
             ax.add_patch(q)
-
-        fl.next('real E(p)')
-        fl.plot(s['power',:]['t2':(-250,250)]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real)
-    s = s_.C
+    d = d_.C
     idx_maxpower = np.argmax(s.getaxis('power'))
     if fl is not None:
         fl.next('full enhancement curve')
-        fl.plot(s)
-    s /= max(s.data)
-    print(ndshape(s))
-    quit()
-    s.setaxis('power',power_axis_W)
+        fl.plot(d)
+    d /= max(d.data)
+    d.setaxis('power',power_axis_W)
     thiscolor = next(thesecolors)
     if fl is not None:
         fl.next('E(p)')
-        fl.plot((s['power',:idx_maxpower+1]), 'ko', capsize=6,
-                alpha=0.3)
-        fl.plot((s['power',idx_maxpower+1:]),'ro',capsize=6,
-                alpha=0.3)
-    enhancement = s
+        fl.plot(d['power',:-3], 'ko', capsize=6, alpha=0.3)
+        fl.plot(d['power',-3:],'ro',capsize=6, alpha=0.3)
+    enhancement = d
     show()
     return enhancement,idx_maxpower
