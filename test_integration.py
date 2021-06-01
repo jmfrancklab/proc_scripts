@@ -48,15 +48,20 @@ for thisfile,exp_type,nodename in [
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft('t2')
+    s.ft(['ph1','ph2'])
     s = s['t2':f_range]
     print("3")
-    s.ft(['ph1','ph2'])
     s.ift('t2')
     print("4")
-    best_shift = hermitian_function_test(select_pathway(s['nScans',2],signal_pathway))
+    best_shift,max_shift = hermitian_function_test(select_pathway(s['nScans',15],signal_pathway).C.convolve('t2',0.01))
     print("5")
     s.setaxis('t2',lambda x: x-best_shift)
-    s.register_axis({'t2':0}, nearest=False)
+    s.register_axis({'t2':0})
+    fl.next('After hermitian phase correction')
+    s.ft('t2')
+    #s = s['nScans',15]
+    fl.image(s)
+    s.ift('t2')
     s.ift(['ph1','ph2'])
     phasing = s['t2',0].C
     phasing.data *= 0
@@ -73,21 +78,17 @@ for thisfile,exp_type,nodename in [
     #{{{rough alignment
     s.ift(['ph1','ph2'])
     s.ft('t2')
-    frq_max = abs(s).argmax('t2')
-    s.ift('t2')
-    s *= np.exp(-1j*2*pi*frq_max*s.fromaxis('t2'))
-    s.ft('t2')
     #}}}
-    fl.basename = 'correlation subroutine'
     opt_shift,sigma = correl_align(s['nScans',15],indirect_dim='repeats',
             ph1_selection = signal_pathway['ph1'],
-            ph2_selection = signal_pathway['ph2'])
+            ph2_selection = signal_pathway['ph2'],sigma=50)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
     fl.basename=None
     fl.next(r'after correlation, $\varphi$ domain')
     fl.image(s)
+    fl.show();quit()
     s.ift('t2')
     s.ft(['ph1','ph2'])
     fl.next('after correl - time domain')
@@ -117,11 +118,7 @@ for thisfile,exp_type,nodename in [
             .mean('t2').run(sqrt))
     print("off-pathway std", std_off_pathway / sqrt(2))
     propagated_variance_from_inactive = N * df ** 2 *std_off_pathway **2
-    propagated_variance = N *df**2*2**2 *2
     fl.next('different types of error')
-    manual_bounds.set_error(sqrt(propagated_variance))
-    fl.plot(manual_bounds,".",capsize=6,label=r'propagated from programmed variance',
-            alpha=0.5)
     manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data))
     fl.plot(manual_bounds,'.',capsize=6,label=r'propagated from inactive std',alpha=0.5)
     all_results.mean('repeats',std=True)

@@ -32,20 +32,24 @@ def process_IR(s, label='', fl=None,
         plot_all=False
         ):
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
-    s = s['t2':f_range]
     s.ift('t2')
-    rx_offset_corr = s['t2':(0.02,None)]
+    s.ift(['ph1','ph2'])
+    t_start = t_range[-1] / 4
+    t_start *= 3
+    rx_offset_corr = s['t2':(t_start,None)]
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
+    s.ft('t2')
+    s.ft(['ph1','ph2'])
+    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('indirect',raw_index=True).item()
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
-    if fl is not None:
-        fl.next('time domain')
-        fl.image(as_scan_nbr(s))
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
     #{{{ phasing the aligned data
-    best_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+    s = s['t2':f_range]
+    s.ift('t2')
+    best_shift,max_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
     logger.info(strm("best shift is", best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     if plot_all:
@@ -104,18 +108,10 @@ def process_IR(s, label='', fl=None,
         s.reorder(['ph1','ph2','vd','t2'])
     else:
         s.reorder(['ph1','vd','t2'])
-    zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd', raw_index=True).item()
     logger.info(strm("zero crossing at",zero_crossing))
-    s.ift(['ph1','ph2'])
-    # {{{ so that the filter is in range, do a rough alignment
-    frq_max = abs(s).argmax('t2')
     s.ift('t2')
-    s *= np.exp(-1j*2*pi*frq_max*s.fromaxis('t2'))
+    s.ift(['ph1','ph2'])
     s.ft('t2')
-    # }}}
-    if plot_all:
-        fl.next(r'after rough align, $\varphi$ domain')
-        fl.image(as_scan_nbr(s))
     fl.basename='correlation subroutine -- before zero crossing:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
     logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
@@ -139,6 +135,7 @@ def process_IR(s, label='', fl=None,
     if plot_all:
         fl.next(r'after correlation, $\varphi$ domain')
         fl.image(as_scan_nbr(s))
+    s.ift('t2')
     s.ft(['ph1','ph2'])
     if plot_all:
         fl.next(r'after correlation')
@@ -154,7 +151,7 @@ def process_IR(s, label='', fl=None,
     if plot_all:
         fl.next('after correlation -- time domain')
         fl.image(as_scan_nbr(s))
-    s = s['t2':(0,t_range[-1])]
+    s = s['t2':(0,None)]
     s['t2',0] *= 0.5
     if plot_all:
         # visualize time domain after filtering and phasing
@@ -164,7 +161,7 @@ def process_IR(s, label='', fl=None,
     if plot_all:
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
-    s['vd':(None,1)] *= -1
+    s['vd':zero_crossing] *= -1
     # }}}
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))

@@ -61,15 +61,16 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
-    #if fl is not None:
-    #    fl.next('after hermitian test phase correction')
-    #    fl.image(s.C.setaxis(
-#'power','#').set_units('power','scan #'))
-    #    s.ft('t2')
-    #    fl.next('after hermitian test phase correction')
-    #    fl.image(s.C.setaxis(
-#'power','#').set_units('power','scan #'))
-    #    s.ift('t2')
+    if fl is not None:
+        fl.next('after hermitian test phase correction')
+        fl.image(s.C.setaxis(
+'power','#').set_units('power','scan #'))
+        fl.show();quit()
+        s.ft('t2')
+        fl.next('after hermitian test phase correction')
+        fl.image(s.C.setaxis(
+'power','#').set_units('power','scan #'))
+        s.ift('t2')
     logger.info(strm("applying zeroth order correction"))
     s.ift(['ph1','ph2'])
     phasing = s['t2',0].C
@@ -83,10 +84,11 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     s.ft(['ph1','ph2'])
    #{{{apodizing and zero fill
     logger.info(strm(s.dimlabels))
-    #if fl is not None:
-    #    fl.next('phase corrected')
-    #    s.ft('t2')
-    #    fl.image(as_scan_nbr(s))
+    if fl is not None:
+        fl.next('phase corrected')
+        s.ft('t2')
+        fl.image(as_scan_nbr(s))
+    fl.show();quit()
     s.reorder(['ph1','ph2','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     power_axis_dBm = array(s.get_prop('meter_powers'))

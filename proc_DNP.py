@@ -22,18 +22,19 @@ T1_list = []
 #       ('FIR_0W','spincore_IR_v1',
 #           (-1e3,1.5e3),(None,50e-3),True,False),
 #        ('FIR_0p5W','spincore_IR_v1',
-#           (-1e3,1.3e3),(None,50e-3),True,False),
+#           (-1e3,1.5e3),(None,50e-3),True,False),
 #        ('FIR_1W','spincore_IR_v1',
-#           (-0.8e3,1.5e3),(None,50e-3),True,False),
+#           (-1e3,1.5e3),(None,50e-3),True,False),
 #        ('FIR_1p5W','spincore_IR_v1',
-#           (-0.8e3,1.5e3),(None,50e-3),True,False),
+#           (-1e3,1.5e3),(None,50e-3),True,False),
 #        ('FIR_2W','spincore_IR_v1',
 #           (-1e3,1.5e3),(None,50e-3),True,False),
 #        ]:
 #    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
 #            postproc=postproc,lookup=postproc_dict,fl=fl)
 #    fl.show()
-#    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl)    T1_list.append(T1)
+#    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl)    
+#    T1_list.append(T1)
     #}}}
 #{{{process enhancement
 d = find_file(thisfile,exp_type=exp_type,
