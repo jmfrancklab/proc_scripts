@@ -60,17 +60,9 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     s = s['t2':freq_range]    
     s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
+    best_shift = 0.33e-3
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
-    if fl is not None:
-        fl.next('after hermitian test phase correction')
-        fl.image(s.C.setaxis(
-'power','#').set_units('power','scan #'))
-        fl.show();quit()
-        s.ft('t2')
-        fl.next('after hermitian test phase correction')
-        fl.image(s.C.setaxis(
-'power','#').set_units('power','scan #'))
-        s.ift('t2')
+    s.ft('t2')
     logger.info(strm("applying zeroth order correction"))
     s.ift(['ph1','ph2'])
     phasing = s['t2',0].C
@@ -78,7 +70,8 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     phasing.ft(['ph1','ph2'])
     phasing['ph1',1]['ph2',0] = 1
     phasing.ift(['ph1','ph2'])
-    ph0 = s['t2':0]/phasing
+    s /= phasing
+    ph0 = s.C.sum('t2')
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1','ph2'])
@@ -86,9 +79,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     logger.info(strm(s.dimlabels))
     if fl is not None:
         fl.next('phase corrected')
-        s.ft('t2')
         fl.image(as_scan_nbr(s))
-    fl.show();quit()
     s.reorder(['ph1','ph2','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     power_axis_dBm = array(s.get_prop('meter_powers'))
@@ -97,19 +88,20 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     power_axis_W = r_[0,power_axis_W]
     s.setaxis('power',power_axis_W)
     s.ift(['ph1','ph2'])
-    s.ft('t2')
     #if fl is not None:
     #    fl.next('phased-frequency domain')
     #    fl.image(as_scan_nbr(s))
     opt_shift,sigma = correl_align(s,indirect_dim='power',
-            ph1_selection=1,ph2_selection=0,sigma=0.1)
+            ph1_selection=1,ph2_selection=0,sigma=50)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
     fl.basename= None
-    #if fl is not None:
-    #    fl.next(r'after correlation, $\varphi$ domain')
-    #    fl.image(as_scan_nbr(s))
+    if fl is not None:
+        fl.next(r'after correlation, $\varphi$ domain')
+        fl.image(as_scan_nbr(s))
+    #fl.show();quit()
+    s *= phasing
     s.ift('t2')
     s.ft(['ph1','ph2'])
     #if fl is not None:
@@ -125,6 +117,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     #    fl.image(as_scan_nbr(s))
     s.ift('t2')
     d=s.C
+    
     #d['power',zero_crossing] *= -1
     #d *= -1
     d.ft('t2')
@@ -140,46 +133,46 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     # }}}
     d_,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             indirect='power', fl=fl, return_frq_slice=True)
-    if fl is not None:
-        fl.next('dummy')
-        with figlist_var() as fl:
-            fl.next('extra')
-            left_pad,bottom_pad,width_pad,top_pad = DCCT(s,fl.next('dummy'),just_2D=True)
-            pass_frq_slice=True
-            frq_slice=frq_slice
-            fl.next('diagnostic 1D plot')
-            fl.plot(d['power',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
-            axvline(x=frq_slice[0],c='k',linestyle=':',alpha=0.8)
-            axvline(x=frq_slice[-1],c='k',linestyle=':',alpha=0.8)
-            fl.next('')
-            x = d.getaxis('t2')
-            dx = x[1]-x[0]
-            y = d.getaxis('power')
-            dy = y[1]-y[0]
-            start_y = d.getaxis('power')[0]
-            stop_y = d.getaxis('power')[-1]+25
-            figure()
-            ax = plt.axes([left_pad,bottom_pad,width_pad,top_pad])
-            yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
-            majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=2, steps=[1,10])
-            minorLocator = lambda: mticker.AutoMinorLocator(n=4)
-            ax.xaxis.set_major_locator(majorLocator())
-            ax.xaxis.set_minor_locator(minorLocator())
-            ax.set_ylabel(None)
-            fl.image(d['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real.run(complex128).C.setaxis(
-'power','#').set_units('power','scan #'),black=False)
-            x1 = x[0]-dx
-            y1 = start_y-dy
-            x2 = frq_slice[-1]+dx
-            tall = 500#(y[-1]+dy)-(y[0]-dy) 
-            wide = frq_slice[0]-x1
-            wide2 = (x[-1]+dx)-x2
-            p = patches.Rectangle((x1,y1),wide,tall,angle=0.0,linewidth=1,fill=None,
-                    hatch='//',ec='k')
-            ax.add_patch(p)
-            q = patches.Rectangle((x2,y1),wide2,tall,angle=0.0,linewidth=1,
-                    fill=None,hatch='//',ec='k')
-            ax.add_patch(q)
+    #if fl is not None:
+    #    fl.next('dummy')
+    #    with figlist_var() as fl:
+    #        fl.next('extra')
+    #        left_pad,bottom_pad,width_pad,top_pad = DCCT(s,fl.next('dummy'),just_2D=True)
+    #        pass_frq_slice=True
+    #        frq_slice=frq_slice
+    #        fl.next('diagnostic 1D plot')
+    #        fl.plot(d['power',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
+    #        axvline(x=frq_slice[0],c='k',linestyle=':',alpha=0.8)
+    #        axvline(x=frq_slice[-1],c='k',linestyle=':',alpha=0.8)
+    #        fl.next('')
+    #        x = d.getaxis('t2')
+    #        dx = x[1]-x[0]
+    #        y = d.getaxis('power')
+    #        dy = y[1]-y[0]
+    #        start_y = d.getaxis('power')[0]
+    #        stop_y = d.getaxis('power')[-1]+25
+    #        figure()
+    #        ax = plt.axes([left_pad,bottom_pad,width_pad,top_pad])
+    #        yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
+    #        majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=2, steps=[1,10])
+    #        minorLocator = lambda: mticker.AutoMinorLocator(n=4)
+    #        ax.xaxis.set_major_locator(majorLocator())
+    #        ax.xaxis.set_minor_locator(minorLocator())
+    #        ax.set_ylabel(None)
+    #        fl.image(d['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real.run(complex128).C.setaxis(
+#'power','#').set_units('power','scan #'),black=False)
+    #        x1 = x[0]-dx
+    #        y1 = start_y-dy
+    #        x2 = frq_slice[-1]+dx
+    #        tall = 500#(y[-1]+dy)-(y[0]-dy) 
+    #        wide = frq_slice[0]-x1
+    #        wide2 = (x[-1]+dx)-x2
+    #        p = patches.Rectangle((x1,y1),wide,tall,angle=0.0,linewidth=1,fill=None,
+    #                hatch='//',ec='k')
+    #        ax.add_patch(p)
+    #        q = patches.Rectangle((x2,y1),wide2,tall,angle=0.0,linewidth=1,
+    #                fill=None,hatch='//',ec='k')
+    #        ax.add_patch(q)
     d = d_.C
     idx_maxpower = np.argmax(s.getaxis('power'))
     if fl is not None:
