@@ -21,7 +21,7 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         fl.plot(signal_E, human_units=False)
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
     fwhm = filter_width
-    #fwhm += 50
+    fwhm += 50
     print("FWHM IS",fwhm)
     fl.push_marker()
     #if fl is not None:
