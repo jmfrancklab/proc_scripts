@@ -41,7 +41,7 @@ def process_IR(s, label='', fl=None,
     s -= rx_offset_corr
     s.ft('t2')
     s.ft(['ph1','ph2'])
-    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('indirect',raw_index=True).item()
+    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
     # no rough centering anymore -- if anything, we should preproc based on τ,
@@ -145,10 +145,6 @@ def process_IR(s, label='', fl=None,
     else:
         s.reorder(['ph1','vd','t2'])
     if plot_all:
-        fl.next('after correlation -- frequency domain')
-        fl.image(as_scan_nbr(s))
-    s.ift('t2')
-    if plot_all:
         fl.next('after correlation -- time domain')
         fl.image(as_scan_nbr(s))
     s = s['t2':(0,None)]
@@ -161,7 +157,7 @@ def process_IR(s, label='', fl=None,
     if plot_all:
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
-    s['vd':zero_crossing] *= -1
+    s['vd',:zero_crossing] *= -1
     # }}}
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))

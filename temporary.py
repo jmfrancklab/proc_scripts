@@ -62,3 +62,4 @@ fl.image(d['t2':(-500,500)].C.setaxis('power','#').set_units('power','scan #'))
 fl.next(r'after correlation alignment, $\Delta p$ domain, real only')
 fl.image(d['t2':(-500,500)].real.setaxis('power','#').set_units('power','scan #'))
 fl.show("temp_correl_210601.png")
+
