@@ -47,21 +47,15 @@ ph0 = d.C.sum('t2')
 ph0 /= abs(ph0)
 #d /= ph0
 fl.image(d['t2':(-500,500)].C.setaxis("power", "#").set_units("power", "scan #"))
-fl.next(r'after correlation alignment, $\varphi$ domain')
-opt_shift,sigma = correl_align(d, indirect_dim='power',
-        ph1_selection=0,ph2_selection=0,sigma=30e3/2.35, fl=None)
-d.ift('t2')
-d *= np.exp(-1j*2*pi*opt_shift*d.fromaxis('t2'))
-d.ft('t2')
-fl.basename = None
-fl.image(d['t2':(-500,500)].C.setaxis('power','#').set_units('power','scan #'))
-fl.next(r'after masked correlation alignment, $\varphi$ domain')
-opt_shift,sigma = correl_align(d, indirect_dim='power',
-        ph1_selection=0,ph2_selection=0,sigma=30e3/2.35, fl=None)
-d.ift('t2')
-d *= np.exp(-1j*2*pi*opt_shift*d.fromaxis('t2'))
-d.ft('t2')
-fl.image(d['t2':(-500,500)].C.setaxis('power','#').set_units('power','scan #'))
+for thisround in ['first', 'second', 'third']:
+    fl.next(r'after %s correlation alignment, $\varphi$ domain'%thisround)
+    opt_shift,sigma = correl_align(d, indirect_dim='power',
+            ph1_selection=0,ph2_selection=0,sigma=30e3/2.35, fl=None,
+            tol=1e-5)
+    d.ift('t2')
+    d *= np.exp(-1j*2*pi*opt_shift*d.fromaxis('t2'))
+    d.ft('t2')
+    fl.image(d['t2':(-500,500)].C.setaxis('power','#').set_units('power','scan #'))
 d.ft(['ph1','ph2'])
 fl.next(r'after correlation alignment, $\Delta p$ domain')
 fl.image(d['t2':(-500,500)].C.setaxis('power','#').set_units('power','scan #'))
