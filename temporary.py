@@ -43,11 +43,12 @@ d /= ph0
 fl.next("ph,freq -- transients in phase")
 fl.image(d.C.setaxis("power", "#").set_units("power", "scan #"))
 opt_shift,sigma = correl_align(d, indirect_dim='power',
-        ph1_selection=0,ph2_selection-0,sigma=50)
+        ph1_selection=0,ph2_selection=0,sigma=50)
 d.ift('t2')
 d *= np.exp(-1j*2*pi*opt_shift*d.fromaxis('t2'))
 d.ft('t2')
 fl.basename = None
 fl.next(r'after correlation alignment, $\varphi$ domain')
-fl.image(d)
+fl.image(d.C.setaxis(
+'power','#').set_units('power','scan #'))
 fl.show()
