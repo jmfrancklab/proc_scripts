@@ -32,18 +32,19 @@ for thisfile,exp_type,nodename in [
     s.ft('t2',shift=True)
     s.ft(['ph1','ph2'])
     n_nScans = 32
-    s = s.mean('nScans')
+    s = s.mean('repeats')
     fl.next('raw data')
     fl.image(s)
     s.ift('t2')
     fl.next('raw data time domain')
     t_range=(0,0.06)
     f_range = (-1e3,1e3)
-    all_results = ndshape(s)
+    n_repeats=32
+    all_results = ndshape(s) + (n_repeats,'repeats')
     all_results.pop("t2").pop("ph1").pop("ph2")
     all_results = all_results.alloc()
+    all_results.setaxis('nScans',s.getaxis('nScans'))
     s.ift(['ph1','ph2'])
-    print("2")
     rx_offset_corr = s['t2':(0.045,None)]
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
@@ -79,7 +80,7 @@ for thisfile,exp_type,nodename in [
     #{{{alignment
     s.ift(['ph1','ph2'])
     s.ft('t2')
-    opt_shift,sigma = correl_align(s,indirect_dim='repeats',
+    opt_shift,sigma = correl_align(s,indirect_dim='nScans',
             ph1_selection = signal_pathway['ph1'],
             ph2_selection = signal_pathway['ph2'],sigma=50)
     s.ift('t2')
@@ -102,10 +103,14 @@ for thisfile,exp_type,nodename in [
     fl.image(s)
     s = s['t2':(0,None)]
     s['t2':0] *= 0.5
+    fl.next('processed data')
+    fl.image(s)
+    print(ndshape(s))
+    s.reorder(['ph1','ph2','nScans','t2'])
     s.ift('t2')
     n_repeats = 32
     for j in range(n_repeats):
-        data = s['repeats',j].C
+        data = s.C
         data /= sqrt(ndshape(data)['ph1']*ndshape(data)['ph2']) #normalization
         dt = diff(data.getaxis('t2')[r_[0,1]]).item()
         data.ft('t2')
@@ -118,26 +123,24 @@ for thisfile,exp_type,nodename in [
     std_off_pathway = (
             data['ph1',0]['ph2',0]['t2':(0,200)].C.run(lambda x:
                 abs(x)**2).mean_all_but(['t2']).mean('t2').run(sqrt))
-    propagated_variance_from_inactive = N * df ** 2 *std_off_pathway **2
-    fl.next('different types of error')
-    #manual_bounds.set_error(sqrt(int(propagated_variance_from_inactive.data)))
-    #fl.plot(manual_bounds,'.',capsize=6,label=r'propagated from inactive std',alpha=0.5)
-    all_results.mean('repeats',std=True)
-    #manual_bounds.set_error(all_results.get_error())
-    #fl.plot(manual_bounds,'.',capsize=6,label=r'manual std from repeats',alpha=0.5)
-    s_std = data.C.run(np.std,'t2')
-    manual_bounds.set_error(s_std)
-    fl.plot(manual_bounds,'.',capsize=6,label='numpy std',alpha=0.5)
-    fl.show();quit()
-    error_pathway = (set(((j,k) for j in range(2) for k in range(4)))
+    error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
     s_int,frq_slice = integral_w_errors(data,signal_pathway,error_pathway,
-            indirect='repeats',fl=fl,return_frq_slice=True)
-    s = s_int
+            indirect='nScans',fl=fl,return_frq_slice=True)
     fl.next('integrated for error')
-    fl.plot(s,'o',capsize=6,alpha=0.3)
+    fl.plot(s_int,'.',capsize=6,alpha=0.3,label='integral_w_error')
+    propagated_variance_from_inactive = N * df ** 2 *std_off_pathway **2
+    manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data.real))
+    fl.plot(manual_bounds,'.',capsize=6,label=r'propagated from inactive std',alpha=0.5)
+    all_results.mean('repeats',std=True)
+    manual_bounds.set_error(all_results.get_error())
+    fl.plot(manual_bounds,'.',capsize=6,label=r'manual std from repeats',alpha=0.5)
+    #s_std = data.C.run(np.std,'t2')
+    #manual_bounds.set_error(s_std)
+    #fl.plot(manual_bounds,'.',capsize=6,label='numpy std',alpha=0.5)
+    #fl.show();quit()
     fl.show();quit()
 
 

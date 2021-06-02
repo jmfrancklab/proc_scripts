@@ -65,6 +65,8 @@ propagated_variance_from_inactive = N * df ** 2 * std_off_pathway ** 2
 
 # the 2 here has to do w/ real/imag/abs I believe, and is needed to get the
 # variance to match the actual std
+print(manual_bounds)
+quit()
 propagated_variance = N * df**2 * fake_data_noise_std**2 * 2
 fl.next("different types of error")
 manual_bounds.set_error(sqrt(propagated_variance))
