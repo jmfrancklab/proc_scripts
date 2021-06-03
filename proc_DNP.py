@@ -18,22 +18,22 @@ nPowers=25
 #}}}
 #{{{process IR datasets and create list of T1s
 T1_list = []
-for nodename,postproc,f_range,t_range,IR,ILT in [
-       ('FIR_0W','spincore_IR_v1',
-           (-0.6e3,1.2e3),(None,50e-3),True,False),
-        ('FIR_0p5W','spincore_IR_v1',
-           (-0.6e3,1.2e3),(None,50e-3),True,False),
-        ('FIR_1W','spincore_IR_v1',
-           (-0.6e3,1.2e3),(None,50e-3),True,False),
-        ('FIR_1p5W','spincore_IR_v1',
-           (-0.6e3,1.2e3),(None,50e-3),True,False),
-        ('FIR_2W','spincore_IR_v1',
-           (-0.6e3,1.2e3),(None,50e-3),True,False),
-        ]:
-    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
-            postproc=postproc,lookup=postproc_dict,fl=fl)
-    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl)    
-    T1_list.append(T1)
+#for nodename,postproc,f_range,t_range,IR,ILT in [
+#       ('FIR_0W','spincore_IR_v1',
+#           (-0.6e3,1.2e3),(None,50e-3),True,False),
+#        ('FIR_0p5W','spincore_IR_v1',
+#           (-0.6e3,1.2e3),(None,50e-3),True,False),
+#        ('FIR_1W','spincore_IR_v1',
+#           (-0.6e3,1.2e3),(None,50e-3),True,False),
+#        ('FIR_1p5W','spincore_IR_v1',
+#           (-0.6e3,1.2e3),(None,50e-3),True,False),
+#        ('FIR_2W','spincore_IR_v1',
+#           (-0.6e3,1.2e3),(None,50e-3),True,False),
+#        ]:
+#    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
+#            postproc=postproc,lookup=postproc_dict,fl=fl)
+#    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl)    
+#    T1_list.append(T1)
     #}}}
 #{{{process enhancement
 d = find_file(thisfile,exp_type=exp_type,

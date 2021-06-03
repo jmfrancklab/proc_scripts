@@ -33,25 +33,25 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     s = s[direct:frq_slice]
     f = s.getaxis(direct)
     df = f[1]-f[0]
-    errors = []
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect,direct])
     extra_dims = [j for j in all_labels if not j.startswith('ph')]
     if len(extra_dims) > 0:
-     raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
-             +str(extra_dims))
+        raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
+                +str(extra_dims))
+        print("LENGTH OF ERROR PATH:",len(error_path))
     collected_variance = ndshape(
          [ndshape(s)[indirect],len(error_path)],[indirect,'pathways']).alloc()
     for j in range(len(error_path)):
-     # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
-     # where N₂ is the number of points in the indirect dimension
-     s_forerror = select_pathway(s,error_path[j])
-     if j==0: N2 = ndshape(s_forerror)[direct]
-     # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
-     # mean sums all elements (there are N₁N₂ elements)
-     s_forerror.run(lambda x: abs(x)**2).mean_all_but([indirect,direct]).integrate(direct)
-     s_forerror *= df # Δf
-     collected_variance['pathways',j] = s_forerror
+        # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
+        # where N₂ is the number of points in the indirect dimension
+        s_forerror = select_pathway(s,error_path[j])
+        if j==0: N2 = ndshape(s_forerror)[direct]
+        # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
+        # mean sums all elements (there are N₁N₂ elements)
+        s_forerror.run(lambda x: abs(x)**2).mean_all_but([indirect,direct]).integrate(direct)
+        s_forerror *= df # Δf
+        collected_variance['pathways',j] = s_forerror
     collected_variance.mean('pathways') # mean the variance above across all pathways
     # {{{ variance calculation for debug
     print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
@@ -61,4 +61,4 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     if not return_frq_slice:
         return s.integrate(direct).set_error(sqrt(collected_variance.data))
     elif return_frq_slice:
-        return s.integrate(direct).set_error(sqrt(collected_variance.data)), frq_slice
+        return s.integrate(direct).set_error(sqrt(collected_variance.data)), frq_slice, sqrt(collected_variance.data)

@@ -36,7 +36,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
         t_range=(0,0.083),fl=None):
     #if fl is not None:
     #    fl.basename = searchstr
-    ##    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+    #    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
     #            s,freq_range) # visualize the frequency limits
     s.ift('t2')
     s.reorder(['ph1','ph2','power','t2'])
