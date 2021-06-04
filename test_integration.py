@@ -11,7 +11,7 @@ def select_pathway(s,pathway):
         retval = retval[k,v]
     return retval
 signal_pathway = {'ph1': 1, 'ph2':0}
-excluded_pathways = [(0,3),(0,0)]
+excluded_pathways = [(0,0)]
 for thisfile,exp_type,nodename in [
         ('210409_Ni_cap_probe_echo_1024','ODNP_NMR_comp/test_equipment','signal')
         ]:
@@ -46,10 +46,12 @@ for thisfile,exp_type,nodename in [
     s.ft('t2')
     s.ft(['ph1','ph2'])
     s = s['t2':f_range]
+    fl.next('freq domain')
+    fl.image(s)
     s.ift('t2')
-    print("4")
-    best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
-    print("5")
+    #best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway))
+    #print(best_shift)
+    best_shift = 0.003
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0})
     fl.next('After hermitian phase correction')
@@ -93,14 +95,11 @@ for thisfile,exp_type,nodename in [
     #s.ft('t2')
     #fl.next('after correl - freq domain')
     #fl.image(s)
-    #}}}
+    ##}}}
     #s.ift('t2')
-    #s *= phasing
-    s.ft('t2')
-    fl.next('normal')
+    fl.next('time domain for slicing')
     fl.image(s)
-    s.ift('t2')
-    s = s['t2':(0,None)]
+    s = s['t2':(0,t_range[-1])]
     s['t2':0] *= 0.5
     s.ft('t2')
     fl.next('FID sliced')
@@ -111,20 +110,21 @@ for thisfile,exp_type,nodename in [
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice,collected_variance = integral_w_errors(s,signal_pathway,error_pathway,
+    s_int,frq_slice,s_test = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
     fl.next('diagnostic 1D plot')
     fl.plot(s['nScans',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
     axvline(x=frq_slice[0],c='k',linestyle=":",alpha=0.8)
     axvline(x=frq_slice[-1],c='k',linestyle=":",alpha=0.8)
     fl.next('integrated for error')
+    fl.plot(s_int,'.',capsize=6,label='integral with error')
+    fl.plot(s_test,'.',capsize=6,label='test')
+    data = data['t2':frq_slice]
     data = select_pathway(data,signal_pathway)
     new_error = data.C.run(np.std,'t2')
     data.integrate('t2')
     fl.plot(data,'o',label='data')
     new_error = np.array(new_error.data)
-    data.set_error(collected_variance.data)
-    fl.plot(data,'.',capsize=6,label='integral_w_error')
     data.set_error(new_error)
     fl.plot(data,'.',capsize=6,label='numpy std')
     fl.show();quit()

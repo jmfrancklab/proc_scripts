@@ -30,6 +30,8 @@ all_results = ndshape(clean_data) + (n_repeats, "repeats")
 all_results.pop("t2").pop("ph1").pop("ph2")
 all_results = all_results.alloc()
 all_results.setaxis("vd", clean_data.getaxis("vd"))
+print(ndshape(clean_data))
+quit()
 for j in range(n_repeats):
     data = clean_data.C
     data.add_noise(fake_data_noise_std)
@@ -62,11 +64,8 @@ print(
     "off-pathway std", std_off_pathway / sqrt(2), "programmed std", fake_data_noise_std
 )
 propagated_variance_from_inactive = N * df ** 2 * std_off_pathway ** 2
-
 # the 2 here has to do w/ real/imag/abs I believe, and is needed to get the
 # variance to match the actual std
-print(manual_bounds)
-quit()
 propagated_variance = N * df**2 * fake_data_noise_std**2 * 2
 fl.next("different types of error")
 manual_bounds.set_error(sqrt(propagated_variance))
@@ -82,9 +81,5 @@ fl.plot(manual_bounds, ".", capsize=6, label=r"propagated from inactive std", al
 all_results.mean("repeats", std=True)
 # by itself, that would give error bars, but the data would be averaged -- better to put the data in the same position
 manual_bounds.set_error(all_results.get_error())
-print(type(all_results))
-print(type(all_results.get_error()))
-print(type(manual_bounds))
-quit()
 fl.plot(manual_bounds, ".", capsize=6, label=r"std from repeats", alpha=0.5)
 fl.show()

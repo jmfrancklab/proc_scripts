@@ -57,7 +57,11 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     s.ft('t2')
     s.ft(['ph1','ph2'])
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('power',raw_index=True).item()
-    s = s['t2':freq_range]    
+    s = s['t2':freq_range] 
+    if fl is not None:
+        fl.next('freq_domain before phasing')
+        fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+    fl.show();quit()    
     s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
     best_shift = 0.33e-3
