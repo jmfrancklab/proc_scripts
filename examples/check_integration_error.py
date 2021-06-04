@@ -30,8 +30,8 @@ all_results = ndshape(clean_data) + (n_repeats, "repeats")
 all_results.pop("t2").pop("ph1").pop("ph2")
 all_results = all_results.alloc()
 all_results.setaxis("vd", clean_data.getaxis("vd"))
-print(ndshape(clean_data))
-quit()
+
+print("shape of all results", ndshape(all_results))
 for j in range(n_repeats):
     data = clean_data.C
     data.add_noise(fake_data_noise_std)
@@ -52,7 +52,7 @@ for j in range(n_repeats):
     manual_bounds.integrate("t2")
     # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
     all_results["repeats", j] = manual_bounds
-    #print("#%d"%j)
+    print("#%d"%j)
 std_off_pathway = (
     data["ph1", 0]["ph2", 0]["t2":bounds]
     .C.run(lambda x: abs(x)**2)
