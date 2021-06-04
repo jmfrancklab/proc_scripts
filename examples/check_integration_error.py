@@ -30,7 +30,6 @@ all_results = ndshape(clean_data) + (n_repeats, "repeats")
 all_results.pop("t2").pop("ph1").pop("ph2")
 all_results = all_results.alloc()
 all_results.setaxis("vd", clean_data.getaxis("vd"))
-
 print("shape of all results", ndshape(all_results))
 for j in range(n_repeats):
     data = clean_data.C
@@ -42,11 +41,18 @@ for j in range(n_repeats):
     data /= sqrt(ndshape(data)["ph1"] * ndshape(data)["ph2"])  # normalization
     # }}}
     dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
-    data.ft("t2", shift=True)
+    data.ft("t2",shift=True)
     # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
+    error_pathway = (set(((j,k) for j in range(ndshape(data)['ph1']) for k in range(ndshape(data)['ph2'])))
+            - set(excluded_pathways)
+            - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
+    error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
+    s_int,frq_slice,std = integral_w_errors(data,signal_pathway,error_pathway,
+            indirect='vd', fl=fl,return_frq_slice=True)
+
     # }}}
-    manual_bounds = data["ph1", 0]["ph2", 1]["t2":bounds]
+    manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
     N = ndshape(manual_bounds)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
     manual_bounds.integrate("t2")
@@ -63,11 +69,14 @@ std_off_pathway = (
 print(
     "off-pathway std", std_off_pathway / sqrt(2), "programmed std", fake_data_noise_std
 )
+
 propagated_variance_from_inactive = N * df ** 2 * std_off_pathway ** 2
 # the 2 here has to do w/ real/imag/abs I believe, and is needed to get the
 # variance to match the actual std
 propagated_variance = N * df**2 * fake_data_noise_std**2 * 2
 fl.next("different types of error")
+manual_bounds.set_error(std)
+fl.plot(manual_bounds,'.',capsize=6,label = 'std from int w err',alpha=0.5)
 manual_bounds.set_error(sqrt(propagated_variance))
 fl.plot(
     manual_bounds,
