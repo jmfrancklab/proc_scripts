@@ -1,6 +1,7 @@
 from pyspecdata import *
 from .integrate_limits import integrate_limits
 import numpy as np
+from pylab import *
 def select_pathway(s,pathway):
     retval = s
     for k,v in pathway.items():
@@ -50,11 +51,11 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
      # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
      # mean sums all elements (there are N₁N₂ elements)
      s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
-     s_forerror.run(lambda x: abs(x)**2).mean_all_but([indirect,direct]).mean(direct)
+     s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
      s_forerror *= df**2 # Δf
      s_forerror *= N2
      collected_variance['pathways',j] = s_forerror
-    collected_variance.mean('pathways',std=True) # mean the variance above across all pathways
+    collected_variance.run(real).mean('pathways',std=True) # mean the variance above across all pathways
     # {{{ variance calculation for debug
     #print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
     print("automatically calculated integral error:",sqrt(collected_variance.data))

@@ -62,7 +62,7 @@ for j in range(n_repeats):
     s_int,frq_slice,mystd = integral_w_errors(data,signal_pathway,error_pathway,
             indirect='vd', fl=fl,return_frq_slice=True)
     # }}}
-    manual_bounds = data["ph1", 0]["ph2", 1]["t2":bounds]
+    manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
     N = ndshape(manual_bounds)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
     manual_bounds.integrate("t2")
