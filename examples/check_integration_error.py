@@ -1,8 +1,18 @@
 """Check integral error calculation
 ================================
 
-We use various formulas to propagate our error and calculate the integral
-error.  This verifies that they are all correct!"""
+Generate a fake dataset of an inversion recovery with multiple repeats (φ
+× t2 × vd × repeats) w/ normally distributed random noise.
+Check that the following match:
+
+- integral w/ error (the canned routine :func:`integral_w_errors`)
+- propagate error based off the programmed σ of the normal distribution
+- set the error bars based on the standard deviation (along the repeats
+  dimension) of the *real* part of the integral
+- propagate error based off the variance of the noise in the inactive
+  coherence channels (do this manually inside this script -- should mimic
+  what :func:`integral_w_errors` does)
+"""
 from pylab import *
 from pyspecdata import *
 from proc_scripts import integrate_limits, integral_w_errors
@@ -26,7 +36,7 @@ fake_data_noise_std = 2.0
 clean_data.reorder(["ph1", "ph2", "vd"])
 bounds = (0, 200)  # seem reasonable to me
 result = 0
-n_repeats = 50 
+n_repeats = 100 
 all_results = ndshape(clean_data) + (n_repeats, "repeats")
 all_results.pop("t2").pop("ph1").pop("ph2")
 all_results = all_results.alloc()
@@ -61,13 +71,13 @@ for j in range(n_repeats):
     print("#%d"%j)
 std_off_pathway = (
     data["ph1", 0]["ph2", 0]["t2":bounds]
-    .C.run(lambda x: abs(x)**2/sqrt(2)) # sqrt2 so variance is variance of real
+    .C.run(lambda x: abs(x)**2/2) # sqrt2 so variance is variance of real
     .mean_all_but(["t2", "vd"])
     .mean("t2")
     .run(sqrt)
 )
 print(
-    "off-pathway std", std_off_pathway / sqrt(2), "programmed std", fake_data_noise_std
+    "off-pathway std", std_off_pathway, "programmed std", fake_data_noise_std
 )
 propagated_variance_from_inactive = N * df ** 2 * std_off_pathway ** 2
 # removed factor of 2 in following, which shouldn't have been there
@@ -82,10 +92,12 @@ fl.plot(
     label=r"propagated from programmed variance",
     alpha=0.5,
 )
-manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data))
-fl.plot(manual_bounds, ".", capsize=6, label=r"propagated from inactive std", alpha=0.5)
 all_results.run(real).mean("repeats", std=True)
 # by itself, that would give error bars, but the data would be averaged -- better to put the data in the same position
 manual_bounds.set_error(all_results.get_error())
+# the fact that this matches the previous shows that my sample size is
+# large enough to give good statistics
 fl.plot(manual_bounds, ".", capsize=6, label=r"std from repeats", alpha=0.5)
+manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data))
+fl.plot(manual_bounds, ".", capsize=6, label=r"propagated from inactive std", alpha=0.5)
 fl.show()
