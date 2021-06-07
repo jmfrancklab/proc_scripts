@@ -105,45 +105,29 @@ for thisfile,exp_type,nodename in [
     fl.next('FID sliced')
     fl.image(s)
     s.reorder(['ph1','ph2','nScans','t2'])
-    
-    s.ift('t2')
-    n_repeats = 32
-    all_results = ndshape(s) + (n_repeats,'repeats')
-    all_results.pop('t2').pop('ph1').pop('ph2')
-    all_results = all_results.alloc()
-    all_results.setaxis('nScans',s.getaxis('nScans'))
-    for j in range(n_repeats):
-        data = s.C
-        dt = np.diff(data.getaxis('t2')[r_[0,1]]).item()
-        data.ft('t2')
-        data /= sqrt(ndshape(data)['t2']) *dt
-        err_path = (set(((j,k) for j in range(ndshape(data)['ph1']) for k in range(ndshape(data)['ph2'])))
-            - set(excluded_pathways)
-            - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
-        err_path = [{'ph1':j,'ph2':k} for j,k in err_path]
-        d_int,f_slice,dstd = integral_w_errors(data,signal_pathway,err_path,
-                indirect='nScans',fl=fl,return_frq_slice=True)
-        m_bounds = select_pathway(data['t2':f_slice],signal_pathway)
-        np_err = m_bounds.C.run(np.std,'t2')
-        np_err = np.array(np_err.data)
-        m_bounds.integrate('t2')
-        all_results['repeats',j] = m_bounds
-    m_bounds.set_error(dstd)
-    fl.next('integrated errors')
-    fl.plot(m_bounds,'.',capsize=6,label='integral with error')
-    m_bounds.set_error(np_err)
-    fl.plot(m_bounds,'.',capsize=6,label='numpy')
-    fl.show();quit()
-
-    
-
-
-    
     data = s.C    
     error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
+    data1 = select_pathway(data['t2':(-750,750)],signal_pathway)
+    data1.integrate('t2')
+    np_1 = data1.C.run(np.std,'nScans')
+    np_1=np.array(np_1.data)
+    data2 = select_pathway(data['t2':(-750,750)],{'ph1':0,'ph2':0})
+    data2.integrate('t2')
+    np_2 = data2.C.run(np.std,'nScans')
+    np_2 = np.array(np_2.data)
+    print(np_1)
+    print(np_2)
+    #fl.next('excluded path and signal path std')
+    #data1.set_error(np_1)
+    #fl.plot(data1,'.',capsize=6)
+    #data2.set_error(np_2)
+    #fl.plot(data2,'.',capsize=6)
+    #fl.show();quit()
+
+
     s_int,frq_slice,std = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
     fl.next('diagnostic 1D plot')
@@ -151,14 +135,18 @@ for thisfile,exp_type,nodename in [
     axvline(x=frq_slice[0],c='k',linestyle=":",alpha=0.8)
     axvline(x=frq_slice[-1],c='k',linestyle=":",alpha=0.8)
     fl.next('integrated for error')
+    x = s_int.get_error()
+    x[:] /= sqrt(2)
     fl.plot(s_int,'.',capsize=6,label='integral with error')
     data = data['t2':frq_slice]
     data = select_pathway(data,signal_pathway)
-    new_error = data.C.run(np.std,'t2')
     data.integrate('t2')
+
+    new_error = data.real.run(np.std,'nScans')
+    #new_error = data.C.mean('t2', std=True).get_error()
     fl.plot(data,'o',label='data')
-    new_error = np.array(new_error.data)
-    data.set_error(new_error)
+    print("new_error, data",ndshape(new_error), ndshape(data))
+    data.set_error(new_error.data)
     fl.plot(data,'.',capsize=6,label='numpy std')
     fl.show();quit()
 

@@ -6,12 +6,12 @@ from proc_scripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
 fl = fl_mod()
 # {{{ input parameters
-thisfile = '210528_TEMPOL_3uM_cap_probe_DNP'
+thisfile = '210525_TEMPOL7uM_cap_probe_DNP'
 exp_type='ODNP_NMR_comp/test_equipment'
 save_npz = False
 power_list = r_[0.001,0.5,1,1.5,2]
 R1w = 1/2.172
-C = 0.000003
+C = 0.000007
 signal_pathway = {'ph1':1,'ph2':-2}
 excluded_pathways = [(0,3),(0,0)]
 nPowers=25
@@ -38,9 +38,11 @@ T1_list = []
 #{{{process enhancement
 d = find_file(thisfile,exp_type=exp_type,
         expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
+fl.next('next')
 enhancement,idx_maxpower = process_enhancement(d, searchstr = thisfile,
-        freq_range=(-3e3,3e3),
+        freq_range=(-2e3,2e3),
         t_range=(0,0.05),fl=fl)
+fl.show();quit()
 #}}}
 #{{{create R1(p) to correct for T1 heating
 T1p = nddata(T1_list,[-1],['power']).setaxis('power',power_list)

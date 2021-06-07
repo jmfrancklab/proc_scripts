@@ -34,15 +34,19 @@ def as_scan_nbr(s):
 def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
         excluded_pathways = [(0,0),(0,1)], freq_range=(None,None),
         t_range=(0,0.083),fl=None):
+    
     #if fl is not None:
-    #    fl.basename = searchstr
-    #    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
-    #            s,freq_range) # visualize the frequency limits
+        #fl.basename = searchstr
+        #fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+        #        s,freq_range) # visualize the frequency limits
     s.ift('t2')
     s.reorder(['ph1','ph2','power','t2'])
     #if fl is not None:
     #    fl.basename = searchstr
     #    fl.side_by_side('show time limits',s,t_range)
+    if fl is not None:
+        fl.next('time')
+        fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
@@ -61,12 +65,10 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     if fl is not None:
         fl.next('freq_domain before phasing')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
-    fl.show();quit()    
     s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
-    best_shift = 0.33e-3
+    #best_shift = 0.33e-3
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
-    s.ft('t2')
     logger.info(strm("applying zeroth order correction"))
     s.ift(['ph1','ph2'])
     phasing = s['t2',0].C
@@ -75,12 +77,13 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     phasing['ph1',1]['ph2',0] = 1
     phasing.ift(['ph1','ph2'])
     s /= phasing
-    ph0 = s.C.sum('t2')
+    ph0 = s['t2':0]/phasing
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1','ph2'])
    #{{{apodizing and zero fill
     logger.info(strm(s.dimlabels))
+    s.ft('t2')
     if fl is not None:
         fl.next('phase corrected')
         fl.image(as_scan_nbr(s))
@@ -96,7 +99,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
     #    fl.next('phased-frequency domain')
     #    fl.image(as_scan_nbr(s))
     opt_shift,sigma = correl_align(s,indirect_dim='power',
-            ph1_selection=1,ph2_selection=0,sigma=50)
+            ph1_selection=1,ph2_selection=0,sigma=0.001)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
@@ -105,7 +108,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1,'ph2':0},
         fl.next(r'after correlation, $\varphi$ domain')
         fl.image(as_scan_nbr(s))
     #fl.show();quit()
-    s *= phasing
+    #s *= phasing
     s.ift('t2')
     s.ft(['ph1','ph2'])
     #if fl is not None:

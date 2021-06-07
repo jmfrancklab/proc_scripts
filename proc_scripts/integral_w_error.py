@@ -49,17 +49,18 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
      if j==0: N2 = ndshape(s_forerror)[direct]
      # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
      # mean sums all elements (there are N₁N₂ elements)
+     s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
      s_forerror.run(lambda x: abs(x)**2).mean_all_but([indirect,direct]).mean(direct)
      s_forerror *= df**2 # Δf
      s_forerror *= N2
      collected_variance['pathways',j] = s_forerror
-    collected_variance.mean('pathways') # mean the variance above across all pathways
+    collected_variance.mean('pathways',std=True) # mean the variance above across all pathways
     # {{{ variance calculation for debug
-    print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
+    #print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
     print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s,sig_path)
     if not return_frq_slice:
         return s.integrate(direct).set_error(sqrt(collected_variance.data))
     elif return_frq_slice:
-        return s.integrate(direct).set_error(sqrt(collected_variance.data)), frq_slice, sqrt(collected_variance.data)
+        return s.integrate(direct).set_error(sqrt(collected_variance.get_error())), frq_slice, sqrt(collected_variance.get_error())

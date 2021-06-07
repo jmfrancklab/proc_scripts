@@ -25,7 +25,7 @@ fake_data_noise_std = 2.0
 clean_data.reorder(["ph1", "ph2", "vd"])
 bounds = (0, 200)  # seem reasonable to me
 result = 0
-n_repeats = 100
+n_repeats = 50 
 all_results = ndshape(clean_data) + (n_repeats, "repeats")
 all_results.pop("t2").pop("ph1").pop("ph2")
 all_results = all_results.alloc()
@@ -41,18 +41,17 @@ for j in range(n_repeats):
     data /= sqrt(ndshape(data)["ph1"] * ndshape(data)["ph2"])  # normalization
     # }}}
     dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
-    data.ft("t2",shift=True)
+    data.ft("t2", shift=True)
     # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
     error_pathway = (set(((j,k) for j in range(ndshape(data)['ph1']) for k in range(ndshape(data)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice,std = integral_w_errors(data,signal_pathway,error_pathway,
+    s_int,frq_slice,mystd = integral_w_errors(data,signal_pathway,error_pathway,
             indirect='vd', fl=fl,return_frq_slice=True)
-
     # }}}
-    manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
+    manual_bounds = data["ph1", 0]["ph2", 1]["t2":bounds]
     N = ndshape(manual_bounds)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
     manual_bounds.integrate("t2")
@@ -61,7 +60,7 @@ for j in range(n_repeats):
     print("#%d"%j)
 std_off_pathway = (
     data["ph1", 0]["ph2", 0]["t2":bounds]
-    .C.run(lambda x: abs(x)**2)
+    .C.run(lambda x: abs(x)**2/sqrt(2)) # sqrt2 so variance is variance of real
     .mean_all_but(["t2", "vd"])
     .mean("t2")
     .run(sqrt)
@@ -69,14 +68,11 @@ std_off_pathway = (
 print(
     "off-pathway std", std_off_pathway / sqrt(2), "programmed std", fake_data_noise_std
 )
-
 propagated_variance_from_inactive = N * df ** 2 * std_off_pathway ** 2
-# the 2 here has to do w/ real/imag/abs I believe, and is needed to get the
-# variance to match the actual std
-propagated_variance = N * df**2 * fake_data_noise_std**2 * 2
+# removed factor of 2 in following, which shouldn't have been there
+propagated_variance = N * df**2 * fake_data_noise_std**2
 fl.next("different types of error")
-manual_bounds.set_error(std)
-fl.plot(manual_bounds,'.',capsize=6,label = 'std from int w err',alpha=0.5)
+fl.plot(s_int,".",capsize=6,label = 'std from int w err',alpha=0.5)
 manual_bounds.set_error(sqrt(propagated_variance))
 fl.plot(
     manual_bounds,
@@ -87,7 +83,7 @@ fl.plot(
 )
 manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data))
 fl.plot(manual_bounds, ".", capsize=6, label=r"propagated from inactive std", alpha=0.5)
-all_results.mean("repeats", std=True)
+all_results.run(real).mean("repeats", std=True)
 # by itself, that would give error bars, but the data would be averaged -- better to put the data in the same position
 manual_bounds.set_error(all_results.get_error())
 fl.plot(manual_bounds, ".", capsize=6, label=r"std from repeats", alpha=0.5)
