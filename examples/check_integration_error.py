@@ -1,7 +1,8 @@
 """Check integral error calculation
 ================================
 
-We use various formulas to propagate our error and calculate the integral error.  This verifies that they are all correct!"""
+We use various formulas to propagate our error and calculate the integral
+error.  This verifies that they are all correct!"""
 from pylab import *
 from pyspecdata import *
 from proc_scripts import integrate_limits, integral_w_errors

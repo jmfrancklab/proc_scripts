@@ -1,3 +1,10 @@
+"""
+Check Integration
+=================
+
+Makes sure that automatically chosen integral bounds perform similar to or
+better than what you would choose by hand.
+"""
 from pylab import *
 from pyspecdata import *
 from proc_scripts import integrate_limits, integral_w_errors
