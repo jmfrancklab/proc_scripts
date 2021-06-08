@@ -6,6 +6,7 @@ fl = fl_mod()
 # {{{ input parameters
 save_npz = False
 #}}}
+coherence_pathway = {'ph1':0,'ph2':1}
 for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT in [
        ('210607_TEMPOL_100mM_cap_probe_DNP','ODNP_NMR_comp/test_equipment',
            'FIR_noPower','spincore_IR_v1',
@@ -18,6 +19,9 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT 
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
+    s.mean('nScans')
+    myslice = s['t2':f_range]
+    mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=fl)
     T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,
-            clock_correction=clock_correction,IR=IR,fl=fl) 
-    fl.show();quit()
+            clock_correction=clock_correction,IR=IR,sign=mysgn,fl=fl) 
+    fl.show()

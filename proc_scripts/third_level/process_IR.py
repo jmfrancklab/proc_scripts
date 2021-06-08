@@ -27,8 +27,10 @@ def process_IR(s, label='', fl=None,
         f_range = (None,None),
         t_range = (None,83e-3),
         IR = True,
+        flip=False,
+        sign = None,
         ILT=False):
-    s.mean('nScans')
+    s *= sign
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s.ift('t2')
     s.reorder(['ph1','ph2','vd','t2'])
@@ -109,24 +111,13 @@ def process_IR(s, label='', fl=None,
         s.reorder(['ph1','vd','t2'])
     logger.info(strm("zero crossing at",zero_crossing))
     s.ift(['ph1','ph2'])
-    fl.basename='correlation subroutine -- before zero crossing:'
+    fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
-    if zero_crossing > 1:
-        opt_shift,sigma = correl_align(s['vd',:zero_crossing+1],indirect_dim='vd',
-                ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-                sigma=50)
-        s.ift('t2')
-        s['vd',:zero_crossing+1] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-        s.ft('t2')
-    else:
-        logger.warning("You have 1 point or less before your zero crossing!!!!")
-    fl.basename='correlation subroutine -- after zero crossing:'
-    opt_shift,sigma = correl_align(s['vd',zero_crossing+1:],indirect_dim='vd',
+    opt_shift,sigma = correl_align(s,indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
             sigma=50)
     s.ift('t2')
-    s['vd',zero_crossing+1:] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
     fl.basename = None
     if fl is not None:
@@ -147,7 +138,10 @@ def process_IR(s, label='', fl=None,
     if fl is not None:
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
+    s *= sign
     data = s.C    
+    if flip:
+        s *= -1
     #s['vd',:zero_crossing] *= -1
     # }}}
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses

@@ -1,3 +1,4 @@
+
 """Used to preprocess data based on type of experiment performed. Returns all data FTed
 into the frequency domain with the phase cycles also FTed (coherence domain). Data is
 not sliced or altered in anyway.
@@ -267,22 +268,25 @@ def proc_Hahn_echoph(s, fl=None):
         fl.image(abs(s))
     return s
 
-def proc_spincore_IR(s,fl=None):
+def proc_spincore_IR(s,nScans=False,fl=None):
+    s.mean('nScans')
     vd_axis = s.getaxis('vd')
+    print(ndshape(s))
+    #quit()
     s.reorder(['ph2','ph1']).set_units('t2','s')
     s.ft('t2', shift=True)
     s.ft(['ph2','ph1'])
     if fl is not None:
         fl.next('raw data -- coherence channels')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+        fl.image(s)
     s.ift('t2')
     if fl is not None:
         fl.next('time domain (all $\\Delta p$)')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'))
+        fl.image(s)
     s.ft('t2', pad=4096)
     if fl is not None:
         fl.next('frequency domain (all $\\Delta p$)')
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'),black=False)
+        fl.image(s,black=False)
     return s
 
 def proc_nutation(s,fl=None):
@@ -355,7 +359,7 @@ def proc_var_tau(s,fl=None):
         fl.image(s)
     return s
 
-def proc_spincore_ODNP_v1(s,fl=None):
+def proc_spincore_ODNP_v1(s,nScans=False,fl=None):
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))

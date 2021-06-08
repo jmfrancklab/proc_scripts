@@ -5,11 +5,6 @@ from proc_scripts import *
 from proc_scripts.correlation_alignment_ODNP import correl_align
 import numpy as np
 fl = figlist_var()
-def select_pathway(s,pathway):
-    retval = s
-    for k, v in pathway.items():
-        retval = retval[k,v]
-    return retval
 signal_pathway = {'ph1': 1, 'ph2':0}
 excluded_pathways = [(0,0),(0,3)]
 for thisfile,exp_type,nodename in [

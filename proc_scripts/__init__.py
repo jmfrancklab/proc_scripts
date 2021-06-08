@@ -9,11 +9,13 @@ from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
+from .simple_functions import select_pathway, determine_sign
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors
 __all__ = ['calc_baseline',
         'center_echo',
         'correl_align',
+        'determine_sign',
         'dBm2power',
         'DCCT',
         'decay',
@@ -27,6 +29,7 @@ __all__ = ['calc_baseline',
         'ph1_real_Abs',
         'power2dBm',
         'recovery',
+        'select_pathway',
         'slice_FID_from_echo',
         'Vpp2power',
         'zeroth_order_ph',
