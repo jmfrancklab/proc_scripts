@@ -6,34 +6,36 @@ from proc_scripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
 fl = fl_mod()
 # {{{ input parameters
-thisfile = '210525_TEMPOL7uM_cap_probe_DNP'
+thisfile = '210607_TEMPOL_100mM_cap_probe_DNP'
 exp_type='ODNP_NMR_comp/test_equipment'
 save_npz = False
 power_list = r_[0.001,0.5,1,1.5,2]
 R1w = 1/2.172
-C = 0.000007
+C = 0.1
 signal_pathway = {'ph1':1,'ph2':-2}
 excluded_pathways = [(0,3),(0,0)]
 nPowers=25
 #}}}
 #{{{process IR datasets and create list of T1s
 T1_list = []
-#for nodename,postproc,f_range,t_range,IR,ILT in [
-#       ('FIR_0W','spincore_IR_v1',
-#           (-0.6e3,1.2e3),(None,50e-3),True,False),
-#        ('FIR_0p5W','spincore_IR_v1',
-#           (-0.6e3,1.2e3),(None,50e-3),True,False),
-#        ('FIR_1W','spincore_IR_v1',
-#           (-0.6e3,1.2e3),(None,50e-3),True,False),
-#        ('FIR_1p5W','spincore_IR_v1',
-#           (-0.6e3,1.2e3),(None,50e-3),True,False),
-#        ('FIR_2W','spincore_IR_v1',
-#           (-0.6e3,1.2e3),(None,50e-3),True,False),
-#        ]:
-#    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
-#            postproc=postproc,lookup=postproc_dict,fl=fl)
-#    T1 = process_IR(s,label=thisfile,W=6,f_range=f_range,IR=False,fl=fl)    
-#    T1_list.append(T1)
+for nodename,postproc,f_range,t_range,clock_correction,IR,ILT in [
+       ('FIR_noPower','spincore_IR_v1',
+           (-2e3,2e3),(None,40e-3),False,False,False),
+        #('FIR_27dBm','spincore_IR_v1',
+        #   (-0.6e3,1.2e3),(None,50e-3),True,False),
+        #('FIR_30dBm','spincore_IR_v1',
+        #   (-0.6e3,1.2e3),(None,50e-3),True,False),
+        #('FIR_32dBm','spincore_IR_v1',
+        #   (-0.6e3,1.2e3),(None,50e-3),True,False),
+        #('FIR_33dBm','spincore_IR_v1',
+        #   (-0.6e3,1.2e3),(None,50e-3),True,False),
+        ]:
+    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
+            postproc=postproc,lookup=postproc_dict,fl=fl)
+    T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,clock_correction=clock_correction,
+            IR=IR,fl=fl)    
+    fl.show();quit()
+    T1_list.append(T1)
     #}}}
 #{{{process enhancement
 d = find_file(thisfile,exp_type=exp_type,

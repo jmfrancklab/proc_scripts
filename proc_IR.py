@@ -6,9 +6,10 @@ fl = fl_mod()
 # {{{ input parameters
 save_npz = False
 #}}}
-for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
-       ('210512_water_cap_probe_IR_33dBm','inv_rec','signal','spincore_IR_v1',
-           (-0.291e3,0.615e3),(None,83e-3),True,False),
+for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT in [
+       ('210607_TEMPOL_100mM_cap_probe_DNP','ODNP_NMR_comp/test_equipment',
+           'FIR_noPower','spincore_IR_v1',
+           (-2e3,2e3),(None,40e-3),False,False,False),
         # ('210322_water_control_FIR_noPower','inv_rec','signal','spincore_IR_v1',
         #    (-0.146e3,-0.06e3),(None,83e-3),False,False),
         #('210517_4OHTempo_TempControl_probe_FIR_34dBm.','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',
@@ -17,5 +18,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,IR,ILT in [
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
-    process_IR(s,label=thisfile,fl=fl) 
-
+    T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,
+            clock_correction=clock_correction,IR=IR,fl=fl) 
+    fl.show();quit()

@@ -49,6 +49,8 @@ for thisfile,exp_type,nodename in [
     fl.next('freq domain')
     fl.image(s)
     s.ift('t2')
+    print(ndshape(s))
+    quit()
     #best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway))
     #print(best_shift)
     best_shift = 0.003
@@ -110,24 +112,6 @@ for thisfile,exp_type,nodename in [
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    data1 = select_pathway(data['t2':(-750,750)],signal_pathway)
-    data1.integrate('t2')
-    np_1 = data1.C.run(np.std,'nScans')
-    np_1=np.array(np_1.data)
-    data2 = select_pathway(data['t2':(-750,750)],{'ph1':0,'ph2':0})
-    data2.integrate('t2')
-    np_2 = data2.C.run(np.std,'nScans')
-    np_2 = np.array(np_2.data)
-    print(np_1)
-    print(np_2)
-    #fl.next('excluded path and signal path std')
-    #data1.set_error(np_1)
-    #fl.plot(data1,'.',capsize=6)
-    #data2.set_error(np_2)
-    #fl.plot(data2,'.',capsize=6)
-    #fl.show();quit()
-
-
     s_int,frq_slice,std = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
     fl.next('diagnostic 1D plot')

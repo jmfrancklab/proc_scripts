@@ -21,18 +21,17 @@ def process_IR(s, label='', fl=None,
         this_l = 0.032,
         l = sqrt(np.logspace(-8.0,0.5,35)),
         signal_pathway = {'ph1':0,'ph2':1},
-        excluded_pathways = [(0,0),(0,3)],
-        coh_err = {'ph1':1,'ph2':r_[0,2,3]},
+        excluded_pathways = [(0,0)],
         clock_correction = True,
         W=6.2,
         f_range = (None,None),
         t_range = (None,83e-3),
         IR = True,
-        ILT=False,
-        plot_all=False
-        ):
+        ILT=False):
+    s.mean('nScans')
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s.ift('t2')
+    s.reorder(['ph1','ph2','vd','t2'])
     s.ift(['ph1','ph2'])
     t_start = t_range[-1] / 4
     t_start *= 3
@@ -49,14 +48,14 @@ def process_IR(s, label='', fl=None,
     #{{{ phasing the aligned data
     s = s['t2':f_range]
     s.ift('t2')
-    best_shift,max_shift = hermitian_function_test(s['ph2',1]['ph1',0].C.mean('vd'))
+    best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    if plot_all:
+    if fl is not None:
         fl.next('time domain after hermitian test')
         fl.image(as_scan_nbr(s))
     s.ft('t2')
-    if plot_all:
+    if fl is not None:
         fl.next('frequency domain after hermitian test')
         fl.image(as_scan_nbr(s))
     s.ift('t2')
@@ -64,23 +63,23 @@ def process_IR(s, label='', fl=None,
         #{{{ clock correction
         clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
         s.ft('t2')
-        if plot_all:
+        if fl is not None:
             fl.next('before clock correction')
             fl.image(as_scan_nbr(s))
-        s_clock=s['ph1',0]['ph2',1].sum('t2')
+        s_clock=s['ph1',1]['ph2',0].sum('t2')
         s.ift(['ph1','ph2'])
         min_index = abs(s_clock).argmin('vd',raw_index=True).item()
         s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
         s_clock['vd',:min_index+1] *=-1
         s_clock.sum('vd').run(abs)
-        if plot_all:
+        if fl is not None:
             fl.next('clock correction')
             fl.plot(s_clock,'.',alpha=0.7)
         clock_corr = s_clock.argmax('clock_corr').item()
         plt.axvline(x=clock_corr, alpha=0.5, color='r')
         s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
         s.ft(['ph1','ph2'])
-        if plot_all:
+        if fl is not None:
             fl.next('after auto-clock correction')
             fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
@@ -95,11 +94,11 @@ def process_IR(s, label='', fl=None,
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1','ph2'])
-    if plot_all:
+    if fl is not None:
         fl.next('zeroth order corrected')
         fl.image(s)
     s.ft('t2')
-    if plot_all:
+    if fl is not None:
         fl.next('phased data -- frequency domain')
         fl.image(as_scan_nbr(s))
     #}}}
@@ -109,9 +108,7 @@ def process_IR(s, label='', fl=None,
     else:
         s.reorder(['ph1','vd','t2'])
     logger.info(strm("zero crossing at",zero_crossing))
-    s.ift('t2')
     s.ift(['ph1','ph2'])
-    s.ft('t2')
     fl.basename='correlation subroutine -- before zero crossing:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
     logger.info(strm("ndshape",ndshape(s),"zero crossing at",zero_crossing))
@@ -132,32 +129,26 @@ def process_IR(s, label='', fl=None,
     s['vd',zero_crossing+1:] *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
     fl.basename = None
-    if plot_all:
+    if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
         fl.image(as_scan_nbr(s))
     s.ift('t2')
     s.ft(['ph1','ph2'])
-    if plot_all:
+    if fl is not None:
         fl.next(r'after correlation')
         fl.image(as_scan_nbr(s))
     if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
         s.reorder(['ph1','vd','t2'])
-    if plot_all:
-        fl.next('after correlation -- time domain')
-        fl.image(as_scan_nbr(s))
-    s = s['t2':(0,None)]
+    s = s['t2':(0,t_range[-1])]
     s['t2',0] *= 0.5
-    if plot_all:
-        # visualize time domain after filtering and phasing
-        fl.next('FID sliced -- time domain')
-        fl.image(as_scan_nbr(s))
     s.ft('t2')
-    if plot_all:
+    if fl is not None:
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
-    s['vd',:zero_crossing] *= -1
+    data = s.C    
+    #s['vd',:zero_crossing] *= -1
     # }}}
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
@@ -165,19 +156,17 @@ def process_IR(s, label='', fl=None,
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
-    s_signal,frq_slice = integral_w_errors(s,signal_pathway,error_path,
+    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
-    logger.info(strm("here is what the error looks like",s_signal.get_error()))
-    if plot_all:
-        fl.next('Integrated data - recovery curve')
-        fl.plot(s_signal,'o',capsize=6, label='real')
-        fl.plot(s_signal.imag,'o',capsize=6,label='imaginary')
-    s = select_pathway(s,signal_pathway)
+    x = s_int.get_error()
+    x[:] /= sqrt(2)
+    logger.info(strm("here is what the error looks like",s_int.get_error()))
     if fl is not None:
-        fl.next('Spectrum - freq domain')
-        fl.plot(s)
-    x = s_signal.fromaxis('vd')
-    f = fitdata(s_signal)
+        fl.next('Integrated data - recovery curve')
+        fl.plot(s_int,'o',capsize=6, label='real')
+        fl.plot(s_int.imag,'o',capsize=6,label='imaginary')
+    x = s_int.fromaxis('vd')
+    f = fitdata(s_int)
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")
     if IR:
         f.functional_form = Mi - 2*Mi*s_exp(-vd*R1)
@@ -189,14 +178,14 @@ def process_IR(s, label='', fl=None,
     T1 = 1./f.output('R_1')
     if fl is not None:
         fl.next('fit',legend=True)
-        fl.plot(s_signal,'o', capsize=6, label='actual data')
-        fl.plot(s_signal.imag,'o',capsize=6,label='actual imaginary')
+        fl.plot(s_int,'o', capsize=6, label='actual data')
+        fl.plot(s_int.imag,'o',capsize=6,label='actual imaginary')
         fl.plot(f.eval(100),label='fit')
         plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='medium',
                 horizontalalignment='center',verticalalignment='center',color='k',
                 position=(0.33,0.95),fontweight='bold')
         plt.legend(bbox_to_anchor=(1,1.01),loc='upper left')
-    logger.info(strm("YOUR T1 IS:",T1))
+    print("YOUR T1 IS:",T1)
     return T1
     
     if ILT:

@@ -35,7 +35,8 @@ for searchstr,exp_type,nodename,postproc,freq_slice,t_slice in [
      # {{{ do the centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
-    best_shift = hermitian_function_test(s['ph1',1]['ph2',-2])
+    print(ndshape(s))
+    best_shift,window = hermitian_function_test(s['ph1',1]['ph2',-2])
     logger.info("best shift is:",best_shift)
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('with time shift')
