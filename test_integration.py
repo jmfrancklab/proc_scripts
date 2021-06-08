@@ -44,11 +44,9 @@ for thisfile,exp_type,nodename in [
     fl.next('freq domain')
     fl.image(s)
     s.ift('t2')
-    print(ndshape(s))
-    quit()
-    #best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway))
-    #print(best_shift)
-    best_shift = 0.003
+    best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway))
+    print(best_shift)
+    #best_shift = 0.003
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0})
     fl.next('After hermitian phase correction')
@@ -109,22 +107,35 @@ for thisfile,exp_type,nodename in [
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
     s_int,frq_slice,std = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
+    data = data['t2':frq_slice]
+    data.integrate('t2')
+    data_on = select_pathway(data,signal_pathway)
+    d1_err = data_on.real.run(np.std,'nScans')
+    data_off = select_pathway(data,{'ph1':0,'ph2':0})
+    d2_err = data_off.real.run(np.std,'nScans')
+    fl.next('signal_pathway error vs off_pathway error')
+    data = select_pathway(data,signal_pathway)
+    data.set_error(d1_err.data)
+    fl.plot(data,'o',capsize=6,label='CT pathway')
+    data.set_error(d2_err.data)
+    fl.plot(data,'o',capsize=6,label='off CT pathway')
+    fl.show();quit()
     fl.next('diagnostic 1D plot')
     fl.plot(s['nScans',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
     axvline(x=frq_slice[0],c='k',linestyle=":",alpha=0.8)
     axvline(x=frq_slice[-1],c='k',linestyle=":",alpha=0.8)
     fl.next('integrated for error')
     x = s_int.get_error()
-    x[:] /= sqrt(2)
+    x[:] /= 2
     fl.plot(s_int,'.',capsize=6,label='integral with error')
     data = data['t2':frq_slice]
     data = select_pathway(data,signal_pathway)
     data.integrate('t2')
 
     new_error = data.real.run(np.std,'nScans')
-    #new_error = data.C.mean('t2', std=True).get_error()
+    #new_error = data.real.C.mean('nScans', std=True).get_error()
     fl.plot(data,'o',label='data')
-    print("new_error, data",ndshape(new_error), ndshape(data))
+    #print("new_error, data",ndshape(new_error), ndshape(data))
     data.set_error(new_error.data)
     fl.plot(data,'.',capsize=6,label='numpy std')
     fl.show();quit()

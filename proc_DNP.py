@@ -22,20 +22,30 @@ nScans = True
 #}}}
 #{{{process IR datasets and create list of T1s
 T1_list = []
-#for nodename,postproc,clock_correction,flip,IR,ILT in [
+for nodename,postproc,clock_correction,flip,IR,ILT in [
        #('FIR_noPower','spincore_IR_v1',
        #    False,False,False,False),
-        #('FIR_27dBm','spincore_IR_v1',
-        #   False,True,False,False),
+        ('FIR_27dBm','spincore_IR_v1',
+           False,True,False,False),
         #('FIR_30dBm','spincore_IR_v1',
         #   False,True,False,False),
         #('FIR_32dBm','spincore_IR_v1',
         #   False,True,False,False),
         #('FIR_33dBm','spincore_IR_v1',
         #   False,True,False,False),
-        #]:
-    #s = find_file(thisfile,exp_type=exp_type,expno=nodename,
-    #        postproc=postproc,lookup=postproc_dict,fl=fl)
+        ]:
+    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
+            postproc=postproc,lookup=postproc_dict,fl=fl)
+    s.ift('t2')
+    a = (abs(s['ph2',1]['ph1',0])**2).mean_all_but('t2')
+    a /= 100
+    b = abs(s)**2
+    b['ph2',1]['ph1',0] *= 0
+    b.mean_all_but('t2')
+    fl.next('for JF')
+    fl.plot(a,'o',label=' (abs(s[ph2,1][ph1,0])**2).mean_all_but(t2)')
+    fl.plot(b,'o',label='temp guy')
+    fl.show();quit()
     #myslice = s['t2':f_range]
     #mysgn = determine_sign(select_pathway(myslice,signal_pathway),fl=fl)
     #T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,
