@@ -268,26 +268,29 @@ def proc_Hahn_echoph(s, fl=None):
         fl.image(abs(s))
     return s
 
-def proc_spincore_IR(s,nScans=False,fl=None):
-    s.mean('nScans')
+def proc_spincore_IR(s,fl=None):
+    if 'nScans' in s.dimlabels:
+        s.mean('nScans')
     vd_axis = s.getaxis('vd')
-    print(ndshape(s))
-    #quit()
     s.reorder(['ph2','ph1']).set_units('t2','s')
     s.ft('t2', shift=True)
     s.ft(['ph2','ph1'])
     if fl is not None:
         fl.next('raw data -- coherence channels')
-        fl.image(s)
+        fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
     s.ift('t2')
     if fl is not None:
         fl.next('time domain (all $\\Delta p$)')
-        fl.image(s)
+        fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
     s.ft('t2', pad=4096)
     if fl is not None:
         fl.next('frequency domain (all $\\Delta p$)')
-        fl.image(s,black=False)
+        fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'),black=False)
     return s
+
 
 def proc_nutation(s,fl=None):
     logging.info("loading pre-processing for nutation")
@@ -359,7 +362,9 @@ def proc_var_tau(s,fl=None):
         fl.image(s)
     return s
 
-def proc_spincore_ODNP_v1(s,nScans=False,fl=None):
+def proc_spincore_ODNP_v1(s,fl=None):
+    if 'nScans' in s.dimlabels:
+        s.mean('nScans')
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))
@@ -374,13 +379,12 @@ def proc_spincore_ODNP_v1(s,nScans=False,fl=None):
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    s.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+    s.chunk('t',['ph1','t2'],[4,-1])
     s.set_units('t2','s')
-    s.labels({'ph2':r_[0.,2.]/4,
-        'ph1':r_[0.,2.]/4})
-    s.reorder(['ph2','ph1'])
+    s.labels({'ph1':r_[0.,1.,2.,3.]/4})
     s.ft('t2',shift=True)
-    s.ft(['ph1','ph2']) # Fourier Transforms coherence channels
+    s.ft(['ph1']) # Fourier Transforms coherence channels
+    s.reorder(['ph1','power'])
     s.C.setaxis('power','#').set_units('power','scan #')
     if fl is not None:
         fl.next('all data: frequency domain')
@@ -472,7 +476,7 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'chirp':proc_capture,
         'spincore_CPMG_v1':proc_spincore_CPMG_v1,
         'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
-        'spincore_IR_v1':proc_spincore_IR,
+        'spincore_IR_v1':proc_spincore_IR,#for 4 x 2 phase cycle
         'spincore_nutation_v1':proc_nutation,
         'spincore_nutation_v2':proc_nutation_amp,
         'spincore_nutation_v3':proc_nutation_chunked,

@@ -6,65 +6,62 @@ from proc_scripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
 fl = fl_mod()
 # {{{ input parameters
-thisfile = '210607_TEMPOL_100mM_cap_probe_DNP'
+thisfile = '210609_TEMPOL_100mM_cap_probe_DNP'
 exp_type='ODNP_NMR_comp/test_equipment'
 save_npz = False
 power_list = r_[0.001,0.5,1,1.5,2]
 R1w = 1/2.172
 C = 0.1
 signal_pathway = {'ph1':0,'ph2':1}
-excluded_pathways = [(0,3),(0,0)]
+E_signal_pathway = {'ph1':1}
+excluded_pathways = [(0,0)]
 nPowers=25
-f_range = (-2e3,2e3)
-t_range = (0,0.05)
-nScans = True
-
+f_range = (-0.2e3,0.2e3)
+t_range = (0,0.04)
+E_f_range = (-10e3,10e3)
+E_t_range = (0, 83e-3)
 #}}}
 #{{{process IR datasets and create list of T1s
 T1_list = []
-for nodename,postproc,clock_correction,flip,IR,ILT in [
-       #('FIR_noPower','spincore_IR_v1',
-       #    False,False,False,False),
-        ('FIR_27dBm','spincore_IR_v1',
-           False,True,False,False),
+#for nodename,postproc,clock_correction,flip,IR,ILT in [
+        #('FIR_nopower','spincore_IR_v1',
+        #    False,False,False,False),
+        #('FIR_0dBm','spincore_IR_v1',
+        #    False,False,False,False),
+        #('FIR_27dBm','spincore_IR_v1',
+        #   False,True,False,False),
         #('FIR_30dBm','spincore_IR_v1',
         #   False,True,False,False),
         #('FIR_32dBm','spincore_IR_v1',
         #   False,True,False,False),
         #('FIR_33dBm','spincore_IR_v1',
         #   False,True,False,False),
-        ]:
-    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
-            postproc=postproc,lookup=postproc_dict,fl=fl)
-    s.ift('t2')
-    a = (abs(s['ph2',1]['ph1',0])**2).mean_all_but('t2')
-    a /= 100
-    b = abs(s)**2
-    b['ph2',1]['ph1',0] *= 0
-    b.mean_all_but('t2')
-    fl.next('for JF')
-    fl.plot(a,'o',label=' (abs(s[ph2,1][ph1,0])**2).mean_all_but(t2)')
-    fl.plot(b,'o',label='temp guy')
-    fl.show();quit()
-    #myslice = s['t2':f_range]
-    #mysgn = determine_sign(select_pathway(myslice,signal_pathway),fl=fl)
-    #T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,
-    #        clock_correction=clock_correction,flip=flip,
-    #        IR=IR,sign=mysgn,fl=fl)    
-    #fl.show()
-    #T1_list.append(T1)
+#        ]:
+#    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
+#            postproc=postproc,lookup=postproc_dict,fl=fl)
+#    print(ndshape(s))
+#    myslice = s['t2':f_range]
+#    mysgn = determine_sign(select_pathway(myslice,signal_pathway,mult_ph_dims=True),fl=fl)
+#    T1 = process_IR(s,label=thisfile,W=2,f_range=f_range,t_range=t_range,
+#            clock_correction=clock_correction,flip=flip,
+#            IR=IR,sign=mysgn,fl=fl)    
+#    T1_list.append(T1)
+    
     #}}}
     
 #{{{process enhancement
-d = find_file(thisfile,exp_type=exp_type,
-        expno='enhancement',postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
-d.mean('nScans')
-dslice = d.C
-#dslice = d['t2':f_range]
-dsign = determine_sign(select_pathway(dslice,signal_pathway))
-enhancement,idx_maxpower = process_enhancement(d, searchstr = thisfile,
-        t_range=t_range,sign=dsign,fl=fl)
-fl.show();quit()
+for nodename,postproc in [
+        ('enhancement','spincore_ODNP_v1')
+        ]:
+    d = find_file(thisfile,exp_type=exp_type,
+            expno=nodename,postproc=postproc,lookup=postproc_dict,fl=fl)
+    dslice = d['t2':E_f_range]
+    dsign = determine_sign(select_pathway(dslice,E_signal_pathway,mult_ph_dims=False))
+    enhancement,idx_maxpower = process_enhancement(d, searchstr = thisfile,
+            freq_range=E_f_range,
+            t_range=E_t_range,flip=True,
+            sign=dsign,fl=fl)
+    fl.show();quit()
 #}}}
 #{{{create R1(p) to correct for T1 heating
 T1p = nddata(T1_list,[-1],['power']).setaxis('power',power_list)

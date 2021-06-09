@@ -12,7 +12,7 @@ def to_percent(y, position):
     else:
         return s + '%'
 def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
-        fig_title='correlation alignment',ph1_selection=1,ph2_selection=1, 
+        fig_title='correlation alignment',ph1_selection=1, 
         shift_bounds=False, max_shift = 100., sigma=20.,fl=None):
     """
     Align transients collected with chunked phase cycling dimensions along an indirect
@@ -35,8 +35,6 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                     sets the tolerance limit for the alignment procedure
     ph1_selection:  int
                     index position of the coherence pathway in phase program 1
-    ph2_selection:  int
-                    index position of the coherence pathway in phase program 2
     shift_bounds:   boolean
                     keeps f_shift to be within a specified
                     limit (upper and lower bounds given by max_shift)
@@ -64,7 +62,6 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 the data in the calculation of the correlation function.
     """
     ph1_len = len(s.getaxis('ph1'))
-    ph2_len = len(s.getaxis('ph2'))
     N = ndshape(s)[indirect_dim]
     sig_energy = (abs(s)**2).data.sum().item() / N
     if fl is not None:
@@ -77,8 +74,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     energy_vals.append(this_E / sig_energy)
     last_E = None
     for_nu_center =s.C
-    for_nu_center.ft(['ph1','ph2'])
-    for_nu_center = for_nu_center['ph1',ph1_selection]['ph2',ph2_selection]
+    for_nu_center.ft(['ph1'])
+    for_nu_center = for_nu_center['ph1',ph1_selection]
     nu_center = for_nu_center.mean(indirect_dim).C.argmax('t2')
     logging.info(strm("Center frequency", nu_center))
     for my_iter in range(100):
@@ -99,16 +96,11 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s_copy.ift('t2')
         s_copy2 = s.C
         s_copy *= nddata(r_[1.,1.,1.,1.],'DeltaPh1')
-        s_copy *= nddata(r_[1.,1.],'DeltaPh2')
-        s_copy.setaxis('DeltaPh2','#')
         s_copy.setaxis('DeltaPh1','#')
         correl = s_copy * 0 
         for ph1_index in range(ph1_len):
             s_copy['DeltaPh1',ph1_index] = s_copy['DeltaPh1',ph1_index].run(lambda x, 
                 axis=None: roll(x, ph1_index,axis=axis),'ph1')
-        for ph2_index in range(ph2_len):
-            s_copy['DeltaPh2',ph2_index] = s_copy['DeltaPh2',ph2_index].run(lambda x,
-                    axis=None: roll(x,ph2_index,axis=axis),'ph2')
         for j in range(1,N):
             correl += s_copy2 * s_copy.C.run(lambda x, axis=None: roll(x,j,axis=axis),
                 indirect_dim).run(conj)
@@ -124,8 +116,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
         correl.ft_clear_startpoints('t2')
         correl.ft('t2', shift=True, pad=2**14)
-        correl.ft(['DeltaPh1','DeltaPh2'])
-        correl = correl['DeltaPh1',ph1_selection]['DeltaPh2',ph2_selection] + correl['DeltaPh1',0]['DeltaPh2',0]
+        correl.ft(['DeltaPh1'])
+        correl = correl['DeltaPh1',ph1_selection] + correl['DeltaPh1',0]
         if my_iter ==0:
             logging.info(strm("holder"))
             if fl is not None:

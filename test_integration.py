@@ -109,6 +109,8 @@ for thisfile,exp_type,nodename in [
             indirect='nScans',fl=fl,return_frq_slice=True)
     data = data['t2':frq_slice]
     data.integrate('t2')
+    print("STD FOR DATA.REAL IS : ",data.real.run(np.std,'nScans'))
+    quit()
     data_on = select_pathway(data,signal_pathway)
     d1_err = data_on.real.run(np.std,'nScans')
     data_off = select_pathway(data,{'ph1':0,'ph2':0})

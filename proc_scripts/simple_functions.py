@@ -1,6 +1,6 @@
 "First order functions for very simple (a few lines) data manipulation"
 import numpy as np
-def select_pathway(s,pathway):
+def select_pathway(s,pathway,mult_ph_dims=False):
     r"""select a particular CT pathway from the signal `s`
     
     Parameters
@@ -10,9 +10,14 @@ def select_pathway(s,pathway):
         cycling dimensions) and values are the pathway you want to select
     """
     retval = s
-    for k, v in pathway.items():
-        retval = retval[k,v]
-    return retval
+    if mult_ph_dims:
+        for k, v in pathway.items():
+            retval = retval[k,v]
+        return retval
+    else:
+        for k in pathway.items():
+            retval=retval[k]
+        return retval    
 def determine_sign(s, direct="t2", fl=None):
     """Given that the signal resides in `pathway`, determine the sign of the signal.
     The sign can be used, e.g. so that all data in an inversion-recover or
@@ -37,12 +42,14 @@ def determine_sign(s, direct="t2", fl=None):
     if fl is not None:
         fl.push_marker()
         fl.next('selected pathway')
-        fl.image(s)
+        fl.image(s.C.setaxis(
+'vd','#').set_units('vd','scan #'))
     data_sgn = s.C.sum(direct)
     data_sgn /= data_sgn.max().item()
     data_sgn.run(np.real).run(lambda x: np.sign(x))
     if fl is not None:
         fl.next('check sign')
-        fl.image(s*data_sgn)
+        fl.image((s.C.setaxis(
+'vd','#').set_units('vd','scan #'))*data_sgn)
         fl.pop_marker()
     return data_sgn

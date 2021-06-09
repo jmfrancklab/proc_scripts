@@ -98,7 +98,7 @@ def process_IR(s, label='', fl=None,
     s.ft(['ph1','ph2'])
     if fl is not None:
         fl.next('zeroth order corrected')
-        fl.image(s)
+        fl.image(as_scan_nbr(s))
     s.ft('t2')
     if fl is not None:
         fl.next('phased data -- frequency domain')
@@ -115,7 +115,7 @@ def process_IR(s, label='', fl=None,
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
     opt_shift,sigma = correl_align(s,indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-            sigma=50)
+            sigma=0.001)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')

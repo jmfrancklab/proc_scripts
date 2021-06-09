@@ -30,9 +30,13 @@ class fl_mod(figlist_var):
         the figure list -- also a good test for objective
         figure list -- for each slice out 3x thisrange, and then
         show the lines for thisrange"""
+        #with figlist_var() as fl:
+        #    fl.push_marker()
+        self.push_marker() 
         thisfig,(ax1,ax2) = plt.subplots(1,2)
         plt.sca(ax1)
         forplot = s['t2':expand_limits(thisrange,s)]
+        print('THIS RANGE IS',thisrange)
         if 'power' in s.dimlabels:
             self.image(forplot.C.setaxis('power','#').set_units('power','scan #'))
         else:
@@ -45,7 +49,10 @@ class fl_mod(figlist_var):
             self.image(forplot.C.setaxis('vd','#').set_units('vd','scan #'))
         draw_limits(thisrange,forplot)
         title('cropped log')
+        self.pop_marker()
         #self.next(plotname, fig=figure())
+        #with figlist_var() as fl:
+        #    fl.pop_marker()
         return
 
     def plot_curve(fl, f, name, guess=None):
