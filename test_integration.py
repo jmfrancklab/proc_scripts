@@ -36,7 +36,7 @@ for thisfile,exp_type,nodename in [
     f_range = (-1e3,1e3)
     s.ift(['ph1','ph2'])
     rx_offset_corr = s['t2':(0.045,None)]
-    rx_offset_corr = rx_offset_corr.mean(['t2'])
+    rx_offset_corr = rx_offset_corr.data.mean()
     s -= rx_offset_corr
     s.ft('t2')
     s.ft(['ph1','ph2'])
@@ -107,30 +107,54 @@ for thisfile,exp_type,nodename in [
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
     s_int,frq_slice,std = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
-    data = data['t2':frq_slice]
-    data.integrate('t2')
-    print("STD FOR DATA.REAL IS : ",data.real.run(np.std,'nScans'))
-    quit()
-    data_on = select_pathway(data,signal_pathway)
-    d1_err = data_on.real.run(np.std,'nScans')
-    data_off = select_pathway(data,{'ph1':0,'ph2':0})
-    d2_err = data_off.real.run(np.std,'nScans')
-    fl.next('signal_pathway error vs off_pathway error')
+    x = s_int.get_error()
+    x[:] /= 2
+    fl.next('error bars')
+    fl.plot(s_int.get_error(),'o',label='s_int.get_error()')
+    data1 =data.C
     data = select_pathway(data,signal_pathway)
-    data.set_error(d1_err.data)
-    fl.plot(data,'o',capsize=6,label='CT pathway')
-    data.set_error(d2_err.data)
-    fl.plot(data,'o',capsize=6,label='off CT pathway')
+    data.integrate('t2')
+    before_slice_error = data.real.run(np.std,'nScans')
+    axhline(y=float(before_slice_error.data),
+            c='red',linestyle=":",label='error without slice')
+    data1 = data1['t2':frq_slice]
+    data2 = data1.C
+    data1=select_pathway(data1,signal_pathway)
+    data2=select_pathway(data2,{'ph1':0,'ph2':0})
+    data2.integrate('t2')
+    data1.integrate('t2')
+    after_slice_error = data1.real.run(np.std,'nScans')
+    off_CT_error = data2.real.run(np.std,'nScans')
+    axhline(y=float(after_slice_error.data),
+            c='k',linestyle=":",label='error of CT')
+    axhline(y=float(off_CT_error.data),
+            c='blue',linestyle=":",label='error of off-CT pathway')
+    
     fl.show();quit()
+    data1.integrate('t2')
+    data_on = select_pathway(data1,signal_pathway)
+    d1_err = data_on.real.run(np.std,'nScans')
+    axhline(y=d1_err,linestyle=":",label='CT pathway[0]')
+    axhline(y=d1_err,linestyle=":",label='CT pathway[-1]')    
+    data_off = select_pathway(data1,{'ph1':0,'ph2':0})
+    d2_err = data_off.real.run(np.std,'nScans')
+    axhline(y=d2_err,linestyle=":",label='off-CT pathway[0]')
+    axhline(y=d1_err,linestyle=":",label='CT pathway[-1]')
+    fl.show();quit()
+    fl.next('signal_pathway error vs off_pathway error')
+    data1 = select_pathway(data1,signal_pathway)
+    data1.set_error(d1_err.data)
+    fl.plot(data1,'o',capsize=6,label='CT pathway')
+    data1.set_error(d2_err.data)
+    fl.plot(data1,'o',capsize=6,label='off CT pathway')
+    #fl.show();quit()
     fl.next('diagnostic 1D plot')
     fl.plot(s['nScans',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
     axvline(x=frq_slice[0],c='k',linestyle=":",alpha=0.8)
     axvline(x=frq_slice[-1],c='k',linestyle=":",alpha=0.8)
     fl.next('integrated for error')
-    x = s_int.get_error()
-    x[:] /= 2
     fl.plot(s_int,'.',capsize=6,label='integral with error')
-    data = data['t2':frq_slice]
+    #data = data['t2':frq_slice]
     data = select_pathway(data,signal_pathway)
     data.integrate('t2')
 
