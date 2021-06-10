@@ -30,8 +30,6 @@ class fl_mod(figlist_var):
         the figure list -- also a good test for objective
         figure list -- for each slice out 3x thisrange, and then
         show the lines for thisrange"""
-        #with figlist_var() as fl:
-        #    fl.push_marker()
         self.push_marker() 
         thisfig,(ax1,ax2) = plt.subplots(1,2)
         plt.sca(ax1)
@@ -50,9 +48,6 @@ class fl_mod(figlist_var):
         draw_limits(thisrange,forplot)
         title('cropped log')
         self.pop_marker()
-        #self.next(plotname, fig=figure())
-        #with figlist_var() as fl:
-        #    fl.pop_marker()
         return
 
     def plot_curve(fl, f, name, guess=None):
@@ -217,5 +212,6 @@ def draw_limits(thisrange,s):
     for j in pairs:
         if None not in j:
             logging.info(strm("drawing a vspan at",j))
-            plt.axvspan(j[0],j[1],color='w',alpha=0.5,linewidth=0)
+            plt.axvspan(j[0]*10**-3,j[1]*10**-3,color='w',alpha=0.5,linewidth=0)
     plt.gca().set_xlim(my_xlim)
+    return
