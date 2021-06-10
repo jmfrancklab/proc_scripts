@@ -1,108 +1,62 @@
 from pyspecdata import *
-#init_logging(label='debug')
-#{{{ boolean statement for processing data before modification to generate chirp
-#   that sets voltage of ref (CH1 of scope) and DUT (CH2 of scope) to same value
-corrected_volt = True
-#}}}
-with figlist_var(filename='chirp.pdf') as fl:
-#    fl.next('$S_{11}$ : phase', legend=True)
-    expno=0
-    for date, id_string,corrected_volt in [
-            #('180706','chirp_probe_magnet',True),   # B_0 = 3399.55 G, no sample
-            #('180706','chirp_probes_magnet',True),   # B_0 = 3399.55 G, sample   
-            #('180706','chirp_probes_magnet_2',True),   # B_0 = 3410.55 G, sample   
-            #('180708','chirp_probes_magnet',True),   # B_0 = 3410.55 G, sample   
-            #('180708','chirp_probes_magnet_repeat',True),   # B_0 = 3410.55 G, sample   
-            #('180708','chirp_probes_magnet_2',True),   # B_0 = 3410.55 G, sample   
-            #('180712','test_chirp',True),   # B_0 = 3394.80 G, sample   
-            #('180712','test_chirp_2',True),   # B_0 = 3394.80 G, sample   
-            #('180714','test_chirp',True),   # B_0 = 3396.25 G, sample   
-            #('180714','test_chirp_2',True),   # B_0 = 3394.25 G, sample   
-            #('180714','test_chirp_3',True),   # B_0 = 3395.75 G, sample   
-            ('200214','nutation_coil2_90',True),   # B_0 = 3395.75 G, sample   
+from scipy.optimize import minimize,leastsq
+from proc_scripts import *
+from proc_scripts import postproc_dict
+from sympy import symbols
+from scipy.signal import tukey
+from pylab import *
+import matplotlib.pyplot as plt
+do_slice = False # slice frequencies and downsample -- in my hands, seems to decrease the quality of the fit 
+standard_cost = False # use the abs real to determine t=0 for the blip -- this actually doesn't seem to work, so just use the max
+show_transfer_func = False # show the transfer function -- will be especially useful for processing non-square shapes
+logger = init_logging('info')
+# 2to3 JF 1/31
+
+with figlist_var() as fl:    
+    # {{{ load data, set units, show raw data
+    for searchstr,exp_type,nodename,postproc,corrected_volt,y_lim in [
+            ('201113_triwave_control_2','ODNP_NMR_comp','capture1','chirp',True,1.25)
             ]:
-#{{{ finding file
-        try:
-            try:
-                # capture2 only present when capture1 was bad
-                d = nddata_hdf5(date+'_'+id_string+'.h5/capture2_'+date,
-                            directory=getDATADIR(exp_type='test_equip'))
-            except:
-                d = nddata_hdf5(date+'_'+id_string+'.h5/capture1_'+date,
-                            directory=getDATADIR(exp_type='test_equip'))
-        except:
-            try:
-                # for captures of different file naming format
-                d = nddata_hdf5(date+'_'+id_string+'.h5/capture2',
-                            directory=getDATADIR(exp_type='test_equip'))
-            except:
-                d = nddata_hdf5(date+'_'+id_string+'.h5/capture1',
-                            directory=getDATADIR(exp_type='test_equip'))
-                #}}}
-        if 'pulse' in id_string:
-            pulse_90 = True
-        else :
-            pulse_90 = False
-        Raise RuntimeError("Have not tested since proc_scripts package")
-        d.set_units('t','s')
-        d.name('Amplitude $/$ $V$')
-        #fl.next('plot ch 0 %s'%id_string)
-        #fl.next('Control channel pulse')
-        #fl.plot(d['ch',0],alpha=0.6,label='raw data')
-        #fl.next('plot ch 1 %s'%id_string)
-        #fl.next('Test channel pulse')
-        #fl.plot(d['ch',1],alpha=0.6,label='raw data')
-        d.ft('t',shift=True)
-        d = d['t':(0,100e6)] # throw out negative frequencies and low-pass
-        d.reorder('ch', first=False) # move ch dimension last
-        d.ift('t')
-        d *= 2
-        if not pulse_90:
-            ranges = abs(d)['ch',0].contiguous(lambda x: x > 0.09*x.data.max())
-        if pulse_90:
-            ranges = abs(d)['ch',0].contiguous(lambda x: x > 0.03*x.data.max())
+        a = find_file(searchstr, exp_type=exp_type, expno=nodename,
+                postproc=postproc, lookup=postproc_dict)
+        fl.next('Raw signal')
+        fl.plot(a['ch',0], alpha=0.5, label='control')    
+        fl.plot(a['ch',1], alpha=0.5, label='reflection')
+        #}}}
+        #{{{FT and plot control/reflection
+        a.ft('t',shift=True)
+        fl.next('freq domain for RM probe with control')
+        fl.plot(a['ch',0],alpha=0.5,label='control')
+        fl.plot(a['ch',1], alpha=0.5, label='reflection')
+        #}}}
+        #{{{throw out low frequencies
+        a_control = a['ch',0]['t':(0,None)]
+        a_refl = a['ch',1]['t':(0,None)]
+        #}}}
+        b = a.C
+        #{{{divide reflection by control
+        a = a_refl/a_control
+        fl.next('when divided by control for %s'%searchstr)
+        fl.plot(abs(a),label='shorting cap')
+        #}}}
+        ylim(0,y_lim)
+        b.reorder('ch',first=False)
+        b.ift('t')
+        b *= 2
+        ranges = abs(b)['ch',0].contiguous(lambda x: x > 0.09*x.data.max())
         ranges = ranges[0,:].tolist()
-        print('Slicing chirp for',id_string,'from',ranges[0]*1e6,'to',ranges[1]*1e6,'us...')
-        d = d['t':tuple(ranges)]
-        #fl.next('plot ch 0 %s'%id_string)
-        #fl.next('Control channel pulse')
-        #fl.plot(d['ch',0],':',alpha=0.9,label='processed')
-        #xlim(8,18)
-        #fl.next('plot ch 1 %s'%id_string)
-        #fl.next('Test channel pulse')
-        #fl.plot(d['ch',1],':',alpha=0.9,label='processed')
-        #xlim(8,18)
-        #label=id_string
-        d.setaxis('t', lambda x: x-d.getaxis('t')[0])
-        if not pulse_90:
-            d.setaxis('t', lambda x: 25e6-x*25e6/4096e-8)
-            d.rename('t','f').set_units('f','Hz')
+        logger.info(strm('Slicing chirp for',searchstr,'from',ranges[0]*1e6,'to',
+            ranges[1]*1e6,'us'))
+        b = b['t':tuple(ranges)]
+        b.setaxis('t',lambda x: x-b.getaxis('t')[0])
+        b.setaxis('t',lambda x: 25e6-x*25e6/4096e-8)
         fl.next('$S_{11}$ : analytic amplitude')
-        ratio = d['ch',1]/d['ch',0]
+        ratio = b['ch',1]/b['ch',0]
         ratio.name('Reflection')
         plot_params = dict(alpha=0.8,
-                markersize=2,
-                #label='%s'%label
-                )
-        #if 'control' in label:
-        #    plot_params['color'] = 'k'
-        if corrected_volt:
-            fl.plot(abs(ratio),'-',c='red', **plot_params) 
-        if not corrected_volt:
-            fl.plot(2*abs(ratio),'.', **plot_params)
-        axhline(0.425, color='gray', alpha=0.5)
+                markersize=2)
+        fl.plot(2*abs(ratio),'.',**plot_params)
+        axhline(0.425,color='gray',alpha=0.5)
         fl.next('$S_{11}$ : phase')
-        fl.plot((ratio).angle/pi, '.', c='blue', **plot_params)
-        expno += 1 
-    fl.next('$S_{11}$ : phase')
-    gridandtick(gca())
-    xlim(10,20)
-    ylim(-1.0,1.0)
-    axvline(14.4289,linestyle=':', color='black')
-    #savefig('../scriv/first_year/fig/phase.png')
-    fl.next('$S_{11}$ : analytic amplitude')
-    gridandtick(gca())
-    xlim(10,20)
-    ylim(0,1)
-    axvline(14.4289,linestyle=':', color='black')
-    #savefig('../scriv/first_year/fig/amplitude.png')
+        fl.plot((ratio).angle/pi,'.',c='blue',**plot_params)
+

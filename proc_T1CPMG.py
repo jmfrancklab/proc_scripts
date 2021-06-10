@@ -1,137 +1,166 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from proc_scripts import fl_mod, center_echo, hermitian_function_test, postproc_dict, DCCT
 from sympy import symbols
+import sympy as sp
+from proc_scripts.fitting import decay
+import matplotlib.pyplot as plt
+logger = init_logging("debug")
 fl = figlist_var()
-mpl.rcParams['figure.figsize'] = [8.0, 6.0]
+plt.rcParams['figure.figsize'] = [8.0, 6.0]
 rcParams["savefig.transparent"] = True
 # {{{ input parameters
-#clock_correction = 1.785
-clock_correction = 0
-nodename = 'signal'
 filter_bandwidth = 5e3
 t2 = symbols('t2')
+test_for_flat_echo = False# test for flat echo and exit
+# Below we give the option of JUST writing the processed 
+# data to a file (write_h5) and then the option of reading
+# and plotting/imaging the processed result (read_h5) as 
+# time saver.
+clock_correction = False
+write_h5 = True # writes the hdf5 file
+read_h5 = False # reads the completed hdf5 file 
 # }}}
-for date,id_string in [
-        ('200303','T1CPMG_AER')
+for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, t_slice, h5_name, h5_dir in [
+        #('w8_2RM1AT_201008','test_equip',4,False,0,'T1CPMG_201008_w8_2RM1AT.h5','process_data_AG')
+        #('w8_201008','test_equip',3,False,False,(None,None),'T1CPMG_201008_w8.h5','process_data_AG')
+        #('free4AT_201008','test_equip',6,False,0,'T1CPMG_201008_FreeAT.h5','process_data_AG'),
+        #('free4AT100mM_201104','test_equip',3,True,None,(-2e3,2e3),
+        #    'T1CPMG_201104_Free4AT100mM.h5','process_data_AG'),
+        #('free4AT_201014','test_equip',7,True,None,(None,None),'T1CPMG_201014_FreeAT_1.h5','process_data_AG')
+        #('w8_200731','test_equip',5,False,0,(None,None),'T1CPMG_200731.h5','process_data_AG')
+        #('w8_1AT2RM_200731','test_Equip',4,True,0,'T1CPMG_0920.h5','AG_processed_data')
+        #('w8_1AT4RM_200731','NMR_Data_AG',4,True)
+        ('w3_201111','test_equip',3,False,False,(-76,76),(None,0.1),'w3_T1CPMG','process_data_AG')
         ]:
-    filename = date+'_'+id_string+'.h5'
-    nodename = 'signal'
-    s = nddata_hdf5(filename+'/'+nodename,
-            directory = getDATADIR(
-                exp_type = 'test_equip'))
-            #{{{ pulling acq params
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
-    nPoints = s.get_prop('acq_params')['nPoints']
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    nScans = s.get_prop('acq_params')['nScans']
-    p90_s = s.get_prop('acq_params')['p90_us']*1e-6
-    deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
-    deblank_s = s.get_prop('acq_params')['deblank_us']*1e-6
-    marker_s = s.get_prop('acq_params')['marker_us']*1e-6
-    tau1_s = s.get_prop('acq_params')['tau1_us']*1e-6
-    pad_start_s = s.get_prop('acq_params')['pad_start_us']*1e-6
-    pad_end_s = s.get_prop('acq_params')['pad_end_us']*1e-6
-    #}}}
-    s.set_units('t','s')
-    fl.next('raw data - no clock correction')
-    fl.image(s)
-    fl.next('raw data - clock correction')
-    s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-    fl.image(s)
-    #{{{ set up of CPMG axis -- chunking
-    orig_t = s.getaxis('t')
-    acq_time_s = orig_t[nPoints]
-    twice_tau = deblank_s + 2*p90_s + deadtime_s + pad_start_s + acq_time_s + pad_end_s + marker_s
-    t2_axis = linspace(0,acq_time_s,nPoints)
-    tE_axis = r_[1:nEchoes+1]*twice_tau
-    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('tE',tE_axis)
-    s.setaxis('t2',t2_axis).set_units('t2','s')
-    vd_list = s.getaxis('vd')
-    s.setaxis('vd',vd_list).set_units('vd','s')
-    #}}}
-    fl.next('chunked data - coherence channels')
-    s.ft(['ph1'])
-    fl.image(s)
-    fl.next('filtered + rough centered data')
-    # centering here means about 0 - this is mostly just an axis adjustment
-    s.ft('t2',shift=True)
-    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
-    s.ift('t2')
-    rough_center = abs(s).convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
-    fl.image(s)
-    s.ft('t2')
-    # here we would align the frequencies which is hereto unresolved
-    s.ift('t2')
-    residual,best_shift = hermitian_function_test(s[
-        'ph1',1])
-    fl.next('hermitian test')
-    fl.plot(residual)
-    print("best shift is",best_shift)
-    # {{{ slice out the FID appropriately and phase correct
-    # it
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    fl.next('time domain after hermitian test')
-    fl.image(s)
-    ph0 = s['t2':0]['tE',0]['ph1',1]
-    print(ndshape(ph0))
-    ph0 = zeroth_order_ph(ph0, fl=fl)
-    print('phasing dimension as one')
-    s /= ph0
-    fl.next('frequency domain -- after hermitian function test and phasing')
-    s.ft('t2')
-    fl.image(s)
-    s.ift('t2')
-    fl.next('check phasing -- real')
-    fl.plot(s['ph1',1]['tE',0])
-    gridandtick(gca())
-    fl.next('check phasing -- imag')
-    fl.plot(s['ph1',1]['tE',0].imag)
-    gridandtick(gca())
-    # not sure that I really like how real vs imag looks here
-    # looks like signal at t2 = 0 gets phased properly, but anything else not
-    s = s['t2':(0,None)]
-    s['t2',0] *= 0.5
-    fl.next('phased and FID sliced')
-    fl.image(s)
-    fl.next('phased and FID sliced -- frequency domain')
-    s.ft('t2')
-    fl.image(s)
-    fl.next('signal vs. vd')
-    s_sliced = s['ph1',1]
-    s_forerror = s['ph1',0]
-    # variance along t2 gives error for the mean, then average it across all
-    # other dimension, then sqrt for stdev
-    # could not get error to work, given the echo dimension
-    fl.image(s_sliced.sum('t2'))
-    d = s_sliced.real
-    print("CONSTRUCTING KERNELS...")
-    Nx = 100
-    Ny = 100
-    Nx_ax = nddata(logspace(-5,3,Nx),'T1')
-    Ny_ax = nddata(logspace(-5,3,Ny),'T2')
-    data = d.C
-    data.rename('vd','tau1').setaxis('tau1',vd_list)
-    data.rename('tE','tau2').setaxis('tau2',tE_axis)
-    x = data.C.nnls(('tau1','tau2'),
-           (Nx_ax,Ny_ax),
-           (lambda x1,x2: 1.-2*exp(-x1/x2),
-            lambda y1,y2: exp(-y1/y2)),
-                     l='BRD')
 
-    x.setaxis('T1',log10(Nx_ax.data)).set_units('T1',None)
-    x.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
-    figure()
-    title(r'$T_{1} - T_{2} distribution$')
-    image(x)
-    xlabel(r'$log(T_2/$s$)$')
-    ylabel(r'$log(T_1/$s$)$')
-    np.savez('proc_'+date+'_'+id_string+'_1',
-            data = x.data,
-            logT1 = x.getaxis('T1'),
-            logT2 = x.getaxis('T2'))
-fl.show();quit()
+    # If file is not processed yet, write_h5 should be True above in the input
+    # parameters
+    # If file is already written one can declare write_h5 as False to save time
+    if write_h5:
+        #before running go into the preprocessing in load_data as some parameters are hardcoded. Double check these
+        s = find_file(searchstr,exp_type=exp_type,
+                expno=nodename,lookup=postproc_dict, fl=fl)
+        s.ift('t2')
+#{{{ clock correction
+        if clock_correction:
+            clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
+            s.ft('t2')
+            fl.next('before clock correction')
+            fl.image(as_scan_nbr(s))
+            s_clock=s['ph1',0]['ph2',-1].sum('t2')
+            s.ift(['ph1','ph2'])
+            min_index = abs(s_clock).argmin('vd',raw_index=True).item()
+            s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+            s_clock['vd',:min_index+1] *=-1
+            s_clock.sum('vd').run(abs)
+            fl.next('clock correction')
+            fl.plot(s_clock,'.',alpha=0.7)
+            clock_corr = s_clock.argmax('clock_corr').item()
+            pyplot.axvline(x=clock_corr, alpha=0.5, color='r')
+            s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+            s.ft(['ph1','ph2'])
+            fl.next('after auto-clock correction')
+            fl.image(s.C.setaxis('vd','#'))
+            s.ift('t2')
+            #}}}
+        if test_for_flat_echo:
+            #{{{Used to test if echo is flat or not
+            s = s['tE',20]['indirect',1]
+            fl.next('abs vs imag',legend=True)
+            fl.plot(abs(s),'-',label='abs')
+            fl.plot(s.imag,'--',label='imag')
+            fl.show();quit() # this flag is used to ask for a partial test, and so this is the *only* valid way to use quit
+        if flat_echo:
+           s['t2',16]=0
+           avg_center=hermitian_function_test(s)
+        else:    
+            centers = []
+            for j in range(ndshape(s)['indirect']):
+                s_slice = s['indirect',j]
+                this_center = hermitian_function_test(s_slice)
+                centers.append(this_center)
+            logger.info(centers)
+            avg_center = sum(centers)/len(centers)
+        s = center_echo(s, avg_center, fl=fl)
+            #}}}
+        fl.next('s centered')
+        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
+        #{{{slice out signal and sum along t2
+        s = s['ph1',0]['ph2',-1]
+        s.sum('t2')
+        fl.next('summed along t2')
+        fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
+        s *= -1
+
+        #}}}
+        #{{{CPMG decay curve
+        CPMG = s['indirect',-1]
+        fl.next('CPMG curve')
+        fl.plot(CPMG,'o')
+        fit_CPMG = fitdata(CPMG)
+        M0,R2,vd = symbols("M_0 R_2 tE",real=True)
+        fit_CPMG.functional_form = (M0)*sp.exp(-vd*R2)
+        logger.info(strm("Functional Form", fit_CPMG.functional_form))
+        logger.info(strm("Functional Form", fit_CPMG.functional_form))
+        fit_CPMG.fit()
+        logger.info(strm(" CPMG output:",fit_CPMG.output()))
+        logger.info(strm("CPMG latex:",fit_CPMG.latex()))
+        T2 = 1./fit_CPMG.output('R_2')
+        fl.next('CPMG fit of T1CPMG for free D2O')
+        fl.plot(CPMG,'o',label='data')
+        fl.plot(fit_CPMG.eval(100),label='fit')
+        logger.info(strm("T2 IS:",T2))
+        #{{{IR recovery curve
+        IR = s['tE',0]
+        fl.next('IR')
+        fl.plot(IR,'o')
+        f = fitdata(IR)
+        M0,Mi,R1,vd = symbols("M_0 M_inf R_1 indirect",real=True)
+        f.functional_form = Mi + (M0-Mi)*sp.exp(-vd*R1)
+        logger.info(strm("Functional Form", f.functional_form))
+        logger.info(strm("Functional Form", f.functional_form))
+        f.fit()
+        logger.info(strm("IR output:",f.output()))
+        logger.info(strm("IR latex:",f.latex()))
+        T1 = 1./f.output('R_1')
+        fl.next('fit for IR portion of T1CPMG')
+        fl.plot(IR,'o',label='fake data')
+        fl.plot(f.eval(100),label='fit',human_units=False)
+        T1 = 1./f.output('R_1')
+        fl.show();quit()
+        #}}}
+        #}}}
+        #{{{save to hdf5 file
+        s.name(searchstr) # use searchstr as the node name withing the HDF5 file
+        s.hdf5_write(h5_name, directory=getDATADIR(h5_dir))
+        logger.info("saving as hdf5 file with shape:",strm(ndshape(s)))
+        #}}}
+    #if read_h5 is True there must already be a written h5 file for the file that 
+    #is to be plotted/imaged that already exists. 
+    if read_h5:
+        s = nddata_hdf5(h5_name+'/'+searchstr,getDATADIR(exp_type=h5_dir)) 
+        #{{{attempting ILT plot with NNLS_Tikhonov_190104
+        tE_axis = s.getaxis('tE')
+        vd_list = s.getaxis('indirect')
+        Nx = 50
+        Ny = 50
+        Nx_ax = nddata(np.logspace(-5,3,Nx),'T1')
+        Ny_ax = nddata(np.logspace(-5,3,Ny),'T2')
+        s_ILT=s.C
+        s_ILT.rename('indirect','tau1').setaxis('tau1',vd_list)
+        s_ILT.rename('tE','tau2').setaxis('tau2',tE_axis)
+        s_ILT = s_ILT.C.nnls(('tau1','tau2'),
+               (Nx_ax,Ny_ax),
+               (lambda x1,x2: 1.-2*np.exp(-x1/x2),
+                lambda y1,y2: np.exp(-y1/y2)),
+                         l='BRD')
+        s_ILT.setaxis('T1',np.log10(Nx_ax.data)).set_units('T1',None)
+        s_ILT.setaxis('T2',np.log10(Ny_ax.data)).set_units('T2',None)
+        #figure()
+        #title(r'$T_{1} - T_{2} distribution$ for free AT in soln')
+        fl.next('%s'%searchstr)
+        fl.image(s_ILT)
+        plt.xlabel(r'$log(T_2/$s$)$')
+        plt.ylabel(r'$log(T_1/$s$)$')
+fl.show()
