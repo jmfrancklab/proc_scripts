@@ -34,14 +34,16 @@ def process_IR(s, label='', fl=None,
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s.ift('t2')
     s.reorder(['ph1','ph2','vd','t2'])
+    #{{{ Applying DC offset
     s.ift(['ph1','ph2'])
     t_start = t_range[-1] / 4
     t_start *= 3
     rx_offset_corr = s['t2':(t_start,None)]
-    rx_offset_corr = rx_offset_corr.mean(['t2'])
+    rx_offset_corr = rx_offset_corr.data.mean()
     s -= rx_offset_corr
     s.ft('t2')
     s.ft(['ph1','ph2'])
+    #}}}
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
@@ -74,6 +76,7 @@ def process_IR(s, label='', fl=None,
             fl.next('after auto-clock correction')
             fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
+    #{{{Applying phase corrections    
     best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
@@ -110,6 +113,7 @@ def process_IR(s, label='', fl=None,
     else:
         s.reorder(['ph1','vd','t2'])
     logger.info(strm("zero crossing at",zero_crossing))
+    #{{{Correlation Alignment
     s.ift(['ph1','ph2'])
     fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
@@ -132,24 +136,26 @@ def process_IR(s, label='', fl=None,
         s.reorder(['ph1','ph2','vd','t2'])
     else:
         s.reorder(['ph1','vd','t2'])
+    #}}}
+    #{{{FID slice
     s = s['t2':(0,t_range[-1])]
     s['t2',0] *= 0.5
     s.ft('t2')
     if fl is not None:
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
+    #}}}    
     s *= sign
     data = s.C    
     if flip:
         s *= -1
-    #s['vd',:zero_crossing] *= -1
-    # }}}
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
+    #{{{Integrating with associated error from excluded pathways
     s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
     x = s_int.get_error()
@@ -159,6 +165,8 @@ def process_IR(s, label='', fl=None,
         fl.next('Integrated data - recovery curve')
         fl.plot(s_int,'o',capsize=6, label='real')
         fl.plot(s_int.imag,'o',capsize=6,label='imaginary')
+    #}}}
+    #{{{Fitting Routine
     x = s_int.fromaxis('vd')
     f = fitdata(s_int)
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")
@@ -181,6 +189,7 @@ def process_IR(s, label='', fl=None,
         plt.legend(bbox_to_anchor=(1,1.01),loc='upper left')
     print("YOUR T1 IS:",T1)
     return T1
+    #}}}
     
     if ILT:
         T1 = nddata(np.logspace(-3,3,150),'T1')
