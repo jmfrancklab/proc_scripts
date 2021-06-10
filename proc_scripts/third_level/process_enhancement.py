@@ -33,7 +33,7 @@ def as_scan_nbr(s):
 # leave this as a loop, so you can load multiple files
 def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
-        t_range=(0,0.083),flip=False,sign=None,fl=None):
+        t_range=(0,0.083),sign=None,fl=None):
     s *= sign
     if fl is not None:
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
@@ -146,9 +146,6 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     power_axis_W = r_[0,power_axis_W]
     d.setaxis('power',power_axis_W)
     thiscolor = next(thesecolors)
-    #d.set_units('power','W')
-    if flip:
-        d = 1-d
     if fl is not None:
         fl.next('E(p)')
         fl.plot(d['power',:-3], 'ko', capsize=6, alpha=0.3)
