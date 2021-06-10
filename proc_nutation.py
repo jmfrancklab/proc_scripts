@@ -1,53 +1,94 @@
+from pylab import *
 from pyspecdata import *
 from scipy.optimize import minimize
-from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod,center_CPMG_echo
+from pyspecProcScripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod,DCCT
 from sympy import symbols
 from numpy import *
 fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging("info")
-for searchstr,exp_type,nodename,postproc in [
-    ['200219_nutation_alex_probe','test_equip','nutation','spincore_nutation_v1']
+max_kHz = 200
+for searchstr,exp_type,nodename,postproc,freq_slice,t_slice in [
+    #['201211_Ni_sol_probe_nutation_1','nutation','nutation',
+    #    'spincore_nutation_v1',(-5000,13000)],
+    #['210302_210302_Ni_cap_probe_nutation_1','nutation','nutation',
+    #    'spincore_nutation_v1',(-4e3,1.2e4)]
+    ['210409_Ni_sol_probe_nutation_1','nutation','nutation',
+        'spincore_nutation_v3',(11e3,40e3),(0.5e-3,1.5e-3)]
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
-            lookup=postproc_dict) 
- 
-    # {{{ do the rough centering before anything else!
+            lookup=postproc_dict,fl=fl)
+    s = s['t2':freq_slice]
+    fl.next('data')
+    fl.image(s)
+    s.ift('t2')
+    rx_offset_corr = s['t2':(0.75e-3,None)] #should be quarter of t_slice onward
+    rx_offset_corr = rx_offset_corr.mean(['t2'])
+    s -= rx_offset_corr
+    s.ft('t2')
+    fl.next('After rx offset correction')
+    fl.image(s)
+    if 'amp' in s.dimlabels:
+        plen = s.get_prop('acq_params')['p90_us']*1e-6
+        logger.info(strm('pulse length is:',plen))
+    s.ift('t2')
+     # {{{ do the centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
-    s.ft(['ph2','ph1'])
-    # }}}
-    
-    # {{{ centering of data using hermitian function test
-    best_shift = hermitian_function_test(s['ph2',0]['ph1',1])
-    logger.info(strm("best shift is",best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    #}}}
-    
-    s.ft('t2',pad=4096)
-    
-    #{{{ selecting coherence and convolving
-    s = s['ph2',0]['ph1',1]
-    fl.next('select $\\Delta p$ and convolve')
-    s.convolve('t2',50)
+    print(ndshape(s))
+    best_shift,window = hermitian_function_test(s['ph1',1]['ph2',-2])
+    logger.info("best shift is:",best_shift)
+    s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
+    fl.next('with time shift')
     fl.image(s)
-    #}}}
-    
-    #{{{ slicing
-    s = s['t2':(-250,250)]
-    fl.next('sliced')
+    fl.next('freq domain after time correction')
+    s.ft('t2')
     fl.image(s)
+    s.ift('t2') # make sure everything is in the same domain
     #}}}
-    
-    #{{{ phasing with zeroth order correction
-    s.ift('t2')
-    fl.next('final time domain')
+    fl.next('t domain centered')
+    fl.image(s)
+    #{{{zeroth order phasing
+    s.ift(['ph1','ph2'])
+    phasing = s['t2',0].C
+    phasing.data *= 0 
+    phasing.ft(['ph1','ph2'])
+    phasing['ph1',1]['ph2',-2] = 1
+    phasing.ift(['ph1','ph2'])
+    fl.next('zeroth order corrected')
+    ph0 = s['t2':0]/phasing
+    ph0 /= abs(ph0)
+    s /= ph0
+    s.ft(['ph1','ph2'])
+    fl.next('phased')
     ph0 = zeroth_order_ph(s['t2':0], fl=None)
     s /= ph0
+    s.ft('t2')
     fl.image(s)
-    fl.next('phased')
-    s.ft('t2',pad=4096)
-    fl.image(s)
-    fl.real_imag('phased data',s)
     #}}}
-fl.show();quit()
+    #{{{ selecting coherence and convolving
+    s = s['ph1',1]['ph2',-2]
+    fl.next('select $\\Delta p$')
+    fl.image(s)
+    #}}}
+    if 'amp' in s.dimlabels:
+        s.setaxis('amp',lambda x:x*plen)
+        s.set_units('amp','s')
+        ind_dim = '\\tau_p a'
+        s.rename('amp',ind_dim)
+    elif 'p_90' in s.dimlabels:
+        ind_dim = 'p_90'
+    else:
+        raise ValueError("not sure what the indirect dimenison is!!")
+    fl.image(s,human_units=False)
+    fl.real_imag('phased data',s)
+    fl.next('FT')
+    title('FT to get $\gamma B_1/a$')
+    s.ft(ind_dim,shift=True)
+    fl.image(s[ind_dim:(-1e3*max_kHz,1e3*max_kHz)])
+    fl.next('absFT')
+    title('FT to get $\gamma B_1/a$')
+    fl.image(abs(s[ind_dim:(-1e3*max_kHz,1e3*max_kHz)]))
+    gridandtick(gca(),gridcolor=[1,1,1])
+fl.show()
+

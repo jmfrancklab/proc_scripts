@@ -1,13 +1,16 @@
 from pyspecdata import *
 from sympy import symbols
-def _fitcurve_initial(s,f_range,direct,indirect,guess):
+import sympy as sp
+import numpy as np
+import logging
+def _fitcurve_initial(s,direct):
     if not s.get_ft_prop(direct):
         raise ValueError("Your data should be in the frequency domain!")
-    curve = s[direct:f_range].sum(direct).real
+    curve = s.real
     return fitdata(curve)
 def _fitcurve_final(f,whichrate,guess):
-    logger.info(strm("Functional form", f.functional_form))
-    logger.info(strm("Functional form", f.functional_form))
+    logging.info(strm("Functional form", f.functional_form))
+    logging.info(strm("Functional form", f.functional_form))
     if guess is not None:
         f.set_guess(guess)
         f.settoguess()
@@ -15,8 +18,8 @@ def _fitcurve_final(f,whichrate,guess):
         # we could return this as well, and then pass it to the fit_curve
         # function
     f.fit()
-    print("output:",f.output())
-    print("latex:",f.latex())
+    logging.info(strm("output:",f.output()))
+    logging.info(strm("latex:",f.latex()))
     if guess is None:
         return f,1./f.output(whichrate)
     else:
@@ -41,11 +44,11 @@ def recovery(s,f_range,direct='t2',indirect='indirect',guess=None):
         returned only if the guess argument is set.
         Give an nddata with all parameters set to the guess value.
     """
-    curve = _fitcurve_initial(s,f_range,direct,indirect,guess)
-    sgn = sign(curve[indirect:(curve.getaxis(indirect).max())].item())
+    curve = _fitcurve_initial(s,direct)
+    sgn = np.sign(curve[indirect:(curve.getaxis(indirect).max())].item())
     curve *= sgn
-    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 %s"%indirect,real=True)
-    curve.functional_form = Mi + (M0-Mi)*sympy.exp(-vd*R1)
+    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 %s"%indirect,real=True)
+    curve.functional_form = Mi + (M0-Mi)*sp.exp(-vd*R1)
     return _fitcurve_final(curve,'R_1',guess)
 
 def decay(s,f_range,direct='t2',indirect='indirect', guess=None):

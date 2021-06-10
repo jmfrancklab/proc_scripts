@@ -1,77 +1,26 @@
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize
-from proc_scripts import *
-from proc_scripts.load_data import postproc_dict
-from proc_scripts.fitting import recovery
-from sympy import symbols
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
+from pyspecProcScripts.third_level.process_IR import process_IR
 fl = fl_mod()
-t2 = symbols('t2')
-logger = init_logging("info")
 # {{{ input parameters
-clock_correction = 1.785
-filter_bandwidth = 5e3
-coh_sel = {'ph1':0,
-        'ph2':1}
-coh_err = {'ph1':1,# coherence channels to use for error
-        'ph2':r_[0,2,3]}
-# }}}
-
-for searchstr,exp_type,nodename, postproc in [
-        ('200212_IR_3_30dBm', 'test_equip', 'signal', 
-            'spincore_IR_v1'),
+save_npz = False
+#}}}
+coherence_pathway = {'ph1':0,'ph2':1}
+for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT in [
+       ('210610_water_TempCont_probe_DNP_1','ODNP_NMR_comp/ODNP',
+           'FIR_34dBm','spincore_IR_v1',
+           (0.1e3,0.345e3),(None,50e-3),True,False,False),
+        # ('210322_water_control_FIR_noPower','inv_rec','signal','spincore_IR_v1',
+        #    (-0.09e3,-0.06e3),(None,83e-3),False,False),
+        #('210517_4OHTempo_TempControl_probe_FIR_34dBm.','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',
+        #    (-0.4e3,0.4e3),(None,20e-3),False,False),
+        #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
-    fl.basename = searchstr
-    s = find_file(searchstr, exp_type=exp_type,
-            expno=nodename,
-            postproc=postproc, lookup=postproc_dict,
-            dimname='indirect')
-    s *= exp(-1j*s.fromaxis('indirect')*clock_correction)
-    #{{{filter data
-    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
-    #}}}
-    #{{{hermitian function test and apply best shift
-    fl.next('frequency domain before')
-    fl.image(s)
-    s.ift('t2')
-    best_shift = hermitian_function_test(s[
-        'ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']],fl=fl)
-    logger.info(strm("best shift is",best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    s.reorder(['ph2','ph1','indirect'])
-    fl.next('time domain after hermitian test')
-    fl.image(s)
-    fl.next('frequency domain after')
-    s.ft('t2')
-    fl.image(s)
-    s.ift('t2')
-    #}}}
-    #{{{zeroth order phase correction
-    ph0 = s['t2':0]['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]
-    logger.info(strm(ndshape(ph0)))
-    if len(ph0.dimlabels) > 0:
-        assert len(ph0.dimlabels) == 1, repr(ndshape(ph0.dimlabels))+" has too many dimensions"
-        ph0 = zeroth_order_ph(ph0, fl=fl)
-        logger.info(strm('phasing dimension as one'))
-    else:
-        logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
-        ph0 = ph0/abs(ph0)
-    s /= ph0
-    fl.next('frequency domain -- after hermitian function test and phasing')
-    s.ft('t2')
-    fl.image(s.C.convolve('t2',10))
-    #}}}
-    #{{{select t2 axis range and 
-    s.ift('t2')
-    s = s['t2':(0,None)]
-    s['t2',0] *= 0.5
-    s.ft('t2')
-    #}}}
-    #{{{recovery curve and fitting
-    s_sliced = s['ph2',coh_sel['ph2']]['ph1',coh_sel['ph1']]*-1 # bc inverted at high powers
-    # below, f_range needs to be defined
-    M0,Mi,R1,vd = sympy.symbols("M_0 M_inf R_1 indirect",real=True)
-    f,T1,g = recovery(s_sliced, (-100,100),
-            guess={M0:-500, Mi:500, R1:1})
-    fl.plot_curve(f,'inversion recovery curve',guess=g)
-fl.show()
-
+    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
+            postproc=postproc,lookup=postproc_dict,fl=fl)
+    myslice = s['t2':f_range]
+    mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=fl)
+    T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,
+            clock_correction=clock_correction,IR=IR,flip=True,sign=mysgn,fl=fl) 
+    fl.show()

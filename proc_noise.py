@@ -2,6 +2,7 @@ from pylab import *
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from itertools import cycle
+import matplotlib.pyplot as plt
 fl = figlist_var()
 scalefactor = 35000 # a manual adjustment -- seems to bring the signal level to close to 1
 convwidth = 0.5e3
@@ -58,8 +59,6 @@ for date,id_string,label_str in [
     signal = s['t2':(-1000,1000)]['ph1',1]['ph2',-2]
     c = next(new_colors)
     signal.ift('t2')
-    #fl.plot(signal.real, alpha=0.5, color=c, label=label_str)
-    #fl.plot(signal.imag, ':', alpha=0.5, color=c, label=label_str)
     fl.plot(abs(signal)['t2':(None,0.2)], linewidth=3, color=c, alpha=0.25,
             label=label_str, human_units=False) # here, it makes sense to set
     #                     human_units to false because the spectra are very
@@ -70,13 +69,10 @@ for date,id_string,label_str in [
     fl.next('noise -- semilog', legend=True)
     fl.plot(noise['t2':frq_slice], plottype='semilogy',alpha=0.05, color=c,
             human_units=False)
-    noise.convolve('t2',convwidth) # convolution is just to provide a running
-    # average, to make it clear where the average noise baseline is at (remember
-    # we are doing this *after* taking the abs)
     fl.plot(noise['t2':frq_slice], plottype='semilogy',alpha=0.5, color=c,
             label=label_str, human_units=False)
     fl.next('noise -- linear', legend=True)
     fl.plot(noise['t2':frq_slice],alpha=0.5, color=c, label=label_str,
             human_units=False)
-    ylim(0,1e-4)
-fl.show();quit()
+    plt.ylim(0,1e-4)
+fl.show()
