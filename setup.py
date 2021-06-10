@@ -1,10 +1,10 @@
 from setuptools import setup
 
 setup(
-    name='proc_scripts',
+    name='pyspecProcScripts',
     version='0.1',
     author="A Guinness, A A Beaton, J M Franck",
-    packages=['proc_scripts',],
+    packages=['pyspecProcScripts',],
     license=open('LICENSE.md').read(),
     long_description=open('README.rst').read(),
     # I leave these commented out b/c they're good examples

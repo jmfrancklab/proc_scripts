@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import basinhopping
-from proc_scripts import *
-from proc_scripts import postproc_dict
-from proc_scripts.fitting import decay
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
+from pyspecProcScripts.fitting import decay
 import sympy as sp
 fl = fl_mod()
 logger = init_logging('info')

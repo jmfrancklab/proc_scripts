@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import *
-from proc_scripts.load_data import postproc_dict
+from pyspecProcScripts import *
+from pyspecProcScripts.load_data import postproc_dict
 from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')

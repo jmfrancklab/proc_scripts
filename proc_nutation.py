@@ -1,7 +1,7 @@
 from pylab import *
 from pyspecdata import *
 from scipy.optimize import minimize
-from proc_scripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod,DCCT
+from pyspecProcScripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod,DCCT
 from sympy import symbols
 from numpy import *
 fl = fl_mod()

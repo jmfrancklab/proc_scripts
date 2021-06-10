@@ -1,8 +1,8 @@
 from pyspecdata import *
-from proc_scripts import *
-from proc_scripts import postproc_dict
-from proc_scripts.third_level.process_IR import process_IR
-from proc_scripts.third_level.process_enhancement import process_enhancement
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
+from pyspecProcScripts.third_level.process_IR import process_IR
+from pyspecProcScripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
 fl = fl_mod()
 # {{{ input parameters
