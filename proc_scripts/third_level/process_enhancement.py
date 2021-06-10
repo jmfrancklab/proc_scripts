@@ -89,19 +89,6 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     s.reorder(['ph1','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     #}}}
-    #{{{Correcting power axis
-    #print(s.getaxis('power'))
-    #quit()
-    #power_axis_dBm = array(s.get_prop('meter_powers'))
-    #print(power_axis_dBm)
-    #power_axis_W = zeros_like(power_axis_dBm)
-    #power_axis_W[:] = 10**(power_axis_dBm/10)
-    #power_axis_W = r_[0,power_axis_W]
-    #print(power_axis_W)
-    #quit()
-    #s.setaxis('power',power_axis_W)
-    #s.set_units('power','W')
-    #}}}
     #{{{Applying correlation alignment
     s.ift(['ph1'])
     opt_shift,sigma = correl_align(s,indirect_dim='power',
@@ -134,6 +121,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     d = d['t2':(0,t_range[-1])]
     d['t2':0] *= 0.5
     d.ft('t2')
+    d *= sign
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
@@ -147,6 +135,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     x[:] /= sqrt(2)
     d = d_.C
     #}}}
+    
     #{{{Normalizing by max 
     idx_maxpower = np.argmax(s.getaxis('power'))
     d /= max(d.data)

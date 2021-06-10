@@ -110,10 +110,9 @@ for thisfile,exp_type,nodename in [
     x = s_int.get_error()
     x[:] /= 2
     fl.next('error bars')
-    avg_s_int = s_int.get_error().mean()
+    avg_s_int = s_int.get_error().mean().item()
     s_int1 = avg_s_int
     axhline(y=avg_s_int,c='red',linestyle=":",label='s_int')
-    fl.plot(s_int1,'o',label='s_int.get_error()')
     data1 =data.C
     data = select_pathway(data,signal_pathway)
     data.integrate('t2')
@@ -129,7 +128,8 @@ for thisfile,exp_type,nodename in [
             c='k',linestyle=":",label='error of CT')
     axhline(y=float(off_CT_error.data),
             c='blue',linestyle=":",label='error of off-CT pathway')
-    
+    plt.ylim(134,144) 
+    plt.legend()
     fl.show();quit()
     data1.integrate('t2')
     data_on = select_pathway(data1,signal_pathway)
