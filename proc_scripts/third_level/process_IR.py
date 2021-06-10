@@ -50,17 +50,6 @@ def process_IR(s, label='', fl=None,
     #{{{ phasing the aligned data
     s = s['t2':f_range]
     s.ift('t2')
-    best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
-    logger.info(strm("best shift is", best_shift))
-    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
-    if fl is not None:
-        fl.next('time domain after hermitian test')
-        fl.image(as_scan_nbr(s))
-    s.ft('t2')
-    if fl is not None:
-        fl.next('frequency domain after hermitian test')
-        fl.image(as_scan_nbr(s))
-    s.ift('t2')
     if clock_correction:
         #{{{ clock correction
         clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
@@ -85,7 +74,18 @@ def process_IR(s, label='', fl=None,
             fl.next('after auto-clock correction')
             fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
+    best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
+    logger.info(strm("best shift is", best_shift))
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    if fl is not None:
+        fl.next('time domain after hermitian test')
+        fl.image(as_scan_nbr(s))
+    s.ft('t2')
+    if fl is not None:
+        fl.next('frequency domain after hermitian test')
+        fl.image(as_scan_nbr(s))
         #}}}
+    s.ift('t2')
     s.ift(['ph1','ph2'])
     phasing = s['t2',0].C
     phasing.data *= 0
