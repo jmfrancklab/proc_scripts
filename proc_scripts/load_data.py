@@ -369,8 +369,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))
     s.setaxis('power',r_[
-        0,dBm2power(np.array(s.get_prop('meter_powers'))+20)]
-        ).set_units('power','W')
+        0:len(s.getaxis('power'))])
     logging.info(strm("meter powers",s.get_prop('meter_powers')))
     logging.info(strm("actual powers",s.getaxis('power')))
     logging.info(strm("ratio of actual to programmed power",

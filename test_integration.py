@@ -110,13 +110,13 @@ for thisfile,exp_type,nodename in [
     x = s_int.get_error()
     x[:] /= 2
     fl.next('error bars')
-    fl.plot(s_int.get_error(),'o',label='s_int.get_error()')
+    sum_s_int = sum(s_int.get_error())
+    sum_s_int /= len(s_int.get_error())
+    s_int1 = sum_s_int
+    fl.plot(s_int1,'o',label='s_int.get_error()')
     data1 =data.C
     data = select_pathway(data,signal_pathway)
     data.integrate('t2')
-    before_slice_error = data.real.run(np.std,'nScans')
-    axhline(y=float(before_slice_error.data),
-            c='red',linestyle=":",label='error without slice')
     data1 = data1['t2':frq_slice]
     data2 = data1.C
     data1=select_pathway(data1,signal_pathway)
