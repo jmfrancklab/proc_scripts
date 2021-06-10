@@ -1,10 +1,11 @@
+from pylab import *
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from itertools import cycle
 import matplotlib.pyplot as plt
 fl = figlist_var()
 scalefactor = 35000 # a manual adjustment -- seems to bring the signal level to close to 1
-convwidth = 0.1e3
+convwidth = 0.5e3
 frq_slice = (-50e3,50e3)
 showraw = False
 new_colors = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
@@ -25,7 +26,7 @@ for date,id_string,label_str in [
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
-                exp_type = 'test_equip'))
+                exp_type = 'ODNP_NMR_comp/old'))
     s.name(None)
     s /= scalefactor
     nPoints = s.get_prop('acq_params')['nPoints']
