@@ -110,9 +110,9 @@ for thisfile,exp_type,nodename in [
     x = s_int.get_error()
     x[:] /= 2
     fl.next('error bars')
-    sum_s_int = sum(s_int.get_error())
-    sum_s_int /= len(s_int.get_error())
-    s_int1 = sum_s_int
+    avg_s_int = s_int.get_error().mean()
+    s_int1 = avg_s_int
+    axhline(y=avg_s_int,c='red',linestyle=":",label='s_int')
     fl.plot(s_int1,'o',label='s_int.get_error()')
     data1 =data.C
     data = select_pathway(data,signal_pathway)
