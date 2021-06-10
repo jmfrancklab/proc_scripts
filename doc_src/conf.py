@@ -17,17 +17,20 @@ import os
 import shlex
 import sphinx_rtd_theme
 import mock
+from matplotlib import rcParams
+print("datapath is",rcParams['datapath'])
  
-autodoc_mock_imports = ['numpy', 'scipy', 'scipy.interpolate', 'pylab', 'mpl_toolkits', 'get_ipython', 'pyspecdata']
+autodoc_mock_imports = ['numpy', 'scipy', 'scipy.interpolate', 'pylab', 'mpl_toolkits', 'get_ipython', 'pyspecdata', 'matplotlib', 'tables']
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
-#sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('..'))
-
-from version import __version__
+sys.path.insert(0, os.path.abspath('../..'))
+sys.path.append(os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../pyspecProcScripts'))
+print("sys.path is",sys.path)
+from pyspecProcScripts.version import __version__
 
 # -- General configuration ------------------------------------------------
 
@@ -48,13 +51,13 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     #'IPython.sphinxext.ipython_console_highlighting',
     #'IPython.sphinxext.ipython_directive',
-    'sphix_gallery.gen_gallery',
+    'sphinx_gallery.gen_gallery',
 ]
 
 sphinx_gallery_conf = {
         'examples_dirs': '../examples', #path to examples scripts
         'gallery_dirs': 'auto_examples', #path to where to save gallery generated output
-        'filename_pattern': '.py', #modified to make more general
+        'filename_pattern': '.py', # modified to make more general
         }
 autosummary_generate = True
 
@@ -73,9 +76,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'proc_scripts'
-copyright = '2020, John M. Franck group'
-author = 'Alec A. Beaton, Samantha M. Betts, Alexandria Guinness, John M. Franck'
+project = 'pyspecProcScripts'
+copyright = '2021, John M. Franck group'
+author = 'Alexandria Guinness, Alec A. Beaton, Samantha M. Betts, John M. Franck'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -112,7 +115,7 @@ exclude_patterns = []
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-add_module_names = False
+#add_module_names = True
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -172,7 +175,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-hrml_css_files = ['gallery_custom.css']
+html_css_files = ['gallery_custom.css']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
