@@ -29,6 +29,7 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
                 data with error associated with coherence pathways
                 not included in the signal pathway
     """
+    assert s.get_ft_prop(direct), "need to be in frequency domain!"
     frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
     logging.debug(strm('frq_slice is',frq_slice))
     s = s[direct:frq_slice]
@@ -43,23 +44,25 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
              +str(extra_dims))
     collected_variance = ndshape(
          [ndshape(s)[indirect],len(error_path)],[indirect,'pathways']).alloc()
+    # this is not averaging over all the pathways!!!!
     for j in range(len(error_path)):
-     # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
-     # where N₂ is the number of points in the indirect dimension
-     s_forerror = select_pathway(s,error_path[j])
-     if j==0: N2 = ndshape(s_forerror)[direct]
-     # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
-     # mean sums all elements (there are N₁N₂ elements)
-     s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
-     s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
-     s_forerror *= df**2 # Δf
-     s_forerror *= N2
+        # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
+        # where N₂ is the number of points in the indirect dimension
+        s_forerror = select_pathway(s,error_path[j])
+        if j==0: N2 = ndshape(s_forerror)[direct]
+        # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
+        # mean sums all elements (there are N₁N₂ elements)
+        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
+        s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
+        s_forerror *= df**2 # Δf
+        s_forerror *= N2
     # {{{ variance calculation for debug
     #print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
     #print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s,sig_path)
+    retval = s.integrate(direct).set_error(sqrt(s_forerror.data))
     if not return_frq_slice:
-        return s.integrate(direct).set_error(sqrt(collected_variance.data))
+        return retval
     elif return_frq_slice:
-        return s.integrate(direct).set_error(sqrt(s_forerror.data)), frq_slice, sqrt(s_forerror.data)
+        return retval, frq_slice
