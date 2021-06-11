@@ -1,3 +1,6 @@
+PySpecData ProcScripts
+======================
+
 .. solves the toctree issue, as noted here: https://github.com/readthedocs/sphinx_rtd_theme/issues/445
 
 .. toctree::
