@@ -1,4 +1,8 @@
-""" Processes and visualizes the nutation pulse program that has been 
+"""
+title needed!!
+==============
+
+Processes and visualizes the nutation pulse program that has been 
 captured on a oscilloscope. Integrates the 90 and 180 pulse to show 
 linearity.
 """

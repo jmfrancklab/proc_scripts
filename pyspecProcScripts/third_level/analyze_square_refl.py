@@ -1,32 +1,7 @@
-""" Analyzes square wave reflection data
-========================================
+""" Analyze square wave reflection data
+=======================================
 Analyzes data acquired by applying a square wave pulse to an empty 
 or filled NMR probe and acquiring the reflection profile.
-
-Parameters
-==========
-d:      nddata
-label:  str
-        appropriate name for dataset.
-frq_bw: int
-        bandwidth in Hz.
-keep_after_pulse:   int
-                    Amount of the time axis after the pulse
-                    that you want to remain-changes depending 
-                    on the Q.
-blip_range:         lst
-                    Range in which the signal blip exists.
-show_analytic_signal_phase: bool
-                            Option on final plot to show the 
-                            phase of the signal.
-show_analytic_signal_real:  bool
-                            Option on final plot to show the 
-                            real of the signal for comparison.
-
-Returns
-=======
-Plots of the reflected square wave with a fit that calculates
-the Q for the probe being tested
 """
 
 import pylab as plb
@@ -51,6 +26,23 @@ def analyze_square_refl(d, label='', fl=None,
     fl: figlist_var child class
         In addition to standard figlist_var methods, this must also include a
         `complex_plot` method that returns list "colors"
+    d:      nddata
+    label:  str
+            appropriate name for dataset.
+    frq_bw: int
+            bandwidth in Hz.
+    keep_after_pulse:   int
+                        Amount of the time axis after the pulse
+                        that you want to remain-changes depending 
+                        on the Q.
+    blip_range:         lst
+                        Range in which the signal blip exists.
+    show_analytic_signal_phase: bool
+                                Option on final plot to show the 
+                                phase of the signal.
+    show_analytic_signal_real:  bool
+                                Option on final plot to show the 
+                                real of the signal for comparison.
     """
     if len(label)>0:
         fl.basename = label

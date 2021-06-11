@@ -1,4 +1,8 @@
-""" Short Time Fourier Transform functions - taken from 
+"""
+Short Time Fourier Transform functions
+======================================
+
+taken from 
 http://tsaith.github.io/time-frequency-analysis-with-short-time-fourier-transform.html
 
 """

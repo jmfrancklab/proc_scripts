@@ -49,8 +49,7 @@ frq_noise *= frq_noise_dens
 fl.next('frq-noise density')
 fl.plot(frq_noise)
 frq_noise.ift('temp')
-if frq_noise.get_ft_prop('temp','df') is not None:
-    frq_noise /= sqrt(ndshape(frq_noise)['temp']) * frq_noise.get_ft_prop('temp','df') # normalization
+frq_noise /= sqrt(ndshape(frq_noise)['temp']) * frq_noise.get_ft_prop('temp','df') # normalization
 fl.next('frq-noise time domain')
 fl.plot(frq_noise)
 # }}}
