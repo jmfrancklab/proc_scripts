@@ -1,4 +1,7 @@
-"AG: missing docstring!!!"
+""" Short Time Fourier Transform functions - taken from 
+http://tsaith.github.io/time-frequency-analysis-with-short-time-fourier-transform.html
+
+"""
 #http://tsaith.github.io/time-frequency-analysis-with-short-time-fourier-transform.html
 from pyspecdata import *
 from pyspecProcScripts import *
@@ -55,7 +58,6 @@ def simu_waves(f,dt,amp0=1,phi0=0):
     phi0: initial phase. when it is -pi/2, sin waves 
     are produced.
     """
-    
     phi = 2 * np.pi * np.cumsum(f) * dt
     y = amp0*np.cos(phi + phi0)
     return y

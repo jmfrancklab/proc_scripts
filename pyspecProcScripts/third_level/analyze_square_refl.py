@@ -37,7 +37,7 @@ from scipy.optimize import minimize,leastsq
 import sympy as s
 import matplotlib.pyplot as plt
 from pyspecdata import *
-init_logging(level='debug')
+logger = init_logging(level='debug')
 def analyze_square_refl(d, label='', fl=None,
         frq_bw=15e6,
         keep_after_pulse=2e-6,
@@ -182,7 +182,7 @@ def analyze_square_refl(d, label='', fl=None,
     dt = np.diff(phases.getaxis('t')[:2]).item()
     phase_diff.mean('t') # favors points with a greater magnitude
     frq_offset = phase_diff.angle.item() / dt / 2 / pi
-    logger(strm(frq_offset.real))
+    logger.info(strm(frq_offset.real))
     frq_line_plot = phases.fromaxis('t')
     frq_line_plot -= frq_line_plot['t',0]
     frq_line_plot *= 2*pi*frq_offset # so this contains 2πνt

@@ -1,4 +1,7 @@
-"AG: missing docstrign!!!"
+""" 
+Processes data acquired after applying a triangular pulse to 
+a NMR probe.
+"""
 import numpy as np
 from scipy import signal
 from pyspecProcScripts import *

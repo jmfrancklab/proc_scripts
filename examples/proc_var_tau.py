@@ -1,4 +1,7 @@
-"""PLEASE PROVIDE A DOCSTRING HERE TO DESCRIBE WHAT THIS FILE DOES"""
+"""
+Processes data which has varying lengths of tau. 
+Demonstrates how to load a h5 file. 
+"""
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts.load_data import postproc_dict
