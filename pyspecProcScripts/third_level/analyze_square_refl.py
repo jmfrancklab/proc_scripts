@@ -182,7 +182,7 @@ def analyze_square_refl(d, label='', fl=None,
     dt = np.diff(phases.getaxis('t')[:2]).item()
     phase_diff.mean('t') # favors points with a greater magnitude
     frq_offset = phase_diff.angle.item() / dt / 2 / pi
-    logger(str(frq_offset.real))
+    logger(strm(frq_offset.real))
     frq_line_plot = phases.fromaxis('t')
     frq_line_plot -= frq_line_plot['t',0]
     frq_line_plot *= 2*pi*frq_offset # so this contains 2πνt
