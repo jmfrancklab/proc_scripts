@@ -1,6 +1,6 @@
 """
-title needed!
-=============
+Echoes with varied tau lengths
+==============================
 
 Processes data which has varying lengths of tau. 
 Demonstrates how to load a h5 file. 

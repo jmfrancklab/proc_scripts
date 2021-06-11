@@ -1,4 +1,6 @@
-"""This example uses symfit to individually fit several Voigt-shaped ESR spectra
+"""EPR linewidth
+================
+This example uses symfit to individually fit several Voigt-shaped ESR spectra
 
 This example does work.
 """

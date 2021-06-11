@@ -21,6 +21,9 @@ def analyze_square_refl(d, label='', fl=None,
         show_analytic_signal_real = False,
         ):
     r"""
+    Plots the reflected square wave with a fit that calculates 
+    the Q for the probe being tested.
+    
     Parameters
     ==========
     fl: figlist_var child class

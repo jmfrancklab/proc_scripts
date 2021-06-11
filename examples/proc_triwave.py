@@ -1,6 +1,6 @@
 """ 
-title needed!!
-==============
+Triangle Wave Processing
+========================
 
 Processes data acquired after applying a triangular pulse to 
 a NMR probe.
