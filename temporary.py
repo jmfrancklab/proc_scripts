@@ -2,8 +2,8 @@ generate_image_files = False
 if generate_image_files:
     import os; os.environ['pyspecdata_figures']='latex'
 from pyspecdata import *
-from proc_scripts import *
-from proc_scripts import postproc_dict
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
 
 init_logging(level="debug")
 d = find_file(

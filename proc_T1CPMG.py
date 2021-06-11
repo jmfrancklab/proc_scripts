@@ -1,9 +1,9 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from proc_scripts import fl_mod, center_echo, hermitian_function_test, postproc_dict, DCCT
+from pyspecProcScripts import fl_mod, center_echo, hermitian_function_test, postproc_dict, DCCT
 from sympy import symbols
 import sympy as sp
-from proc_scripts.fitting import decay
+from pyspecProcScripts.fitting import decay
 import matplotlib.pyplot as plt
 logger = init_logging("debug")
 fl = figlist_var()

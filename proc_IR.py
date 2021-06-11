@@ -1,7 +1,7 @@
 from pyspecdata import *
-from proc_scripts import *
-from proc_scripts import postproc_dict
-from proc_scripts.third_level.process_IR import process_IR
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
+from pyspecProcScripts.third_level.process_IR import process_IR
 fl = fl_mod()
 # {{{ input parameters
 save_npz = False
