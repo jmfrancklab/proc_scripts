@@ -1,3 +1,9 @@
+"""
+Field Sweep
+===========
+
+A field sweep to detect the ESR via NMR-ODNP!
+"""
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
@@ -71,4 +77,4 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
     fl.next('Field dependent')
     fl.plot(s,'o')
     print(s.getaxis('Field'))
-fl.show();quit()
+fl.show()

@@ -5,7 +5,8 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
-from proc_scripts import *
+from .. import hermitian_function_test, integral_w_errors, select_pathway, correl_align
+
 t2 = symbols('t2')
 
 def select_pathway(s,pathway):
@@ -44,7 +45,7 @@ def process_IR(s, label='', fl=None,
     s.ft('t2')
     s.ft(['ph1','ph2'])
     #}}}
-    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
+    zero_crossing=abs(select_pathway(s, signal_pathway)).sum('t2').argmin('vd', raw_index=True).item()
     if 'indirect' in s.dimlabels:
         s.rename('indirect','vd')
     # no rough centering anymore -- if anything, we should preproc based on τ,
@@ -77,7 +78,7 @@ def process_IR(s, label='', fl=None,
             fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
     #{{{Applying phase corrections    
-    best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
+    best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'), signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     if fl is not None:
@@ -116,9 +117,9 @@ def process_IR(s, label='', fl=None,
     s.ift(['ph1','ph2'])
     fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    opt_shift,sigma = correl_align(s,indirect_dim='vd',
-            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
-            sigma=10)
+    opt_shift,sigma = correl_align(s, indirect_dim='vd',
+                                   ph1_selection=signal_pathway['ph1'], ph2_selection=signal_pathway['ph2'],
+                                   sigma=10)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
@@ -146,7 +147,7 @@ def process_IR(s, label='', fl=None,
     #}}}    
     #s *= sign
     data = s.C
-    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
+    zero_crossing=abs(select_pathway(s, signal_pathway)).sum('t2').argmin('vd', raw_index=True).item()
     if flip:
         s['vd',:zero_crossing] *= -1
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
@@ -156,8 +157,8 @@ def process_IR(s, label='', fl=None,
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
     #{{{Integrating with associated error from excluded pathways    
-    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
-            fl=fl,return_frq_slice=True)
+    s_int,frq_slice,mystd = integral_w_errors(s, signal_pathway, error_path,
+                                              fl=fl, return_frq_slice=True)
     x = s_int.get_error()
     x[:] /= sqrt(2)
     logger.info(strm("here is what the error looks like",s_int.get_error()))
