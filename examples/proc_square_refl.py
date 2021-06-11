@@ -1,3 +1,10 @@
+"""Process a square wave reflection
+===================================
+
+Processes a square wave reflection in order to calculate the
+Q of the NMR probe. Optional to show the phasing and real on top
+of the fitted square wave reflection.
+"""
 from pylab import *
 from pyspecdata import *
 from proc_scripts.third_level.analyze_square_refl import analyze_square_refl
