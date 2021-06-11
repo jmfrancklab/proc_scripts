@@ -10,7 +10,9 @@ from pyspecProcScripts import *
 from pyspecProcScripts import postproc_dict
 from scipy.optimize import leastsq,minimize,basinhopping
 from sympy import symbols
-import pywt
+# sphinx_gallery_thumbnail_number = 2
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
+
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 20e3
