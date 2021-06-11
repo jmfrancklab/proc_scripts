@@ -110,10 +110,10 @@ for thisfile,exp_type,nodename in [
     x = s_int.get_error()
     x[:] /= 2
     fl.next('error bars')
-    avg_s_int = s_int.get_error().mean()
+    fl.plot(s_int.get_error(),'o',label='returned error from integral_w_errors')
+    avg_s_int = s_int.get_error().mean().item()
     s_int1 = avg_s_int
-    axhline(y=avg_s_int,c='red',linestyle=":",label='s_int')
-    fl.plot(s_int1,'o',label='s_int.get_error()')
+    axhline(y=avg_s_int,c='red',linestyle=":",label='averaged returned error from integral w errors')
     data1 =data.C
     data = select_pathway(data,signal_pathway)
     data.integrate('t2')
@@ -126,10 +126,10 @@ for thisfile,exp_type,nodename in [
     after_slice_error = data1.real.run(np.std,'nScans')
     off_CT_error = data2.real.run(np.std,'nScans')
     axhline(y=float(after_slice_error.data),
-            c='k',linestyle=":",label='error of CT')
+            c='k',linestyle=":",label='error associated with CT pathway of signal')
     axhline(y=float(off_CT_error.data),
-            c='blue',linestyle=":",label='error of off-CT pathway')
-    
+            c='blue',linestyle=":",label='error associated with inactive CT pathway')
+    plt.ylim(0,None) 
     fl.show();quit()
     data1.integrate('t2')
     data_on = select_pathway(data1,signal_pathway)

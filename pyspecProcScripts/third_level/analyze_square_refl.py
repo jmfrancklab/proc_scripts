@@ -1,3 +1,34 @@
+""" Analyzes square wave reflection data
+========================================
+Analyzes data acquired by applying a square wave pulse to an empty 
+or filled NMR probe and acquiring the reflection profile.
+
+Parameters
+==========
+d:      nddata
+label:  str
+        appropriate name for dataset.
+frq_bw: int
+        bandwidth in Hz.
+keep_after_pulse:   int
+                    Amount of the time axis after the pulse
+                    that you want to remain-changes depending 
+                    on the Q.
+blip_range:         lst
+                    Range in which the signal blip exists.
+show_analytic_signal_phase: bool
+                            Option on final plot to show the 
+                            phase of the signal.
+show_analytic_signal_real:  bool
+                            Option on final plot to show the 
+                            real of the signal for comparison.
+
+Returns
+=======
+Plots of the reflected square wave with a fit that calculates
+the Q for the probe being tested
+"""
+
 import pylab as plb
 from pylab import r_, pi
 import pyspecdata as psp
@@ -6,11 +37,10 @@ from scipy.optimize import minimize,leastsq
 import sympy as s
 import matplotlib.pyplot as plt
 from pyspecdata import *
+init_logging(level='debug')
 def analyze_square_refl(d, label='', fl=None,
         frq_bw=15e6,
-        keep_after_pulse=2e-6, # amount of the time
-        #                        axis after the pulse we want hanging around --
-        #                        this can change depending on the Q
+        keep_after_pulse=2e-6,
         blip_range = [-0.1e-6,None],
         show_analytic_signal_phase = True,
         show_analytic_signal_real = False,

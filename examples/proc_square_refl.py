@@ -1,9 +1,14 @@
-"AG: missing docstring!!!!"
+"""Process a square wave reflection
+===================================
+
+Processes a square wave reflection in order to calculate the 
+Q of a NMR probe.
+"""
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts.third_level.analyze_square_refl import analyze_square_refl
 from pyspecProcScripts import * 
-init_logging("debug")
+init_logging(level="debug")
 with fl_mod() as fl:
     for filename, expno, dataset_name in [("210125_sqwv_cap_probe_1", "capture1", "hairpin probe"),
             ('210111_sqwv_sol_probe_1', 'capture1', 'solenoid probe')]:
