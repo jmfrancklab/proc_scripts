@@ -467,6 +467,35 @@ def proc_ESR(s):
     s_integral = s.C.run_nopop(np.cumsum,'$B_0$')
     logging.info(strm(s_integral))
     return s    
+def proc_field_sweep_au(s,fl=None):
+    logging.info("loading preprocessing for a field sweep expt")
+    nPoints = s.get_prop('acq_params')['nPoints']
+    nEchoes = s.get_prop('acq_params')['nEchoes']
+    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nScans = s.get_prop('acq_params')['nScans']
+    s.reorder('t',first=True)
+    if s.get_prop('acq_params')['nPhaseSteps'] == 8:
+        s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+        s.setaxis('ph2',r_[0.,2.]/4)
+    else:
+        s.chunk('t',['ph1','t2'],[4,-1])
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.reorder('t2',first=False)
+    t2_max = s.getaxis('t2')[-1]
+    rx_offset_corr = s['t2':(t2_max*0.75,None)]
+    rx_offset_corr = rx_offset_corr.data.mean()
+    s -= rx_offset_corr
+    if s.get_prop('acq_params')['nPhaseSteps'] == 8:
+        s.ft(['ph2','ph1'])
+    else:
+        s.ft(['ph1'])
+    if fl is not None:    
+        fl.next('raw data -- coherence channels')
+        fl.image(s)
+    s.ft('t2',shift=True)
+    return s
+
 
 postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
@@ -484,5 +513,6 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG,
         'ESR_linewidth':proc_ESR,
+        'field_sweep':proc_field_sweep_au,
 
 }
