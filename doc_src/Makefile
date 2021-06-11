@@ -14,6 +14,10 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
+api: auto_api/pyspecProcScripts.rst
+	@echo "Made auto_api folder"
+auto_api/pyspecProcScripts.rst:
+	sphinx-apidoc -o auto_api ../pyspecProcScripts
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
@@ -29,8 +33,10 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+	-rm -rf auto_api/*
+	-rm -rf auto_examples/*
 
-html:
+html: api
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
