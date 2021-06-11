@@ -1,6 +1,7 @@
+"AG -- generate a docstring!!!!!!"
 from pyspecdata import *
-from proc_scripts import *
-from proc_scripts import postproc_dict
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
 import symfit as s
 import pickle,os
 from pylab import ndarray

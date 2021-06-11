@@ -1,6 +1,7 @@
+"AG: missing docstring!!!"
 #http://tsaith.github.io/time-frequency-analysis-with-short-time-fourier-transform.html
 from pyspecdata import *
-from proc_scripts import *
+from pyspecProcScripts import *
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt

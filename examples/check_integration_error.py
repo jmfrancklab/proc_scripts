@@ -15,7 +15,9 @@ Check that the following match:
 """
 from pylab import *
 from pyspecdata import *
-from proc_scripts import integrate_limits, integral_w_errors
+from pyspecProcScripts import integrate_limits, integral_w_errors
+
+# sphinx_gallery_thumbnail_number = 2
 
 init_logging(level="debug")
 fl = figlist_var()

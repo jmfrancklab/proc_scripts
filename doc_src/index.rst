@@ -8,4 +8,8 @@
 This is the documentation for a set of processing scripts based on the
 `pyspecdata <https://jmfrancklab.github.io/pyspecdata>`_ module.
 
-Start on the :doc:`intro <./intro>` page, or browse the documentation to the left.
+To **jump into examples**, click
+:ref:`here <sphx_glr_auto_examples>`.
+
+To understand the structure of the functions/code,
+start on the :doc:`intro <./intro>` page, or browse the documentation to the left.

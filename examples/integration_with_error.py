@@ -7,7 +7,7 @@ better than what you would choose by hand.
 """
 from pylab import *
 from pyspecdata import *
-from proc_scripts import integrate_limits, integral_w_errors
+from pyspecProcScripts import integrate_limits, integral_w_errors
 from numpy.random import seed
 
 seed(2021)  # so the same random result is generated every time -- 2021 is meaningless
