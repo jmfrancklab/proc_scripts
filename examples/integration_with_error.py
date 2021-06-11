@@ -56,10 +56,6 @@ s_int,frq_slice,mystd = integral_w_errors(data,signal_pathway,error_pathway,
         indirect='vd', fl=fl,return_frq_slice=True)
 logger.debug(strm("check the std after FT", std(data["ph1", 0]["ph2", 0].data.real)))
 # the sqrt on the next line accounts for the var(real)+var(imag)
-fl.next("raw data")
-fl.image(data, alpha=0.5)
-fl.next("real part of raw data")
-fl.image(data.real, alpha=0.5)
 fl.next("compare manual vs. automatic", legend=True)
 # here I plot w/ manually chosen integration bounds:
 manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
