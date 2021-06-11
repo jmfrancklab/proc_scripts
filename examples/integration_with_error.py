@@ -69,7 +69,9 @@ fl.image(data, alpha=0.5)
 fl.next("real part of raw data")
 fl.image(data.real, alpha=0.5)
 fl.next("compare manual vs. automatic")
-# here I plot w/ manually chosen integration bounds:
+# run a controlled comparison between manually chosen integration bounds and
+# compare against automatically generated
+# as noted in issue #44 , manually chosen bounds underperform
 for bounds,thislabel in [
     (manual_slice,'manual bounds'),  # leave this as a loop so user can experiment with different bounds
     (tuple(returned_frq_slice),'auto bounds'),  # leave this as a loop so user can experiment with different bounds
