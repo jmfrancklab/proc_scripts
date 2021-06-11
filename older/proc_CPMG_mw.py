@@ -1,11 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[5]:
-
-
 from pyspecdata import *
-from utility import dBm2power
 fl = figlist_var()
 for date,id_string in [
         ('200115','CPMG_DNP_1')
@@ -58,12 +51,15 @@ for date,id_string in [
     fl.image(s)
     #s.mean('nScans',return_error=False)
     s.reorder('t2',first=True)
+    print(ndshape(s))
     t2_max = zeros_like(s.getaxis('power'))
     for x in range(len(s.getaxis('power'))):
         t2_max[x] = abs(s['power',x]['tE',0]).argmax('t2',raw_index=True).data
     s.setaxis('t2',lambda t: t -s.getaxis('t2')[int(t2_max.mean())])
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
+    print(ndshape(s))
     s.reorder('nEchoes',first=True)
+    print(ndshape(s))
     s.ft('t2')
     # as of right now, this plot doesn't show anything meaningful
     fl.next('check center')
@@ -79,7 +75,7 @@ for date,id_string in [
     def print_fun(x, f, accepted):
         global iteration
         iteration += 1
-        #print (iteration, x, f, int(accepted))
+        print((iteration, x, f, int(accepted)))
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
@@ -92,103 +88,54 @@ for date,id_string in [
     phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
     phshift *= exp(-1j*2*pi*zeroorder_rad)
     s *= phshift
-    #print("RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
-    #        firstorder,angle(zeroorder_rad)/pi*180))
-    #if s['nEchoes':0]['t2':0]['power',-4].item().real > 0:
-        #print s['nEchoes':0]['t2':0]['power',-4].item().real
-        #print "Sign correction"
-        #s *= -1
-        #print s['nEchoes':0]['t2':0]['power',-4].item().real
-    #print ndshape(s)
+    print("RELATIVE PHASE SHIFT WAS {:0.1f}\\us and {:0.1f}$^\circ$".format(
+            firstorder,angle(zeroorder_rad)/pi*180))
+    if s['nEchoes':0]['t2':0]['power',-4].item().real > 0:
+        print(s['nEchoes':0]['t2':0]['power',-4].item().real)
+        print("Sign correction")
+        s *= -1
+        print(s['nEchoes':0]['t2':0]['power',-4].item().real)
+    print(ndshape(s))
     s.reorder('power',first=True)
     fl.next('after phased - real ft')
     fl.image(s.real)
     fl.next('after phased - imag ft')
     fl.image(s.imag)
-
-
-# In[6]:
-
-
-d = s['power',:-3]['t2':(-100,150)].C.sum('t2')
-data = d['power',-1].C
-data = data.data
-tau = tE_axis
-T2_len = 50
-T2 = linspace(log10(3e-3),log10(10.0),T2_len)
-tau_2d = reshape(tau,(shape(tau)[0],1))
-T2_2d = reshape(10**T2,(1,shape(T2)[0]))
-kernel = exp(-tau_2d/T2_2d)
-x,rnorm = nnls_regularized(kernel,data,l=0.)
-fl.next('plot data and fit')
-plot(data,'.')
-plot(kernel.dot(x))
-
-
-# In[7]:
-
-
-def L_curve(l,r_norm,x_norm,**kwargs):
-    """plot L-curve using
-    
-    Parameters
-    ==========
-    l: double
-        lambda values
-    r_norm: double
-        norm of the residual
-    x_norm: double
-        norm of solution vector"""
-    plot(log10(r_norm),log10(x_norm),'o',**kwargs)
-    for j,this_l in enumerate(l):
-        annotate('%5g'%this_l, (log10(r_norm[j]),log10(x_norm[j])),
-                ha='left',va='bottom',rotation=45)
-    ylabel('xnorm')
-    xlabel('residual')
-
-
-# In[ ]:
-
-
-l = sqrt(logspace(-10,1,25))
-
-def nonvec_lcurve(A,l):
-    x_norm = empty_like(l)
-    r_norm = empty_like(l)
-    for j,this_l in enumerate(l):
-        x,r_norm[j] = nnls_regularized(A,data,l=this_l)
-        x_norm[j] = linalg.norm(x)
-    return x,x_norm,r_norm
-x,x_norm,r_norm = nonvec_lcurve(kernel,l)
-
-fl.next('L-curve')
-L_curve(l,r_norm,x_norm,markersize=10,alpha=0.5,label='manual loop')
-
-
-# In[ ]:
-
-
-x,rnorm = nnls_regularized(kernel,data,l=0.13)
-
-
-# In[ ]:
-
-
-this_data = ndshape([shape(d.getaxis('power'))[0],T2_len],['power','T2']).alloc()
-this_data.setaxis('power',d.getaxis('power'))
-this_data.setaxis('T2',T2)
-for y in range(shape(d.getaxis('power'))[0]):
-    temp = d['power',y].C
-    if temp.data[0].real < 0:
-        temp *= -1
-    x,rnorm = nnls_regularized(kernel,temp.data,l=0.13)
-    this_data['power',y]['T2',:] = x[:]
-
-print(this_data.getaxis('power'))
-this_data.rename('T2','log(T2)')
-
-fl.next('T2 distribution vs power')
-fl.image(abs(this_data))
-clim(0,max(this_data['power',0].data).real)
+    T2_values = ones(ndshape(s)['power'])
+    find_T2 = True
+    #{{{ find T2
+    if find_T2:
+        for k in range(ndshape(s)['power']):
+        #for k in [1,5,10,15,19]:
+            data = s['t2':0]['power',k]
+            fl.next('Echo decay (power = %f W)'%s.getaxis('power')[k])
+            x = tE_axis
+            ydata = data.data.real
+            if ydata[0] < 1:
+                ydata *= -1
+            ydata /= max(ydata)
+            fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+            raise RuntimeEror("Need to set up fitdata using new capabilities")
+            data.guess([0.1,100.0]) <-- should be a dictionary
+            fl.plot(data.eval(400))
+            T2_values[k] = T2
+            print("T2:",T2,"s")
+        fl.next('T2 vs power')
+        fl.plot(s.getaxis('power')[:-3],T2_values[:-3],'.')
+        xlabel('Power (W)')
+        ylabel('T2 (seconds)')
+    #}}}
+    print(T2_values)
+    fl.show();quit()
+    enhancement = s['t2':0]['nEchoes',0].C
+    enhanced = enhancement.data[1:].real
+    enhanced /= max(enhanced)
+    fl.next('150 uL TEMPOL enhancement (first echo of CPMG train)')
+    fl.plot(s.getaxis('power')[:-3],enhanced[:-3],'.',human_units=False)
+    #fl.plot(power_axis_W[-3:],enhanced[-3:],'o',human_units=False)
+    xlabel('Power (W)')
+    ylabel('Enhancement')
 
 fl.show();quit()
+
+
