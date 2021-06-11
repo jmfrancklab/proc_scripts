@@ -1,5 +1,6 @@
-"""Check integral error calculation
-================================
+"""
+Propagation of Integral Error
+=============================
 
 Generate a fake dataset of an inversion recovery with multiple repeats (φ
 × t2 × vd × repeats) w/ normally distributed random noise.
