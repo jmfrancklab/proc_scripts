@@ -5,7 +5,7 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
-from proc_scripts import *
+from pyspecProcScripts import *
 t2 = symbols('t2')
 
 def select_pathway(s,pathway):
@@ -144,11 +144,12 @@ def process_IR(s, label='', fl=None,
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
     #}}}    
-    #s *= sign
+    s *= sign
     data = s.C
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     if flip:
-        s['vd',:zero_crossing] *= -1
+        s *= -1
+        #s['vd',:zero_crossing] *= -1
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)

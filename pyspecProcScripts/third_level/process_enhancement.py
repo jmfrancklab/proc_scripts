@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from proc_scripts import *
-from proc_scripts import postproc_dict
-from proc_scripts.correlation_alignment_ODNP import correl_align
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
+from pyspecProcScripts.correlation_alignment_ODNP import correl_align
 from sympy import symbols
 from matplotlib import *
 import numpy as np
@@ -36,14 +36,11 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         t_range=(0,0.083),sign=None,fl=None):
     s *= sign
     if fl is not None:
+        fl.push_marker()
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
                 s,thisrange=freq_range) # visualize the frequency limits
     s.ift('t2')
     s.reorder(['ph1','power','t2'])
-    if fl is not None:
-        fl.push_marker()
-        fl.next('time domain')
-        fl.image(as_scan_nbr(s))
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
@@ -92,14 +89,17 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     #{{{Applying correlation alignment
     s.ift(['ph1'])
     opt_shift,sigma = correl_align(s,indirect_dim='power',
-            ph1_selection=1,sigma=0.001)
+            ph1_selection=1,sigma=50)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
     fl.basename= None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
-        fl.image(as_scan_nbr(s))
+        s.set_units('t2','Hz')
+        #s *= phasing
+        fl.image(s,human_units=False)
+    #fl.show();quit()    
     s.ift('t2')
     s.ft(['ph1'])
     if fl is not None:
@@ -121,6 +121,9 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     d = d['t2':(0,t_range[-1])]
     d['t2':0] *= 0.5
     d.ft('t2')
+    if fl is not None:
+        fl.next('FID sliced')
+        fl.image(d)
     d *= sign
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
@@ -151,5 +154,5 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         fl.plot(d['power',:-3], 'ko', capsize=6, alpha=0.3)
         fl.plot(d['power',-3:],'ro',capsize=6, alpha=0.3)
         fl.pop_marker()
-    enhancement = d
+    enhancement = d['power',:-3]
     return enhancement,idx_maxpower
