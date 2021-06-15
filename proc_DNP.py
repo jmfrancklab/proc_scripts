@@ -6,19 +6,19 @@ from pyspecProcScripts.third_level.process_enhancement import process_enhancemen
 from sympy import symbols, Symbol, latex,limit,init_printing
 fl = fl_mod()
 # {{{ input parameters
-thisfile = '210610_3uM_TEMPOL_cap_probe_DNP'
+thisfile = '210614_TEMPOL_100mM_cap_probe_DNP'
 exp_type='ODNP_NMR_comp/test_equipment'
 save_npz = False
 power_list = r_[0,0.5,1,1.5,2]
 R1w = 1/2.172
-C = 0.0000035
+C = 0.00015
 signal_pathway = {'ph1':0,'ph2':1}
 E_signal_pathway = {'ph1':1}
 excluded_pathways = [(0,0)]
-nPowers=15
-f_range = (-0.1e3,0.1e3)
-t_range = (0,0.06)
-E_f_range = (-1.5e3,1.5e3)
+nPowers=25
+f_range = (-0.16e3,0.13e3)
+t_range = (0,0.04)
+E_f_range = (-7.5e3,7.5e3)
 E_t_range = (0, 83e-3)
 #}}}
 #{{{process IR datasets and create list of T1s
@@ -27,25 +27,26 @@ for nodename,postproc,clock_correction,flip,IR,ILT in [
         ('FIR_nopower','spincore_IR_v1',
             False,False,True,False),
         ('FIR_27dBm','spincore_IR_v1',
-           False,False,True,False),
+           False,True,True,False),
         ('FIR_30dBm','spincore_IR_v1',
-           False,False,True,False),
+           False,True,True,False),
         ('FIR_32dBm','spincore_IR_v1',
-           False,False,True,False),
+           False,True,True,False),
         ('FIR_33dBm','spincore_IR_v1',
-           False,False,True,False),
+           False,True,True,False),
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
-    #fl.show();quit()
+    #fl.show()#;quit()
     myslice = s['t2':f_range]
     mysgn = determine_sign(select_pathway(myslice,signal_pathway,mult_ph_dims=True),fl=fl)
-    T1 = process_IR(s,label=thisfile,W=10,f_range=f_range,t_range=t_range,
+    T1 = process_IR(s,label=thisfile,W=1,f_range=f_range,t_range=t_range,
             clock_correction=clock_correction,flip=flip,
-            IR=IR,sign=mysgn,fl=fl)    
+            IR=IR,sign=mysgn,fl=fl)
+    #fl.show()#;quit()
     T1_list.append(T1)
     #}}}
-    
+#quit()    
 #{{{process enhancement
 for nodename,postproc in [
         ('enhancement','spincore_ODNP_v1')
@@ -92,7 +93,7 @@ plt.ylabel("$R_1(p)$")
 #{{{plotting with correcting for heating
 ksigs_T=(0.0015167/C)*(1-enhancement)*(R1p_fine)
 fl.next('ksig_smax for %s'%thisfile)
-ksigs_T.set_units('power','mW')
+#ksigs_T.set_units('power','mW')
 #}}}
 #{{{plotting with correction for heating
 x = enhancement.fromaxis('power')
@@ -102,8 +103,9 @@ fitting_line.functional_form = (k*power)/(p_half+power)
 fitting_line.fit()
 fl.plot(ksigs_T,'o',label='with heating correction')
 fl.plot(ksigs_T.imag,'o',label='imaginary')
+fitting_line.set_units('power','mW')
 fit = fitting_line.eval(25)
-fit.set_units('power','mW')
+fit.set_units('mW')
 fl.plot(fit,label='fit')
 plt.text(0.75, 0.25, fitting_line.latex(), transform=plt.gca().transAxes,size='large',
         horizontalalignment='center',color='k')
