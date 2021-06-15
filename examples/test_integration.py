@@ -37,7 +37,6 @@ for thisfile,exp_type,nodename in [
     fl.next('raw data')
     fl.image(s)
     s.ift('t2')
-    fl.next('raw data time domain')
     t_range=(0,0.06)
     f_range = (-1e3,1e3)
     s.ift(['ph1','ph2'])
@@ -47,8 +46,6 @@ for thisfile,exp_type,nodename in [
     s.ft('t2')
     s.ft(['ph1','ph2'])
     s = s['t2':f_range]
-    fl.next('freq domain')
-    fl.image(s)
     s.ift('t2')
     best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway))
     s.setaxis('t2',lambda x: x-best_shift)
