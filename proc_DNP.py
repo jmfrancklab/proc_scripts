@@ -6,7 +6,7 @@ from pyspecProcScripts.third_level.process_enhancement import process_enhancemen
 from sympy import symbols, Symbol, latex,limit,init_printing
 fl = fl_mod()
 # {{{ input parameters
-thisfile = '210614_TEMPOL_100mM_cap_probe_DNP'
+thisfile = '210614_TEMPOL_150uM_cap_probe_DNP'
 exp_type='ODNP_NMR_comp/test_equipment'
 save_npz = False
 power_list = r_[0,0.5,1,1.5,2]
@@ -16,9 +16,9 @@ signal_pathway = {'ph1':0,'ph2':1}
 E_signal_pathway = {'ph1':1}
 excluded_pathways = [(0,0)]
 nPowers=25
-f_range = (-0.16e3,0.13e3)
+f_range = (-0.17e3,0.13e3)
 t_range = (0,0.04)
-E_f_range = (-7.5e3,7.5e3)
+E_f_range = (-3e3,3e3)
 E_t_range = (0, 83e-3)
 #}}}
 #{{{process IR datasets and create list of T1s
@@ -37,16 +37,15 @@ for nodename,postproc,clock_correction,flip,IR,ILT in [
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
-    #fl.show()#;quit()
     myslice = s['t2':f_range]
     mysgn = determine_sign(select_pathway(myslice,signal_pathway,mult_ph_dims=True),fl=fl)
     T1 = process_IR(s,label=thisfile,W=1,f_range=f_range,t_range=t_range,
             clock_correction=clock_correction,flip=flip,
             IR=IR,sign=mysgn,fl=fl)
-    #fl.show()#;quit()
+    fl.show()#;quit()
     T1_list.append(T1)
     #}}}
-#quit()    
+quit()    
 #{{{process enhancement
 for nodename,postproc in [
         ('enhancement','spincore_ODNP_v1')
