@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from proc_scripts import *
-from proc_scripts import postproc_dict
-from proc_scripts.correlation_alignment_ODNP import correl_align
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
+from pyspecProcScripts.correlation_alignment_ODNP import correl_align
 from sympy import symbols
 from matplotlib import *
 import numpy as np
@@ -33,7 +33,7 @@ def as_scan_nbr(s):
 # leave this as a loop, so you can load multiple files
 def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
-        t_range=(0,0.083),flip=False,sign=None,fl=None):
+        t_range=(0,0.083),direct='t2',flip=False,sign=None,fl=None):
     s *= sign
     if fl is not None:
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
@@ -59,14 +59,14 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     s.ft('t2')
     s.ft(['ph1'])
     #}}}
-    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('power',raw_index=True).item()
+    s.reorder(['ph1','nScans','power','t2'])
     s = s['t2':freq_range] 
     if fl is not None:
         fl.next('freq_domain before phasing')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     #{{{Applying phasing corrections
     s.ift('t2') # inverse fourier transform into time domain
-    best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
+    #best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
     best_shift = 0.033e-3
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     logger.info(strm("applying zeroth order correction"))
@@ -77,42 +77,54 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     phasing['ph1',1] = 1
     phasing.ift(['ph1'])
     s /= phasing
-    ph0 = s['t2':0]/phasing
+    ph0 = s['t2':0]
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1'])
-    logger.info(strm(s.dimlabels))
     s.ft('t2')
+    s.reorder(['ph1','nScans','power','t2'])
     if fl is not None:
         fl.next('phase corrected')
         fl.image(as_scan_nbr(s))
-    s.reorder(['ph1','power','t2'])
-    logger.info(strm("zero corssing at",zero_crossing))
-    #}}}
-    #{{{Correcting power axis
-    #print(s.getaxis('power'))
-    #quit()
-    #power_axis_dBm = array(s.get_prop('meter_powers'))
-    #print(power_axis_dBm)
-    #power_axis_W = zeros_like(power_axis_dBm)
-    #power_axis_W[:] = 10**(power_axis_dBm/10)
-    #power_axis_W = r_[0,power_axis_W]
-    #print(power_axis_W)
-    #quit()
-    #s.setaxis('power',power_axis_W)
-    #s.set_units('power','W')
     #}}}
     #{{{Applying correlation alignment
+    print('BEFORE',ndshape(s))
+    if 'nScans' in s.dimlabels:
+        phcycdims = [j for j in s.dimlabels if j.startswith('ph')]
+        indirect = set(s.dimlabels)-set(phcycdims)-set([direct])
+        indirect = [j for j in s.dimlabels if j in indirect]
+        nScans_len = len(s.getaxis('nScans'))
+        s.smoosh(indirect)
     s.ift(['ph1'])
-    opt_shift,sigma = correl_align(s,indirect_dim='power',
-            ph1_selection=1,sigma=0.001)
+    if 'nScans' in s.dimlabels:
+        opt_shift,sigma = correl_align(s,indirect_dim='nScans',
+                ph1_selection=1,sigma=0.001)
+    else:
+        opt_shift,sigma = correl_align(s,indirect_dim='power',
+                ph1_selection=1,sigma=0.001)
     s.ift('t2')
+    print("AFTER",ndshape(s))
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
+    if 'nScans' in s.dimlabels:
+        s.chunk('nScans',['nScans','power'],[nScans_len,-1])
+        s.reorder(['ph1','nScans','power','t2'])
+    print(ndshape(s))    
     fl.basename= None
+    s.setaxis('nScans','#').set_units('nScans','scan #')
+    s.setaxis('power','#').set_units('power','scan #')
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
-        fl.image(as_scan_nbr(s))
+        s /= phasing
+        fl.image(s.C.setaxis(
+'nScans','#').set_units('nScans','scan #'))
+        fl.next('freq')
+        if 'nScans' in s.dimlabels:
+            fl.image(s.C.setaxis('nScans','#').set_units('nScans','scan #'))
+        else:    
+            fl.image(as_scan_nbr(s))
+        
+    fl.show();quit()    
     s.ift('t2')
     s.ft(['ph1'])
     if fl is not None:

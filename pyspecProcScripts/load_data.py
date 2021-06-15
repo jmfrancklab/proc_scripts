@@ -363,8 +363,6 @@ def proc_var_tau(s,fl=None):
     return s
 
 def proc_spincore_ODNP_v1(s,fl=None):
-    if 'nScans' in s.dimlabels:
-        s.mean('nScans')
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))

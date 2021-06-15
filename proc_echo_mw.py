@@ -19,12 +19,12 @@ plt.rcParams.update({
 logger = init_logging("info")
 t2 = symbols('t2')
 signal_pathway = {'ph1':1}
-freq_range= (-5e3,5e3)
+freq_range= (-1.5e3,1.5e3)
 t_range = (0,0.083)
 fl = fl_mod()
 #}}}
 for filename,nodename,file_location,postproc in [
-        ('210609_TEMPOL_100mM_cap_probe_DNP','enhancement',
+        ('210610_3uM_TEMPOL_cap_probe_DNP','enhancement',
             'ODNP_NMR_comp/test_equipment','spincore_ODNP_v1'),
         ]:
     s = find_file(filename,exp_type=file_location,expno=nodename,
