@@ -35,10 +35,10 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
         t_range=(0,0.083),sign=None,fl=None):
     s *= sign
-    if fl is not None:
-        fl.push_marker()
-        fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
-                s,thisrange=freq_range) # visualize the frequency limits
+    #if fl is not None:
+    #    fl.push_marker()
+    #    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+    #            s,thisrange=freq_range) # visualize the frequency limits
     s.ift('t2')
     s.reorder(['ph1','power','t2'])
     rcParams.update({
@@ -59,7 +59,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('power',raw_index=True).item()
     s = s['t2':freq_range] 
     if fl is not None:
-        fl.next('freq_domain before phasing')
+        fl.next('freq_domain before hermitian')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     #{{{Applying phasing corrections
     s.ift('t2') # inverse fourier transform into time domain
@@ -81,7 +81,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     logger.info(strm(s.dimlabels))
     s.ft('t2')
     if fl is not None:
-        fl.next('phase corrected')
+        fl.next('After zeroth order phase correction')
         fl.image(as_scan_nbr(s))
     s.reorder(['ph1','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
@@ -89,7 +89,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     #{{{Applying correlation alignment
     s.ift(['ph1'])
     opt_shift,sigma = correl_align(s,indirect_dim='power',
-            ph1_selection=1,sigma=50)
+            ph1_selection=1,sigma=0.001)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
@@ -97,9 +97,9 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
         s.set_units('t2','Hz')
-        #s *= phasing
+        #s.C.reorder(['power','ph1']).smoosh(['power','ph1'])
+        #s /= phasing
         fl.image(s,human_units=False)
-    #fl.show();quit()    
     s.ift('t2')
     s.ft(['ph1'])
     if fl is not None:
