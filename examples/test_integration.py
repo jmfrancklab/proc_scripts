@@ -118,5 +118,4 @@ for thisfile,exp_type,nodename in [
             c='blue',linestyle=":",
             label='error associated with inactive CT pathway')
     plt.ylim(0,None) 
-    fl.show();quit()
 
