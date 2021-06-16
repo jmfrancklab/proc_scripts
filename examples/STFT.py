@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = (20,15)
 plt.rcParams['image.interpolation'] = 'nearest'
 plt.rcParams.update({'font.size': 22})
-
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 def stft(x, fs, frame_size, hop):
     """
     Perform STFT (short-time fourier transform).

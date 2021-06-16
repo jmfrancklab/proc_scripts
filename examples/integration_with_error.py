@@ -11,7 +11,7 @@ from pyspecProcScripts import integrate_limits, integral_w_errors
 from numpy.random import seed
 
 # sphinx_gallery_thumbnail_number = 2
-
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 seed(2021)  # so the same random result is generated every time -- 2021 is meaningless
 init_logging(level="debug")
 fl = figlist_var()

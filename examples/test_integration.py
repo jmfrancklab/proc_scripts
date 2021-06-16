@@ -10,6 +10,7 @@ from matplotlib import *
 from pyspecProcScripts import *
 from pyspecProcScripts.correlation_alignment_ODNP import correl_align
 import numpy as np
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 signal_pathway = {'ph1': 1, 'ph2':0}
 excluded_pathways = [(0,0),(0,3)]
 with figlist_var() as fl:    

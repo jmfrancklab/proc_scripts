@@ -9,7 +9,7 @@ from pylab import *
 from pyspecdata import *
 from pyspecProcScripts.load_data import postproc_dict
 import h5py as h5
-
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 with figlist_var() as fl:
     for filename, expno, exp_type, postproc, frequency, f_range in [
             ("201209_Ni_sol_probe_var_tau",'var_tau','var_tau','spincore_var_tau_v1',

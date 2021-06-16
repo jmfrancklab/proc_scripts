@@ -9,7 +9,7 @@ linearity.
 from pyspecdata import *
 from pylab import *
 from sympy import symbols, latex, Symbol
-
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 with figlist_var() as fl:
     for filename, folder_name, nodename, t_min, t_max,ninety_range,oneeighty_range in [
             ('210204_gds_p90_vary_3', 'nutation', 'capture1',1.4e7,1.6e7,

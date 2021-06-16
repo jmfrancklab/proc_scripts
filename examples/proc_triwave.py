@@ -12,7 +12,7 @@ from pyspecdata import *
 from pyspecProcScripts import postproc_dict
 from scipy import signal
 import matplotlib.pyplot as plt
-
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 fl = figlist_var()
  # {{{ load data, set units, show raw data
 for searchstr,exp_type,nodename,postproc,corrected_volt in [

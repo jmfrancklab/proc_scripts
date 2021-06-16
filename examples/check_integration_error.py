@@ -18,6 +18,7 @@ from pyspecdata import *
 from pyspecProcScripts import integrate_limits, integral_w_errors
 
 # sphinx_gallery_thumbnail_number = 2
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 
 init_logging(level="debug")
 fl = figlist_var()
