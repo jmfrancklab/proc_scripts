@@ -12,7 +12,7 @@ def to_percent(y, position):
     else:
         return s + '%'
 def correl_align(s, align_phases=False,ODNP=True,tol=1e-4,indirect_dim='indirect',
-        fig_title='correlation alignment',ph1_selection=1, 
+        fig_title='correlation alignment',ph1_selection=1,ph2_selection=0, 
         shift_bounds=False, max_shift = 100., sigma=20.,direct='t2',fl=None):
     """
     Align transients collected with chunked phase cycling dimensions along an indirect
@@ -67,10 +67,11 @@ def correl_align(s, align_phases=False,ODNP=True,tol=1e-4,indirect_dim='indirect
         indirect = [j for j in s.dimlabels if j in indirect]
         nScans_len = len(s.getaxis('nScans'))
         s.smoosh(indirect)
-    s.ift(['ph1'])
     if ODNP:
+        s.ift(['ph1'])
         ph1_len = len(s.getaxis('ph1'))
     else:
+        s.ift(['ph1','ph2'])
         ph1_len = len(s.getaxis('ph1'))
         ph2_len = len(s.getaxis('ph2'))
     N = ndshape(s)[indirect_dim]

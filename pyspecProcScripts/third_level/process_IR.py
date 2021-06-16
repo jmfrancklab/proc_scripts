@@ -5,7 +5,7 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
-from proc_scripts import *
+from pyspecProcScripts import *
 t2 = symbols('t2')
 
 def select_pathway(s,pathway):
@@ -113,15 +113,12 @@ def process_IR(s, label='', fl=None,
     else:
         s.reorder(['ph1','vd','t2'])
     #{{{Correlation Alignment
-    s.ift(['ph1','ph2'])
     fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    opt_shift,sigma = correl_align(s,indirect_dim='vd',
+    s_aligned,opt_shift,sigma = correl_align(s,ODNP=False,indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
             sigma=10)
-    s.ift('t2')
-    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    s.ft('t2')
+    s = s_aligned
     fl.basename = None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
@@ -156,7 +153,7 @@ def process_IR(s, label='', fl=None,
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
     #{{{Integrating with associated error from excluded pathways    
-    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
+    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
     x = s_int.get_error()
     x[:] /= sqrt(2)
