@@ -21,6 +21,6 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT 
             postproc=postproc,lookup=postproc_dict,fl=fl)
     myslice = s['t2':f_range]
     mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=fl)
-    T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,
+    T1 = process_IR(s,W=7,f_range=f_range,t_range=t_range,
             clock_correction=clock_correction,IR=IR,flip=True,sign=mysgn,fl=fl) 
     fl.show()
