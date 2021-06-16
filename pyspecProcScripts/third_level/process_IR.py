@@ -5,7 +5,7 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
-from proc_scripts import *
+from pyspecProcScripts import *
 t2 = symbols('t2')
 
 def select_pathway(s,pathway):

@@ -9,7 +9,8 @@ from sympy import symbols, Symbol, latex,limit,init_printing
 #from pylab import *
 #from sympy import exp as s_exp
 #from scipy.optimize import leastsq,minimize,basinhopping,nnls
-
+import os
+os.chdir('C:/Users/saman/proc_scripts/')
 #{{{input parameters
 plt.rcParams.update({
     "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
@@ -20,12 +21,12 @@ logger = init_logging("info")
 t2 = symbols('t2')
 signal_pathway = {'ph1':1}
 freq_range= (-5e3,5e3)
-t_range = (0,0.083)
+t_range = (0,50e-3)
 fl = fl_mod()
 #}}}
 for filename,nodename,file_location,postproc in [
-        ('210609_TEMPOL_100mM_cap_probe_DNP','enhancement',
-            'ODNP_NMR_comp/test_equipment','spincore_ODNP_v1'),
+        ('210615_S175R1a_pR_DDM_ODNP','enhancement',
+            'odnp','spincore_ODNP_v1'),
         ]:
     s = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
