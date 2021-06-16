@@ -10,7 +10,8 @@ Demonstrate on a fake dataset of an inversion recovery with multiple repeats (φ
 """
 from pylab import *
 from pyspecdata import *
-from pyspecProcScripts import integrate_limits, integral_w_errors
+from pyspecProcScripts import *
+from pyspecProcScripts.third_level.process_data import proc_data
 from numpy.random import normal, seed
 seed(2021)
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
@@ -23,7 +24,7 @@ fl = figlist_var()
 t2 = nddata(r_[0:0.2:256j], "t2")
 vd = nddata(r_[0:1:40j], "vd")
 ph1 = nddata(r_[0, 2] / 4.0, "ph1")
-ph2 = nddata(r_[0:4] / 4.0, "ph2")
+ph2 = nddata(r_[0, 2] / 4.0, "ph2")
 signal_pathway = {"ph1": 0, "ph2": 1}
 # this generates fake clean_data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
@@ -53,7 +54,7 @@ frq_noise /= sqrt(ndshape(frq_noise)['temp']) * frq_noise.get_ft_prop('temp','df
 fl.next('frq-noise time domain')
 fl.plot(frq_noise)
 # }}}
-frq_noise = nddata(frq_noise.data.real,[-1,2,4],['vd','ph1','ph2'])
+frq_noise = nddata(frq_noise.data.real,[-1,2,2],['vd','ph1','ph2'])
 # }}}
 fake_data_noise_std = 1.0
 clean_data.reorder(["ph1", "ph2", "vd"])
@@ -75,5 +76,14 @@ data /= sqrt(ndshape(data)["t2"]) * dt
 # }}}
 fl.next("fake data -- freq domain")
 fl.image(data)
+f_range=(-161.5,243.6)
+t_range=(0,0.04)
+coherence_pathway = {'ph1':0,'ph2':1}
+myslice = data['t2':f_range]
+mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=fl)
 # }}}
+data = proc_data(data,label='integral with errors',fl=fl,flip=True,f_range=(-161.5,243.6),t_range=(0,0.04),sign=mysgn)
+fl.next('Integrated data')
+fl.plot(data,'o',capsize=6,label='real')
+fl.plot(data.imag,'o',capsize=6,label='imaginary')
 fl.show()

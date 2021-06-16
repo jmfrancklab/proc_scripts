@@ -67,7 +67,7 @@ def proc_data(s,label='',indirect = 'vd',fl=None,signal_pathway={'ph1':0,'ph2':1
         phasing.ft(['ph1','ph2'])
         phasing['ph1',0]['ph2',1] = 1
         phasing.ift(['ph1','ph2'])
-        ph0 = s['t2':0]
+        ph0 = s['t2':0]/phasing #if I don't do this the signal jumps from Ph2:1 to ph2:0
         ph0 /= abs(ph0)
         s /= ph0
         s.ft(['ph1','ph2'])
