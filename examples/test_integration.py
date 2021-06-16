@@ -8,7 +8,7 @@ from pyspecdata import *
 from pylab import *
 from matplotlib import *
 from pyspecProcScripts import *
-from pyspecProcScripts.correlation_alignment_ODNP import correl_align
+from pyspecProcScripts.correlation_alignment import correl_align
 import numpy as np
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 signal_pathway = {'ph1': 1, 'ph2':0}
