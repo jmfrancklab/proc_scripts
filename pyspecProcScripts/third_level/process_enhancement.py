@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from pyspecProcScripts import *
 from pyspecProcScripts import postproc_dict
-from pyspecProcScripts.correlation_alignment_ODNP import correl_align
+from pyspecProcScripts.correlation_alignment import correl_align
 from sympy import symbols
 from matplotlib import *
 import numpy as np
@@ -24,7 +24,9 @@ def select_pathway(s,pathway):
         retval = retval[k,v]
     return retval
 def as_scan_nbr(s):
-        return s.C.setaxis('power','#').set_units('power','scan #')
+        return s.C.setaxis(
+'nScans','#').set_units('nScans','scan #').setaxis(
+'power','#').set_units('power','scan #')
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
 # list of integrals for ODNP
@@ -34,7 +36,7 @@ def as_scan_nbr(s):
 def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
         t_range=(0,0.083),direct='t2',flip=False,sign=None,fl=None):
-    s *= sign
+    #s *= sign
     if fl is not None:
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
                 s,thisrange=freq_range) # visualize the frequency limits
@@ -66,8 +68,8 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     #{{{Applying phasing corrections
     s.ift('t2') # inverse fourier transform into time domain
-    #best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
-    best_shift = 0.033e-3
+    best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
+    #best_shift = 0.033e-3
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     logger.info(strm("applying zeroth order correction"))
     s.ift(['ph1'])
@@ -77,67 +79,50 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     phasing['ph1',1] = 1
     phasing.ift(['ph1'])
     s /= phasing
-    ph0 = s['t2':0]
+    ph0 = s['t2':0]/phasing #if I don't divide by phasing here the signal jumps from ph:1 to ph1:0 I am not sure why.
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1'])
     s.ft('t2')
     s.reorder(['ph1','nScans','power','t2'])
     if fl is not None:
-        fl.next('phase corrected')
+        fl.next('phase corrected-hermitian and zeroth order phase correction applied')
         fl.image(as_scan_nbr(s))
     #}}}
     #{{{Applying correlation alignment
-    print('BEFORE',ndshape(s))
     if 'nScans' in s.dimlabels:
-        phcycdims = [j for j in s.dimlabels if j.startswith('ph')]
-        indirect = set(s.dimlabels)-set(phcycdims)-set([direct])
-        indirect = [j for j in s.dimlabels if j in indirect]
-        nScans_len = len(s.getaxis('nScans'))
-        s.smoosh(indirect)
-    s.ift(['ph1'])
-    if 'nScans' in s.dimlabels:
-        opt_shift,sigma = correl_align(s,indirect_dim='nScans',
+       s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='nScans',
                 ph1_selection=1,sigma=0.001)
     else:
-        opt_shift,sigma = correl_align(s,indirect_dim='power',
+        s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='nScans',
                 ph1_selection=1,sigma=0.001)
-    s.ift('t2')
-    print("AFTER",ndshape(s))
-    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    s.ft('t2')
-    if 'nScans' in s.dimlabels:
-        s.chunk('nScans',['nScans','power'],[nScans_len,-1])
-        s.reorder(['ph1','nScans','power','t2'])
-    print(ndshape(s))    
+    s = s_aligned
     fl.basename= None
-    s.setaxis('nScans','#').set_units('nScans','scan #')
-    s.setaxis('power','#').set_units('power','scan #')
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
-        s /= phasing
-        fl.image(s.C.setaxis(
-'nScans','#').set_units('nScans','scan #'))
-        fl.next('freq')
-        if 'nScans' in s.dimlabels:
-            fl.image(s.C.setaxis('nScans','#').set_units('nScans','scan #'))
-        else:    
-            fl.image(as_scan_nbr(s))
-        
-    fl.show();quit()    
+        #s /= phasing
+        fl.image(as_scan_nbr(s))
+        #fl.next('after correlation, time domain')
+        #s.ift('t2')
+        #fl.image(as_scan_nbr(s))
+    #fl.show();quit()    
     s.ift('t2')
     s.ft(['ph1'])
+    if 'nScans' in s.dimlabels:
+        s.mean('nScans')
     if fl is not None:
         fl.next('after correlation alignment FTed ph')
-        fl.image(as_scan_nbr(s))
-    s.reorder(['ph1','power','t2'])
+        fl.image(s.C.setaxis(
+'power','#').set_units('power','scan #'))
     if fl is not None:
         fl.next('after correlation -- time domain')
-        fl.image(as_scan_nbr(s))
+        fl.image(s.C.setaxis(
+'power','#').set_units('power','scan #'))
     s.ft('t2')    
     if fl is not None:
         fl.next('after correlation -- frequency domain')
-        fl.image(as_scan_nbr(s))
+        fl.image(s.C.setaxis(
+'power','#').set_units('power','scan #'))
     #}}}
     s.ift('t2')
     d=s.C
@@ -147,20 +132,23 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     d['t2':0] *= 0.5
     d.ft('t2')
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    if fl is not None:
+        fl.next('before integration')
+        fl.image(d.C.setaxis(
+'power','#').set_units('power','scan #'))
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'])]))
     error_pathway = [{'ph1':j} for j in error_pathway]
     # }}}
     #{{{ integrating with error bar calculation
-    d_,frq_slice,std = integral_w_errors(d,signal_pathway,error_pathway,
+    d_,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             indirect='power', fl=fl, return_frq_slice=True)
     x = d_.get_error()
     x[:] /= sqrt(2)
     d = d_.C
     #}}}
-    #{{{Normalizing by max 
-    idx_maxpower = np.argmax(s.getaxis('power'))
+    #{{{Normalizing by max
     d /= max(d.data)
     #}}}
     power_axis_dBm = array(s.get_prop('meter_powers'))
@@ -170,6 +158,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     d.setaxis('power',power_axis_W)
     thiscolor = next(thesecolors)
     #d.set_units('power','W')
+    #s *= sign
     if flip:
         d = 1-d
     if fl is not None:
@@ -178,4 +167,4 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         fl.plot(d['power',-3:],'ro',capsize=6, alpha=0.3)
         fl.pop_marker()
     enhancement = d
-    return enhancement,idx_maxpower
+    return enhancement
