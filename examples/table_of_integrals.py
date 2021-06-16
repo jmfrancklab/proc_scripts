@@ -82,7 +82,7 @@ coherence_pathway = {'ph1':0,'ph2':1}
 myslice = data['t2':f_range]
 mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=fl)
 # }}}
-data = proc_data(data,label='integral with errors',fl=fl,flip=True,f_range=(-161.5,243.6),t_range=(0,0.04),sign=mysgn)
+data = proc_data(data,fl=fl,flip=True,f_range=(-161.5,243.6),t_range=(0,0.04),sign=mysgn)
 fl.next('Integrated data')
 fl.plot(data,'o',capsize=6,label='real')
 fl.plot(data.imag,'o',capsize=6,label='imaginary')

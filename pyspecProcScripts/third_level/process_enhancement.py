@@ -1,5 +1,10 @@
+"""
+Processes enhancement data
+==========================
+Processes data acquired from an enhancement experiment 
+and plots the resulting enhancement curve normalized.
+"""
 from pyspecdata import *
-from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from pyspecProcScripts import *
 from pyspecProcScripts import postproc_dict
 from sympy import symbols
@@ -28,9 +33,29 @@ def as_scan_nbr(s):
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
-def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
+def process_enhancement(s, signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
         t_range=(0,0.083),direct='t2',sign=None,fl=None):
+    """
+    Parameters
+    ==========
+    s:  nddata
+    signal_pathway: dict
+                    Coherence transfer pathway in which the signal
+                    resides.
+    excluded_pathways:  lst
+                        The coherence transfer pathway in which we
+                        do NOT expect to see signal
+    freq_range: tuple
+                Range in the frequency domain in which the signal resides.
+                Units should be Hz.
+    t_range:    tuple
+                Range in the time domain in which the signal lasts.
+                Units should be seconds.
+    direct:     str
+                Direct dimension.
+    """            
+                    
     if fl is not None:
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
                 s,thisrange=freq_range) # visualize the frequency limits

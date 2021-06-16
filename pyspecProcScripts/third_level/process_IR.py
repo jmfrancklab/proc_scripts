@@ -1,6 +1,8 @@
-import pylab as plb
+"""Analyze Inversion Recovery Data
+==================================
+Analyzes data acquired from an Inversion Recovery experiment.
+"""
 from pyspecdata import *
-from scipy.optimize import minimize, leastsq
 from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,6 +32,37 @@ def process_IR(s, this_l = 0.032,
         sign = None,
         ILT=False,
         fl=None):
+"""
+Parameters
+==========
+s:      nddata
+this_l: int
+        the number that compromises between fitting the data and the degree of 
+        regularization to be applied. The number at the "knee" of the L-curve 
+        produced.
+l:      int
+        logarithmic spacing desired for the ILT plot
+clock_correction:   boolean
+                    whether or not a automated clock correction should be applied to the
+                    data. Should be true if when looking at the raw data it looks super
+                    "rainbowy".
+W:      int
+        repetition delay applied in FIR experiments
+f_range:    tuple
+            Range in the frequency domain in which the signal resides.
+            Units should be Hz.
+t_range:    tuple
+            Range in the time domain in which the signal lasts.
+            Units should be seconds.
+IR:         boolean
+            When "True", uses the fit to a normal IR. When "False" uses the fit
+            from a FIR. If false, W must be accurate to the experiment.
+flip:       boolean
+            At higher powers, the data has been known to flip upside down prior
+            to the zero crossing. When true, this will correct for this.
+ILT:        boolean
+            Option that will produce an ILT plot of the IR experiment.
+"""            
     s_int = proc_data(s,label='Inversion Recovery',indirect='vd',fl=fl,
             f_range=f_range,t_range=t_range,clock_correction=clock_correction,flip=flip,
             sign=sign)

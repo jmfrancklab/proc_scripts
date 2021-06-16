@@ -1,3 +1,10 @@
+"""
+Processes ND-datasets
+=====================
+Applies DC offset correction, phase corrections and the correlation alignment to 
+ND nddata and returns the integral of the signal
+with the error associated with the excluded pathways.
+"""
 from pyspecdata import *
 from pyspecProcScripts import *
 def select_pathway(s,pathway):
@@ -5,9 +12,42 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval
-def proc_data(s,label='',indirect = 'vd',fl=None,signal_pathway={'ph1':0,'ph2':1},
+def proc_data(s,indirect = 'vd',fl=None,signal_pathway={'ph1':0,'ph2':1},
         excluded_pathways = [(0,0)], clock_correction=False,flip=False,
         f_range=(None,None), t_range=(None,83e-3),sign=None):
+    """
+    Parameters
+    ==========
+    s:      nddata
+    indirect:   str
+                The indirect dimension of the dataset.
+    signal_pathway: dict
+                    Coherence transfer pathway in which the signal 
+                    resides.
+    excluded_pathways:  lst
+                        The coherence transfer pathway in which we
+                        do NOT expect to see signal
+    clock_correction:   boolean
+                        Whether or not a automated clock correction should be applied to the
+                        data. Should be true if when looking at the raw data it looks super
+                        "rainbowy".    
+    flip:       boolean
+                At higher powers, the data has been known to flip upside down prior
+                to the zero crossing. When true, this will correct for this.
+    f_range:    tuple
+                Range in the frequency domain in which the signal resides.
+                Units should be Hz.
+    t_range:    tuple
+                Range in the time domain in which the signal lasts.
+                Units should be seconds.
+    
+    Returns             
+    =======
+    s:  nddata
+        integrated data with the error associated with the excluded pathways.
+    """    
+                    
+            
     s *= sign
     if 'ph2' in s.dimlabels:
         s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
