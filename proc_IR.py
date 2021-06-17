@@ -8,9 +8,9 @@ save_npz = False
 #}}}
 coherence_pathway = {'ph1':0,'ph2':1}
 for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT in [
-       ('210614_TEMPOL_100mM_cap_probe_DNP','inv_rec',
-           'FIR_nopower','spincore_IR_v1',
-           (-0.213e3,0.25e3),(None,30e-3),False,False,False),
+       ('210617_100mM_TEMPO_cap_probe','inv_rec',
+           'FIR_34dBm','spincore_IR_v1',
+           (-0.11e3,0.2e3),(None,70e-3),False,True,False),
         # ('210322_water_control_FIR_noPower','inv_rec','signal','spincore_IR_v1',
         #    (-0.09e3,-0.06e3),(None,83e-3),False,False),
         #('210517_4OHTempo_TempControl_probe_FIR_34dBm.','odnp_nmr_comp/inv_rec','signal','spincore_IR_v1',

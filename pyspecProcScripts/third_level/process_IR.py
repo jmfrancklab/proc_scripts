@@ -148,8 +148,7 @@ def process_IR(s, label='', fl=None,
     data = s.C
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     if flip:
-        s *= -1
-        #s['vd',:zero_crossing] *= -1
+        s['vd',:zero_crossing] *= -1
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
@@ -157,7 +156,7 @@ def process_IR(s, label='', fl=None,
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
     #{{{Integrating with associated error from excluded pathways    
-    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
+    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
     x = s_int.get_error()
     x[:] /= sqrt(2)
