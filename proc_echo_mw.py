@@ -19,23 +19,15 @@ plt.rcParams.update({
 logger = init_logging("info")
 t2 = symbols('t2')
 signal_pathway = {'ph1':1}
-freq_range= (-0.5e3,0.5e3)
-t_range = (0,0.083)
 fl = fl_mod()
 #}}}
-<<<<<<< HEAD
 for filename,nodename,file_location,postproc,freq_range,t_range in [
-#        ('210617_Y191R1a_pR_DDM_ODNP','enhancement',
-#            'odnp','spincore_ODNP_v1',
-#            (-0.5e3,0.5e3),(0,50e-3)),
+        ('210617_Y191R1a_pR_DDM_ODNP','enhancement',
+            'odnp','spincore_ODNP_v1',
+            (-0.5e3,0.5e3),(0,50e-3)),
 #        ('210617_T177R1a_pR_DDM_ODNP','enhancement',
 #            'odnp','spincore_ODNP_v1',
 #            (-0.4e3,0.5e3),(0,45e-3)),
-=======
-for filename,nodename,file_location,postproc in [
->>>>>>> b1f52efb7aed0585991cc8ffecb5acc3983f0eb8
-        ('210616_F195R1a_pR_DDM_ODNP','enhancement',
-            'ODNP_NMR_comp/test_equipment','spincore_ODNP_v1'),
         ]:
     s = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
