@@ -36,6 +36,8 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         t_range=(0,0.083),sign=None,fl=None):
     s *= sign
     #if fl is not None:
+    #    print(s.get_units('t2'))
+    #    s.set_units('t2','kHz')
     #    fl.push_marker()
     #    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
     #            s,thisrange=freq_range) # visualize the frequency limits
@@ -85,7 +87,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     phasing['ph1',1] = 1
     phasing.ift(['ph1'])
     s /= phasing
-    ph0 = s['t2':0]
+    ph0 = s['t2':0]/phasing
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1'])
@@ -149,13 +151,14 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         #d.ft('t2')
     d *= sign
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    d.mean('nScans')
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'])]))
     error_pathway = [{'ph1':j} for j in error_pathway]
     # }}}
     #{{{ integrating with error bar calculation
-    d_,frq_slice,std = integral_w_errors(d,signal_pathway,error_pathway,
+    d_,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             indirect='power', fl=fl, return_frq_slice=True)
     x = d_.get_error()
     x[:] /= sqrt(2)
