@@ -12,6 +12,9 @@ from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import integrate_limits, integral_w_errors
 from numpy.random import normal, seed
+import sympy as s
+from sympy import Symbol as sympy_symbol
+from collections import OrderedDict
 seed(2021)
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 
@@ -20,58 +23,112 @@ rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 # {{{ generate the fake data
 init_logging(level="debug")
 fl = figlist_var()
-t2 = nddata(r_[0:0.2:256j], "t2")
-vd = nddata(r_[0:1:40j], "vd")
-ph1 = nddata(r_[0, 2] / 4.0, "ph1")
-ph2 = nddata(r_[0:4] / 4.0, "ph2")
-signal_pathway = {"ph1": 0, "ph2": 1}
-# this generates fake clean_data w/ a T₂ of 0.2s
-# amplitude of 21, just to pick a random amplitude
-# offset of 300 Hz, FWHM 10 Hz
+class fl_dummy_class (object):
+    def plot(*args):
+        pass
+    def next(*args):
+        pass
+    def push_marker(*args):
+        pass
+    def pop_marker(*args):
+        pass
+fl_dummy = fl_dummy_class
+def fake_data(
+        expression,
+        axis_coords,
+        signal_pathway,
+        direct = 't2',
+        SD_sigma = [0.05,0.003],
+        SD_amp = [1,5],
+        scale=100,
+        fake_data_noise_std = 1.0,
+        fl=fl_dummy):
+    """Generate fake data subject to noise and frequency variation.
+    Parameters
+    ==========
+    expression: sympy expression
+        Gives the functional form of the data.
+    axis_coords: OrderedDict
+        Gives nddata objects providing all the axis coordinates.
+        **Very importantly**, these must be listed in the loop nesting order
+        (outside in) in which they occur in the pulse program,
+        or the frequency drift will not be modeled correctly.
+
+        To enable *simulating echo-like data*, you can specify a direct axis
+        that starts at a negative number.
+        If you do this, the beginning of the axis will be re-set to 0 before returning.
+    signal_pathway: dict
+        Gives the signal pathway, with keys being phase cycling dimensions, and
+        values being the corresponding Δp.
+    scale: float (default 100) 
+        amplitude of frequency variation
+    """
+    # this generates fake clean_data w/ a T₂ of 0.2s
+    # amplitude of 21, just to pick a random amplitude
+    # offset of 300 Hz, FWHM 10 Hz
+    mysymbols = expression.atoms(sympy_symbol)
+    missing = (
+            set(str(j) for j in mysymbols)
+            - set(axis_coords.keys()))
+    assert len(missing) == 0, "all non-phase cycling symbols in your expression must have matching axis coordinates in the dictionary -- you are missing %s!"%str(missing)
+    thefunction = lambdify(mysymbols, expression, 'numpy')
+    clean_data = thefunction(*tuple(axis_coords[str(j)] for j in mysymbols))
+    for j in signal_pathway.keys():
+        clean_data *= exp(signal_pathway[j]*1j*2*pi*axis_coords[j])
+    ## {{{ model frequency drift
+    indirect_size = prod([ndshape(clean_data)[j] for j in axis_coords.keys() if j != direct])
+    frq_noise = normal(scale=scale,size=indirect_size)
+    frq_noise = frq_noise + 1j*normal(scale=scale,size=frq_noise.size)
+    # {{{ control the spectral density of the shifts to be gaussian
+    frq_noise = nddata(frq_noise,[-1],['temp'])
+    N = ndshape(frq_noise)['temp']
+    frq_noise.setaxis('temp',-0.5+r_[0:N]/N).set_units('temp','cycperscan')
+    SD_gen = zip(SD_sigma,SD_amp)
+    sigma,A = next(SD_gen)
+    frq_noise_dens = A*exp(-frq_noise.fromaxis('temp')**2/2/sigma**2)
+    for sigma,A in SD_gen:
+        frq_noise_dens += A*exp(-frq_noise.fromaxis('temp')**2/2/sigma**2)
+    frq_noise *= frq_noise_dens
+    fl.push_marker()
+    fl.next('frq-noise density')
+    fl.plot(frq_noise)
+    frq_noise.ift('temp')
+    frq_noise /= sqrt(ndshape(frq_noise)['temp']) * frq_noise.get_ft_prop('temp','df') # normalization
+    fl.next('frq-noise time domain')
+    fl.plot(frq_noise)
+    # }}}
+    frq_noise = nddata(frq_noise.data.real,
+            [ndshape(clean_data)[j] for j in axis_coords.keys() if j != direct],
+            [j for j in axis_coords.keys() if j != direct])
+    ## }}}
+    data = clean_data.C
+    data.add_noise(fake_data_noise_std)
+    data *= exp(1j*2*pi*frq_noise*(data.fromaxis('t2'))) # the frequency shift
+    # at this point, the fake data has been generated
+    for j in signal_pathway.keys():
+        data.ft(j)
+    fl.pop_marker()
+    data.setaxis(direct, lambda x: x-data.getaxis(direct)[0])
+    data.ft(direct, shift=True)
+    data.ift(direct)
+    data.register_axis({direct:0})
+    return data
+t2, td, vd, ph1, ph2 = s.symbols('t2 td vd ph1 ph2')
 echo_time = 5e-3
-clean_data = 21*(1 - 2*exp(-vd / 0.2))*exp(+1j*2*pi*100*(t2-echo_time) - abs(t2-echo_time)*50*pi)
-clean_data *= exp(signal_pathway["ph1"]*1j*2*pi*ph1)
-clean_data *= exp(signal_pathway["ph2"]*1j*2*pi*ph2)
-clean_data["t2":0] *= 0.5
-# {{{ model frequency drift
-sigma1 = 0.05 # distribution in frequency domain (smaller is "smoother")
-sigma2 = 0.003 # distribution in frequency domain (smaller is "smoother")
-scale = 100 # amplitude of frequency variation
-frq_noise = normal(scale=scale,size=ndshape(clean_data)["ph1"] * ndshape(clean_data)["ph2"] * ndshape(clean_data)["vd"])
-frq_noise = frq_noise + 1j*normal(scale=scale,size=frq_noise.size)
-# {{{ control the spectral density of the shifts to be gaussian
-frq_noise = nddata(frq_noise,[-1],['temp'])
-N = ndshape(frq_noise)['temp']
-frq_noise.setaxis('temp',-0.5+r_[0:N]/N).set_units('temp','cycperscan')
-frq_noise_dens = 5*exp(-frq_noise.fromaxis('temp')**2/2/sigma2**2)
-frq_noise_dens += exp(-frq_noise.fromaxis('temp')**2/2/sigma1**2)
-frq_noise *= frq_noise_dens
-fl.next('frq-noise density')
-fl.plot(frq_noise)
-frq_noise.ift('temp')
-frq_noise /= sqrt(ndshape(frq_noise)['temp']) * frq_noise.get_ft_prop('temp','df') # normalization
-fl.next('frq-noise time domain')
-fl.plot(frq_noise)
-# }}}
-frq_noise = nddata(frq_noise.data.real,[-1,2,4],['vd','ph1','ph2'])
-# }}}
-fake_data_noise_std = 1.0
-clean_data.reorder(["ph1", "ph2", "vd"])
-data = clean_data.C
-data.add_noise(fake_data_noise_std)
-data *= exp(1j*2*pi*frq_noise*(data.fromaxis('t2')-echo_time))
-# at this point, the fake data has been generated
-data.ft(["ph1", "ph2"])
-# {{{ usually, we don't use a unitary FT -- this makes it unitary
-data /= 0.5 * 0.25  # the dt in the integral for both dims
-data /= sqrt(ndshape(data)["ph1"] * ndshape(data)["ph2"])  # normalization
-# }}}
-dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
+data = fake_data(
+    21*(1 - 2*s.exp(-vd / 0.2))*s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*50*s.pi),
+    OrderedDict([
+        ("vd" , nddata(r_[0:1:40j], "vd")),
+        ("ph1" , nddata(r_[0, 2] / 4.0, "ph1")),
+        ("ph2" , nddata(r_[0:4] / 4.0, "ph2")),
+        ("t2" , nddata(r_[0:0.2:256j]-echo_time, "t2"))]),
+        {"ph1": 0, "ph2": 1})
+data.reorder(["ph1", "ph2", "vd"])
 fl.next("fake data -- time domain")
 fl.image(data)
-data.ft("t2", shift=True)
+data.ft("t2")
 # {{{ make it unitary again
-data /= sqrt(ndshape(data)["t2"]) * dt
+data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop('t2','dt')
 # }}}
 fl.next("fake data -- freq domain")
 fl.image(data)
