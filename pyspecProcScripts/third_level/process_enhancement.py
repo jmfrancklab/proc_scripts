@@ -35,9 +35,9 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
         t_range=(0,0.083),flip=False,sign=None,fl=None):
     s *= sign
-    if fl is not None:
-        fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
-                s,thisrange=freq_range) # visualize the frequency limits
+#    if fl is not None:
+#        fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+#                s,thisrange=freq_range) # visualize the frequency limits
     s.ift('t2')
     s.reorder(['ph1','power','t2'])
     if fl is not None:
