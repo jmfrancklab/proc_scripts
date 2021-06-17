@@ -135,17 +135,21 @@ for thisfile,exp_type,nodename in [
     data1.integrate('t2')
     data_on = select_pathway(data1,signal_pathway)
     d1_err = data_on.real.run(np.std,'nScans')
-    axhline(y=d1_err,linestyle=":",label='CT pathway[0]')
-    axhline(y=d1_err,linestyle=":",label='CT pathway[-1]')    
+    axhline(y=d1_err,linestyle=":",
+            label='CT pathway[0]')
+    axhline(y=d1_err,linestyle=":",
+            label='CT pathway[-1]')    
     data_off = select_pathway(data1,{'ph1':0,'ph2':0})
     d2_err = data_off.real.run(np.std,'nScans')
-    axhline(y=d2_err,linestyle=":",label='off-CT pathway[0]')
-    axhline(y=d1_err,linestyle=":",label='CT pathway[-1]')
+    axhline(y=d2_err,linestyle=":",
+            label='off-CT pathway[0]')
+    axhline(y=d1_err,linestyle=":",
+            label='CT pathway[-1]')
     fl.show();quit()
     fl.next('signal_pathway error vs off_pathway error')
     data1 = select_pathway(data1,signal_pathway)
     data1.set_error(d1_err.data)
-    fl.plot(data1,'o',capsize=6,label='CT pathway')
+    fl.plot(data1,'o',capsize=6, label='CT pathway')
     data1.set_error(d2_err.data)
     fl.plot(data1,'o',capsize=6,label='off CT pathway')
     #fl.show();quit()

@@ -1,3 +1,11 @@
+"""
+Captured Nutation 
+=================
+
+Processes and visualizes the nutation pulse program that has been 
+captured on a oscilloscope. Integrates the 90 and 180 pulse to show 
+linearity.
+"""
 from pyspecdata import *
 from pylab import *
 from sympy import symbols, latex, Symbol
