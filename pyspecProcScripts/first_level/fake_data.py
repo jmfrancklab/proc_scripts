@@ -1,7 +1,9 @@
 from .fl_dummy import fl_dummy
 from sympy import Symbol as sympy_symbol
 from sympy import lambdify
-from numpy import *
+from pyspecdata import nddata, ndshape
+import numpy as np
+from numpy.random import normal
 def fake_data(
         expression,
         axis_coords,
@@ -48,30 +50,30 @@ def fake_data(
     missing = (
             set(str(j) for j in mysymbols)
             - set(axis_coords.keys()))
-    assert len(missing) == 0, "all non-phase cycling symbols in your expression must have matching axis coordinates in the dictionary -- you are missing %s!"%str(missing)
+    assert len(missing) == 0, "all non-phase cycling symbols in your expression must have matching axis coordinates in the dictionary -- you are missing %s!" % str(missing)
     thefunction = lambdify(mysymbols, expression, 'numpy')
     clean_data = thefunction(*tuple(axis_coords[str(j)] for j in mysymbols))
     for j in signal_pathway.keys():
-        clean_data *= exp(signal_pathway[j]*1j*2*pi*axis_coords[j])
+        clean_data *= np.exp(signal_pathway[j] * 1j * 2 * np.pi * axis_coords[j])
     ## {{{ model frequency drift
-    indirect_size = prod([ndshape(clean_data)[j] for j in axis_coords.keys() if j != direct])
+    indirect_size = np.prod([ndshape(clean_data)[j] for j in axis_coords.keys() if j != direct])
     frq_noise = normal(scale=scale,size=indirect_size)
     frq_noise = frq_noise + 1j*normal(scale=scale,size=frq_noise.size)
     # {{{ control the spectral density of the shifts to be gaussian
     frq_noise = nddata(frq_noise,[-1],['temp'])
     N = ndshape(frq_noise)['temp']
-    frq_noise.setaxis('temp',-0.5+r_[0:N]/N).set_units('temp','cycperscan')
+    frq_noise.setaxis('temp', -0.5 + np.r_[0:N] / N).set_units('temp', 'cycperscan')
     SD_gen = zip(SD_sigma,SD_amp)
     sigma,A = next(SD_gen)
-    frq_noise_dens = A*exp(-frq_noise.fromaxis('temp')**2/2/sigma**2)
+    frq_noise_dens = A * np.exp(-frq_noise.fromaxis('temp') ** 2 / 2 / sigma ** 2)
     for sigma,A in SD_gen:
-        frq_noise_dens += A*exp(-frq_noise.fromaxis('temp')**2/2/sigma**2)
+        frq_noise_dens += A * np.exp(-frq_noise.fromaxis('temp') ** 2 / 2 / sigma ** 2)
     frq_noise *= frq_noise_dens
     fl.push_marker()
     fl.next('frq-noise density')
     fl.plot(frq_noise)
     frq_noise.ift('temp')
-    frq_noise /= sqrt(ndshape(frq_noise)['temp']) * frq_noise.get_ft_prop('temp','df') # normalization
+    frq_noise /= np.sqrt(ndshape(frq_noise)['temp']) * frq_noise.get_ft_prop('temp', 'df') # normalization
     fl.next('frq-noise time domain')
     fl.plot(frq_noise)
     # }}}
@@ -81,7 +83,7 @@ def fake_data(
     ## }}}
     data = clean_data.C
     data.add_noise(fake_data_noise_std)
-    data *= exp(1j*2*pi*frq_noise*(data.fromaxis('t2'))) # the frequency shift
+    data *= np.exp(1j * 2 * np.pi * frq_noise * (data.fromaxis('t2'))) # the frequency shift
     # at this point, the fake data has been generated
     for j in signal_pathway.keys():
         data.ft(j)

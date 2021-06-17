@@ -13,7 +13,6 @@ from pyspecdata import *
 from pyspecProcScripts import *
 from numpy.random import normal, seed
 import sympy as s
-from sympy import Symbol as sympy_symbol
 from collections import OrderedDict
 seed(2021)
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
