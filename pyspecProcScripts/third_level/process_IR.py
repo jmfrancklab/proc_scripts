@@ -95,7 +95,7 @@ def process_IR(s, label='', fl=None,
     phasing.ft(['ph1','ph2'])
     phasing['ph1',0]['ph2',1] = 1
     phasing.ift(['ph1','ph2'])
-    ph0 = s['t2':0]/phasing #if I don't divide by phasing here the signal jumps coherence channels (ph2:1 to ph2:0 for example)
+    ph0 = s['t2':0]/phasing
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1','ph2'])
@@ -113,12 +113,12 @@ def process_IR(s, label='', fl=None,
     else:
         s.reorder(['ph1','vd','t2'])
     #{{{Correlation Alignment
+    s.ift(['ph1','ph2'])
     fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='vd',
+    opt_shift,sigma = correl_align(s,indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
             sigma=10)
-    s = s_aligned
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
@@ -148,7 +148,8 @@ def process_IR(s, label='', fl=None,
     data = s.C
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     if flip:
-        s['vd',:zero_crossing] *= -1
+        s *= -1
+        #s['vd',:zero_crossing] *= -1
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
@@ -187,7 +188,7 @@ def process_IR(s, label='', fl=None,
                 horizontalalignment='center',verticalalignment='center',color='k',
                 position=(0.33,0.95),fontweight='bold')
         plt.legend(bbox_to_anchor=(1,1.01),loc='upper left')
-    logging.info(strm("YOUR T1 IS:",T1))
+    print("YOUR T1 IS:",T1)
     return T1
     #}}}
     
