@@ -23,6 +23,12 @@ signal_pathway = {'ph1':1}
 fl = fl_mod()
 #}}}
 for filename,nodename,file_location,postproc,freq_range,t_range in [
+#        ('210617_Y191R1a_pR_DDM_ODNP','enhancement',
+#            'odnp','spincore_ODNP_v1',
+#            (-0.5e3,0.5e3),(0,50e-3)),
+#        ('210617_T177R1a_pR_DDM_ODNP','enhancement',
+#            'odnp','spincore_ODNP_v1',
+#            (-0.4e3,0.5e3),(0,45e-3)),
         ('210616_F195R1a_pR_DDM_ODNP','enhancement',
             'odnp','spincore_ODNP_v1',
             (-0.4e3,0.4e3),(0,50e-3)),
