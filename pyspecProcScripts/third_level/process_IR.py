@@ -49,7 +49,7 @@ def process_IR(s, label='', fl=None,
         s.rename('indirect','vd')
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
-    #{{{ phasing the aligned data
+    #{{{ phasing the data
     s = s['t2':f_range]
     s.ift('t2')
     if clock_correction:
@@ -115,15 +115,12 @@ def process_IR(s, label='', fl=None,
     else:
         s.reorder(['ph1','vd','t2'])
     #{{{Correlation Alignment
-    s.ift(['ph1','ph2'])
     fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    opt_shift,sigma = correl_align(s,indirect_dim='vd',
+    s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
             sigma=10)
-    s.ift('t2')
-    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    s.ft('t2')
+    s = s_aligned
     fl.basename = None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
@@ -151,8 +148,7 @@ def process_IR(s, label='', fl=None,
     data = s.C
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     if flip:
-        s *= -1
-        #s['vd',:zero_crossing] *= -1
+        s['vd',:zero_crossing] *= -1
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
@@ -162,8 +158,8 @@ def process_IR(s, label='', fl=None,
     #{{{Integrating with associated error from excluded pathways    
     s_int,frq_slice = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
-    x = s_int.get_error()
-    x[:] /= sqrt(2)
+    x1 = s_int.get_error()
+    x1[:] /= sqrt(2)
     logger.info(strm("here is what the error looks like",s_int.get_error()))
     if fl is not None:
         fl.next('Integrated data - recovery curve')
@@ -175,8 +171,10 @@ def process_IR(s, label='', fl=None,
     f = fitdata(s_int)
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")
     if IR:
+        logging.info(strm("fitting using the regular IR equation"))
         f.functional_form = Mi - 2*Mi*s_exp(-vd*R1)
     else:
+        logging.info(strm("fitting using the FIR equation"))
         f.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
     f.fit()
     logger.info(strm("output:",f.output()))
