@@ -8,7 +8,7 @@ fl = figlist_var()
 signal_pathway = {'ph1': 1, 'ph2':0}
 excluded_pathways = [(0,0),(0,3)]
 for thisfile,exp_type,nodename in [
-        ('210409_Ni_cap_probe_echo_1024','ODNP_NMR_comp/test_equipment','signal')
+        ('201113_TEMPOL_capillary_probe_16Scans_ModCoil','ODNP_NMR_comp/test_equipment','signal')
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename)
     nPoints = s.get_prop('acq_params')['nPoints']
@@ -24,18 +24,23 @@ for thisfile,exp_type,nodename in [
     s.setaxis('nScans',r_[0:nScans])
     s.set_units('t2','s')
     s.reorder('t2',first=False)
-    s.chunk('nScans',['repeats','nScans'],[32,-1])
+    #print(ndshape(s))
+    #quit()
+    #s.chunk('nScans',['repeats','nScans'],[32,-1])
     s.ft('t2',shift=True)
     s.ft(['ph1','ph2'])
-    s = s.mean('repeats')
+    #s = s.mean('repeats')
     fl.next('raw data')
     fl.image(s)
     s.ift('t2')
     fl.next('raw data time domain')
-    t_range=(0,0.06)
-    f_range = (-1e3,1e3)
+    fl.image(s)
+    #fl.show();quit()
+    t_range=(0,0.05)
+    f_range = (-0.11e3,0.12e3)
     s.ift(['ph1','ph2'])
-    rx_offset_corr = s['t2':(0.045,None)]
+    t_rx = (t_range[-1]/4)*3
+    rx_offset_corr = s['t2':(t_rx,None)]
     rx_offset_corr = rx_offset_corr.data.mean()
     s -= rx_offset_corr
     s.ft('t2')
@@ -92,8 +97,6 @@ for thisfile,exp_type,nodename in [
     #fl.image(s)
     ##}}}
     #s.ift('t2')
-    fl.next('time domain for slicing')
-    fl.image(s)
     s = s['t2':(0,t_range[-1])]
     s['t2':0] *= 0.5
     s.ft('t2')
@@ -105,7 +108,7 @@ for thisfile,exp_type,nodename in [
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice,std = integral_w_errors(s,signal_pathway,error_pathway,
+    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
     x = s_int.get_error()
     x[:] /= 2
@@ -129,7 +132,10 @@ for thisfile,exp_type,nodename in [
             c='k',linestyle=":",label='error associated with CT pathway of signal')
     axhline(y=float(off_CT_error.data),
             c='blue',linestyle=":",label='error associated with inactive CT pathway')
-    plt.ylim(0,160) 
+    print('error from integral w errors',avg_s_int)
+    print('error associated with CT pathway of signal', float(after_slice_error.data))
+    print('error associated with inactive CT pathway',float(off_CT_error.data))
+    #plt.ylim(0,160) 
     plt.legend()
     fl.show();quit()
     data1.integrate('t2')
