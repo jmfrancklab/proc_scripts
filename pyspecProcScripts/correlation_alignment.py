@@ -11,7 +11,7 @@ def to_percent(y, position):
         return s + r'$\%$'
     else:
         return s + '%'
-def correl_align(s, align_phases=False,ODNP=True,tol=1e-4,indirect_dim='indirect',
+def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         fig_title='correlation alignment',ph1_selection=1,ph2_selection=0, 
         shift_bounds=False, max_shift = 100., sigma=20.,direct='t2',fl=None):
     """
@@ -67,6 +67,10 @@ def correl_align(s, align_phases=False,ODNP=True,tol=1e-4,indirect_dim='indirect
         indirect = [j for j in s.dimlabels if j in indirect]
         nScans_len = len(s.getaxis('nScans'))
         s.smoosh(indirect)
+    if 'ph2' in s.dimlabels:
+        ODNP=False
+    else:
+        ODNP=True
     if ODNP:
         s.ift(['ph1'])
         ph1_len = len(s.getaxis('ph1'))
