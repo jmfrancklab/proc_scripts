@@ -1,7 +1,13 @@
-"""PLEASE PROVIDE A DOCSTRING HERE TO DESCRIBE WHAT THIS FILE DOES"""
+"""
+Echoes with varied tau lengths
+==============================
+
+Processes data which has varying lengths of tau. 
+Demonstrates how to load a h5 file. 
+"""
 from pylab import *
 from pyspecdata import *
-from proc_scripts.load_data import postproc_dict
+from pyspecProcScripts.load_data import postproc_dict
 import h5py as h5
 
 with figlist_var() as fl:

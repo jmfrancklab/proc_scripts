@@ -153,7 +153,7 @@ def process_IR(s, label='', fl=None,
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
     #{{{Integrating with associated error from excluded pathways    
-    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
+    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
     x1 = s_int.get_error()
     x1[:] /= sqrt(2)

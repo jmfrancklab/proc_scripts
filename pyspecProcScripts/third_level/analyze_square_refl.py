@@ -1,3 +1,9 @@
+""" Analyze square wave reflection data
+=======================================
+Analyzes data acquired by applying a square wave pulse to an empty 
+or filled NMR probe and acquiring the reflection profile.
+"""
+
 import pylab as plb
 from pylab import r_, pi
 import pyspecdata as psp
@@ -6,21 +12,40 @@ from scipy.optimize import minimize,leastsq
 import sympy as s
 import matplotlib.pyplot as plt
 from pyspecdata import *
+logger = init_logging(level='debug')
 def analyze_square_refl(d, label='', fl=None,
         frq_bw=15e6,
-        keep_after_pulse=2e-6, # amount of the time
-        #                        axis after the pulse we want hanging around --
-        #                        this can change depending on the Q
+        keep_after_pulse=2e-6,
         blip_range = [-0.1e-6,None],
         show_analytic_signal_phase = True,
         show_analytic_signal_real = False,
         ):
     r"""
+    Plots the reflected square wave with a fit that calculates 
+    the Q for the probe being tested.
+    
     Parameters
     ==========
     fl: figlist_var child class
         In addition to standard figlist_var methods, this must also include a
         `complex_plot` method that returns list "colors"
+    d:      nddata
+    label:  str
+            appropriate name for dataset.
+    frq_bw: int
+            bandwidth in Hz.
+    keep_after_pulse:   int
+                        Amount of the time axis after the pulse
+                        that you want to remain-changes depending 
+                        on the Q.
+    blip_range:         lst
+                        Range in which the signal blip exists.
+    show_analytic_signal_phase: bool
+                                Option on final plot to show the 
+                                phase of the signal.
+    show_analytic_signal_real:  bool
+                                Option on final plot to show the 
+                                real of the signal for comparison.
     """
     if len(label)>0:
         fl.basename = label
@@ -152,7 +177,7 @@ def analyze_square_refl(d, label='', fl=None,
     dt = np.diff(phases.getaxis('t')[:2]).item()
     phase_diff.mean('t') # favors points with a greater magnitude
     frq_offset = phase_diff.angle.item() / dt / 2 / pi
-    logger(str(frq_offset.real))
+    logger.info(strm(frq_offset.real))
     frq_line_plot = phases.fromaxis('t')
     frq_line_plot -= frq_line_plot['t',0]
     frq_line_plot *= 2*pi*frq_offset # so this contains 2πνt

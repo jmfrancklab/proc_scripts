@@ -48,8 +48,6 @@ for thisfile,exp_type,nodename in [
     fl.image(s)
     s.ift('t2')
     best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway))
-    print(best_shift)
-    #best_shift = 0.003
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0})
     fl.next('After hermitian phase correction')
@@ -97,8 +95,6 @@ for thisfile,exp_type,nodename in [
     #fl.image(s)
     ##}}}
     #s.ift('t2')
-    fl.next('time domain for slicing')
-    fl.image(s)
     s = s['t2':(0,t_range[-1])]
     s['t2':0] *= 0.5
     s.ft('t2')
@@ -110,7 +106,7 @@ for thisfile,exp_type,nodename in [
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice,std = integral_w_errors(s,signal_pathway,error_pathway,
+    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
     x = s_int.get_error()
     x[:] /= 2
@@ -147,17 +143,21 @@ for thisfile,exp_type,nodename in [
     data1.integrate('t2')
     data_on = select_pathway(data1,signal_pathway)
     d1_err = data_on.real.run(np.std,'nScans')
-    axhline(y=d1_err,linestyle=":",label='CT pathway[0]')
-    axhline(y=d1_err,linestyle=":",label='CT pathway[-1]')    
+    axhline(y=d1_err,linestyle=":",
+            label='CT pathway[0]')
+    axhline(y=d1_err,linestyle=":",
+            label='CT pathway[-1]')    
     data_off = select_pathway(data1,{'ph1':0,'ph2':0})
     d2_err = data_off.real.run(np.std,'nScans')
-    axhline(y=d2_err,linestyle=":",label='off-CT pathway[0]')
-    axhline(y=d1_err,linestyle=":",label='CT pathway[-1]')
+    axhline(y=d2_err,linestyle=":",
+            label='off-CT pathway[0]')
+    axhline(y=d1_err,linestyle=":",
+            label='CT pathway[-1]')
     fl.show();quit()
     fl.next('signal_pathway error vs off_pathway error')
     data1 = select_pathway(data1,signal_pathway)
     data1.set_error(d1_err.data)
-    fl.plot(data1,'o',capsize=6,label='CT pathway')
+    fl.plot(data1,'o',capsize=6, label='CT pathway')
     data1.set_error(d2_err.data)
     fl.plot(data1,'o',capsize=6,label='off CT pathway')
     #fl.show();quit()
