@@ -31,6 +31,7 @@ for filename,nodename,file_location,postproc,freq_range,t_range in [
         ]:
     s = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
+    print(ndshape(s));quit()
     #fl.show();quit()
     myslice = s['t2':freq_range]
     mysign = determine_sign(select_pathway(myslice,signal_pathway,mult_ph_dims=False))
