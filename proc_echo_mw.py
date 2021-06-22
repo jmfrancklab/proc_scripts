@@ -3,12 +3,6 @@ from pyspecProcScripts import *
 from pyspecProcScripts import postproc_dict
 from pyspecProcScripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
-#from matplotlib import *
-#import numpy as np
-#import matplotlib.pyplot as plt
-#from pylab import *
-#from sympy import exp as s_exp
-#from scipy.optimize import leastsq,minimize,basinhopping,nnls
 
 #{{{input parameters
 plt.rcParams.update({
@@ -29,10 +23,9 @@ for filename,nodename,file_location,postproc in [
         ]:
     s = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
-    #fl.show();quit()
     myslice = s['t2':freq_range]
     mysign = determine_sign(select_pathway(myslice,signal_pathway,mult_ph_dims=False))
-    enhancement,idx_maxpower = process_enhancement(s,searchstr = filename,
+    enhancement = process_enhancement(s,searchstr = filename,
             freq_range=freq_range, t_range=t_range,sign=mysign,fl=fl)
     fl.show()
 
