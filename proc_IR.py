@@ -8,10 +8,9 @@ save_npz = False
 #}}}
 coherence_pathway = {'ph1':0,'ph2':1}
 for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT in [
-<<<<<<< HEAD
-        ('210617_Y191R1a_pR_DDM_ODNP','odnp',
-            'FIR_36dBm','spincore_IR_v1',
-            (-0.5e3,0.5e3),(None,50e-3),True,False,False),
+        ('210617_T177R1a_pR_DDM_ODNP','odnp',
+            'FIR_0dBm','spincore_IR_v1',
+            (-0.4e3,0.4e3),(None,50e-3),True,False,False),
 #        ('210617_T177R1a_pR_DDM_ODNP','odnp',
 #            'FIR_36dBm','spincore_IR_v1',
 #            (-0.5e3,0.5e3),(None,50e-3),True,False,False),
