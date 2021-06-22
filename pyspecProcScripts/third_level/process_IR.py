@@ -5,7 +5,7 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
-from proc_scripts import *
+from pyspecProcScripts import *
 t2 = symbols('t2')
 
 def select_pathway(s,pathway):
@@ -49,17 +49,17 @@ def process_IR(s, label='', fl=None,
         s.rename('indirect','vd')
     # no rough centering anymore -- if anything, we should preproc based on τ,
     # etc, but otherwise let the hermitian test handle it
-    #{{{ phasing the aligned data
+    #{{{ phasing the data
     s = s['t2':f_range]
     s.ift('t2')
     if clock_correction:
         #{{{ clock correction
-        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
+        clock_corr = nddata(np.linspace(-2,2,2500),'clock_corr')
         s.ft('t2')
         if fl is not None:
             fl.next('before clock correction')
             fl.image(as_scan_nbr(s))
-        s_clock=s['ph1',1]['ph2',0].sum('t2')
+        s_clock=s['ph1',0]['ph2',1].sum('t2')
         s.ift(['ph1','ph2'])
         min_index = abs(s_clock).argmin('vd',raw_index=True).item()
         s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
@@ -76,6 +76,7 @@ def process_IR(s, label='', fl=None,
             fl.next('after auto-clock correction')
             fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
+    #fl.show();quit()    
     #{{{Applying phase corrections    
     best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
     logger.info(strm("best shift is", best_shift))
@@ -105,7 +106,8 @@ def process_IR(s, label='', fl=None,
     s.ft('t2')
     if fl is not None:
         fl.next('phased data -- frequency domain')
-        fl.image(as_scan_nbr(s)) 
+        fl.image(as_scan_nbr(s))
+    #fl.show();quit()    
     #}}}
     #}}}
     if 'ph2' in s.dimlabels:
@@ -113,15 +115,12 @@ def process_IR(s, label='', fl=None,
     else:
         s.reorder(['ph1','vd','t2'])
     #{{{Correlation Alignment
-    s.ift(['ph1','ph2'])
     fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    opt_shift,sigma = correl_align(s,indirect_dim='vd',
+    s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='vd',
             ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
             sigma=10)
-    s.ift('t2')
-    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    s.ft('t2')
+    s = s_aligned
     fl.basename = None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
@@ -130,7 +129,8 @@ def process_IR(s, label='', fl=None,
     s.ft(['ph1','ph2'])
     if fl is not None:
         fl.next(r'after correlation')
-        fl.image(as_scan_nbr(s))    
+        fl.image(as_scan_nbr(s)) 
+    #fl.show();quit()    
     if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
@@ -156,10 +156,10 @@ def process_IR(s, label='', fl=None,
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
     #{{{Integrating with associated error from excluded pathways    
-    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
+    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
-    x = s_int.get_error()
-    x[:] /= sqrt(2)
+    x1 = s_int.get_error()
+    x1[:] /= sqrt(2)
     logger.info(strm("here is what the error looks like",s_int.get_error()))
     if fl is not None:
         fl.next('Integrated data - recovery curve')
@@ -171,8 +171,10 @@ def process_IR(s, label='', fl=None,
     f = fitdata(s_int)
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")
     if IR:
+        logging.info(strm("fitting using the regular IR equation"))
         f.functional_form = Mi - 2*Mi*s_exp(-vd*R1)
     else:
+        logging.info(strm("fitting using the FIR equation"))
         f.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
     f.fit()
     logger.info(strm("output:",f.output()))
