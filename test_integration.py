@@ -70,24 +70,24 @@ for thisfile,exp_type,nodename in [
     fl.image(s)
     s.ift('t2')
     #{{{alignment
-    s.ift(['ph1','ph2'])
-    s.ft('t2')
-    opt_shift,sigma = correl_align(s,indirect_dim='nScans',
-            ph1_selection = signal_pathway['ph1'],
-            ph2_selection = signal_pathway['ph2'],sigma=50)
-    s.ift('t2')
-    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    s.ft('t2')
-    fl.basename=None
-    fl.next(r'after correlation, $\varphi$ domain')
-    fl.image(s)
-    s.ift('t2')
-    s.ft(['ph1','ph2'])
-    fl.next('after correl - time domain')
-    fl.image(s)
-    s.ft('t2')
-    fl.next('after correl - freq domain')
-    fl.image(s)
+    #s.ift(['ph1','ph2'])
+    #s.ft('t2')
+    #opt_shift,sigma = correl_align(s,indirect_dim='nScans',
+    #        ph1_selection = signal_pathway['ph1'],
+    #        ph2_selection = signal_pathway['ph2'],sigma=50)
+    #s.ift('t2')
+    #s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    #s.ft('t2')
+    #fl.basename=None
+    #fl.next(r'after correlation, $\varphi$ domain')
+    #fl.image(s)
+    #s.ift('t2')
+    #s.ft(['ph1','ph2'])
+    #fl.next('after correl - time domain')
+    #fl.image(s)
+    #s.ft('t2')
+    #fl.next('after correl - freq domain')
+    #fl.image(s)
     ##}}}
     s.ift('t2')
     s = s['t2':(0,t_range[-1])]
@@ -108,7 +108,6 @@ for thisfile,exp_type,nodename in [
     x[:] /= 2
     fl.next('comparison of std')
     avg_s_int = s_int.get_error().mean().item()
-    s_int1 = avg_s_int
     fl.plot(s_int.get_error(),'o',label='returned error from integral_w_errors')
     axhline(y=avg_s_int,c='red',linestyle=":",label='averaged returned error from integral_w_errors')
     data1 =data.C
@@ -136,27 +135,6 @@ for thisfile,exp_type,nodename in [
     ax.set_ylim(lims)
     plt.legend()
     fl.show();quit()
-    data1.integrate('t2')
-    data_on = select_pathway(data1,signal_pathway)
-    d1_err = data_on.real.run(np.std,'nScans')
-    axhline(y=d1_err,linestyle=":",
-            label='CT pathway[0]')
-    axhline(y=d1_err,linestyle=":",
-            label='CT pathway[-1]')    
-    data_off = select_pathway(data1,{'ph1':0,'ph2':0})
-    d2_err = data_off.real.run(np.std,'nScans')
-    axhline(y=d2_err,linestyle=":",
-            label='off-CT pathway[0]')
-    axhline(y=d1_err,linestyle=":",
-            label='CT pathway[-1]')
-    fl.show();quit()
-    fl.next('signal_pathway error vs off_pathway error')
-    data1 = select_pathway(data1,signal_pathway)
-    data1.set_error(d1_err.data)
-    fl.plot(data1,'o',capsize=6, label='CT pathway')
-    data1.set_error(d2_err.data)
-    fl.plot(data1,'o',capsize=6,label='off CT pathway')
-    #fl.show();quit()
     fl.next('diagnostic 1D plot')
     fl.plot(s['nScans',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
     axvline(x=frq_slice[0],c='k',linestyle=":",alpha=0.8)
