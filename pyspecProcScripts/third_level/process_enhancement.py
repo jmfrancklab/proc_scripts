@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
-from pyspecProcScripts.correlation_alignment import correl_align
+from proc_scripts import *
+from proc_scripts import postproc_dict
+from proc_scripts.correlation_alignment_ODNP import correl_align
 from sympy import symbols
 from matplotlib import *
 import numpy as np
@@ -36,11 +36,14 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         t_range=(0,0.083),sign=None,fl=None):
     s *= sign
     if fl is not None:
-        fl.push_marker()
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
                 s,thisrange=freq_range) # visualize the frequency limits
     s.ift('t2')
     s.reorder(['ph1','power','t2'])
+    if fl is not None:
+        fl.push_marker()
+        fl.next('time domain')
+        fl.image(as_scan_nbr(s))
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
@@ -59,13 +62,12 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('power',raw_index=True).item()
     s = s['t2':freq_range] 
     if fl is not None:
-        fl.next('freq_domain before hermitian')
+        fl.next('freq_domain before phasing')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
-        s.ift('t2')
-        fl.next('time domain before hermitian')
-        fl.image(s)
     #{{{Applying phasing corrections
+    s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
+    best_shift = 0.033e-3
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     logger.info(strm("applying zeroth order correction"))
     s.ift(['ph1'])
@@ -75,33 +77,30 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     phasing['ph1',1] = 1
     phasing.ift(['ph1'])
     s /= phasing
-    ph0 = s['t2':0]/phasing #if I don't divide by phasing the signal jumps from ph1:1 to ph1:0 for some reason not sure why so I do a temp fix by doing this
+    ph0 = s['t2':0]/phasing
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1'])
     logger.info(strm(s.dimlabels))
     s.ft('t2')
     if fl is not None:
-        fl.next('After zeroth order phase correction')
+        fl.next('phase corrected')
         fl.image(as_scan_nbr(s))
     s.reorder(['ph1','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     #}}}
     #{{{Applying correlation alignment
-    s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='power',
+    s.ift(['ph1'])
+    opt_shift,sigma = correl_align(s,indirect_dim='power',
             ph1_selection=1,sigma=0.001)
-    s = s_aligned
+    s.ift('t2')
+    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s.ft('t2')
     fl.basename= None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
-        s.set_units('t2','Hz')
-        fl.image(s.C.setaxis(
-'power','#').set_units('power','scan #'))
+        fl.image(as_scan_nbr(s))
     s.ift('t2')
-    if fl is not None:
-        fl.next('t domain after correlation')
-        fl.image(s.C.setaxis(
-'power','#').set_units('power','scan #'))
     s.ft(['ph1'])
     if fl is not None:
         fl.next('after correlation alignment FTed ph')
@@ -122,13 +121,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     d = d['t2':(0,t_range[-1])]
     d['t2':0] *= 0.5
     d.ft('t2')
-    if fl is not None:
-        fl.next('FID sliced')
-        fl.image(d.C.setaxis(
-'power','#').set_units('power','scan #'))
     d *= sign
-    if 'nScans' in d.dimlabels:
-        d.mean('nScans')
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
@@ -144,6 +137,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     #}}}
     
     #{{{Normalizing by max 
+    idx_maxpower = np.argmax(s.getaxis('power'))
     d /= max(d.data)
     #}}}
     power_axis_dBm = array(s.get_prop('meter_powers'))
@@ -157,5 +151,5 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         fl.plot(d['power',:-3], 'ko', capsize=6, alpha=0.3)
         fl.plot(d['power',-3:],'ro',capsize=6, alpha=0.3)
         fl.pop_marker()
-    enhancement = d['power',:-3]
-    return enhancement
+    enhancement = d
+    return enhancement,idx_maxpower
