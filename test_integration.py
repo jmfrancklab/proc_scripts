@@ -72,12 +72,14 @@ for thisfile,exp_type,nodename in [
     #{{{alignment
     #s.ift(['ph1','ph2'])
     #s.ft('t2')
-    #opt_shift,sigma = correl_align(s,indirect_dim='nScans',
+    #s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='nScans',
     #        ph1_selection = signal_pathway['ph1'],
     #        ph2_selection = signal_pathway['ph2'],sigma=50)
+    #s = s_aligned
     #s.ift('t2')
     #s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     #s.ft('t2')
+    #s = s_aligned
     #fl.basename=None
     #fl.next(r'after correlation, $\varphi$ domain')
     #fl.image(s)
@@ -108,6 +110,8 @@ for thisfile,exp_type,nodename in [
     x[:] /= 2
     fl.next('comparison of std')
     avg_s_int = s_int.get_error().mean().item()
+    s_int1 = avg_s_int
+    s_int1 /= s_int.data.argmax().item()
     fl.plot(s_int.get_error(),'o',label='returned error from integral_w_errors')
     axhline(y=avg_s_int,c='red',linestyle=":",label='averaged returned error from integral_w_errors')
     data1 =data.C
@@ -117,6 +121,9 @@ for thisfile,exp_type,nodename in [
     data2 = data1.C
     data1=select_pathway(data1,signal_pathway)
     data2=select_pathway(data2,{'ph1':0,'ph2':0})
+    data2 /= data2.argmax('t2').item()
+    data1 /= data1.argmax('t2').item()
+
     data2.integrate('t2')
     data1.integrate('t2')
     after_slice_error = data1.real.run(np.std,'nScans')
@@ -134,6 +141,9 @@ for thisfile,exp_type,nodename in [
     lims[0] = 0
     ax.set_ylim(lims)
     plt.legend()
+    print("error from integral w errors",avg_s_int)
+    print("error associated with CT of signal", float(after_slice_error.data))
+    print("error associated with inactive CT pathway",float(off_CT_error.data))
     fl.show();quit()
     fl.next('diagnostic 1D plot')
     fl.plot(s['nScans',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
