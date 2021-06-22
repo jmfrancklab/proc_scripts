@@ -89,7 +89,7 @@ for thisfile,exp_type,nodename in [
     #fl.next('after correl - freq domain')
     #fl.image(s)
     ##}}}
-    s.ift('t2')
+    #s.ift('t2')
     s = s['t2':(0,t_range[-1])]
     s['t2':0] *= 0.5
     s.ft('t2')
@@ -97,7 +97,7 @@ for thisfile,exp_type,nodename in [
     fl.image(s)
     s.reorder(['ph1','ph2','nScans','t2'])
     s /= s.data.mean()
-    data = s.C  
+    #{{{integral w errors
     error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
@@ -110,21 +110,20 @@ for thisfile,exp_type,nodename in [
     avg_s_int = s_int.get_error().mean().item()
     fl.plot(s_int.get_error(),'o',label='returned error from integral_w_errors')
     axhline(y=avg_s_int,c='red',linestyle=":",label='averaged returned error from integral_w_errors')
-    data1 =data.C
-    data = select_pathway(data,signal_pathway)
-    data.integrate('t2')
-    data1 = data1['t2':frq_slice]
-    data2 = data1.C
-    data1=select_pathway(data1,signal_pathway)
-    data2=select_pathway(data2,{'ph1':0,'ph2':0})
-    data2.integrate('t2')
-    data1.integrate('t2')
-    after_slice_error = data1.real.run(np.std,'nScans')
-    off_CT_error = data2.real.run(np.std,'nScans')
+    #}}}
+    #{{{numpy stds
+    s = s['t2':frq_slice]
+    on_CT = select_pathway(s,signal_pathway)
+    on_CT.integrate('t2')
+    off_CT=select_pathway(s,{'ph1':0,'ph2':0})
+    off_CT.integrate('t2')
+    after_slice_error = on_CT.real.run(np.std,'nScans')
+    off_CT_error = off_CT.real.run(np.std,'nScans')
     axhline(y=float(after_slice_error.data),
             c='k',linestyle=":",label='error associated with CT pathway of signal')
     axhline(y=float(off_CT_error.data),
             c='blue',linestyle=":",label='error associated with inactive CT pathway')
+    #}}}
     print('error from integral w errors',avg_s_int)
     print('error associated with CT pathway of signal', float(after_slice_error.data))
     print('error associated with inactive CT pathway',float(off_CT_error.data))
