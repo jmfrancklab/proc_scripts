@@ -32,9 +32,9 @@ for thisfile,exp_type,nodename in [
     fl.next('raw data time domain')
     fl.image(s)
     t_range=(0,0.05)
-    f_range = (-0.11e3,0.12e3)
-    s.ift(['ph1','ph2'])
+    f_range = (-0.1e3,0.13e3)
     t_rx = (t_range[-1]/4)*3
+    s.ift(['ph1','ph2'])
     rx_offset_corr = s['t2':(t_rx,None)]
     rx_offset_corr = rx_offset_corr.data.mean()
     s -= rx_offset_corr
