@@ -70,15 +70,15 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     #{{{Applying phasing corrections
     #s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
-    best_shift = 0.033e-3
+    #best_shift = 0.033e-3
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     logger.info(strm("applying zeroth order correction"))
-    #if fl is not None:
-    #    fl.next('After hermitian-t domain')
-    #    fl.image(s)
-    #    s.ft('t2')
-    #    fl.next('after hermitian-freq domain')
-    #    fl.image(s)
+    if fl is not None:
+        fl.next('After hermitian-t domain')
+        fl.image(s)
+        s.ft('t2')
+        fl.next('after hermitian-freq domain')
+        fl.image(s)
     #fl.show();quit()    
     s.ift(['ph1'])
     phasing = s['t2',0].C
@@ -92,7 +92,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     s /= ph0
     s.ft(['ph1'])
     logger.info(strm(s.dimlabels))
-    s.ft('t2')
+    #s.ft('t2')
     if fl is not None:
         fl.next('After zeroth order phase correction')
         fl.image(as_scan_nbr(s))
