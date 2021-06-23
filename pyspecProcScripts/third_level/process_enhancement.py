@@ -151,14 +151,14 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         #d.ft('t2')
     d *= sign
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
-    d.mean('nScans')
+    #d.mean('nScans')
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'])]))
     error_pathway = [{'ph1':j} for j in error_pathway]
     # }}}
     #{{{ integrating with error bar calculation
-    d_,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
+    d_,frq_slice,std = integral_w_errors(d,signal_pathway,error_pathway,
             indirect='power', fl=fl, return_frq_slice=True)
     x = d_.get_error()
     x[:] /= sqrt(2)
