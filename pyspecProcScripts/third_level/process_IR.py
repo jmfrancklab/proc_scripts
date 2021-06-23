@@ -7,8 +7,7 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
-from pyspecProcScripts import *
-from pyspecProcScripts.third_level.process_data import proc_data
+from proc_scripts import *
 t2 = symbols('t2')
 
 def select_pathway(s,pathway):
@@ -30,42 +29,135 @@ def process_IR(s, this_l = 0.032,
         IR = True,
         flip=False,
         sign = None,
-        ILT=False,
-        fl=None):
-"""
-Parameters
-==========
-s:      nddata
-this_l: int
-        the number that compromises between fitting the data and the degree of 
-        regularization to be applied. The number at the "knee" of the L-curve 
-        produced.
-l:      int
-        logarithmic spacing desired for the ILT plot
-clock_correction:   boolean
-                    whether or not a automated clock correction should be applied to the
-                    data. Should be true if when looking at the raw data it looks super
-                    "rainbowy".
-W:      int
-        repetition delay applied in FIR experiments
-f_range:    tuple
-            Range in the frequency domain in which the signal resides.
-            Units should be Hz.
-t_range:    tuple
-            Range in the time domain in which the signal lasts.
-            Units should be seconds.
-IR:         boolean
-            When "True", uses the fit to a normal IR. When "False" uses the fit
-            from a FIR. If false, W must be accurate to the experiment.
-flip:       boolean
-            At higher powers, the data has been known to flip upside down prior
-            to the zero crossing. When true, this will correct for this.
-ILT:        boolean
-            Option that will produce an ILT plot of the IR experiment.
-"""            
-    s_int = proc_data(s,label='Inversion Recovery',indirect='vd',fl=fl,
-            f_range=f_range,t_range=t_range,clock_correction=clock_correction,flip=flip,
-            sign=sign)
+        ILT=False):
+    s *= sign
+    s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
+    s.ift('t2')
+    s.reorder(['ph1','ph2','vd','t2'])
+    #{{{ Applying DC offset
+    s.ift(['ph1','ph2'])
+    t_start = t_range[-1] / 4
+    t_start *= 3
+    rx_offset_corr = s['t2':(t_start,None)]
+    rx_offset_corr = rx_offset_corr.data.mean()
+    s -= rx_offset_corr
+    s.ft('t2')
+    s.ft(['ph1','ph2'])
+    #}}}
+    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
+    if 'indirect' in s.dimlabels:
+        s.rename('indirect','vd')
+    # no rough centering anymore -- if anything, we should preproc based on τ,
+    # etc, but otherwise let the hermitian test handle it
+    #{{{ phasing the data
+    s = s['t2':f_range]
+    s.ift('t2')
+    if clock_correction:
+        #{{{ clock correction
+        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
+        s.ft('t2')
+        if fl is not None:
+            fl.next('before clock correction')
+            fl.image(as_scan_nbr(s))
+        s_clock=s['ph1',1]['ph2',0].sum('t2')
+        s.ift(['ph1','ph2'])
+        min_index = abs(s_clock).argmin('vd',raw_index=True).item()
+        s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+        s_clock['vd',:min_index+1] *=-1
+        s_clock.sum('vd').run(abs)
+        if fl is not None:
+            fl.next('clock correction')
+            fl.plot(s_clock,'.',alpha=0.7)
+        clock_corr = s_clock.argmax('clock_corr').item()
+        plt.axvline(x=clock_corr, alpha=0.5, color='r')
+        s *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
+        s.ft(['ph1','ph2'])
+        if fl is not None:
+            fl.next('after auto-clock correction')
+            fl.image(s.C.setaxis('vd','#'))
+        s.ift('t2')
+    #{{{Applying phase corrections    
+    best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
+    logger.info(strm("best shift is", best_shift))
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    if fl is not None:
+        fl.next('time domain after hermitian test')
+        fl.image(as_scan_nbr(s))
+    s.ft('t2')
+    if fl is not None:
+        fl.next('frequency domain after hermitian test')
+        fl.image(as_scan_nbr(s))
+        #}}}
+    s.ift('t2')
+    s.ift(['ph1','ph2'])
+    phasing = s['t2',0].C
+    phasing.data *= 0
+    phasing.ft(['ph1','ph2'])
+    phasing['ph1',0]['ph2',1] = 1
+    phasing.ift(['ph1','ph2'])
+    ph0 = s['t2':0]/phasing
+    ph0 /= abs(ph0)
+    s /= ph0
+    s.ft(['ph1','ph2'])
+    if fl is not None:
+        fl.next('zeroth order corrected')
+        fl.image(as_scan_nbr(s))
+    s.ft('t2')
+    if fl is not None:
+        fl.next('phased data -- frequency domain')
+        fl.image(as_scan_nbr(s)) 
+    #}}}
+    #}}}
+    if 'ph2' in s.dimlabels:
+        s.reorder(['ph1','ph2','vd','t2'])
+    else:
+        s.reorder(['ph1','vd','t2'])
+    #{{{Correlation Alignment
+    fl.basename='correlation subroutine:'
+    #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
+    s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='vd',
+            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+            sigma=10)
+    s = s_aligned
+    fl.basename = None
+    if fl is not None:
+        fl.next(r'after correlation, $\varphi$ domain')
+        fl.image(as_scan_nbr(s))   
+    s.ift('t2')
+    s.ft(['ph1','ph2'])
+    if fl is not None:
+        fl.next(r'after correlation')
+        fl.image(as_scan_nbr(s))    
+    if 'ph2' in s.dimlabels:
+        s.reorder(['ph1','ph2','vd','t2'])
+    else:
+        s.reorder(['ph1','vd','t2']) 
+    #}}}
+    #{{{FID slice
+    s = s['t2':(0,t_range[-1])]
+    s['t2',0] *= 0.5
+    s.ft('t2')
+    if fl is not None:
+        fl.next('FID sliced -- frequency domain')
+        fl.image(as_scan_nbr(s))
+    #}}}    
+    #s *= sign
+    data = s.C
+    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
+    if flip:
+        s['vd',:zero_crossing] *= -1
+    # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
+            - set(excluded_pathways)
+            - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
+    error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
+    # }}}
+    #{{{Integrating with associated error from excluded pathways    
+    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
+            fl=fl,return_frq_slice=True)
+    x1 = s_int.get_error()
+    x1[:] /= sqrt(2)
+>>>>>>> 9c6b1a025193310fe61c7fcad0d3427149ec8546
     logger.info(strm("here is what the error looks like",s_int.get_error()))
     if fl is not None:
         fl.next('Integrated data - recovery curve')
@@ -77,8 +169,10 @@ ILT:        boolean
     f = fitdata(s_int)
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")
     if IR:
+        logging.info(strm("fitting using the regular IR equation"))
         f.functional_form = Mi - 2*Mi*s_exp(-vd*R1)
     else:
+        logging.info(strm("fitting using the FIR equation"))
         f.functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
     f.fit()
     logger.info(strm("output:",f.output()))

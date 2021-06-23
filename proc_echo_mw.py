@@ -3,7 +3,6 @@ from pyspecProcScripts import *
 from pyspecProcScripts import postproc_dict
 from pyspecProcScripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
-
 #{{{input parameters
 plt.rcParams.update({
     "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
