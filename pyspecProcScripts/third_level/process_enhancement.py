@@ -64,13 +64,13 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     if fl is not None:
         fl.push_marker()
         fl.next('time domain')
-        fl.image(as_scan_nbr(s))
+        fl.image(s)
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
         "savefig.facecolor": (1.0,1.0,1.0,0.0),
         })
-    s = proc_data(s,label='Enhancement',indirect='power',fl=fl, 
+    s = proc_data(s,indirect='power',fl=fl, 
             signal_pathway = signal_pathway,f_range=freq_range,
             t_range=t_range,sign=sign)
     #{{{Normalizing by max
@@ -79,9 +79,9 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     #}}}
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
-    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
-    power_axis_W = r_[0,power_axis_W]
-    d.setaxis('power',power_axis_W)
+    #power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
+    #power_axis_W = r_[0,power_axis_W]
+    #d.setaxis('power',power_axis_W)
     thiscolor = next(thesecolors)
     if fl is not None:
         fl.next('E(p)')

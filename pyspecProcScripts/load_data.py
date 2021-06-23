@@ -376,7 +376,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    s.chunk('t',['ph1','t2'],[4,-1])
+    #s.chunk('t',['ph1','t2'],[4,-1])
     s.set_units('t2','s')
     s.labels({'ph1':r_[0.,1.,2.,3.]/4})
     s.ft('t2',shift=True)

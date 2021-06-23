@@ -201,15 +201,11 @@ def proc_data(s,indirect = 'vd',fl=None,signal_pathway={'ph1':0,'ph2':1},
         s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
         if fl is not None:
             fl.next('time domain after hermitian test')
-            fl.image(s.C.setaxis(
-'nScans','#').set_units('nScans','scan #').setaxis(
-'power','#').set_units('power','scan #'))
+            fl.image(s)
         s.ft('t2')
         if fl is not None:
             fl.next('frequency domain after hermitian test')
-            fl.image(s.C.setaxis(
-'nScans','#').set_units('nScans','scan #').setaxis(
-'power','#').set_units('power','scan #'))
+            fl.image(s)
             #}}}
         s.ift('t2')
         s.ift(['ph1'])
@@ -242,9 +238,7 @@ def proc_data(s,indirect = 'vd',fl=None,signal_pathway={'ph1':0,'ph2':1},
         fl.basename = None
         if fl is not None:
             fl.next(r'after correlation, $\varphi$ domain')
-            fl.image(s.C.setaxis(
-'nScans','#').set_units('nScans','scan #').setaxis(
-'power','#').set_units('power','scan #'))   
+            fl.image(s.C.setaxis('power','#').set_units('power','scan #'))   
         s.ift('t2')
         s.ft(['ph1'])
         if 'nScans' in s.dimlabels:
