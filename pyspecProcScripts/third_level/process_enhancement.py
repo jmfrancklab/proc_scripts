@@ -151,7 +151,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         #d.ft('t2')
     d *= sign
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
-    #d.mean('nScans')
+#    d.mean('nScans') # this doesn't work for ODNP data???
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'])]))
