@@ -96,39 +96,40 @@ for thisfile,exp_type,nodename in [
     fl.next('FID sliced')
     fl.image(s)
     s.reorder(['ph1','ph2','nScans','t2'])
+    d = s.C.integrate('t2')
+    s /= d.data.mean()
+    fl.next('after normalization')
+    fl.image(s)
+
     #{{{integral w errors
     error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
+    s_int, active_error, frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
+    y = active_error.get_error()
+    y[:] /= 2
     x = s_int.get_error()
     x[:] /= 2
     fl.next('comparison of std')
     avg_s_int = s_int.get_error().mean().item()
-    fl.plot(s_int.get_error(),'o',label='returned error from integral_w_errors')
-    axhline(y=avg_s_int,c='red',linestyle=":",label='averaged returned error from integral_w_errors')
-    #fl.show();quit()
+    avg_active_int = active_error.get_error().mean().item()
+    fl.plot(s_int.get_error(),'o',label='std over integral in inactive CT')
+    fl.plot(active_error.get_error(),'x',label='std over integral in active CT')
+    axhline(y=avg_s_int,c='red',linestyle=":",label='averaged std over integral in inactive CT')
+    axhline(y=avg_active_int,c='blue',linestyle=":",label='averaged std over integral in active CT')
     #}}}
     #{{{numpy stds
     s = s['t2':frq_slice]
     on_CT = select_pathway(s,signal_pathway)
     on_CT.integrate('t2')
-    on_CT /= on_CT.data.mean()
-    off_CT=select_pathway(s,{'ph1':0,'ph2':0})
-    off_CT.integrate('t2')
-    off_CT /= off_CT.data.mean()
     on_CT_error = on_CT.real.run(np.std,'nScans')
-    off_CT_error = off_CT.real.run(np.std,'nScans')
     axhline(y=float(on_CT_error.data),
-            c='k',linestyle=":",label='error associated with CT pathway of signal')
-    axhline(y=float(off_CT_error.data),
-            c='blue',linestyle=":",label='error associated with inactive CT pathway')
+            c='k',linestyle=":",label='propagated error of CT')
     #}}}
     print('error from integral w errors',avg_s_int)
     print('error associated with CT pathway of signal', float(on_CT_error.data))
-    print('error associated with inactive CT pathway',float(off_CT_error.data))
     plt.axis('tight')
     ax = plt.gca()
     lims = list(ax.get_ylim())
