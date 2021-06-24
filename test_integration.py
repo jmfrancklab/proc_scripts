@@ -10,6 +10,7 @@ excluded_pathways = [(0,0),(0,3)]
 for thisfile,exp_type,nodename in [
         ('201113_TEMPOL_capillary_probe_16Scans_noModCoil','ODNP_NMR_comp/test_equipment','signal')
         ]:
+#{{{processing data    
     s = find_file(thisfile,exp_type=exp_type,expno=nodename)
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
@@ -96,10 +97,9 @@ for thisfile,exp_type,nodename in [
     fl.next('FID sliced')
     fl.image(s)
     s.reorder(['ph1','ph2','nScans','t2'])
+    #}}}
     d = s.C.integrate('t2')
     s /= d.data.mean()
-    fl.next('after normalization')
-    fl.image(s)
 
     #{{{integral w errors
     error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
@@ -115,21 +115,27 @@ for thisfile,exp_type,nodename in [
     fl.next('comparison of std')
     avg_s_int = s_int.get_error().mean().item()
     avg_active_int = active_error.get_error().mean().item()
-    fl.plot(s_int.get_error(),'o',label='std over integral in inactive CT')
-    fl.plot(active_error.get_error(),'x',label='std over integral in active CT')
-    axhline(y=avg_s_int,c='red',linestyle=":",label='averaged std over integral in inactive CT')
-    axhline(y=avg_active_int,c='blue',linestyle=":",label='averaged std over integral in active CT')
+    fl.plot(s_int.get_error(),'o',label='std of integral in inactive CT')
+    fl.plot(active_error.get_error(),'x',label='std of integral in active CT')
+    axhline(y=avg_s_int,c='red',linestyle=":",label='propagated from inactive std(out of integrals_w_errors)')
+    axhline(y=avg_active_int,c='blue',linestyle=":",label='propagated from active std (same process applied as the inactive but with the active CT selected)')
     #}}}
     #{{{numpy stds
+    std_over_noise = s['t2':(0,frq_slice[0])]
     s = s['t2':frq_slice]
-    on_CT = select_pathway(s,signal_pathway)
-    on_CT.integrate('t2')
-    on_CT_error = on_CT.real.run(np.std,'nScans')
-    axhline(y=float(on_CT_error.data),
-            c='k',linestyle=":",label='propagated error of CT')
+    std_over_noise = select_pathway(std_over_noise,signal_pathway)
+    std_over_peak = select_pathway(s,signal_pathway)
+    std_over_noise = std_over_noise.integrate('t2')
+    std_over_peak.integrate('t2')
+    std_over_noise_error = std_over_noise.real.run(np.std,'nScans')
+    std_over_peak_error = std_over_peak.real.run(np.std,'nScans')
+    axhline(y=float(std_over_noise_error.data),c='yellow',
+            linestyle=":",label='std over noise slice of CT')
+    axhline(y=float(std_over_peak_error.data),
+            c='k',linestyle=":",label='std over peak of CT')
+    print("over peak",float(std_over_peak_error.data))
+    print("over noise", float(std_over_noise_error.data))
     #}}}
-    print('error from integral w errors',avg_s_int)
-    print('error associated with CT pathway of signal', float(on_CT_error.data))
     plt.axis('tight')
     ax = plt.gca()
     lims = list(ax.get_ylim())
