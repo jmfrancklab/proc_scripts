@@ -24,10 +24,14 @@ plt.rcParams.update({
 logger = init_logging("info")
 t2 = symbols('t2')
 thesecolors = cycle(list('bgrcmykw'))
+def select_pathway(s,pathway):
+    retval = s
+    for k,v in pathway.items():
+        retval = retval[k,v]
+    return retval    
 def as_scan_nbr(s):
-        return s.C.setaxis(
-'nScans','#').set_units('nScans','scan #').setaxis(
-'power','#').set_units('power','scan #')
+        return s.C.setaxis('nScans','#').set_units('nScans','scan
+                #').setaxis('power','#').set_units('power','scan #')
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
 # list of integrals for ODNP
@@ -36,8 +40,8 @@ def as_scan_nbr(s):
 # leave this as a loop, so you can load multiple files
 def process_enhancement(s, signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
-        t_range=(0,0.083),sign=None,fl=None):
-    s *= sign
+        t_range=(0,0.083),sgn=None,fl=None):
+    s *= sgn
     if fl is not None:
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
                 s,thisrange=freq_range) # visualize the frequency limits
@@ -79,7 +83,9 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     phasing['ph1',1] = 1
     phasing.ift(['ph1'])
     s /= phasing
-    ph0 = s['t2':0]/phasing #if I don't divide by phasing the signal jumps from ph1:1 to ph1:0 for some reason not sure why so I do a temp fix by doing this
+    ph0 = s['t2':0]/phasing #if I don't divide by phasing the signal jumps from
+    #ph1:1 to ph1:0 for some reason not sure why so I do a temp fix by doing
+    #this
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(['ph1'])
@@ -92,20 +98,17 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     logger.info(strm("zero corssing at",zero_crossing))
     #}}}
     #{{{Applying correlation alignment
-    s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='power',
-            ph1_selection=1,sigma=0.001)
-    s = s_aligned
+    s,opt_shift,sigma = correl_align(s,indirect_dim='power',
+            ph1_selection=1,sigma=50)
     fl.basename= None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
         s.set_units('t2','Hz')
-        fl.image(s.C.setaxis(
-'power','#').set_units('power','scan #'))
+        fl.image(s.C.setaxis( 'power','#').set_units('power','scan #'))
     s.ift('t2')
     if fl is not None:
         fl.next('t domain after correlation')
-        fl.image(s.C.setaxis(
-'power','#').set_units('power','scan #'))
+        fl.image(s.C.setaxis( 'power','#').set_units('power','scan #'))
     s.ft(['ph1'])
     if fl is not None:
         fl.next('after correlation alignment FTed ph')
@@ -130,7 +133,7 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
         fl.next('FID sliced')
         fl.image(d.C.setaxis(
 'power','#').set_units('power','scan #'))
-    d *= sign
+    d *= sgn
     if 'nScans' in d.dimlabels:
         d.mean('nScans')
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses

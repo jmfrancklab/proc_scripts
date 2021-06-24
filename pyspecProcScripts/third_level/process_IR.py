@@ -7,7 +7,7 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
-from proc_scripts import *
+from pyspecProcScripts import *
 t2 = symbols('t2')
 
 def select_pathway(s,pathway):
@@ -28,9 +28,44 @@ def process_IR(s, this_l = 0.032,
         t_range = (None,83e-3),
         IR = True,
         flip=False,
-        sign = None,
-        ILT=False):
-    s *= sign
+        sgn = None,
+        ILT=False,
+        fl=None):
+    """Fully processes inversion recovery experiments to produce a fit inversion
+    recovery curve to extrapolate the T1 time from.
+
+    Parameters
+    ==========
+    s:      nddata
+    this_l: int
+            knee of the L curve that gives best balance between signal and
+    l:      ndarray
+            spacing for the L curve minimization
+    clock_correction:   boolean
+                        especially needed at times in spincore to correct for 
+                        drift in frequency and time.
+    W:      int
+            repetition delay set for FIR experiments
+    f_range:    tuple
+                range in which the signal resides in the frequency domain.
+    t_range:    tuple
+                range in which the signal resides in the time domain.
+    IR:     boolean
+            True for a true inversion recovery fitting, false for FIR fitting.
+    flip:   boolean 
+            At higher powers it's been noted the signal can flip signs sometimes
+            inverting the recovery curve-this corrects for it
+    sign:   nddata  
+            the nddata with the collected signs of the data along the signal that
+            upon multiplication will convert all signal to the same sign. Useful
+            for datasets where a null is present.
+    ILT:    boolean
+            If true, will produce an ILT image plot for visualizing the T1 as a function
+            of offset.
+    fl:     boolean
+            option to show figures produced by processing script.
+        """        
+    s *= sgn
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s.ift('t2')
     s.reorder(['ph1','ph2','vd','t2'])
@@ -115,10 +150,9 @@ def process_IR(s, this_l = 0.032,
     #{{{Correlation Alignment
     fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    s_aligned,opt_shift,sigma = correl_align(s,indirect_dim='vd',
-            ph1_selection=signal_pathway['ph1'],ph2_selection=signal_pathway['ph2'],
+    s,opt_shift,sigma = correl_align(s,indirect_dim='vd',
+            signal_pathway=signal_pathway,
             sigma=10)
-    s = s_aligned
     fl.basename = None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
@@ -141,11 +175,11 @@ def process_IR(s, this_l = 0.032,
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
     #}}}    
-    #s *= sign
+    s *= sgn
     data = s.C
-    zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
-    if flip:
-        s['vd',:zero_crossing] *= -1
+    #zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
+    #if flip:
+    #    s['vd',:zero_crossing] *= -1
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
@@ -153,11 +187,10 @@ def process_IR(s, this_l = 0.032,
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
     #{{{Integrating with associated error from excluded pathways    
-    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
+    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
     x1 = s_int.get_error()
     x1[:] /= sqrt(2)
->>>>>>> 9c6b1a025193310fe61c7fcad0d3427149ec8546
     logger.info(strm("here is what the error looks like",s_int.get_error()))
     if fl is not None:
         fl.next('Integrated data - recovery curve')
