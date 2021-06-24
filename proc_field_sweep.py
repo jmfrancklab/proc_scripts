@@ -8,13 +8,14 @@ import pywt
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 20e3
-filename = '210611_S175R1a_pR_DDM_field_dep'
+filename = '210624_500uM_TEMPO_hexane_field_dep'
 for nodename,postproc,label_str,freq_slice,field_slice in [
-        ('32dBm_finer','field_sweep','Sams field sweep',(-700,700),(-400,300)),
+        ('field_sweep','field_sweep','500 uM TEMPO in hexane',(-600,850),(-500,500)),
         ]:
     s = find_file(filename,exp_type='ODNP_NMR_comp/field_dependent',
             expno=nodename,postproc=postproc,lookup=postproc_dict,fl=fl)
-    s = s['t2':freq_slice]
+    #fl.show();quit()
+    #s = s['t2':freq_slice]
     if s.get_prop('acq_params')['nPhaseSteps'] == 8:
         s.mean('nScans')
         s = s['ph1',1]['ph0',0].C
@@ -31,6 +32,7 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
     fl.next('line plots')
     for z in range(len(s.getaxis('Field'))):
         fl.plot(abs(s['Field',z]),label='%d'%z)
+    #fl.show();quit()
     s_ = s['t2':field_slice].sum('t2')
     fl.next('sweep, without hermitian')
     fl.plot(abs(s_),'o-')
