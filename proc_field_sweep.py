@@ -49,7 +49,7 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
     fl.plot(abs(s_),'o-')
     field_idx = (abs(s_.data)).argmax()
     print(field_idx)
-    print('At %0.1f G, the NMR frequency is %0.8e MHz'%(s.getaxis('Field')[field_idx],freqs[field_idx]))
+    print('At $B_0$ = %0.1f, $f_0$ = %0.8e'%(s.getaxis('Field')[field_idx],freqs[field_idx]))
 #    gamma_eff = (/s.getaxis('Field')[field_idx])
 #    s_.setaxis('Field',lambda x: gamma_eff*x)
 #    fl.next('sweep across carrier freq')
