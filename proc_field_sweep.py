@@ -16,15 +16,16 @@ rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 20e3
-filename = '210615_S175R1a_pR_DDM_field_dep_2' #'210611_S175R1a_pR_DDM_field_dep'
-gamma_eff = (14.921343/3512.1)#(14.893851/3505.6) # MHz / G
-f_dip = 9.821251464#9.82103 # GHz
+filename = '210624_500uM_TEMPO_hexane_field_dep_fine' #'210611_S175R1a_pR_DDM_field_dep'
+gamma_eff = (14.895072/3505.9)#(14.893851/3505.6) # MHz / G
+f_dip = 9.821285#9.82103 # GHz
 for nodename,postproc,label_str,freq_slice,field_slice in [
-        ('32dBm_real_centered',#'32dBm_finer',
-        'field_sweep','Sams field sweep',(-700,700),(-400,300)),
+        ('field_sweep',#'32dBm_finer',
+        'field_sweep','TEMPO field sweep',(-500,250),(-300,200)),
         ]:
     s = find_file(filename,exp_type='odnp',#'ODNP_NMR_comp/field_dependent',
             expno=nodename,postproc=postproc,lookup=postproc_dict,fl=fl)
+    #fl.show();quit()
     freqs = s.get_prop('acq_params')['mw_freqs']
     s = s['t2':freq_slice]
     if s.get_prop('acq_params')['nPhaseSteps'] == 8:
