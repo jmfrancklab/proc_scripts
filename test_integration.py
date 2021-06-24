@@ -6,23 +6,20 @@ from pyspecProcScripts.correlation_alignment import correl_align
 import numpy as np
 fl = figlist_var()
 signal_pathway = {'ph1': 1, 'ph2':0}
+t_range=(0,0.05)
+f_range = (-0.11e3,0.12e3)
 excluded_pathways = [(0,0),(0,3)]
 for thisfile,exp_type,nodename in [
         ('201113_TEMPOL_capillary_probe_16Scans_noModCoil','ODNP_NMR_comp/test_equipment','signal')
         ]:
 #{{{processing data    
     s = find_file(thisfile,exp_type=exp_type,expno=nodename)
-    nPoints = s.get_prop('acq_params')['nPoints']
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = 8
-    SW_kHz =s.get_prop('acq_params')['SW_kHz']
-    nScans = s.get_prop('acq_params')['nScans']
     s.reorder('t',first=True)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.labels({'ph2':r_[0.,2.]/4,
         'ph1':r_[0.,1.,2.,3.]/4})
     s.reorder(['ph1','ph2'])
-    s.setaxis('nScans',r_[0:nScans])
+    s.setaxis('nScans','#')
     s.set_units('t2','s')
     s.reorder('t2',first=False)
     s.ft('t2',shift=True)
@@ -32,13 +29,9 @@ for thisfile,exp_type,nodename in [
     s.ift('t2')
     fl.next('raw data time domain')
     fl.image(s)
-    t_range=(0,0.05)
-    f_range = (-0.11e3,0.12e3)
     s.ift(['ph1','ph2'])
     t_rx = (t_range[-1]/4)*3
-    rx_offset_corr = s['t2':(t_rx,None)]
-    rx_offset_corr = rx_offset_corr.data.mean()
-    s -= rx_offset_corr
+    s -= s['t2':(t_rx,None)].data.mean()  # DC offset correction
     s.ft('t2')
     s.ft(['ph1','ph2'])
     s = s['t2':f_range]
@@ -52,20 +45,10 @@ for thisfile,exp_type,nodename in [
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
-    s.ift(['ph1','ph2'])
-    phasing = s['t2',0].C
-    phasing.data *= 0
-    phasing.ft(['ph1','ph2'])
-    phasing['ph1',1]['ph2',0] = 1
-    phasing.ift(['ph1','ph2'])
-    s /= phasing
-    fl.next('ph, freq -- apply reciever phase')
-    fl.image(s)
-    ph0 = s['t2':0]/phasing
+    ph0 = select_pathway(s,signal_pathway)['t2':0]
     ph0 /= abs(ph0)
     logger.info(strm("there is only one dimension left -- standard 1D zeroth order phasing"))
     s /= ph0
-    s.ft(['ph1','ph2'])
     fl.next('after zeroth order phasing applied')
     s.ft('t2')
     fl.image(s)
@@ -123,6 +106,7 @@ for thisfile,exp_type,nodename in [
     s_int_all, active_error,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
             indirect='nScans',fl=fl,return_frq_slice=True)
     S = s_int_all.get_error()
+    #np.std(s_int.data)
     S[:] /= 2
     x = s_int_0.get_error()
     x[:] /= 2
@@ -172,12 +156,8 @@ for thisfile,exp_type,nodename in [
     
     #}}}
     #{{{numpy stds
-    std_over_noise = s['t2':(0,frq_slice[0])]
-    s = s['t2':frq_slice]
-    std_over_noise = select_pathway(std_over_noise,signal_pathway)
-    std_over_noise = std_over_noise.integrate('t2')
-    std_over_noise_error = std_over_noise.real.run(np.std,'nScans')
-    axhline(y=float(std_over_noise_error.data),c='k',
+    np_std = s_int_all.real.run(np.std('nScans'))
+    axhline(y=float(np_std.data),c='k',
             linestyle=":",label='std noise slice of CT')
     #}}}
     plt.axis('tight')
