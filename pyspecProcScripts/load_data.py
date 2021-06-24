@@ -494,6 +494,9 @@ def proc_field_sweep_au(s,fl=None):
         fl.next('raw data -- coherence channels')
         fl.image(s)
     s.ft('t2',shift=True)
+    if fl is not None:
+        fl.next('frequency domain raw data')
+        fl.image(s)
     return s
 
 

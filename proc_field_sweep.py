@@ -41,6 +41,7 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
     fl.next('line plots')
     for z in range(len(s.getaxis('Field'))):
         fl.plot(abs(s['Field',z]),label='%d'%z)
+    #fl.show();quit()
     s_ = s['t2':field_slice].sum('t2')
     fl.next('sweep, without hermitian')
     fl.plot(abs(s_),'o-')
