@@ -18,7 +18,6 @@ t2 = symbols('t2')
 filter_bandwidth = 20e3
 filename = '210615_S175R1a_pR_DDM_field_dep_2' #'210611_S175R1a_pR_DDM_field_dep'
 gamma_eff = (14.921343/3512.1)#(14.893851/3505.6) # MHz / G
-f_dip = 9.821251464#9.82103 # GHz
 for nodename,postproc,label_str,freq_slice,field_slice in [
         ('32dBm_real_centered',#'32dBm_finer',
         'field_sweep','Sams field sweep',(-700,700),(-400,300)),
@@ -47,7 +46,7 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
     fl.plot(abs(s_),'o-')
     field_idx = (abs(s_.data)).argmax()
     print(field_idx)
-    print('At $B_0$ = %0.1f, $f_0$ = %0.8e'%(s.getaxis('Field')[field_idx],freqs[field_idx]))
+    print('At %0.1f G, the NMR frequency is %0.8e MHz'%(s.getaxis('Field')[field_idx],freqs[field_idx]))
 #    gamma_eff = (/s.getaxis('Field')[field_idx])
 #    s_.setaxis('Field',lambda x: gamma_eff*x)
 #    fl.next('sweep across carrier freq')
