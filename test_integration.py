@@ -94,8 +94,8 @@ for thisfile,exp_type,nodename in [
     s = s['t2':(0,t_range[-1])]
     s['t2':0] *= 0.5
     s.ft('t2')
-    fl.next('FID sliced')
-    fl.image(s)
+    #fl.next('FID sliced')
+    #fl.image(s)
     s.reorder(['ph1','ph2','nScans','t2'])
     #}}}
     d = s.C.integrate('t2')
@@ -106,35 +106,79 @@ for thisfile,exp_type,nodename in [
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int, active_error, frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
+    s_int_0, active_error, frq_slice = integral_w_errors(s,signal_pathway,[{'ph1':0,'ph2':0}],
             indirect='nScans',fl=fl,return_frq_slice=True)
+    s_int_1, active_error,frq_slice = integral_w_errors(s,signal_pathway,[{'ph1':0,'ph2':1}],
+            indirect='nScans',fl=fl,return_frq_slice=True)
+    s_int_2, active_error,frq_slice = integral_w_errors(s,signal_pathway,[{'ph1':1,'ph2':1}],
+            indirect='nScans',fl=fl,return_frq_slice=True)
+    s_int_3, active_error,frq_slice = integral_w_errors(s,signal_pathway,[{'ph1':2,'ph2':0}],
+            indirect='nScans',fl=fl,return_frq_slice=True)
+    s_int_4, active_error,frq_slice = integral_w_errors(s,signal_pathway,[{'ph1':2,'ph2':1}],
+            indirect='nScans',fl=fl,return_frq_slice=True)
+    s_int_5, active_error,frq_slice = integral_w_errors(s,signal_pathway,[{'ph1':3,'ph2':0}],
+            indirect='nScans',fl=fl,return_frq_slice=True)
+    s_int_6, active_error,frq_slice = integral_w_errors(s,signal_pathway,[{'ph1':3,'ph2':1}],
+            indirect='nScans',fl=fl,return_frq_slice=True)
+    s_int_all, active_error,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
+            indirect='nScans',fl=fl,return_frq_slice=True)
+    S = s_int_all.get_error()
+    S[:] /= 2
+    x = s_int_0.get_error()
+    x[:] /= 2
     y = active_error.get_error()
     y[:] /= 2
-    x = s_int.get_error()
-    x[:] /= 2
+    z = s_int_1.get_error()
+    z[:] /= 2
+    a = s_int_2.get_error()
+    a[:] /= 2
+    b = s_int_3.get_error()
+    b[:] /= 2
+    c = s_int_4.get_error()
+    c[:] /= 2
+    d = s_int_5.get_error()
+    d[:] /= 2
+    e = s_int_6.get_error()
+    e[:] /= 2
     fl.next('comparison of std')
-    avg_s_int = s_int.get_error().mean().item()
-    avg_active_int = active_error.get_error().mean().item()
-    fl.plot(s_int.get_error(),'o',label='std of integral in inactive CT')
-    fl.plot(active_error.get_error(),'x',label='std of integral in active CT')
-    axhline(y=avg_s_int,c='red',linestyle=":",label='propagated from inactive std(out of integrals_w_errors)')
-    axhline(y=avg_active_int,c='blue',linestyle=":",label='propagated from active std (same process applied as the inactive but with the active CT selected)')
+    avg_s_int_0 = s_int_0.get_error().mean().item()
+    avg_s_int_1 = s_int_1.get_error().mean().item()
+    avg_s_int_2 = s_int_2.get_error().mean().item()
+    avg_s_int_3 = s_int_3.get_error().mean().item()
+    avg_s_int_4 = s_int_4.get_error().mean().item()
+    avg_s_int_5 = s_int_5.get_error().mean().item()
+    avg_s_int_6 = s_int_6.get_error().mean().item()
+    avg_s_all = s_int_all.get_error().mean().item()
+    avg_s_int_active = active_error.get_error().mean().item()
+    fl.plot(s_int_0.get_error(),'o',label='propagated error for ph1:0, ph2:0')
+    fl.plot(s_int_1.get_error(),'o',label='propagated error for ph1:0, ph2:1')
+    fl.plot(s_int_2.get_error(),'o',label='propagated error for ph1:1, ph2:1')
+    fl.plot(s_int_3.get_error(),'o',label='propagated error for ph1:2, ph2:0')
+    fl.plot(s_int_4.get_error(),'o',label='propagated error for ph1:2, ph2:1')
+    fl.plot(s_int_5.get_error(),'o',label='propagated error for ph1:3, ph2:0')
+    fl.plot(s_int_6.get_error(),'o',label='propagated error for ph1:3, ph2:1')
+    fl.plot(s_int_all.get_error(),'x',label='propagated error over all excluded paths')
+    fl.plot(active_error.get_error(),'o',label='propagated error from active CT in noise slice')
+    axhline(y=avg_s_int_0,c='red',linestyle=":",label='averaged propagated error for ph1:0,ph2:0')
+    axhline(y=avg_s_int_1,c='orange',linestyle=":",label='averaged propagated error for ph1:0,ph2:1')
+    axhline(y=avg_s_int_2,c='yellow',linestyle=":",label='averaged propagated error for ph1:1,ph2:1')
+    axhline(y=avg_s_int_3,c='green',linestyle=":",label='averaged propagated error for ph1:2,ph2:0')
+    axhline(y=avg_s_int_4,c='cyan',linestyle=":",label='averaged propagated error for ph1:2,ph2:1')
+    axhline(y=avg_s_int_5,c='blue',linestyle=":",label='averaged propagated error for ph1:3,ph2:0')
+    axhline(y=avg_s_int_6,c='blue',linestyle=":",label='averaged propagated error for ph1:3,ph2:1')
+    axhline(y=avg_s_all,c='magenta',linestyle=":",label='averaged propagated error for all excluded paths')
+
+    axhline(y=avg_s_int_active,c='blue',linestyle=":",label='averaged propagated error from active CT in noise slice')
+    
     #}}}
     #{{{numpy stds
     std_over_noise = s['t2':(0,frq_slice[0])]
     s = s['t2':frq_slice]
     std_over_noise = select_pathway(std_over_noise,signal_pathway)
-    std_over_peak = select_pathway(s,signal_pathway)
     std_over_noise = std_over_noise.integrate('t2')
-    std_over_peak.integrate('t2')
     std_over_noise_error = std_over_noise.real.run(np.std,'nScans')
-    std_over_peak_error = std_over_peak.real.run(np.std,'nScans')
-    axhline(y=float(std_over_noise_error.data),c='yellow',
-            linestyle=":",label='std over noise slice of CT')
-    axhline(y=float(std_over_peak_error.data),
-            c='k',linestyle=":",label='std over peak of CT')
-    print("over peak",float(std_over_peak_error.data))
-    print("over noise", float(std_over_noise_error.data))
+    axhline(y=float(std_over_noise_error.data),c='k',
+            linestyle=":",label='std noise slice of CT')
     #}}}
     plt.axis('tight')
     ax = plt.gca()
