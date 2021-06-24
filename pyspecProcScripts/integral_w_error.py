@@ -29,14 +29,12 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
                 data with error associated with coherence pathways
                 not included in the signal pathway
     """
+    print(s.get_ft_prop(direct))
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
     logging.debug(strm('frq_slice is',frq_slice))
-    noise = s[direct:((frq_slice[-1]+50),None)]
     s = s[direct:frq_slice]
-    noise_f = noise.getaxis(direct)
     f = s.getaxis(direct)
-    noise_df = noise_f[1]-noise_f[0]
     df = f[1]-f[0]
     errors = []
     all_labels = set(s.dimlabels)
@@ -66,19 +64,32 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     #print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
     avg_error = sum(avg_error)/len(avg_error)
     print(avg_error)
-    active_error = select_pathway(noise,sig_path)
-    N1 = ndshape(active_error)[direct]
-    #active_error -= active_error.C.mean_all_but([indirect,direct]).mean(direct)
-    active_error.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
-    active_error *= noise_df**2
-    active_error *= N1
     #print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s,sig_path)
-    d = select_pathway(noise,sig_path)
     retval = s.integrate(direct).set_error(sqrt(avg_error.data))
-    active_val = d.integrate(direct).set_error(sqrt(active_error.data))
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
-        return retval, active_val, frq_slice
+        return retval, frq_slice
+
+def active_propagation(s, signal_path, indirect='vd', direct='t2'):
+    assert s.get_ft_prop(direct), "need to be in frequency domain!"
+    frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
+    logging.debug(strm('frq_slice is',frq_slice))
+    s = s[direct:((frq_slice[-1]+50),None)]
+    f = noise.getaxis(direct)
+    df = noise_f[1]-noise_f[0]
+    all_labels = set(s.dimlabels)
+    all_labels -= set([indirect,direct])
+    extra_dims = [j for j in all_labels if not j.startswith('ph')]
+    if len(extra_dims) > 0:
+     raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
+             +str(extra_dims))
+    s_forerror = select_pathway(s, signal_path)
+    N = ndshape(s_forerror)[direct]
+    s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
+    s_forerror *= df**2
+    s_forerror *= N
+    return sqrt(s_forerror)
+     
