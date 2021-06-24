@@ -71,3 +71,12 @@ Finally, we will construct higher-level functions, all
 in a single module, that utilize these to
 
 .. automodule:: toplevel
+
+Example Gallery
+===============
+
+If you're uncertain, start here!
+
+.. toctree::
+
+    auto_examples/index

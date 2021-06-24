@@ -17,9 +17,11 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     signal_E /= signal_E.data.max()
     filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
     if fl is not None:
+        fl.push_marker()
         fl.next('signal Energy')
         fl.plot(signal_E, human_units=False)
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
+        fl.pop_marker()
     fwhm = filter_width
     print("FWHM IS",fwhm)
     fl.push_marker()

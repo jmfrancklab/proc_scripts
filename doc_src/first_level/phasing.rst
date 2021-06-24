@@ -3,5 +3,5 @@ Phasing
 
 The ``phasing`` module:
 
-.. automodule:: proc_scripts.phasing
+.. automodule:: ~pyspecProcScripts.phasing
     :members:

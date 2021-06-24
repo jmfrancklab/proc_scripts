@@ -1,21 +1,24 @@
-"""Check integral error calculation
-================================
+"""
+Propagation of Integral Error
+=============================
 
 Generate a fake dataset of an inversion recovery with multiple repeats (φ
 × t2 × vd × repeats) w/ normally distributed random noise.
 Check that the following match:
 
-- integral w/ error (the canned routine :func:`integral_w_errors`)
+- integral w/ error (the canned routine :func:`~pyspecProcScripts.integral_w_errors`)
 - propagate error based off the programmed σ of the normal distribution
 - set the error bars based on the standard deviation (along the repeats
   dimension) of the *real* part of the integral
 - propagate error based off the variance of the noise in the inactive
   coherence channels (do this manually inside this script -- should mimic
-  what :func:`integral_w_errors` does)
+  what :func:`~pyspecProcScripts.integral_w_errors` does)
 """
 from pylab import *
 from pyspecdata import *
-from proc_scripts import integrate_limits, integral_w_errors
+from pyspecProcScripts import integrate_limits, integral_w_errors
+
+# sphinx_gallery_thumbnail_number = 2
 
 init_logging(level="debug")
 fl = figlist_var()
@@ -59,7 +62,7 @@ for j in range(n_repeats):
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice,mystd = integral_w_errors(data,signal_pathway,error_pathway,
+    s_int,frq_slice = integral_w_errors(data,signal_pathway,error_pathway,
             indirect='vd', fl=fl,return_frq_slice=True)
     # }}}
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]

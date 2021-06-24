@@ -1,10 +1,12 @@
-"""This example uses symfit to individually fit several Voigt-shaped ESR spectra
+"""EPR linewidth
+================
+This example uses symfit to individually fit several Voigt-shaped ESR spectra
 
 This example does work.
 """
 from pyspecdata import *
-from proc_scripts import *
-from proc_scripts import postproc_dict
+from pyspecProcScripts import *
+from pyspecProcScripts import postproc_dict
 import symfit as s
 import pickle,os
 from pylab import ndarray
@@ -28,7 +30,7 @@ sigma_list = []
 data = []
 A_list = []
 B_center_list = []
-C_list = []
+save_figure=False
 for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
         ("210218_1mM_TEMPOL_2",'ESR','ESR_linewidth',
             {A:2.107721e02,
@@ -82,8 +84,6 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
     plt.figure()
     plt.title('linewidth for 1mM TEMPOL')
     plot(d)
-    fl.show()
-    quit()
     d = d['$B_0$':(-9, 9)]
     plot(d, '--', alpha=0.5, linewidth=4)
     d.setaxis('$B_0$', lambda x: x+1) # for a positive B_center, b/c the interactive guess doesn't deal well with negative parameters
@@ -153,5 +153,6 @@ plot(conc_list,R_list,'x',label='R')
 plot(conc_list,sigma_list,'x',label=r'$\sigma$')
 plt.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
 plt.ylabel('concentration')
-plt.savefig('RvsC.png',transparent=True)
+if save_figure:
+    plt.savefig('RvsC.png',transparent=True)
 plt.show()
