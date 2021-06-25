@@ -16,6 +16,7 @@ from symfit.contrib.interactive_guess import InteractiveGuess
 import numpy as np
 from itertools import cycle
 from scipy.optimize import nnls
+init_logging(level='debug')
 fl=figlist_var()
 B_center = Parameter('B_center', value=-0.2)
 sigma = Parameter('sigma', value=3)
