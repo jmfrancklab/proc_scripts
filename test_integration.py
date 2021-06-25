@@ -83,14 +83,24 @@ for thisfile,exp_type,nodename in [
     fl.image(s)
     s.reorder(['ph1','ph2','nScans','t2'])
     #}}}
-    d = s.C.integrate('t2')
-    s /= d.data.mean()
-    print(s.get_ft_prop('t2'))
+    
+    #{{{Normalization
+    frq_slice = integrate_limits(select_pathway(s,signal_pathway),fl=fl)
+    d = s.C['t2':frq_slice]
+    d = select_pathway(d,signal_pathway)
+    d.integrate('t2')
+    avg_d = d.C.mean().item()
+    d /= avg_d
+    s /= avg_d
+    #}}}
+    
     #{{{integral w errors
     error_pathway = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
+    #{{{Making lists for all individual inactive pathways to get error
+    # associated with each one
     s_int_lst = []
     ph_lst = [[{'ph1':0,'ph2':0}],
         [{'ph1':0,'ph2':1}],
@@ -101,9 +111,6 @@ for thisfile,exp_type,nodename in [
         [{'ph1':3,'ph2':1}]]
     error_lst = []
     avg_error_lst = []
-    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_pathway,
-            indirect='nScans',fl=fl,return_frq_slice=True)
-    error = s_int.get_error()
     for i in range(len(ph_lst)):
         test = s.get_ft_prop('t2')
         if s.get_ft_prop('t2') is False:
@@ -116,25 +123,38 @@ for thisfile,exp_type,nodename in [
         s_int_lst.append(s_int)
         error_lst.append(error)
         avg_error_lst.append(avg_error)
-    active_error = active_propagation(s, signal_pathway, indirect='nScans',fl=fl)
+    #}}}
+
+    #{{{Calculating propagated error averaged over all inactive CTs
+    averaged_inactive, frq_slice = integral_w_errors(s, signal_pathway,
+            error_pathway, indirect='nScans', fl=fl, return_frq_slice=True)
+    averaged_inactive_error = averaged_inactive.get_error()
+    averaged_inactive_error[:] /= 2
+    avg_avg_error = averaged_inactive_error.mean().item()
+    #}}}
+
+    #{{{Calculating propagated error along active CT on noise slice
+    active_error,N,df = active_propagation(s, signal_pathway, indirect='nScans',fl=fl)
     active_error[:] /= 2
     avg_active_error = active_error.mean().item()
+    #}}}
+    #{{{Calculating the std dev -- error associated with the integrals
+    numpy_s_int = d.run(np.std,'nScans')
+   #}}} 
+    #{{{Plotting Errors
     fl.next('comparison of std')
     for i in range(len(s_int_lst)):
         fl.plot(error_lst[i],'o',color=colors[i],label = 'on excluded path of %s'%ph_lst[i])
     fl.plot(active_error,'x',
             label='propagated error from active CT in noise slice')
+    fl.plot(averaged_inactive_error,'o',color='brown',label='averaged propagated error from all inactive CTs')
     for i in range(len(s_int_lst)):
         axhline(y=avg_error_lst[i], linestyle=":", color=colors[i],
                 label = "averaged %s"%ph_lst[i])
-
     axhline(y=avg_active_error,linestyle=":", label='averaged propagated error from active CT in noise slice')
-    #}}}
-    #{{{numpy stds
-    numpy_s_int = s_int_lst[3].data.real
-    np_std = np.std(numpy_s_int)
-    axhline(y=np_std,c='k',
-            linestyle=":",label='propagated error over signal using numpy std')
+    axhline(y=avg_avg_error,linestyle=":",color='brown',label='averaged average propagated error from inactive CTs')
+    axhline(y=numpy_s_int.data,c='k',
+            linestyle=":",label='std dev - error associated with the integrals')
     #}}}
     plt.axis('tight')
     ax = plt.gca()
@@ -142,22 +162,5 @@ for thisfile,exp_type,nodename in [
     lims[0] = 0
     ax.set_ylim(lims)
     plt.legend()
-    fl.show();quit()
-    fl.next('diagnostic 1D plot')
-    fl.plot(s['nScans',:]['ph1',signal_pathway['ph1']]['ph2',signal_pathway['ph2']].real,alpha=0.4)
-    axvline(x=frq_slice[0],c='k',linestyle=":",alpha=0.8)
-    axvline(x=frq_slice[-1],c='k',linestyle=":",alpha=0.8)
-    fl.next('integrated for error')
-    fl.plot(s_int,'.',capsize=6,label='integral with error')
-    #data = data['t2':frq_slice]
-    data = select_pathway(data,signal_pathway)
-    data.integrate('t2')
-
-    new_error = data.real.run(np.std,'nScans')
-    #new_error = data.real.C.mean('nScans', std=True).get_error()
-    fl.plot(data,'o',label='data')
-    #print("new_error, data",ndshape(new_error), ndshape(data))
-    data.set_error(new_error.data)
-    fl.plot(data,'.',capsize=6,label='numpy std')
     fl.show();quit()
 

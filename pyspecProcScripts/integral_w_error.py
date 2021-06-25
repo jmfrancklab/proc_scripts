@@ -49,11 +49,8 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     collected_variance = ndshape(
          [ndshape(s)[indirect],len(error_path)],[indirect,'pathways']).alloc()
 
-
-
-
     # this is not averaging over all the pathways!!!! -- addressed in issue #44 
-    #avg_error = []
+    avg_error = []
     for j in range(len(error_path)):
         # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
         # where N₂ is the number of points in the indirect dimension
@@ -64,16 +61,13 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
         if j==0: N2 = ndshape(s_forerror)[direct]
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
-        #s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
+        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
         s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
         s_forerror *= df**2 # Δf
         s_forerror *= N2
-        #avg_error.append(s_forerror)
+        avg_error.append(s_forerror)
     # {{{ variance calculation for debug
-    #print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
-    #avg_error = sum(avg_error)/len(avg_error)
-    #print(avg_error)
-    #print("automatically calculated integral error:",sqrt(collected_variance.data))
+    avg_error = sum(avg_error)/len(avg_error)
     # }}}
     s = select_pathway(s,sig_path)
     retval = s.integrate(direct).set_error(sqrt(s_forerror.data))
@@ -101,5 +95,5 @@ def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None):
     s_forerror *= df**2
     s_forerror *= N
     retval = sqrt(s_forerror.data)
-    return retval
+    return retval,N,df
      
