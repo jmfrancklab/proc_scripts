@@ -212,7 +212,7 @@ def draw_limits(thisrange,s):
     for j in pairs:
         if None not in j:
             logging.info(strm("drawing a vspan at",j))
-            plt.axvspan(j[0]*10**-3,j[1]*10**-3,color='w',alpha=0.5,linewidth=0)
+            plt.axvspan(j[0]*10,j[1]*10,color='w',alpha=0.5,linewidth=0)
     plt.gca().set_xlim(my_xlim)
     return
 

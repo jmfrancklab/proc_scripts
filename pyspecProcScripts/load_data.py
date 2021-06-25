@@ -363,8 +363,6 @@ def proc_var_tau(s,fl=None):
     return s
 
 def proc_spincore_ODNP_v1(s,fl=None):
-    if 'nScans' in s.dimlabels:
-        s.mean('nScans')
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))
@@ -378,7 +376,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     nScans = s.get_prop('acq_params')['nScans']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    s.chunk('t',['ph1','t2'],[4,-1])
+    #s.chunk('t',['ph1','t2'],[4,-1])
     s.set_units('t2','s')
     s.labels({'ph1':r_[0.,1.,2.,3.]/4})
     s.ft('t2',shift=True)

@@ -58,13 +58,14 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
         s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
         s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
         s_forerror *= df**2 # Δf
-        s_forerror *= N2
+        #s_forerror *= N2
     # {{{ variance calculation for debug
     #print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
     #print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s,sig_path)
     retval = s.integrate(direct).set_error(sqrt(s_forerror.data))
+    retval /= retval.data.mean()
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
