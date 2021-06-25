@@ -108,10 +108,11 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s_copy *= exp(-(s_copy.fromaxis('t2')-nu_center)**2/(2*sigma**2))
         s_copy.ift('t2')
         s_copy2 = s.C
-        s_copy *= nddata(r_[1.,1.],'DeltaPh2')
-        s_copy *= nddata(r_[1.,1.,1.,1.],'DeltaPh1')
-        s_copy.setaxis('DeltaPh2','#')
-        s_copy.setaxis('DeltaPh1','#')
+        for x in range(len(signal_keys)):
+            ph = [1.]*(len(s.getaxis(signal_keys[x])))
+            ph = np.array(ph)
+            s_copy *= nddata(ph,'DeltaPh%d'%(x+1))
+            s_copy.setaxis('DeltaPh%d'%(x+1),'#')
         correl = s_copy * 0 
         for j in range(len(signal_keys)):
             for ph_index in range(ph_len):

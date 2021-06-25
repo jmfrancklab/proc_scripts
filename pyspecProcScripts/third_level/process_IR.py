@@ -89,12 +89,12 @@ def process_IR(s, this_l = 0.032,
     s.ift('t2')
     if clock_correction:
         #{{{ clock correction
-        clock_corr = nddata(np.linspace(-2,2,2500),'clock_corr')
+        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
         s.ft('t2')
         if fl is not None:
             fl.next('before clock correction')
             fl.image(as_scan_nbr(s))
-        s_clock=s['ph1',0]['ph2',1].sum('t2')
+        s_clock=s['ph1',1]['ph2',0].sum('t2')
         s.ift(['ph1','ph2'])
         min_index = abs(s_clock).argmin('vd',raw_index=True).item()
         s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
@@ -111,7 +111,6 @@ def process_IR(s, this_l = 0.032,
             fl.next('after auto-clock correction')
             fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
-    #fl.show();quit()    
     #{{{Applying phase corrections    
     best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
     logger.info(strm("best shift is", best_shift))
@@ -142,7 +141,6 @@ def process_IR(s, this_l = 0.032,
     if fl is not None:
         fl.next('phased data -- frequency domain')
         fl.image(as_scan_nbr(s))
-    #fl.show();quit()    
     #}}}
     #}}}
     if 'ph2' in s.dimlabels:
@@ -164,7 +162,6 @@ def process_IR(s, this_l = 0.032,
     if fl is not None:
         fl.next(r'after correlation')
         fl.image(as_scan_nbr(s)) 
-    #fl.show();quit()    
     if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
