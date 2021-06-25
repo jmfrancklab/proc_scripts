@@ -126,10 +126,6 @@ def process_IR(s, this_l = 0.032,
     s.ift('t2')
     s.ift(['ph1','ph2'])
     phasing = s['t2',0].C
-    phasing.data *= 0
-    phasing.ft(['ph1','ph2'])
-    phasing['ph1',0]['ph2',1] = 1
-    phasing.ift(['ph1','ph2'])
     ph0 = s['t2':0]/phasing
     ph0 /= abs(ph0)
     s /= ph0
