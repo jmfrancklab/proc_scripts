@@ -13,7 +13,7 @@ def to_percent(y, position):
         return s + '%'
 def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         fig_title='correlation alignment',signal_pathway = {'ph1':0,'ph2':1}, 
-        shift_bounds=False, nScans=False, max_shift = 100., sigma=20.,direct='t2',fl=None):
+        shift_bounds=False, avg_dim = None, max_shift = 100., sigma=20.,direct='t2',fl=None):
     """
     Align transients collected with chunked phase cycling dimensions along an indirect
     dimension based on maximizing the correlation across all the transients and repeat
@@ -40,6 +40,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                     limit (upper and lower bounds given by max_shift)
                     which should be around the location of the expected
                     signal
+    avg_dim:        str
+                    dimension along which the data is being averaged
     max_shift:      float
                     specifies the upper and lower bounds to the range over
                     which f_shift will be taken from the correlation function.
@@ -62,19 +64,22 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 the data in the calculation of the correlation function.
     """
     logging.info(strm("Applying the correlation routine"))
-    if nScans:
+    if avg_dim:
         phcycdims = [j for j in s.dimlabels if j.startswith('ph')]
         indirect = set(s.dimlabels)-set(phcycdims)-set([direct])
         indirect = [j for j in s.dimlabels if j in indirect]
-        nScans_len = len(s.getaxis('nScans'))
+        avg_dim_len = len(s.getaxis(avg_dim))
         s.smoosh(indirect)
     s.ift(list(signal_pathway.keys()))
     ph_lens = []
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
+    ph_len = {j:ndshape(s)[j] for j in signal_pathway.keys()}
     for x in range(len(signal_keys)):
-        ph_len = len(s.getaxis(signal_keys[x]))
-        ph_lens.append(ph_len)
+        #print(len(s.getaxis(signal_keys[x])))
+        #ph_lens = [len(j) for j in (s.getaxis(signal_keys[x]))] 
+        ph_length = len(s.getaxis(signal_keys[x]))
+        ph_lens.append(ph_length)
     N = ndshape(s)[indirect_dim]
     sig_energy = (abs(s)**2).data.sum().item() / N
     if fl is not None:
@@ -109,15 +114,15 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s_copy *= exp(-(s_copy.fromaxis('t2')-nu_center)**2/(2*sigma**2))
         s_copy.ift('t2')
         s_copy2 = s.C
-        for x in range(len(signal_keys)):
-            ph = [1.]*(len(s.getaxis(signal_keys[x])))
-            ph = np.array(ph)
-            s_copy *= nddata(ph,'DeltaPh%d'%(x+1))
-            s_copy.setaxis('DeltaPh%d'%(x+1),'#')
+        for k,v in ph_len.items():
+            ph = ones(v)
+            s_copy *= nddata(ph,'Delta'+k.capitalize())
+            s_copy.setaxis('Delta'+k.capitalize(),'#')
         correl = s_copy * 0 
-        for j in range(len(signal_keys)):
-            for ph_index in range(ph_len):
-                s_copy['DeltaPh%d'%(j+1),ph_index] = s_copy['DeltaPh%d'%(j+1),ph_index].run(lambda x, axis=None: roll(x,ph_index,axis=axis),'ph%d'%(j+1))
+        for k,v in ph_len.items():
+            for ph_index in range(v):
+                s_copy['Delta%s'%k.capitalize(),ph_index] = s_copy['Delta%s'%k.capitalize(),
+                        ph_index].run(lambda x, axis=None: roll(x,ph_index,axis=axis),k)
         for j in range(1,N):
             correl += s_copy2 * s_copy.C.run(lambda x, axis=None: roll(x,j,axis=axis),
                 indirect_dim).run(conj)
@@ -133,9 +138,11 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
         correl.ft_clear_startpoints('t2')
         correl.ft('t2', shift=True, pad=2**14)
-        for j in range(len(signal_keys)):
-            correl.ft(['DeltaPh%d'%(j+1)])
-            correl = correl['DeltaPh%d'%(j+1),signal_values[j]]+correl['DeltaPh%d'%(j+1),0]
+        for k,v in ph_len.items():
+                correl.ft(['Delta%s'%k.capitalize()])
+        for j in range(1,len(ph_len.keys())):
+            for k,v in ph_len.items():
+                correl = correl['Delta'+k.capitalize(),j]+correl['Delta'+k.capitalize(),0]
         if my_iter ==0:
             logging.info(strm("holder"))
             if fl is not None:
@@ -143,7 +150,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
         if shift_bounds:
             f_shift = correl['t2':(-max_shift,max_shift)].run(real).argmax('t2')
-        if not shift_bounds:
+        else:
             f_shift = correl.run(real).argmax('t2')
         s_copy = s.C
         s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis('t2'))
@@ -175,8 +182,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     s.ift('t2')
     s *= np.exp(-1j*2*pi*f_shift*s.fromaxis('t2'))
     s.ft('t2')
-    if nScans:
-        s.chunk('nScans',['nScans','power'],[nScans_len,-1])
-        s.reorder(['ph1','nScans','power','t2'])
+    if avg_dim:
+        s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
+        s.reorder(['ph1',avg_dim,'power','t2'])
     return s,f_shift,sigma    
 
