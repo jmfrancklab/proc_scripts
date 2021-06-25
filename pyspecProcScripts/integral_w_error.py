@@ -29,8 +29,8 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
                 data with error associated with coherence pathways
                 not included in the signal pathway
     """
-    print(s.get_ft_prop(direct))
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
+    print("you made it this far once")
     frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
     logging.debug(strm('frq_slice is',frq_slice))
     s = s[direct:frq_slice]
@@ -43,8 +43,17 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     if len(extra_dims) > 0:
      raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
              +str(extra_dims))
+
+
+
+    collected_variance = ndshape(
+         [ndshape(s)[indirect],len(error_path)],[indirect,'pathways']).alloc()
+
+
+
+
     # this is not averaging over all the pathways!!!! -- addressed in issue #44 
-    avg_error = []
+    #avg_error = []
     for j in range(len(error_path)):
         # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
         # where N₂ is the number of points in the indirect dimension
@@ -59,27 +68,27 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
         s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
         s_forerror *= df**2 # Δf
         s_forerror *= N2
-        avg_error.append(s_forerror)
+        #avg_error.append(s_forerror)
     # {{{ variance calculation for debug
     #print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
-    avg_error = sum(avg_error)/len(avg_error)
-    print(avg_error)
+    #avg_error = sum(avg_error)/len(avg_error)
+    #print(avg_error)
     #print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s,sig_path)
-    retval = s.integrate(direct).set_error(sqrt(avg_error.data))
+    retval = s.integrate(direct).set_error(sqrt(s_forerror.data))
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
         return retval, frq_slice
 
-def active_propagation(s, signal_path, indirect='vd', direct='t2'):
+def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None):
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
+    frq_slice = integrate_limits(select_pathway(s,signal_path),fl=fl)
     logging.debug(strm('frq_slice is',frq_slice))
     s = s[direct:((frq_slice[-1]+50),None)]
-    f = noise.getaxis(direct)
-    df = noise_f[1]-noise_f[0]
+    f = s.getaxis(direct)
+    df = f[1]-f[0]
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect,direct])
     extra_dims = [j for j in all_labels if not j.startswith('ph')]
@@ -91,5 +100,6 @@ def active_propagation(s, signal_path, indirect='vd', direct='t2'):
     s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
     s_forerror *= df**2
     s_forerror *= N
-    return sqrt(s_forerror)
+    retval = sqrt(s_forerror.data)
+    return retval
      
