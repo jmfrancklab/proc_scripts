@@ -61,6 +61,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 the width of the Gaussian function used to frequency filter
                 the data in the calculation of the correlation function.
     """
+    logging.info(strm("Applying the correlation routine"))
     if nScans:
         phcycdims = [j for j in s.dimlabels if j.startswith('ph')]
         indirect = set(s.dimlabels)-set(phcycdims)-set([direct])
