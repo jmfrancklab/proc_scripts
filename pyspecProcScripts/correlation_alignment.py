@@ -33,8 +33,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                     name for the figures generated
     tol:            float
                     sets the tolerance limit for the alignment procedure
-    ph1_selection:  int
-                    index position of the coherence pathway in phase program 1
+    signal_pathway: dict
+                    dictionary containing the signal pathway
     shift_bounds:   boolean
                     keeps f_shift to be within a specified
                     limit (upper and lower bounds given by max_shift)
