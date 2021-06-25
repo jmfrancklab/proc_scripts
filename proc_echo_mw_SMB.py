@@ -21,38 +21,41 @@ logger = init_logging("info")
 t2 = symbols('t2')
 fl = fl_mod()
 #}}}
-s = find_file('210624.*',exp_type='odnp',#expno='enhancement',
+
+s = find_file('210624_Y71R1a_Ras_ODNP',exp_type='ODNP_NMR_comp/ODNP', expno='enhancement',
         postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
 fl.next('raw data')
 s = s['t2':(-1e3,1e3)]
-fl.next('sliced to integration bounds')
 fl.image(s)
 ph0 = s['power',-4].sum('t2')
 ph0 /= abs(ph0)
 s /= ph0
 fl.next('phased')
 fl.image(s)
-s = s['t2':(-100,100)]
-d = s['ph1',1].C
-d.integrate('t2')
-d /= max(d.data)
+s = s['t2':(-250,0)]
+fl.next('sliced to integration bounds')
+fl.image(s)
+s = s['ph1',1]
+fl.next('sliced to integration bounds\nselect coh. pathway\nreal')
+fl.image(s.real)
+s.integrate('t2')
+s /= max(s.data.real)
 #{getting power axis
-power_axis_dBm = array(d.get_prop('meter_powers'))
-power_axis_W = zeros_like(power_axis_dBm)
-power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
-power_axis_W = r_[0,power_axis_W]
-d.setaxis('power',power_axis_W)
+s.setaxis('power',r_[-9999,array(s.get_prop('meter_powers'))])
+print("here are the dBm",s.getaxis('power'))
+s.setaxis('power', lambda x:
+        1e-3*10**(x/10.))
+print("here are the powers",s.getaxis('power'))
+s.set_units('power','W')
 #}
 fl.next('simple integral')
-fl.plot(d['power',:-3],'ko')
-fl.plot(d['power',-3:],'ro')
-plt.xlabel('power (W)')
-plt.ylabel('integrated 1HNMR signal')
+fl.plot(s['power',:-3],'ko')
+fl.plot(s['power',-3:],'ro')
+plt.ylabel('integrated $^1$H NMR signal')
 #{Enhancement
-E = 1 - d.C
+s /= s['power',0]
 fl.next('enhancement curve')
-fl.plot(E['power',:-3],'ko')
-fl.plot(E['power',-3:],'ro')
-plt.xlabel('power (W)')
+fl.plot(s['power',:-3],'ko')
+fl.plot(s['power',-3:],'ro')
 fl.show()
 #}
