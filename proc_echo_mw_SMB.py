@@ -21,7 +21,7 @@ logger = init_logging("info")
 t2 = symbols('t2')
 fl = fl_mod()
 #}}}
-s = find_file('210617_T177R1a_pR_DDM_ODNP',exp_type='odnp',expno='enhancement',
+s = find_file('210624.*',exp_type='odnp',#expno='enhancement',
         postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
 fl.next('raw data')
 s = s['t2':(-1e3,1e3)]
