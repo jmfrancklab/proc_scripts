@@ -143,16 +143,16 @@ for thisfile,exp_type,nodename in [
    #}}} 
     #{{{Plotting Errors
     fl.next('comparison of std')
-    #for i in range(len(s_int_lst)):
-    #    fl.plot(error_lst[i],'o',color=colors[i],label = 'on excluded path of %s'%ph_lst[i])
-    #fl.plot(active_error,'x',
-    #        label='propagated error from active CT in noise slice')
-    #fl.plot(averaged_inactive_error,'o',color='brown',label='averaged propagated error from all inactive CTs')
-    #for i in range(len(s_int_lst)):
-    #    axhline(y=avg_error_lst[i], linestyle=":", color=colors[i],
-    #            label = "averaged %s"%ph_lst[i])
-    #axhline(y=avg_active_error,linestyle=":", label='averaged propagated error from active CT in noise slice')
-    #axhline(y=avg_avg_error,linestyle=":",color='brown',label='averaged average propagated error from inactive CTs')
+    for i in range(len(s_int_lst)):
+        fl.plot(error_lst[i],'o',color=colors[i],label = 'on excluded path of %s'%ph_lst[i])
+    fl.plot(active_error,'x',
+            label='propagated error from active CT in noise slice')
+    fl.plot(averaged_inactive_error,'o',color='brown',label='averaged propagated error from all inactive CTs')
+    for i in range(len(s_int_lst)):
+        axhline(y=avg_error_lst[i], linestyle=":", color=colors[i],
+                label = "averaged %s"%ph_lst[i])
+    axhline(y=avg_active_error,linestyle=":", label='averaged propagated error from active CT in noise slice')
+    axhline(y=avg_avg_error,linestyle=":",color='brown',label='averaged average propagated error from inactive CTs')
     axhline(y=numpy_s_int.data,c='k',
             linestyle=":",label='std dev - error associated with the integrals')
     #}}}
