@@ -28,9 +28,9 @@ def process_IR(s, label='', fl=None,
         t_range = (None,83e-3),
         IR = True,
         flip=False,
-        sign = None,
+        sgn = None,
         ILT=False):
-    s *= sign
+    s *= sgn
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s.ift('t2')
     s.reorder(['ph1','ph2','vd','t2'])
@@ -147,7 +147,7 @@ def process_IR(s, label='', fl=None,
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
     #}}}    
-    #s *= sign
+    s *= sgn
     data = s.C
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     if flip:
