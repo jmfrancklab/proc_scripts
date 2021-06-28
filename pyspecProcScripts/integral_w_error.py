@@ -47,7 +47,6 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
 
     collected_variance = ndshape(
          [ndshape(s)[indirect],len(error_path)],[indirect,'pathways']).alloc()
-
     # this is not averaging over all the pathways!!!! -- addressed in issue #44 
     avg_error = []
     for j in range(len(error_path)):
@@ -96,3 +95,4 @@ def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None):
     retval = sqrt(s_forerror.data)
     return retval,N,df
      
+

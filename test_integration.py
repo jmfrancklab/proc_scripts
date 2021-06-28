@@ -31,9 +31,19 @@ for thisfile,exp_type,nodename in [
     s.ift('t2')
     fl.next('raw data time domain')
     fl.image(s)
+<<<<<<< HEAD
     s.ift(['ph1','ph2'])
     t_rx = (t_range[-1]/4)*3
     s -= s['t2':(t_rx,None)].data.mean()  # DC offset correction
+=======
+    t_range=(0,0.05)
+    f_range = (-0.11e3,0.12e3)
+    s.ift(['ph1','ph2'])
+    t_rx = (t_range[-1]/4)*3
+    rx_offset_corr = s['t2':(t_rx,None)]
+    rx_offset_corr = rx_offset_corr.data.mean()
+    s -= rx_offset_corr
+>>>>>>> master
     s.ft('t2')
     s.ft(['ph1','ph2'])
     s = s['t2':f_range]
@@ -84,7 +94,7 @@ for thisfile,exp_type,nodename in [
     s.reorder(['ph1','ph2','nScans','t2'])
     #}}}
     
-    #{{{Normalization
+    #{{{Normalizationz
     frq_slice = integrate_limits(select_pathway(s,signal_pathway),fl=fl)
     d = s.C['t2':frq_slice]
     d = select_pathway(d,signal_pathway)
