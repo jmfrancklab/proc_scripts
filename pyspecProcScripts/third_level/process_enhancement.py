@@ -68,7 +68,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         fl.next('time domain before hermitian')
         fl.image(s)
     #{{{Applying phasing corrections
-    #s.ift('t2') # inverse fourier transform into time domain
+    s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
     #best_shift = 0.033e-3
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
@@ -92,7 +92,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     s /= ph0
     s.ft(['ph1'])
     logger.info(strm(s.dimlabels))
-    #s.ft('t2')
+    s.ft('t2')
     if fl is not None:
         fl.next('After zeroth order phase correction')
         fl.image(as_scan_nbr(s))
@@ -149,7 +149,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         #fl.next('FID sliced')
         #fl.image(d,human_units=False)
         #d.ft('t2')
-    d *= sign
+    d *= sgn
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     d.mean('nScans')
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
