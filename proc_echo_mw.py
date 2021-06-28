@@ -23,7 +23,7 @@ for filename,nodename,file_location,postproc in [
     s = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
     myslice = s['t2':freq_range]
-    mysign = determine_sign(select_pathway(myslice,signal_pathway,mult_ph_dims=False))
+    mysign = select_pathway(myslice, signal_pathway).real.sum('t2').run(np.sign)
     enhancement = process_enhancement(s,searchstr = filename,
             freq_range=freq_range, t_range=t_range,sign=mysign,fl=fl)
     fl.show()

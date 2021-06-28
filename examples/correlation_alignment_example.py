@@ -43,7 +43,7 @@ fl.image(data)
 # deal with the null of the signal
 print(type(data))
 myslice = data['t2':f_range]
-mysgn = determine_sign(data['ph1',0]['ph2',1])
+mysgn = myslice['ph1',0]['ph2',1].real.sum('t2').run(np.sign)
 data *= mysgn
 #}}}
 data = data['t2':f_range]
