@@ -41,7 +41,6 @@ fl.image(data)
 #}}}
 #{{{Changing sign of all signal to be the same so we don't have to
 # deal with the null of the signal
-print(type(data))
 myslice = data['t2':f_range]
 mysgn = myslice['ph1',0]['ph2',1].real.sum('t2').run(np.sign)
 data *= mysgn
@@ -68,8 +67,6 @@ data.ft('t2')
 data,opt_shift,sigma = correl_align(data,indirect_dim='vd',
         signal_pathway = {'ph1':0,'ph2':1},
         sigma = 50)
-fl.next(r'After Correlation, $\varphi$ domain')
-fl.image(data)
 data.ift('t2')
 data.ft(['ph1','ph2'])
 fl.next('Aligned Data -- Time Domain')

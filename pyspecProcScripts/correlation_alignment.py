@@ -71,15 +71,9 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         avg_dim_len = len(s.getaxis(avg_dim))
         s.smoosh(indirect)
     s.ift(list(signal_pathway.keys()))
-    ph_lens = []
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len = {j:ndshape(s)[j] for j in signal_pathway.keys()}
-    for x in range(len(signal_keys)):
-        #print(len(s.getaxis(signal_keys[x])))
-        #ph_lens = [len(j) for j in (s.getaxis(signal_keys[x]))] 
-        ph_length = len(s.getaxis(signal_keys[x]))
-        ph_lens.append(ph_length)
     N = ndshape(s)[indirect_dim]
     sig_energy = (abs(s)**2).data.sum().item() / N
     if fl is not None:
