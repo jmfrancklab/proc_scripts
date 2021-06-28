@@ -134,7 +134,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         correl.ft('t2', shift=True, pad=2**14)
         for k,v in ph_len.items():
                 correl.ft(['Delta%s'%k.capitalize()])
-        for j in range(1,len(ph_len.keys())):
+        for j in range(1,len(ph_len.keys())+1):
             for k,v in ph_len.items():
                 correl = correl['Delta'+k.capitalize(),j]+correl['Delta'+k.capitalize(),0]
         if my_iter ==0:
