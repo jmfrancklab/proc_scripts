@@ -32,6 +32,6 @@ for filename,nodename,file_location,postproc in [
     myslice = s['t2':freq_range]
     mysign = determine_sign(select_pathway(myslice,signal_pathway,mult_ph_dims=False))
     enhancement,idx_maxpower = process_enhancement(s,searchstr = filename,
-            freq_range=freq_range, t_range=t_range,flip=True,sign=mysign,fl=fl)
+            freq_range=freq_range, t_range=t_range,sign=mysign,fl=fl)
     fl.show()
 
