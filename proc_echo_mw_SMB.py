@@ -26,7 +26,7 @@ fl = fl_mod()
 #{enter parameters and load data
 simple_integral = True # don't need to enter t_max or f_range if True.
 t_max = 50e-3 # seconds
-f_range = (-0.2e3, 0.2e3) # tuple, Hz
+f_range = (-0.25e3, 0.25e3) # tuple, Hz
 #s = find_file('210617_T177R1a_pR_DDM_ODNP',exp_type='odnp',expno='enhancement',
 #        postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
 s = find_file('210623_F195R1a_pR_DHPC_ODNP',exp_type='odnp',expno='enhancement',
@@ -49,11 +49,11 @@ d = s['ph1',1].C
 if simple_integral:
     d = d['t2':(-100,100)]
     fl.next('zoomed in')
-    fl.image(s['ph1',1][
+    fl.image(s['ph1',1]['t2':(-200,200)].C)
 else:
     d = d['t2',f_range]
     fl.next('sliced to integration bounds')
-fl.image(d)
+    fl.image(s['ph1',1]['t2':2*f_range].C)
 d.integrate('t2')
 d /= max(d.data)
 #d /= min(d.data)

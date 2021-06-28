@@ -1,4 +1,4 @@
-from proc_scripts import * 
+from pyspecProcScripts import * 
 from pyspecdata import *
 from sympy import symbols
 
