@@ -1,32 +1,43 @@
 from pyspecdata import *
-from pylab import subplots
+from pylab import subplots, axvline
 import numpy as np
 from .fwhm_calculate import fwhm_calculator
 import logging
 
 
 def integrate_limits(s, axis="t2", fwhm=100, fl=None):
-    signal_sign = s.C.sum(axis).run(np.real).run(np.sign)
-    temp = abs(s).real * signal_sign
+    temp = s.C.mean_all_but(axis)
+    if fl is not None:
+        fl.next('integration diagnostic')
+        fl.push_marker()
+        fl.plot(abs(temp))
+    temp.run(np.real)
+    temp /= temp.C.sum(axis).run(np.sign) # flip it so it's pointing up
+    if fl is not None:
+        fl.plot(temp)
 
     # pulled from apodization code
     sigma = nddata(np.linspace(1e-5,1e3,1000),'sigma').set_units('sigma','s')
-    s_avg = s.C.mean_all_but('t2')
-    gaussians = np.exp(-s_avg.C.fromaxis('t2')**2/2/sigma**2)
-    signal_E = (abs(s_avg * gaussians)**2).sum('t2')
+    gaussians = np.exp(-temp.C.fromaxis(axis)**2/2/sigma**2)
+    signal_E = (abs(temp * gaussians)**2).sum(axis)
     signal_E /= signal_E.data.max()
     filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
     if fl is not None:
-        fl.push_marker()
-        fl.next('signal Energy')
+        fl.next('integration diagnostic -- signal Energy')
         fl.plot(signal_E, human_units=False)
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
-        fl.pop_marker()
     fwhm = filter_width
     print("FWHM IS",fwhm)
-    fl.push_marker()
-    temp.mean_all_but(axis)
     # https://en.wikipedia.org/wiki/Full_width_at_half_maximum
     temp.convolve(axis, fwhm/(2*np.sqrt(np.log(4))))
-    fl.pop_marker()
-    return temp.contiguous(lambda x: abs(x) > 0.5 * abs(x).data.max())[0]
+    #temp *= sqrt(fwhm/(2*np.sqrt(np.log(4))))
+    if fl is not None:
+        fl.next('integration diagnostic')
+        fl.plot(temp)
+    freq_limits = temp.contiguous(lambda x: abs(x) > 0.5 * abs(x).data.max())[0]
+    if fl is not None:
+        fl.next('integration diagnostic')
+        axvline(x = freq_limits[0], c='k', alpha=0.75)
+        axvline(x = freq_limits[-1], c='k', alpha=0.75)
+        fl.pop_marker()
+    return freq_limits
