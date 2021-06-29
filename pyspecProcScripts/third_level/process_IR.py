@@ -157,7 +157,7 @@ def process_IR(s, this_l = 0.032,
     s.ft(['ph1','ph2'])
     if fl is not None:
         fl.next(r'after correlation')
-        fl.image(as_scan_nbr(s)) 
+        fl.image(as_scan_nbr(s))
     if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
@@ -172,10 +172,8 @@ def process_IR(s, this_l = 0.032,
         fl.image(as_scan_nbr(s))
     #}}}    
     s *= sgn
-    data = s.C
-    #zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
-    #if flip:
-    #    s['vd',:zero_crossing] *= -1
+    if flip:
+        s *= -1
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)
