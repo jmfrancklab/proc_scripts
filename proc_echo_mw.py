@@ -12,7 +12,11 @@ plt.rcParams.update({
 logger = init_logging("info")
 t2 = symbols('t2')
 signal_pathway = {'ph1':1}
+<<<<<<< HEAD
 freq_range= (-4e3,4e3)
+=======
+freq_range= (-1e3,1.5e3)
+>>>>>>> d9fae807172287770788f27d3c53268612a74223
 t_range = (0,0.083)
 fl = fl_mod()
 #}}}

@@ -45,7 +45,7 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     s.ift('t2')
     s.reorder(['ph1','power','t2'])
     if fl is not None:
-        fl.push_marker()
+        #fl.push_marker()
         fl.next('time domain')
         if avg_dim:
             fl.image(s.C.setaxis('nScans','#').set_units('nScans',
@@ -103,7 +103,6 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
                     'scan #').setaxis('power','#').set_units('power','scan #'))
         else:
             fl.image(s.setaxis('power','#').set_units('power','scan #'))
-
     s.reorder(['ph1','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     #}}}
