@@ -28,9 +28,6 @@ def select_pathway(s,pathway):
     for k,v in pathway.items():
         retval = retval[k,v]
     return retval    
-def as_scan_nbr(s):
-        return s.C.setaxis('nScans','#').set_units('nScans','scan
-                #').setaxis('power','#').set_units('power','scan #')
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
 # list of integrals for ODNP
@@ -39,9 +36,10 @@ def as_scan_nbr(s):
 # leave this as a loop, so you can load multiple files
 def process_enhancement(s, signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
-        t_range=(0,0.083),sgn=None,fl=None):
+        t_range=(0,0.083),sgn=None,avg_dim=None,fl=None):
     s *= sgn
     if fl is not None:
+        fl.push_marker()
         fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
                 s,thisrange=freq_range) # visualize the frequency limits
     s.ift('t2')
@@ -49,7 +47,11 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     if fl is not None:
         fl.push_marker()
         fl.next('time domain')
-        fl.image(as_scan_nbr(s))
+        if avg_dim:
+            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
+                    'scan #').setaxis('power','#').set_units('power','scan #'))
+        else:
+            fl.image(s.setaxis('power','#').set_units('power','scan #'))
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
@@ -69,7 +71,11 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     s = s['t2':freq_range] 
     if fl is not None:
         fl.next('freq_domain before hermitian')
-        fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+        if avg_dim:
+            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
+                    'scan #').setaxis('power','#').set_units('power','scan #'))
+        else:
+            fl.image(s.setaxis('power','#').set_units('power','scan #'))
     #{{{Applying phasing corrections
     s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
@@ -92,34 +98,46 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     s.ft('t2')
     if fl is not None:
         fl.next('After zeroth order phase correction')
-        fl.image(as_scan_nbr(s))
+        if avg_dim:
+            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
+                    'scan #').setaxis('power','#').set_units('power','scan #'))
+        else:
+            fl.image(s.setaxis('power','#').set_units('power','scan #'))
+
     s.reorder(['ph1','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     #}}}
     #{{{Applying correlation alignment
     s,opt_shift,sigma = correl_align(s,indirect_dim='power',
-            ph1_selection=1,sigma=50)
+            signal_pathway=signal_pathway,sigma=50)
+    s.ft(['ph1'])
     fl.basename= None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
         s.set_units('t2','Hz')
-        fl.image(s.C.setaxis( 'power','#').set_units('power','scan #'))
+        if avg_dim:
+            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
+                    'scan #').setaxis('power','#').set_units('power','scan #'))
+        else:
+            fl.image(s.setaxis('power','#').set_units('power','scan #'))
     s.ift('t2')
-    if fl is not None:
-        fl.next('t domain after correlation')
-        fl.image(s.C.setaxis( 'power','#').set_units('power','scan #'))
-    s.ft(['ph1'])
-    if fl is not None:
-        fl.next('after correlation alignment FTed ph')
-        fl.image(as_scan_nbr(s))
     s.reorder(['ph1','power','t2'])
     if fl is not None:
         fl.next('after correlation -- time domain')
-        fl.image(as_scan_nbr(s))
+        if avg_dim:
+            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
+                    'scan #').setaxis('power','#').set_units('power','scan #'))
+        else:
+            fl.image(s.setaxis('power','#').set_units('power','scan #'))
+
     s.ft('t2')    
     if fl is not None:
         fl.next('after correlation -- frequency domain')
-        fl.image(as_scan_nbr(s))
+        if avg_dim:
+            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
+                    'scan #').setaxis('power','#').set_units('power','scan #'))
+        else:
+            fl.image(s.setaxis('power','#').set_units('power','scan #'))
     #}}}
     s.ift('t2')
     d=s.C
@@ -130,11 +148,14 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     d.ft('t2')
     if fl is not None:
         fl.next('FID sliced')
-        fl.image(d.C.setaxis(
-'power','#').set_units('power','scan #'))
+        if avg_dim:
+            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
+                    'scan #').setaxis('power','#').set_units('power','scan #'))
+        else:
+            fl.image(s.setaxis('power','#').set_units('power','scan #'))
     d *= sgn
-    if nScans:
-        d.mean('nScans')
+    if avg_dim:
+        d.mean(avg_dim)
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
@@ -152,16 +173,18 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     #{{{Normalizing by max 
     d /= max(d.data)
     #}}}
+
+    #{{{setting appropriate power axis
     power_axis_dBm = array(s.get_prop('meter_powers'))
     power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
     power_axis_W = r_[0,power_axis_W]
     d.setaxis('power',power_axis_W)
-    thiscolor = next(thesecolors)
+    d.set_units('power','W')
     if fl is not None:
         fl.next('E(p)')
         fl.plot(d['power',:-3], 'ko', capsize=6, alpha=0.3)
-        fl.plot(d['power',-3:],'ro',capsize=6, alpha=0.3)
+        fl.plot(d['power',-3:], 'ro',capsize=6, alpha=0.3)
         fl.pop_marker()
     enhancement = d['power',:-3]
     return enhancement
