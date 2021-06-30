@@ -1,3 +1,4 @@
+#{imports,etc.
 from pyspecdata import *
 from pyspecProcScripts import *
 from pyspecProcScripts import postproc_dict
@@ -11,31 +12,54 @@ import matplotlib.pyplot as plt
 #from scipy.optimize import leastsq,minimize,basinhopping,nnls
 #import os
 #os.chdir('C:/Users/saman/proc_scripts/')
-#{{{input parameters
 plt.rcParams.update({
     "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
     "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
     "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
 })
-logger = init_logging("info")
+#}
+#{ initializing and symbols
+#logger = init_logging("info")
 t2 = symbols('t2')
 fl = fl_mod()
-#}}}
+#}
+#{enter parameters and load data
+simple_bounds = False # don't need to enter t_max or f_range if True.
+t_max = 50e-3 # seconds
+f_range = [-0.25e3, 0.25e3] # list, Hz
 s = find_file('210617_T177R1a_pR_DDM_ODNP',exp_type='odnp',expno='enhancement',
         postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
-fl.next('raw data')
+#s = find_file('210623_F195R1a_pR_DHPC_ODNP',exp_type='odnp',expno='enhancement',
+#        postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=None)
+#}
+#{showing raw data - and cutting off excess
 s = s['t2':(-1e3,1e3)]
-fl.next('sliced to integration bounds')
+fl.next('raw data')
 fl.image(s)
+fl.next('raw data - time domain')
+fl.image(s.C.ift('t2'))
+#}
+#{zeroeth order phasing
 ph0 = s['power',-4].sum('t2')
 ph0 /= abs(ph0)
 s /= ph0
 fl.next('phased')
 fl.image(s)
-s = s['t2':(-100,100)]
+#}
+#{integrating data with bounds
 d = s['ph1',1].C
+if simple_bounds:
+    d = d['t2':(-100,100)]
+    fl.next('zoomed in')
+    fl.image(s['ph1',1]['t2':(-200,200)].C)
+else:
+    d = d['t2':f_range]
+    fl.next('sliced to integration bounds')
+    fl.image(s['ph1',1]['t2':(2*f_range[0],2*f_range[1])].C)
 d.integrate('t2')
 d /= max(d.data)
+#d /= min(d.data)
+#}
 #{getting power axis
 power_axis_dBm = array(d.get_prop('meter_powers'))
 power_axis_W = zeros_like(power_axis_dBm)
@@ -43,12 +67,17 @@ power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
 power_axis_W = r_[0,power_axis_W]
 d.setaxis('power',power_axis_W)
 #}
-fl.next('simple integral')
+#{plot integrated data
+if simple_bounds:
+    fl.next('simple integral')
+else:
+    fl.next('polarization transferred')
 fl.plot(d['power',:-3],'ko')
 fl.plot(d['power',-3:],'ro')
 plt.xlabel('power (W)')
 plt.ylabel('integrated 1HNMR signal')
-#{Enhancement
+#}
+#{enhancement
 E = 1 - d.C
 fl.next('enhancement curve')
 fl.plot(E['power',:-3],'ko')

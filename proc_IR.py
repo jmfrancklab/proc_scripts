@@ -8,9 +8,12 @@ save_npz = False
 #}}}
 coherence_pathway = {'ph1':0,'ph2':1}
 for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT in [
-        ('210617_T177R1a_pR_DDM_ODNP','odnp',
+        ('210623_F195R1a_pR_DHPC_ODNP','odnp',
             'FIR_0dBm','spincore_IR_v1',
-            (-0.4e3,0.4e3),(None,50e-3),True,False,False),
+            (-0.5e3,0.5e3),(None,50e-3),True,False,False),
+#        ('210617_Y191R1a_pR_DDM_ODNP','odnp',
+#            'FIR_36dBm','spincore_IR_v1',
+#            (-0.5e3,0.5e3),(None,50e-3),True,False,False),
 #        ('210617_T177R1a_pR_DDM_ODNP','odnp',
 #            'FIR_36dBm','spincore_IR_v1',
 #            (-0.5e3,0.5e3),(None,50e-3),True,False,False),
@@ -20,9 +23,9 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT 
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
-#    s = s['vd',:-1]
+    s = s['vd',:-1]
     myslice = s['t2':f_range]
-    mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=None)
-    T1 = process_IR(s,label=thisfile,W=1,f_range=f_range,t_range=t_range,
+    mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=fl)
+    T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,
             clock_correction=clock_correction,IR=IR,flip=True,sign=mysgn,fl=fl) 
     fl.show()
