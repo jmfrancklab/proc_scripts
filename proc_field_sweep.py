@@ -25,7 +25,6 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
         ]:
     s = find_file(filename,exp_type='odnp',#'ODNP_NMR_comp/field_dependent',
             expno=nodename,postproc=postproc,lookup=postproc_dict,fl=fl)
-    #fl.show();quit()
     freqs = s.get_prop('acq_params')['mw_freqs']
     s = s['t2':freq_slice]
     if s.get_prop('acq_params')['nPhaseSteps'] == 8:
@@ -48,15 +47,9 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
     fl.next('sweep, without hermitian')
     fl.plot(abs(s_),'o-')
     field_idx = (abs(s_.data)).argmax()
-    print(field_idx)
     print('At $B_0$ = %0.1f, $f_0$ = %0.8e'%(s.getaxis('Field')[field_idx],freqs[field_idx]))
-#    gamma_eff = (/s.getaxis('Field')[field_idx])
-#    s_.setaxis('Field',lambda x: gamma_eff*x)
-#    fl.next('sweep across carrier freq')
-#    fl.plot(abs(s_),'go-')
-#    xlabel('frequency (MHz)')
-#    s_.setaxis('Field',lambda x: x/f_dip)
-#    fl.next('sweep across ppt-value')
-#    fl.plot(abs(s_),'mo-')
-#    xlabel('ppt (MHz/GHz)')
+    fitting = abs(s_).polyfit('Field',order=2)
+    Field = nddata(r_[3503.5:3508:100j],'Field')
+    fl.plot(Field.eval_poly(fitting,'Field'),label='fit')
+    print('I found a max at',Field.eval_poly(fitting,'Field').argmax().item())
 fl.show()
