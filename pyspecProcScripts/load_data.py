@@ -492,11 +492,11 @@ def proc_field_sweep_au(s,fl=None):
         s.ft(['ph1'])
     if fl is not None:    
         fl.next('raw data -- coherence channels')
-        fl.image(s)
+        fl.image(s.C.setaxis('Field','#').set_units('Field','scan #'))
     s.ft('t2',shift=True)
     if fl is not None:
         fl.next('frequency domain raw data')
-        fl.image(s)
+        fl.image(s.C.setaxis('Field','#').set_units('Field','scan #'))
     return s
 
 
