@@ -44,7 +44,6 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
                 +str(extra_dims))
     collected_variance = ndshape(
          [ndshape(s)[indirect],len(error_path)],[indirect,'pathways']).alloc()
-    # this is not averaging over all the pathways!!!! -- addressed in issue #44 
     avg_error = []
     for j in range(len(error_path)):
         # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
