@@ -1,4 +1,10 @@
-The processing will be structured into multiple levels.
+If you're uncertain, start with examples!
+
+.. toctree::
+
+    auto_examples/index
+
+The processing is structured into multiple levels.
 
 Lowest level
 ============
@@ -72,11 +78,3 @@ in a single module, that utilize these to
 
 .. automodule:: toplevel
 
-Example Gallery
-===============
-
-If you're uncertain, start here!
-
-.. toctree::
-
-    auto_examples/index

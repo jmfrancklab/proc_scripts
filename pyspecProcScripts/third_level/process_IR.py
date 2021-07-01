@@ -5,7 +5,7 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
-from proc_scripts import *
+from pyspecProcScripts import *
 t2 = symbols('t2')
 
 def select_pathway(s,pathway):
@@ -28,9 +28,9 @@ def process_IR(s, label='', fl=None,
         t_range = (None,83e-3),
         IR = True,
         flip=False,
-        sign = None,
+        sgn = None,
         ILT=False):
-    s *= sign
+    s *= sgn
     s['ph2',0]['ph1',0]['t2':0] = 0 # kill the axial noise
     s.ift('t2')
     s.reorder(['ph1','ph2','vd','t2'])
@@ -54,12 +54,12 @@ def process_IR(s, label='', fl=None,
     s.ift('t2')
     if clock_correction:
         #{{{ clock correction
-        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
+        clock_corr = nddata(np.linspace(-2,2,2500),'clock_corr')
         s.ft('t2')
         if fl is not None:
             fl.next('before clock correction')
             fl.image(as_scan_nbr(s))
-        s_clock=s['ph1',1]['ph2',0].sum('t2')
+        s_clock=s['ph1',0]['ph2',1].sum('t2')
         s.ift(['ph1','ph2'])
         min_index = abs(s_clock).argmin('vd',raw_index=True).item()
         s_clock *= np.exp(-1j*clock_corr*s.fromaxis('vd'))
@@ -76,6 +76,7 @@ def process_IR(s, label='', fl=None,
             fl.next('after auto-clock correction')
             fl.image(s.C.setaxis('vd','#'))
         s.ift('t2')
+    #fl.show();quit()    
     #{{{Applying phase corrections    
     best_shift,max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
     logger.info(strm("best shift is", best_shift))
@@ -105,7 +106,8 @@ def process_IR(s, label='', fl=None,
     s.ft('t2')
     if fl is not None:
         fl.next('phased data -- frequency domain')
-        fl.image(as_scan_nbr(s)) 
+        fl.image(as_scan_nbr(s))
+    #fl.show();quit()    
     #}}}
     #}}}
     if 'ph2' in s.dimlabels:
@@ -130,7 +132,8 @@ def process_IR(s, label='', fl=None,
     s.ft(['ph1','ph2'])
     if fl is not None:
         fl.next(r'after correlation')
-        fl.image(as_scan_nbr(s))    
+        fl.image(as_scan_nbr(s)) 
+    #fl.show();quit()    
     if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd','t2'])
     else:
@@ -144,7 +147,7 @@ def process_IR(s, label='', fl=None,
         fl.next('FID sliced -- frequency domain')
         fl.image(as_scan_nbr(s))
     #}}}    
-    #s *= sign
+    s *= sgn
     data = s.C
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
     if flip:
@@ -156,7 +159,7 @@ def process_IR(s, label='', fl=None,
     error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
     # }}}
     #{{{Integrating with associated error from excluded pathways    
-    s_int,frq_slice,mystd = integral_w_errors(s,signal_pathway,error_path,
+    s_int,frq_slice = integral_w_errors(s,signal_pathway,error_path,
             fl=fl,return_frq_slice=True)
     x = s_int.get_error()
     x[:] /= sqrt(2)
