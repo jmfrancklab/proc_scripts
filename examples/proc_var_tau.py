@@ -7,7 +7,7 @@ Demonstrates how to load a h5 file.
 """
 from pylab import *
 from pyspecdata import *
-from pyspecProcScripts.load_data import postproc_dict
+from pyspecProcScripts.load_data import lookup_table
 import h5py as h5
 
 with figlist_var() as fl:
@@ -25,7 +25,7 @@ with figlist_var() as fl:
             logger.info(strm(fp.keys()))
         # }}}
         d = find_file(filename,exp_type=exp_type,expno=expno,postproc=postproc,
-                lookup=postproc_dict,fl=fl)
+                lookup=lookup_table,fl=fl)
         d = d['t2':f_range]
         d = d['ph1',+1]['ph2',-2]
         d.ift('t2')

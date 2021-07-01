@@ -3,7 +3,7 @@ if generate_image_files:
     import os; os.environ['pyspecdata_figures']='latex'
 from pyspecdata import *
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
+from pyspecProcScripts import lookup_table
 
 init_logging(level="debug")
 d = find_file(
@@ -11,7 +11,7 @@ d = find_file(
     exp_type="ODNP_NMR_comp",
     expno="enhancement",
     postproc="spincore_ODNP_v1",
-    lookup=postproc_dict,
+    lookup=lookup_table,
 )
 fl = figlist_var()
 fl.next("freq")

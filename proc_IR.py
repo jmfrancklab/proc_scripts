@@ -1,6 +1,6 @@
 from pyspecdata import *
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
+from pyspecProcScripts import lookup_table
 from pyspecProcScripts.third_level.process_IR import process_IR
 fl = fl_mod()
 # {{{ input parameters
@@ -18,7 +18,7 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT 
         #('w3_201111','test_equip',2,'ag_IR2H',(-600,600),(0,None),True)
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
-            postproc=postproc,lookup=postproc_dict,fl=fl)
+            postproc=postproc,lookup=lookup_table,fl=fl)
     myslice = s['t2':f_range]
     mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=fl)
     T1 = process_IR(s,label=thisfile,W=7,f_range=f_range,t_range=t_range,

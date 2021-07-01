@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from pyspecProcScripts import *
-from pyspecProcScripts.load_data import postproc_dict
+from pyspecProcScripts.load_data import lookup_table
 from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
@@ -18,7 +18,7 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
         ]:
     #{{{loads raw data and plots
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_dict,fl=fl)
+            postproc=postproc, lookup=lookup_table,fl=fl)
     s.mean('nScans')    
     #}}}
     #{{{rough centering of sliced data 

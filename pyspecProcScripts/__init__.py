@@ -1,6 +1,6 @@
 from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs
 from .first_level.fake_data import fake_data
-from .load_data import postproc_dict
+from .load_data import lookup_table
 from .plotting import expand_limits,draw_limits,fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
 from .baseline import calc_baseline
@@ -30,7 +30,7 @@ __all__ = ['calc_baseline',
         'fwhm_calculator',
         'integrate_limits',
         'ph1_real_Abs',
-        'postproc_dict',
+        'lookup_table',
         'power2dBm',
         'recovery',
         'select_pathway',

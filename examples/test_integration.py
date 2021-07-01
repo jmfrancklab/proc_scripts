@@ -19,16 +19,13 @@ for thisfile, exp_type, nodename in [
     )
 ]:
     # {{{processing data
-    s = find_file(thisfile, exp_type=exp_type, expno=nodename)
-    nScans = s.get_prop("acq_params")["nScans"]
-    s.reorder("t", first=True)
-    s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
-    s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
-    s.setaxis("nScans", r_[0:nScans])
-    s.set_units("t2", "s")
-    s.reorder("t2", first=False)
-    s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"])
+    s = find_file(
+        thisfile,
+        exp_type=exp_type,
+        expno=nodename,
+        postproc="spincore_echo_v1",
+        lookup=lookup_table,
+    )
     fl.next("raw data")
     fl.image(s)
     s.ift("t2")

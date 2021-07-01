@@ -476,7 +476,7 @@ def proc_ESR(s):
     logging.info(strm(s_integral))
     return s    
 
-postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
+lookup_table = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
         'ag_CPMG_strob':proc_bruker_CPMG_v1,
         'ag_T1CPMG_2h':proc_bruker_T1CPMG_v1,
