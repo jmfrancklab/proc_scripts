@@ -14,20 +14,20 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     Parameters
     ==========
     sig_path:   dict
-                dictionary of the path of the desired signal
+                Dictionary of the path of the desired signal.
     error_path: dict
-                dictionary of all coherence pathways that are 
-                not the signal pathway
+                Dictionary of all coherence pathways that are 
+                not the signal pathway.
     indirect:   str
-                indirect axis
+                Indirect axis.
     direct:     str
-                direct axis
+                Direct axis.
     
     Returns
     =======
     s:       nddata
-                data with error associated with coherence pathways
-                not included in the signal pathway
+             Data with error associated with coherence pathways
+             not included in the signal pathway.
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
@@ -40,10 +40,8 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     all_labels -= set([indirect,direct])
     extra_dims = [j for j in all_labels if not j.startswith('ph')]
     if len(extra_dims) > 0:
-     raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
-             +str(extra_dims))
-
-
+        raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
+                +str(extra_dims))
 
     collected_variance = ndshape(
          [ndshape(s)[indirect],len(error_path)],[indirect,'pathways']).alloc()
@@ -93,6 +91,6 @@ def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None):
     s_forerror *= df**2
     s_forerror *= N
     retval = sqrt(s_forerror.data)
-    return retval,N,df
+    return retval
      
 

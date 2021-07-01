@@ -20,7 +20,6 @@ for thisfile,exp_type,nodename in [
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.labels({'ph2':r_[0.,2.]/4,
         'ph1':r_[0.,1.,2.,3.]/4})
-    s.reorder(['ph1','ph2'])
     s.setaxis('nScans',r_[0:nScans])
     s.set_units('t2','s')
     s.reorder('t2',first=False)
@@ -44,8 +43,7 @@ for thisfile,exp_type,nodename in [
     #{{{Phase corrections
     s.ift('t2')
     best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway))
-    s.setaxis('t2',lambda x: x-best_shift)
-    s.register_axis({'t2':0})
+    s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     fl.next('After hermitian phase correction')
     s.ft('t2')
     fl.image(s)
@@ -78,8 +76,8 @@ for thisfile,exp_type,nodename in [
     #s.ft('t2')
     #fl.next('after correl - freq domain')
     #fl.image(s)
-    ##}}}
     #s.ift('t2')
+    ##}}}
     s = s['t2':(0,t_range[-1])]
     s['t2':0] *= 0.5
     s.ft('t2')
@@ -90,7 +88,7 @@ for thisfile,exp_type,nodename in [
     
     #{{{Normalization
     frq_slice = integrate_limits(select_pathway(s,signal_pathway),fl=fl)
-    d = s.C['t2':frq_slice]
+    d = s['t2':frq_slice].C
     d = select_pathway(d,signal_pathway)
     d.integrate('t2')
     avg_d = d.C.mean().item()
@@ -138,13 +136,15 @@ for thisfile,exp_type,nodename in [
     #}}}
 
     #{{{Calculating propagated error along active CT on noise slice
-    active_error,N,df = active_propagation(s, signal_pathway, indirect='nScans',fl=fl)
+    active_error = active_propagation(s, signal_pathway, indirect='nScans',fl=fl)
     active_error[:] /= 2
     avg_active_error = active_error.mean().item()
     #}}}
+
     #{{{Calculating the std dev -- error associated with the integrals
     numpy_s_int = d.run(np.std,'nScans')
-   #}}} 
+    #}}} 
+    
     #{{{Plotting Errors
     fl.next('comparison of std')
     for i in range(len(s_int_lst)):
@@ -166,5 +166,5 @@ for thisfile,exp_type,nodename in [
     lims[0] = 0
     ax.set_ylim(lims)
     plt.legend()
-    fl.show();quit()
+    fl.show()
 
