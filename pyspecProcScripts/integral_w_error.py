@@ -72,10 +72,11 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     elif return_frq_slice:
         return retval, frq_slice
 
-def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None,offset=50.0):
+def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None,offset=500.0):
     """propagate error from the region `offset` to the right of the peak (where
     we assume there is only noise),  in the signal pathway `signal_path`, which
     we assume is the active coherence pathway.
+    Include only the real part of the signal.
 
     Parameters
     ==========
@@ -110,7 +111,7 @@ def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None,offset
                 +str(extra_dims))
     s_forerror = select_pathway(s, signal_path)
     N = ndshape(s_forerror)[direct]
-    s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
+    s_forerror.run(real).run(lambda x: abs(x)**2).mean_all_but([direct,indirect]).mean(direct)
     s_forerror *= df**2
     s_forerror *= N
     return s_forerror.run(sqrt)

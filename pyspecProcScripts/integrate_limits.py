@@ -37,7 +37,6 @@ def integrate_limits(s, axis="t2", fl=None):
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
         fl.pop_marker()
     fwhm = filter_width
-    print("FWHM IS",fwhm)
     fl.push_marker()
     temp.mean_all_but(axis)
     # https://en.wikipedia.org/wiki/Full_width_at_half_maximum

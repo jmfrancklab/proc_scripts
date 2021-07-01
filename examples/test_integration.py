@@ -7,8 +7,8 @@ import numpy as np
 
 fl = figlist_var()
 signal_pathway = {"ph1": 1, "ph2": 0}
-t_range = (0, 0.05)
-f_range = (-0.11e3, 0.12e3)
+t_range = (0, 0.05) # must start at 0 for an FID
+f_range = (-1e3, 1e3)
 excluded_pathways = [(0, 0), (0, 3)]
 colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
 for thisfile, exp_type, nodename in [
@@ -35,9 +35,9 @@ for thisfile, exp_type, nodename in [
     s.ift(["ph1", "ph2"])
     t_rx = (t_range[-1] / 4) * 3
     s -= s["t2":(t_rx, None)].data.mean()
-    s.ft("t2")
     s.ft(["ph1", "ph2"])
     # }}}
+    s.ft("t2")
     s = s["t2":f_range]
     fl.next("freq domain")
     fl.image(s)
@@ -45,17 +45,10 @@ for thisfile, exp_type, nodename in [
     s.ift("t2")
     best_shift, window_size = hermitian_function_test(select_pathway(s, signal_pathway))
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-    fl.next("After hermitian phase correction")
-    s.ft("t2")
-    fl.image(s)
-    s.ift("t2")
     ph0 = select_pathway(s, signal_pathway)["t2":0]
     ph0 /= abs(ph0)
-    logger.info(
-        strm("there is only one dimension left -- standard 1D zeroth order phasing")
-    )
     s /= ph0
-    fl.next("after zeroth order phasing applied")
+    fl.next("After phase correction")
     s.ft("t2")
     fl.image(s)
     # }}}
@@ -81,21 +74,21 @@ for thisfile, exp_type, nodename in [
     # fl.image(s)
     # s.ift('t2')
     ##}}}
-    s = s["t2" : (0, t_range[-1])]
+    fl.next("FID sliced")
+    s = s["t2" : t_range]
     s["t2":0] *= 0.5
     s.ft("t2")
-    fl.next("FID sliced")
     fl.image(s)
     s.reorder(["ph1", "ph2", "nScans", "t2"])
     # }}}
 
     # {{{Normalization
     frq_slice = integrate_limits(select_pathway(s, signal_pathway), fl=fl)
-    d = s["t2":frq_slice].C
-    d = select_pathway(d, signal_pathway)
-    d.integrate("t2")
-    avg_d = d.C.mean().item()
-    d /= avg_d
+    s_integral = s["t2":frq_slice].C # the "official" copy of the integral
+    s_integral = select_pathway(s_integral, signal_pathway)
+    s_integral.integrate("t2")
+    avg_d = s_integral.C.mean().item()
+    s_integral /= avg_d
     s /= avg_d
     # }}}
 
@@ -111,38 +104,27 @@ for thisfile, exp_type, nodename in [
     # {{{Making lists for all individual inactive pathways to get error
     # associated with each one
     s_int_lst = []
-    ph_lst = [
-        [{"ph1": 0, "ph2": 0}],
-        [{"ph1": 0, "ph2": 1}],
-        [{"ph1": 1, "ph2": 1}],
-        [{"ph1": 2, "ph2": 0}],
-        [{"ph1": 2, "ph2": 1}],
-        [{"ph1": 3, "ph2": 0}],
-        [{"ph1": 3, "ph2": 1}],
-    ]
     error_lst = []
     avg_error_lst = []
-    for i in range(len(ph_lst)):
-        test = s.get_ft_prop("t2")
-        if s.get_ft_prop("t2") is False:
-            s.ft("t2")
-        s_int, frq_slice = integral_w_errors(
+    for thispathway in error_pathway:
+        s_thisint, frq_slice_check = integral_w_errors(
             s,
             signal_pathway,
-            ph_lst[i],
+            [thispathway],
             indirect="nScans",
             fl=fl,
             return_frq_slice=True,
         )
-        error = s_int.get_error()
-        error[:] /= 2
+        assert all(frq_slice_check == frq_slice)
+        error = s_thisint.get_error()
         avg_error = error.mean().item()
-        s_int_lst.append(s_int)
+        s_int_lst.append(s_thisint)
         error_lst.append(error)
         avg_error_lst.append(avg_error)
     # }}}
 
-    # {{{Calculating propagated error averaged over all inactive CTs
+    # {{{ Calculating propagated error averaged over all inactive CTs (as the
+    #     function is meant to be called)
     averaged_inactive, frq_slice = integral_w_errors(
         s,
         signal_pathway,
@@ -152,27 +134,22 @@ for thisfile, exp_type, nodename in [
         return_frq_slice=True,
     )
     averaged_inactive_error = averaged_inactive.get_error()
-    averaged_inactive_error[:] /= 2
     avg_avg_error = averaged_inactive_error.mean().item()
     # }}}
 
-    # {{{Calculating propagated error along active CT on noise slice
+    # {{{ Calculating propagated error along active CT on noise slice
     active_error = active_propagation(s, signal_pathway, indirect="nScans", fl=fl)
     avg_active_error = active_error.C.mean("nScans").item()
     # }}}
 
-    # {{{Calculating the std dev -- error associated with the integrals
-    numpy_s_int = d.run(np.std, "nScans")
-    # }}}
-
-    # {{{Plotting Errors
+    # {{{ Plotting Errors
     fl.next("comparison of std")
     for i in range(len(s_int_lst)):
         fl.plot(
             error_lst[i],
             "o",
             color=colors[i],
-            label="on excluded path of %s" % ph_lst[i],
+            label="on excluded path of %s" % error_pathway[i],
         )
     fl.plot(active_error, "x", label="propagated error from active CT in noise slice")
     fl.plot(
@@ -186,23 +163,26 @@ for thisfile, exp_type, nodename in [
             y=avg_error_lst[i],
             linestyle=":",
             color=colors[i],
-            label="averaged %s" % ph_lst[i],
+            label="averaged %s" % error_pathway[i],
         )
     axhline(
         y=avg_active_error,
-        linestyle=":",
+        linestyle="--",
         label="averaged propagated error from active CT in noise slice",
     )
     axhline(
         y=avg_avg_error,
-        linestyle=":",
+        linestyle="--",
         color="brown",
         label="averaged average propagated error from inactive CTs",
     )
+    # {{{ Calculating the std dev -- error associated with the integrals
+    s_integral.run(np.std, "nScans")
+    # }}}
     axhline(
-        y=numpy_s_int.data,
+        y=s_integral.data,
         c="k",
-        linestyle=":",
+        linestyle="-",
         label="std dev - error associated with the integrals",
     )
     # }}}
