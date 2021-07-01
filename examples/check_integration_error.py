@@ -61,7 +61,7 @@ for j in range(n_repeats):
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice,mystd = integral_w_errors(data,signal_pathway,error_pathway,
+    s_int,frq_slice = integral_w_errors(data,signal_pathway,error_pathway,
             indirect='vd', fl=fl,return_frq_slice=True)
     # }}}
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
