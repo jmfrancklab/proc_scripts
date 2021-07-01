@@ -73,6 +73,7 @@ def make_enhancement_data():
     return enhancement_data,E_f_range,E_signal_pathway
     #}}}
 
+#{{{Function that will apply phase corrections and the correlation alignment
 def processing(data, f_range, signal_path,label='',indirect=None):
     #{{{Changing sign of all signal to be the same so we don't have to
     # deal with the null of the signal
@@ -111,10 +112,13 @@ def processing(data, f_range, signal_path,label='',indirect=None):
     fl.next('%s Aligned Data -- Frequency Domain'%label)
     fl.image(data)
     #}}}
+
+#{{{Process the fake IR data and the fake enhancement data
 Ep, f_range, signal_path = make_enhancement_data()
 Ep = processing(Ep,f_range,signal_path,label='Enhancement',indirect='power')
 IR,IR_f_range, IR_signal_path = make_IR_data()
 IR = processing(IR, IR_f_range, IR_signal_path, label='IR',indirect='vd')
-fl.show();quit()
+#}}}
+fl.show()
 
 

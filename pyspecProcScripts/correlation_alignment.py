@@ -23,46 +23,47 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     Parameters
     ==========
     s:  nddata
-        an nddata object which contains phase cycle dimensions and an
-        indirect dimension
+        A nddata object which contains phase cycle dimensions and an
+        indirect dimension.
     align_phases:   boolean
-    indirect_dim:   str
-                    name of the indirect dimension along which you seek to align
-                    the transients
-    fig_title:      str
-                    name for the figures generated
     tol:            float
-                    sets the tolerance limit for the alignment procedure
+                    Sets the tolerance limit for the alignment procedure.
+    indirect_dim:   str
+                    Name of the indirect dimension along which you seek to align
+                    the transients.
+    fig_title:      str
+                    Title for the figures generated.
     signal_pathway: dict
-                    dictionary containing the signal pathway
+                    Dictionary containing the signal pathway.
     shift_bounds:   boolean
-                    keeps f_shift to be within a specified
+                    Keeps f_shift to be within a specified
                     limit (upper and lower bounds given by max_shift)
                     which should be around the location of the expected
-                    signal
+                    signal.
     avg_dim:        str
-                    dimension along which the data is being averaged
+                    Dimension along which the data is being averaged.
     max_shift:      float
-                    specifies the upper and lower bounds to the range over
+                    Specifies the upper and lower bounds to the range over
                     which f_shift will be taken from the correlation function.
-                    shift_bounds must be True
+                    Shift_bounds must be True.
     sigma:          int
-                    sigma value for the gaussian fitting. Related to the linewidth
+                    Sigma value for the Gaussian fitting. Related to the line width
                     of the given data.
     fl:             boolean 
                     fl=fl to show the plots and figures produced by this function
-                    otherwise, fl=None
+                    otherwise, fl=None.
                     
     Returns
     =======
     f_shift:    array
-                the optimized frequency shifts for each transient which will 
+                The optimized frequency shifts for each transient which will 
                 maximize their correlation amongst each other, thereby aligning
-                them
+                them.
     sigma:      float
-                the width of the Gaussian function used to frequency filter
+                The width of the Gaussian function used to frequency filter
                 the data in the calculation of the correlation function.
     """
+
     logging.info(strm("Applying the correlation routine"))
     if avg_dim:
         phcycdims = [j for j in s.dimlabels if j.startswith('ph')]
@@ -78,7 +79,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     sig_energy = (abs(s)**2).data.sum().item() / N
     if fl is not None:
         fl.next('before correlation\nsig. energy=%g'%sig_energy + fig_title)
-        fl.image(s.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
+        fl.image(s.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),human_units=False)
     energy_diff = 1.
     i = 0
     energy_vals = []
@@ -102,9 +103,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             s /= ph0
         s.ift('t2')
         s_copy = s.C
-        freq_filter = True
         s_copy.ft('t2')
-        sigma = sigma
         s_copy *= exp(-(s_copy.fromaxis('t2')-nu_center)**2/(2*sigma**2))
         s_copy.ift('t2')
         s_copy2 = s.C
@@ -120,16 +119,12 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         for j in range(1,N):
             correl += s_copy2 * s_copy.C.run(lambda x, axis=None: roll(x,j,axis=axis),
                 indirect_dim).run(conj)
-        if my_iter == 0:
-            logging.info(strm("holder"))
-            if fl is not None:
-                fl.next('Look at correlation function - time domain')
-                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
+        correl.reorder([indirect_dim,'t2'],first=False)
         if my_iter ==0:
             logging.info(strm("holder"))
             if fl is not None:
                 fl.next('correlation function\ntime domain, after apod')
-                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
+                fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
         correl.ft_clear_startpoints('t2')
         correl.ft('t2', shift=True, pad=2**14)
         for k,v in signal_pathway.items():
@@ -139,7 +134,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             logging.info(strm("holder"))
             if fl is not None:
                 fl.next('correlation function \nfreq domain, after apod')
-                fl.image(correl.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
+                fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
         if shift_bounds:
             f_shift = correl['t2':(-max_shift,max_shift)].run(real).argmax('t2')
         else:
@@ -152,7 +147,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             logging.info(strm("holder"))
             if fl is not None:
                 fl.next('after correlation\nbefore ph0 restore')
-                fl.image(s_copy.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
+                fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
         logging.info(strm('signal energy per transient (recalc to check that it stays the same):',(abs(s_copy**2).data.sum().item() / N)))
 
         this_E = (abs(s_copy.C.sum(indirect_dim))**2).data.sum().item() / N**2
@@ -170,7 +165,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         gca().yaxis.set_major_formatter(to_percent)
     if fl is not None:
         fl.next('after correlation\nph0 restored sig. energy=%g'%sig_energy)
-        fl.image(s_copy.C.setaxis('vd','#').set_units('vd','scan #'),human_units=False)
+        fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
     s.ift('t2')
     s *= np.exp(-1j*2*pi*f_shift*s.fromaxis('t2'))
     s.ft('t2')
