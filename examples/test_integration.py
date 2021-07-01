@@ -137,8 +137,7 @@ for thisfile,exp_type,nodename in [
 
     #{{{Calculating propagated error along active CT on noise slice
     active_error = active_propagation(s, signal_pathway, indirect='nScans',fl=fl)
-    active_error[:] /= 2
-    avg_active_error = active_error.mean().item()
+    avg_active_error = active_error.C.mean('nScans').item()
     #}}}
 
     #{{{Calculating the std dev -- error associated with the integrals
