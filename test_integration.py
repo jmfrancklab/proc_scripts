@@ -31,14 +31,17 @@ for thisfile,exp_type,nodename in [
     s.ift('t2')
     fl.next('raw data time domain')
     fl.image(s)
+    #{{{DC offset correction
     s.ift(['ph1','ph2'])
     t_rx = (t_range[-1]/4)*3
-    s -= s['t2':(t_rx,None)].data.mean()  # DC offset correction
+    s -= s['t2':(t_rx,None)].data.mean()  
     s.ft('t2')
     s.ft(['ph1','ph2'])
+    #}}}
     s = s['t2':f_range]
     fl.next('freq domain')
     fl.image(s)
+    #{{{Phase corrections
     s.ift('t2')
     best_shift,window_size = hermitian_function_test(select_pathway(s,signal_pathway))
     s.setaxis('t2',lambda x: x-best_shift)
@@ -54,6 +57,7 @@ for thisfile,exp_type,nodename in [
     fl.next('after zeroth order phasing applied')
     s.ft('t2')
     fl.image(s)
+    #}}}
     s.ift('t2')
     #{{{alignment
     #s.ift(['ph1','ph2'])
@@ -143,16 +147,16 @@ for thisfile,exp_type,nodename in [
    #}}} 
     #{{{Plotting Errors
     fl.next('comparison of std')
-    #for i in range(len(s_int_lst)):
-    #    fl.plot(error_lst[i],'o',color=colors[i],label = 'on excluded path of %s'%ph_lst[i])
-    #fl.plot(active_error,'x',
-    #        label='propagated error from active CT in noise slice')
-    #fl.plot(averaged_inactive_error,'o',color='brown',label='averaged propagated error from all inactive CTs')
-    #for i in range(len(s_int_lst)):
-    #    axhline(y=avg_error_lst[i], linestyle=":", color=colors[i],
-    #            label = "averaged %s"%ph_lst[i])
-    #axhline(y=avg_active_error,linestyle=":", label='averaged propagated error from active CT in noise slice')
-    #axhline(y=avg_avg_error,linestyle=":",color='brown',label='averaged average propagated error from inactive CTs')
+    for i in range(len(s_int_lst)):
+        fl.plot(error_lst[i],'o',color=colors[i],label = 'on excluded path of %s'%ph_lst[i])
+    fl.plot(active_error,'x',
+            label='propagated error from active CT in noise slice')
+    fl.plot(averaged_inactive_error,'o',color='brown',label='averaged propagated error from all inactive CTs')
+    for i in range(len(s_int_lst)):
+        axhline(y=avg_error_lst[i], linestyle=":", color=colors[i],
+                label = "averaged %s"%ph_lst[i])
+    axhline(y=avg_active_error,linestyle=":", label='averaged propagated error from active CT in noise slice')
+    axhline(y=avg_avg_error,linestyle=":",color='brown',label='averaged average propagated error from inactive CTs')
     axhline(y=numpy_s_int.data,c='k',
             linestyle=":",label='std dev - error associated with the integrals')
     #}}}
