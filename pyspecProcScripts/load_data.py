@@ -269,8 +269,6 @@ def proc_Hahn_echoph(s, fl=None):
     return s
 
 def proc_spincore_IR(s,fl=None):
-    if 'nScans' in s.dimlabels:
-        s.mean('nScans')
     vd_axis = s.getaxis('vd')
     s.reorder(['ph2','ph1']).set_units('t2','s')
     s.ft('t2', shift=True)
@@ -362,9 +360,19 @@ def proc_var_tau(s,fl=None):
         fl.image(s)
     return s
 
+def proc_spincore_echo_v1(s,fl=None):
+    "old-fashioned (not properly shaped before storage) echo data"
+    s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
+    s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.set_units("t2", "s")
+    s.reorder("t2", first=False)
+    if "nScans" in s.dimlabels:
+        s.setaxis("nScans", "#")
+    s.ft("t2", shift=True)
+    s.ft(["ph1", "ph2"])
+    return s
+
 def proc_spincore_ODNP_v1(s,fl=None):
-    if 'nScans' in s.dimlabels:
-        s.mean('nScans')
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis('power').copy()
     logging.info(strm("programmed powers",prog_power))
@@ -480,6 +488,7 @@ postproc_dict = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_nutation_v2':proc_nutation_amp,
         'spincore_nutation_v3':proc_nutation_chunked,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
+        'spincore_echo_v1':proc_spincore_echo_v1,
         'spincore_var_tau_v1':proc_var_tau,
         'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG,
