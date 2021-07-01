@@ -5,7 +5,21 @@ from .fwhm_calculate import fwhm_calculator
 import logging
 
 
-def integrate_limits(s, axis="t2", fwhm=100, fl=None):
+def integrate_limits(s, axis="t2", fl=None):
+    """automatically determine the integration limits
+
+    Parameters
+    ==========
+    axis: str
+        name of the dimension along which you want to determine the integration
+        limits
+
+    Returns
+    =======
+    retval: ndarray
+        A len 2 ndarray tuple with the start and stop indeces for the integration
+        bounds.
+    """
     signal_sign = s.C.sum(axis).run(np.real).run(np.sign)
     temp = abs(s).real * signal_sign
 

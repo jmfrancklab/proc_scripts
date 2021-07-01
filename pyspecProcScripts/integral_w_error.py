@@ -72,23 +72,45 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     elif return_frq_slice:
         return retval, frq_slice
 
-def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None):
+def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None,offset=50.0):
+    """propagate error from the region `offset` to the right of the peak (where
+    we assume there is only noise),  in the signal pathway `signal_path`, which
+    we assume is the active coherence pathway.
+
+    Parameters
+    ==========
+    signal_path: dict
+        Dictionary givin the active CT pathway
+    indirect: str
+        Name of the indirect dimension -- used to check that you don't have
+        directions that are not direct, indirect, or phase cycling.
+    direct: str
+        Name of the direct dimension
+    offset: float
+        Distance (in Hz) between the auto-chosen integration bounds from
+        :func:`integrate_limits` and the start of the "noise region."
+
+    Returns
+    =======
+    retval: nddata
+        just a data object with the error that this method predicts
+    """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     frq_slice = integrate_limits(select_pathway(s,signal_path),fl=fl)
     logging.debug(strm('frq_slice is',frq_slice))
-    s = s[direct:((frq_slice[-1]+50),None)]
-    f = s.getaxis(direct)
-    df = f[1]-f[0]
+    s = s[direct:((frq_slice[-1]+offset),None)] # grab all data more than
+    #                                             offset to the right of the
+    #                                             peak
+    df = s.get_ft_prop(direct,'df')
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect,direct])
     extra_dims = [j for j in all_labels if not j.startswith('ph')]
     if len(extra_dims) > 0:
-     raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
-             +str(extra_dims))
+        raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
+                +str(extra_dims))
     s_forerror = select_pathway(s, signal_path)
     N = ndshape(s_forerror)[direct]
     s_forerror.run(lambda x: abs(x)**2/2).mean_all_but([direct,indirect]).mean(direct)
     s_forerror *= df**2
     s_forerror *= N
-    retval = sqrt(s_forerror.data)
-    return retval
+    return s_forerror.run(sqrt)
