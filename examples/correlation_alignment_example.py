@@ -15,7 +15,7 @@ seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-echo_time = 1e-3
+echo_time = 10e-3
 f_range = (-400, 400)
 
 with figlist_var() as fl:
@@ -75,6 +75,8 @@ with figlist_var() as fl:
         fl.image(data)
         data.ft("t2")
         fl.next("After hermitian function test -- Frequency domain")
+        # both of these plots labeled "After hermitian function test" now show
+        # the sign of the signal bouncing back and forth -- why is that!!!????
         fl.image(data)
         data.ift("t2")
         ph0 = select_pathway(data, signal_pathway)["t2":0]

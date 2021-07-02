@@ -83,7 +83,7 @@ def fake_data(
     ## }}}
     data = clean_data.C
     data.add_noise(fake_data_noise_std)
-    data *= np.exp(1j * 2 * np.pi * frq_noise * (data.fromaxis('t2'))) # the frequency shift
+    data *= np.exp(1j * 2 * np.pi * frq_noise * (data.fromaxis(direct))) # the frequency shift
     # at this point, the fake data has been generated
     for j in signal_pathway.keys():
         data.ft(j)
@@ -92,4 +92,5 @@ def fake_data(
     data.ft(direct, shift=True)
     data.ift(direct)
     data.register_axis({direct:0})
+    data.set_units(direct,'s')
     return data
