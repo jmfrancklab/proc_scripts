@@ -16,6 +16,7 @@ from matplotlib import *
 from pyspecProcScripts import *
 from pyspecProcScripts.correlation_alignment import correl_align
 import numpy as np
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 
 fl = figlist_var()
 signal_pathway = {"ph1": 1, "ph2": 0}
