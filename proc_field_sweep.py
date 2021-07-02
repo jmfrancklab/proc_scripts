@@ -16,14 +16,14 @@ rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 20e3
-filename = '210630_500uM_TEMPO_hexane_field_dep_uneven' #'210611_S175R1a_pR_DDM_field_dep'
-gamma_eff = (14.890865/3504.85)#(14.893851/3505.6) # MHz / G
-f_dip = 9.821285#9.82103 # GHz
+filename = '210702_500uM_TEMPO_hexane_cap_probe_field_dep' #'210611_S175R1a_pR_DDM_field_dep'
+gamma_eff = (14.824903/3489.4)#(14.893851/3505.6) # MHz / G
+f_dip = 9.8214286#9.82103 # GHz
 for nodename,postproc,label_str,freq_slice,field_slice in [
-        ('field_sweep',#'32dBm_finer',
-        'field_sweep','TEMPO field sweep',(-500,700),(-200,600)),
+        ('field_sweep_2',#'32dBm_finer',
+        'field_sweep','TEMPO field sweep',(-500,700),(-200,500)),
         ]:
-    s = find_file(filename,exp_type='odnp',#'ODNP_NMR_comp/field_dependent',
+    s = find_file(filename,exp_type='ODNP_NMR_comp/field_dependent',
             expno=nodename,postproc=postproc,lookup=postproc_dict,fl=fl)
     freqs = s.get_prop('acq_params')['mw_freqs']
     s = s['t2':freq_slice]
@@ -50,6 +50,6 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
     print('At $B_0$ = %0.1f, $f_0$ = %0.8e'%(s.getaxis('Field')[field_idx],freqs[field_idx]))
     fitting = abs(s_).polyfit('Field',order=2)
     Field = nddata(r_[3503.5:3508:100j],'Field')
-    fl.plot(Field.eval_poly(fitting,'Field'),label='fit')
+    #fl.plot(Field.eval_poly(fitting,'Field'),label='fit')
     print('I found a max at',Field.eval_poly(fitting,'Field').argmax().item())
 fl.show()
