@@ -17,10 +17,10 @@ measured_vs_actual = 22. # how many dB down the split + measured power is from
 #                          the forward power
 #}}}
 
-s = find_file('210630_50uM_TEMPO_hexane_cap_probe_DNP',exp_type='ODNP_NMR_comp/test_equipment', expno='enhancement',
+s = find_file('210702_500uM_TEMPO_hexane_cap_probe_DNP',exp_type='ODNP_NMR_comp/test_equipment', expno='enhancement',
         postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
 fl.next('raw data')
-s = s['t2':(-1.5e3,1.5e3)]
+s = s['t2':(-0.3e3,0.3e3)]
 fl.image(s)
 ph0 = s['power',-4].sum('t2')
 ph0 /= abs(ph0)
