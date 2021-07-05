@@ -22,9 +22,10 @@ s = find_file('210702_100mM_TEMPO_hexane_test_2',exp_type='ODNP_NMR_comp/test_eq
 print(s.get_prop('acq_params'))
 fl.next('raw data')
 fl.image(s)
+fl.show();quit()
 #fl.show();quit()
-s = s['t2':(-5e3,5e3)]
-ph0 = s['power',-4].sum('t2')
+s = s['t2':(-1e3,1e3)]
+ph0 = s['power',-3].sum('t2')
 ph0 /= abs(ph0)
 s /= ph0
 fl.next('phased')
