@@ -4,6 +4,10 @@
 *.pyc
 *.bak
 *.pickle
+*.png
+*.rst
+*.md5
+*.zip
 tags
 __pycache__
 data_files.log
