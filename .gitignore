@@ -14,3 +14,4 @@ data_files.log
 missing_data_files.log
 doc_src/_build/
 doc_src/index.docx
+doc_src/auto_examples/
