@@ -1,14 +1,23 @@
 """ Acquiring the Error Associated for Experimental Data
 ========================================================
 
-Takes data from a standard echo experiment with multiple scans and compares the 
-traditional method of acquiring the error, the propagated error along the inactive
-coherence transfer (CT) pathways in the integrated signal slice, and the error associated
-with the integrated signal in the active coherence pathway.
+Estimates the error of the integral of an actual data set of a standard echo
+experiment. Three methods of acquiring the error associated with the data are 
+compared:
 
-Demonstrates how our method of averaging the error along the inactive CTs compares 
-against traditional methods. With our method, there is no need to take multiple scans
-as we propagate the error in the inactive CTs instead.
+    -Taking an area along the active coherence transfer (CT) pathway outside of the
+    signal and propagating that error to estimate the error associated with the integral.
+    (The traditional method of acquiring the error associated with a data set.)
+    -Taking the integral in the inactive CT pathways and propagating to get the error 
+    associated with the integral in the active CT.
+    -Taking the standard deviation along the number of scans in the active CT
+    integral. (Traditional method of getting the standard deviation when multiple
+    scans are available)
+    
+Demonstrates that by propagating the error of the integral in the inactive CTs we still
+get a reasonable error within the limits of traditional methods. This then shows that 
+we no longer need multiple scans to acquire the error of the integral and can do so by 
+looking at the inactive CTs.
 """
 from pyspecdata import *
 from pylab import *
