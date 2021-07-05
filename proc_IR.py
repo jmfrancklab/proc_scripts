@@ -23,6 +23,8 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,clock_correction,IR,ILT 
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
+    print(s.get_prop('acq_params'))
+    fl.show();quit()
     #s = s['vd',:-1]
     myslice = s['t2':f_range]
     mysgn = determine_sign(select_pathway(myslice, coherence_pathway), fl=fl)
