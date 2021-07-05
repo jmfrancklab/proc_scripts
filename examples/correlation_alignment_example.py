@@ -61,6 +61,7 @@ with figlist_var() as fl:
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
         fl.next("Data in Frequency Domain")
         fl.image(data)
+        #fl.show();quit()
         myslice = data["t2":f_range]
         mysgn = select_pathway(myslice, signal_pathway).real.sum("t2").run(np.sign)
         data *= mysgn
@@ -68,8 +69,7 @@ with figlist_var() as fl:
         data.ift("t2")
         #{{{ Applying the phase corrections
         best_shift, max_shift = hermitian_function_test(
-            select_pathway(data, signal_pathway).C.mean(indirect)
-        )
+            select_pathway(data.C.mean(indirect), signal_pathway))
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         fl.next("After hermitian function test -- Time domain")
         fl.image(data)
@@ -84,6 +84,7 @@ with figlist_var() as fl:
         data /= ph0
         fl.next("After phasing corrections applied")
         fl.image(data)
+        fl.show();quit()
         #}}}
         #{{{ Applying Correlation Routine to Align Data
         data.ft("t2")
