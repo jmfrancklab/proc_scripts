@@ -5,19 +5,17 @@ Estimates the error of the integral of an actual data set of a standard echo
 experiment. Three methods of acquiring the error associated with the data are 
 compared:
 
-    -Taking an area along the active coherence transfer (CT) pathway outside of the
-    signal and propagating that error to estimate the error associated with the integral.
-    (The traditional method of acquiring the error associated with a data set.)
-    -Taking the integral in the inactive CT pathways and propagating to get the error 
-    associated with the integral in the active CT.
-    -Taking the standard deviation along the number of scans in the active CT
-    integral. (Traditional method of getting the standard deviation when multiple
-    scans are available)
+    -   Taking an area along the active coherence transfer (CT) pathway outside of the bandwidth of the signal
+        signal and propagating that error to estimate the error associated with the integral.
+        (The traditional method of acquiring the error associated with a data set.)
+    -   Taking the integral in the inactive CT pathways and propagating to get the error 
+        associated with the integral in the active CT.
+    -   Taking the standard deviation of many integrals determined by
+        integrating over the signal bandwidth of the active CT pathway.
+        (Best method when many scans are available)
     
 Demonstrates that by propagating the error of the integral in the inactive CTs we still
-get a reasonable error within the limits of traditional methods. This then shows that 
-we no longer need multiple scans to acquire the error of the integral and can do so by 
-looking at the inactive CTs.
+get a reasonable error within the limits of traditional methods.
 """
 from pyspecdata import *
 from pylab import *
