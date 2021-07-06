@@ -17,21 +17,21 @@ measured_vs_actual = 22. # how many dB down the split + measured power is from
 #                          the forward power
 #}}}
 
-s = find_file('210702_100mM_TEMPO_hexane_test_2',exp_type='ODNP_NMR_comp/test_equipment', expno='enhancement_curve',
+s = find_file('210706_150uM_TEMPO_hexane_cap_probe_DNP',exp_type='ODNP_NMR_comp/test_equipment', expno='enhancement',
         postproc='spincore_ODNP_v1',lookup=postproc_dict,fl=fl)
 print(s.get_prop('acq_params'))
 fl.next('raw data')
 fl.image(s)
-fl.show();quit()
 #fl.show();quit()
-s = s['t2':(-1e3,1e3)]
+#fl.show();quit()
+s = s['t2':(-0.5e3,0.5e3)]
 ph0 = s['power',-3].sum('t2')
 ph0 /= abs(ph0)
 s /= ph0
 fl.next('phased')
 fl.image(s)
 #fl.show();quit()
-s = s['t2':(-300,-55)]
+s = s['t2':(-200,2)]
 fl.next('sliced to integration bounds')
 fl.image(s)
 s = s['ph1',1]
@@ -40,8 +40,7 @@ fl.image(s.real)
 s.integrate('t2')
 s /= max(s.data.real)
 #{getting power axis
-print(s.get_prop('acq_params')['meter_powers'])
-s.setaxis('power',r_[-9999,array(s.get_prop('acq_params')['meter_powers'])])
+s.setaxis('power',r_[-9999,array(s.get_prop('meter_powers'))])
 print("here are the dBm",s.getaxis('power'))
 s.setaxis('power', lambda x:
         1e-3*10**((x+measured_vs_actual)/10.))
