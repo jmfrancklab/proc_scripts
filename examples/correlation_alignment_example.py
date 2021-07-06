@@ -15,7 +15,7 @@ seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-echo_time = 1e-3
+echo_time = 10e-3
 f_range = (-400, 400)
 
 with figlist_var() as fl:
@@ -63,16 +63,25 @@ with figlist_var() as fl:
         mysgn = select_pathway(myslice, signal_pathway).real.sum("t2").run(np.sign)
         data *= mysgn
         data = data["t2":f_range]
-        data.ift("t2")
-        #{{{ Applying the phase corrections
-        best_shift, max_shift = hermitian_function_test(
-            select_pathway(data.C.mean(indirect), signal_pathway))
-        data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
+        data.ift('t2')
+        rough_center = abs(data)['ph1',0]['ph2',1].C.convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+        logger.info(strm('Rough center is:',rough_center))
+        data.setaxis('t2', lambda x: x - rough_center).register_axis({"t2": 0})
         ph0 = select_pathway(data, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
         data /= ph0
-        fl.next("After phasing corrections applied")
+        fl.next("Zeroth order phasing correction applied")
         fl.image(data)
+        #{{{ Applying the phase corrections
+        best_shift, max_shift = hermitian_function_test(
+            select_pathway(data.C.mean(indirect), signal_pathway))#,
+            #down_from_max = 0.5,
+            #rel_shift = 5.0,
+            #fl=fl)
+        data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
+        fl.next('After Hermitian Test')
+        fl.image(data)
+        fl.show();quit()
         #}}}
         #{{{ Applying Correlation Routine to Align Data
         data.ft("t2")
