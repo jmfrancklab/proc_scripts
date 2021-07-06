@@ -15,7 +15,7 @@ seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-echo_time = 1e-3
+echo_time = 10e-3
 f_range = (-400, 400)
 
 with figlist_var() as fl:
