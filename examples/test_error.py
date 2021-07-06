@@ -1,5 +1,5 @@
-""" Acquiring the Error Associated for Experimental Data
-========================================================
+""" Validate Inactive CT Error
+==============================
 
 Estimates the error of the integral of an actual data set of a standard echo
 experiment. Three methods of acquiring the error associated with the data are 
@@ -25,6 +25,8 @@ from pyspecProcScripts.correlation_alignment import correl_align
 import numpy as np
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 
+# sphinx_gallery_thumbnail_number = 4
+
 fl = figlist_var()
 signal_pathway = {"ph1": 1, "ph2": 0}
 t_range = (0, 0.05) # must start at 0 for an FID
@@ -46,8 +48,6 @@ for thisfile, exp_type, nodename in [
         postproc="spincore_echo_v1",
         lookup=lookup_table,
     )
-    fl.next("raw data")
-    fl.image(s)
     s.ift("t2")
     fl.next("raw data time domain")
     fl.image(s)
@@ -59,8 +59,6 @@ for thisfile, exp_type, nodename in [
     # }}}
     s.ft("t2")
     s = s["t2":f_range]
-    fl.next("freq domain")
-    fl.image(s)
     # {{{Phase corrections
     s.ift("t2")
     best_shift, window_size = hermitian_function_test(select_pathway(s, signal_pathway))
@@ -68,7 +66,7 @@ for thisfile, exp_type, nodename in [
     ph0 = select_pathway(s, signal_pathway)["t2":0]
     ph0 /= abs(ph0)
     s /= ph0
-    fl.next("After phase correction")
+    fl.next("Phase corrected freq. domain")
     s.ft("t2")
     fl.image(s)
     # }}}
@@ -103,7 +101,7 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{Normalization
-    frq_slice = integrate_limits(select_pathway(s, signal_pathway), fl=fl)
+    frq_slice = integrate_limits(select_pathway(s, signal_pathway))
     s_integral = s["t2":frq_slice].C # the "official" copy of the integral
     s_integral = select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
@@ -132,7 +130,6 @@ for thisfile, exp_type, nodename in [
             signal_pathway,
             [thispathway],
             indirect="nScans",
-            fl=fl,
             return_frq_slice=True,
         )
         assert all(frq_slice_check == frq_slice)
@@ -150,7 +147,6 @@ for thisfile, exp_type, nodename in [
         signal_pathway,
         error_pathway,
         indirect="nScans",
-        fl=fl,
         return_frq_slice=True,
     )
     averaged_inactive_error = averaged_inactive.get_error()
@@ -158,12 +154,12 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{ Calculating propagated error along active CT on noise slice
-    active_error = active_propagation(s, signal_pathway, indirect="nScans", fl=fl)
+    active_error = active_propagation(s, signal_pathway, indirect="nScans")
     avg_active_error = active_error.C.mean("nScans").item()
     # }}}
 
     # {{{ Plotting Errors
-    fl.next("comparison of std")
+    fl.next("comparison of std", legend=True)
     for i in range(len(s_int_lst)):
         fl.plot(
             error_lst[i],
@@ -171,12 +167,12 @@ for thisfile, exp_type, nodename in [
             color=colors[i],
             label="on excluded path of %s" % error_pathway[i],
         )
-    fl.plot(active_error, "x", label="propagated error from active CT in noise slice")
+    fl.plot(active_error, "x", label="propagated error from active CT\nin noise slice")
     fl.plot(
         averaged_inactive_error,
         "o",
         color="brown",
-        label="averaged propagated error from all inactive CTs",
+        label="averaged propagated error\nfrom all inactive CTs",
     )
     for i in range(len(s_int_lst)):
         axhline(
@@ -188,13 +184,13 @@ for thisfile, exp_type, nodename in [
     axhline(
         y=avg_active_error,
         linestyle="--",
-        label="averaged propagated error from active CT in noise slice",
+        label="averaged propagated error\nfrom active CT in noise slice",
     )
     axhline(
         y=avg_avg_error,
         linestyle="--",
         color="brown",
-        label="averaged average propagated error from inactive CTs",
+        label="averaged propagated error\nfrom all inactive CTs",
     )
     # {{{ Calculating the std dev -- error associated with the integrals
     s_integral.run(np.std, "nScans")
@@ -203,7 +199,7 @@ for thisfile, exp_type, nodename in [
         y=s_integral.data,
         c="k",
         linestyle="-",
-        label="std dev - error associated with the integrals",
+        label="std dev of integrals",
     )
     # }}}
     plt.axis("tight")

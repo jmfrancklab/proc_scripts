@@ -37,9 +37,7 @@ def integrate_limits(s, axis="t2", fl=None):
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
         fl.pop_marker()
     fwhm = filter_width
-    fl.push_marker()
     temp.mean_all_but(axis)
     # https://en.wikipedia.org/wiki/Full_width_at_half_maximum
     temp.convolve(axis, fwhm/(2*np.sqrt(np.log(4))))
-    fl.pop_marker()
     return temp.contiguous(lambda x: abs(x) > 0.5 * abs(x).data.max())[0]
