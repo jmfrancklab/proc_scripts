@@ -30,6 +30,21 @@ with figlist_var() as fl:
             "vd",
             "IR",
         ),
+        (
+            (
+                23
+                * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
+                *s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) *50 * s.pi)
+            ),
+            [
+                ("power", nddata(r_[0:4:25j], "power")),
+                ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
+                ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+            ],
+            {"ph1":1},
+            "power",
+            "enhancement",
+        ),
     ]:
         fl.basename = label
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
@@ -43,7 +58,7 @@ with figlist_var() as fl:
         data *= mysgn
         data = data["t2":f_range]
         data.ift('t2')
-        rough_center = abs(data)['ph1',0]['ph2',1].C.convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+        rough_center = abs(select_pathway(data,signal_pathway)).C.convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
         logger.info(strm('Rough center is:',rough_center))
         data.setaxis('t2', lambda x: x - rough_center).register_axis({"t2": 0})
         ph0 = select_pathway(data, signal_pathway)["t2":0]
