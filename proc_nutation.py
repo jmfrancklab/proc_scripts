@@ -1,7 +1,7 @@
 from pylab import *
 from pyspecdata import *
 from scipy.optimize import minimize
-from pyspecProcScripts import hermitian_function_test,zeroth_order_ph,postproc_dict,fl_mod,DCCT
+from pyspecProcScripts import hermitian_function_test,zeroth_order_ph,lookup_table,fl_mod,DCCT
 from sympy import symbols
 from numpy import *
 fl = fl_mod()
@@ -17,7 +17,7 @@ for searchstr,exp_type,nodename,postproc,freq_slice,t_slice in [
         'spincore_nutation_v3',(11e3,40e3),(0.5e-3,1.5e-3)]
     ]:
     s = find_file(searchstr,exp_type=exp_type,expno=nodename,postproc=postproc,
-            lookup=postproc_dict,fl=fl)
+            lookup=lookup_table,fl=fl)
     s = s['t2':freq_slice]
     fl.next('data')
     fl.image(s)
