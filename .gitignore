@@ -5,6 +5,9 @@
 *.bak
 *.pickle
 *.npz
+*.bin
+*.exe
+*.bat
 temp.sh
 temp.py
 tags
