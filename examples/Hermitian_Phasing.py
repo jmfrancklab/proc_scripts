@@ -30,21 +30,6 @@ with figlist_var() as fl:
             "vd",
             "IR",
         ),
-        (
-            (
-                23
-                * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
-                * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
-            ),
-            [
-                ("power", nddata(r_[0:4:25j], "power")),
-                ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
-            ],
-            {"ph1": 1},
-            "power",
-            "enhancement",
-        ),
     ]:
         fl.basename = label
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
@@ -67,10 +52,13 @@ with figlist_var() as fl:
         fl.next("Zeroth order phasing correction applied")
         fl.image(data)
         #{{{ Applying the phase corrections
+        fl.basename = "(Hermitian diagnostic)"
         best_shift, max_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway),fl=fl)
+        fl.basename = None
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-        fl.next('After Hermitian Test')
+        fl.next('After Hermitian Test, time domain')
         fl.image(data)
-        fl.show();quit()
-
+        data.ft("t2")
+        fl.next('After Hermitian Test, frequency domain')
+        fl.image(data)
