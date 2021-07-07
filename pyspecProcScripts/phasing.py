@@ -225,8 +225,9 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     s.ift('t2')
     s = s['t2',:orig_t2]
     logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
+    s.reorder(['t2'],first=False)
     if fl:
-        fl.next('shifted data')
+        fl.next('Hermitian Diagnostic - Shifted Data')
         fl.image(s.C.mean_all_but(['shift','t2']))
     #}}}
     #{{{make sure there's an odd number of points and set phase of center point to 0
@@ -266,7 +267,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     #I want to do this center_point = s_hermitian['t2':0], but why not be consistent
     s_hermitian /= center_point/abs(center_point)
     if fl:
-        fl.next('hermitian data')
+        fl.next('Hermitian Diagnostic - Hermitian Data')
         fl.image(s_hermitian.C.mean_all_but(['shift','t2']))
     #}}}
     #though we want to average the residual for each FID, try making an average
@@ -290,11 +291,11 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     ph0 /= abs(ph0)
     s_FID /= ph0
     if fl:
-        fl.next('FID data')
+        fl.next('Hermitian Diagnostic - FID Data')
         fl.image(s_FID.C.mean_all_but(['shift','t2']))
     s_FID.ft('t2')
     if fl:
-        fl.next('FT of FID data')
+        fl.next('Hermitian Diagnostic - FT of FID Data')
         fl.image(s_FID.C.mean_all_but(['shift','t2']))
     logging.info(strm(ndshape(s_FID)))
     sum_abs_real = abs(s_FID.real).sum('t2').mean_all_but(['shift'])
@@ -302,7 +303,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     best_abs_real = (sum_abs_real/sum_abs_imag).argmin('shift').item()
     if fl:
         fig, (ax1,ax2,ax3) = plt.subplots(3,1)
-        fl.next('mirror tests', fig=fig)
+        fl.next('Hermitian Diagnostic - Mirror Tests', fig=fig)
         def real_imag_mirror(forplot, ax):
             l = fl.plot(forplot.real, alpha=0.5, ax=ax, label='real',
                     human_units=False)
@@ -336,7 +337,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         real_imag_mirror(forplot, ax2)
         ax2.set_title('shift=0')
         #}}}
-        fl.next('cost functions')
+        fl.next('Hermitian Diagnostic - Cost Functions')
         def rescale(forplot):
             retval = forplot.C
             retval -= retval.data.min()
