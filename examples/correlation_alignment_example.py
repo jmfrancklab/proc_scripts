@@ -64,7 +64,7 @@ with figlist_var() as fl:
         data *= mysgn
         data = data["t2":f_range]
         data.ift('t2')
-        rough_center = abs(data)['ph1',0]['ph2',1].C.convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
+        rough_center = abs(select_pathway(data,signal_pathway)).C.convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
         logger.info(strm('Rough center is:',rough_center))
         data.setaxis('t2', lambda x: x - rough_center).register_axis({"t2": 0})
         ph0 = select_pathway(data, signal_pathway)["t2":0]
@@ -81,7 +81,6 @@ with figlist_var() as fl:
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         fl.next('After Hermitian Test')
         fl.image(data)
-        fl.show();quit()
         #}}}
         #{{{ Applying Correlation Routine to Align Data
         data.ft("t2")
