@@ -41,42 +41,46 @@ with figlist_var() as fl:
                 ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
                 ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
             ],
-            {"ph1":1},
+            {"ph1": 1},
             "power",
             "enhancement",
         ),
     ]:
-        fl.basename = label
+        fl.basename = "(%s)" % label
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        fl.next("Data in Frequency Domain")
+        fl.next("Raw Data")
         fl.image(data)
         data = data["t2":f_range]
-        data.ift('t2')
-        rough_center = abs(select_pathway(data,signal_pathway)).C.convolve('t2',0.01).mean_all_but('t2').argmax('t2').item()
-        logger.info(strm('Rough center is:',rough_center))
-        data.setaxis('t2', lambda x: x - rough_center).register_axis({"t2": 0})
-        fl.next('Rough centering')
-        data.ft('t2')
+        data.ift("t2")
+        rough_center = (
+            abs(select_pathway(data, signal_pathway))
+            .C.convolve("t2", 0.01)
+            .mean_all_but("t2")
+            .argmax("t2")
+            .item()
+        )
+        logger.info(strm("Rough center is:", rough_center))
+        data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
+        fl.next("After Rough Centering and Zeroth Order Phasing")
+        data.ft("t2")
         mysgn = select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
         data *= mysgn
-        fl.image(data)
-        data.ift('t2')
+        data.ift("t2")
         ph0 = select_pathway(data, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
         data /= ph0
-        fl.next("Zeroth order phasing correction applied")
         fl.image(data)
-        #{{{ Applying the phase corrections
         best_shift, max_shift = hermitian_function_test(
-            select_pathway(data.C.mean(indirect), signal_pathway),fl=fl)
+            select_pathway(data.C.mean(indirect), signal_pathway), fl=fl
+        )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-        data.ft('t2')
+        data.ft("t2")
         data *= mysgn
-        fl.next('After Hermitian Test, Frequency Domain')
+        fl.next("After Hermitian Test, Frequency Domain")
         fl.image(data)
         data.ift("t2")
-        fl.next('After Hermitian Test, Time domain')
+        fl.next("After Hermitian Test, Time Domain")
         fl.image(data)
