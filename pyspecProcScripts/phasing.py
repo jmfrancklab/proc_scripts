@@ -354,5 +354,4 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         data_for_peak.name('absolute value')
         fl.plot(data_for_peak.C.rename('t2','shift').set_units('shift','s'),c='red',
                 human_units=False)
-        xlim(np.array(rel_shift)*max_shift/1e-3)
     return best_shift+peak_center,max_shift    
