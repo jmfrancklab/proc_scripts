@@ -1,3 +1,13 @@
+"""
+Phasing and Timing Correction
+=============================
+
+Take fake data with a relatively symmetric echo 
+(:math:`T_2^*=1/50\pi`, echo time of 10 ms),
+and demonstrate how we can automatically find the zeroth order phase and the
+center of the echo in order to get data that's purely real in the frequency
+domain.
+"""
 from pyspecdata import *
 from pyspecProcScripts import *
 from pylab import *
@@ -20,7 +30,7 @@ with figlist_var() as fl:
             (
                 23
                 * (1 - 2 * s.exp(-vd / 0.2))
-                * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
+                * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
             ),
             [
                 ("vd", nddata(r_[0:1:40j], "vd")),
@@ -36,7 +46,7 @@ with figlist_var() as fl:
             (
                 23
                 * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
-                * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
+                * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
             ),
             [
                 ("power", nddata(r_[0:4:25j], "power")),
@@ -49,7 +59,7 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig,ax_list = subplots(1,4,figsize=(20,20))
+        fig, ax_list = subplots(1, 4, figsize=(20, 20))
         fig.suptitle(fl.basename)
         fl.next("Data processing", fig=fig)
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)

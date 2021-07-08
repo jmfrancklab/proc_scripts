@@ -227,7 +227,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
     s.reorder(['t2'],first=False)
     if fl:
-        fig_forlist, ax_list = plt.subplots(4,1, figsize=(10,20))
+        fig_forlist, ax_list = plt.subplots(4,1, figsize=(10,10))
         fl.next("hermitian diagnostic", fig=fig_forlist)
         fig_forlist.suptitle(" ".join(["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]))
         fl.image(s.C.mean_all_but(['shift','t2']), ax=ax_list[0])
