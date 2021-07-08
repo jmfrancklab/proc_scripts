@@ -227,8 +227,11 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
     s.reorder(['t2'],first=False)
     if fl:
-        fl.next('Hermitian Diagnostic - Shifted Data')
-        fl.image(s.C.mean_all_but(['shift','t2']))
+        fig_forlist, ax_list = plt.subplots(4,1, figsize=(10,20))
+        fl.next("hermitian diagnostic", fig=fig_forlist)
+        fig_forlist.suptitle(" ".join(["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]))
+        fl.image(s.C.mean_all_but(['shift','t2']), ax=ax_list[0])
+        ax_list[0].set_title('Shifted Data')
     #}}}
     #{{{make sure there's an odd number of points and set phase of center point to 0
     logging.debug(strm("before taking the slice, endpoints are",s.getaxis('t2')[r_[0,-1]]))
@@ -267,8 +270,9 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     #I want to do this center_point = s_hermitian['t2':0], but why not be consistent
     s_hermitian /= center_point/abs(center_point)
     if fl:
-        fl.next('Hermitian Diagnostic - Hermitian Data')
-        fl.image(s_hermitian.C.mean_all_but(['shift','t2']))
+        fl.image(s_hermitian.C.mean_all_but(['shift','t2']),
+                ax=ax_list[1])
+        ax_list[1].set_title('Hermitian Data')
     #}}}
     #though we want to average the residual for each FID, try making an average
     #FID and calculating the residual, as I do in the test towards the end
@@ -291,12 +295,15 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     ph0 /= abs(ph0)
     s_FID /= ph0
     if fl:
-        fl.next('Hermitian Diagnostic - FID Data')
-        fl.image(s_FID.C.mean_all_but(['shift','t2']))
+        fl.image(s_FID.C.mean_all_but(['shift','t2']),
+                ax=ax_list[2])
+        ax_list[2].set_title('FID Data')
     s_FID.ft('t2')
     if fl:
-        fl.next('Hermitian Diagnostic - FT of FID Data')
-        fl.image(s_FID.C.mean_all_but(['shift','t2']))
+        fl.image(s_FID.C.mean_all_but(['shift','t2']),
+                ax=ax_list[3])
+        ax_list[3].set_title('FT of FID Data')
+        fig_forlist.tight_layout(rect=[0, 0.03, 1, 0.95])
     logging.info(strm(ndshape(s_FID)))
     sum_abs_real = abs(s_FID.real).sum('t2').mean_all_but(['shift'])
     sum_abs_imag = abs(s_FID.imag).sum('t2').mean_all_but(['shift'])

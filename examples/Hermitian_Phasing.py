@@ -8,6 +8,8 @@ from numpy.random import normal, seed
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
+# sphinx_gallery_thumbnail_number = 5
+
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
@@ -47,12 +49,15 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
+        fig,ax_list = subplots(1,4,figsize=(20,20))
+        fig.suptitle(fl.basename)
+        fl.next("Data processing", fig=fig)
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        fl.next("Raw Data")
-        fl.image(data)
+        fl.image(data, ax=ax_list[0])
+        ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
         rough_center = (
@@ -64,7 +69,6 @@ with figlist_var() as fl:
         )
         logger.info(strm("Rough center is:", rough_center))
         data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
-        fl.next("After Rough Centering and Zeroth Order Phasing")
         data.ft("t2")
         mysgn = select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
         data *= mysgn
@@ -72,15 +76,17 @@ with figlist_var() as fl:
         ph0 = select_pathway(data, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
         data /= ph0
-        fl.image(data)
+        fl.image(data, ax=ax_list[1])
+        ax_list[1].set_title("Rough Center + Zeroth Order")
         best_shift, max_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway), fl=fl
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
         data *= mysgn
-        fl.next("After Hermitian Test, Frequency Domain")
-        fl.image(data)
+        fl.image(data, ax=ax_list[2])
+        ax_list[2].set_title("Hermitian Test (ν)")
         data.ift("t2")
-        fl.next("After Hermitian Test, Time Domain")
-        fl.image(data)
+        fl.image(data, ax=ax_list[3])
+        ax_list[3].set_title("Hermitian Test (t)")
+        fig.tight_layout(rect=[0, 0.03, 1, 0.95])
