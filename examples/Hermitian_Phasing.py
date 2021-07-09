@@ -59,7 +59,7 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig, ax_list = subplots(1, 4)
+        fig, ax_list = subplots(1, 4, figsize = (20,20))
         fig.suptitle(fl.basename)
         fl.next("Data processing", fig=fig)
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
@@ -87,7 +87,7 @@ with figlist_var() as fl:
         ph0 /= abs(ph0)
         data /= ph0
         fl.image(data, ax=ax_list[1])
-        ax_list[1].set_title("Rough Center + Zeroth Order")
+        ax_list[1].set_title("Rough Center \n + Zeroth Order")
         best_shift, max_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway), fl=fl
         )
