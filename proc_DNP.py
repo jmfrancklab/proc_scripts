@@ -1,6 +1,6 @@
 from pyspecdata import *
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
+from pyspecProcScripts import lookup_table
 from pyspecProcScripts.third_level.process_IR import process_IR
 from pyspecProcScripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
@@ -38,7 +38,7 @@ T1_list = []
         #   False,True,False,False),
 #        ]:
 #    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
-#            postproc=postproc,lookup=postproc_dict,fl=fl)
+#            postproc=postproc,lookup=lookup_table,fl=fl)
 #    print(ndshape(s))
 #    myslice = s['t2':f_range]
 #    mysgn = determine_sign(select_pathway(myslice,signal_pathway,mult_ph_dims=True),fl=fl)
@@ -54,7 +54,7 @@ for nodename,postproc in [
         ('enhancement','spincore_ODNP_v1')
         ]:
     d = find_file(thisfile,exp_type=exp_type,
-            expno=nodename,postproc=postproc,lookup=postproc_dict,fl=fl)
+            expno=nodename,postproc=postproc,lookup=lookup_table,fl=fl)
     dslice = d['t2':E_f_range]
     dsign = determine_sign(select_pathway(dslice,E_signal_pathway,mult_ph_dims=False))
     enhancement,idx_maxpower = process_enhancement(d, searchstr = thisfile,

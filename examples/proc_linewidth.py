@@ -6,7 +6,7 @@ This example does work.
 """
 from pyspecdata import *
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
+from pyspecProcScripts import lookup_table
 import symfit as s
 import pickle,os
 from pylab import ndarray
@@ -81,7 +81,7 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
         #    )
         ]:
     d = find_file(searchstr + '.DSC', exp_type=exp_type, postproc=postproc,
-                  lookup=postproc_dict)
+                  lookup=lookup_table)
     plt.figure()
     plt.title('linewidth for 1mM TEMPOL')
     plot(d)

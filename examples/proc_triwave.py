@@ -9,7 +9,7 @@ import numpy as np
 from scipy import signal
 from pyspecProcScripts import *
 from pyspecdata import *
-from pyspecProcScripts import postproc_dict
+from pyspecProcScripts import lookup_table
 from scipy import signal
 import matplotlib.pyplot as plt
 
@@ -19,7 +19,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         ('201202_triwave_RMprobe_20ms','ODNP_NMR_comp','capture1','chirp',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_dict) 
+            postproc=postproc, lookup=lookup_table) 
     #{{{ raw data
     fl.next('raw together')
     fl.plot(d)

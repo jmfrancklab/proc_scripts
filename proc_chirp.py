@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize,leastsq
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
+from pyspecProcScripts import lookup_table
 from sympy import symbols
 from scipy.signal import tukey
 from pylab import *
@@ -18,7 +18,7 @@ with figlist_var() as fl:
             ('201113_triwave_control_2','ODNP_NMR_comp','capture1','chirp',True,1.25)
             ]:
         a = find_file(searchstr, exp_type=exp_type, expno=nodename,
-                postproc=postproc, lookup=postproc_dict)
+                postproc=postproc, lookup=lookup_table)
         fl.next('Raw signal')
         fl.plot(a['ch',0], alpha=0.5, label='control')    
         fl.plot(a['ch',1], alpha=0.5, label='reflection')

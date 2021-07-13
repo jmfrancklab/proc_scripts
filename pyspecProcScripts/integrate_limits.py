@@ -5,7 +5,21 @@ from .fwhm_calculate import fwhm_calculator
 import logging
 
 
-def integrate_limits(s, axis="t2", fwhm=100, fl=None):
+def integrate_limits(s, axis="t2", fl=None):
+    """automatically determine the integration limits
+
+    Parameters
+    ==========
+    axis: str
+        name of the dimension along which you want to determine the integration
+        limits
+
+    Returns
+    =======
+    retval: ndarray
+        A len 2 ndarray tuple with the start and stop indeces for the integration
+        bounds.
+    """
     signal_sign = s.C.sum(axis).run(np.real).run(np.sign)
     temp = abs(s).real * signal_sign
 
@@ -23,10 +37,7 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
         fl.pop_marker()
     fwhm = filter_width
-    print("FWHM IS",fwhm)
-    fl.push_marker()
     temp.mean_all_but(axis)
     # https://en.wikipedia.org/wiki/Full_width_at_half_maximum
     temp.convolve(axis, fwhm/(2*np.sqrt(np.log(4))))
-    fl.pop_marker()
     return temp.contiguous(lambda x: abs(x) > 0.5 * abs(x).data.max())[0]

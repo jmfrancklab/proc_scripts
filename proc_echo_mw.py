@@ -1,6 +1,6 @@
 from pyspecdata import *
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
+from pyspecProcScripts import lookup_table
 from pyspecProcScripts.third_level.process_enhancement import process_enhancement
 from sympy import symbols, Symbol, latex,limit,init_printing
 #{{{input parameters
@@ -21,7 +21,7 @@ for filename,nodename,file_location,postproc in [
             'ODNP_NMR_comp/test_equipment','spincore_ODNP_v1'),
         ]:
     s = find_file(filename,exp_type=file_location,expno=nodename,
-            postproc=postproc,lookup=postproc_dict,fl=fl)
+            postproc=postproc,lookup=lookup_table,fl=fl)
     myslice = s['t2':freq_range]
     mysign = select_pathway(myslice, signal_pathway).real.sum('t2').run(np.sign)
     enhancement = process_enhancement(s,freq_range=freq_range, 
