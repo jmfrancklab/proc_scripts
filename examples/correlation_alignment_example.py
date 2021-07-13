@@ -14,6 +14,8 @@ from numpy.random import normal, seed
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
+# sphinx_gallery_thumbnail_number = 6
+
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
@@ -53,7 +55,7 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig, ax_list = subplots(1,4, figsize(20,20))
+        fig, ax_list = subplots(1, 4, figsize = (20,20))
         fig.suptitle(fl.basename)
         fl.next("Data Processing", fig=fig)
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
@@ -66,23 +68,25 @@ with figlist_var() as fl:
         data.ift("t2")
         rough_center = (
                 abs(select_pathway(data, signal_pathway))
-                .C.convolve("t2",0.01)
+                .C.convolve("t2", 0.01)
                 .mean_all_but("t2")
                 .argmax("t2")
                 .item()
         )
-        logger.info(strm("Rough center is:",rough_center))
+        logger.info(strm("Rough center is:", rough_center))
         data.setaxis("t2",lambda x: x - rough_center).register_axis({"t2": 0})
         data.ft("t2")
-        mysgn = select_pathway(myslice, signal_pathway).C.real.sum("t2").run(np.sign)
+        mysgn = select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
         data *= mysgn
-        data.ift('t2')
+        data.ift("t2")
         ph0 = select_pathway(data, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
         data /= ph0
-        fl.image(data,ax=ax_list[1])
+        data.ft("t2")
+        fl.image(data, ax=ax_list[1])
         ax_list[1].set_title("Rough Center \n + Zeroth Order")
         #{{{ Applying the phase corrections
+        data.ift("t2")
         best_shift, max_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway))
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
@@ -90,11 +94,9 @@ with figlist_var() as fl:
         data *= mysgn
         fl.image(data, ax=ax_list[2])
         ax_list[2].set_title("Hermitian Test (v)")
-        data.ift("t2")
         fl.image(data,ax=ax_list[3])
         ax_list[3].set_title("Hermitian Test (t)")
         fig.tight_layout(rect=[0,0.03,1,0.95])
-        data.ft("t2")
         data *= mysgn
         #}}}
         #{{{ Applying Correlation Routine to Align Data
