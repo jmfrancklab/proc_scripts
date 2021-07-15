@@ -19,20 +19,35 @@ measured_vs_actual = 22. # how many dB down the split + measured power is from
 #{Input parameters & Load Data
 file_location = 'odnp'
 postproc = 'spincore_ODNP_v2' # 'spincore_ODNP_v1'
-names = ['DDM KCl','DHPC KCl','DDM KI', 'DDM $KH_{2}PO_{4}$']
+plot_ks = True
+plot_enhancements = True
+plotname = 'Q183R1a pR (210708) vs TEMPOL (210714)'
+names = ['TEMPOL','pR in DDM','pR in DHPC']#['DDM KCl','DHPC KCl','DDM KI', 'DDM $KH_{2}PO_{4}$']
+names = ['TEMPOL','DDM KCl','DHPC KCl','DDM KI', 'DDM $KH_{2}PO_{4}$']
 curves = nddata(zeros((len(names),18),dtype='complex128'),['sample','power'])
+enhancements = nddata(zeros((len(names),18),dtype='complex128'),['sample','power'])
 
 for (idx,filename,nodename,outname,f_range,C,T1_0,ppt,export_csv) in [
-        (0,'210707_Q183R1a_pR_DDM_ODNP','enhancement',
+        (0,'210714_150uM_TEMPOL_SMB_ODNP','enhancement_real',
+            '210714_150uM_TEMPOL_SMB_enhancement',
+            (-200,200),150e-6,3.56,1.5163,False),
+#        (1,'210714_A174R1a_pR_DDM_ODNP','enhancement1',
+#            '210714_A174R1a_pR_DDM_enhancement',
+#            (-250,100),240e-6,1.49,1.5154,False),
+#        (2,'210714_A174R1a_pR_DHPC_ODNP','enhancement',
+#            '210714_A174R1a_pR_DHPC_enhancement',
+#            (-250,75),238.5e-6,1.47,1.5154,False),
+    
+        (1,'210707_Q183R1a_pR_DDM_ODNP','enhancement',
             '210707_Q183R1a_pR_DDM_enhancement',
             (-225,75),207.4e-6,1.89,1.5154,True),
-        (1,'210707_Q183R1a_pR_DHPC_ODNP','enhancement',
+        (2,'210707_Q183R1a_pR_DHPC_ODNP','enhancement',
             '210707_Q183R1a_pR_DHPC_enhancement',
             (-225,75),103.2e-6,2.15,1.5154,True),
-        (2,'210708_Q183R1a_pR_KI_ODNP','enhancement',
+        (3,'210708_Q183R1a_pR_KI_ODNP','enhancement',
             '210708_Q183R1a_pR_KI_enhancement',
             (-200,100),113.1e-6,1.12,1.5154,True),
-        (3,'210708_Q183R1a_pR_KH2PO4_ODNP','enhancement',
+        (4,'210708_Q183R1a_pR_KH2PO4_ODNP','enhancement',
             '210708_Q183R1a_pR_KH2PO4_enhancement',
             (-225,75),115.2e-6,1.9,1.5154,True)
         ]:
@@ -77,20 +92,11 @@ for (idx,filename,nodename,outname,f_range,C,T1_0,ppt,export_csv) in [
 #{Enhancement
     #s *= (207.4/113.1)
     s /= s['power',0]
-    if C is not None:
-        epsilon = 1 - s
-        ks = epsilon/C
-        if T1_0 is not None:
-            ks /= T1_0
-            if ppt is not None:
-                ks *= ppt*1e-3 # gets you in units of k_sigma!!!
-                fl.next('$k_{\sigma}s(p)$ using $T_{1}(0)$')
-                fl.plot(ks['power',:-3],'ko', human_units=False)
-                fl.plot(ks['power',-3:],'ro', human_units=False)
-                curves['sample',idx] = ks
     fl.next('enhancement curve')
     fl.plot(s['power',:-3],'ko', human_units=False)
     fl.plot(s['power',-3:],'ro', human_units=False)
+    if plot_enhancements:
+        enhancements['sample',idx] = s
     if C is not None:
         epsilon = 1 - s
         ks = epsilon/C
@@ -101,7 +107,8 @@ for (idx,filename,nodename,outname,f_range,C,T1_0,ppt,export_csv) in [
                 fl.next('$k_{\sigma}s(p)$ using $T_{1}(0)$')
                 fl.plot(ks['power',:-3],'ko', human_units=False)
                 fl.plot(ks['power',-3:],'ro', human_units=False)
-                curves['sample',idx] = ks
+                if plot_ks:
+                    curves['sample',idx] = ks
 #}
 # { Exporting data from the enhancement curve as csv
     if export_csv:
@@ -117,18 +124,36 @@ for (idx,filename,nodename,outname,f_range,C,T1_0,ppt,export_csv) in [
 #}
 #    fl.show()
 #{ Plotting all results together
-figure(figsize=(7,5))
-curves.labels('power',s.getaxis('power'))
-colors = ['dark magenta','brick red','dark orange','gold','greenish','dark cyan','grape','wine']
-for i,name in enumerate(names):
-    plot(curves['sample',i]['power',:-3],color='xkcd:%s'%colors[i],marker='o',ls='',human_units=False,
-            label='%s'%name,alpha=0.5)
-    plot(curves['sample',i]['power',-3:],color='xkcd:%s'%colors[i],marker='x',ls='',human_units=False,
-            label='%s back'%name,markersize=7)
-plt.ylabel('$k_{\sigma}s(p)$ $(s^{-1})$')
-plt.xlabel('power (W)')
-plt.legend(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
-plt.savefig('%s_ksgima_sp_comparison.png'%outname.split('_')[0],transparent=True,overwrite=True,bbox_inches='tight')
+if plot_enhancements:
+    figure(figsize=(7,5))
+    title('%s enhancements'%plotname)
+    enhancements.labels('power',s.getaxis('power'))
+    colors = ['dark magenta','brick red','dark orange','gold','greenish','dark cyan','grape','wine']   
+    for i,name in enumerate(names):
+        plot(enhancements['sample',i]['power',:-3],color='xkcd:%s'%colors[i],marker='o',ls='',human_units=False,
+                label='%s'%name,alpha=0.5)
+        plot(enhancements['sample',i]['power',-3:],color='xkcd:%s'%colors[i],marker='x',ls='',human_units=False,
+                label='%s back'%name,markersize=7)
+    plt.ylabel('E')
+    plt.xlabel('power (W)')
+    plt.legend(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
+    plt.savefig('%s_enhancement.png'%('_'.join(plotname.split(' '))),transparent=True,overwrite=True,bbox_inches='tight')
+    plt.close()
+
+if plot_ks:
+    figure(figsize=(7,5))
+    title('%s $k_{\sigma}s(p)$'%plotname)
+    curves.labels('power',s.getaxis('power'))
+    colors = ['dark magenta','brick red','dark orange','gold','greenish','dark cyan','grape','wine']
+    for i,name in enumerate(names):
+        plot(curves['sample',i]['power',:-3],color='xkcd:%s'%colors[i],marker='o',ls='',human_units=False,
+                label='%s'%name,alpha=0.5)
+        plot(curves['sample',i]['power',-3:],color='xkcd:%s'%colors[i],marker='x',ls='',human_units=False,
+                label='%s back'%name,markersize=7)
+    plt.ylabel('$k_{\sigma}s(p)$ $(s^{-1})$')
+    plt.xlabel('power (W)')
+    plt.legend(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
+    plt.savefig('%s_ksgima_sp.png'%('_'.join(plotname.split(' '))),transparent=True,overwrite=True,bbox_inches='tight')
+    plt.close()
 plt.show()
-plt.close()
 #}
