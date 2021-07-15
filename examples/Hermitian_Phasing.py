@@ -81,10 +81,7 @@ with figlist_var() as fl:
         data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
         data.ft("t2")
         data.ift("t2")
-        # {{{ Zeroth Order Phase Correction
-        retval = zeroth_order_ph(select_pathway(data,signal_pathway))
-        data /= retval
-        # }}}
+        data /= zeroth_order_ph(select_pathway(data,signal_pathway))
         fl.image(data, ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Rough Center \n + Zeroth Order")
         best_shift, max_shift = hermitian_function_test(
