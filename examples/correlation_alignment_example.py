@@ -94,7 +94,8 @@ with figlist_var() as fl:
         #}}}
         #{{{ Applying Correlation Routine to Align Data
         data, opt_shift, sigma = correl_align(
-            data, indirect_dim=indirect, signal_pathway=signal_pathway, sigma=50
+            data, indirect_dim=indirect, signal_pathway=signal_pathway, 
+            sigma=50, fl=fl
         )
         data.ift("t2")
         for k, v in signal_pathway.items():
