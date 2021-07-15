@@ -62,7 +62,7 @@ with figlist_var() as fl:
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        fl.image(data, ax=ax_list[0])
+        fl.image(data, ax=ax_list[0], human_units=False)
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
@@ -75,16 +75,15 @@ with figlist_var() as fl:
         )
         logger.info(strm("Rough center is:", rough_center))
         data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
-        data.ft('t2')
-        mysgn = (
-            select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
-        )  # this is the sign of the signal -- note how in the hermitian test,
-        #    and correlation alignment, I pass sign-flipped data, so that we 
-        #    don't need to worry about messing with the original signal
-        data.ift('t2')
-        ph0 = select_pathway(data*mysgn, signal_pathway)["t2":0]
+        data.ft("t2")
+        data.ift("t2")
+        # {{{ this is not correct -- you want to use the zeroth order phasing
+        # routine to determine the zeroth order phase, since it allows for
+        # negative data this will flip the negative data to positive
+        ph0 = select_pathway(data, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
         data /= ph0
+        # }}}
         # {{{ Applying the phase corrections
         best_shift, max_shift = hermitian_function_test(
             select_pathway((data*mysgn).C.mean(indirect), signal_pathway)
@@ -101,7 +100,7 @@ with figlist_var() as fl:
         data.ift("t2")
         data *= np.exp(-1j * 2 * pi * opt_shift * data.fromaxis("t2"))
         data.ft("t2")
-        fl.image(data, ax=ax_list[2])
+        fl.image(data, ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Aligned Data (v)")
         data.ift("t2")
         fl.image(data, ax=ax_list[3], human_units=False)

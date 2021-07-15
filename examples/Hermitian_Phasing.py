@@ -80,12 +80,14 @@ with figlist_var() as fl:
         logger.info(strm("Rough center is:", rough_center))
         data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
         data.ft("t2")
-        mysgn = select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
-        data *= mysgn
         data.ift("t2")
+        # {{{ this is not correct -- you want to use the zeroth order phasing
+        # routine to determine the zeroth order phase, since it allows for
+        # negative data this will flip the negative data to positive
         ph0 = select_pathway(data, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
         data /= ph0
+        # }}}
         fl.image(data, ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Rough Center \n + Zeroth Order")
         best_shift, max_shift = hermitian_function_test(
@@ -93,7 +95,6 @@ with figlist_var() as fl:
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
-        data *= mysgn
         fl.image(data, ax=ax_list[2])
         ax_list[2].set_title("Hermitian Test (ν)")
         data.ift("t2")
