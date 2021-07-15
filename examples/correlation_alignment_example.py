@@ -92,9 +92,13 @@ with figlist_var() as fl:
         fig.tight_layout(rect=[0,0.03,1,0.95])
         #}}}
         #{{{ Applying Correlation Routine to Align Data
-        data, opt_shift, sigma = correl_align(
-            data, indirect_dim=indirect, signal_pathway=signal_pathway, sigma=50
+        mysgn = select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign) # this is the sign of the signal -- note how on the next line, I pass sign-flipped data, so that we don't need to worry about messing with the original signal
+        opt_shift, sigma = correl_align(
+            data*mysgn, indirect_dim=indirect, signal_pathway=signal_pathway, sigma=50
         )
+        s.ift('t2')
+        s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+        s.ft('t2')
         data.ift("t2")
         for k, v in signal_pathway.items():
             data.ft([k])

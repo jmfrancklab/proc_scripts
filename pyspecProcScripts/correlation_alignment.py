@@ -167,11 +167,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     if fl is not None:
         fl.next('after correlation\nph0 restored sig. energy=%g'%sig_energy)
         fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
-    s.ift('t2')
-    s *= np.exp(-1j*2*pi*f_shift*s.fromaxis('t2'))
-    s.ft('t2')
     if avg_dim:
         s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
         s.reorder(['ph1',avg_dim,'power','t2'])
-    return s,f_shift,sigma    
+    return f_shift,sigma    
 
