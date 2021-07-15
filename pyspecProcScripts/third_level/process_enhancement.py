@@ -27,13 +27,14 @@ def select_pathway(s,pathway):
     retval = s
     for k,v in pathway.items():
         retval = retval[k,v]
-    return retval    
+    return retval
 # slice out the FID from the echoes,
 # also frequency filtering, in order to generate the
 # list of integrals for ODNP
 # to use: as a rule of thumb, make the white boxes
 # about 2x as far as it looks like they should be
 # leave this as a loop, so you can load multiple files
+# why is this part of this pull request??
 def process_enhancement(s, signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
         t_range=(0,0.083),sgn=None,avg_dim=None,fl=None):
@@ -45,7 +46,6 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     s.ift('t2')
     s.reorder(['ph1','power','t2'])
     if fl is not None:
-        #fl.push_marker()
         fl.next('time domain')
         if avg_dim:
             fl.image(s.C.setaxis('nScans','#').set_units('nScans',

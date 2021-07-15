@@ -39,6 +39,7 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect,direct])
     extra_dims = [j for j in all_labels if not j.startswith('ph')]
+    # review this
     if len(extra_dims) > 0:
         raise ValueError("You have extra (non-phase cycling, non-indirect) dimensions: "
                 +str(extra_dims))

@@ -64,6 +64,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 the data in the calculation of the correlation function.
     """
 
+    # review this
     logging.info(strm("Applying the correlation routine"))
     if avg_dim:
         phcycdims = [j for j in s.dimlabels if j.startswith('ph')]

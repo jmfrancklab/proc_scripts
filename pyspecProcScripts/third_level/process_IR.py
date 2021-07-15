@@ -7,6 +7,7 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
+# this is a circular import!
 from pyspecProcScripts import *
 t2 = symbols('t2')
 
@@ -18,6 +19,7 @@ def select_pathway(s,pathway):
 def as_scan_nbr(d):
     '''since we need to relabel vd frequently- we make a method'''
     return d.C.setaxis('vd','#').set_units('vd','scan #')
+# this is written like you're trying to run it as a script!
 signal_pathway = {'ph1':0,'ph2':1}
 excluded_pathways = [(0,0)]
 def process_IR(s, this_l = 0.032,
