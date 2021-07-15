@@ -77,9 +77,13 @@ with figlist_var() as fl:
         data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
         data.ft("t2")
         data.ift("t2")
+        # {{{ this is not correct -- you want to use the zeroth order phasing
+        # routine to determine the zeroth order phase, since it allows for
+        # negative data this will flip the negative data to positive
         ph0 = select_pathway(data, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
         data /= ph0
+        # }}}
         # {{{ Applying the phase corrections
         best_shift, max_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway)
