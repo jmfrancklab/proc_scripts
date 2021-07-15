@@ -78,7 +78,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     N = ndshape(s)[indirect_dim]
     sig_energy = (abs(s)**2).data.sum().item() / N
     if fl:
-        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(10,10))
+        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(7,7))
         fl.next("Correlation Diagnostics")
         fig_forlist.suptitle(" ".join(["Correlation Diagnostic"] + [j for j in [fl.basename] if j is not None]))
         fl.image(s.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[0],human_units=False)
@@ -128,7 +128,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             if fl:
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[1])
-                ax_list[1].set_title('correlation function\ntime domain, after apod')
+                ax_list[1].set_title('correlation function\ntime domain, \nafter apod')
         correl.ft_clear_startpoints('t2')
         correl.ft('t2', shift=True, pad=2**14)
         for k,v in signal_pathway.items():
@@ -139,7 +139,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             if fl:
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[2],human_units=False)
-                ax_list[2].set_title('correlation function \nfreq domain, after apod')
+                ax_list[2].set_title('correlation function \nfreq domain, \nafter apod')
         if shift_bounds:
             f_shift = correl['t2':(-max_shift,max_shift)].run(real).argmax('t2')
         else:
@@ -171,7 +171,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         gca().yaxis.set_major_formatter(to_percent)
     if fl is not None:
         fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[4])
-        ax_list[4].set_title('after correlation\nph0 restored sig. energy=%g'%sig_energy)
+        ax_list[4].set_title('after correlation\nph0 restored \nsig. energy=%g'%sig_energy)
     if avg_dim:
         s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
         s.reorder(['ph1',avg_dim,'power','t2'])
