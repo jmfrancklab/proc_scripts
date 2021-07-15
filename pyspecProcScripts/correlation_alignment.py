@@ -77,9 +77,12 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     ph_len = {j:ndshape(s)[j] for j in signal_pathway.keys()}
     N = ndshape(s)[indirect_dim]
     sig_energy = (abs(s)**2).data.sum().item() / N
-    if fl is not None:
-        fl.next('before correlation\nsig. energy=%g'%sig_energy + fig_title)
-        fl.image(s.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),human_units=False)
+    if fl:
+        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(10,10))
+        fl.next("Correlation Diagnostics")
+        fig_forlist.suptitle(" ".join(["Correlation Diagnostic"] + [j for j in [fl.basename] if j is not None]))
+        fl.image(s.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[0],human_units=False)
+        ax_list[0].set_title('before correlation\nsig. energy=%g'%sig_energy)
     energy_diff = 1.
     i = 0
     energy_vals = []
@@ -122,9 +125,10 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         correl.reorder([indirect_dim,'t2'],first=False)
         if my_iter ==0:
             logging.info(strm("holder"))
-            if fl is not None:
-                fl.next('correlation function\ntime domain, after apod')
-                fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
+            if fl:
+                fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
+                        ax=ax_list[1])
+                ax_list[1].set_title('correlation function\ntime domain, after apod')
         correl.ft_clear_startpoints('t2')
         correl.ft('t2', shift=True, pad=2**14)
         for k,v in signal_pathway.items():
@@ -132,9 +136,10 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             correl = correl['Delta'+k.capitalize(),v]+correl['Delta'+k.capitalize(),0]
         if my_iter ==0:
             logging.info(strm("holder"))
-            if fl is not None:
-                fl.next('correlation function \nfreq domain, after apod')
-                fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
+            if fl:
+                fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
+                        ax=ax_list[2],human_units=False)
+                ax_list[2].set_title('correlation function \nfreq domain, after apod')
         if shift_bounds:
             f_shift = correl['t2':(-max_shift,max_shift)].run(real).argmax('t2')
         else:
@@ -145,9 +150,10 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s_copy.ft('t2')
         if my_iter ==0:
             logging.info(strm("holder"))
-            if fl is not None:
-                fl.next('after correlation\nbefore ph0 restore')
-                fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
+            if fl:
+                fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
+                        ax=ax_list[3],human_units=False)
+                ax_list[3].set_title('after correlation\nbefore ph0 restore')
         logging.info(strm('signal energy per transient (recalc to check that it stays the same):',(abs(s_copy**2).data.sum().item() / N)))
 
         this_E = (abs(s_copy.C.sum(indirect_dim))**2).data.sum().item() / N**2
@@ -164,8 +170,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         fl.plot(array(energy_vals),'x')
         gca().yaxis.set_major_formatter(to_percent)
     if fl is not None:
-        fl.next('after correlation\nph0 restored sig. energy=%g'%sig_energy)
-        fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'))
+        fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[4])
+        ax_list[4].set_title('after correlation\nph0 restored sig. energy=%g'%sig_energy)
     if avg_dim:
         s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
         s.reorder(['ph1',avg_dim,'power','t2'])
