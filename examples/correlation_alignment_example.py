@@ -75,38 +75,31 @@ with figlist_var() as fl:
         )
         logger.info(strm("Rough center is:", rough_center))
         data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
-        data.ft("t2")
-        data.ift("t2")
-        ph0 = select_pathway(data, signal_pathway)["t2":0]
+        data.ft('t2')
+        mysgn = (
+            select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
+        )  # this is the sign of the signal -- note how in the hermitian test,
+        #    and correlation alignment, I pass sign-flipped data, so that we 
+        #    don't need to worry about messing with the original signal
+        data.ift('t2')
+        ph0 = select_pathway(data*mysgn, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
         data /= ph0
         # {{{ Applying the phase corrections
         best_shift, max_shift = hermitian_function_test(
-            select_pathway(data.C.mean(indirect), signal_pathway)
+            select_pathway((data*mysgn).C.mean(indirect), signal_pathway)
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-        fl.image(data, ax=ax_list[3])
-        ax_list[3].set_title("Hermitian Test (t)")
         data.ft("t2")
-        fl.image(data, ax=ax_list[2])
-        ax_list[2].set_title("Hermitian Test (v)")
-        fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+        fl.image(data, ax=ax_list[1])
+        ax_list[1].set_title("Phased and \n Centered")
         # }}}
         # {{{ Applying Correlation Routine to Align Data
-        mysgn = (
-            select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
-        )  # this is the sign of the signal -- note how on the next line,
-        #    I pass sign-flipped data, so that we don't need to worry about
-        #    messing with the original signal
         opt_shift, sigma = correl_align(
             data * mysgn, indirect_dim=indirect, signal_pathway=signal_pathway, sigma=50
         )
-        s.ift("t2")
-        s *= np.exp(-1j * 2 * pi * opt_shift * s.fromaxis("t2"))
-        s.ft("t2")
         data.ift("t2")
-        for k, v in signal_pathway.items():
-            data.ft([k])
+        data *= np.exp(-1j * 2 * pi * opt_shift * data.fromaxis("t2"))
         data.ft("t2")
         fl.image(data, ax=ax_list[2])
         ax_list[2].set_title("Aligned Data (v)")
