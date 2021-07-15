@@ -4,7 +4,6 @@
 Takes a 2D data set and applies proper phasing corrections followed by 
 aligning the data through a correlation routine.
 """
-# need to review this
 from pyspecdata import *
 from pyspecProcScripts import *
 from pylab import *
@@ -77,8 +76,6 @@ with figlist_var() as fl:
         logger.info(strm("Rough center is:", rough_center))
         data.setaxis("t2",lambda x: x - rough_center).register_axis({"t2": 0})
         data.ft("t2")
-        mysgn = select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
-        data *= mysgn
         data.ift("t2")
         ph0 = select_pathway(data, signal_pathway)["t2":0]
         ph0 /= abs(ph0)
@@ -91,14 +88,12 @@ with figlist_var() as fl:
         best_shift, max_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway))
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-        data.ft("t2")
-        data *= mysgn
-        fl.image(data, ax=ax_list[2])
-        ax_list[2].set_title("Hermitian Test (v)")
         fl.image(data,ax=ax_list[3])
         ax_list[3].set_title("Hermitian Test (t)")
+        data.ft("t2")
+        fl.image(data, ax=ax_list[2])
+        ax_list[2].set_title("Hermitian Test (v)")
         fig.tight_layout(rect=[0,0.03,1,0.95])
-        data *= mysgn
         #}}}
         #{{{ Applying Correlation Routine to Align Data
         data, opt_shift, sigma = correl_align(
@@ -108,7 +103,6 @@ with figlist_var() as fl:
         for k, v in signal_pathway.items():
             data.ft([k])
         data.ft("t2")
-        data *= mysgn
         fl.next("Aligned Data -- Frequency Domain")
         fl.image(data)
         data.ift("t2")
