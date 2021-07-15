@@ -128,7 +128,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             if fl:
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[1])
-                ax_list[1].set_title('correlation function\ntime domain, \nafter apod')
+                ax_list[1].set_title('correlation function (t), \nafter apod')
         correl.ft_clear_startpoints('t2')
         correl.ft('t2', shift=True, pad=2**14)
         for k,v in signal_pathway.items():
@@ -139,7 +139,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             if fl:
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[2],human_units=False)
-                ax_list[2].set_title('correlation function \nfreq domain, \nafter apod')
+                ax_list[2].set_title('correlation function (v), \nafter apod')
         if shift_bounds:
             f_shift = correl['t2':(-max_shift,max_shift)].run(real).argmax('t2')
         else:
