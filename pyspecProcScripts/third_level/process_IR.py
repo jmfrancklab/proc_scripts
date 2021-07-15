@@ -148,9 +148,12 @@ def process_IR(s, this_l = 0.032,
     #{{{Correlation Alignment
     fl.basename='correlation subroutine:'
     #for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    s,opt_shift,sigma = correl_align(s,indirect_dim='vd',
+    opt_shift,sigma = correl_align(s,indirect_dim='vd',
             signal_pathway=signal_pathway,
             sigma=10)
+    s.ift('t2')
+    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s.ft('t2')
     fl.basename = None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
@@ -176,6 +179,8 @@ def process_IR(s, this_l = 0.032,
     s *= sgn
     if flip:
         s *= -1
+    if 'nScans' in s.dimlabels:
+        s.mean('nScans')
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
     error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
             - set(excluded_pathways)

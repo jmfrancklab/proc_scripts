@@ -26,6 +26,6 @@ for filename,nodename,file_location,postproc in [
     myslice = s['t2':freq_range]
     mysign = select_pathway(myslice, signal_pathway).real.sum('t2').run(np.sign)
     enhancement = process_enhancement(s,freq_range=freq_range, 
-            t_range=t_range,sgn=mysign,fl=fl)
+            t_range=t_range,sgn=mysign,avg_dim='nScans',fl=fl)
     fl.show()
 

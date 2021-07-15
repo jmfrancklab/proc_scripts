@@ -6,8 +6,6 @@ and plots the resulting enhancement curve normalized.
 """
 from pyspecdata import *
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
-from pyspecProcScripts.correlation_alignment import correl_align
 from sympy import symbols
 from matplotlib import *
 import numpy as np
@@ -48,8 +46,7 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     if fl is not None:
         fl.next('time domain')
         if avg_dim:
-            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
-                    'scan #').setaxis('power','#').set_units('power','scan #'))
+            fl.image(s)
         else:
             fl.image(s.setaxis('power','#').set_units('power','scan #'))
     rcParams.update({
@@ -72,8 +69,7 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     if fl is not None:
         fl.next('freq_domain before hermitian')
         if avg_dim:
-            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
-                    'scan #').setaxis('power','#').set_units('power','scan #'))
+            fl.image(s)
         else:
             fl.image(s.setaxis('power','#').set_units('power','scan #'))
     #{{{Applying phasing corrections
@@ -99,24 +95,24 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     if fl is not None:
         fl.next('After zeroth order phase correction')
         if avg_dim:
-            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
-                    'scan #').setaxis('power','#').set_units('power','scan #'))
+            fl.image(s)
         else:
             fl.image(s.setaxis('power','#').set_units('power','scan #'))
     s.reorder(['ph1','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
     #}}}
     #{{{Applying correlation alignment
-    s,opt_shift,sigma = correl_align(s,indirect_dim='power',
+    opt_shift,sigma = correl_align(s,indirect_dim='power',
             signal_pathway=signal_pathway,sigma=50)
-    s.ft(['ph1'])
+    s.ift('t2')
+    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s.ft('t2')
     fl.basename= None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
         s.set_units('t2','Hz')
         if avg_dim:
-            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
-                    'scan #').setaxis('power','#').set_units('power','scan #'))
+            fl.image(s)
         else:
             fl.image(s.setaxis('power','#').set_units('power','scan #'))
     s.ift('t2')
@@ -124,8 +120,7 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     if fl is not None:
         fl.next('after correlation -- time domain')
         if avg_dim:
-            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
-                    'scan #').setaxis('power','#').set_units('power','scan #'))
+            fl.image(s)
         else:
             fl.image(s.setaxis('power','#').set_units('power','scan #'))
 
@@ -133,8 +128,7 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     if fl is not None:
         fl.next('after correlation -- frequency domain')
         if avg_dim:
-            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
-                    'scan #').setaxis('power','#').set_units('power','scan #'))
+            fl.image(s)
         else:
             fl.image(s.setaxis('power','#').set_units('power','scan #'))
     #}}}
@@ -148,8 +142,7 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     if fl is not None:
         fl.next('FID sliced')
         if avg_dim:
-            fl.image(s.C.setaxis('nScans','#').set_units('nScans',
-                    'scan #').setaxis('power','#').set_units('power','scan #'))
+            fl.image(s)
         else:
             fl.image(s.setaxis('power','#').set_units('power','scan #'))
     d *= sgn
@@ -182,8 +175,8 @@ def process_enhancement(s, signal_pathway = {'ph1':1},
     d.set_units('power','W')
     if fl is not None:
         fl.next('E(p)')
-        fl.plot(d['power',:-3], 'ko', capsize=6, alpha=0.3)
-        fl.plot(d['power',-3:], 'ro',capsize=6, alpha=0.3)
+        fl.plot(d['power',:-3], 'ko', capsize=6, alpha=0.3,human_units=False)
+        fl.plot(d['power',-3:], 'ro',capsize=6, alpha=0.3,human_units=False)
         fl.pop_marker()
     enhancement = d['power',:-3]
     return enhancement
