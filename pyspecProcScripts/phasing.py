@@ -147,8 +147,8 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
         fl.plot(s_cost,'.')
     s_cost.smoosh(['vd','phcorr'],'transients')
     ph1_opt = np.asarray(s_cost.argmin('transients').item())
-    logger.info(strm("THIS IS PH1_OPT",ph1_opt))
-    logger.info(strm('optimal phase correction',repr(ph1_opt)))
+    logging.info(strm("THIS IS PH1_OPT",ph1_opt))
+    logging.info(strm('optimal phase correction',repr(ph1_opt)))
     # }}}
     # {{{ apply the phase corrections
     def applyphase(arg,ph1):
@@ -158,7 +158,7 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
         arg /= ph0
         return arg
     def costfun(ph1):
-        logger.info(strm("PH1 IS THIS:",ph1))
+        logging.info(strm("PH1 IS THIS:",ph1))
         if type(ph1) is np.ndarray:
             ph1 = ph1.item()
         temp = s.C
@@ -194,7 +194,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     # and use it to determine the max shift
     s = s.C # need to copy, since I'm manipulating the axis here
     dt = np.diff(s.getaxis('t2')[:2]).item()
-    logger.info(strm("For hermitian test, my dwell time is",dt))
+    logging.info(strm("For hermitian test, my dwell time is",dt))
     # am assuming the axis of the source data is not manipulated
     data_for_peak = abs(s).mean_all_but(['t2'])
     max_val = data_for_peak.data.max()
@@ -205,7 +205,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     peak_center = data_for_peak['t2':(0.1e-3,None)].argmax('t2').item()
     s.setaxis('t2',lambda x: x-peak_center)
     s.register_axis({'t2':0})
-    logger.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
+    logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
     max_shift = np.min(abs(peak_center-peak_bounds))
     #}}}
     #{{{construct test arrays for T2 decay and shift
@@ -213,7 +213,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         rel_shift = [-rel_shift,rel_shift]
     shift_t = nddata(r_[rel_shift[0]:rel_shift[1]:shift_points*1j]*max_shift,'shift')
     data_for_peak.setaxis('t2',lambda x:x-peak_center) #for plotting later
-    logger.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
+    logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
     #}}}
     #{{{time shift and correct for T2 decay
     orig_t2 = ndshape(s)['t2']
@@ -223,7 +223,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     s.set_units('shift','s')
     s.ift('t2')
     s = s['t2',:orig_t2]
-    logger.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
+    logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
     s.reorder(['t2'],first=False)
     if fl:
         fig_forlist, ax_list = plt.subplots(4,1, figsize=(10,10))
@@ -233,8 +233,8 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         ax_list[0].set_title('Shifted Data')
     #}}}
     #{{{make sure there's an odd number of points and set phase of center point to 0
-    logger.debug(strm("before taking the slice, endpoints are",s.getaxis('t2')[r_[0,-1]]))
-    logger.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
+    logging.debug(strm("before taking the slice, endpoints are",s.getaxis('t2')[r_[0,-1]]))
+    logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
     # {{{ this passes the assertion, but I
     #     need jf_hack for the next step to
     #     work -- this means the axis isn't
@@ -250,22 +250,22 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         x *= dt
     # }}}
     s_hermitian = s['t2':(-max_shift,max_shift)].C
-    logger.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
+    logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
     n_points = ndshape(s_hermitian)['t2']
-    logger.debug(strm('size of axis',len(s_hermitian.getaxis('t2'))))
-    logger.debug(strm('steps',np.unique(np.diff(s_hermitian.getaxis('t2')))))
-    logger.debug(strm('full list of axis after slice',s_hermitian.getaxis('t2')))
-    logger.debug(strm("check for endpoints",s_hermitian.getaxis('t2')[r_[0,-1]],
+    logging.debug(strm('size of axis',len(s_hermitian.getaxis('t2'))))
+    logging.debug(strm('steps',np.unique(np.diff(s_hermitian.getaxis('t2')))))
+    logging.debug(strm('full list of axis after slice',s_hermitian.getaxis('t2')))
+    logging.debug(strm("check for endpoints",s_hermitian.getaxis('t2')[r_[0,-1]],
         s_hermitian.getaxis('t2')[0] + s_hermitian.getaxis('t2')[-1],
         s_hermitian.getaxis('t2')[n_points//2]))
     if n_points % 2 == 0:
         raise ValueError("Getting an even slice -- shouldn't happen if your "
                 "axis coord are in register with t=0 and you take a slice "
                 "(-max_shift,max_shift)")
-    logger.debug("check for center", n_points, s_hermitian.getaxis('t2')[n_points//2:n_points//2+3])
+    logging.debug("check for center", n_points, s_hermitian.getaxis('t2')[n_points//2:n_points//2+3])
     assert s_hermitian.getaxis('t2')[n_points//2] == 0
     center_point = s_hermitian['t2',n_points//2]
-    logger.debug(strm(center_point/abs(center_point)))
+    logging.debug(strm(center_point/abs(center_point)))
     #I want to do this center_point = s_hermitian['t2':0], but why not be consistent
     s_hermitian /= center_point/abs(center_point)
     if fl:
