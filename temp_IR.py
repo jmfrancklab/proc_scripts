@@ -9,9 +9,18 @@ T1w = 2.6 #s
 #}}}
 coherence_pathway = {'ph1':0,'ph2':1}
 for thisfile,exp_type,nodename,postproc,f_range,t_range,rep,clock_correction,IR,ILT in [
-        ('210708_Q183R1a_pR_KH2PO4_ODNP','odnp',
-            'FIR_0dBm','spincore_IR_v1',
-            (-300,300),(None,83e-3),2.5,False,False,False)
+        ('210714_A174R1a_pR_DDM_ODNP','odnp',
+            'FIR_36dBm','spincore_IR_v1',
+            (-300,300),(None,83e-3),4,False,False,False),
+#        ('210714_A174R1a_pR_DHPC_ODNP','odnp',
+#            'FIR_36dBm','spincore_IR_v1',
+#            (-200,150),(None,83e-3),4,False,False,False),
+#        ('210714_150uM_TEMPOL_SMB_ODNP','odnp',
+#            'FIR_0dBm','spincore_IR_v1',
+#            (-300,300),(None,83e-3),6.5,False,False,False),
+#        ('210708_Q183R1a_pR_KH2PO4_ODNP','odnp',
+#            'FIR_0dBm','spincore_IR_v1',
+#            (-300,300),(None,83e-3),2.5,False,False,False),
 #        ('210707_Q183R1a_pR_DHPC_ODNP','odnp',
 #            'FIR_36dBm','spincore_IR_v1',
 #            (-300,300),(None,83e-3),3,False,False,False),
@@ -38,6 +47,14 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,rep,clock_correction,IR,
         s = s['vd',:-1]
     myslice = s['t2':f_range]
     mysgn = select_pathway(myslice,coherence_pathway).real.sum('t2').run(np.sign)
+    if thisfile == '210714_150uM_TEMPOL_SMB_ODNP':
+        if nodename == 'FIR_36dBm':
+       # mysgn = nddata(r_[1.,-1.,1,-1.,1.,-1.,1.,-1.,1.,-1.,1.,-1.],'vd').labels('vd',s.getaxis('vd'))
+       #mysgn = nddata(np.ones((12)),'vd').labels('vd',s.getaxis('vd'))
+           mysgn = nddata(r_[1.,1.,1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.],'vd').labels('vd',s.getaxis('vd'))
+        if nodename == 'FIR_0dBm':
+           mysgn = nddata(r_[-1.,-1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],'vd').labels('vd',s.getaxis('vd'))
+#               1,6,7,11
     if s.getaxis('vd').max() == 12:
         s = s['vd':(0,4.1)]
         mysgn = mysgn['vd':(0,4.1)]
@@ -53,5 +70,5 @@ for thisfile,exp_type,nodename,postproc,f_range,t_range,rep,clock_correction,IR,
 ##    T1 = process_IR(s,W=rep,f_range=f_range,t_range=t_range,
 ##            clock_correction=clock_correction,IR=IR,flip=True,sgn=mysgn,fl=fl)
     T1 = process_IR(s,W=rep,f_range=f_range,t_range=t_range,clock_correction=clock_correction,IR=IR,
-            flip=False,sgn=mysgn,fl=fl,hermitian_phasing=True,best_shift=0.004167) 
+            flip=True,sgn=mysgn,fl=fl,hermitian_phasing=True,best_shift=0.004167) 
     fl.show()
