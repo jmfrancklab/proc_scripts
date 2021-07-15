@@ -19,37 +19,53 @@ measured_vs_actual = 22. # how many dB down the split + measured power is from
 #{Input parameters & Load Data
 file_location = 'odnp'
 postproc = 'spincore_ODNP_v2' # 'spincore_ODNP_v1'
-plot_ks = True
-plot_enhancements = True
-plotname = 'Q183R1a pR (210708) vs TEMPOL (210714)'
-names = ['TEMPOL','pR in DDM','pR in DHPC']#['DDM KCl','DHPC KCl','DDM KI', 'DDM $KH_{2}PO_{4}$']
-names = ['TEMPOL','DDM KCl','DHPC KCl','DDM KI', 'DDM $KH_{2}PO_{4}$']
+plotname = 'Q183R1a pR Hoffmeister Series Anions'# 'Q183R1a pR DDM' 
+names = ['KCl','KI','$KH_{2}PO_{4}$']#['TEMPOL','DDM KCl','DHPC KCl','DDM KI', 'DDM $KH_{2}PO_{4}$']
+plot_all_ks = True 
+plot_all_enhancements = True
+save_figs = True
+if save_figs:
+    import os
+    os.chdir('C:/Users/saman/Research/Sam_Notebooks/ODNP_proc/')
 curves = nddata(zeros((len(names),18),dtype='complex128'),['sample','power'])
 enhancements = nddata(zeros((len(names),18),dtype='complex128'),['sample','power'])
+    # { Load T1_values
+#import pandas as pd
+#path = 'C:/Users/saman/Research/Sam_Notebooks/ODNP_proc'
+#T1_df = pd.read_csv('%s/210707_Q183R1a_pR_DDM_T1s.csv'%path)
+#print(T1_df);quit()
+    # }
+for (idx,filename,nodename,outname,f_range,C,T1_0,T1_vals,ppt,export_csv) in [
+#        (0,'210714_150uM_TEMPOL_SMB_ODNP','enhancement_real',
+#            '210714_150uM_TEMPOL_SMB_enhancement',
+#            (-200,200),150e-6,3.56,None,1.5163,False),
 
-for (idx,filename,nodename,outname,f_range,C,T1_0,ppt,export_csv) in [
-        (0,'210714_150uM_TEMPOL_SMB_ODNP','enhancement_real',
-            '210714_150uM_TEMPOL_SMB_enhancement',
-            (-200,200),150e-6,3.56,1.5163,False),
-#        (1,'210714_A174R1a_pR_DDM_ODNP','enhancement1',
+#        (0,'210714_A174R1a_pR_DDM_ODNP','enhancement1',
 #            '210714_A174R1a_pR_DDM_enhancement',
-#            (-250,100),240e-6,1.49,1.5154,False),
-#        (2,'210714_A174R1a_pR_DHPC_ODNP','enhancement',
+#            (-250,100),240e-6,1.49,None,1.5154,False),
+#        (1,'210715_A174R1a_pR_KI_ODNP','enhancement',
+#            '210715_A174R1a_pR_KI_enhancement',
+#            (-200,200),236.9e-6,1.45,None,1.5154,False),
+#        (2,'210715_A174R1a_pR_KH2PO4_ODNP','enhancement',
+#            '210715_A174R1a_pR_KH2PO4_enhancement',
+#            (-200,200),162.1e-6,2.05,None,1.5154,False),
+#        (3,'210714_A174R1a_pR_DHPC_ODNP','enhancement',
 #            '210714_A174R1a_pR_DHPC_enhancement',
-#            (-250,75),238.5e-6,1.47,1.5154,False),
+#            (-250,75),238.5e-6,1.47,None,1.5154,False),
     
-        (1,'210707_Q183R1a_pR_DDM_ODNP','enhancement',
+        (0,'210707_Q183R1a_pR_DDM_ODNP','enhancement',
             '210707_Q183R1a_pR_DDM_enhancement',
-            (-225,75),207.4e-6,1.89,1.5154,True),
-        (2,'210707_Q183R1a_pR_DHPC_ODNP','enhancement',
-            '210707_Q183R1a_pR_DHPC_enhancement',
-            (-225,75),103.2e-6,2.15,1.5154,True),
-        (3,'210708_Q183R1a_pR_KI_ODNP','enhancement',
+            (-225,75),207.4e-6,None,None,1.5154,True), # have T1_values for this data 
+        (1,'210708_Q183R1a_pR_KI_ODNP','enhancement',
             '210708_Q183R1a_pR_KI_enhancement',
-            (-200,100),113.1e-6,1.12,1.5154,True),
-        (4,'210708_Q183R1a_pR_KH2PO4_ODNP','enhancement',
+            (-200,100),113.1e-6,1.12,None,1.5154,True),
+        (2,'210708_Q183R1a_pR_KH2PO4_ODNP','enhancement',
             '210708_Q183R1a_pR_KH2PO4_enhancement',
-            (-225,75),115.2e-6,1.9,1.5154,True)
+            (-225,75),115.2e-6,1.9,None,1.5154,True)
+#        (3,'210707_Q183R1a_pR_DHPC_ODNP','enhancement',
+#            '210707_Q183R1a_pR_DHPC_enhancement',
+#            (-225,75),103.2e-6,2.15,None,1.5154,True),
+
         ]:
     s = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
@@ -95,20 +111,26 @@ for (idx,filename,nodename,outname,f_range,C,T1_0,ppt,export_csv) in [
     fl.next('enhancement curve')
     fl.plot(s['power',:-3],'ko', human_units=False)
     fl.plot(s['power',-3:],'ro', human_units=False)
-    if plot_enhancements:
+    if plot_all_enhancements:
         enhancements['sample',idx] = s
     if C is not None:
         epsilon = 1 - s
         ks = epsilon/C
         if T1_0 is not None:
             ks /= T1_0
-            if ppt is not None:
-                ks *= ppt*1e-3 # gets you in units of k_sigma!!!
-                fl.next('$k_{\sigma}s(p)$ using $T_{1}(0)$')
-                fl.plot(ks['power',:-3],'ko', human_units=False)
-                fl.plot(ks['power',-3:],'ro', human_units=False)
-                if plot_ks:
-                    curves['sample',idx] = ks
+            fl.next('$k_{\sigma}s(p)T_{1}(p)$ $\div$ $ T_{1}(0)$')
+        elif T1_vals is not None:
+            m,b = np.polyfit(T1_vals.getaxis('power'),T1_vals.data,1)
+            T1_p = lambda p: (m*p)+b
+            T1_p = nddata(T1_p(ks.getaxis('power')),ks.getaxis('power')).labels('power',ks.getaxis('power'))
+            ks /= T1_p
+            fl.next('$k_{\sigma}s(p)$')
+        if ppt is not None:
+            ks *= ppt*1e-3 # gets you in units of k_sigma!!!
+            fl.plot(ks['power',:-3],'ko', human_units=False)
+            fl.plot(ks['power',-3:],'ro', human_units=False)
+            if plot_all_ks:
+                curves['sample',idx] = ks
 #}
 # { Exporting data from the enhancement curve as csv
     if export_csv:
@@ -123,8 +145,9 @@ for (idx,filename,nodename,outname,f_range,C,T1_0,ppt,export_csv) in [
         enhancement3.to_csv('%s_enhancement.csv'%outname,index=False)
 #}
 #    fl.show()
+fl.show()
 #{ Plotting all results together
-if plot_enhancements:
+if plot_all_enhancements:
     figure(figsize=(7,5))
     title('%s enhancements'%plotname)
     enhancements.labels('power',s.getaxis('power'))
@@ -136,11 +159,13 @@ if plot_enhancements:
                 label='%s back'%name,markersize=7)
     plt.ylabel('E')
     plt.xlabel('power (W)')
-    plt.legend(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
-    plt.savefig('%s_enhancement.png'%('_'.join(plotname.split(' '))),transparent=True,overwrite=True,bbox_inches='tight')
+    plt.legend()#bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
+    if save_figs:
+        plt.savefig('%s_enhancement.png'%('_'.join(plotname.split(' '))),transparent=True,overwrite=True,bbox_inches='tight')
+    plt.show()
     plt.close()
-
-if plot_ks:
+    
+if plot_all_ks:
     figure(figsize=(7,5))
     title('%s $k_{\sigma}s(p)$'%plotname)
     curves.labels('power',s.getaxis('power'))
@@ -152,8 +177,9 @@ if plot_ks:
                 label='%s back'%name,markersize=7)
     plt.ylabel('$k_{\sigma}s(p)$ $(s^{-1})$')
     plt.xlabel('power (W)')
-    plt.legend(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
-    plt.savefig('%s_ksgima_sp.png'%('_'.join(plotname.split(' '))),transparent=True,overwrite=True,bbox_inches='tight')
+    plt.legend()#bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
+    if save_figs:
+        plt.savefig('%s_ksgima_sp.png'%('_'.join(plotname.split(' '))),transparent=True,overwrite=True,bbox_inches='tight')
+    plt.show()
     plt.close()
-plt.show()
 #}
