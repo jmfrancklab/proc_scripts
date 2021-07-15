@@ -92,4 +92,5 @@ def fake_data(
     data.ft(direct, shift=True)
     data.ift(direct)
     data.register_axis({direct:0})
+    data.set_units(direct,'s')
     return data
