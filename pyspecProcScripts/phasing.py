@@ -6,7 +6,7 @@ from pylab import xlim
 import numpy as np
 import pyspecdata as pysp
 from scipy import linalg
-# where is "logger" coming from? Does "logging" not work as used here?
+import logging
 def zeroth_order_ph(d, fl=None):
     r'''determine the covariance of the datapoints
     in complex plane, and use to phase the
