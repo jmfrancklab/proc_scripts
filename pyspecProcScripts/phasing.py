@@ -299,7 +299,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     s_FID.ft('t2')
     if fl:
         fl.image(s_FID.C.mean_all_but(['shift','t2']),
-                ax=ax_list[3])
+                ax=ax_list[3], human_units=False)
         ax_list[3].set_title('FT of FID Data')
         fig_forlist.tight_layout(rect=[0, 0.03, 1, 0.95])
     sum_abs_real = abs(s_FID.real).sum('t2').mean_all_but(['shift'])
@@ -313,7 +313,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
                     human_units=False)
             fl.plot(forplot.C.setaxis('t2', lambda x: -x), color=l[-1].get_color(),alpha=0.2,ax=ax,
                     human_units=False)
-            l=fl.plot(forplot.imag,alpha=0.5,ax=ax)
+            l=fl.plot(forplot.imag,alpha=0.5,ax=ax, human_units=False)
             fl.plot(-forplot.imag.C.setaxis('t2',lambda x: -x),color=l[-1].get_color(),
                     alpha=0.2,ax=ax,
                     human_units=False)
