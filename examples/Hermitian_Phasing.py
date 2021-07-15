@@ -59,7 +59,7 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig, ax_list = subplots(1, 4, figsize = (20,20))
+        fig, ax_list = subplots(1, 4, figsize = (10,10))
         fig.suptitle(fl.basename)
         fl.next("Data processing", fig=fig)
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
