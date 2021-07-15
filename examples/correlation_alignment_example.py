@@ -83,8 +83,6 @@ with figlist_var() as fl:
         ph0 /= abs(ph0)
         data /= ph0
         data.ft("t2")
-        fl.image(data, ax=ax_list[1])
-        ax_list[1].set_title("Rough Center \n + Zeroth Order")
         #{{{ Applying the phase corrections
         data.ift("t2")
         best_shift, max_shift = hermitian_function_test(
@@ -92,11 +90,10 @@ with figlist_var() as fl:
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
         data *= mysgn
-        fl.image(data, ax=ax_list[2])
-        ax_list[2].set_title("Hermitian Test (v)")
-        fl.image(data,ax=ax_list[3])
-        ax_list[3].set_title("Hermitian Test (t)")
-        fig.tight_layout(rect=[0,0.03,1,0.95])
+        data.ift("t2")
+        fl.image(data, ax=ax_list[1])
+        ax_list[1].set_title("Phase Corrected and Centered")
+        data.ft("t2")
         data *= mysgn
         #}}}
         #{{{ Applying Correlation Routine to Align Data
@@ -108,9 +105,12 @@ with figlist_var() as fl:
             data.ft([k])
         data.ft("t2")
         data *= mysgn
-        fl.next("Aligned Data -- Frequency Domain")
-        fl.image(data)
-        data.ift("t2")
-        fl.next("Aligned Data -- Time Domain")
-        fl.image(data)
+        fl.image(data,ax=ax_list[2])
+        ax_list[2].set_title("Aligned Data -- Frequency Domain")
+        #data.ift("t2")
+        #data.set_units("t2","Hz")
+        fl.image(data,ax=ax_list[3])
+        ax_list[3].set_title("Aligned Data -- Time Domain")
+        fig.tight_layout(rect=[0,0.03,1,0.95])
+
         #}}} 
