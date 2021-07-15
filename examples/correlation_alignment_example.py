@@ -62,7 +62,7 @@ with figlist_var() as fl:
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        fl.image(data, ax=ax_list[0])
+        fl.image(data, ax=ax_list[0], human_units=False)
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
@@ -85,10 +85,10 @@ with figlist_var() as fl:
             select_pathway(data.C.mean(indirect), signal_pathway)
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-        fl.image(data, ax=ax_list[3])
+        fl.image(data, ax=ax_list[3], human_units=False)
         ax_list[3].set_title("Hermitian Test (t)")
         data.ft("t2")
-        fl.image(data, ax=ax_list[2])
+        fl.image(data, ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Hermitian Test (v)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
         # }}}
@@ -101,14 +101,10 @@ with figlist_var() as fl:
         opt_shift, sigma = correl_align(
             data * mysgn, indirect_dim=indirect, signal_pathway=signal_pathway, sigma=50
         )
-        s.ift("t2")
-        s *= np.exp(-1j * 2 * pi * opt_shift * s.fromaxis("t2"))
-        s.ft("t2")
         data.ift("t2")
-        for k, v in signal_pathway.items():
-            data.ft([k])
+        data *= np.exp(-1j * 2 * pi * opt_shift * data.fromaxis("t2"))
         data.ft("t2")
-        fl.image(data, ax=ax_list[2])
+        fl.image(data, ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Aligned Data (v)")
         data.ift("t2")
         fl.image(data, ax=ax_list[3], human_units=False)

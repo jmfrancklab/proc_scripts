@@ -175,5 +175,6 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     if avg_dim:
         s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
         s.reorder(['ph1',avg_dim,'power','t2'])
+    s.ft(list(signal_pathway.keys()))
     return f_shift,sigma    
 
