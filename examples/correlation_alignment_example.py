@@ -77,16 +77,13 @@ with figlist_var() as fl:
         data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
         data.ft("t2")
         data.ift("t2")
-        # {{{ this is not correct -- you want to use the zeroth order phasing
-        # routine to determine the zeroth order phase, since it allows for
-        # negative data this will flip the negative data to positive
-        ph0 = select_pathway(data, signal_pathway)["t2":0]
-        ph0 /= abs(ph0)
-        data /= ph0
+        # {{{Zeroth order phase correction
+        retval = zeroth_order_ph(select_pathway(data,signal_pathway))
+        data /= retval
         # }}}
         # {{{ Applying the phase corrections
         best_shift, max_shift = hermitian_function_test(
-            select_pathway((data*mysgn).C.mean(indirect), signal_pathway)
+            select_pathway(data.C.mean(indirect), signal_pathway)
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
@@ -94,6 +91,10 @@ with figlist_var() as fl:
         ax_list[1].set_title("Phased and \n Centered")
         # }}}
         # {{{ Applying Correlation Routine to Align Data
+        mysgn = (select_pathway(data,signal_pathway).C.real.sum("t2").run(np.sign))
+        #    this is the sign of the signal -- note how on the next line,
+        #    I pass sign-flipped data, so that we don't need to worry about
+        #    messing with the original signal
         opt_shift, sigma = correl_align(
             data * mysgn, indirect_dim=indirect, signal_pathway=signal_pathway, sigma=50
         )

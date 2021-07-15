@@ -81,12 +81,9 @@ with figlist_var() as fl:
         data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
         data.ft("t2")
         data.ift("t2")
-        # {{{ this is not correct -- you want to use the zeroth order phasing
-        # routine to determine the zeroth order phase, since it allows for
-        # negative data this will flip the negative data to positive
-        ph0 = select_pathway(data, signal_pathway)["t2":0]
-        ph0 /= abs(ph0)
-        data /= ph0
+        # {{{ Zeroth Order Phase Correction
+        retval = zeroth_order_ph(select_pathway(data,signal_pathway))
+        data /= retval
         # }}}
         fl.image(data, ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Rough Center \n + Zeroth Order")
