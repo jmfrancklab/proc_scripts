@@ -88,10 +88,8 @@ with figlist_var() as fl:
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
         data *= mysgn
-        data.ift("t2")
         fl.image(data, ax=ax_list[1])
         ax_list[1].set_title("Phase Corrected and Centered")
-        data.ft("t2")
         data *= mysgn
         #}}}
         #{{{ Applying Correlation Routine to Align Data
@@ -106,10 +104,7 @@ with figlist_var() as fl:
         fl.image(data, ax=ax_list[2])
         ax_list[2].set_title("Aligned Data (v)")
         data.ift("t2")
-        #data.ift("t2")
-        #data.set_units("t2","Hz")
-        fl.image(data, ax=ax_list[3])
+        fl.image(data, ax=ax_list[3], human_units=False)
         ax_list[3].set_title("Aligned Data (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-
         #}}} 
