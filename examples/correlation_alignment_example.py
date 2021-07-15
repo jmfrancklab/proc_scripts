@@ -88,6 +88,7 @@ with figlist_var() as fl:
         fl.image(data, ax=ax_list[3])
         ax_list[3].set_title("Hermitian Test (t)")
         data.ft("t2")
+        data.ft("t2")
         fl.image(data, ax=ax_list[2])
         ax_list[2].set_title("Hermitian Test (v)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -111,8 +112,7 @@ with figlist_var() as fl:
         fl.image(data, ax=ax_list[2])
         ax_list[2].set_title("Aligned Data (v)")
         data.ift("t2")
-        fl.image(data, ax=ax_list[3])
+        fl.image(data, ax=ax_list[3], human_units=False)
         ax_list[3].set_title("Aligned Data (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-
         # }}}
