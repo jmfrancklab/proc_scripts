@@ -47,7 +47,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                     which f_shift will be taken from the correlation function.
                     Shift_bounds must be True.
     sigma:          int
-                    Sigma value for the Gaussian fitting. Related to the line width
+                    Sigma value for the Gaussian mask. Related to the line width
                     of the given data.
     fl:             boolean 
                     fl=fl to show the plots and figures produced by this function
@@ -78,6 +78,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     N = ndshape(s)[indirect_dim]
     sig_energy = (abs(s)**2).data.sum().item() / N
     if fl:
+        fl.push_marker()
         fig_forlist, ax_list = plt.subplots(1, 5, figsize=(7,7))
         fl.next("Correlation Diagnostics")
         fig_forlist.suptitle(" ".join(["Correlation Diagnostic"] + [j for j in [fl.basename] if j is not None]))
@@ -172,6 +173,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     if fl is not None:
         fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[4])
         ax_list[4].set_title('after correlation\nph0 restored \nsig. energy=%g'%sig_energy)
+        fl.pop_marker()
     if avg_dim:
         s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
         s.reorder(['ph1',avg_dim,'power','t2'])

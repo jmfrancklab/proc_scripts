@@ -94,7 +94,15 @@ with figlist_var() as fl:
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
         opt_shift, sigma = correl_align(
-            data * mysgn, indirect_dim=indirect, signal_pathway=signal_pathway, sigma=50
+            data * mysgn,
+            indirect_dim=indirect,
+            signal_pathway=signal_pathway,
+            sigma=3000 / 2.355,
+            max_shift=300,  # this makes the Gaussian mask 3
+            #                 kHz (so much wider than the signal), and
+            #                 max_shift needs to be set just wide enough to
+            #                 accommodate the drift in signal
+            fl=fl
         )
         data.ift("t2")
         data *= np.exp(-1j * 2 * pi * opt_shift * data.fromaxis("t2"))
