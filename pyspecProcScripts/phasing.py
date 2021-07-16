@@ -4,7 +4,6 @@ from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
 from pylab import xlim
 import numpy as np
-import pyspecdata as pysp
 from scipy import linalg
 import logging
 def zeroth_order_ph(d, fl=None):
@@ -42,7 +41,7 @@ def zeroth_order_ph(d, fl=None):
         # slightly better than the magnitude -- this should be both a robust
         # test and a resolution for issue #23
         )
-    eigenValues, eigenVectors = linalg.eig(cov_mat)
+    eigenValues, eigenVectors = linalg.eigh(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
     # next 3 lines from stackexchange -- sort by
