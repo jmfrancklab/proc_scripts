@@ -2,32 +2,37 @@ from pyspecdata import *
 from pyspecProcScripts import *
 from pyspecProcScripts import postproc_dict
 from pyspecProcScripts.third_level.process_IR import process_IR
+import time
 fl = fl_mod()
 # {{{ input parameters
-save_npz = False
-T1w = 2.6 #s
-#}}}
-coherence_pathway = {'ph1':0,'ph2':1}
+filename = '210707_Q183R1a_pR_DDM_ODNP'
+powers = np.r_[0,2,2.5,3.16,3.98] #W
 exp_type = 'odnp'
 postproc = 'spincore_IR_v1'
 export_csv = True
-outname = '210707_Q183R1a_pR_DDM'
-powers = np.r_[0,2,2.5,3.16,3.98] #W
+
+date = time.strftime('%y%m%d')
+outname = '%s_%s'%(date,'_'.join(filename.split('_')[1:-1]))
+titl = ' '.join(filename.split('_')[:-1])
 T1_vals = nddata(np.zeros((len(powers))),'power').labels('power',powers)
-for idx,thisfile,nodename,f_range,t_range,rep,clock_correction,IR,ILT in [
-        (0,'210707_Q183R1a_pR_DDM_ODNP','FIR_noPower_real_newvd2',
-            (-200,25),(None,60e-3),3,False,False,False),
-        (1,'210707_Q183R1a_pR_DDM_ODNP','FIR_33dBm_real_newvd2',
-            (-175,150),(None,83e-3),3,False,False,False),
-        (2,'210707_Q183R1a_pR_DDM_ODNP','FIR_34dBm_real_newvd2',
-            (-200,150),(None,65e-3),3,False,False,False),
-        (3,'210707_Q183R1a_pR_DDM_ODNP','FIR_35dBm_real_newvd2',
-            (-200,150),(None,65e-3),3,False,False,False),
-        (4,'210707_Q183R1a_pR_DDM_ODNP','FIR_36dBm_real_newvd2',
-            (-200,175),(None,50e-3),3,False,False,False),
+T1w = 2.6 #s
+coherence_pathway = {'ph1':0,'ph2':1}
+
+for idx,filename,nodename,f_range,t_range,rep,clock_correction,IR,ILT in [
+    (0,filename,'FIR_noPower_real_newvd2',(-200,25),(None,60e-3),3,
+        False,False,False),
+    (1,filename,'FIR_33dBm_real_newvd2',(-175,150),(None,83e-3),3,
+        False,False,False),
+    (2,filename,'FIR_34dBm_real_newvd2',(-200,150),(None,65e-3),3,
+        False,False,False),
+    (3,filename,'FIR_35dBm_real_newvd2',(-200,150),(None,65e-3),3,
+        False,False,False),
+    (4,filename,'FIR_36dBm_real_newvd2',(-200,175),(None,50e-3),3,
+        False,False,False),
         ]:
-    fl.basename = thisfile
-    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
+#}}}
+    fl.basename = filename
+    s = find_file(filename,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=postproc_dict,fl=fl)
     myslice = s['t2':f_range]
     mysgn = select_pathway(myslice,coherence_pathway).real.sum('t2').run(np.sign)
@@ -40,19 +45,27 @@ for idx,thisfile,nodename,f_range,t_range,rep,clock_correction,IR,ILT in [
     T1_vals['power',idx] = T1
 #    fl.show()
 #{ Fit T1 curve
-#fitfxn = lambda p,x: (p[0]*x) + p[1]
-#errfxn = lambda p_arg,x_arg,y_arg: abs(fitfxn(p_arg,x_arg) - y_arg)
 m,b = np.polyfit(T1_vals.getaxis('power'),T1_vals.data,1)
-print('T1(p) fit: $T_{1}=%0.6fp+%0.6f$'%(m,b))
-print('R1(p): $R_{1} = %0.6fp+%0.6f$'%(1/m,1/b))
+print('T1(p) fit: m = %0.6f s/W b = %0.6f s'%(m,b))
+m1,b1 = np.polyfit(T1_vals.getaxis('power'),1/T1_vals.data,1)
+print('R1(p) fit: m = %0.6f W/s b = %0.6f 1/s'%(m1,b1))
 #{ Plot all T1's together
 figure(figsize=(7,5))
-title('$T_{1}$(p) for %s'%(' '.join(outname.split('_'))))
+title('%s $T_{1}$(p)'%titl)
 plot(T1_vals,color='xkcd:dark magenta',ls='-',marker='o')
 plt.ylabel('$T_{1}$ (s)')
 plt.xlabel('power (W)')
-plt.text(1,powers[-2],'T1 = %0.4fp + %0.4f'%(m,b))
+plt.text(powers[1]/4,T1_vals.data[0],'T1(s) = %0.4f(s/W) * p (W) + %0.4f(s)'%(m,b),fontsize='medium')
 plt.savefig('%s_T1s.png'%outname,overwrite=True,bbox_inches='tight')
+plt.show()
+plt.close()
+figure(figsize=(7,5))
+title('%s $R_{1}$(p)'%titl)
+plot(powers,1/T1_vals.data,'xkcd:dark magenta',ls='-',marker='o')
+plt.ylabel('$R_{1}$ $s^{-1}$')
+plt.xlabel('power (W)')
+plt.text(powers[0],(1/T1_vals.data[0])*0.8,'R1(1/s) = %0.4f (1/Ws) * p (W) + %0.4f (1/s)'%(m1,b1),fontsize='medium')
+plt.savefig('%s_R1s.png'%outname,overwrite=True,bbox_inches='tight')
 plt.show()
 plt.close()
 #}
