@@ -139,5 +139,4 @@ with figlist_var() as fl:
         fl.image(data, ax=ax_list[3], human_units=False)
         ax_list[3].set_title("Aligned Data (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-        fl.show();quit()
         # }}}
