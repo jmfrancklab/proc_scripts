@@ -19,11 +19,20 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         fl.plot(temp)
 
     # pulled from apodization code
+    Gaussian_Conv = True
+    Lorentzian_Conv = False
     sigma = nddata(np.linspace(1e-10,1e-1,1000),'sigma').set_units('sigma','s')
-    gaussians = np.exp(-temp.C.fromaxis(axis)**2/2/sigma**2)
-    signal_E = (abs(temp * gaussians)**2).sum(axis)
+    if Gaussian_Conv:
+        gaussians = np.exp(-temp.C.fromaxis(axis)**2/2/sigma**2)
+        signal_E = (abs(temp * gaussians)**2).sum(axis)
+    if Lorentzian_Conv:
+        lorentzians = np.exp(-abs(temp.C.fromaxis(axis))/sigma)
+        signal_E = (abs(temp * lorentzians)**2).sum(axis)
     signal_E /= signal_E.data.max()
-    filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
+    if Gaussian_Conv:
+        filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
+    if Lorentzian_Conv:
+        filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
     if fl is not None:
         fl.next('integration diagnostic -- signal Energy')
         fl.plot(signal_E, human_units=False)
@@ -38,11 +47,20 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     for_manual.setaxis('t2', lambda t: t- rough_center)
     for_manual.register_axis({'t2':0})
     x = for_manual.C.fromaxis('t2')
-    convfunc = lambda x,y: exp(-(x**2)/(2.0*(y**2)))
+    if Gaussian_Conv:
+        convfunc = lambda x,y: exp(-(x**2)/(2.0*(y**2)))
+    if Lorentzian_Conv:
+        convfunc = lambda x,y: exp(-(abs(x))/y)
     myfilter = convfunc(x,filter_width)
-    fl.next('Gaussian filter')
+    if Gaussian_Conv:
+        fl.next('Gaussian filter')
+    if Lorentzian_Conv:
+        fl.next('Gaussian filter')
     fl.plot(myfilter)
-    fl.next('Compare Gaussian Filter and Abs Data Normalized')
+    if Gaussian_Conv:
+        fl.next('Compare Gaussian Filter and Abs Data Normalized')
+    if Lorentzian_Conv:
+        fl.next('Compare Lorentzian Filter and Abs Data Normalized')
     fl.plot(abs(for_manual)/abs(for_manual).max(), alpha=0.5, label='abs data')
     fl.plot(myfilter, alpha=0.5, label='Gaussian filter')
     newdata = for_manual*myfilter
