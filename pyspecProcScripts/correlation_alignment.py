@@ -71,7 +71,6 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         indirect = [j for j in s.dimlabels if j in indirect]
         avg_dim_len = len(s.getaxis(avg_dim))
         s.smoosh(indirect)
-    s.ift(list(signal_pathway.keys()))
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len = {j:ndshape(s)[j] for j in signal_pathway.keys()}
@@ -108,6 +107,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s.ift(direct)
         s_copy = s.C
         s_copy.ft(direct)
+        this_mask = exp(-(s_copy.fromaxis(direct)-nu_center)**2/(2*sigma**2))
         s_copy *= exp(-(s_copy.fromaxis(direct)-nu_center)**2/(2*sigma**2))
         s_copy.ift(direct)
         s_copy2 = s.C
@@ -149,7 +149,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis(direct))
         s.ft(direct)
         s_copy.ft(direct)
-        if my_iter ==0:
+        if my_iter == 0:
             logging.info(strm("holder"))
             if fl:
                 fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
@@ -177,6 +177,5 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     if avg_dim:
         s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
         s.reorder(['ph1',avg_dim,'power',direct])
-    s.ft(list(signal_pathway.keys()))
-    return f_shift,sigma    
+    return f_shift,sigma, this_mask    
 
