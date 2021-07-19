@@ -214,6 +214,9 @@ def process_IR(s, this_l = 0.032,
         s_int *= -1
         #}}}
     #{{{Fitting Routine
+#    s_ints = np.delete(s_int.data,3)
+#    vd_del = np.delete(s_int.getaxis('vd'),3)
+#    s_int = nddata(s_ints,'vd').labels('vd',vd_del)
     x = s_int.fromaxis('vd')
     f = fitdata(s_int)
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")

@@ -17,11 +17,13 @@ measured_vs_actual = 22. # how many dB down the split + measured power is from
                          # the forward power
 #}
 #{Input parameters & Load Data
-f_range =(-250,75)         #(-250,100)#(-200,200) # Frequency cutoff in Hz. 
-outname = '210714_A174R1a_pR_DHPC_enhancement'#DDM_enhancement'#'210714_150uM_TEMPOL_enhancement'
+f_range =(-200,200)#(-250,75)         #(-250,100)#(-200,200) # Frequency cutoff in Hz. 
+outname = '210715_A174R1a_pR_KH2PO4_enhancement'#'210714_A174R1a_pR_DHPC_enhancement'#DDM_enhancement'#'210714_150uM_TEMPOL_enhancement'
 # If you don't want a csv of enhancement data, put None.
-s = find_file('210714_A174R1a_pR_DHPC_ODNP',exp_type='odnp',expno='enhancement',#'enhancement1',
+s = find_file('210715_A174R1a_pR_KH2PO4_ODNP',exp_type='odnp',expno='enhancement',
         postproc='spincore_ODNP_v2',lookup=postproc_dict,fl=fl)
+#s = find_file('210714_A174R1a_pR_DHPC_ODNP',exp_type='odnp',expno='enhancement',#'enhancement1',
+#        postproc='spincore_ODNP_v2',lookup=postproc_dict,fl=fl)
 #s = find_file('210616_S175R1a_pR_DDM_ODNP',exp_type='odnp',expno='enhancement',
 #        postproc='spincore_ODNP_v2',lookup=postproc_dict,fl=fl)
 #s = find_file('210617_T177R1a_pR_DDM_ODNP',exp_type='odnp', expno='enhancement',
