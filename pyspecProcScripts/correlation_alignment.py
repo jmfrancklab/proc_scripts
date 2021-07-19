@@ -107,6 +107,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s.ift('t2')
         s_copy = s.C
         s_copy.ft('t2')
+        this_mask = exp(-(s_copy.fromaxis('t2')-nu_center)**2/(2*sigma**2))
         s_copy *= exp(-(s_copy.fromaxis('t2')-nu_center)**2/(2*sigma**2))
         s_copy.ift('t2')
         s_copy2 = s.C
@@ -118,7 +119,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         for k,v in ph_len.items():
             for ph_index in range(v):
                 s_copy['Delta%s'%k.capitalize(),ph_index] = s_copy['Delta%s'%k.capitalize(),
-                        ph_index].run(lambda x, axis=None: roll(x,ph_index,axis=axis),k)
+                        ph_index].run(lambda x, axis=None: roll(x, ph_index, axis=axis), k)
         for j in range(1,N):
             correl += s_copy2 * s_copy.C.run(lambda x, axis=None: roll(x,j,axis=axis),
                 indirect_dim).run(conj)
