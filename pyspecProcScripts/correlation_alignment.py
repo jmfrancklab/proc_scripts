@@ -47,7 +47,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                     which f_shift will be taken from the correlation function.
                     Shift_bounds must be True.
     sigma:          int
-                    Sigma value for the Gaussian fitting. Related to the line width
+                    Sigma value for the Gaussian mask. Related to the line width
                     of the given data.
     fl:             boolean 
                     fl=fl to show the plots and figures produced by this function
@@ -78,6 +78,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     N = ndshape(s)[indirect_dim]
     sig_energy = (abs(s)**2).data.sum().item() / N
     if fl:
+        fl.push_marker()
         fig_forlist, ax_list = plt.subplots(1, 5, figsize=(7,7))
         fl.next("Correlation Diagnostics")
         fig_forlist.suptitle(" ".join(["Correlation Diagnostic"] + [j for j in [fl.basename] if j is not None]))
@@ -93,7 +94,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     for_nu_center.ft(list(signal_pathway))
     for x in range(len(signal_keys)):
         for_nu_center = for_nu_center[signal_keys[x],signal_values[x]]
-    nu_center = for_nu_center.mean(indirect_dim).C.argmax('t2')
+    nu_center = for_nu_center.mean(indirect_dim).C.argmax(direct)
     logging.info(strm("Center frequency", nu_center))
     for my_iter in range(100):
         i += 1
@@ -101,15 +102,14 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         logging.info(strm("CORRELATION ALIGNMENT ITERATION NO. ",i))
         logging.info(strm("*** *** ***"))
         if align_phases:
-            ph0 = s.C.sum('t2')
+            ph0 = s.C.sum(direct)
             ph0 /= abs(ph0)
             s /= ph0
-        s.ift('t2')
+        s.ift(direct)
         s_copy = s.C
-        s_copy.ft('t2')
-        this_mask = exp(-(s_copy.fromaxis('t2')-nu_center)**2/(2*sigma**2))
-        s_copy *= exp(-(s_copy.fromaxis('t2')-nu_center)**2/(2*sigma**2))
-        s_copy.ift('t2')
+        s_copy.ft(direct)
+        s_copy *= exp(-(s_copy.fromaxis(direct)-nu_center)**2/(2*sigma**2))
+        s_copy.ift(direct)
         s_copy2 = s.C
         for k,v in ph_len.items():
             ph = ones(v)
@@ -123,15 +123,15 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         for j in range(1,N):
             correl += s_copy2 * s_copy.C.run(lambda x, axis=None: roll(x,j,axis=axis),
                 indirect_dim).run(conj)
-        correl.reorder([indirect_dim,'t2'],first=False)
+        correl.reorder([indirect_dim,direct],first=False)
         if my_iter ==0:
             logging.info(strm("holder"))
             if fl:
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[1])
                 ax_list[1].set_title('correlation function (t), \nafter apod')
-        correl.ft_clear_startpoints('t2')
-        correl.ft('t2', shift=True, pad=2**14)
+        correl.ft_clear_startpoints(direct)
+        correl.ft(direct, shift=True, pad=2**14)
         for k,v in signal_pathway.items():
             correl.ft(['Delta%s'%k.capitalize()])
             correl = correl['Delta'+k.capitalize(),v]+correl['Delta'+k.capitalize(),0]
@@ -142,13 +142,13 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
                         ax=ax_list[2],human_units=False)
                 ax_list[2].set_title('correlation function (v), \nafter apod')
         if shift_bounds:
-            f_shift = correl['t2':(-max_shift,max_shift)].run(real).argmax('t2')
+            f_shift = correl[direct:(-max_shift,max_shift)].run(real).argmax(direct)
         else:
-            f_shift = correl.run(real).argmax('t2')
+            f_shift = correl.run(real).argmax(direct)
         s_copy = s.C
-        s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis('t2'))
-        s.ft('t2')
-        s_copy.ft('t2')
+        s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis(direct))
+        s.ft(direct)
+        s_copy.ft(direct)
         if my_iter ==0:
             logging.info(strm("holder"))
             if fl:
@@ -173,9 +173,10 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
     if fl is not None:
         fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[4])
         ax_list[4].set_title('after correlation\nph0 restored \nsig. energy=%g'%sig_energy)
+        fl.pop_marker()
     if avg_dim:
         s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
-        s.reorder(['ph1',avg_dim,'power','t2'])
+        s.reorder(['ph1',avg_dim,'power',direct])
     s.ft(list(signal_pathway.keys()))
     return f_shift,sigma    
 

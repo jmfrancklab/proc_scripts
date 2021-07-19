@@ -18,7 +18,7 @@ from numpy.random import normal, seed
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
-# sphinx_gallery_thumbnail_number = 10
+# sphinx_gallery_thumbnail_number = 1
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
