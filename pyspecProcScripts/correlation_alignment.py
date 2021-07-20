@@ -71,6 +71,8 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         indirect = [j for j in s.dimlabels if j in indirect]
         avg_dim_len = len(s.getaxis(avg_dim))
         s.smoosh(indirect)
+    for j in signal_pathway.keys():
+        assert not s.get_ft_prop(j), str(j)+" must not be in the coherence domain"
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len = {j:ndshape(s)[j] for j in signal_pathway.keys()}
@@ -108,7 +110,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s_copy = s.C
         s_copy.ft(direct)
         this_mask = exp(-(s_copy.fromaxis(direct)-nu_center)**2/(2*sigma**2))
-        s_copy *= exp(-(s_copy.fromaxis(direct)-nu_center)**2/(2*sigma**2))
+        s_copy *= this_mask
         s_copy.ift(direct)
         s_copy2 = s.C
         for k,v in ph_len.items():
