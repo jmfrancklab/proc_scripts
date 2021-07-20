@@ -11,7 +11,7 @@ def to_percent(y, position):
         return s + r'$\%$'
     else:
         return s + '%'
-def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
+def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
         fig_title='correlation alignment',signal_pathway = {'ph1':0,'ph2':1}, 
         shift_bounds=False, avg_dim = None, max_shift = 100., sigma=20.,direct='t2',fl=None):
     """
@@ -22,7 +22,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
 
     Parameters
     ==========
-    s:  nddata
+    s_orig:  nddata
         A nddata object which contains phase cycle dimensions and an
         indirect dimension.
     align_phases:   boolean
@@ -66,32 +66,32 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
 
     logging.info(strm("Applying the correlation routine"))
     if avg_dim:
-        phcycdims = [j for j in s.dimlabels if j.startswith('ph')]
-        indirect = set(s.dimlabels)-set(phcycdims)-set([direct])
-        indirect = [j for j in s.dimlabels if j in indirect]
-        avg_dim_len = len(s.getaxis(avg_dim))
-        s.smoosh(indirect)
+        phcycdims = [j for j in s_orig.dimlabels if j.startswith('ph')]
+        indirect = set(s_orig.dimlabels)-set(phcycdims)-set([direct])
+        indirect = [j for j in s_orig.dimlabels if j in indirect]
+        avg_dim_len = len(s_orig.getaxis(avg_dim))
+        s_orig.smoosh(indirect)
     for j in signal_pathway.keys():
-        assert not s.get_ft_prop(j), str(j)+" must not be in the coherence domain"
+        assert not s_orig.get_ft_prop(j), str(j)+" must not be in the coherence domain"
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
-    ph_len = {j:ndshape(s)[j] for j in signal_pathway.keys()}
-    N = ndshape(s)[indirect_dim]
-    sig_energy = (abs(s)**2).data.sum().item() / N
+    ph_len = {j:ndshape(s_orig)[j] for j in signal_pathway.keys()}
+    N = ndshape(s_orig)[indirect_dim]
+    sig_energy = (abs(s_orig)**2).data.sum().item() / N
     if fl:
         fl.push_marker()
         fig_forlist, ax_list = plt.subplots(1, 5, figsize=(7,7))
         fl.next("Correlation Diagnostics")
         fig_forlist.suptitle(" ".join(["Correlation Diagnostic"] + [j for j in [fl.basename] if j is not None]))
-        fl.image(s.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[0],human_units=False)
+        fl.image(s_orig.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[0],human_units=False)
         ax_list[0].set_title('before correlation\nsig. energy=%g'%sig_energy)
     energy_diff = 1.
     i = 0
     energy_vals = []
-    this_E = (abs(s.C.sum(indirect_dim))**2).data.sum().item() / N**2
+    this_E = (abs(s_orig.C.sum(indirect_dim))**2).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
-    for_nu_center =s.C
+    for_nu_center =s_orig.C
     for_nu_center.ft(list(signal_pathway))
     for x in range(len(signal_keys)):
         for_nu_center = for_nu_center[signal_keys[x],signal_values[x]]
@@ -102,17 +102,17 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         logging.info(strm("*** *** ***"))
         logging.info(strm("CORRELATION ALIGNMENT ITERATION NO. ",i))
         logging.info(strm("*** *** ***"))
+        s_orig.ift(direct)
+        s_copy = s_orig.C
         if align_phases:
-            ph0 = s.C.sum(direct)
+            ph0 = s_orig.C.sum(direct)
             ph0 /= abs(ph0)
-            s /= ph0
-        s.ift(direct)
-        s_copy = s.C
+            s_copy /= ph0
         s_copy.ft(direct)
         this_mask = exp(-(s_copy.fromaxis(direct)-nu_center)**2/(2*sigma**2))
         s_copy *= this_mask
         s_copy.ift(direct)
-        s_copy2 = s.C
+        s_copy2 = s_orig.C
         for k,v in ph_len.items():
             ph = ones(v)
             s_copy *= nddata(ph,'Delta'+k.capitalize())
@@ -147,9 +147,9 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
             f_shift = correl[direct:(-max_shift,max_shift)].run(real).argmax(direct)
         else:
             f_shift = correl.run(real).argmax(direct)
-        s_copy = s.C
+        s_copy = s_orig.C
         s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis(direct))
-        s.ft(direct)
+        s_orig.ft(direct)
         s_copy.ft(direct)
         if my_iter == 0:
             logging.info(strm("holder"))
@@ -177,7 +177,7 @@ def correl_align(s, align_phases=False,tol=1e-4,indirect_dim='indirect',
         ax_list[4].set_title('after correlation\nph0 restored \nsig. energy=%g'%sig_energy)
         fl.pop_marker()
     if avg_dim:
-        s.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
-        s.reorder(['ph1',avg_dim,'power',direct])
-    return f_shift,sigma, this_mask    
+        s_orig.chunk(avg_dim,[avg_dim,'power'],[avg_dim_len,-1])
+        s_orig.reorder(['ph1',avg_dim,'power',direct])
+    return f_shift, sigma, this_mask    
 
