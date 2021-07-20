@@ -108,21 +108,6 @@ with figlist_var() as fl:
         )
         this_shape = data_before
         this_shape *= 0
-        #for ph1_idx in range(len(this_shape.getaxis('ph1'))):
-        #    for ph2_idx in range(len(this_shape.getaxis('ph2'))):
-        #        if ph1_idx ==1 and ph2_idx ==0:
-        #            this_shape['ph1',ph1_idx]['ph2',ph2_idx] = 1
-        #            this_shape['ph1',ph1_idx]['ph2',ph2_idx] *= mask_func
-        #        elif ph1_idx == 3 and ph2_idx == 0:
-        #            this_shape['ph1',ph1_idx]['ph2',ph2_idx] = 1
-        #            this_shape['ph1',ph1_idx]['ph2',ph2_idx] *= mask_func
-        #        else:
-        #            this_shape['ph1',ph1_idx]['ph2',ph2_idx] = 0 
-        # AG: Above is the line for line exactly what is in the most up to date
-        # version of the use of the correlation alignment. Below I attempt to 
-        # simplify it to less lines while still applying the same things. It
-        # seems like it is working but until JF agrees they are doing the 
-        # same thing I leave it here for reference
         for k,v in signal_pathway.items():
             for ph_idx in range(v):
                 this_shape[k,ph_idx] = 1
