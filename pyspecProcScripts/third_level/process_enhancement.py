@@ -1,3 +1,9 @@
+"""
+Processes enhancement data
+==========================
+Processes data acquired from an enhancement experiment 
+and plots the resulting enhancement curve normalized.
+"""
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 from proc_scripts import *
