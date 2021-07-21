@@ -11,7 +11,7 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     if fl is not None:
         fl.next('integration diagnostic')
         fl.push_marker()
-        #fl.plot(abs(temp), label='abs before')
+        fl.plot(abs(temp.C.ft('t2'))/abs(temp.C.ft('t2')).max(), alpha=0.6, label='before convolve')
     temp_copy = temp.C
     fl.next('before convolution')
     fl.plot(temp_copy)
@@ -19,8 +19,8 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         fl.plot(temp)
 
     # pulled from apodization code
-    Gaussian_Conv = True
-    Lorentzian_Conv = False
+    Gaussian_Conv = False
+    Lorentzian_Conv = True
     sigma = nddata(np.linspace(1e-10,1e-1,1000),'sigma').set_units('sigma','s')
     if Gaussian_Conv:
         gaussians = np.exp(-temp.C.fromaxis(axis)**2/2/sigma**2)
@@ -62,17 +62,18 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     if Lorentzian_Conv:
         fl.next('Compare Lorentzian Filter and Abs Data Normalized')
     fl.plot(abs(for_manual)/abs(for_manual).max(), alpha=0.5, label='abs data')
-    fl.plot(myfilter, alpha=0.5, label='Gaussian filter')
+    fl.plot(myfilter, alpha=0.5, label='filter')
     newdata = for_manual*myfilter
     fl.next('Overlay abs data')
     fl.plot(abs(for_manual), alpha=0.5, label='before applying filter')
     fl.plot(abs(newdata), alpha=0.5, label='after applying filter')
     # END COPY FROM PYSPECDATA CONVOLVE.PY
     #temp.convolve('t2', filter_width)
+    temp = newdata.C
+    temp.ft('t2')
     if fl is not None:
         fl.next('integration diagnostic')
-        fl.plot(abs(temp)/abs(temp).max(), label='after')
-        fl.show();quit()
+        fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
     freq_limits = temp.contiguous(lambda x: abs(x) > 0.5 * abs(x).data.max())[0]
     if fl is not None:
         fl.next('integration diagnostic')
