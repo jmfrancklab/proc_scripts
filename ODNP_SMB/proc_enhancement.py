@@ -35,10 +35,12 @@ date = time.strftime('%y%m%d')
 #print(T1_df);quit()
     # }
 for (filename,nodename,f_range,C,T1_0,T1_vals,ppt) in [
-        ('210714_150uM_TEMPOL_SMB_ODNP','enhancement_real',
-            (-200,200),150e-6,3.56,None,1.5163),
+        ('210507_TEMPOL_150uM__cap_probe_DNP_1','signal',
+            (-150,250),150e-6,1.87,None,1.5163)
+
+#        ('210714_150uM_TEMPOL_SMB_ODNP','enhancement_real',
+#            (-200,200),150e-6,3.56,None,1.5163),
 #        ('210707_Q183R1a_pR_DDM_ODNP','enhancement',
-#            '210707_Q183R1a_pR_DDM_enhancement',
 #            (-225,75),207.4e-6,None,None,1.5154), # have T1_values for this data 
         ]:
 # }}}

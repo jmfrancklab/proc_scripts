@@ -19,7 +19,7 @@ As of 210720...
             
                 (0,'210707_Q183R1a_pR_DDM_ODNP','enhancement',
                     '210707_Q183R1a_pR_DDM_enhancement',
-                    (-225,75),207.4e-6,None,None,1.5154,True), # have T1_values for this data 
+                    (-225,75),207.4e-6,1.00,None,1.5154,True), # have T1_values for this data 
                 (1,'210708_Q183R1a_pR_KI_ODNP','enhancement',
                     '210708_Q183R1a_pR_KI_enhancement',
                     (-200,100),113.1e-6,1.12,None,1.5154,True),
