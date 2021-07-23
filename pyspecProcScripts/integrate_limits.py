@@ -4,6 +4,7 @@ import numpy as np
 from .fwhm_calculate import fwhm_calculator
 import logging
 from pylab import r_,fft,ifft,ifftshift,fftshift,exp,ones_like
+from matplotlib.pyplot import annotate
 
 
 def integrate_limits(s, axis="t2", fwhm=100, fl=None):
@@ -74,11 +75,13 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     if fl is not None:
         fl.next('integration diagnostic')
         fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
-    freq_limits = temp.contiguous(lambda x: abs(x) > 0.5 * abs(x).data.max())[0]
+    limit_for_contiguous = 0.125
+    freq_limits = temp.contiguous(lambda x: abs(x) > limit_for_contiguous * abs(x).data.max())[0]
     if fl is not None:
         fl.next('integration diagnostic')
         axvline(x = freq_limits[0], c='k', alpha=0.75)
         axvline(x = freq_limits[-1], c='k', alpha=0.75)
+        annotate(str(limit_for_contiguous), xy=(freq_limits[-1],0.85))
         fl.pop_marker()
     freq_limits = np.array(freq_limits)
     return freq_limits
