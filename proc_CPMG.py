@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import basinhopping
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
+from pyspecProcScripts import lookup_table
 from pyspecProcScripts.fitting import decay
 import sympy as sp
 fl = fl_mod()
@@ -27,7 +27,7 @@ for searchstr, exp_type, nodename, postproc, label_str, f_range, in [
         #    'deadtime=5',(-500,500)),
         ]:
     s = find_file(searchstr, exp_type=exp_type,
-            expno=nodename, postproc=postproc, lookup=postproc_dict, fl=fl)
+            expno=nodename, postproc=postproc, lookup=lookup_table, fl=fl)
     s.ift('t2')
     #{{{ Different versions of the pulse program (notably bruker vs. spincore)
     #    phase cycle the pulses with different numbers of steps, so we need to deal

@@ -1,6 +1,5 @@
 from pyspecdata import *
 from sympy import symbols
-from pyspecProcScripts import *
 import math
 import numpy as np
 import logging

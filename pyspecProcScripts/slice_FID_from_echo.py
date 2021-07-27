@@ -1,4 +1,3 @@
-from pyspecProcScripts import * 
 from pyspecdata import *
 from sympy import symbols
 

@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
-from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
-from pyspecProcScripts.correlation_alignment_ODNP import correl_align
+from proc_scripts import *
+from proc_scripts import lookup_table
+from proc_scripts.correlation_alignment_ODNP import correl_align
 from sympy import symbols
 from matplotlib import *
 import numpy as np
@@ -33,17 +33,17 @@ def as_scan_nbr(s):
 # leave this as a loop, so you can load multiple files
 def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
         excluded_pathways = [(0,0)], freq_range=(None,None),
-        t_range=(0,0.083),sign=None,fl=None):
+        t_range=(0,0.083),flip=False,sign=None,fl=None):
     s *= sign
-    #if fl is not None:
-    #    print(s.get_units('t2'))
-    #    s.set_units('t2','kHz')
-    #    fl.push_marker()
-    #    fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
-    #            s,thisrange=freq_range) # visualize the frequency limits
-    #fl.show();quit()
+    if fl is not None:
+        fl.side_by_side('show frequency limits\n$\\rightarrow$ use to adjust freq range',
+                s,thisrange=freq_range) # visualize the frequency limits
     s.ift('t2')
     s.reorder(['ph1','power','t2'])
+    if fl is not None:
+        fl.push_marker()
+        fl.next('time domain')
+        fl.image(as_scan_nbr(s))
     rcParams.update({
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
@@ -62,24 +62,14 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum('t2').argmin('power',raw_index=True).item()
     s = s['t2':freq_range] 
     if fl is not None:
-        fl.next('freq_domain before hermitian')
+        fl.next('freq_domain before phasing')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
-        s.ift('t2')
-        fl.next('time domain before hermitian')
-        fl.image(s)
     #{{{Applying phasing corrections
-    #s.ift('t2') # inverse fourier transform into time domain
+    s.ift('t2') # inverse fourier transform into time domain
     best_shift,max_shift = hermitian_function_test(select_pathway(s,signal_pathway).C.convolve('t2',0.01))
     best_shift = 0.033e-3
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     logger.info(strm("applying zeroth order correction"))
-    #if fl is not None:
-    #    fl.next('After hermitian-t domain')
-    #    fl.image(s)
-    #    s.ft('t2')
-    #    fl.next('after hermitian-freq domain')
-    #    fl.image(s)
-    #fl.show();quit()    
     s.ift(['ph1'])
     phasing = s['t2',0].C
     phasing.data *= 0
@@ -94,14 +84,23 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     logger.info(strm(s.dimlabels))
     s.ft('t2')
     if fl is not None:
-        fl.next('After zeroth order phase correction')
+        fl.next('phase corrected')
         fl.image(as_scan_nbr(s))
-        #s.ift('t2')
-        #fl.next('time domain after zeroth order')
-        #fl.image(s)
-    #fl.show();quit()    
     s.reorder(['ph1','power','t2'])
     logger.info(strm("zero corssing at",zero_crossing))
+    #}}}
+    #{{{Correcting power axis
+    #print(s.getaxis('power'))
+    #quit()
+    #power_axis_dBm = array(s.get_prop('meter_powers'))
+    #print(power_axis_dBm)
+    #power_axis_W = zeros_like(power_axis_dBm)
+    #power_axis_W[:] = 10**(power_axis_dBm/10)
+    #power_axis_W = r_[0,power_axis_W]
+    #print(power_axis_W)
+    #quit()
+    #s.setaxis('power',power_axis_W)
+    #s.set_units('power','W')
     #}}}
     #{{{Applying correlation alignment
     s.ift(['ph1'])
@@ -113,15 +112,8 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     fl.basename= None
     if fl is not None:
         fl.next(r'after correlation, $\varphi$ domain')
-        s.set_units('t2','Hz')
-        #s.C.reorder(['power','ph1']).smoosh(['power','ph1'])
-        #s /= phasing
-        fl.image(s,human_units=False)
+        fl.image(as_scan_nbr(s))
     s.ift('t2')
-    if fl is not None:
-        fl.next('t domain after correlation')
-        fl.image(s)
-    #fl.show();quit()    
     s.ft(['ph1'])
     if fl is not None:
         fl.next('after correlation alignment FTed ph')
@@ -142,16 +134,7 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     d = d['t2':(0,t_range[-1])]
     d['t2':0] *= 0.5
     d.ft('t2')
-    if fl is not None:
-        fl.next('FID sliced')
-        fl.image(d)
-        #d.ift('t2')
-        #fl.next('FID sliced')
-        #fl.image(d,human_units=False)
-        #d.ft('t2')
-    d *= sign
     # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
-#    d.mean('nScans') # this doesn't work for ODNP data???
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
             - set([(signal_pathway['ph1'])]))
@@ -164,7 +147,6 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     x[:] /= sqrt(2)
     d = d_.C
     #}}}
-    
     #{{{Normalizing by max 
     idx_maxpower = np.argmax(s.getaxis('power'))
     d /= max(d.data)
@@ -175,10 +157,13 @@ def process_enhancement(s, searchstr='', signal_pathway = {'ph1':1},
     power_axis_W = r_[0,power_axis_W]
     d.setaxis('power',power_axis_W)
     thiscolor = next(thesecolors)
+    #d.set_units('power','W')
+    if flip:
+        d = 1-d
     if fl is not None:
         fl.next('E(p)')
         fl.plot(d['power',:-3], 'ko', capsize=6, alpha=0.3)
         fl.plot(d['power',-3:],'ro',capsize=6, alpha=0.3)
         fl.pop_marker()
-    enhancement = d['power',:-3]
+    enhancement = d
     return enhancement,idx_maxpower

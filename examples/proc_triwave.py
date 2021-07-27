@@ -1,8 +1,15 @@
+""" 
+Triangle Wave Processing
+========================
+
+Processes data acquired after applying a triangular pulse to 
+a NMR probe.
+"""
 import numpy as np
 from scipy import signal
-from proc_scripts import *
+from pyspecProcScripts import *
 from pyspecdata import *
-from proc_scripts import postproc_dict
+from pyspecProcScripts import lookup_table
 from scipy import signal
 import matplotlib.pyplot as plt
 
@@ -12,7 +19,7 @@ for searchstr,exp_type,nodename,postproc,corrected_volt in [
         ('201202_triwave_RMprobe_20ms','ODNP_NMR_comp','capture1','chirp',True)
         ]:
     d = find_file(searchstr, exp_type=exp_type, expno=nodename,
-            postproc=postproc, lookup=postproc_dict) 
+            postproc=postproc, lookup=lookup_table) 
     #{{{ raw data
     fl.next('raw together')
     fl.plot(d)
