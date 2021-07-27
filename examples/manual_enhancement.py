@@ -1,7 +1,6 @@
 # {{{ Imports & Initialization
 from pyspecdata import *
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
 from sympy import symbols, Symbol, latex,limit,init_printing
 from numpy import *
 import time
@@ -48,7 +47,7 @@ for (filename,nodename,f_range,C,T1_0,T1_vals,ppt) in [
     titl = '%s %s'%(' '.join(filename.split('_')[1:-1]),filename.split('_')[0])
 # {{{ Load and plot raw data
     s = find_file(filename,exp_type=file_location,expno=nodename,
-            postproc=postproc,lookup=postproc_dict,fl=fl)
+            postproc=postproc,lookup=lookup_table)
     fl.next('%s\nraw data'%titl)
 # }}}
 # {{{ Cut off trailing data and phase
