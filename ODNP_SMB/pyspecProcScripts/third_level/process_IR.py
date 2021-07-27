@@ -23,7 +23,7 @@ excluded_pathways = [(0,0)]
 def process_IR(s, this_l = 0.032,
         l = sqrt(np.logspace(-8.0,0.5,35)),
         clock_correction = True,
-        W=6.2,
+        rd=6.2,
         f_range = (None,None),
         t_range = (None,83e-3),
         IR = True,
@@ -46,7 +46,7 @@ def process_IR(s, this_l = 0.032,
     clock_correction:   boolean
                         especially needed at times in spincore to correct for 
                         drift in frequency and time.
-    W:      int
+    rd:      int
             repetition delay set for FIR experiments
     f_range:    tuple
                 range in which the signal resides in the frequency domain.
@@ -217,9 +217,19 @@ def process_IR(s, this_l = 0.032,
 #    s_ints = np.delete(s_int.data,3)
 #    vd_del = np.delete(s_int.getaxis('vd'),3)
 #    s_int = nddata(s_ints,'vd').labels('vd',vd_del)
-    x = s_int.fromaxis('vd')
+#{Removing bad points
+    remove_bad_point = False
+    if remove_bad_point:
+        s_temp = s_int.C
+        s_int = np.delete(s_temp.C.data, obj=2, axis=0) # removing 2nd idx 'vd' point
+        s_int = nddata(s_int,'vd').labels('vd',np.delete(s_temp.getaxis('vd'),obj=2,axis=0))
+        s_int.copy_props(s_temp)
+    #}
+        x = nddata(s_int.getaxis('vd'),'vd').labels('vd',s_int.getaxis('vd'))
+    else:
+        x = s_int.fromaxis('vd')
     f = fitdata(s_int)
-    M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd")
+    M0,Mi,R1,vd,W = symbols("M_0 M_inf R_1 vd W")
     if IR:
         logging.info(strm("fitting using the regular IR equation"))
         f.functional_form = Mi - 2*Mi*s_exp(-vd*R1)
@@ -240,8 +250,8 @@ def process_IR(s, this_l = 0.032,
             plt.legend(bbox_to_anchor=(1,1.01),loc='upper left')
         else:
             fl.next('fit',legend=True)
-            fl.plot(s_int,'o', capsize=6, label='actual data')
-            fl.plot(s_int.imag,'o',capsize=6,alpha=0.3,label='actual imaginary')
+            fl.plot(s_int,'o', markersize=6, label='actual data')# capsize=6,
+            fl.plot(s_int.imag,'o', markersize=6,alpha=0.3,label='actual imaginary')# capsize=6,
             fl.plot(f.eval(100),'-',label='fit')
             plt.text(0.75, 0.25, f.latex(), transform=plt.gca().transAxes,size='medium',
                     horizontalalignment='center',verticalalignment='center',color='k',

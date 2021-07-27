@@ -21,8 +21,9 @@ measured_vs_actual = 22. # how many dB down the split + measured power is from
 date = time.strftime('%y%m%d') 
 file_location = 'odnp'
 postproc = 'spincore_ODNP_v2' # 'spincore_ODNP_v1'
-plotname = 'Q183R1a pR Hoffmeister Series Anions'
-names = ['KCl','KI','$KH_{2}PO_{4}$']
+plotname = 'A174R1a pR All Environment Comparison'
+names = ['DDM KCl','KI','$KH_{2}PO_{4}$','DHPC KCl']
+colors = ['dark magenta','bright red','gold','leaf green','cerulean','grape','wine']   
 plot_all = True 
 save_figs = True
 curves = nddata(zeros((len(names),18),dtype='complex128'),['sample','power'])
@@ -34,21 +35,21 @@ enhancements = nddata(zeros((len(names),18),dtype='complex128'),['sample','power
 #print(T1_df);quit()
     # }
 for (idx,filename,nodename,f_range,C,T1_0,T1_vals,ppt) in [
-#        (0,'210714_A174R1a_pR_DDM_ODNP','enhancement1',
-#            (-250,100),240e-6,1.49,None,1.5154),
-#        (1,'210715_A174R1a_pR_KI_ODNP','enhancement',
-#            (-200,200),236.9e-6,1.45,None,1.5154),
-#        (2,'210715_A174R1a_pR_KH2PO4_ODNP','enhancement',
-#            (-200,200),162.1e-6,2.05,None,1.5154),
-#        (3,'210714_A174R1a_pR_DHPC_ODNP','enhancement',
-#            (-250,75),238.5e-6,1.47,None,1.5154),
+        (0,'210714_A174R1a_pR_DDM_ODNP','enhancement1',
+            (-250,100),240e-6,1.49,None,1.5154),
+        (1,'210715_A174R1a_pR_KI_ODNP','enhancement',
+            (-200,200),236.9e-6,1.45,None,1.5154),
+        (2,'210715_A174R1a_pR_KH2PO4_ODNP','enhancement',
+            (-200,200),162.1e-6,2.05,None,1.5154),
+        (3,'210714_A174R1a_pR_DHPC_ODNP','enhancement',
+            (-250,75),238.5e-6,1.47,None,1.5154),
     
-        (0,'210707_Q183R1a_pR_DDM_ODNP','enhancement',
-            (-225,75),207.4e-6,1.00,None,1.5154), # have T1_values for this data
-        (1,'210708_Q183R1a_pR_KI_ODNP','enhancement',
-            (-200,100),113.1e-6,1.12,None,1.5154),
-        (2,'210708_Q183R1a_pR_KH2PO4_ODNP','enhancement',
-            (-225,75),115.2e-6,1.9,None,1.5154),
+#        (0,'210707_Q183R1a_pR_DDM_ODNP','enhancement',
+#            (-225,75),207.4e-6,1.00,None,1.5154), # have T1_values for this data
+#        (1,'210708_Q183R1a_pR_KI_ODNP','enhancement',
+#            (-200,100),113.1e-6,1.12,None,1.5154),
+#        (2,'210708_Q183R1a_pR_KH2PO4_ODNP','enhancement',
+#            (-225,75),115.2e-6,1.9,None,1.5154),
 #        (3,'210707_Q183R1a_pR_DHPC_ODNP','enhancement',
 #            (-225,75),103.2e-6,2.15,None,1.5154)
         ]:
@@ -157,12 +158,11 @@ if plot_all:
     figure(figsize=(7,5))
     title('%s %s\nenhancements'%(filename.split('_')[0],plotname))
     enhancements.labels('power',s.getaxis('power'))
-    colors = ['dark magenta','brick red','dark orange','gold','greenish','dark cyan','grape','wine']   
     for i,name in enumerate(names):
         plot(enhancements['sample',i]['power',:-3],color='xkcd:%s'%colors[i],marker='o',ls='',human_units=False,
-                label='%s'%name,alpha=0.5)
+                label='%s'%name,alpha=0.75)
         plot(enhancements['sample',i]['power',-3:],color='xkcd:%s'%colors[i],marker='x',ls='',human_units=False,
-                label='%s back'%name,markersize=7)
+                markersize=7)#label='%s back'%name,
     plt.ylabel('E')
     plt.xlabel('power (W)')
     plt.legend()#bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
@@ -175,12 +175,11 @@ if plot_all and C is not None:
     figure(figsize=(7,5))
     title('%s %s\n$k_{\sigma}s(p)$'%(filename.split('_')[0],plotname))
     curves.labels('power',s.getaxis('power'))
-    colors = ['dark magenta','brick red','dark orange','gold','greenish','dark cyan','grape','wine']
     for i,name in enumerate(names):
         plot(curves['sample',i]['power',:-3],color='xkcd:%s'%colors[i],marker='o',ls='',human_units=False,
-                label='%s'%name,alpha=0.5)
+                label='%s'%name,alpha=0.75)
         plot(curves['sample',i]['power',-3:],color='xkcd:%s'%colors[i],marker='x',ls='',human_units=False,
-                label='%s back'%name,markersize=7)
+                markersize=7)#label='%s back'%name,
     plt.ylabel('$k_{\sigma}s(p)$ $(s^{-1})$')
     plt.xlabel('power (W)')
     plt.legend()#bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)

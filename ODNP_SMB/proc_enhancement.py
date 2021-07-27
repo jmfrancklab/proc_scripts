@@ -21,7 +21,7 @@ measured_vs_actual = 22. # how many dB down the split + measured power is from
 file_location = 'odnp'
 postproc = 'spincore_ODNP_v2' # 'spincore_ODNP_v1'
 export_csv = True
-save_figs = True # saves enhancement and ksigma plots only, youll have to do the 
+save_figs = False # saves enhancement and ksigma plots only, youll have to do the 
                  #rest manually. Format todays date, root filename, figure type:
                  # ex: "210720_150uM_TEMPOL_SMB_enhancement.png'
 if save_figs:
