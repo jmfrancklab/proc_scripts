@@ -41,37 +41,43 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     print("*** *** ***")
     print("FILTER WIDTH IS",filter_width)
     print("*** *** ***")
-    # https://en.wikipedia.org/wiki/Full_width_at_half_maximum
-    # COPY EXACTLY FROM PYSPECDATA CONVOLVE.PY
-    for_manual = temp.C
-    rough_center = abs(for_manual).C.mean_all_but('t2').argmax('t2').item()
-    for_manual.setaxis('t2', lambda t: t- rough_center)
-    for_manual.register_axis({'t2':0})
-    x = for_manual.C.fromaxis('t2')
     if Gaussian_Conv:
         convfunc = lambda x,y: exp(-(x**2)/(2.0*(y**2)))
     if Lorentzian_Conv:
         convfunc = lambda x,y: exp(-(abs(x))/y)
-    myfilter = convfunc(x,filter_width)
-    if Gaussian_Conv:
-        fl.next('Gaussian filter')
-    if Lorentzian_Conv:
-        fl.next('Gaussian filter')
-    fl.plot(myfilter)
-    if Gaussian_Conv:
-        fl.next('Compare Gaussian Filter and Abs Data Normalized')
-    if Lorentzian_Conv:
-        fl.next('Compare Lorentzian Filter and Abs Data Normalized')
-    fl.plot(abs(for_manual)/abs(for_manual).max(), alpha=0.5, label='abs data')
-    fl.plot(myfilter, alpha=0.5, label='filter')
-    newdata = for_manual*myfilter
-    fl.next('Overlay abs data')
-    fl.plot(abs(for_manual), alpha=0.5, label='before applying filter')
-    fl.plot(abs(newdata), alpha=0.5, label='after applying filter')
+    # https://en.wikipedia.org/wiki/Full_width_at_half_maximum
+    # COPY EXACTLY FROM PYSPECDATA CONVOLVE.PY
+    rough_center = abs(temp).C.mean_all_but('t2').argmax('t2').item()
+    temp.setaxis('t2', lambda t: t- rough_center).register_axis({'t2':0})
+    manual_convolve = False
+    if manual_convolve:
+        # assumed temp starts in time domain
+        for_manual = temp.C
+        x = for_manual.C.fromaxis('t2')
+        myfilter = convfunc(x,filter_width)
+        if Gaussian_Conv:
+            fl.next('Gaussian filter')
+        if Lorentzian_Conv:
+            fl.next('Gaussian filter')
+        fl.plot(myfilter)
+        fl.show();quit()
+        if Gaussian_Conv:
+            fl.next('Compare Gaussian Filter and Abs Data Normalized')
+        if Lorentzian_Conv:
+            fl.next('Compare Lorentzian Filter and Abs Data Normalized')
+        fl.plot(abs(for_manual)/abs(for_manual).max(), alpha=0.5, label='abs data')
+        fl.plot(myfilter, alpha=0.5, label='filter')
+        newdata = for_manual*myfilter
+        fl.next('Overlay abs data')
+        fl.plot(abs(for_manual), alpha=0.5, label='before applying filter')
+        fl.plot(abs(newdata), alpha=0.5, label='after applying filter')
+        temp = newdata.C
+        temp.ft('t2')
     # END COPY FROM PYSPECDATA CONVOLVE.PY
-    #temp.convolve('t2', filter_width)
-    temp = newdata.C
-    temp.ft('t2')
+    if not manual_convolve:
+        temp.ft('t2')
+        print("I want this filter_width",filter_width)
+        temp.convolve('t2', filter_width, convfunc=convfunc)
     if fl is not None:
         fl.next('integration diagnostic')
         fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
