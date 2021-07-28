@@ -14,7 +14,7 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         fl.plot(abs(temp.C.ft('t2'))/abs(temp.C.ft('t2')).max(), alpha=0.6, label='before convolve')
     Gaussian_Conv = False
     Lorentzian_Conv = True
-    Lorentz_to_Gauss = True
+    Lorentz_to_Gauss = False
     #{{{ make sure to calculate Lorentzian filter for L-to-G transform
     if Lorentz_to_Gauss:
         assert Lorentzian_Conv == True and Gaussian_Conv == False, "Must set Lorentzian convolve to True for Lorentzian to Gaussian transformation"
@@ -105,6 +105,5 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         axvline(x = freq_limits[-1], c='k', alpha=0.75)
         annotate(str(limit_for_contiguous), xy=(freq_limits[-1],0.85))
         fl.pop_marker()
-        fl.show();quit()
     freq_limits = np.array(freq_limits)
     return freq_limits

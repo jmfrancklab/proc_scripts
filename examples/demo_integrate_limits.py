@@ -45,4 +45,16 @@ with figlist_var() as fl:
     # }}}
     fl.next("fake data -- freq domain")
     fl.image(data)
+    # need to feed integrate limits time domain data 
+    data.ift('t2')
+    freq_lim = integrate_limits(data['ph1',0]['ph2',1],fl=fl)
+    data.ft('t2')
+    fl.next("fake data -- show freq limit selection")
+    fl.plot(data['ph1',0]['ph2',1])
+    axvline(x=freq_lim[0])
+    axvline(x=freq_lim[-1])
+
+
+    
+    print(freq_lim)
     # }}}
