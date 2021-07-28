@@ -12,7 +12,7 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     if fl is not None:
         fl.next('integration diagnostic')
         fl.push_marker()
-        fl.plot(abs(temp.C.ft('t2'))/abs(temp.C.ft('t2')).max(), alpha=0.6, label='before convolve')
+        fl.plot(abs(temp.C.ft('t2'))/abs(temp.C.ft('t2')).max(), alpha=0.6, label='before Lorentzian to Gauss')
     temp_copy = temp.C
     fl.next('before convolution')
     fl.plot(temp_copy)
@@ -45,10 +45,14 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         convfunc = lambda x,y: exp(-(x**2)/(2.0*(y**2)))
     if Lorentzian_Conv:
         convfunc = lambda x,y: exp(-(abs(x))/y)
+    Gaussian_func = lambda x,y: exp(-(x**2)/(2.0*(y**2)))
+    Lorentzian_func = lambda x,y: exp(-(abs(x))/y)
     # https://en.wikipedia.org/wiki/Full_width_at_half_maximum
     # COPY EXACTLY FROM PYSPECDATA CONVOLVE.PY
     rough_center = abs(temp).C.mean_all_but('t2').argmax('t2').item()
     temp.setaxis('t2', lambda t: t- rough_center).register_axis({'t2':0})
+    #temp = temp['t2':(0.5e-3,None)]
+    temp = temp['t2':(7e-3,None)]
     manual_convolve = False
     if manual_convolve:
         # assumed temp starts in time domain
@@ -77,10 +81,21 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     if not manual_convolve:
         temp.ft('t2')
         print("I want this filter_width",filter_width)
-        temp.convolve('t2', filter_width, convfunc=convfunc)
+        # filter_width is λ/π which is FWHM for Lorentzian in Hz
+        # filter for L-to-G lies between λ/2 and λ*2 (Cav p.116)
+        # thus we need to multiply our filter by π, in order to have filters of
+        # the appropriate range
+        this_filter = (filter_width*pi)/2
+        print("Filter width for Lorentz-to-Gauss",this_filter)
+        temp.convolve('t2', this_filter, convfunc=Gaussian_func)
+        temp.ift('t2')
+        temp /= Lorentzian_func(temp.C.fromaxis('t2'),filter_width)
+        temp.ft('t2')
+        #temp.convolve('t2', filter_width, convfunc=convfunc)
     if fl is not None:
         fl.next('integration diagnostic')
-        fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
+        fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after Lorentzian-to-Gauss')
+        fl.show();quit()
     limit_for_contiguous = 0.125
     freq_limits = temp.contiguous(lambda x: abs(x) > limit_for_contiguous * abs(x).data.max())[0]
     if fl is not None:
