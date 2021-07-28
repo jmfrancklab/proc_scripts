@@ -7,60 +7,53 @@ from pylab import r_,fft,ifft,ifftshift,fftshift,exp,ones_like
 from matplotlib.pyplot import annotate
 
 def integrate_limits(s, axis="t2",
-        filter_width=100, Gaussian=False,
-        Lorentzian=True, fl=None):
-"""
-Integrate Limits
-============================
+        filter_width=100,
+        Gaussian=False,
+        Lorentzian=True,
+        Lorentzian_to_Gaussian=False,
+        fl=None):
+    r"""
+    Integrate Limits
+    ============================
 
-This function takes data in the time domain and
-applies a matched filter (choice of Lorentzian or
-Gaussian) to the frequency domain data, which it
-then uses to determine the integration limits
-based on a cut off from the maximum signal
-intensity.
-
-
-axisname: str
-    apply convolution along `axisname`
-
-fwhm: int
-    width of the matched filter is `fwhm` - this
-    is calculated more precisely within the
-    program
-
-Gaussian: boolean
-    set `Gaussian` to True in order to calculate
-    the matched-filter via Gaussian convolution of
-    the frequency domain signal (i.e., apply a
-    matched Gaussian filter to peak in frequency
-    domain).
-    If `Gaussian` is set to True, set
-    `Lorentzian` to False.
-
-Gaussian: boolean
-    set `Lorentzian` to True in order to calculate
-    the matched-filter via Lorentzian convolution of
-    the frequency domain signal (i.e., apply a
-    matched Lorentzian filter to peak in frequency
-    domain).
-    If `Lorentzian` is set to True, set
-    `Gaussian` to False.
+    This function takes data in the time domain and applies a matched filter
+    (choice of Lorentzian or Gaussian, default is Lorentzian) to the frequency
+    domain data, which it then uses to determine the integration limits based on a
+    cut off from the maximum signal intensity.
 
 
-fl: None or figlist_var()
-`   to show diagnostic plots, set `fl` to
-    the figure list; set `fl` to None in order
-    not to see any diagnostic plots
+    axisname: str
+        apply convolution along `axisname`
 
-"""
+    fwhm: int
+        width of the matched filter is `fwhm` - this is calculated more precisely
+        within the program
+
+    Gaussian: boolean
+        set `Gaussian` to True in order to calculate the matched-filter via
+        Gaussian convolution of the frequency domain signal (i.e., apply a matched
+        Gaussian filter to peak in frequency domain).
+        If `Gaussian` is set to True, set `Lorentzian` to False.
+
+    Gaussian: boolean
+        set `Lorentzian` to True in order to calculate the matched-filter via
+        Lorentzian convolution of the frequency domain signal (i.e., apply a
+        matched Lorentzian filter to peak in frequency domain).
+        If `Lorentzian` is set to True, set `Gaussian` to False.
+
+
+    fl: None or figlist_var()
+    `   to show diagnostic plots, set `fl` to the figure list; set `fl` to None in
+        order not to see any diagnostic plots
+
+    """
     temp = s.C.mean_all_but(axis)
     if fl is not None:
         fl.next('integration diagnostic')
         fl.push_marker()
         fl.plot(abs(temp.C.ft('t2'))/abs(temp.C.ft('t2')).max(), alpha=0.6, label='before convolve')
-    Gaussian_Conv = False
-    Lorentzian_Conv = True
+    Gaussian_Conv = Gaussian
+    Lorentzian_Conv = Lorentzian
     Lorentz_to_Gauss = False
     #{{{ make sure to calculate Lorentzian filter for L-to-G transform
     if Lorentz_to_Gauss:

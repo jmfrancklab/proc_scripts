@@ -58,14 +58,23 @@ with figlist_var() as fl:
     fl.image(data)
     # need to feed integrate limits time domain data 
     data.ift('t2')
-    freq_lim = integrate_limits(data['ph1',0]['ph2',1],fl=fl)
+    freq_lim = integrate_limits(data['ph1',0]['ph2',1],
+            fl=fl)
     data.ft('t2')
-    fl.next("fake data -- show freq limit selection")
+    fl.next("fake data -- show freq limit selection, Lorentzian filter")
     fl.plot(data['ph1',0]['ph2',1])
     axvline(x=freq_lim[0])
     axvline(x=freq_lim[-1])
-
-
-    
-    print(freq_lim)
+    print("Determined frequency limits via Lorentzian filter of",freq_lim)
+    data.ift('t2')
+    freq_lim = integrate_limits(data['ph1',0]['ph2',1],
+            Gaussian=True,
+            Lorentzian=False,
+            fl=fl)
+    data.ft('t2')
+    fl.next("fake data -- show freq limit selection, Gaussian filter")
+    fl.plot(data['ph1',0]['ph2',1])
+    axvline(x=freq_lim[0])
+    axvline(x=freq_lim[-1])
+    print("Determined frequency limits via Gaussian filter of",freq_lim)
     # }}}
