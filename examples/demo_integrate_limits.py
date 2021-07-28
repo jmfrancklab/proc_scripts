@@ -2,11 +2,22 @@
 Demonstrate Integrate Limits
 ============================
 
-Add a nice docstring here!
+For this demonstration, we generate inversion
+recovery data for a single peak, with a relatively
+mild frequency variation, so that no serious
+alignment is required before integration. We mimic
+the 8-step phase cycle used for echo detection in
+these experiments, and include the effect of the
+echo time on the data detected in the time domain.
 
-For this demonstration, we generate inversion recovery data with a relatively
-mild frequency variation, so that no serious alignment is required before integration,
-but so that the.
+We use integrate_limits to detect the frequency
+limits used for peak integration, based on a
+matched Lorentzian filter on our frequency domain
+data.
+
+We illustrate the position of the frequency
+limits with vertical lines on the final plot.
+
 """
 from pylab import *
 from pyspecdata import *
@@ -21,7 +32,7 @@ init_logging(level="debug")
 
 with figlist_var() as fl:
     # {{{ generate the fake data
-    # this generates fake clean_data w/ a T₂ of 0.2s
+    # this generates fake clean_data w/ a T1 of 0.2s
     # amplitude of 21, just to pick a random amplitude
     # offset of 300 Hz, FWHM 10 Hz
     t2, td, vd, ph1, ph2 = s.symbols('t2 td vd ph1 ph2')
