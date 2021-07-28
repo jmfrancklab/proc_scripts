@@ -6,22 +6,20 @@ import logging
 from pylab import r_,fft,ifft,ifftshift,fftshift,exp,ones_like
 from matplotlib.pyplot import annotate
 
-
 def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     temp = s.C.mean_all_but(axis)
     if fl is not None:
         fl.next('integration diagnostic')
         fl.push_marker()
-        fl.plot(abs(temp.C.ft('t2'))/abs(temp.C.ft('t2')).max(), alpha=0.6, label='before Lorentzian to Gauss')
-    temp_copy = temp.C
-    fl.next('before convolution')
-    fl.plot(temp_copy)
-    if fl is not None:
-        fl.plot(temp)
-
-    # pulled from apodization code
+        fl.plot(abs(temp.C.ft('t2'))/abs(temp.C.ft('t2')).max(), alpha=0.6, label='before convolve')
     Gaussian_Conv = False
     Lorentzian_Conv = True
+    Lorentz_to_Gauss = True
+    #{{{ make sure to calculate Lorentzian filter for L-to-G transform
+    if Lorentz_to_Gauss:
+        assert Lorentzian_Conv == True and Gaussian_Conv == False, "Must set Lorentzian convolve to True for Lorentzian to Gaussian transformation"
+    #}}}
+    # Calculating matched filter
     sigma = nddata(np.linspace(1e-10,1e-1,1000),'sigma').set_units('sigma','s')
     if Gaussian_Conv:
         gaussians = np.exp(-temp.C.fromaxis(axis)**2/2/sigma**2)
@@ -41,20 +39,22 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
     print("*** *** ***")
     print("FILTER WIDTH IS",filter_width)
     print("*** *** ***")
-    if Gaussian_Conv:
-        convfunc = lambda x,y: exp(-(x**2)/(2.0*(y**2)))
-    if Lorentzian_Conv:
-        convfunc = lambda x,y: exp(-(abs(x))/y)
+    # Generate the appropriate convolution functions
     Gaussian_func = lambda x,y: exp(-(x**2)/(2.0*(y**2)))
     Lorentzian_func = lambda x,y: exp(-(abs(x))/y)
-    # https://en.wikipedia.org/wiki/Full_width_at_half_maximum
-    # COPY EXACTLY FROM PYSPECDATA CONVOLVE.PY
-    rough_center = abs(temp).C.mean_all_but('t2').argmax('t2').item()
-    temp.setaxis('t2', lambda t: t- rough_center).register_axis({'t2':0})
-    #temp = temp['t2':(0.5e-3,None)]
-    temp = temp['t2':(7e-3,None)]
+    if Gaussian_Conv:
+        convfunc = Gaussian_func
+    if Lorentzian_Conv:
+        convfunc = Lorentzian_func
+    if Lorentz_to_Gauss:
+        # not immediately sure why, but I need to do this in order to get freq limits around the peak (otherwise they are around 0)
+        rough_center = abs(temp).C.mean_all_but('t2').argmax('t2').item()
+        temp.setaxis('t2', lambda t: t- rough_center).register_axis({'t2':0})
+    if Lorentz_to_Gauss:
+        temp = temp['t2':(7e-3,None)]
     manual_convolve = False
     if manual_convolve:
+        #{{{ for manual convolution - arguably can be deleted
         # assumed temp starts in time domain
         for_manual = temp.C
         x = for_manual.C.fromaxis('t2')
@@ -77,25 +77,26 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         fl.plot(abs(newdata), alpha=0.5, label='after applying filter')
         temp = newdata.C
         temp.ft('t2')
-    # END COPY FROM PYSPECDATA CONVOLVE.PY
+    #}}}
     if not manual_convolve:
         temp.ft('t2')
         print("I want this filter_width",filter_width)
-        # filter_width is λ/π which is FWHM for Lorentzian in Hz
-        # filter for L-to-G lies between λ/2 and λ*2 (Cav p.116)
-        # thus we need to multiply our filter by π, in order to have filters of
-        # the appropriate range
-        this_filter = (filter_width*pi)/2
-        print("Filter width for Lorentz-to-Gauss",this_filter)
-        temp.convolve('t2', this_filter, convfunc=Gaussian_func)
-        temp.ift('t2')
-        temp /= Lorentzian_func(temp.C.fromaxis('t2'),filter_width)
-        temp.ft('t2')
-        #temp.convolve('t2', filter_width, convfunc=convfunc)
+        if Lorentz_to_Gauss:
+            # filter_width is λ/π which is FWHM for Lorentzian in Hz
+            # filter for L-to-G lies between λ/2 and λ*2 (Cav p.116)
+            # thus we need to multiply our filter by π, in order to have filters of
+            # the appropriate range
+            this_filter = (filter_width*pi)/2
+            print("Filter width for Lorentz-to-Gauss",this_filter)
+            temp.convolve('t2', this_filter, convfunc=Gaussian_func)
+            temp.ift('t2')
+            temp /= Lorentzian_func(temp.C.fromaxis('t2'),filter_width)
+            temp.ft('t2')
+        if not Lorentz_to_Gauss:
+            temp.convolve('t2', filter_width, convfunc=convfunc)
     if fl is not None:
         fl.next('integration diagnostic')
-        fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after Lorentzian-to-Gauss')
-        fl.show();quit()
+        fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
     limit_for_contiguous = 0.125
     freq_limits = temp.contiguous(lambda x: abs(x) > limit_for_contiguous * abs(x).data.max())[0]
     if fl is not None:
@@ -104,5 +105,6 @@ def integrate_limits(s, axis="t2", fwhm=100, fl=None):
         axvline(x = freq_limits[-1], c='k', alpha=0.75)
         annotate(str(limit_for_contiguous), xy=(freq_limits[-1],0.85))
         fl.pop_marker()
+        fl.show();quit()
     freq_limits = np.array(freq_limits)
     return freq_limits
