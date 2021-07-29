@@ -21,7 +21,6 @@ def integrate_limits(s, axis="t2",
     domain data, which it then uses to determine the integration limits based on a
     cut off from the maximum signal intensity.
 
-
     axisname: str
         apply convolution along `axisname`
 

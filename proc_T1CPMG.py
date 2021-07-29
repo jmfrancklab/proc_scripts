@@ -1,6 +1,6 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-from pyspecProcScripts import fl_mod, center_echo, hermitian_function_test, postproc_dict, DCCT
+from pyspecProcScripts import fl_mod, center_echo, hermitian_function_test, lookup_table, DCCT
 from sympy import symbols
 import sympy as sp
 from pyspecProcScripts.fitting import decay
@@ -40,7 +40,7 @@ for searchstr, exp_type, nodename, flat_echo, clock_correction, freq_slice, t_sl
     if write_h5:
         #before running go into the preprocessing in load_data as some parameters are hardcoded. Double check these
         s = find_file(searchstr,exp_type=exp_type,
-                expno=nodename,lookup=postproc_dict, fl=fl)
+                expno=nodename,lookup=lookup_table, fl=fl)
         s.ift('t2')
 #{{{ clock correction
         if clock_correction:

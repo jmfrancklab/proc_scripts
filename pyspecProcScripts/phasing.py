@@ -4,7 +4,6 @@ from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
 from pylab import xlim
 import numpy as np
-import pyspecdata as pysp
 from scipy import linalg
 import logging
 def zeroth_order_ph(d, fl=None):
@@ -42,7 +41,7 @@ def zeroth_order_ph(d, fl=None):
         # slightly better than the magnitude -- this should be both a robust
         # test and a resolution for issue #23
         )
-    eigenValues, eigenVectors = linalg.eig(cov_mat)
+    eigenValues, eigenVectors = linalg.eigh(cov_mat)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real,mean_point.imag]
     # next 3 lines from stackexchange -- sort by
@@ -194,7 +193,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     # and use it to determine the max shift
     s = s.C # need to copy, since I'm manipulating the axis here
     dt = np.diff(s.getaxis('t2')[:2]).item()
-    logging.debug(strm("For hermitian test, my dwell time is",dt))
+    logging.info(strm("For hermitian test, my dwell time is",dt))
     # am assuming the axis of the source data is not manipulated
     data_for_peak = abs(s).mean_all_but(['t2'])
     max_val = data_for_peak.data.max()
@@ -214,7 +213,6 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     shift_t = nddata(r_[rel_shift[0]:rel_shift[1]:shift_points*1j]*max_shift,'shift')
     data_for_peak.setaxis('t2',lambda x:x-peak_center) #for plotting later
     logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
-    #data_for_peak = data_for_peak['t2':(rel_shift[0]*max_shift,rel_shift[1]*max_shift)]
     #}}}
     #{{{time shift and correct for T2 decay
     orig_t2 = ndshape(s)['t2']
@@ -225,9 +223,13 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     s.ift('t2')
     s = s['t2',:orig_t2]
     logging.debug(strm("closest to 0", s.getaxis('t2')[np.argmin(abs(s.getaxis('t2')-0))]))
+    s.reorder(['t2'],first=False)
     if fl:
-        fl.next('shifted data')
-        fl.image(s.C.mean_all_but(['shift','t2']))
+        fig_forlist, ax_list = plt.subplots(4,1, figsize=(10,10))
+        fl.next("hermitian diagnostic", fig=fig_forlist)
+        fig_forlist.suptitle(" ".join(["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]))
+        fl.image(s.C.mean_all_but(['shift','t2']), ax=ax_list[0])
+        ax_list[0].set_title('Shifted Data')
     #}}}
     #{{{make sure there's an odd number of points and set phase of center point to 0
     logging.debug(strm("before taking the slice, endpoints are",s.getaxis('t2')[r_[0,-1]]))
@@ -262,12 +264,13 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     logging.debug("check for center", n_points, s_hermitian.getaxis('t2')[n_points//2:n_points//2+3])
     assert s_hermitian.getaxis('t2')[n_points//2] == 0
     center_point = s_hermitian['t2',n_points//2]
-    logging.info(strm(center_point/abs(center_point)))
+    logging.debug(strm(center_point/abs(center_point)))
     #I want to do this center_point = s_hermitian['t2':0], but why not be consistent
     s_hermitian /= center_point/abs(center_point)
     if fl:
-        fl.next('hermitian data')
-        fl.image(s_hermitian.C.mean_all_but(['shift','t2']))
+        fl.image(s_hermitian.C.mean_all_but(['shift','t2']),
+                ax=ax_list[1])
+        ax_list[1].set_title('Hermitian Data')
     #}}}
     #though we want to average the residual for each FID, try making an average
     #FID and calculating the residual, as I do in the test towards the end
@@ -290,25 +293,27 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
     ph0 /= abs(ph0)
     s_FID /= ph0
     if fl:
-        fl.next('FID data')
-        fl.image(s_FID.C.mean_all_but(['shift','t2']))
+        fl.image(s_FID.C.mean_all_but(['shift','t2']),
+                ax=ax_list[2])
+        ax_list[2].set_title('FID Data')
     s_FID.ft('t2')
     if fl:
-        fl.next('FT of FID data')
-        fl.image(s_FID.C.mean_all_but(['shift','t2']))
-    logging.info(strm(ndshape(s_FID)))
+        fl.image(s_FID.C.mean_all_but(['shift','t2']),
+                ax=ax_list[3], human_units=False)
+        ax_list[3].set_title('FT of FID Data')
+        fig_forlist.tight_layout(rect=[0, 0.03, 1, 0.95])
     sum_abs_real = abs(s_FID.real).sum('t2').mean_all_but(['shift'])
     sum_abs_imag = abs(s_FID.imag).sum('t2').mean_all_but(['shift'])
     best_abs_real = (sum_abs_real/sum_abs_imag).argmin('shift').item()
     if fl:
         fig, (ax1,ax2,ax3) = plt.subplots(3,1)
-        fl.next('mirror tests', fig=fig)
+        fl.next('Hermitian Diagnostic - Mirror Tests', fig=fig)
         def real_imag_mirror(forplot, ax):
             l = fl.plot(forplot.real, alpha=0.5, ax=ax, label='real',
                     human_units=False)
             fl.plot(forplot.C.setaxis('t2', lambda x: -x), color=l[-1].get_color(),alpha=0.2,ax=ax,
                     human_units=False)
-            l=fl.plot(forplot.imag,alpha=0.5,ax=ax)
+            l=fl.plot(forplot.imag,alpha=0.5,ax=ax, human_units=False)
             fl.plot(-forplot.imag.C.setaxis('t2',lambda x: -x),color=l[-1].get_color(),
                     alpha=0.2,ax=ax,
                     human_units=False)
@@ -336,7 +341,7 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         real_imag_mirror(forplot, ax2)
         ax2.set_title('shift=0')
         #}}}
-        fl.next('cost functions')
+        fl.next('Hermitian Diagnostic - Cost Functions')
         def rescale(forplot):
             retval = forplot.C
             retval -= retval.data.min()
@@ -353,5 +358,4 @@ def hermitian_function_test(s, down_from_max=0.5, rel_shift=1.5,shift_points=120
         data_for_peak.name('absolute value')
         fl.plot(data_for_peak.C.rename('t2','shift').set_units('shift','s'),c='red',
                 human_units=False)
-        xlim(np.array(rel_shift)*max_shift/1e-3)
     return best_shift+peak_center,max_shift    

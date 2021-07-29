@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 from proc_scripts import *
-from proc_scripts import postproc_dict
+from proc_scripts import lookup_table
 from sympy import symbols
 import os
 init_logging('debug')
@@ -14,7 +14,7 @@ for searchstr, exp_type, nodename, postproc in [
         ]:
     s = find_file(searchstr, exp_type=exp_type, expno=nodename,
             postproc=postproc,
-            lookup=postproc_dict)
+            lookup=lookup_table)
     s = s['ph8',0]['ph4',1]['m',1]['n',0]
     s = s['indirect',0]
     s = center_CPMG_echo(s)
