@@ -210,8 +210,8 @@ def process_IR(s, this_l = 0.032,
             fl.next('Integrated data - recovery curve')
             fl.plot(s_int,'o',capsize=6, label='real')
             fl.plot(s_int.imag,'o',capsize=6,label='imaginary')    
-    if s_int['vd',0].data < 0:
-        s_int *= -1
+#    if s_int['vd',0].data < 0:
+#        s_int *= -1
         #}}}
     #{{{Fitting Routine
 #    s_ints = np.delete(s_int.data,3)
