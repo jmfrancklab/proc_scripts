@@ -23,6 +23,7 @@ if single_file:
     export_csv = False
 if export_csv:
     os.chdir(csv_path)
+
 date = time.strftime('%y%m%d')
 outname = '%s_%s'%(date,'_'.join(filename.split('_')[1:-1]))
 titl = ' '.join(filename.split('_')[:-1])
@@ -76,7 +77,7 @@ for idx,filename,nodename,f_range,t_range,rep,clock_correction,IR,ILT in [
     fl.image(s.C['ph1',0]['ph2',1]['t2':(-750,750)]*mysgn)
     T1 = process_IR(s,rd=rep,f_range=f_range,t_range=t_range,clock_correction=clock_correction,IR=IR,
             flip=True,sgn=mysgn,fl=fl,hermitian_phasing=True,best_shift=0.004167) 
-    if not single_file:
+if not single_file:
         T1_vals['power',idx] = T1
     fl.show()
 if single_file:
