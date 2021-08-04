@@ -90,7 +90,10 @@ def integrate_limits(s, axis="t2",
     elif Lorentzian_Conv:
         convfunc = Lorentzian_func
     if Lorentz_to_Gauss:
-        # not immediately sure why, but I need to do this in order to get freq limits around the peak (otherwise they are around 0)
+    #    # not immediately sure why, but I need to
+    #    # do this in order to get freq limits
+    #    # around the peak (otherwise they are
+    #    # around 0)
         rough_center = abs(temp).C.mean_all_but('t2').argmax('t2').item()
         temp.setaxis('t2', lambda t: t- rough_center).register_axis({'t2':0})
         temp = temp['t2':(7e-3,None)]
@@ -108,11 +111,11 @@ def integrate_limits(s, axis="t2",
         temp /= Lorentzian_func(temp.C.fromaxis('t2'),filter_width)
         temp.ft('t2')
     else:
-        temp.convolve('t2', 1/filter_width, convfunc=convfunc)
+        temp.convolve('t2', (1/filter_width), convfunc=convfunc)
     if fl is not None:
         fl.next('integration diagnostic')
         fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
-    limit_for_contiguous = 0.125
+    limit_for_contiguous = 0.07
     freq_limits = temp.contiguous(lambda x: abs(x) > limit_for_contiguous * abs(x).data.max())[0]
     if fl is not None:
         fl.next('integration diagnostic')
