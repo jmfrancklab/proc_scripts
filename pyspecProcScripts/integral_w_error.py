@@ -30,7 +30,11 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
              not included in the signal pathway.
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
+    s.ift('t2')
+    frq_slice,_ = integrate_limits(select_pathway(s,sig_path),
+            Lorentzian_to_Gaussian = True,
+            fl=fl)
+    s.ft('t2')
     logging.debug(strm('frq_slice is',frq_slice))
     s = s[direct:frq_slice]
     f = s.getaxis(direct)
