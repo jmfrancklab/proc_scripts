@@ -23,6 +23,7 @@ from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
 from numpy.random import normal, seed
+from numpy.linalg import norm
 import sympy as s
 from collections import OrderedDict
 seed(2021)
@@ -50,10 +51,7 @@ with figlist_var() as fl:
     data.reorder(["ph1", "ph2", "vd"])
     fl.next("fake data -- time domain")
     fl.image(data)
-    data.ft("t2")
-    # {{{ make it unitary again
-    data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop('t2','dt')
-    # }}}
+    data.ft("t2", unitary=True)
     fl.next("fake data -- freq domain")
     fl.image(data)
     # need to feed integrate limits time domain data 
