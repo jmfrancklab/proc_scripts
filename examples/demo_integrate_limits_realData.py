@@ -37,8 +37,6 @@ for filename, expno, subplot_name, in [
         fl.basename = expno
         # Put what goes into here in the time domain
         freq_lim = integrate_limits(select_pathway(d,signal_pathway),
-                Gaussian=True,
-                Lorentzian=False,
-                Lorentzian_to_Gaussian=False,
+                convolve_method='Lorentzian',
                 fl=fl)
 fl.show();quit()
