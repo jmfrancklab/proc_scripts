@@ -71,6 +71,8 @@ def integrate_limits(s, axis="t2",
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
     if convolve_method == 'Gaussian':
         temp *= np.exp(-temp.C.fromaxis(axis)**2/2/filter_width**2)
+    elif convolve_method == 'Lorentzian':
+        temp *= np.exp(-abs(temp.C.fromaxis(axis))/filter_width)
     temp.ft('t2')
 
     if Lorentz_to_Gauss:
