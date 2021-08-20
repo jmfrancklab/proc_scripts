@@ -47,7 +47,6 @@ def integrate_limits(s, axis="t2",
         order not to see any diagnostic plots
 
     """
-    Lorentz_to_Gauss = False
     temp = s.C.mean_all_but(axis)
     if fl is not None:
         fl.next('integration diagnostic')
@@ -58,11 +57,15 @@ def integrate_limits(s, axis="t2",
         convolution_set = np.exp(-temp.C.fromaxis(axis)**2/2/sigma**2)
     elif convolve_method == 'Lorentzian':
         convolution_set = np.exp(-abs(temp.C.fromaxis(axis))/sigma)
+    elif convolve_method == 'Lorentzian_to_Gaussian':
+        convolution_set = np.exp(-abs(temp.C.fromaxis(axis))/sigma)
     signal_E = (abs(temp * convolution_set)**2).sum(axis)
     signal_E /= signal_E.data.max()
     if convolve_method == 'Gaussian':
         filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
     elif convolve_method == 'Lorentzian':
+        filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
+    elif convolve_method == 'Lorentzian_to_Gaussian':
         filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
     logger.info(strm("FILTER WIDTH IS",filter_width))
     if fl is not None:
@@ -73,27 +76,10 @@ def integrate_limits(s, axis="t2",
         temp *= np.exp(-temp.C.fromaxis(axis)**2/2/filter_width**2)
     elif convolve_method == 'Lorentzian':
         temp *= np.exp(-abs(temp.C.fromaxis(axis))/filter_width)
+    elif convolve_method == 'Lorentzian_to_Gaussian':
+        temp *= np.exp(-temp.C.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
+        temp /= np.exp(-abs(temp.C.fromaxis(axis))/filter_width)
     temp.ft('t2')
-
-    if Lorentz_to_Gauss:
-        # not immediately sure why, but I need to
-        # do this in order to get freq limits
-        # around the peak (otherwise they are
-        # around 0)
-        rough_center = abs(temp).C.mean_all_but('t2').argmax('t2').item()
-        temp.setaxis('t2', lambda t: t- rough_center).register_axis({'t2':0})
-        temp = temp['t2':(7e-3,None)]
-    if Lorentz_to_Gauss:
-        # filter_width is λ/π which is FWHM for Lorentzian in Hz
-        # filter for L-to-G lies between λ/2 and λ*2 (Cav p.116)
-        # thus we need to multiply our filter by π, in order to have filters of
-        # the appropriate range
-        this_filter = (filter_width*pi)/2
-        logger.info(strm("Filter width for Lorentz-to-Gauss",this_filter))
-        temp.convolve('t2', 1/this_filter, convfunc=Gaussian_func)
-        temp.ift('t2')
-        temp /= Lorentzian_func(temp.C.fromaxis('t2'),filter_width)
-        temp.ft('t2')
     if fl is not None:
         fl.next('integration diagnostic')
         fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
@@ -106,7 +92,5 @@ def integrate_limits(s, axis="t2",
         annotate(str(limit_for_contiguous), xy=(freq_limits[-1],0.85))
         fl.pop_marker()
     freq_limits = np.array(freq_limits)
-    if Lorentz_to_Gauss:
-        return freq_limits,temp
-    else:
-        return freq_limits
+    # Think still need to return 'temp' if Lorentzian_to_Gaussian 
+    return freq_limits
