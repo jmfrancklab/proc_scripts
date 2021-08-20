@@ -99,7 +99,6 @@ def integrate_limits(s, axis="t2",
         rough_center = abs(temp).C.mean_all_but('t2').argmax('t2').item()
         temp.setaxis('t2', lambda t: t- rough_center).register_axis({'t2':0})
         temp = temp['t2':(7e-3,None)]
-    temp.ft('t2')
     logger.info(strm("I want this filter_width",filter_width))
     if Lorentz_to_Gauss:
         # filter_width is λ/π which is FWHM for Lorentzian in Hz
@@ -113,7 +112,8 @@ def integrate_limits(s, axis="t2",
         temp /= Lorentzian_func(temp.C.fromaxis('t2'),filter_width)
         temp.ft('t2')
     else:
-        temp.convolve('t2', (1/filter_width), convfunc=convfunc)
+        temp *= np.exp(-temp.C.fromaxis(axis)**2/2/filter_width**2)
+        temp.ft('t2')
     if fl is not None:
         fl.next('integration diagnostic')
         fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
