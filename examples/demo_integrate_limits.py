@@ -57,6 +57,7 @@ with figlist_var() as fl:
     # need to feed integrate limits time domain data 
     data.ift('t2')
     freq_lim = integrate_limits(data['ph1',0]['ph2',1],
+            convolve_method='Lorentzian',
             fl=fl)
     data.ft('t2')
     fl.next("fake data -- show freq limit selection, Lorentzian filter")
@@ -66,8 +67,7 @@ with figlist_var() as fl:
     print("Determined frequency limits via Lorentzian filter of",freq_lim)
     data.ift('t2')
     freq_lim = integrate_limits(data['ph1',0]['ph2',1],
-            Gaussian=True,
-            Lorentzian=False,
+            convolve_method='Gaussian',
             fl=fl)
     data.ft('t2')
     fl.next("fake data -- show freq limit selection, Gaussian filter")
