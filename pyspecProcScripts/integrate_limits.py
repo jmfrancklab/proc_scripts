@@ -86,9 +86,9 @@ def integrate_limits(s, axis="t2",
     temp.ft('t2')
     if fl is not None:
         fl.next('integration diagnostic')
-        fl.plot(abs(temp)/abs(temp).max(), alpha=0.6, label='after convolve')
+        fl.plot(temp/temp.max(), alpha=0.6, label='after convolve')
     limit_for_contiguous = 0.25
-    freq_limits = temp.contiguous(lambda x: abs(x) > limit_for_contiguous * abs(x).data.max())[0]
+    freq_limits = temp.contiguous(lambda x: x.real > limit_for_contiguous * x.real.data.max())[0]
     if fl is not None:
         fl.next('integration diagnostic')
         axvline(x = freq_limits[0], c='k', alpha=0.75)
