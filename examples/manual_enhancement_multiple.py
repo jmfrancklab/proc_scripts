@@ -142,7 +142,7 @@ T1s_b = nddata(r_[0.0, 0.0, 0.0, 0.0, 0.0], "power").labels(
 T1s_c = nddata(r_[0.0, 0.0, 0.0, 0.0, 0.0], "power").labels(
     "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
 )
-T1s_d = nddata(r_[0.0, 0.0, 0.0, 0.0, 0.0], "power").labels(
+T1s_d = nddata(r_[1.132, 1.432, 1.464, 1.534, 1.586], "power").labels(
     "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
 )
 
