@@ -105,7 +105,7 @@ file_location = "odnp"
 postproc = "spincore_ODNP_v2"
 export_csv = True
 save_figs = True
-savedir = "."#"C:/Users/saman/Research/Data/pR_ODNP/output_files/"
+savedir = "C:/Users/saman/Research/Data/pR_ODNP/output_files/"
 if save_figs:
     os.chdir(savedir)
 auto_T1s = True
@@ -133,7 +133,7 @@ for (filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
     #        1.5163,
     #    )
     # Example with realistic data with T1 values; you can enter
-    # manually above, or import from a csv (ask Sam). You can also 
+    # manually above, or import from a csv (ask Sam). You can also
     # choose to enter C, T1_0, T1_vals and/or ppt as None.
     (
         "210707_Q183R1a_pR_DDM_ODNP",
