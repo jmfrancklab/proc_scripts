@@ -12,10 +12,11 @@ plt.rcParams.update({
 })
 fl = fl_mod()
 # {{{ input parameters
-filename = '210707_Q183R1a_pR_DDM_ODNP' #'210714_150uM_TEMPOL_SMB_ODNP''210806_129uM_TEMPOL_capProbe'
+filename = '210707_Q183R1a_pR_DHPC_ODNP' #'210714_150uM_TEMPOL_SMB_ODNP''210806_129uM_TEMPOL_capProbe'
 powers = np.r_[0,2,2.51,3.16,3.98] #W -> [0,33,34,35,36] dBm
 exp_type = 'odnp'
 postproc = 'spincore_IR_v1'
+show_proc = True
 export_csv = True
 csv_path = 'C:/Users/saman/Research/Data/pR_ODNP/output_files/'
 single_file = False
@@ -53,12 +54,18 @@ for idx,filename,nodename,f_range,t_range,rep,clock_correction,IR,ILT in [
 #    (3,filename,'FIR_35dBm',(-300,300),(None,83e-3),6.5,False,False,False),#(-75,175)
 #    (4,filename,'FIR_36dBm',(-300,300),(None,83e-3),6.5,False,False,False),#(-100,125),(None,75e-3)
 # }
-# {210707_Q183R1a_pR_DDM_ODNP
-    (0,filename,'FIR_noPower_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
-    (1,filename,'FIR_33dBm_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
-    (2,filename,'FIR_34dBm_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
-    (3,filename,'FIR_35dBm_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
-    (4,filename,'FIR_36dBm_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
+# {filename = 210707_Q183R1a_pR_DHPC_ODNP, flip = False
+    (0,filename,'FIR_0dBm',(-175,25),(None,83e-3),2.5,False,False,False),
+    (1,filename,'FIR_33dBm',(-250,75),(None,83e-3),2.5,False,False,False),
+    (2,filename,'FIR_34dBm',(-225,75),(None,83e-3),2.5,False,False,False),
+    (3,filename,'FIR_35dBm',(-225,75),(None,83e-3),2.5,False,False,False),
+    (4,filename,'FIR_36dBm',(-175,125),(None,83e-3),2.5,True,False,False),
+# {filename = 210707_Q183R1a_pR_DDM_ODNP
+#    (0,filename,'FIR_noPower_real_newvd2',(-250,250),(None,83e-3),3,False,False,False), 
+#    (1,filename,'FIR_33dBm_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
+#    (2,filename,'FIR_34dBm_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
+#    (3,filename,'FIR_35dBm_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
+#    (4,filename,'FIR_36dBm_real_newvd2',(-250,250),(None,83e-3),3,False,False,False),
 # }
         ]:
 #}}}
@@ -71,7 +78,7 @@ for idx,filename,nodename,f_range,t_range,rep,clock_correction,IR,ILT in [
     mysgn = [select_pathway(myslice,coherence_pathway).real['t2',np.argmax(i)].run(np.sign) for i in abs(select_pathway(myslice,coherence_pathway).real.data)][0]
 #    mysgn = select_pathway(myslice,coherence_pathway).real.sum('t2').run(np.sign)
 #    mysgn = nddata(np.ones((len(myslice.getaxis('vd')))),'vd').labels('vd',myslice.getaxis('vd'))
-#    mysgn = nddata(r_[-1.,-1.,-1.,-1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],'vd').labels('vd',myslice.getaxis('vd'))
+    mysgn = nddata(r_[-1.,-1.,-1.,-1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],'vd').labels('vd',myslice.getaxis('vd'))
 
 #    if len(s.getaxis('vd')) == 12:
 #        mysgn = nddata(r_[-1.,-1.,-1.,1.,1.,1.,1.,1.,1.,1.,1.,1.],'vd').labels('vd',s.getaxis('vd'))
@@ -81,13 +88,15 @@ for idx,filename,nodename,f_range,t_range,rep,clock_correction,IR,ILT in [
     fl.next('\nshowing coherence channel zoom')
     fl.image(s.C['ph1',0]['ph2',1]['t2':(-750,750)]*mysgn)
     T1 = process_IR(s,rd=rep,f_range=f_range,t_range=t_range,clock_correction=clock_correction,IR=IR,
-            flip=True,sgn=mysgn,fl=fl,hermitian_phasing=True,best_shift=0.004167) 
+            flip=False,sgn=mysgn,fl=fl,hermitian_phasing=True,best_shift=0.004167) 
     if not single_file:
         T1_vals['power',idx] = T1
         fl.next('T1 at %0.2f W is %0.3f s'%(T1_vals.getaxis('power')[idx],T1))
         fl.plot(r_[0,2,5,10],r_[0,2,5,10],'o')
         for i in range(len(T1_vals.getaxis('power'))):
             text(5,i+1,'T1 at %0.2f W is %0.3f s'%(T1_vals.getaxis('power')[i],T1_vals.data[i]))
+    if show_proc:
+        fl.show()
 fl.show()
 if single_file:
     print(T1_vals*1e6)
