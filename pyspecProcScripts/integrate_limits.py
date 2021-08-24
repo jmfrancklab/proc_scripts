@@ -49,7 +49,7 @@ def integrate_limits(s, axis="t2",
     """
     s.ift('t2') # move ift into function to eventually discard
     #assert s.get_ft_prop(axis), "data must be in the frequency domain along %s!!"%axis
-    temp = s.C.mean_all_but(axis)
+    temp = s.C.mean_all_but(axis).real
     convolve_method = convolve_method.lower()
     if fl is not None:
         forplot = temp.C.ft(axis)
