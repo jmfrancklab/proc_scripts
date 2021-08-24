@@ -1,5 +1,5 @@
 # {{{ Docstring
-'''
+"""
 Manual Enhancement
 ==================
 This script allows you to process your enhancement data for 
@@ -9,37 +9,68 @@ depending on the data you collected and the figures and other
 outputs you'd like to save. 
 
 Parameters (in the order they appear)
-----------
+-------------------------------------
 file_location: str - exp_type of your enhancement data file from 
-    the _pyspecdata or .pyspecdata file
+    the _pyspecdata or .pyspecdata file (typically 'ODNP_NMR_comp/ODNP'
+    if connected to the G-drive; in this example it is not).
+
 postproc: str - the type of postprocessing you require as written
-    in pyspecProcScripts/load_file.py
+    in pyspecProcScripts/load_file.py. (This script uses v2 because 
+    it accounts for any old 8-step phase-cycled data).
+
 export_csv: Boolean - determines whether a csv is generated from
-    the enhancement data
-auto_T1s: Boolean - determines whether the T1 values and corresponding
-    power values are loaded from a csv into an nddata [('power',n)]
-    where n is the number of T1 values measured 
-    OR if you have to manually enter your T1 and power values.
+    the enhancement data (columns: power (W), Re[E(p)], Im[E(p)]).
+
+auto_T1s: Boolean - determines whether manually entered T1 values 
+    and powers are used (False is applied for this case)for the 
+    'T1s' nddata: ndshape of [('power', n)] where n is the number
+    of T1 values measured OR  if the array is constructed by loading
+    from a csv (columns: "power (W)", "$T_1$ (s)") using pandas.
+    Note: There is a script in progress for saving multiple T1 values 
+    into a csv automatically, which is where $T_1$ comes from.
+
 save_figs: Boolean - determines whether to save enhancement and
-    ksigma*s(p) plots.
-    Filename format = today's date, root filename, plot type.
-        ex: "210720_150uM_TEMPOL_SMB_enhancement.png"
-save_location: str - path to where you want your figures saved.
-manual_T1s: arr - array of T1 values corresponding to power_vals. This
-    script will correct the data by dividing out T1(p) if you give OR
-    load T1_vals.
+    ksigma*s(p) plots. Filename format:
+    "{today's date in YYMMDD}_{root filename}_{plot type}.png"
+    ex: 
+    "210720_150uM_TEMPOL_SMB_enhancement.png"
+
+save_location: str - full path to where you want your figures saved.
+    (I think you can just put "." and it will save to the current directory,
+    but I'm not 100% sure).
+
+T1_file: str - name of the csv file containing T1_values, no extension.
+
+manual_T1s: arr - array of T1 values corresponding to power_vals. By
+    giving these values, and entering 'T1s' for T1_vals, this script 
+    will correct the data by dividing out a first-order fit of T1(p).
+    It will do the same if you do auto 
+
 power_vals: arr - array of power values corresponding to T1 values in
     manual_T1s
-filename: str - name of the file containing your data
-nodename: str - name of the node in the file containing your data
-f_range: tuple of floats - frequency range in MHz
+
+filename: str - name of the file containing your enhancement data. No
+    extension required.
+
+nodename: str - name of the node in the file containing your data.
+    Examples include: "enhancement" "enhancement_1" "signal"
+
+f_range: tuple of floats - frequency range in Hz in which you will 
+    crop your data to remove noise. Example: (300,250) #Hz
+
 C: float - concentration in M. If given, you will get (1-E(p))/C. Can
-    enter None.
+    enter 'None'. Example: 340e-6 #M
+
 T1_0: float - T1(p=0) in s. If given, this script will get (1-E(p))/(C T1(p=0)).
-    Can enter None.
+    Can enter 'None'. Example: 0.907 #s
+
+T1_vals: nddata - ndshape of [("power", n)] where n is the number of 
+    measured T1 values. This is entered as 'T1s' or 'None' depending
+    on whethere you have the values and want the correction.
+
 ppt: float - the ratio of f_NMR to f_ESR for your specific type of sample (spin 
-    label) in MHz/GHz. 
-'''
+    label) in MHz/GHz. Can enter 'None'. Example: 1.5154 #MHz/GHz for MTSL in pR
+"""
 # }}}
 # {{{ Imports & Initialization
 from pyspecdata import *
@@ -66,50 +97,50 @@ measured_vs_actual = 22.0  # how many dB down the split + measured power is from
 # }}}
 # {{{ Input parameters & Load Data
 file_location = "odnp"
-postproc = "spincore_ODNP_v2" 
+postproc = "spincore_ODNP_v2"
 export_csv = True
 auto_T1s = True
-save_figs = False 
+save_figs = True
 save_location = "C:/Users/saman/Research/Data/pR_ODNP/output_files/"
 if save_figs:
     os.chdir(save_location)
 date = time.strftime("%y%m%d")
 # { Load T1_values
 if auto_T1s:
-    path = save_location
-    T1_df = pd.read_csv('%s210707_Q183R1a_pR_DDM_T1s.csv'%path)
-    print(T1_df);quit()
-    T1s = T1_df['T1']
+    T1_file = "210813_Q183R1a_pR_DDM_T1s"
+    T1_df = pd.read_csv("%s%s.csv" % (save_location, T1_file))
+    T1s = nddata(T1_df["$T_1$ (s)"].to_numpy(), "power").labels(
+        "power", T1_df["power (W)"].to_numpy()
+    )
 else:
-    manual_T1s = r_[]
-    power_vals = r_[]
-    T1s = nddata(manual_T1s,'power').labels('power',power_vals)
+    manual_T1s = r_[0.959, 1.150, 1.305, 1.394, 1.542]
+    power_vals = r_[0.0, 2.00, 2.51, 3.16, 3.98]
+    T1s = nddata(manual_T1s, "power").labels("power", power_vals)
 # }
 for (filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
     # Example for old 8-step phase cycled data, preprocessed
-    # with the spincore_ODNP_v2 processing. 
+    # with the spincore_ODNP_v2 processing.
+    #    (
+    #        "210507_TEMPOL_150uM__cap_probe_DNP_1",
+    #        "signal",
+    #        (-150, 250),
+    #        150e-6,
+    #        1.87,
+    #        None,
+    #        1.5163,
+    #    )
+    # Example with realistic data with T1 values; you can enter
+    # manually above, or import from a csv. You can also choose
+    # to enter C, T1_0, T1_vals and/or ppt as None.
     (
-        "210507_TEMPOL_150uM__cap_probe_DNP_1",
-        "signal",
-        (-150, 250),
-        150e-6,
-        1.87,
-        None,
-        1.5163,
-    )
-    # Example for data with T1 values, you can enter manually
-    # above, or import from a csv. 
-    (
-        "210714_150uM_TEMPOL_SMB_ODNP",
-        "enhancement_real",
-        (-200,200),
-        146.7e-6,
-        3.56,
+        "210707_Q183R1a_pR_DDM_ODNP",
+        "enhancement",
+        (-225, 75),
+        207.4e-6,
+        0.959,
         T1s,
-        1.51563,
-    )
-    #        ('210707_Q183R1a_pR_DDM_ODNP','enhancement',
-    #            (-225,75),207.4e-6,None,None,1.5154), # have T1_values for this data
+        1.5154,
+    ),
 ]:
     # }}}
     outname = "%s_%s" % (date, "_".join(filename.split("_")[1:-1]))
@@ -159,9 +190,7 @@ for (filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
     # }}}
     # {{{ Simple integral
     fl.next("%s\nsimple integral" % titl)
-    fl.plot(
-        s["power", :-3], "ko", human_units=False
-    )
+    fl.plot(s["power", :-3], "ko", human_units=False)
     # (human_units = False because the range for the red points tries to force mW, which is incompatible with W)
     fl.plot(s["power", -3:], "ro", human_units=False)
     plt.xlabel("power (W)")
@@ -185,6 +214,7 @@ for (filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
     # {{{ Export enhancement data as a csv (if prompted)
     if export_csv:
         import pandas as pd
+
         reenhancementdf = pd.DataFrame(data=s.real.data, columns=["Re[E(p)]"])
         imenhancementdf = pd.DataFrame(data=s.imag.data, columns=["Im[E(p)]"])
         enhancementdf = pd.DataFrame(data=s.data, columns=["enhancement"])
@@ -208,10 +238,17 @@ for (filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
                 fl.next("%s\n$k_{\sigma}s(p)T_{1}(p)$ $\div$ $T_{1}(0)$" % titl)
             #  T1(p)...
             else:  # (if T1_vals is not None -- we dont want T1_vals to be divided out along with T1_0)
+                temp = ks.C / T1_0
+                fl.next("%s\n$k_{\sigma}s(p)T_{1}(p)$ $\div$ $T_{1}(0)$" % titl)
+                fl.plot(temp["power", :-3], "ko", human_units=False)
+                fl.plot(temp["power", -3:], "ro", human_units=False)
+                plt.xlabel("power (W)")
+                plt.ylabel("$k_{\sigma}s(p)T_{1}(p)$ $\div$ $T_{1}(0)$")
                 m, b = np.polyfit(T1_vals.getaxis("power"), T1_vals.data, 1)
                 T1_p = lambda p: (m * p) + b
-                T1_p = nddata(T1_p(ks.getaxis("power")), ks.getaxis("power")).labels(
-                    "power", ks.getaxis("power"))
+                T1_p = nddata(T1_p(ks.getaxis("power")), "power").labels(
+                    "power", ks.getaxis("power")
+                )
                 ks /= T1_p
                 fl.next("%s\n$k_{\sigma}s(p)$" % titl)
         # ppt correction for increased sigfigs...
