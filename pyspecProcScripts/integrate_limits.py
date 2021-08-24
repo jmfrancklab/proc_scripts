@@ -47,16 +47,16 @@ def integrate_limits(s, axis="t2",
         order not to see any diagnostic plots
 
     """
-    s.ift('t2') # move ift into function to eventually discard
-    #assert s.get_ft_prop(axis), "data must be in the frequency domain along %s!!"%axis
+    assert s.get_ft_prop(axis), "data must be in the frequency domain along %s!!"%axis
     temp = s.C.mean_all_but(axis).real
     convolve_method = convolve_method.lower()
     if fl is not None:
-        forplot = temp.C.ft(axis)
+        forplot = temp
         fl.next('integration diagnostic')
         fl.push_marker()
-        fl.plot(forplot/forplot.max(), alpha=0.6, label='before convolve')
+        fl.plot(forplot/forplot.data.max(), alpha=0.6, label='before convolve')
     sigma = nddata(np.linspace(1e-10,1e-1,1000),'sigma').set_units('sigma','s')
+    temp.ift('t2')
     if convolve_method == 'gaussian':
         convolution_set = np.exp(-temp.fromaxis(axis)**2/2/sigma**2)
     elif convolve_method == 'lorentzian':
@@ -97,5 +97,4 @@ def integrate_limits(s, axis="t2",
         fl.pop_marker()
     freq_limits = np.array(freq_limits)
     # Think still need to return 'temp' if Lorentzian_to_Gaussian 
-    s.ft('t2') # move ft into function to eventually discard
     return freq_limits
