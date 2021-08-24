@@ -9,7 +9,7 @@ logger = init_logging("debug")
 
 def integrate_limits(s, axis="t2",
         filter_width=100,
-        convolve_method='Gaussian',
+        convolve_method='gaussian',
         fl=None):
     r"""
     Integrate Limits
@@ -20,7 +20,7 @@ def integrate_limits(s, axis="t2",
     domain data, which it then uses to determine the integration limits based on a
     cut off from the maximum signal intensity.
 
-    axisname: str
+    axis: str
         apply convolution along `axisname`
 
     fwhm: int
@@ -29,11 +29,11 @@ def integrate_limits(s, axis="t2",
 
     convolve_method: str
         specify as one of the following 3 options:
-        * Option 1 - 'Gaussian' 
+        * Option 1 - 'gaussian' 
         to calculate the matched-filter via
         Gaussian convolution of the frequency
         domain signal.
-        * Option 2 - 'Lorentzian' 
+        * Option 2 - 'lorentzian' 
         to calculate the matched-filter via
         Lorentzian convolution of the frequency
         domain signal.
@@ -47,23 +47,27 @@ def integrate_limits(s, axis="t2",
         order not to see any diagnostic plots
 
     """
+    s.ift('t2') # move ift into function to eventually discard
+    #assert s.get_ft_prop(axis), "data must be in the frequency domain along %s!!"%axis
     temp = s.C.mean_all_but(axis)
+    convolve_method = convolve_method.lower()
     if fl is not None:
+        forplot = temp.C.ft(axis)
         fl.next('integration diagnostic')
         fl.push_marker()
-        fl.plot(abs(temp.C.ft('t2'))/abs(temp.C.ft('t2')).max(), alpha=0.6, label='before convolve')
+        fl.plot(forplot/forplot.max(), alpha=0.6, label='before convolve')
     sigma = nddata(np.linspace(1e-10,1e-1,1000),'sigma').set_units('sigma','s')
-    if convolve_method == 'Gaussian':
-        convolution_set = np.exp(-temp.C.fromaxis(axis)**2/2/sigma**2)
-    elif convolve_method == 'Lorentzian':
-        convolution_set = np.exp(-abs(temp.C.fromaxis(axis))/sigma)
+    if convolve_method == 'gaussian':
+        convolution_set = np.exp(-temp.fromaxis(axis)**2/2/sigma**2)
+    elif convolve_method == 'lorentzian':
+        convolution_set = np.exp(-abs(temp.fromaxis(axis))/sigma)
     elif convolve_method == 'Lorentzian_to_Gaussian':
-        convolution_set = np.exp(-abs(temp.C.fromaxis(axis))/sigma)
+        convolution_set = np.exp(-abs(temp.fromaxis(axis))/sigma)
     signal_E = (abs(temp * convolution_set)**2).sum(axis)
     signal_E /= signal_E.data.max()
-    if convolve_method == 'Gaussian':
+    if convolve_method == 'gaussian':
         filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
-    elif convolve_method == 'Lorentzian':
+    elif convolve_method == 'lorentzian':
         filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
     elif convolve_method == 'Lorentzian_to_Gaussian':
         filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
@@ -72,13 +76,13 @@ def integrate_limits(s, axis="t2",
         fl.next('integration diagnostic -- signal Energy')
         fl.plot(signal_E, human_units=False)
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
-    if convolve_method == 'Gaussian':
-        temp *= np.exp(-temp.C.fromaxis(axis)**2/2/filter_width**2)
-    elif convolve_method == 'Lorentzian':
-        temp *= np.exp(-abs(temp.C.fromaxis(axis))/filter_width)
+    if convolve_method == 'gaussian':
+        temp *= np.exp(-temp.fromaxis(axis)**2/2/filter_width**2)
+    elif convolve_method == 'lorentzian':
+        temp *= np.exp(-abs(temp.fromaxis(axis))/filter_width)
     elif convolve_method == 'Lorentzian_to_Gaussian':
-        temp *= np.exp(-temp.C.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
-        temp /= np.exp(-abs(temp.C.fromaxis(axis))/filter_width)
+        temp *= np.exp(-temp.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
+        temp /= np.exp(-abs(temp.fromaxis(axis))/filter_width)
     temp.ft('t2')
     if fl is not None:
         fl.next('integration diagnostic')
@@ -93,4 +97,5 @@ def integrate_limits(s, axis="t2",
         fl.pop_marker()
     freq_limits = np.array(freq_limits)
     # Think still need to return 'temp' if Lorentzian_to_Gaussian 
+    s.ft('t2') # move ft into function to eventually discard
     return freq_limits

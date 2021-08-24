@@ -46,33 +46,34 @@ with figlist_var() as fl:
             ("ph2" , nddata(r_[0:4] / 4.0, "ph2")),
             ("t2" , nddata(r_[0:0.2:256j]-echo_time, "t2"))]),
             {"ph1": 0, "ph2": 1},
-            scale=10.)
-    data.setaxis('t2', lambda x: x-echo_time).register_axis({"t2":0}) # this
+            scale=20.)
+    # {{{ just have the data phase (not testing phasing here)
+    data.setaxis('t2', lambda x: x-echo_time).register_axis({"t2":0})
+    data = data['t2',0:-3] # dropping the last couple points avoids aliasing
+    #                        effects from the axis registration
+    #                        (otherwise, we get "droop" of the baseline)
+    # }}}
     data.reorder(["ph1", "ph2", "vd"])
     fl.next("fake data -- time domain")
     fl.image(data)
-    data.ft("t2", unitary=True)
+    fl.next("FID sliced -- time domain")
+    data = data['t2':(0,None)]
+    data['t2',0] *= 0.5
+    ph0 = data['t2',0].data.mean()
+    ph0 /= abs(ph0)
+    data /= ph0
+    fl.image(data)
+    data.ft("t2")
     fl.next("fake data -- freq domain")
     fl.image(data)
-    # need to feed integrate limits time domain data 
-    data.ift('t2')
-    freq_lim = integrate_limits(data['ph1',0]['ph2',1],
-            convolve_method='Lorentzian',
-            fl=fl)
-    data.ft('t2')
-    fl.next("fake data -- show freq limit selection, Lorentzian filter")
-    fl.plot(data['ph1',0]['ph2',1])
-    axvline(x=freq_lim[0])
-    axvline(x=freq_lim[-1])
-    print("Determined frequency limits via Lorentzian filter of",freq_lim)
-    data.ift('t2')
-    freq_lim = integrate_limits(data['ph1',0]['ph2',1],
-            convolve_method='Gaussian',
-            fl=fl)
-    data.ft('t2')
-    fl.next("fake data -- show freq limit selection, Gaussian filter")
-    fl.plot(data['ph1',0]['ph2',1])
-    axvline(x=freq_lim[0])
-    axvline(x=freq_lim[-1])
-    print("Determined frequency limits via Gaussian filter of",freq_lim)
+    for method in ['Lorentzian','Gaussian']:
+        fl.basename = method
+        freq_lim = integrate_limits(data['ph1',0]['ph2',1],
+                convolve_method='Lorentzian',
+                fl=fl)
+        fl.next("fake data -- show freq limit selection, Lorentzian filter")
+        fl.plot(data['ph1',0]['ph2',1])
+        axvline(x=freq_lim[0])
+        axvline(x=freq_lim[-1])
+        print("Determined frequency limits via",method,"filter of",freq_lim)
     # }}}
