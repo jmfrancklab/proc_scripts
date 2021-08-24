@@ -37,7 +37,7 @@ def integrate_limits(s, axis="t2",
         to calculate the matched-filter via
         Lorentzian convolution of the frequency
         domain signal.
-        * Option 3 - 'Lorentzian_to_Gaussian'
+        * Option 3 - 'lorentzian_to_gaussian'
         apply Lorentzian to Gaussian
         transformation to your data, in order to
         determine integral limits.
@@ -49,6 +49,13 @@ def integrate_limits(s, axis="t2",
     """
     assert s.get_ft_prop(axis), "data must be in the frequency domain along %s!!"%axis
     temp = s.C.mean_all_but(axis).real
+    # {{{ taking real in the frequency domain enforces symmetry in the
+    # time domain.  Without the following, the negative time components
+    # get aliased to large time.
+    # Might make sense to rather have `.real` above do this, since the
+    # reasoning should always apply!  (discuss)
+    temp.set_ft_prop(axis,['start','time'],-s.get_ft_prop(axis,'dt')*(ndshape(s)[axis]//2))
+    # }}}
     convolve_method = convolve_method.lower()
     if fl is not None:
         forplot = temp
@@ -59,30 +66,35 @@ def integrate_limits(s, axis="t2",
     temp.ift('t2')
     if convolve_method == 'gaussian':
         convolution_set = np.exp(-temp.fromaxis(axis)**2/2/sigma**2)
-    elif convolve_method == 'lorentzian':
-        convolution_set = np.exp(-abs(temp.fromaxis(axis))/sigma)
-    elif convolve_method == 'Lorentzian_to_Gaussian':
+    elif convolve_method in ['lorentzian','lorentzian_to_gaussian']:
         convolution_set = np.exp(-abs(temp.fromaxis(axis))/sigma)
     signal_E = (abs(temp * convolution_set)**2).sum(axis)
     signal_E /= signal_E.data.max()
     if convolve_method == 'gaussian':
         filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
-    elif convolve_method == 'lorentzian':
-        filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
-    elif convolve_method == 'Lorentzian_to_Gaussian':
+    elif convolve_method in ['lorentzian','lorentzian_to_gaussian']:
         filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
     logger.info(strm("FILTER WIDTH IS",filter_width))
     if fl is not None:
         fl.next('integration diagnostic -- signal Energy')
         fl.plot(signal_E, human_units=False)
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
+    if fl is not None:
+        fl.next('integration diagnostic -- time domain')
+        fl.plot(abs(temp), alpha=0.6, label='before mult')
     if convolve_method == 'gaussian':
         temp *= np.exp(-temp.fromaxis(axis)**2/2/filter_width**2)
-    elif convolve_method == 'lorentzian':
+    elif convolve_method in 'lorentzian':
         temp *= np.exp(-abs(temp.fromaxis(axis))/filter_width)
-    elif convolve_method == 'Lorentzian_to_Gaussian':
+    elif convolve_method == 'lorentzian_to_gaussian':
+        # JF: I agree that a lot of the L to G code is duplicated here,
+        # but the second part of this doesn't have to do with choosing the
+        # integral limits, but rather with actually modifying the data
         temp *= np.exp(-temp.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
         temp /= np.exp(-abs(temp.fromaxis(axis))/filter_width)
+    if fl is not None:
+        fl.next('integration diagnostic -- time domain')
+        fl.plot(abs(temp), alpha=0.6, label='after mult')
     temp.ft('t2')
     if fl is not None:
         fl.next('integration diagnostic')
@@ -96,5 +108,5 @@ def integrate_limits(s, axis="t2",
         annotate(str(limit_for_contiguous), xy=(freq_limits[-1],0.85))
         fl.pop_marker()
     freq_limits = np.array(freq_limits)
-    # Think still need to return 'temp' if Lorentzian_to_Gaussian 
+    # Think still need to return 'temp' if lorentzian_to_gaussian 
     return freq_limits
