@@ -3,6 +3,24 @@ from .apod_matched_filter import apod_matched_filter
 
 def L2G(s, axis='t2',
         fl=None):
+    r"""
+    Lorentzian-to-Gaussian
+    ============================
+
+    This performs Lorentzian-to-Gaussian transformation on input data. Data
+    should be input as time domain data.
+
+    s: nddata
+        time domain data to undergo transformation
+
+    axis: str
+        transformation along `axisname` (t2)
+
+    fl: None or figlist_var()
+        to show diagnostic plots, set `fl` to the
+        figure list; set `fl` to None in order not
+        to see any diagnostic plots
+    """
     temp = s.C.mean_all_but(axis)
     _,filter_width = apod_matched_filter(temp,
             convolve_method='lorentzian',

@@ -28,6 +28,9 @@ def apod_matched_filter(s, axis='t2',
         finds a matched-filter Lorentzian to the
         input data
 
+    ret_width: float
+        returns the linewidth found for the matched filter, typically not necessary
+
     fl: None or figlist_var()
         to show diagnostic plots, set `fl` to the
         figure list; set `fl` to None in order not
@@ -54,11 +57,14 @@ def apod_matched_filter(s, axis='t2',
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
     if fl is not None:
         fl.next('integration diagnostic -- time domain')
-        fl.plot(abs(temp), alpha=0.6, label='before mult')
+        fl.plot(abs(temp), alpha=0.6, label='abs val, before mult')
     if convolve_method == 'gaussian':
         temp *= np.exp(-temp.fromaxis(axis)**2/2/filter_width**2)
     elif convolve_method in 'lorentzian':
         temp *= np.exp(-abs(temp.fromaxis(axis))/filter_width)
+    if fl is not None:
+        fl.next('integration diagnostic -- time domain')
+        fl.plot(abs(temp), alpha=0.6, label='abs val, after mult')
     if ret_width:
         return temp, filter_width
     else:
