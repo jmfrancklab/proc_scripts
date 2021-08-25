@@ -479,40 +479,40 @@ def proc_spincore_ODNP_v2(s,fl=None):
     '''Deals with 8-step phase-cycled
     data in addition to 4-step phase-cycled
     data.'''
-     if 'nScans' in s.dimlabels:
-         s.mean('nScans')
-     logging.info("loading pre-processing for ODNP")
-     prog_power = s.getaxis('power').copy()
-     logging.info(strm("programmed powers",prog_power))
-     s.setaxis('power',r_[
-         0:len(s.getaxis('power'))])
-     logging.info(strm("meter powers",s.get_prop('meter_powers')))
-     logging.info(strm("actual powers",s.getaxis('power')))
-     logging.info(strm("ratio of actual to programmed power",
-                s.getaxis('power')/prog_power))
-     nPoints = s.get_prop('acq_params')['nPoints']
-     SW_kHz = s.get_prop('acq_params')['SW_kHz']
-     nScans = s.get_prop('acq_params')['nScans']
-     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-     if nPhaseSteps == 4:
-         s.chunk('t',['ph1','t2'],[4,-1]) # what is this doing?
-         s.set_units('t2','s')
-         s.labels({'ph1':r_[0.,1.,2.,3.]/4})
-         s.ft('t2',shift=True)
-         s.ft(['ph1']) # Fourier Transforms coherence channels
-         s.reorder(['ph1','power'])
-     if nPhaseSteps == 8:
-         s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-         s.reorder(['ph1','ph2','power','t2'])
-         s.setaxis('ph2',r_[0.,2.]/4)
-         s.setaxis('ph1',r_[0.:4.]/4)
-         s.ft('t2',shift=True)
-         s.ft(['ph2','ph1']) # Fourier Transforms coherence channels
-     s.C.setaxis('power','#').set_units('power','scan #')
-     if fl is not None:
-         fl.next('all data: frequency domain')
-         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
-     return s
+    if 'nScans' in s.dimlabels:
+        s.mean('nScans')
+    logging.info("loading pre-processing for ODNP")
+    prog_power = s.getaxis('power').copy()
+    logging.info(strm("programmed powers",prog_power))
+    s.setaxis('power',r_[
+        0:len(s.getaxis('power'))])
+    logging.info(strm("meter powers",s.get_prop('meter_powers')))
+    logging.info(strm("actual powers",s.getaxis('power')))
+    logging.info(strm("ratio of actual to programmed power",
+               s.getaxis('power')/prog_power))
+    nPoints = s.get_prop('acq_params')['nPoints']
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nScans = s.get_prop('acq_params')['nScans']
+    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    if nPhaseSteps == 4:
+        s.chunk('t',['ph1','t2'],[4,-1]) # what is this doing?
+        s.set_units('t2','s')
+        s.labels({'ph1':r_[0.,1.,2.,3.]/4})
+        s.ft('t2',shift=True)
+        s.ft(['ph1']) # Fourier Transforms coherence channels
+        s.reorder(['ph1','power'])
+    if nPhaseSteps == 8:
+        s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+        s.reorder(['ph1','ph2','power','t2'])
+        s.setaxis('ph2',r_[0.,2.]/4)
+        s.setaxis('ph1',r_[0.:4.]/4)
+        s.ft('t2',shift=True)
+        s.ft(['ph2','ph1']) # Fourier Transforms coherence channels
+    s.C.setaxis('power','#').set_units('power','scan #')
+    if fl is not None:
+        fl.next('all data: frequency domain')
+        fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+    return s
 
 lookup_table = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
