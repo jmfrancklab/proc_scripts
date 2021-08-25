@@ -5,6 +5,8 @@ from .fwhm_calculate import fwhm_calculator
 import logging
 from pylab import r_,fft,ifft,ifftshift,fftshift,exp,ones_like
 from matplotlib.pyplot import annotate
+from .apod_matched_filter import apod_matched_filter
+
 logger = init_logging("debug")
 
 def integrate_limits(s, axis="t2",
@@ -62,36 +64,16 @@ def integrate_limits(s, axis="t2",
         fl.next('integration diagnostic')
         fl.push_marker()
         fl.plot(forplot/forplot.data.max(), alpha=0.6, label='before convolve')
-    sigma = nddata(np.linspace(1e-10,1e-1,1000),'sigma').set_units('sigma','s')
     temp.ift('t2')
-    if convolve_method == 'gaussian':
-        convolution_set = np.exp(-temp.fromaxis(axis)**2/2/sigma**2)
-    elif convolve_method in ['lorentzian','lorentzian_to_gaussian']:
-        convolution_set = np.exp(-abs(temp.fromaxis(axis))/sigma)
-    signal_E = (abs(temp * convolution_set)**2).sum(axis)
-    signal_E /= signal_E.data.max()
-    if convolve_method == 'gaussian':
-        filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
-    elif convolve_method in ['lorentzian','lorentzian_to_gaussian']:
-        filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
-    logger.info(strm("FILTER WIDTH IS",filter_width))
-    if fl is not None:
-        fl.next('integration diagnostic -- signal Energy')
-        fl.plot(signal_E, human_units=False)
-        fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
-    if fl is not None:
-        fl.next('integration diagnostic -- time domain')
-        fl.plot(abs(temp), alpha=0.6, label='before mult')
-    if convolve_method == 'gaussian':
-        temp *= np.exp(-temp.fromaxis(axis)**2/2/filter_width**2)
-    elif convolve_method in 'lorentzian':
-        temp *= np.exp(-abs(temp.fromaxis(axis))/filter_width)
-    elif convolve_method == 'lorentzian_to_gaussian':
-        # JF: I agree that a lot of the L to G code is duplicated here,
-        # but the second part of this doesn't have to do with choosing the
-        # integral limits, but rather with actually modifying the data
-        temp *= np.exp(-temp.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
-        temp /= np.exp(-abs(temp.fromaxis(axis))/filter_width)
+    temp = apod_matched_filter(temp,fl=fl)
+    print("Success")
+    fl.show();quit()
+    #elif convolve_method == 'lorentzian_to_gaussian':
+    #    # JF: I agree that a lot of the L to G code is duplicated here,
+    #    # but the second part of this doesn't have to do with choosing the
+    #    # integral limits, but rather with actually modifying the data
+    #    temp *= np.exp(-temp.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
+    #    temp /= np.exp(-abs(temp.fromaxis(axis))/filter_width)
     if fl is not None:
         fl.next('integration diagnostic -- time domain')
         fl.plot(abs(temp), alpha=0.6, label='after mult')
