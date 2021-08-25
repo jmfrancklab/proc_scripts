@@ -39,10 +39,6 @@ def integrate_limits(s, axis="t2",
         to calculate the matched-filter via
         Lorentzian convolution of the frequency
         domain signal.
-        * Option 3 - 'lorentzian_to_gaussian'
-        apply Lorentzian to Gaussian
-        transformation to your data, in order to
-        determine integral limits.
 
     fl: None or figlist_var()
         to show diagnostic plots, set `fl` to the figure list; set `fl` to None in
@@ -65,9 +61,9 @@ def integrate_limits(s, axis="t2",
         fl.push_marker()
         fl.plot(forplot/forplot.data.max(), alpha=0.6, label='before convolve')
     temp.ift('t2')
-    temp = apod_matched_filter(temp,fl=fl)
-    print("Success")
-    fl.show();quit()
+    temp = apod_matched_filter(temp,
+            convolve_method=convolve_method,
+            fl=fl)
     #elif convolve_method == 'lorentzian_to_gaussian':
     #    # JF: I agree that a lot of the L to G code is duplicated here,
     #    # but the second part of this doesn't have to do with choosing the

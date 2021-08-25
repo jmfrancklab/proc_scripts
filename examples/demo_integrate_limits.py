@@ -69,9 +69,9 @@ with figlist_var() as fl:
     for method in ['Lorentzian','Gaussian']:
         fl.basename = method
         freq_lim = integrate_limits(data['ph1',0]['ph2',1],
-                convolve_method='Lorentzian',
+                convolve_method=method,
                 fl=fl)
-        fl.next("fake data -- show freq limit selection, Lorentzian filter")
+        fl.next("fake data -- show freq limit selection, %s filter"%method)
         fl.plot(data['ph1',0]['ph2',1])
         axvline(x=freq_lim[0])
         axvline(x=freq_lim[-1])
