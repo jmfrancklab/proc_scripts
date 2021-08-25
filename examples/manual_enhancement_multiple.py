@@ -44,8 +44,34 @@ save_figs: Boolean - determines whether the figures from plot_all will be
     saved.
 
 savedir: str - directory in which you would like your figures to be saved 
-    (make sure there is no "/" on the end).You should be able to put "." 
-    for the current working directory - not 100% sure yet .........................
+    (make sure there is no "/" on the end).You can put "." for the current 
+    working directory if desired, but it's recommended that you have a 
+    separate output file directory.
+
+use_T1s: Boolean - determines whether T1 values and corresponding powers
+    will be fit to a first order linear function and divided out of the 
+    enhancement as a heating correction. If this is True, the function of 
+    this script that divides out T1(p=0) if given will be overridden by
+    the T1(p) correction. 
+
+auto_T1s: Boolean - determines whether the nddatas that fill a list, are...
+    True -- automatically constructed via loading from a csv (columns: 
+    "power (W)", "$T_1$ (s)") using pandas.
+    Note: There is a script in progress for saving multiple T1 values 
+    into a csv automatically, which is where $T_1$ comes from.
+    OR
+    False --  manually constructed with entered T1 values 
+    and powers are used (False is applied for this case, see T1s_x).
+
+T1_filelist: list of strings - list of csv filenames containing the T1 values
+    and corresponding power values, no extension. This file should be located 
+    in the same 'savedir' directory where output files are allocated to, since
+    at some point, this will be a type of output file from IR processing.
+
+T1s_x: nddata - ndshape of [('power',n)], contains the T1 values 
+    in s as data and the corresponding n power values in W at which the IR
+    experiments were performed as a label.You need a separate T1s_x for each
+    enhancement dataset. 
 
 idx: int - index of the dataset starting at 0 and counting up for each
     data set you have. Example: if you have 4 data sets, your indices 
@@ -64,24 +90,14 @@ C: float - concentration in M. If given, you will get (1-E(p))/C. Can
     enter 'None'. Example: 340e-6 #M
 
 T1_0: float - T1(p=0) in s. If given, this script will get (1-E(p))/(C T1(p=0)).
-    Can enter 'None'. Example: 0.907 #s
-
-T1_vals: nddata - ndshape of [("power", n)] where n is the number of 
-    measured T1 values. This is entered as 'T1s' or 'None' depending
-    on whethere you have the values and want the correction.............................
+    Can enter 'None' if you don't desire this correction.  You need to enter either
+    a value for all enhancement or 'None' for all enhancements. DONT MIX AND MATCH
+    because this will result in data that is not directly comparable.
+    Example: 0.907 #s
 
 ppt: float - the ratio of f_NMR to f_ESR for your specific type of sample (spin 
     label) in MHz/GHz. Can enter 'None'. Example: 1.5154 #MHz/GHz for MTSL in pR
 
-T1s_a (...T1s_x): nddata - ndshape of [('power',n)] where n is the number of 
-    T1 values measured. There will be an nddata for each enhancement dataset. 
-    For now, you need to construct these manually. For example:
-        T1s_x = nddata(r_[T1(p=0.),T1(p=p1),T1(p=p2),T1(p=p3),T1(p=p4)],
-        'power').labels('power',r_[0.,p1,p2,p3,p4])
-        Units of T1 are in s and units of p are in W.
-    If you have this nddata  entered as T1_vals for one of the datasets, it
-    needs to be entered for alldatasets, since it allows the script to account
-    for heating.
 """
 # }}}
 # {{{ Imports & Initialization
@@ -124,29 +140,33 @@ colors = [
 show_proc = False
 plot_all = True
 save_figs = True
-savedir = "C:/Users/saman/Research/Data/pR_ODNP/output_files"
+savedir = "."
 if save_figs:
     os.chdir(savedir)
 # Load T1_values
-# import pandas as pd
-# path = 'C:/Users/saman/Research/Sam_Notebooks/ODNP_proc'
-# T1_df = pd.read_csv('%s/210707_Q183R1a_pR_DDM_T1s.csv'%path)
-# print(T1_df);quit()
+use_T1s = True
+auto_T1s = False
+if auto_T1s:
+    T1_filelist = ["210813_Q183R1a_pR_DDM_T1s","210824_Q183R1a_pR_KI_T1s",
+            "210824_Q183R1a_pR_KH2PO4_T1s","210824_Q183R1a_pR_DHPC_T1s"]
+    T1s = []
+    for T1_file in T1_filelist:
+        T1_df = pd.read_csv("%s/%s.csv"%(savedir,T1_file))
+        T1_data = nddata(T1_df["$T_1$ (s)"].to_numpy(),"power").labels(
+                "power", T1_df["power (W)"].to_numpy())
+        T1s.append(T1_data)
+else:
+    T1s_a = nddata(r_[0.959, 1.150, 1.305, 1.394, 1.542], "power").labels(
+            "power", r_[0.0, 2.0, 2.51, 3.16, 3.98])
+    T1s_b = nddata(r_[1.076, 1.302, 1.401, 1.454, 1.543], "power").labels(
+            "power", r_[0.0, 2.0, 2.51, 3.16, 3.98])
+    T1s_c = nddata(r_[1.126, 1.461, 1.499, 1.592], "power").labels(
+            "power", r_[0.0, 2.51, 3.16, 3.98])
+    T1s_d = nddata(r_[1.132, 1.432, 1.464, 1.534, 1.586], "power").labels(
+            "power", r_[0.0, 2.0, 2.51, 3.16, 3.98])
+    T1s = [T1s_a, T1s_b, T1s_c, T1s_d]
 
-T1s_a = nddata(r_[0.959, 1.150, 1.305, 1.394, 1.542], "power").labels(
-    "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
-)
-T1s_b = nddata(r_[0.0, 0.0, 0.0, 0.0, 0.0], "power").labels(
-    "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
-)
-T1s_c = nddata(r_[0.0, 0.0, 0.0, 0.0, 0.0], "power").labels(
-    "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
-)
-T1s_d = nddata(r_[1.132, 1.432, 1.464, 1.534, 1.586], "power").labels(
-    "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
-)
-
-for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
+for (idx, filename, nodename, f_range, C, T1_0, ppt) in [
     (
         0,
         "210707_Q183R1a_pR_DDM_ODNP",
@@ -154,7 +174,6 @@ for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
         (-225, 75),
         207.4e-6,
         0.959,
-        None,
         1.5154,
     ),
     (
@@ -163,8 +182,7 @@ for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
         "enhancement",
         (-200, 100),
         113.1e-6,
-        1.12,
-        None,
+        1.076,
         1.5154,
     ),
     (
@@ -173,8 +191,7 @@ for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
         "enhancement",
         (-225, 75),
         115.2e-6,
-        1.9,
-        None,
+        1.126,
         1.5154,
     ),
     (
@@ -183,11 +200,15 @@ for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
         "enhancement",
         (-225, 75),
         103.2e-6,
-        2.15,
-        None,
+        1.132,
         1.5154,
     ),
 ]:
+    if use_T1s:
+        T1_vals = T1s[idx]
+    else: 
+        T1_vals = None
+
     # {{{ Processing Data
     titl = "%s %s" % (" ".join(filename.split("_")[1:-1]), filename.split("_")[0])
     s = find_file(
@@ -233,6 +254,10 @@ for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
             zeros((len(names), len(s.getaxis("power"))), dtype="complex128"),
             ["sample", "power"],
         ).labels("power", s.getaxis("power"))
+        ksigmasp = nddata(
+            zeros((len(names), len(s.getaxis("power"))), dtype="complex128"),
+            ["sample", "power"],
+        ).labels("power", s.getaxis("power"))
 
     # }}}
     # {{{ Integral
@@ -258,6 +283,12 @@ for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
                 "The enhancement data you are trying to add to the nddata (idx=%0.0f) has %0.0f power points while the nddata holds exactly%0.0f power points."
                 % (idx, len(s.getaxis("power")), len(enhancements.getaxis("power")))
             )
+
+    if use_T1s:
+        T1_vals = T1s[idx]
+    else: 
+        T1_vals = None
+
     if C is not None:
         epsilon = 1 - s.C
         ks = epsilon / C
@@ -268,9 +299,20 @@ for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
                 ks /= T1_0
                 fl.next("%s\n$k_{\sigma}s(p)T_{1}(p)$ $\div$ $T_{1}(0)$" % titl)
             else:
+                temp = ks.C / T1_0
+                if ppt is not None:
+                    temp *= ppt * 1e-3 
+                if plot_all: 
+                    try:
+                        curves["sample", idx] = temp
+                    except:
+                        print(
+                    "The enhancement data you are trying to add to the nddata (idx=%0.0f) has %0.0f power points while the nddata holds exactly%0.0f power  points."
+                    % (idx, len(s.getaxis("power")), len(enhancements.getaxis("power")))
+                )
                 m, b = np.polyfit(T1_vals.getaxis("power"), T1_vals.data, 1)
                 T1_p = lambda p: (m * p) + b
-                T1_p = nddata(T1_p(ks.getaxis("power")), ks.getaxis("power")).labels(
+                T1_p = nddata(T1_p(ks.getaxis("power")),"power").labels(
                     "power", ks.getaxis("power")
                 )
                 ks /= T1_p
@@ -289,7 +331,7 @@ for (idx, filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
                 plt.ylabel("$k_{\sigma}s(p)$")
         if plot_all:
             try:
-                curves["sample", idx] = ks
+                ksigmasp["sample", idx] = ks
             except:
                 print(
                     "The enhancement data you are trying to add to the nddata (idx=%0.0f) has %0.0f power points while the nddata holds exactly%0.0f power  points."
@@ -332,10 +374,11 @@ if plot_all:
             overwrite=True,
             bbox_inches="tight",
         )
-
+    show()
 if plot_all and C is not None:
     figure(figsize=(7, 5))
-    title("%s %s\n$k_{\sigma}s(p)$" % (filename.split("_")[0], plotname))
+    title("%s %s\n$k_{\sigma}s(p)T_{1}(p)$ $\div$ $T_{1}(p=0)$" % (
+        filename.split("_")[0], plotname))
     curves.labels("power", s.getaxis("power"))
     for i, name in enumerate(names):
         plot(
@@ -355,6 +398,38 @@ if plot_all and C is not None:
             human_units=False,
             markersize=7,
         )  # label='%s back'%name,
+    plt.ylabel("$k_{\sigma}s(p)$ $\div$ $T_{1}(p=0)$")
+    plt.xlabel("power (W)")
+    plt.legend()  # bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
+    if save_figs:
+        plt.savefig(
+            "%s_%s_ksgima_sp_T10.png" % (date, plotname),
+            transparent=True,
+            overwrite=True,
+            bbox_inches="tight",
+        )
+    show()
+    figure(figsize=(7, 5))
+    title("%s %s\n$k_{\sigma}s(p)$" % (filename.split("_")[0], plotname))
+    ksigmasp.labels("power", s.getaxis("power"))
+    for i, name in enumerate(names):
+        plot(
+            ksigmasp["sample", i]["power", :-3],
+            color="xkcd:%s" % colors[i],
+            marker="o",
+            ls="",
+            human_units=False,
+            label="%s" % name,
+            alpha=0.75,
+        )
+        plot(
+            ksigmasp["sample", i]["power", -3:],
+            color="xkcd:%s" % colors[i],
+            marker="x",
+            ls="",
+            human_units=False,
+            markersize=7,
+        )  # label='%s back'%name,
     plt.ylabel("$k_{\sigma}s(p)$ $(s^{-1})$")
     plt.xlabel("power (W)")
     plt.legend()  # bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
@@ -365,5 +440,6 @@ if plot_all and C is not None:
             overwrite=True,
             bbox_inches="tight",
         )
+
 show()
 # }}}

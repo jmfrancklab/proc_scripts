@@ -32,26 +32,21 @@ savedir: str - directory in which you would like your figures to be saved
     working directory if desired, but it's recommended that you have a 
     separate output file directory.
 
-auto_T1s: Boolean - determines whether manually entered T1 values 
-    and powers are used (False is applied for this case)for the 
-    'T1s' nddata: ndshape of [('power', n)] where n is the number
-    of T1 values measured OR  if the array is constructed by loading
-    from a csv (columns: "power (W)", "$T_1$ (s)") using pandas.
+auto_T1s: Boolean - determines whether the T1s nddata (see 'T1s' below)
+    is constructed automatically via loading from a csv (columns:
+    "power (W)", "$T_1$ (s)") using pandas or constructed manually.
     Note: There is a script in progress for saving multiple T1 values 
     into a csv automatically, which is where $T_1$ comes from.
 
-T1_file: str - name of the csv file containing T1_values, no extension. This
-    file should be located in the same 'savedir' directory where output
-    files are allocated to, since at some point this will be a type of 
-    output file.
+T1_file: str - name of the csv file containing T1 values and corresponding
+    power values, no extension. This file should be located in the same 
+    'savedir' directory where output files are allocated to, since at some 
+    point this will be a type of output file from IR processing.
 
-manual_T1s: arr - array of T1 values corresponding to power_vals. By
-    giving these values, and entering 'T1s' for T1_vals, this script 
-    will correct the data by dividing out a first-order fit of T1(p).
-    It will do the same if you do auto 
-
-power_vals: arr - array of power values corresponding to T1 values in
-    manual_T1s
+T1s: nddata - ndshape of [('power', n)], contains the T1 values in s as data 
+    and the corresponding n power values in W at which the IR experiments
+    were performed as a label. This is either automatically created 
+    (auto_T1s = True)or manually constructed (auto_T1s = False). 
 
 filename: str - name of the file containing your enhancement data. No
     extension required.
@@ -105,10 +100,10 @@ file_location = "odnp"
 postproc = "spincore_ODNP_v2"
 export_csv = True
 save_figs = True
-savedir = "C:/Users/saman/Research/Data/pR_ODNP/output_files/"
+savedir = "."
 if save_figs:
     os.chdir(savedir)
-auto_T1s = True
+auto_T1s = False
 if auto_T1s:
     T1_file = "210813_Q183R1a_pR_DDM_T1s"
     T1_df = pd.read_csv("%s/%s.csv" % (savedir, T1_file))
@@ -116,22 +111,11 @@ if auto_T1s:
         "power", T1_df["power (W)"].to_numpy()
     )
 else:
-    manual_T1s = r_[0.959, 1.150, 1.305, 1.394, 1.542]
-    power_vals = r_[0.0, 2.00, 2.51, 3.16, 3.98]
-    T1s = nddata(manual_T1s, "power").labels("power", power_vals)
+    T1s = nddata(r_[0.959, 1.150, 1.305, 1.394, 1.542],
+            "power").labels("power",
+                    r_[0.0, 2.00, 2.51, 3.16, 3.98])
 # }
 for (filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
-    # Example for old 8-step phase cycled data, preprocessed
-    # with the spincore_ODNP_v2 processing.
-    #    (
-    #        "210507_TEMPOL_150uM__cap_probe_DNP_1",
-    #        "signal",
-    #        (-150, 250),
-    #        150e-6,
-    #        1.87,
-    #        None,
-    #        1.5163,
-    #    )
     # Example with realistic data with T1 values; you can enter
     # manually above, or import from a csv (ask Sam). You can also
     # choose to enter C, T1_0, T1_vals and/or ppt as None.
