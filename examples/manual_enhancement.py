@@ -111,9 +111,9 @@ if auto_T1s:
         "power", T1_df["power (W)"].to_numpy()
     )
 else:
-    T1s = nddata(r_[0.959, 1.150, 1.305, 1.394, 1.542],
-            "power").labels("power",
-                    r_[0.0, 2.00, 2.51, 3.16, 3.98])
+    T1s = nddata(r_[0.959, 1.150, 1.305, 1.394, 1.542], "power").labels(
+        "power", r_[0.0, 2.00, 2.51, 3.16, 3.98]
+    )
 # }
 for (filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
     # Example with realistic data with T1 values; you can enter
@@ -260,5 +260,5 @@ for (filename, nodename, f_range, C, T1_0, T1_vals, ppt) in [
                 overwrite=True,
                 bbox_inches="tight",
             )
-    # }}}
 fl.show()
+# }}}

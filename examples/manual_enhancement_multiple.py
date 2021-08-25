@@ -1,4 +1,4 @@
-# {{{ Docstring
+# Docstring
 """
 Manual Enhancement Multiple
 ===========================
@@ -99,7 +99,6 @@ ppt: float - the ratio of f_NMR to f_ESR for your specific type of sample (spin
     label) in MHz/GHz. Can enter 'None'. Example: 1.5154 #MHz/GHz for MTSL in pR
 
 """
-# }}}
 # {{{ Imports & Initialization
 from pyspecdata import *
 from pyspecProcScripts import *
@@ -147,23 +146,32 @@ if save_figs:
 use_T1s = True
 auto_T1s = False
 if auto_T1s:
-    T1_filelist = ["210813_Q183R1a_pR_DDM_T1s","210824_Q183R1a_pR_KI_T1s",
-            "210824_Q183R1a_pR_KH2PO4_T1s","210824_Q183R1a_pR_DHPC_T1s"]
+    T1_filelist = [
+        "210813_Q183R1a_pR_DDM_T1s",
+        "210824_Q183R1a_pR_KI_T1s",
+        "210824_Q183R1a_pR_KH2PO4_T1s",
+        "210824_Q183R1a_pR_DHPC_T1s",
+    ]
     T1s = []
     for T1_file in T1_filelist:
-        T1_df = pd.read_csv("%s/%s.csv"%(savedir,T1_file))
-        T1_data = nddata(T1_df["$T_1$ (s)"].to_numpy(),"power").labels(
-                "power", T1_df["power (W)"].to_numpy())
+        T1_df = pd.read_csv("%s/%s.csv" % (savedir, T1_file))
+        T1_data = nddata(T1_df["$T_1$ (s)"].to_numpy(), "power").labels(
+            "power", T1_df["power (W)"].to_numpy()
+        )
         T1s.append(T1_data)
 else:
     T1s_a = nddata(r_[0.959, 1.150, 1.305, 1.394, 1.542], "power").labels(
-            "power", r_[0.0, 2.0, 2.51, 3.16, 3.98])
+        "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
+    )
     T1s_b = nddata(r_[1.076, 1.302, 1.401, 1.454, 1.543], "power").labels(
-            "power", r_[0.0, 2.0, 2.51, 3.16, 3.98])
+        "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
+    )
     T1s_c = nddata(r_[1.126, 1.461, 1.499, 1.592], "power").labels(
-            "power", r_[0.0, 2.51, 3.16, 3.98])
+        "power", r_[0.0, 2.51, 3.16, 3.98]
+    )
     T1s_d = nddata(r_[1.132, 1.432, 1.464, 1.534, 1.586], "power").labels(
-            "power", r_[0.0, 2.0, 2.51, 3.16, 3.98])
+        "power", r_[0.0, 2.0, 2.51, 3.16, 3.98]
+    )
     T1s = [T1s_a, T1s_b, T1s_c, T1s_d]
 
 for (idx, filename, nodename, f_range, C, T1_0, ppt) in [
@@ -204,10 +212,6 @@ for (idx, filename, nodename, f_range, C, T1_0, ppt) in [
         1.5154,
     ),
 ]:
-    if use_T1s:
-        T1_vals = T1s[idx]
-    else: 
-        T1_vals = None
 
     # {{{ Processing Data
     titl = "%s %s" % (" ".join(filename.split("_")[1:-1]), filename.split("_")[0])
@@ -286,7 +290,7 @@ for (idx, filename, nodename, f_range, C, T1_0, ppt) in [
 
     if use_T1s:
         T1_vals = T1s[idx]
-    else: 
+    else:
         T1_vals = None
 
     if C is not None:
@@ -301,18 +305,22 @@ for (idx, filename, nodename, f_range, C, T1_0, ppt) in [
             else:
                 temp = ks.C / T1_0
                 if ppt is not None:
-                    temp *= ppt * 1e-3 
-                if plot_all: 
+                    temp *= ppt * 1e-3
+                if plot_all:
                     try:
                         curves["sample", idx] = temp
                     except:
                         print(
-                    "The enhancement data you are trying to add to the nddata (idx=%0.0f) has %0.0f power points while the nddata holds exactly%0.0f power  points."
-                    % (idx, len(s.getaxis("power")), len(enhancements.getaxis("power")))
-                )
+                            "The enhancement data you are trying to add to the nddata (idx=%0.0f) has %0.0f power points while the nddata holds exactly%0.0f power  points."
+                            % (
+                                idx,
+                                len(s.getaxis("power")),
+                                len(enhancements.getaxis("power")),
+                            )
+                        )
                 m, b = np.polyfit(T1_vals.getaxis("power"), T1_vals.data, 1)
                 T1_p = lambda p: (m * p) + b
-                T1_p = nddata(T1_p(ks.getaxis("power")),"power").labels(
+                T1_p = nddata(T1_p(ks.getaxis("power")), "power").labels(
                     "power", ks.getaxis("power")
                 )
                 ks /= T1_p
@@ -339,8 +347,8 @@ for (idx, filename, nodename, f_range, C, T1_0, ppt) in [
                 )
     if show_proc:
         fl.show()
-# }}}
 fl.show()
+# }}}
 # {{{ Plotting all results together
 if plot_all:
     figure(figsize=(7, 5))
@@ -377,8 +385,10 @@ if plot_all:
     show()
 if plot_all and C is not None:
     figure(figsize=(7, 5))
-    title("%s %s\n$k_{\sigma}s(p)T_{1}(p)$ $\div$ $T_{1}(p=0)$" % (
-        filename.split("_")[0], plotname))
+    title(
+        "%s %s\n$k_{\sigma}s(p)T_{1}(p)$ $\div$ $T_{1}(p=0)$"
+        % (filename.split("_")[0], plotname)
+    )
     curves.labels("power", s.getaxis("power"))
     for i, name in enumerate(names):
         plot(
