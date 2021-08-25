@@ -145,6 +145,12 @@ if save_figs:
 # Load T1_values
 use_T1s = True
 auto_T1s = False
+
+# If I run gvim diff on manual_enhancement vs. manual_enhancement_multiple,
+# there don't seem to be significant differences between these.
+# So, if we were going to see this through to conclusion, we should put these
+# into the same file.
+
 if auto_T1s:
     T1_filelist = [
         "210813_Q183R1a_pR_DDM_T1s",
@@ -354,6 +360,8 @@ if plot_all:
     figure(figsize=(7, 5))
     title("%s %s\nenhancements" % (filename.split("_")[0], plotname))
     enhancements.labels("power", s.getaxis("power"))
+    enhancements.set_units("W")
+    enhancements.name("$E(p)$")
     for i, name in enumerate(names):
         plot(
             enhancements["sample", i]["power", :-3],
@@ -372,8 +380,7 @@ if plot_all:
             human_units=False,
             markersize=7,
         )  # label='%s back'%name,
-    plt.ylabel("E")
-    plt.xlabel("power (W)")
+        # the x and y labels should come from the nddata
     plt.legend()  # bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.)
     if save_figs:
         plt.savefig(
