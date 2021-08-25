@@ -35,7 +35,7 @@ for filename, expno, subplot_name, in [
             ph0 = ph0/abs(ph0)
         d /= ph0
         fl.basename = expno
-        # Put what goes into here in the time domain
+        d.ft('t2')
         freq_lim = integrate_limits(select_pathway(d,signal_pathway),
                 convolve_method='Lorentzian',
                 fl=fl)
