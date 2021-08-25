@@ -476,6 +476,9 @@ def proc_ESR(s):
     return s    
 
 def proc_spincore_ODNP_v2(s,fl=None):
+    '''Deals with 8-step phase-cycled
+    data in addition to 4-step phase-cycled
+    data.'''
      if 'nScans' in s.dimlabels:
          s.mean('nScans')
      logging.info("loading pre-processing for ODNP")
