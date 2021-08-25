@@ -77,3 +77,7 @@ with figlist_var() as fl:
         axvline(x=freq_lim[-1])
         print("Determined frequency limits via",method,"filter of",freq_lim)
     # }}}
+    data.ift('t2')
+    LG = L2G(data['ph1',0]['ph2',1],
+            fl=fl)
+    fl.show();quit()
