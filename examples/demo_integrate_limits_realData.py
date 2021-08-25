@@ -39,4 +39,4 @@ for filename, expno, subplot_name, in [
         freq_lim = integrate_limits(select_pathway(d,signal_pathway),
                 convolve_method='Lorentzian',
                 fl=fl)
-fl.show();quit()
+fl.show()
