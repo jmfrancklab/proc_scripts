@@ -22,6 +22,7 @@ def L2G(s, axis='t2',
         to see any diagnostic plots
     """
     temp = s.C.mean_all_but(axis)
+    assert temp.get_prop('FT')['t2'] == False, "Data must be in time domain"
     _,filter_width = apod_matched_filter(temp,
             convolve_method='lorentzian',
             ret_width=True,

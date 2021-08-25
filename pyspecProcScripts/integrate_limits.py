@@ -17,9 +17,13 @@ def integrate_limits(s, axis="t2",
     Integrate Limits
     ============================
 
-    This function takes data in the time domain and applies a matched filter
-    (choice of Lorentzian or Gaussian, default is Lorentzian) to the frequency
-    domain data, which it then uses to determine the integration limits based on a
+    This function takes data in the frequency
+    domain and finds the corresponding frequency
+    limits of the signal for integration.
+    Limits are found by applying a matched filter
+    (choice of Lorentzian or Gaussian) to the
+    frequency domain data, which it then uses to
+    determine the integration limits based on a
     cut off from the maximum signal intensity.
 
     axis: str
@@ -52,6 +56,7 @@ def integrate_limits(s, axis="t2",
     # get aliased to large time.
     # Might make sense to rather have `.real` above do this, since the
     # reasoning should always apply!  (discuss)
+    # AB: Yes, then I agree `.real` should be doing this.
     temp.set_ft_prop(axis,['start','time'],-s.get_ft_prop(axis,'dt')*(ndshape(s)[axis]//2))
     # }}}
     convolve_method = convolve_method.lower()
@@ -64,12 +69,6 @@ def integrate_limits(s, axis="t2",
     temp = apod_matched_filter(temp,
             convolve_method=convolve_method,
             fl=fl)
-    #elif convolve_method == 'lorentzian_to_gaussian':
-    #    # JF: I agree that a lot of the L to G code is duplicated here,
-    #    # but the second part of this doesn't have to do with choosing the
-    #    # integral limits, but rather with actually modifying the data
-    #    temp *= np.exp(-temp.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
-    #    temp /= np.exp(-abs(temp.fromaxis(axis))/filter_width)
     if fl is not None:
         fl.next('integration diagnostic -- time domain')
         fl.plot(abs(temp), alpha=0.6, label='after mult')
