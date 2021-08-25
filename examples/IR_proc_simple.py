@@ -38,6 +38,10 @@ for filename, nodename, f_range, t_range, rep, clock_correction, IR, ILT in [
     fl.basename = titl
     s = find_file(filename, exp_type=exp_type, expno=nodename,
             postproc=postproc, lookup=lookup_table)
+
+    if 'indirect' in s.dimlabels:
+        s.rename('indirect','vd')
+
     fl.next('\nraw data')
     fl.image(s)
     myslice = s['t2':f_range]
@@ -51,9 +55,10 @@ for filename, nodename, f_range, t_range, rep, clock_correction, IR, ILT in [
     fl.image(s.C['ph1',ph1_idx]['ph2',ph2_idx]['t2':(-750,750)]*mysgn)
     fl.show()
 
-    # {{{ Process_IR -- adapted from process_IR.py
+    # {{{ Process_IR -- adapted from process_IR.py (uses as_scan_nbr and select_pathway from process_IR.py from latest commit on master from 8/25/21)
     # Parameters
-    sign = mysgn; 
+    sign = mysgn; signal_pathway = coherence_pathway; excluded_pathways = [(0,0)]
+    flip=False; fl = fl; clock_correction = False; 
 
     # Code
     s *= sign # fixing the sign of each fid along the 'vd' dimension
@@ -64,7 +69,7 @@ for filename, nodename, f_range, t_range, rep, clock_correction, IR, ILT in [
     #   Apply DC Offset
     s.ift(['ph1','ph2']) # ift the phase dimensions -- what does this do???
     t_start = t_range[-1] * (3/4) # taking the last time point and multiplying by 3/4                                  # as a starting time point to cut off by for corrections
-    rx_offset_corr = s['t2':(t_start,None)].mean() # defining the offset correction
+    rx_offset_corr = s['t2':(t_start,None)].data.mean() # defining the offset correction
                                                    # as the mean along the time axis,
                                                    # given the starting cutoff
     s -= rx_offset_corr # correcting any vertical/signal offset 
@@ -72,9 +77,63 @@ for filename, nodename, f_range, t_range, rep, clock_correction, IR, ILT in [
     s.ft(['ph1','ph2']) #ft back from the ift dimenstion of phase
 
     #   Zero Crossing
-    zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
+    if flip:
+        zero_crossing = abs(select_pathway(s,signal_pathway)).sum('t2').argmin('vd',raw_index=True).item()
+        s['vd',:zero_crossing] *= -1
+
+    # Crop Data Along Frequency Domain
+    s = s['t2':f_range]
+    s.ift('t2') # ift into time domain
+
+    # Clock Correction
+    if clock_correction:
+        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
+        s.ft('t2') # ft into freq domain
+
+        if fl is not None:
+            fl.next('\nbefore clock correction')
+            fl.image(as_scan_nbr(s))
+
+        s_clock = s['ph1',1]['ph2',0].sum('t2') # sum of all f-domain signal in signal coherence channel
+        s.ift(['ph1','ph2'])
+        min_index = abs(s_clock).argmin('vd',raw_index=True).item()
+        s_clock *= np.exp(-1j * clock_corr * s.fromaxis('vd')) # multiply by exponential containing clock correction
+        s_clock['vd', :min_index+1] *= -1
+        s_clock.sum('vd').run(abs)
+
+        if fl is not None:
+            fl.next('\nclock correction')
+            fl.image(s_clock,'.',alpha=0.7)
+        clock_corr = s_clock.argmax('clock_corr').item()
+        plt.axvline(x=clock_corr, alpha=0.5, color='r')
+        s *= np.exp(-1j * clock_corr * s.fromaxis('vd'))
+        s.ft(['ph1','ph2'])
+
+        if fl is not None:
+            fl.next('\nafter clock correction')
+            fl.image(s.C.setaxis('vd','#'))
+        s.ift('t2') # ift into time domain
+
+    # Phasing
+    best_shift, max_shift = hermitian_function_test(select_pathway(s.C.mean('vd'),signal_pathway))
+    quit() 
 
 
 
-       
+
+
+
+
+    #  Error Path
+    print(set(excluded_pathways))
+    print([(signal_pathway['ph1'],signal_pathway['ph2'])],)
+    error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
+            - set(excluded_pathways)
+            - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
+    error_path = [{'ph1':j,'ph2':k} for j,k in error_path]
+
+    # Integrating with Error from Excluded Pathways
+    s_int, frq_slice, mystd = integral_w_errors(s, signal_pathway, error_path,
+            fl=fl, return_frq_slice=True)
+    
     # }}}
