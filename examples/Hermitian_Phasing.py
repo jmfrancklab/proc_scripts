@@ -47,7 +47,7 @@ with figlist_var() as fl:
                 23
                 * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
                 * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
-            ),
+           ),
             [
                 ("power", nddata(r_[0:4:25j], "power")),
                 ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
