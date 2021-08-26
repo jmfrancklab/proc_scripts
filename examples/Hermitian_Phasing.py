@@ -23,7 +23,7 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
-
+selection_range = (None,0.03) #2 x time domain signal
 with figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label in [
         (
@@ -70,22 +70,12 @@ with figlist_var() as fl:
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
-        rough_center = (
-            abs(select_pathway(data, signal_pathway))
-            .C.convolve("t2", 0.3e-3)
-            .mean_all_but("t2")
-            .argmax("t2")
-            .item()
-        )
-        logger.info(strm("Rough center is:", rough_center))
-        data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
-        data.ft("t2")
-        data.ift("t2")
         data /= zeroth_order_ph(select_pathway(data,signal_pathway), fl=fl)
         fl.image(data, ax=ax_list[1], human_units=False)
-        ax_list[1].set_title("Rough Center \n + Zeroth Order")
-        best_shift, max_shift = hermitian_function_test(
-            select_pathway(data.C.mean(indirect), signal_pathway), fl=fl
+        ax_list[1].set_title("Zeroth Order Phase Corrected")
+        best_shift = hermitian_function_test(
+            select_pathway(data.C.mean(indirect), signal_pathway), 
+            selection_range = selection_range, fl=fl
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
