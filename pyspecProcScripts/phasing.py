@@ -177,28 +177,38 @@ def hermitian_function_test(s,
         frq_range=(-5e3/2,5e3/2),#assumes signal is somewhat on resonance
         selection_range=(None,0.04),
         ini_delay = 0e6, 
+        band_mask = False,
         band_mask_no = 0,
-        band_mask = False, fl=None):
-    r"""determine the center of the echo
+        , fl=None):
+    r"""determine the center of the echo via 
 
     Parameters
     ==========
     direct:             str
-    Direct axis of data.
+        Axis of data (i.e., direct dimension).
     frq_range:          tuple of floats
-        Evenly slice of frequency domain that includes signal;should
-        be centered about 0 if performed on resonance.
+        range over which to slice data in the
+        frequency domain for frequency filtering
     selection_range:    tuple of floats
-        Slice that extends to about 2 times the time domain signal.
+        range over which to slice data in the time
+        domain, should be slightly greater than
+        twice tau (twice the time between the
+        beginning of acquisition to center of
+        echo, with a little extra time: 0.5ms
+        - 1 ms or so)
     ini_delay:          float
         initial delay
-    band_mask_no:       int
-        Helps determing number of points for rectangular mask
     band_mask:          boolean
-        Masks out aliasing components around the middle of the 
-        selection range.
-        When true, uses rectangular shape for applied mask.
-        When false, uses triangular shape for applied mask.
+        determines the type of mask used on the 2D
+        residual for accurate calculation of cost
+        function. The mask is used to circumvent
+        aliasing of the cost function.
+        When True, applies rectangular mask to the
+        2D residual.
+        When False, applies triangular mask to the
+        2D residual.
+    band_mask_no:       int
+        determines number of points for rectangular mask
     """
     orig_dt = s.get_ft_prop(direct, "dt")
     s.ft(direct)
