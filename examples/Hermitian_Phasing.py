@@ -26,38 +26,38 @@ f_range = (-400, 400)
 selection_range = (None,0.03) #2 x time domain signal
 with figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label in [
-        (
             (
-                23
-                * (1 - 2 * s.exp(-vd / 0.2))
-                * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
-            ),
-            [
-                ("vd", nddata(r_[0:1:40j], "vd")),
-                ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                ("ph2", nddata(r_[0, 2] / 4.0, "ph2")),
-                ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
-            ],
-            {"ph1": 0, "ph2": 1},
-            "vd",
-            "IR",
-        ),
-        (
+                (
+                    23
+                    * (1 - 2 * s.exp(-vd / 0.2))
+                    * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
+                    ),
+                [
+                    ("vd", nddata(r_[0:1:40j], "vd")),
+                    ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
+                    ("ph2", nddata(r_[0, 2] / 4.0, "ph2")),
+                    ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+                    ],
+                {"ph1": 0, "ph2": 1},
+                "vd",
+                "IR",
+                ),
             (
-                23
-                * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
-                * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
-           ),
-            [
-                ("power", nddata(r_[0:4:25j], "power")),
-                ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
-            ],
-            {"ph1": 1},
-            "power",
-            "enhancement",
-        ),
-    ]:
+                (
+                    23
+                    * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
+                    * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
+                    ),
+                [
+                    ("power", nddata(r_[0:4:25j], "power")),
+                    ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
+                    ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+                    ],
+                {"ph1": 1},
+                "power",
+                "enhancement",
+                ),
+            ]:
         fl.basename = "(%s)" % label
         fig, ax_list = subplots(1, 4, figsize = (7,7))
         fig.suptitle(fl.basename)

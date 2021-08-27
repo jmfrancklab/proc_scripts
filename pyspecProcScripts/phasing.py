@@ -2,7 +2,7 @@
 from pyspecdata import *
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
-from pylab import *
+from pylab import xlim,subplots,axvline,ylim
 import numpy as np
 from scipy import linalg
 import logging
@@ -172,39 +172,49 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
     fl.pop_marker()
     return s
     #}}}
-def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6, 
-        band_mask_no = 0, band_mask = False, fl=None):
+def hermitian_function_test(s, 
+        direct = 't2',
+        frq_range=(-5e3/2,5e3/2),#assumes signal is somewhat on resonance
+        selection_range=(None,0.04),
+        ini_delay = 0e6, 
+        band_mask_no = 0,
+        band_mask = False, fl=None):
     r"""determine the center of the echo
 
     Parameters
     ==========
-    selection_range:  tuple of floats
+    direct:             str
+    Direct axis of data.
+    frq_range:          tuple of floats
+        Evenly slice of frequency domain that includes signal;should
+        be centered about 0 if performed on resonance.
+    selection_range:    tuple of floats
         Slice that extends to about 2 times the time domain signal.
-    ini_delay:       float
+    ini_delay:          float
         initial delay
-    band_mask_no:    int
+    band_mask_no:       int
         Helps determing number of points for rectangular mask
-    band_mask:       boolean
+    band_mask:          boolean
         Masks out aliasing components around the middle of the 
         selection range.
         When true, uses rectangular shape for applied mask.
         When false, uses triangular shape for applied mask.
     """
-    orig_dt = s.getaxis('t2')[1] - s.getaxis('t2')[0]
-    s.ft('t2')
-    s = s['t2':(-5e3/2,5e3/2)] #assumes signal is somewhat on resonance
-    s.ift('t2',pad=2048*8)
+    orig_dt = s.get_ft_prop(direct, "dt")
+    s.ft(direct)
+    s = s[direct:frq_range] 
+    s.ift(direct,pad=2048*8)
     if fl is not None:
         fig, ax_list = subplots(6, 1, figsize=(15,15))
         fl.next('Hermitian Function Test Diagnostics',fig=fig)
-        s = s['t2':(ini_delay,None)]
+        s = s[direct:(ini_delay,None)]
         fl.plot(abs(s),'.',ax=ax_list[0])
         ax_list[0].set_title('Data with Padding')
-    selection = s['t2':selection_range]
-    N = ndshape(selection)['t2']
+    selection = s[direct:selection_range]
+    N = ndshape(selection)[direct]
     mid_idx = N//2+N%2-1
-    selection = selection['t2',0:2*mid_idx+1]
-    dt = selection.get_ft_prop('t2','dt')
+    selection = selection[direct,0:2*mid_idx+1]
+    dt = selection.get_ft_prop(direct,'dt')
     #the shifts themselves run from 0 to mid_idx -- the echo-centers
     #these correspond to are different. Also, we're not really
     #worried about the sub-integer shift here, because we can just
@@ -214,13 +224,13 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
     shifts.set_units('shift','s')
     logger.info(strm("Length of shifts dimension:", ndshape(shifts)['shift']))
     residual = selection.C
-    residual.ft('t2')
-    residual *= np.exp(-1j*2*pi*shifts*residual.fromaxis('t2'))
-    residual.ift('t2')
-    logger.info(strm("Length of t2 dimension:", ndshape(selection)['t2']))
-    assert ndshape(selection)['t2'] % 2 == 1, "t2 dimension *must* be odd, please check what went wrong."
+    residual.ft(direct)
+    residual *= np.exp(-1j*2*pi*shifts*residual.fromaxis(direct))
+    residual.ift(direct)
+    logger.info(strm("Length of t2 dimension:", ndshape(selection)[direct]))
+    assert ndshape(selection)[direct] % 2 == 1, "t2 dimension *must* be odd, please check what went wrong."
     #{{{phase correct and weigh 'residual' by 1/(signal amplitude)
-    center_point = residual['t2',mid_idx]
+    center_point = residual[direct,mid_idx]
     residual /= center_point
     #}}}
     if fl is not None:
@@ -229,7 +239,7 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
         else:
             fl.image(residual,ax=ax_list[1])
         ax_list[1].set_title('shifted and phased')    
-    residual = abs(residual - residual['t2',::-1].runcopy(np.conj)).mean_all_but(['shift','t2'])
+    residual = abs(residual - residual[direct,::-1].runcopy(np.conj)).mean_all_but(['shift',direct])
     if fl is not None:
         fl.image(residual,ax=ax_list[2])
         ax_list[2].set_title('Residual 2D')
@@ -237,8 +247,8 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
         n_mask_pts = int(band_mask_no/dt)
         if n_mask_pts % 2:
             n_mask_pts -= 1
-        residual['t2',mid_idx+n_mask_pts:] = 0
-        residual['t2',:mid_idx-n_mask_pts] = 0
+        residual[direct,mid_idx+n_mask_pts:] = 0
+        residual[direct,:mid_idx-n_mask_pts] = 0
         title_str = 'rectangular mask'
     else:
         #Here we would do the calculation outlined for the triangle mask,
@@ -255,8 +265,8 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
         norm = np.floor(mid_idx-B)
         norm = norm.astype(float)
         mask /= ((norm)*2)
-        mask = nddata(mask,['t2','shift'])
-        mask.setaxis('t2',residual.getaxis('t2'))
+        mask = nddata(mask,[direct,'shift'])
+        mask.setaxis(direct,residual.getaxis(direct))
         mask.setaxis('shift',residual.getaxis('shift'))
         if fl is not None:
             fl.image(mask,ax=ax_list[3],human_units=False)
@@ -274,7 +284,7 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
         ax_list[5].set_title('Masked Residual -- Relabeled')
         xlim(0,15)
         fig.tight_layout()
-    residual.mean('t2')
+    residual.mean(direct)
     residual.set_units('center','s')
     best_shift = residual['center':(500e-5,None)].C.argmin('center').item()
     #slices first few points out as usually the artifacts give a minimum
@@ -285,7 +295,7 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
         fl.plot(residual, color='k', alpha = 0.5, human_units=False)
         fl.twinx(orig=False, color='red')
         selection.name('absolute value')
-        fl.plot(abs(selection).mean_all_but('t2').rename('t2','center').set_units('center',
+        fl.plot(abs(selection).mean_all_but(direct).rename(direct,'center').set_units('center',
             's'), color='red',alpha=0.5, human_units=False)
         axvline(x=best_shift, c='k', linestyle=":")
         for dwell_int in r_[0:5]:
