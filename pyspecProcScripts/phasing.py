@@ -195,9 +195,11 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
     s = s['t2':(-5e3/2,5e3/2)] #assumes signal is somewhat on resonance
     s.ift('t2',pad=2048*8)
     if fl is not None:
-        fl.next('data with padding')
+        fig, ax_list = subplots(6, 1, figsize=(15,15))
+        fl.next('Hermitian Function Test Diagnostics',fig=fig)
         s = s['t2':(ini_delay,None)]
-        fl.plot(abs(s),'.')
+        fl.plot(abs(s),'.',ax=ax_list[0])
+        ax_list[0].set_title('Data with Padding')
     selection = s['t2':selection_range]
     N = ndshape(selection)['t2']
     mid_idx = N//2+N%2-1
@@ -222,15 +224,15 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
     residual /= center_point
     #}}}
     if fl is not None:
-        fl.next('shifted and phased')
         if 'power' in s.dimlabels:
-            fl.image(residual['power',-4])
+            fl.image(residual['power',-4],ax=ax_list[1])
         else:
-            fl.image(residual)
+            fl.image(residual,ax=ax_list[1])
+        ax_list[1].set_title('shifted and phased')    
     residual = abs(residual - residual['t2',::-1].runcopy(np.conj)).mean_all_but(['shift','t2'])
     if fl is not None:
-        fl.next('Residual 2D')
-        fl.image(residual)
+        fl.image(residual,ax=ax_list[2])
+        ax_list[2].set_title('Residual 2D')
     if band_mask:
         n_mask_pts = int(band_mask_no/dt)
         if n_mask_pts % 2:
@@ -257,19 +259,21 @@ def hermitian_function_test(s, selection_range=(None,0.04), ini_delay = 0e6,
         mask.setaxis('t2',residual.getaxis('t2'))
         mask.setaxis('shift',residual.getaxis('shift'))
         if fl is not None:
-            fl.next('mask')
-            fl.image(mask)
+            fl.image(mask,ax=ax_list[3],human_units=False)
+            ax_list[3].set_title('Mask')
         residual *= mask
         title_str = 'triangular mask'
     if fl is not None:
-        fl.next('masked residual')
-        fl.image(residual)
+        fl.image(residual,ax=ax_list[4])
+        ax_list[4].set_title('Masked Residual')
     residual.rename('shift','center').setaxis('center',
             dt*(mid_idx-r_[0:mid_idx])+ini_delay)
     residual = residual['center',::-1]
     if fl is not None:
-        fl.next('masked residual -- relabeled')
-        fl.image(residual)
+        fl.image(residual,ax=ax_list[5])
+        ax_list[5].set_title('Masked Residual -- Relabeled')
+        xlim(0,15)
+        fig.tight_layout()
     residual.mean('t2')
     residual.set_units('center','s')
     best_shift = residual['center':(500e-5,None)].C.argmin('center').item()
