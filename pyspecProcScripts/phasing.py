@@ -177,9 +177,9 @@ def hermitian_function_test(s,
         frq_range=(-5e3/2,5e3/2),#assumes signal is somewhat on resonance
         selection_range=(None,0.04),
         ini_delay = 0e6, 
-        band_mask = False,
-        band_mask_no = 0,
-        , fl=None):
+        band_mask = 0,
+        final_range = (500e-5,None),
+        fl=None):
     r"""determine the center of the echo via 
 
     Parameters
@@ -209,6 +209,10 @@ def hermitian_function_test(s,
         2D residual.
     band_mask_no:       int
         determines number of points for rectangular mask
+    final_range:        tuple
+        range that will slice out the very first few points 
+        which gives an artificial minimum and messes with the
+        cost function.
     """
     orig_dt = s.get_ft_prop(direct, "dt")
     s.ft(direct)
@@ -254,7 +258,7 @@ def hermitian_function_test(s,
         fl.image(residual,ax=ax_list[2])
         ax_list[2].set_title('Residual 2D')
     if band_mask:
-        n_mask_pts = int(band_mask_no/dt)
+        n_mask_pts = int(band_mask/dt)
         if n_mask_pts % 2:
             n_mask_pts -= 1
         residual[direct,mid_idx+n_mask_pts:] = 0
@@ -296,7 +300,7 @@ def hermitian_function_test(s,
         fig.tight_layout()
     residual.mean(direct)
     residual.set_units('center','s')
-    best_shift = residual['center':(500e-5,None)].C.argmin('center').item()
+    best_shift = residual['center':final_range].C.argmin('center').item()
     #slices first few points out as usually the artifacts give a minimum
     if fl is not None:
         axvline(x=best_shift*1e6, c='white', linestyle=":")
