@@ -219,7 +219,7 @@ def hermitian_function_test(s,
     s = s[direct:frq_range] 
     s.ift(direct,pad=2048*8)
     if fl is not None:
-        fig, ax_list = subplots(6, 1, figsize=(15,15))
+        fig, ax_list = subplots(6, 1, figsize=(10,10))
         fl.next('Hermitian Function Test Diagnostics',fig=fig)
         s = s[direct:(ini_delay,None)]
         fl.plot(abs(s),'.',ax=ax_list[0])
@@ -297,7 +297,7 @@ def hermitian_function_test(s,
         fl.image(residual,ax=ax_list[5])
         ax_list[5].set_title('Masked Residual -- Relabeled')
         xlim(0,15)
-        fig.tight_layout()
+        fig.tight_layout(h_pad = 0.03)
     residual.mean(direct)
     residual.set_units('center','s')
     best_shift = residual['center':final_range].C.argmin('center').item()
