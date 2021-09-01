@@ -61,7 +61,7 @@ with figlist_var() as fl:
     data /= ph0
     data.ft("t2")
     fl.next("fake data -- freq domain")
-    data = select_pathway(data,{"ph1":0,"ph2":1})
+    data = select_pathway(data, ph1=0, ph2=1)
     fl.image(data)
     LG = L2G(data,
             fl=fl)
