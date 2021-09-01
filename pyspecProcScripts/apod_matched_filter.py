@@ -59,9 +59,13 @@ def apod_matched_filter(s, axis='t2',
         filter_data = np.exp(-abs(temp.fromaxis(axis))/filter_width)
     if fl is not None:
         fl.next('matched filter diagnostic -- time domain')
-        norm_cnst = abs(temp)[axis,1] / abs(filter_data)[axis,1]
+        fl.plot(abs(temp), alpha=0.6, label='abs val, before mult')
+        norm_cnst = abs(temp)[axis:(0+temp.get_ft_prop(axis,"dt"))] / abs(filter_data)[axis:(0+temp.get_ft_prop(axis,"dt"))]
         fl.plot(abs(filter_data) * norm_cnst, alpha=0.6, label='matched apod. filter')
     temp *= filter_data
+    if fl is not None:
+        fl.next('matched filter diagnostic -- time domain')
+        fl.plot(abs(temp), alpha=0.6, label='abs val, after mult')
     if ret_width:
         return temp, filter_width
     else:

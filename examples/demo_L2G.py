@@ -54,18 +54,16 @@ with figlist_var() as fl:
     #                        (otherwise, we get "droop" of the baseline)
     # }}}
     data.reorder(["ph1", "ph2", "vd"])
-    fl.next("fake data -- time domain")
-    fl.image(data)
-    fl.next("FID sliced -- time domain")
     data = data['t2':(0,None)]
     data['t2',0] *= 0.5
     ph0 = data['t2',0].data.mean()
     ph0 /= abs(ph0)
     data /= ph0
-    fl.image(data)
     data.ft("t2")
     fl.next("fake data -- freq domain")
+    data = select_pathway(data,{"ph1":0,"ph2":1})
     fl.image(data)
-    data.ift('t2')
-    LG = L2G(data['ph1',0]['ph2',1],
+    LG = L2G(data,
             fl=fl)
+    fl.next("fake data -- freq domain after L2G")
+    fl.image(LG)

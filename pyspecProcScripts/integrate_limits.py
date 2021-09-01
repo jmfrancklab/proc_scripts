@@ -7,31 +7,25 @@ from pylab import r_,fft,ifft,ifftshift,fftshift,exp,ones_like
 from matplotlib.pyplot import annotate
 from .apod_matched_filter import apod_matched_filter
 
-logger = init_logging("debug")
-
 def integrate_limits(s, axis="t2",
-        filter_width=100,
         convolve_method='gaussian',
+        cutoff = 0.25,
         fl=None):
-    r"""
-    Integrate Limits
-    ============================
-
-    This function takes data in the frequency
+    r"""This function takes data in the frequency
     domain and finds the corresponding frequency
     limits of the signal for integration.
+
     Limits are found by applying a matched filter
-    (choice of Lorentzian or Gaussian) to the
+    (choice of Lorentzian or Gaussian ``convolve_method``) to the
     frequency domain data, which it then uses to
     determine the integration limits based on a
-    cut off from the maximum signal intensity.
+    ``cutoff`` amplitude based as a faction of the maximum signal intensity.
+
+    Parameters
+    ==========
 
     axis: str
         apply convolution along `axisname`
-
-    fwhm: int
-        width of the matched filter is `fwhm` - this is calculated more precisely
-        within the program
 
     convolve_method: str
         specify as one of the following 3 options:
@@ -43,6 +37,13 @@ def integrate_limits(s, axis="t2",
         to calculate the matched-filter via
         Lorentzian convolution of the frequency
         domain signal.
+
+    cutoff: float
+        set the integration limit to the points where the convolved signal
+        crosses this fraction of its maximum.
+        (e.g. cutoff=0.5 would give integration limits that correspond to the
+        frequencies marking the full width half maximum of the convolution of
+        the signal and its matched filter)
 
     fl: None or figlist_var()
         to show diagnostic plots, set `fl` to the figure list; set `fl` to None in
@@ -73,8 +74,7 @@ def integrate_limits(s, axis="t2",
     if fl is not None:
         fl.next('integration diagnostic')
         fl.plot(temp/temp.max(), alpha=0.6, label='after convolve')
-    limit_for_contiguous = 0.25
-    freq_limits = temp.contiguous(lambda x: x.real > limit_for_contiguous * x.real.data.max())[0]
+    freq_limits = temp.contiguous(lambda x: x.real > cutoff * x.real.data.max())[0]
     if fl is not None:
         fl.next('integration diagnostic')
         axvline(x = freq_limits[0], c='k', alpha=0.75)

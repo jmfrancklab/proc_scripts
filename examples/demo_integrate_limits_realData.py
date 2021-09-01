@@ -1,7 +1,6 @@
 from pylab import *
 from pyspecdata import *
-from pyspecProcScripts import hermitian_function_test, zeroth_order_ph
-from pyspecProcScripts import integrate_limits, integral_w_errors
+from pyspecProcScripts import *
 fl = figlist_var()
 
 for filename, expno, subplot_name, in [
@@ -14,15 +13,8 @@ for filename, expno, subplot_name, in [
         ]:
         d = find_file(filename, exp_type='ODNP_NMR_comp/processed',
                 expno=expno)
-        ph1_val = 1
-        ph2_val = 0
-        signal_pathway = {"ph1": ph1_val, "ph2": ph2_val}
+        signal_pathway = {"ph1": 1, "ph2": 0}
         excluded_pathways = [(0, 0),(0,-1)]
-        def select_pathway(s,pathway):
-            retval = s
-            for k,v in pathway.items():
-                retval = retval[k,v]
-            return retval    
         d.ift('t2')
         # Zeroth order correction
         ph0 = select_pathway(d['t2':0],signal_pathway)
@@ -36,7 +28,9 @@ for filename, expno, subplot_name, in [
         d /= ph0
         fl.basename = expno
         d.ft('t2')
-        freq_lim = integrate_limits(select_pathway(d,signal_pathway),
-                convolve_method='Lorentzian',
-                fl=fl)
+        for method in ['Lorentzian','Gaussian']:
+            fl.basename = "%s method: "%method
+            freq_lim = integrate_limits(select_pathway(d,signal_pathway),
+                    convolve_method=method,
+                    fl=fl)
 fl.show()

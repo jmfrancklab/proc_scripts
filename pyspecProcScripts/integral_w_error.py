@@ -1,12 +1,8 @@
 from pyspecdata import *
 from .integrate_limits import integrate_limits
+from .simple_functions import select_pathway
 import numpy as np
 from pylab import *
-def select_pathway(s,pathway):
-    retval = s
-    for k,v in pathway.items():
-        retval = retval[k,v]
-    return retval    
 def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,return_frq_slice=False):
     """Calculates the propagation of error for the given signal and returns
     signal with the error associated.
@@ -30,11 +26,9 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
              not included in the signal pathway.
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    s.ift('t2')
     frq_slice = integrate_limits(select_pathway(s,sig_path),
             convolve_method='Gaussian',
             fl=None)
-    s.ft('t2')
     logging.debug(strm('frq_slice is',frq_slice))
     s = s[direct:frq_slice]
     f = s.getaxis(direct)

@@ -1,5 +1,6 @@
 from pyspecdata import *
 from sympy import symbols
+from .simple_functions import select_pathway
 
 
 def slice_FID_from_echo(s, max_t=None, signal_pathway={'ph1':1, 'ph2':-2}, fl=None):
@@ -22,11 +23,6 @@ def slice_FID_from_echo(s, max_t=None, signal_pathway={'ph1':1, 'ph2':-2}, fl=No
     =======
     s:      phase corrected and sliced data
     """
-    def select_pathway(s,pathway):
-        myslice = s
-        for k, v in pathway.items():
-            myslice = myslice[k,v]
-        return myslice    
     best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
     s.setaxis('t2',lambda x: x-best_shift)
     s.register_axis({'t2':0}, nearest=False)

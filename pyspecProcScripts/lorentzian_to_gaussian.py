@@ -9,7 +9,7 @@ def L2G(s, axis='t2',
     ============================
 
     This performs Lorentzian-to-Gaussian transformation on input data. Data
-    should be input as time domain data.
+    should be input as frequency domain data.
 
     s: nddata
         time domain data to undergo transformation
@@ -23,7 +23,13 @@ def L2G(s, axis='t2',
         to see any diagnostic plots
     """
     temp = s.C.mean_all_but(axis)
-    assert temp.get_prop('FT')['t2'] == False, "Data must be in time domain"
+    assert temp.get_prop('FT')[axis], "Data must be in frequency domain"
+    if fl is not None:
+        fl.next('Lorentzian to Gaussian diagnostic -- frequency domain')
+        fl.plot(temp,
+                alpha=0.6,
+                label='before')
+    temp.ift(axis)
     _,filter_width = apod_matched_filter(temp,
             convolve_method='lorentzian',
             ret_width=True,
@@ -33,10 +39,6 @@ def L2G(s, axis='t2',
         fl.plot(temp,
                 alpha=0.6,
                 label='before')
-        fl.next('Lorentzian to Gaussian diagnostic -- frequency domain')
-        fl.plot(temp.C.ft('t2'),
-                alpha=0.6,
-                label='before')
     temp *= np.exp(-temp.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
     temp /= np.exp(-abs(temp.fromaxis(axis))/filter_width)
     if fl is not None:
@@ -44,9 +46,17 @@ def L2G(s, axis='t2',
         fl.plot(temp,
                 alpha=0.6,
                 label='after')
+    temp.ft(axis)
+    if fl is not None:
         fl.next('Lorentzian to Gaussian diagnostic -- frequency domain')
-        fl.plot(temp.C.ft('t2'),
+        fl.plot(temp,
                 alpha=0.6,
                 label='after')
         axhline(y=0,color='k')
+    # {{{ actually apply the transform to the data and return
+    temp = s.C.ift(axis)
+    temp *= np.exp(-temp.fromaxis(axis)**2/2/(filter_width*pi/2)**2)
+    temp /= np.exp(-abs(temp.fromaxis(axis))/filter_width)
+    temp.ft(axis)
+    # }}}
     return temp
