@@ -69,9 +69,6 @@ def integrate_limits(s, axis="t2",
     temp = apod_matched_filter(temp,
             convolve_method=convolve_method,
             fl=fl)
-    if fl is not None:
-        fl.next('integration diagnostic -- time domain')
-        fl.plot(abs(temp), alpha=0.6, label='after mult')
     temp.ft('t2')
     if fl is not None:
         fl.next('integration diagnostic')
