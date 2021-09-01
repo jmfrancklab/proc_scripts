@@ -43,23 +43,26 @@ def apod_matched_filter(s, axis='t2',
     elif convolve_method == 'lorentzian':
         convolution_set = np.exp(-abs(temp.fromaxis(axis))/sigma)
     signal_E = (abs(temp * convolution_set)**2).sum(axis)
-    signal_E /= signal_E.data.max()
+    signal_E /= abs(signal_E.data).max()
     if convolve_method == 'gaussian':
         filter_width = abs(signal_E-1/sqrt(2)).argmin('sigma').item()
     elif convolve_method == 'lorentzian':
-        filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
+        filter_width = abs(signal_E-1/2).argmin('sigma').item()
     logger.info(strm("FILTER WIDTH IS",filter_width))
     if fl is not None:
         fl.next('matched filter diagnostic -- signal Energy')
         fl.plot(signal_E, human_units=False)
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
+    if convolve_method == 'gaussian':
+        filter_data = np.exp(-temp.fromaxis(axis)**2/2/filter_width**2)
+    elif convolve_method in 'lorentzian':
+        filter_data = np.exp(-abs(temp.fromaxis(axis))/filter_width)
     if fl is not None:
         fl.next('matched filter diagnostic -- time domain')
         fl.plot(abs(temp), alpha=0.6, label='abs val, before mult')
-    if convolve_method == 'gaussian':
-        temp *= np.exp(-temp.fromaxis(axis)**2/2/filter_width**2)
-    elif convolve_method in 'lorentzian':
-        temp *= np.exp(-abs(temp.fromaxis(axis))/filter_width)
+        norm_cnst = abs(temp)[axis,1] / abs(filter_data)[axis,1]
+        fl.plot(abs(filter_data) * norm_cnst, alpha=0.6, label='matched apod. filter')
+    temp *= filter_data
     if fl is not None:
         fl.next('matched filter diagnostic -- time domain')
         fl.plot(abs(temp), alpha=0.6, label='abs val, after mult')

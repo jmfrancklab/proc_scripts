@@ -69,4 +69,3 @@ with figlist_var() as fl:
     data.ift('t2')
     LG = L2G(data['ph1',0]['ph2',1],
             fl=fl)
-    fl.show()

@@ -1,4 +1,5 @@
 from pyspecdata import *
+from pylab import axhline
 from .apod_matched_filter import apod_matched_filter
 
 def L2G(s, axis='t2',
@@ -26,7 +27,6 @@ def L2G(s, axis='t2',
     _,filter_width = apod_matched_filter(temp,
             convolve_method='lorentzian',
             ret_width=True,
-            basename='L2G',
             fl=fl)
     if fl is not None:
         fl.next('Lorentzian to Gaussian diagnostic -- time domain')
@@ -48,4 +48,5 @@ def L2G(s, axis='t2',
         fl.plot(temp.C.ft('t2'),
                 alpha=0.6,
                 label='after')
+        axhline(y=0,color='k')
     return temp
