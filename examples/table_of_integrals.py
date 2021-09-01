@@ -21,11 +21,14 @@ rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 
 # {{{ generate the fake data
 init_logging(level="debug")
-fl = figlist_var()
+fl = fl_mod()
 # this generates fake clean_data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
 # offset of 300 Hz, FWHM 10 Hz
 t2, td, vd, ph1, ph2 = s.symbols('t2 td vd ph1 ph2')
+signal_pathway = {'ph1':0,'ph2':1}
+f_range = (-200,300)
+t_range= (0,30e-3)
 echo_time = 5e-3
 data = fake_data(
     21*(1 - 2*s.exp(-vd / 0.2))*s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*50*s.pi),
@@ -45,5 +48,9 @@ data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop('t2','dt')
 fl.next("fake data -- freq domain")
 fl.image(data)
 # }}}
+myslice = data['t2':f_range]
+mysgn = determine_sign(select_pathway(myslice, signal_pathway), fl=fl)
+data_int, data = process_data(s=data,signal_pathway=signal_pathway,
+        f_range=f_range,t_range=t_range, sgn=mysgn,indirect='vd',fl=fl)
 # AG: implement your function on this data -- then also modify the symbolic expression to get enhancement, etc, and do that as well
 fl.show()

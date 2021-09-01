@@ -1,5 +1,6 @@
 from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs
 from .first_level.fake_data import fake_data
+from .table_integrals import process_data
 from .load_data import lookup_table
 from .plotting import expand_limits,draw_limits,fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
@@ -23,6 +24,7 @@ __all__ = ['calc_baseline',
         'draw_limits',
         'expand_limits',
         'fake_data',
+        'process_data',
         'fl_mod',
         'hermitian_function_test',
         'integral_w_errors',
