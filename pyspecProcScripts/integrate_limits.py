@@ -61,9 +61,10 @@ def integrate_limits(s, axis="t2",
     # }}}
     convolve_method = convolve_method.lower()
     if fl is not None:
+        logger.debug(strm("from integrate_limits, basename is",fl.basename,"and current",fl.current))
+        fl.push_marker()
         forplot = temp
         fl.next('integration diagnostic')
-        fl.push_marker()
         fl.plot(forplot/forplot.data.max(), alpha=0.6, label='before convolve')
     temp.ift('t2')
     temp = apod_matched_filter(temp,

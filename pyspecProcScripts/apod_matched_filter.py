@@ -3,7 +3,6 @@ from pyspecdata import *
 def apod_matched_filter(s, axis='t2',
         convolve_method='gaussian',
         ret_width=False,
-        basename=None,
         fl=None): 
     r"""
     Apodization Matched Filter
@@ -51,19 +50,18 @@ def apod_matched_filter(s, axis='t2',
         filter_width = abs(signal_E-signal_E.max()/2).argmin('sigma').item()
     logger.info(strm("FILTER WIDTH IS",filter_width))
     if fl is not None:
-        fl.basename = basename
-        fl.next('integration diagnostic -- signal Energy')
+        fl.next('matched filter diagnostic -- signal Energy')
         fl.plot(signal_E, human_units=False)
         fl.plot(signal_E['sigma':(filter_width,filter_width+1e-6)],'o', human_units=False)
     if fl is not None:
-        fl.next('integration diagnostic -- time domain')
+        fl.next('matched filter diagnostic -- time domain')
         fl.plot(abs(temp), alpha=0.6, label='abs val, before mult')
     if convolve_method == 'gaussian':
         temp *= np.exp(-temp.fromaxis(axis)**2/2/filter_width**2)
     elif convolve_method in 'lorentzian':
         temp *= np.exp(-abs(temp.fromaxis(axis))/filter_width)
     if fl is not None:
-        fl.next('integration diagnostic -- time domain')
+        fl.next('matched filter diagnostic -- time domain')
         fl.plot(abs(temp), alpha=0.6, label='abs val, after mult')
     if ret_width:
         return temp, filter_width
