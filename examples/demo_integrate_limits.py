@@ -26,7 +26,6 @@ from numpy.random import normal, seed
 from numpy.linalg import norm
 import sympy as s
 from collections import OrderedDict
-import time
 seed(2021)
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 1
@@ -37,7 +36,6 @@ with figlist_var() as fl:
     # this generates fake clean_data w/ a T1 of 0.2s
     # amplitude of 21, just to pick a random amplitude
     # offset of 300 Hz, FWHM 10 Hz
-    time_list = [time.time()]
     t2, td, vd, ph1, ph2 = s.symbols('t2 td vd ph1 ph2')
     echo_time = 5e-3
     data = fake_data(
@@ -51,7 +49,6 @@ with figlist_var() as fl:
             scale=20.)
     # {{{ just have the data phase (not testing phasing here)
     data.setaxis('t2', lambda x: x-echo_time).register_axis({"t2":0})
-    time_list.append(time.time())
     data = data['t2',0:-3] # dropping the last couple points avoids aliasing
     #                        effects from the axis registration
     #                        (otherwise, we get "droop" of the baseline)
@@ -67,25 +64,17 @@ with figlist_var() as fl:
     data /= ph0
     fl.image(data)
     data.ft("t2")
-    time_list.append(time.time())
     fl.next("fake data -- freq domain")
     fl.image(data)
     for method in ['Lorentzian','Gaussian']:
-        time_list.append(time.time())
         fl.basename = method + " filter:"
-        logger.debug(strm("from main script, basename is",fl.basename,"and current",fl.current))
         freq_lim = integrate_limits(data['ph1',0]['ph2',1],
                 convolve_method=method,
                 fl=fl)
-        logger.debug("about to run potentially problematic next command")
         fl.next("fake data -- show freq limit selection")
         fl.plot(data['ph1',0]['ph2',1])
         axvline(x=freq_lim[0])
         axvline(x=freq_lim[-1])
         print("Determined frequency limits via",method,"filter of",freq_lim)
-    time_list.append(time.time())
-    print("figure list-----\n",fl) # there were extra/blank figures, and I added this to help me figure out which they were (update to pyspecdata needed)
     # }}}
-time_list.append(time.time())
-print("time list",diff(array(time_list)))
     # }}}
