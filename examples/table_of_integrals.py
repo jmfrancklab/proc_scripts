@@ -52,5 +52,6 @@ myslice = data['t2':f_range]
 mysgn = determine_sign(select_pathway(myslice, signal_pathway), fl=fl)
 data_int, data = process_data(s=data,signal_pathway=signal_pathway,
         f_range=f_range,t_range=t_range, sgn=mysgn,indirect='vd',fl=fl)
-# AG: implement your function on this data -- then also modify the symbolic expression to get enhancement, etc, and do that as well
+fl.next('s_int')
+fl.plot(select_pathway(data_int,signal_pathway))
 fl.show()

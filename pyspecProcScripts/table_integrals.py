@@ -33,6 +33,7 @@ def process_data(s,searchstr='',
     else:
         s['ph1',0]['t2':0] = 0
         s.reorder(['ph1','power','t2'])
+    #{{{DC offset correction
     s.ift(list(signal_pathway))
     t_start = t_range[-1] / 4
     t_start *= 3
@@ -41,9 +42,22 @@ def process_data(s,searchstr='',
     s -= rx_offset_corr
     s.ft(direct)
     s.ft(list(signal_pathway))
+    #}}}
     zero_crossing=abs(select_pathway(s,signal_pathway)).sum(direct).argmin(indirect,raw_index=True).item()
+    #{{{phase correction
     s = s[direct:f_range]
     s.ift(direct)
+    rough_center = (
+            abs(select_pathway(s,signal_pathway))
+            .C.convolve(direct,0.3e-3)
+            .mean_all_but(direct)
+            .argmax(direct)
+            .item()
+            )
+    s.setaxis(direct, lambda x: x - rough_center).register_axis({direct:0})
+    s.ft(direct)
+    s.ift(direct)
+    s /= zeroth_order_ph(select_pathway(s,signal_pathway),fl=fl)
     #best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),signal_pathway).C.convolve(direct,3e-4))
     #logger.info(strm("best shift is", best_shift))
     #s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
@@ -55,18 +69,8 @@ def process_data(s,searchstr='',
     #    fl.next('frequency domain after hermitian')
     #    fl.image(s)
     #    s.ift(direct)
-    s.ift(list(signal_pathway))
-    phasing = s[direct,0].C
-    phasing.data *= 0 
-    phasing.ft(list(signal_pathway))
-    phasing_path = select_pathway(phasing,signal_pathway)
-    phasing_path = 1
-    phasing.ift(list(signal_pathway))
-    ph0 = s[direct:0]/phasing
-    ph0 /= abs(ph0)
-    s /= ph0
-    s.ft(list(signal_pathway))
     s.ft(direct)
+    print(s)
     if fl is not None:
         fl.next('phase corrected data -- frequency domain')
         fl.image(s)
