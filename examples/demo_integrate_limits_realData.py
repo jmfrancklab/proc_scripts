@@ -1,4 +1,22 @@
-"""docstring required"""
+"""
+Demonstrate Integrate Limits on Real Data
+=========================================
+
+Here we load in low SNR Hahn echo data and
+demonstrate that we can find reasonable and
+accurate integration limits on this data.
+
+Similar to the demonstration on fake data, we use
+integrate_limits to detect the frequency limits
+used for peak integration, and demonstrate,
+separately, the integration limits using a matched
+Lorentzian filter and a matched Gaussian filter on
+our frequency domain data.
+
+We illustrate the position of the frequency limits
+with vertical lines on the final plots.
+
+"""
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
