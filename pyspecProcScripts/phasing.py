@@ -178,9 +178,9 @@ def hermitian_function_test(s,
         selection_range=(None,0.04),
         ini_delay = 0e6, 
         band_mask = 0,
-        final_range = (500e-5,None),
+        final_range = (100e-5,None),
         fl=None):
-    r"""determine the center of the echo via 
+    r"""determine the center of the echo via hermitian symmetry of the time domain. 
 
     Parameters
     ==========
