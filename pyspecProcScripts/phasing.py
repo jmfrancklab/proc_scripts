@@ -172,15 +172,17 @@ def ph1_real_Abs(s,dw,ph1_sel=0,ph2_sel=1,fl = None):
     fl.pop_marker()
     return s
     #}}}
-def hermitian_function_test(s, 
-        direct = 't2',
-        frq_range=(-5e3/2,5e3/2),#assumes signal is somewhat on resonance
-        selection_range=(None,0.04),
-        ini_delay = 0e6, 
-        band_mask = 0,
-        final_range = (100e-5,None),
-        fl=None):
-    r"""determine the center of the echo via hermitian symmetry of the time domain. 
+def hermitian_function_test(
+    s,
+    direct="t2",
+    frq_range=(-5e3 / 2, 5e3 / 2),  # assumes signal is somewhat on resonance
+    selection_range=(None, 0.04),
+    ini_delay=0e6,
+    band_mask=0,
+    final_range=(100e-5, None),
+    fl=None,
+):
+    r"""determine the center of the echo via hermitian symmetry of the time domain.
 
     Parameters
     ==========
@@ -210,112 +212,124 @@ def hermitian_function_test(s,
     band_mask_no:       int
         determines number of points for rectangular mask
     final_range:        tuple
-        range that will slice out the very first few points 
+        range that will slice out the very first few points
         which gives an artificial minimum and messes with the
         cost function.
     """
     orig_dt = s.get_ft_prop(direct, "dt")
     s.ft(direct)
-    s = s[direct:frq_range] 
-    s.ift(direct,pad=2048*8)
+    s = s[direct:frq_range]
+    s.ift(direct, pad=2048 * 8)
     if fl is not None:
-        fig, ax_list = subplots(6, 1, figsize=(10,10))
-        fl.next('Hermitian Function Test Diagnostics',fig=fig)
-        s = s[direct:(ini_delay,None)]
-        fl.plot(abs(s),'.',ax=ax_list[0])
-        ax_list[0].set_title('Data with Padding')
+        fig, ax_list = subplots(6, 1, figsize=(10, 10))
+        fl.next("Hermitian Function Test Diagnostics", fig=fig)
+        s = s[direct:(ini_delay, None)]
+        fl.plot(abs(s), ".", ax=ax_list[0])
+        ax_list[0].set_title("Data with Padding")
     selection = s[direct:selection_range]
     N = ndshape(selection)[direct]
-    mid_idx = N//2+N%2-1
-    selection = selection[direct,0:2*mid_idx+1]
-    dt = selection.get_ft_prop(direct,'dt')
-    #the shifts themselves run from 0 to mid_idx -- the echo-centers
-    #these correspond to are different. Also, we're not really
-    #worried about the sub-integer shift here, because we can just
-    #use sinc interpolation before we start -- see:
-    #https://jmfrancklab.slack.com/archives/CLMMYDD98/p1623354066039100
-    shifts =  nddata(dt*(r_[0:mid_idx]),'shift')
-    shifts.set_units('shift','s')
-    logger.info(strm("Length of shifts dimension:", ndshape(shifts)['shift']))
+    mid_idx = N // 2 + N % 2 - 1
+    selection = selection[direct, 0 : 2 * mid_idx + 1]
+    dt = selection.get_ft_prop(direct, "dt")
+    # the shifts themselves run from 0 to mid_idx -- the echo-centers
+    # these correspond to are different. Also, we're not really
+    # worried about the sub-integer shift here, because we can just
+    # use sinc interpolation before we start -- see:
+    # https://jmfrancklab.slack.com/archives/CLMMYDD98/p1623354066039100
+    shifts = nddata(dt * (r_[0:mid_idx]), "shift")
+    shifts.set_units("shift", "s")
+    logger.info(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
     residual = selection.C
     residual.ft(direct)
-    residual *= np.exp(-1j*2*pi*shifts*residual.fromaxis(direct))
+    residual *= np.exp(-1j * 2 * pi * shifts * residual.fromaxis(direct))
     residual.ift(direct)
     logger.info(strm("Length of t2 dimension:", ndshape(selection)[direct]))
-    assert ndshape(selection)[direct] % 2 == 1, "t2 dimension *must* be odd, please check what went wrong."
-    #{{{phase correct and weigh 'residual' by 1/(signal amplitude)
-    center_point = residual[direct,mid_idx]
+    assert (
+        ndshape(selection)[direct] % 2 == 1
+    ), "t2 dimension *must* be odd, please check what went wrong."
+    # {{{phase correct and weigh 'residual' by 1/(signal amplitude)
+    center_point = residual[direct, mid_idx]
     residual /= center_point
-    #}}}
+    # }}}
     if fl is not None:
-        if 'power' in s.dimlabels:
-            fl.image(residual['power',-4],ax=ax_list[1])
+        if "power" in s.dimlabels:
+            fl.image(residual["power", -4], ax=ax_list[1])
         else:
-            fl.image(residual,ax=ax_list[1])
-        ax_list[1].set_title('shifted and phased')    
-    residual = abs(residual - residual[direct,::-1].runcopy(np.conj)).mean_all_but(['shift',direct])
+            fl.image(residual, ax=ax_list[1])
+        ax_list[1].set_title("shifted and phased")
+    residual = abs(residual - residual[direct, ::-1].runcopy(np.conj)).mean_all_but(
+        ["shift", direct]
+    )
     if fl is not None:
-        fl.image(residual,ax=ax_list[2])
-        ax_list[2].set_title('Residual 2D')
+        fl.image(residual, ax=ax_list[2])
+        ax_list[2].set_title("Residual 2D")
     if band_mask:
-        n_mask_pts = int(band_mask/dt)
+        n_mask_pts = int(band_mask / dt)
         if n_mask_pts % 2:
             n_mask_pts -= 1
-        residual[direct,mid_idx+n_mask_pts:] = 0
-        residual[direct,:mid_idx-n_mask_pts] = 0
-        title_str = 'rectangular mask'
+        residual[direct, mid_idx + n_mask_pts :] = 0
+        residual[direct, : mid_idx - n_mask_pts] = 0
+        title_str = "rectangular mask"
     else:
-        #Here we would do the calculation outlined for the triangle mask,
-        #but with only two new variables -- A and B
-        A = r_[-mid_idx:mid_idx+1]
+        # Here we would do the calculation outlined for the triangle mask,
+        # but with only two new variables -- A and B
+        A = r_[-mid_idx : mid_idx + 1]
         A = -abs(A)
         A += mid_idx
-        B = residual.fromaxis('shift').data/dt
-        A = A.reshape(-1,1)
-        B = B.reshape(1,-1)
-        mask = np.greater_equal(A,B)
-        mask = np.multiply(mask,1)
+        B = residual.fromaxis("shift").data / dt
+        A = A.reshape(-1, 1)
+        B = B.reshape(1, -1)
+        mask = np.greater_equal(A, B)
+        mask = np.multiply(mask, 1)
         mask = mask.astype(float)
-        norm = np.floor(mid_idx-B)
+        norm = np.floor(mid_idx - B)
         norm = norm.astype(float)
-        mask /= ((norm)*2)
-        mask = nddata(mask,[direct,'shift'])
-        mask.setaxis(direct,residual.getaxis(direct))
-        mask.setaxis('shift',residual.getaxis('shift'))
+        mask /= (norm) * 2
+        mask = nddata(mask, [direct, "shift"])
+        mask.setaxis(direct, residual.getaxis(direct))
+        mask.setaxis("shift", residual.getaxis("shift"))
         if fl is not None:
-            fl.image(mask,ax=ax_list[3],human_units=False)
-            ax_list[3].set_title('Mask')
+            fl.image(mask, ax=ax_list[3], human_units=False)
+            ax_list[3].set_title("Mask")
         residual *= mask
-        title_str = 'triangular mask'
+        title_str = "triangular mask"
     if fl is not None:
-        fl.image(residual,ax=ax_list[4])
-        ax_list[4].set_title('Masked Residual')
-    residual.rename('shift','center').setaxis('center',
-            dt*(mid_idx-r_[0:mid_idx])+ini_delay)
-    residual = residual['center',::-1]
+        fl.image(residual, ax=ax_list[4])
+        ax_list[4].set_title("Masked Residual")
+    residual.rename("shift", "center").setaxis(
+        "center", dt * (mid_idx - r_[0:mid_idx]) + ini_delay
+    )
+    residual = residual["center", ::-1]
     if fl is not None:
-        fl.image(residual,ax=ax_list[5])
-        ax_list[5].set_title('Masked Residual -- Relabeled')
-        xlim(0,15)
-        fig.tight_layout(h_pad = 0.03)
+        fl.image(residual, ax=ax_list[5])
+        ax_list[5].set_title("Masked Residual -- Relabeled")
+        xlim(0, 15)
+        fig.tight_layout(h_pad=0.03)
     residual.mean(direct)
-    residual.set_units('center','s')
-    best_shift = residual['center':final_range].C.argmin('center').item()
-    #slices first few points out as usually the artifacts give a minimum
+    residual.set_units("center", "s")
+    best_shift = residual["center":final_range].C.argmin("center").item()
+    # slices first few points out as usually the artifacts give a minimum
     if fl is not None:
-        axvline(x=best_shift*1e6, c='white', linestyle=":")
-        fl.next('cost function %s - freq filter'%title_str)
-        residual.name('cost function')
-        fl.plot(residual, color='k', alpha = 0.5, human_units=False)
-        fl.twinx(orig=False, color='red')
-        selection.name('absolute value')
-        fl.plot(abs(selection).mean_all_but(direct).rename(direct,'center').set_units('center',
-            's'), color='red',alpha=0.5, human_units=False)
-        axvline(x=best_shift, c='k', linestyle=":")
+        axvline(x=best_shift * 1e6, c="white", linestyle=":")
+        fl.next("cost function %s - freq filter" % title_str)
+        residual.name("cost function")
+        fl.plot(residual, color="k", alpha=0.5, human_units=False)
+        fl.twinx(orig=False, color="red")
+        selection.name("absolute value")
+        fl.plot(
+            abs(selection)
+            .mean_all_but(direct)
+            .rename(direct, "center")
+            .set_units("center", "s"),
+            color="red",
+            alpha=0.5,
+            human_units=False,
+        )
+        axvline(x=best_shift, c="k", linestyle=":")
         for dwell_int in r_[0:5]:
-            axvline(x=best_shift-(orig_dt*dwell_int),alpha=0.4,c='k',linestyle=":")
+            axvline(
+                x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="k", linestyle=":"
+            )
         fl.twinx(orig=True)
-        ylim(0,residual['center':(best_shift-4e-3,best_shift)].data.max())
-    return best_shift    
-
-
+        ylim(0, residual["center" : (best_shift - 4e-3, best_shift)].data.max())
+    return best_shift

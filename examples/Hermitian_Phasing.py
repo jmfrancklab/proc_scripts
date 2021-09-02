@@ -57,7 +57,7 @@ with figlist_var() as fl:
             "power",
             "enhancement",
         ),
-        ]:
+    ]:
         fl.basename = "(%s)" % label
         fig, ax_list = subplots(1, 4, figsize = (7,7))
         fig.suptitle(fl.basename)
@@ -75,7 +75,8 @@ with figlist_var() as fl:
         ax_list[1].set_title("Zeroth Order Phase Corrected")
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway), 
-            selection_range = selection_range, fl=fl
+            selection_range=selection_range,
+            fl=fl
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
