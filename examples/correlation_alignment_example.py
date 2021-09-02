@@ -68,7 +68,7 @@ with figlist_var() as fl:
         data.ift("t2")
         rough_center = (
             abs(select_pathway(data, signal_pathway))
-            .C.convolve("t2", 0.01)
+            .C.convolve("t2", 0.3e-3)
             .mean_all_but("t2")
             .argmax("t2")
             .item()
