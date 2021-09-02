@@ -79,7 +79,7 @@ def integrate_limits(s, axis="t2",
         fl.next('integration diagnostic')
         axvline(x = freq_limits[0], c='k', alpha=0.75)
         axvline(x = freq_limits[-1], c='k', alpha=0.75)
-        annotate(str(limit_for_contiguous), xy=(freq_limits[-1],0.85))
+        annotate(str(freq_limits), xy=(freq_limits[-1],0.85))
         fl.pop_marker()
     freq_limits = np.array(freq_limits)
     # Think still need to return 'temp' if lorentzian_to_gaussian 

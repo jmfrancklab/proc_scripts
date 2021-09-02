@@ -1,3 +1,4 @@
+"""docstring required"""
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
