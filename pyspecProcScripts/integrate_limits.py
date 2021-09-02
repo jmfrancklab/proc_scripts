@@ -19,7 +19,7 @@ def integrate_limits(s, axis="t2",
     (choice of Lorentzian or Gaussian ``convolve_method``) to the
     frequency domain data, which it then uses to
     determine the integration limits based on a
-    ``cutoff`` amplitude based as a faction of the maximum signal intensity.
+    ``cutoff`` amplitude based as a fraction of the maximum signal intensity.
 
     Parameters
     ==========
