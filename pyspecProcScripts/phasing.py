@@ -212,7 +212,7 @@ def hermitian_function_test(
     band_mask_no:       int
         determines number of points for rectangular mask
     final_range:        tuple
-        range that will slice out the very first few points
+        range that will slice out everything but the very first few points
         which gives an artificial minimum and messes with the
         cost function.
     """
