@@ -27,7 +27,6 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     frq_slice = integrate_limits(select_pathway(s,sig_path),
-            convolve_method='Gaussian',
             fl=None)
     logging.debug(strm('frq_slice is',frq_slice))
     s = s[direct:frq_slice]

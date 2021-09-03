@@ -101,17 +101,14 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{Normalization
-    frq_slice = integrate_limits(select_pathway(s, signal_pathway),
-            convolve_method='Gaussian')
+    frq_slice = integrate_limits(select_pathway(s, signal_pathway))
     s_integral = s["t2":frq_slice].C # the "official" copy of the integral
     s_integral = select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
-    avg_d = s_integral.C.mean().item()
+    avg_d = s_integral.C.mean().real.item()
     s_integral /= avg_d
     # the line below changes the frequency slice for some reason
     s /= avg_d
-    frq_slice = integrate_limits(select_pathway(s, signal_pathway),
-            convolve_method='Gaussian')
     # }}}
 
     # {{{integral w errors
@@ -136,8 +133,6 @@ for thisfile, exp_type, nodename in [
             indirect="nScans",
             return_frq_slice=True,
         )
-        print(frq_slice)
-        print(frq_slice_check)
         assert all(frq_slice_check == frq_slice)
         error = s_thisint.get_error()
         avg_error = error.mean().item()
@@ -160,7 +155,7 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{ Calculating propagated error along active CT on noise slice
-    active_error,_ = active_propagation(s, signal_pathway, indirect="nScans")
+    active_error = active_propagation(s, signal_pathway, indirect="nScans")
     avg_active_error = active_error.C.mean("nScans").item()
     # }}}
 
