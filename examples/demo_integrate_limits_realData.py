@@ -1,6 +1,6 @@
 """
-Demonstrate Integrate Limits on Real Data
-=========================================
+Demonstrate Integrate Limits on Experimental Data
+=================================================
 
 Here we load in low SNR Hahn echo data and
 demonstrate that we can find reasonable and
@@ -15,7 +15,6 @@ our frequency domain data.
 
 We illustrate the position of the frequency limits
 with vertical lines on the final plots.
-
 """
 from pylab import *
 from pyspecdata import *
