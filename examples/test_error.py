@@ -107,7 +107,6 @@ for thisfile, exp_type, nodename in [
     s_integral.integrate("t2")
     avg_d = s_integral.C.mean().real.item()
     s_integral /= avg_d
-    # the line below changes the frequency slice for some reason
     s /= avg_d
     # }}}
 
