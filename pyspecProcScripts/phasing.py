@@ -256,6 +256,7 @@ def hermitian_function_test(
     N = ndshape(selection)[direct]
     mid_idx = N // 2 + N % 2 - 1
     selection = selection[direct, 0 : 2 * mid_idx + 1]
+    # JF to here
     dt = selection.get_ft_prop(direct, "dt")
     # the shifts themselves run from 0 to mid_idx -- the echo-centers
     # these correspond to are different. Also, we're not really
@@ -273,16 +274,16 @@ def hermitian_function_test(
     assert (
         ndshape(selection)[direct] % 2 == 1
     ), "t2 dimension *must* be odd, please check what went wrong."
-    # {{{phase correct and weigh 'residual' by 1/(signal amplitude)
-    center_point = residual[direct, mid_idx]
-    residual /= center_point
-    # }}}
     if fl is not None:
         if "power" in s.dimlabels:
             fl.image(residual["power", -4], ax=ax_list[0, 1])
         else:
             fl.image(residual, ax=ax_list[0, 1])
         ax_list[0, 1].set_title("shifted and phased")
+    # {{{phase correct and weigh 'residual' by 1/(signal amplitude)
+    center_point = residual[direct, mid_idx]
+    residual /= center_point
+    # }}}
     residual = abs(residual - residual[direct, ::-1].runcopy(np.conj)).mean_all_but(
         ["shift", direct]
     )
