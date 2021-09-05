@@ -274,16 +274,17 @@ def hermitian_function_test(
     assert (
         ndshape(selection)[direct] % 2 == 1
     ), "t2 dimension *must* be odd, please check what went wrong."
+    # {{{phase correct 
+    center_point = residual[direct, mid_idx]
+    residual /= center_point/abs(center_point)
+    # }}}
     if fl is not None:
         if "power" in s.dimlabels:
             fl.image(residual["power", -4], ax=ax_list[0, 1])
         else:
             fl.image(residual, ax=ax_list[0, 1])
         ax_list[0, 1].set_title("shifted and phased")
-    # {{{phase correct and weigh 'residual' by 1/(signal amplitude)
-    center_point = residual[direct, mid_idx]
-    residual /= center_point
-    # }}}
+    residual /= abs(center_point) # weight 'residual' by 1/(signal amplitude)
     residual = abs(residual - residual[direct, ::-1].runcopy(np.conj)).mean_all_but(
         ["shift", direct]
     )
