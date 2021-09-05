@@ -167,8 +167,8 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
         fl.plot(s_cost, ".")
     s_cost.smoosh(["vd", "phcorr"], "transients")
     ph1_opt = np.asarray(s_cost.argmin("transients").item())
-    logging.info(strm("THIS IS PH1_OPT", ph1_opt))
-    logging.info(strm("optimal phase correction", repr(ph1_opt)))
+    logging.debug(strm("THIS IS PH1_OPT", ph1_opt))
+    logging.debug(strm("optimal phase correction", repr(ph1_opt)))
     # }}}
     # {{{ apply the phase corrections
     def applyphase(arg, ph1):
@@ -179,7 +179,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
         return arg
 
     def costfun(ph1):
-        logging.info(strm("PH1 IS THIS:", ph1))
+        logging.debug(strm("PH1 IS THIS:", ph1))
         if type(ph1) is np.ndarray:
             ph1 = ph1.item()
         temp = s.C
@@ -199,7 +199,7 @@ def hermitian_function_test(
     s,
     direct="t2",
     frq_range=(-2.5e3, 2.5e3),  # assumes signal is somewhat on resonance
-    aliasing_slop=3,
+    aliasing_slop=2, # if this is set to 3 rather than 2, the IR version is failing.  That shouldn't be happening!  (Equivalently, if we set ini_delay to 3ms in 7093, this also fails!)
     band_mask=False,
     final_range=(100e-5, None),
     fl=None,
@@ -240,8 +240,9 @@ def hermitian_function_test(
     s = s[direct:frq_range]
     s.ift(direct, pad=1024 * 16)
     new_dt = s.get_ft_prop(direct, "dt")
-    non_aliased_range = r_[3,-3]*int(orig_dt/new_dt)
+    non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     ini_delay = non_aliased_range[0]*new_dt
+    logger.debug(strm("ini delay is",ini_delay))
     s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
     if fl is not None:
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
@@ -263,12 +264,12 @@ def hermitian_function_test(
     # https://jmfrancklab.slack.com/archives/CLMMYDD98/p1623354066039100
     shifts = nddata(dt * (r_[0:mid_idx]), "shift")
     shifts.set_units("shift", "s")
-    logger.info(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
+    logger.debug(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
     residual = selection.C
     residual.ft(direct)
     residual *= np.exp(-1j * 2 * pi * shifts * residual.fromaxis(direct))
     residual.ift(direct)
-    logger.info(strm("Length of t2 dimension:", ndshape(selection)[direct]))
+    logger.debug(strm("Length of t2 dimension:", ndshape(selection)[direct]))
     assert (
         ndshape(selection)[direct] % 2 == 1
     ), "t2 dimension *must* be odd, please check what went wrong."
