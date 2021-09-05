@@ -23,7 +23,6 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
-selection_range = (None,0.03) #2 x time domain signal
 with figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label in [
         (
@@ -75,7 +74,6 @@ with figlist_var() as fl:
         ax_list[1].set_title("Zeroth Order Phase Corrected")
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway), 
-            selection_range=selection_range,
             fl=fl
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})

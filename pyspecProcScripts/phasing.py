@@ -198,10 +198,9 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 def hermitian_function_test(
     s,
     direct="t2",
-    frq_range=(-5e3 / 2, 5e3 / 2),  # assumes signal is somewhat on resonance
-    selection_range=(None, 0.04),
-    ini_delay=0e6,
-    band_mask=0,
+    frq_range=(-2.5e3, 2.5e3),  # assumes signal is somewhat on resonance
+    aliasing_slop=3,
+    band_mask=False,
     final_range=(100e-5, None),
     fl=None,
 ):
@@ -214,15 +213,12 @@ def hermitian_function_test(
     frq_range:          tuple of floats
         range over which to slice data in the
         frequency domain for frequency filtering
-    selection_range:    tuple of floats
-        range over which to slice data in the time
-        domain, should be slightly greater than
-        twice tau (twice the time between the
-        beginning of acquisition to center of
-        echo, with a little extra time: 0.5ms
-        - 1 ms or so)
-    ini_delay:          float
-        initial delay
+    aliasing_slop:          int
+        Because we sinc interpolate here, we need to allow for the fact that
+        the very beginning and ending of the time-domain signal are
+        interpolated to match.
+        In units of the dwell time of the original signal, this slices out the
+        aliased parts at the beginning and end of the time-domain signal.
     band_mask:          boolean
         determines the type of mask used on the 2D
         residual for accurate calculation of cost
@@ -242,16 +238,20 @@ def hermitian_function_test(
     orig_dt = s.get_ft_prop(direct, "dt")
     s.ft(direct)
     s = s[direct:frq_range]
-    s.ift(direct, pad=2048 * 8)
+    s.ift(direct, pad=1024 * 16)
+    new_dt = s.get_ft_prop(direct, "dt")
+    non_aliased_range = r_[3,-3]*int(orig_dt/new_dt)
+    ini_delay = non_aliased_range[0]*new_dt
+    s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
     if fl is not None:
-        plt.rcParams["figure.figsize"] = [7.5, 3.5]
-        plt.rcParams["figure.autolayout"] = True
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
-        s = s[direct:(ini_delay, None)]
-        fl.plot(abs(s), ".", ax=ax_list[0, 0])
+        fl.plot(abs(s), ax=ax_list[0, 0])
         ax_list[0, 0].set_title("Data with Padding")
-    selection = s[direct:selection_range]
+    probable_center = abs(s).convolve(direct,orig_dt*3).argmax(direct).item() # convolve just for some signal averaging
+    selection = s[direct:(0,probable_center*2)]
+    if fl is not None:
+        fl.plot(abs(selection), ':', ax=ax_list[0, 0])
     N = ndshape(selection)[direct]
     mid_idx = N // 2 + N % 2 - 1
     selection = selection[direct, 0 : 2 * mid_idx + 1]
