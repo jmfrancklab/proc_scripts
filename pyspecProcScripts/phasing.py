@@ -284,6 +284,9 @@ def hermitian_function_test(
         else:
             fl.image(residual, ax=ax_list[0, 1])
         ax_list[0, 1].set_title("shifted and phased")
+    # I tried removing the following line, and the 2D residual actually
+    # looks sharper, but then the 1D plot of the cost function disappears
+    # -- what's up with that?
     residual /= abs(center_point) # weight 'residual' by 1/(signal amplitude)
     residual = abs(residual - residual[direct, ::-1].runcopy(np.conj)).mean_all_but(
         ["shift", direct]
