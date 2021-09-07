@@ -250,7 +250,7 @@ def hermitian_function_test(
         fl.plot(abs(s), ax=ax_list[0, 0])
         ax_list[0, 0].set_title("Data with Padding")
     probable_center = abs(s).convolve(direct,orig_dt*3).argmax(direct).item() # convolve just for some signal averaging
-    selection = s[direct:(0,probable_center*3)]
+    selection = s[direct:(0,probable_center*2)]
     if fl is not None:
         fl.plot(abs(selection), ':', ax=ax_list[0, 0])
     N = ndshape(selection)[direct]
