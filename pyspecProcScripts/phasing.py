@@ -251,13 +251,13 @@ def hermitian_function_test(
         fl.plot(abs(s), ax=ax_list[0, 0])
         ax_list[0, 0].set_title("Data with Padding")
     probable_center = abs(s).convolve(direct,orig_dt*3).argmax(direct).item() # convolve just for some signal averaging
-    selection = s[direct:(0,probable_center*2)]
+    residual = s[direct:(0,probable_center*2)]
     if fl is not None:
-        fl.plot(abs(selection), ':', ax=ax_list[0, 0])
-    N = ndshape(selection)[direct]
+        fl.plot(abs(residual), ':', ax=ax_list[0, 0])
+    N = ndshape(residual)[direct]
     mid_idx = N // 2 + N % 2 - 1
-    selection = selection[direct, 0 : 2 * mid_idx + 1]
-    dt = selection.get_ft_prop(direct, "dt")
+    residual = residual[direct, 0 : 2 * mid_idx + 1]
+    dt = residual.get_ft_prop(direct, "dt")
     # the shifts themselves run from 0 to mid_idx -- the echo-centers
     # these correspond to are different. Also, we're not really
     # worried about the sub-integer shift here, because we can just
@@ -266,16 +266,15 @@ def hermitian_function_test(
     shifts = nddata(dt * (r_[0:mid_idx]), "shift")
     shifts.set_units("shift", "s")
     logger.debug(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
-    residual = selection.C
     if fl is not None:
         if band_mask:
             title_str = "rectangular mask"
         else:
             title_str = "triangular mask"
         fl.next("cost function %s - freq filter" % title_str)
-        selection.name("absolute value")
+        residual.name("absolute value")
         fl.plot(
-            abs(selection)
+            abs(residual)
             .mean_all_but(direct)
             .rename(direct, "center")
             .set_units("center", "s"),
@@ -286,9 +285,9 @@ def hermitian_function_test(
     residual.ft(direct)
     residual *= np.exp(-1j * 2 * pi * shifts * residual.fromaxis(direct))
     residual.ift(direct)
-    logger.debug(strm("Length of t2 dimension:", ndshape(selection)[direct]))
+    logger.debug(strm("Length of t2 dimension:", ndshape(residual)[direct]))
     assert (
-        ndshape(selection)[direct] % 2 == 1
+        ndshape(residual)[direct] % 2 == 1
     ), "t2 dimension *must* be odd, please check what went wrong."
     # {{{phase correct 
     center_point = residual[direct, mid_idx]
