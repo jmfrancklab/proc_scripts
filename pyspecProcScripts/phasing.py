@@ -199,7 +199,7 @@ def hermitian_function_test(
     s,
     direct="t2",
     frq_range=(-2.5e3, 2.5e3),  # assumes signal is somewhat on resonance
-    aliasing_slop=2.5, # if this is set to 3 rather than 2, the IR version is failing.  That shouldn't be happening!  (Equivalently, if we set ini_delay to 3ms in 7093, this also fails!)
+    aliasing_slop=3, # if this is set to 3 rather than 2, the IR version is failing.  That shouldn't be happening!  (Equivalently, if we set ini_delay to 3ms in 7093, this also fails!)
     band_mask=False,
     final_range=(100e-5, None),
     fl=None,
