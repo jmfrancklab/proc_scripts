@@ -2,7 +2,7 @@
 from pyspecdata import *
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
-from pylab import xlim, subplots, axvline, ylim
+from pylab import xlim, subplots, axvline, ylim, sca
 import numpy as np
 from scipy import linalg
 import logging
@@ -245,6 +245,7 @@ def hermitian_function_test(
     logger.debug(strm("ini delay is",ini_delay))
     s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
     if fl is not None:
+        fl.push_marker()
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0])
@@ -256,7 +257,6 @@ def hermitian_function_test(
     N = ndshape(selection)[direct]
     mid_idx = N // 2 + N % 2 - 1
     selection = selection[direct, 0 : 2 * mid_idx + 1]
-    # JF to here
     dt = selection.get_ft_prop(direct, "dt")
     # the shifts themselves run from 0 to mid_idx -- the echo-centers
     # these correspond to are different. Also, we're not really
@@ -267,6 +267,22 @@ def hermitian_function_test(
     shifts.set_units("shift", "s")
     logger.debug(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
     residual = selection.C
+    if fl is not None:
+        if band_mask:
+            title_str = "rectangular mask"
+        else:
+            title_str = "triangular mask"
+        fl.next("cost function %s - freq filter" % title_str)
+        selection.name("absolute value")
+        fl.plot(
+            abs(selection)
+            .mean_all_but(direct)
+            .rename(direct, "center")
+            .set_units("center", "s"),
+            color="k",
+            alpha=0.5,
+            human_units=False,
+        )
     residual.ft(direct)
     residual *= np.exp(-1j * 2 * pi * shifts * residual.fromaxis(direct))
     residual.ift(direct)
@@ -300,7 +316,6 @@ def hermitian_function_test(
             n_mask_pts -= 1
         residual[direct, mid_idx + n_mask_pts :] = 0
         residual[direct, : mid_idx - n_mask_pts] = 0
-        title_str = "rectangular mask"
     else:
         # Here we would do the calculation outlined for the triangle mask,
         # but with only two new variables -- A and B
@@ -323,7 +338,6 @@ def hermitian_function_test(
             fl.image(mask, ax=ax_list[1, 0], human_units=False)
             ax_list[1, 0].set_title("Mask")
         residual *= mask
-        title_str = "triangular mask"
     if fl is not None:
         fl.image(residual, ax=ax_list[1, 1])
         ax_list[1, 1].set_title("Masked Residual")
@@ -341,26 +355,15 @@ def hermitian_function_test(
     best_shift = residual["center":final_range].C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
     if fl is not None:
-        axvline(x=best_shift * 1e6, c="white", linestyle=":")
         fl.next("cost function %s - freq filter" % title_str)
-        residual.name("cost function")
-        fl.plot(residual, color="k", alpha=0.5, human_units=False)
         fl.twinx(orig=False, color="red")
-        selection.name("absolute value")
-        fl.plot(
-            abs(selection)
-            .mean_all_but(direct)
-            .rename(direct, "center")
-            .set_units("center", "s"),
-            color="red",
-            alpha=0.5,
-            human_units=False,
-        )
+        residual.name("cost function")
+        fl.plot(residual, color="r", alpha=0.5, human_units=False)
+        ylim(0, residual["center" : (best_shift - 4e-3, best_shift)].data.max())
         axvline(x=best_shift, c="k", linestyle=":")
-        for dwell_int in r_[0:5]:
+        for dwell_int in r_[-5:5]:
             axvline(
                 x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="k", linestyle=":"
             )
-        fl.twinx(orig=True)
-        ylim(0, residual["center" : (best_shift - 4e-3, best_shift)].data.max())
+        fl.pop_marker()
     return best_shift
