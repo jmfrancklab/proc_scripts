@@ -6,13 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
 from proc_scripts import *
+from .simple_functions import select_pathway
 t2 = symbols('t2')
 
-def select_pathway(s,pathway):
-    retval = s
-    for k,v in pathway.items():
-        retval = retval[k,v]
-    return retval
 def as_scan_nbr(d):
     '''since we need to relabel vd frequently- we make a method'''
     return d.C.setaxis('vd','#').set_units('vd','scan #')

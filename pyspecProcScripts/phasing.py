@@ -4,6 +4,7 @@ from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
 from pylab import xlim
 import numpy as np
+from numpy import r_, c_
 from scipy import linalg
 import logging
 def zeroth_order_ph(d, fl=None):

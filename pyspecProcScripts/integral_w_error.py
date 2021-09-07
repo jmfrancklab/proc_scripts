@@ -1,13 +1,9 @@
 from pyspecdata import *
 from .integrate_limits import integrate_limits
+from .simple_functions import select_pathway
 import numpy as np
 from pylab import *
-def select_pathway(s,pathway):
-    retval = s
-    for k,v in pathway.items():
-        retval = retval[k,v]
-    return retval    
-def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,return_frq_slice=False):
+def integral_w_errors(s,sig_path,error_path, convolve_method=None, indirect='vd', direct='t2',fl=None,return_frq_slice=False):
     """Calculates the propagation of error for the given signal and returns
     signal with the error associated.
     
@@ -18,6 +14,8 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
     error_path: dict
                 Dictionary of all coherence pathways that are 
                 not the signal pathway.
+    convolve_meth: str
+                method of convolution used in integrating limits
     indirect:   str
                 Indirect axis.
     direct:     str
@@ -30,7 +28,12 @@ def integral_w_errors(s,sig_path,error_path, indirect='vd', direct='t2',fl=None,
              not included in the signal pathway.
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    frq_slice = integrate_limits(select_pathway(s,sig_path),fl=fl)
+    if convolve_method is not None:
+        kwargs = {'convolve_method':convolve_method}
+    else:
+        kwargs = {}
+    frq_slice = integrate_limits(select_pathway(s,sig_path),
+            **kwargs)
     logging.debug(strm('frq_slice is',frq_slice))
     s = s[direct:frq_slice]
     f = s.getaxis(direct)
