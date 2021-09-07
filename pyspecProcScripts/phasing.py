@@ -199,7 +199,7 @@ def hermitian_function_test(
     s,
     direct="t2",
     frq_range=(-2.5e3, 2.5e3),  # assumes signal is somewhat on resonance
-    aliasing_slop=2, # if this is set to 3 rather than 2, the IR version is failing.  That shouldn't be happening!  (Equivalently, if we set ini_delay to 3ms in 7093, this also fails!)
+    aliasing_slop=3,
     band_mask=False,
     final_range=(100e-5, None),
     fl=None,
@@ -241,9 +241,9 @@ def hermitian_function_test(
     s.ift(direct, pad=1024 * 16)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
-    ini_delay = non_aliased_range[0]*new_dt
-    logger.debug(strm("ini delay is",ini_delay))
     s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
+    ini_delay = s.getaxis(direct)[0]
+    logger.debug(strm("ini delay is",ini_delay))
     if fl is not None:
         fl.push_marker()
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
@@ -257,15 +257,6 @@ def hermitian_function_test(
     N = ndshape(residual)[direct]
     mid_idx = N // 2 + N % 2 - 1
     residual = residual[direct, 0 : 2 * mid_idx + 1]
-    dt = residual.get_ft_prop(direct, "dt")
-    # the shifts themselves run from 0 to mid_idx -- the echo-centers
-    # these correspond to are different. Also, we're not really
-    # worried about the sub-integer shift here, because we can just
-    # use sinc interpolation before we start -- see:
-    # https://jmfrancklab.slack.com/archives/CLMMYDD98/p1623354066039100
-    shifts = nddata(dt * (r_[0:mid_idx]), "shift")
-    shifts.set_units("shift", "s")
-    logger.debug(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
     if fl is not None:
         if band_mask:
             title_str = "rectangular mask"
@@ -282,6 +273,15 @@ def hermitian_function_test(
             alpha=0.5,
             human_units=False,
         )
+    dt = residual.get_ft_prop(direct, "dt")
+    # the shifts themselves run from 0 to mid_idx -- the echo-centers
+    # these correspond to are different. Also, we're not really
+    # worried about the sub-integer shift here, because we can just
+    # use sinc interpolation before we start -- see:
+    # https://jmfrancklab.slack.com/archives/CLMMYDD98/p1623354066039100
+    shifts = nddata(dt * (r_[0:mid_idx]), "shift")
+    shifts.set_units("shift", "s")
+    logger.debug(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
     residual.ft(direct)
     residual *= np.exp(-1j * 2 * pi * shifts * residual.fromaxis(direct))
     residual.ift(direct)
@@ -302,7 +302,6 @@ def hermitian_function_test(
     # I tried removing the following line, and the 2D residual actually
     # looks sharper, but then the 1D plot of the cost function disappears
     # -- what's up with that?
-    residual /= abs(center_point) # weight 'residual' by 1/(signal amplitude)
     residual = abs(residual - residual[direct, ::-1].runcopy(np.conj)).mean_all_but(
         ["shift", direct]
     )
@@ -329,7 +328,7 @@ def hermitian_function_test(
         mask = mask.astype(float)
         norm = np.floor(mid_idx - B)
         norm = norm.astype(float)
-        mask /= (norm) * 2
+        mask /= ((norm) * 2)**2
         mask = nddata(mask, [direct, "shift"])
         mask.setaxis(direct, residual.getaxis(direct))
         mask.setaxis("shift", residual.getaxis("shift"))
@@ -358,8 +357,10 @@ def hermitian_function_test(
         fl.twinx(orig=False, color="red")
         residual.name("cost function")
         fl.plot(residual, color="r", alpha=0.5, human_units=False)
-        ylim(0, residual["center" : (best_shift - 4e-3, best_shift)].data.max())
-        axvline(x=best_shift, c="k", linestyle=":")
+        fl.plot(residual["center" : (best_shift - 4e-3, best_shift)], ':', alpha=0.5, human_units=False)
+        #ylim(0, residual["center" : (best_shift - 4e-3, best_shift)].data.max())
+        print("I find max",residual["center" : (best_shift - 4e-3, best_shift)].data.max())
+        axvline(x=best_shift, c="k", linestyle="--")
         for dwell_int in r_[-5:5]:
             axvline(
                 x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="k", linestyle=":"
