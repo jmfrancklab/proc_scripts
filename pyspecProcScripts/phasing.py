@@ -201,7 +201,6 @@ def hermitian_function_test(
     frq_range=(-2.5e3, 2.5e3),  # assumes signal is somewhat on resonance
     aliasing_slop=3,
     band_mask=False,
-    final_range=(100e-5, None),
     fl=None,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
@@ -248,12 +247,12 @@ def hermitian_function_test(
         fl.push_marker()
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
-        fl.plot(abs(s), ax=ax_list[0, 0])
+        fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
     probable_center = abs(s).convolve(direct,orig_dt*3).argmax(direct).item() # convolve just for some signal averaging
     residual = s[direct:(0,probable_center*2)]
     if fl is not None:
-        fl.plot(abs(residual), ':', ax=ax_list[0, 0])
+        fl.plot(abs(residual), ':', ax=ax_list[0, 0], human_units=False)
     N = ndshape(residual)[direct]
     mid_idx = N // 2 + N % 2 - 1
     residual = residual[direct, 0 : 2 * mid_idx + 1]
@@ -344,13 +343,12 @@ def hermitian_function_test(
     )
     residual = residual["center", ::-1]
     if fl is not None:
-        fl.image(residual, ax=ax_list[1, 2])
+        fl.image(residual, ax=ax_list[1, 2], human_units=False)
         ax_list[1, 2].set_title("Masked Residual -- Relabeled")
-        xlim(0, 15)
         fig.tight_layout()
     residual.mean(direct)
     residual.set_units("center", "s")
-    best_shift = residual["center":final_range].C.argmin("center").item()
+    best_shift = residual.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
     if fl is not None:
         fl.next("cost function %s - freq filter" % title_str)

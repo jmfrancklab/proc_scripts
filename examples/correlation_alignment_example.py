@@ -14,7 +14,7 @@ from numpy.random import normal, seed
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
-# sphinx_gallery_thumbnail_number = 6
+# sphinx_gallery_thumbnail_number = 4
 
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
@@ -66,21 +66,10 @@ with figlist_var() as fl:
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
-        rough_center = (
-            abs(select_pathway(data, signal_pathway))
-            .C.convolve("t2", 0.3e-3)
-            .mean_all_but("t2")
-            .argmax("t2")
-            .item()
-        )
-        logger.info(strm("Rough center is:", rough_center))
-        data.setaxis("t2", lambda x: x - rough_center).register_axis({"t2": 0})
-        data.ft("t2")
-        data.ift("t2")
         data /= zeroth_order_ph(select_pathway(data, signal_pathway))
         # }}}
         # {{{ Applying the phase corrections
-        best_shift, max_shift = hermitian_function_test(
+        best_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway)
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
