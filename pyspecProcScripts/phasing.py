@@ -199,7 +199,7 @@ def hermitian_function_test(
     s,
     direct="t2",
     frq_range=(-2.5e3, 2.5e3),  # assumes signal is somewhat on resonance
-    aliasing_slop=3, # if this is set to 3 rather than 2, the IR version is failing.  That shouldn't be happening!  (Equivalently, if we set ini_delay to 3ms in 7093, this also fails!)
+    aliasing_slop=2, # if this is set to 3 rather than 2, the IR version is failing.  That shouldn't be happening!  (Equivalently, if we set ini_delay to 3ms in 7093, this also fails!)
     band_mask=False,
     final_range=(100e-5, None),
     fl=None,
@@ -240,10 +240,10 @@ def hermitian_function_test(
     s = s[direct:frq_range]
     s.ift(direct, pad=1024 * 16)
     new_dt = s.get_ft_prop(direct, "dt")
-    non_aliased_range = r_[-aliasing_slop,aliasing_slop]*int(orig_dt/new_dt)
+    non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     ini_delay = non_aliased_range[0]*new_dt
     logger.debug(strm("ini delay is",ini_delay))
-    s = s[direct:(non_aliased_range[0],non_aliased_range[1])]
+    s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
     if fl is not None:
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
@@ -276,7 +276,6 @@ def hermitian_function_test(
     ), "t2 dimension *must* be odd, please check what went wrong."
     # {{{phase correct 
     center_point = residual[direct, mid_idx]
-    #residual /=center_point
     residual /= center_point/abs(center_point)
     # }}}
     if fl is not None:
