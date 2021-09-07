@@ -10,6 +10,7 @@ from pyspecdata import *
 from pyspecProcScripts import integrate_limits, integral_w_errors
 from numpy.random import seed
 
+rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 2
 
 seed(2021)  # so the same random result is generated every time -- 2021 is meaningless

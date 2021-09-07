@@ -1,6 +1,8 @@
 """
-Demonstrate Integrate Limits
-============================
+Lorentzian to Gaussian Transformation
+=====================================
+
+Demonstrates the Lorentzian to Gaussian transformation.
 
 For this demonstration, we generate inversion
 recovery data for a single peak, with a relatively
@@ -9,15 +11,6 @@ alignment is required before integration. We mimic
 the 8-step phase cycle used for echo detection in
 these experiments, and include the effect of the
 echo time on the data detected in the time domain.
-
-We use integrate_limits to detect the frequency
-limits used for peak integration, based on a
-matched Lorentzian filter on our frequency domain
-data.
-
-We illustrate the position of the frequency
-limits with vertical lines on the final plot.
-
 """
 from pylab import *
 from pyspecdata import *
@@ -28,7 +21,7 @@ import sympy as s
 from collections import OrderedDict
 seed(2021)
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
-# sphinx_gallery_thumbnail_number = 1
+# sphinx_gallery_thumbnail_number = 2
 init_logging(level="debug")
 
 with figlist_var() as fl:
