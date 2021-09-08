@@ -240,6 +240,7 @@ def hermitian_function_test(
     s.ift(direct, pad=1024 * 16)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
+    ini_start = s.getaxis(direct)[0]
     s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
     ini_delay = s.getaxis(direct)[0]
     logger.debug(strm("ini delay is",ini_delay))
@@ -250,7 +251,7 @@ def hermitian_function_test(
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
     probable_center = abs(s).convolve(direct,orig_dt*3).argmax(direct).item() # convolve just for some signal averaging
-    residual = s[direct:(0,probable_center*2)]
+    residual = s[direct:(ini_start,ini_start+(probable_center-ini_start)*2)]
     if fl is not None:
         fl.plot(abs(residual), ':', ax=ax_list[0, 0], human_units=False)
     N = ndshape(residual)[direct]
