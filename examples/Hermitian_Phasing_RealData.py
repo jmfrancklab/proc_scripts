@@ -19,18 +19,17 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 1
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-echo_time = 10e-3
 f_range = (-1e3, 1e3)
 filename = '210604_50mM_4AT_AOT_w11_cap_probe_echo'
 signal_pathway = {'ph1':1,'ph2':0}
 with figlist_var() as fl:
-    for nodename,file_location,postproc,label in [
+    for nodename,file_location,postproc,label,herm_range,alias_slop in [
         ('tau_1000','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 1 ms',),
+            'tau is 1 ms',(-0.25e3,0.3e3),1),
         ('tau_3500','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 3.5 ms'),
+            'tau is 3.5 ms',(-0.25e3,0.25e3),1),
         ('tau_11135','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 11.135 ms')
+            'tau is 11.135 ms',(-0.5e3,0.5e3),2)
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,
                 postproc=postproc,lookup=lookup_table,fl=fl)
@@ -48,8 +47,8 @@ with figlist_var() as fl:
         ax_list[1].set_title("Zeroth Order Phase Corrected")
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean("nScans"), signal_pathway),
-            frq_range = (-0.5e3,0.5e3),
-            aliasing_slop=2,
+            frq_range = herm_range,
+            aliasing_slop=alias_slop,
             fl=fl
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
