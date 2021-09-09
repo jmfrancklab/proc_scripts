@@ -216,8 +216,9 @@ def hermitian_function_test(
         Because we sinc interpolate here, we need to allow for the fact that
         the very beginning and ending of the time-domain signal are
         interpolated to match.
-        In units of the dwell time of the original signal, this slices out the
-        aliased parts at the beginning and end of the time-domain signal.
+        This value is the multiple of the dwell time of the original signal
+        that is sliced out due to the fact this amount of signal is aliased 
+        at the beginning and end of the time-domain signal.
     band_mask:          boolean
         determines the type of mask used on the 2D
         residual for accurate calculation of cost
