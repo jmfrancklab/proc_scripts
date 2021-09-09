@@ -241,7 +241,8 @@ def hermitian_function_test(
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     ini_start = s.getaxis(direct)[0]
-    s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
+    if aliasing_slop > 0:
+        s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
     ini_delay = s.getaxis(direct)[0]
     logger.debug(strm("ini delay is",ini_delay))
     if fl is not None:
@@ -250,7 +251,7 @@ def hermitian_function_test(
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
-    probable_center = abs(s).convolve(direct,orig_dt*3).argmax(direct).item() # convolve just for some signal averaging
+    probable_center = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).argmax(direct).item() # convolve just for some signal averaging
     residual = s[direct:(ini_start,ini_start+(probable_center-ini_start)*2)]
     if fl is not None:
         fl.plot(abs(residual), ':', ax=ax_list[0, 0], human_units=False)
@@ -347,7 +348,7 @@ def hermitian_function_test(
         fl.image(residual, ax=ax_list[1, 2], human_units=False)
         ax_list[1, 2].set_title("Masked Residual -- Relabeled")
         fig.tight_layout()
-    residual.mean(direct)
+    residual.mean_all_but(["shift", "center"])
     residual.set_units("center", "s")
     best_shift = residual.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
