@@ -6,6 +6,7 @@ from pylab import xlim, subplots, axvline, ylim, sca
 import numpy as np
 from scipy import linalg
 import logging
+import matplotlib.pyplot as plt
 
 
 def zeroth_order_ph(d, fl=None):
@@ -362,6 +363,12 @@ def hermitian_function_test(
         #ylim(0, residual["center" : (best_shift - 4e-3, best_shift)].data.max())
         print("I find max",residual["center" : (best_shift - 4e-3, best_shift)].data.max())
         axvline(x=best_shift, c="k", linestyle="--")
+        text(x = best_shift+0.0005,
+                y = residual.max()-0.001,
+                s = "best shift is: %f"%best_shift,
+                fontsize = 16,
+                color='red'
+                )
         for dwell_int in r_[-5:5]:
             axvline(
                 x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="k", linestyle=":"

@@ -26,10 +26,10 @@ with figlist_var() as fl:
     for nodename,file_location,postproc,label in [
         ('tau_1000','ODNP_NMR_comp/Echoes','spincore_echo_v1',
             'tau is 1 ms'),
-        ('tau_3500','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 3.5 ms'),
-        ('tau_11135','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 11.135 ms')
+        #('tau_3500','ODNP_NMR_comp/Echoes','spincore_echo_v1',
+        #    'tau is 3.5 ms'),
+        #('tau_11135','ODNP_NMR_comp/Echoes','spincore_echo_v1',
+        #    'tau is 11.135 ms')
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,
                 postproc=postproc,lookup=lookup_table,fl=fl)
@@ -38,15 +38,16 @@ with figlist_var() as fl:
         fig.suptitle(fl.basename)
         data.reorder(['ph1','ph2','nScans','t2'])
         fl.next("Data processing", fig=fig)
-        fl.image(data, ax=ax_list[0])
+        fl.image(data['t2':(-1e3,1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
         data /= zeroth_order_ph(select_pathway(data,signal_pathway), fl=fl)
-        fl.image(data, ax=ax_list[1], human_units=False)
+        fl.image(data['t2':(-1e3,1e3)], ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Zeroth Order Phase Corrected")
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean("nScans"), signal_pathway),
+            frq_range=(-1.77e3,1.77e3),
             fl=fl
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
