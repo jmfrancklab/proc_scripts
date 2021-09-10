@@ -358,11 +358,11 @@ def hermitian_function_test(
         s.name("cost function")
         fl.plot(s, color="r", alpha=0.5, human_units=False)
         fl.plot(s["center" : (best_shift - 4e-3, best_shift)], ':', alpha=0.5, human_units=False)
-        #ylim(0, s["center" : (best_shift - 4e-3, best_shift)].data.max())
         print("I find max",s["center" : (best_shift - 4e-3, best_shift)].data.max())
         axvline(x=best_shift, c="k", linestyle="--")
+        print(s.max())
         text(x = best_shift+0.0005,
-                y = s.max()-0.001,
+                y = s.max(),
                 s = "best shift is: %f"%best_shift,
                 fontsize = 16,
                 color='red'
