@@ -199,7 +199,6 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 def hermitian_function_test(
     s,
     direct="t2",
-    frq_range=(-2.5e3, 2.5e3),  # assumes signal is somewhat on resonance
     aliasing_slop=3,
     band_mask=False,
     fl=None,
@@ -210,9 +209,6 @@ def hermitian_function_test(
     ==========
     direct:             str
         Axis of data (i.e., direct dimension).
-    frq_range:          tuple of floats
-        range over which to slice data in the
-        frequency domain for frequency filtering
     aliasing_slop:          int
         Because we sinc interpolate here, we need to allow for the fact that
         the very beginning and ending of the time-domain signal are
@@ -236,9 +232,10 @@ def hermitian_function_test(
         which gives an artificial minimum and messes with the
         cost function.
     """
+    s = s.C # work on a copy, so that we're not messing w/ anything
     orig_dt = s.get_ft_prop(direct, "dt")
-    s.ft(direct)
-    s = s[direct:frq_range]
+    if not s.get_ft_prop(direct):
+        s.ft(direct)
     s.ift(direct, pad=1024 * 16)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
@@ -255,21 +252,21 @@ def hermitian_function_test(
         ax_list[0, 0].set_title("Data with Padding")
     half_decay_range = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).contiguous(lambda x: x < 0.5 * abs(x).data.max())
     half_decay_pt = half_decay_range[0][0]
-    residual = s[direct:(ini_start,ini_start+(half_decay_pt-ini_start)*2)]
+    s = s[direct:(ini_start,ini_start+(half_decay_pt-ini_start)*2)]
     if fl is not None:
-        fl.plot(abs(residual), ':', ax=ax_list[0, 0], human_units=False)
-    N = ndshape(residual)[direct]
+        fl.plot(abs(s), ':', ax=ax_list[0, 0], human_units=False)
+    N = ndshape(s)[direct]
     mid_idx = N // 2 + N % 2 - 1
-    residual = residual[direct, 0 : 2 * mid_idx + 1]
+    s = s[direct, 0 : 2 * mid_idx + 1]
     if fl is not None:
         if band_mask:
             title_str = "rectangular mask"
         else:
             title_str = "triangular mask"
         fl.next("cost function %s - freq filter" % title_str)
-        residual.name("absolute value")
+        s.name("absolute value")
         fl.plot(
-            abs(residual)
+            abs(s)
             .mean_all_but(direct)
             .rename(direct, "center")
             .set_units("center", "s"),
@@ -277,7 +274,7 @@ def hermitian_function_test(
             alpha=0.5,
             human_units=False,
         )
-    dt = residual.get_ft_prop(direct, "dt")
+    dt = s.get_ft_prop(direct, "dt")
     # the shifts themselves run from 0 to mid_idx -- the echo-centers
     # these correspond to are different. Also, we're not really
     # worried about the sub-integer shift here, because we can just
@@ -286,45 +283,45 @@ def hermitian_function_test(
     shifts = nddata(dt * (r_[0:mid_idx]), "shift")
     shifts.set_units("shift", "s")
     logger.debug(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
-    residual.ft(direct)
-    residual *= np.exp(-1j * 2 * pi * shifts * residual.fromaxis(direct))
-    residual.ift(direct)
-    logger.debug(strm("Length of t2 dimension:", ndshape(residual)[direct]))
+    s.ft(direct)
+    s *= np.exp(-1j * 2 * pi * shifts * s.fromaxis(direct))
+    s.ift(direct)
+    logger.debug(strm("Length of t2 dimension:", ndshape(s)[direct]))
     assert (
-        ndshape(residual)[direct] % 2 == 1
+        ndshape(s)[direct] % 2 == 1
     ), "t2 dimension *must* be odd, please check what went wrong."
     # {{{phase correct 
-    center_point = residual[direct, mid_idx]
-    residual /= center_point/abs(center_point)
+    center_point = s[direct, mid_idx]
+    s /= center_point/abs(center_point)
     # }}}
     if fl is not None:
         if "power" in s.dimlabels:
-            fl.image(residual["power", -4], ax=ax_list[0, 1])
+            fl.image(s["power", -4], ax=ax_list[0, 1])
         else:
-            fl.image(residual, ax=ax_list[0, 1])
+            fl.image(s, ax=ax_list[0, 1])
         ax_list[0, 1].set_title("shifted and phased")
-    # I tried removing the following line, and the 2D residual actually
+    # I tried removing the following line, and the 2D s actually
     # looks sharper, but then the 1D plot of the cost function disappears
     # -- what's up with that?
-    residual = abs(residual - residual[direct, ::-1].runcopy(np.conj)).mean_all_but(
+    s = abs(s - s[direct, ::-1].runcopy(np.conj)).mean_all_but(
         ["shift", direct]
     )
     if fl is not None:
-        fl.image(residual, ax=ax_list[0, 2])
+        fl.image(s, ax=ax_list[0, 2])
         ax_list[0, 2].set_title("Residual 2D")
     if band_mask:
         n_mask_pts = int(band_mask / dt)
         if n_mask_pts % 2:
             n_mask_pts -= 1
-        residual[direct, mid_idx + n_mask_pts :] = 0
-        residual[direct, : mid_idx - n_mask_pts] = 0
+        s[direct, mid_idx + n_mask_pts :] = 0
+        s[direct, : mid_idx - n_mask_pts] = 0
     else:
         # Here we would do the calculation outlined for the triangle mask,
         # but with only two new variables -- A and B
         A = r_[-mid_idx : mid_idx + 1]
         A = -abs(A)
         A += mid_idx
-        B = residual.fromaxis("shift").data / dt
+        B = s.fromaxis("shift").data / dt
         A = A.reshape(-1, 1)
         B = B.reshape(1, -1)
         mask = np.greater_equal(A, B)
@@ -334,38 +331,38 @@ def hermitian_function_test(
         norm = norm.astype(float)
         mask /= ((norm) * 2)**2
         mask = nddata(mask, [direct, "shift"])
-        mask.setaxis(direct, residual.getaxis(direct))
-        mask.setaxis("shift", residual.getaxis("shift"))
+        mask.setaxis(direct, s.getaxis(direct))
+        mask.setaxis("shift", s.getaxis("shift"))
         if fl is not None:
             fl.image(mask, ax=ax_list[1, 0], human_units=False)
             ax_list[1, 0].set_title("Mask")
-        residual *= mask
+        s *= mask
     if fl is not None:
-        fl.image(residual, ax=ax_list[1, 1])
+        fl.image(s, ax=ax_list[1, 1])
         ax_list[1, 1].set_title("Masked Residual")
-    residual.rename("shift", "center").setaxis(
+    s.rename("shift", "center").setaxis(
         "center", dt * (mid_idx - r_[0:mid_idx]) + ini_delay
     )
-    residual = residual["center", ::-1]
+    s = s["center", ::-1]
     if fl is not None:
-        fl.image(residual, ax=ax_list[1, 2], human_units=False)
+        fl.image(s, ax=ax_list[1, 2], human_units=False)
         ax_list[1, 2].set_title("Masked Residual -- Relabeled")
         fig.tight_layout()
-    residual.mean_all_but(["shift", "center"])
-    residual.set_units("center", "s")
-    best_shift = residual.C.argmin("center").item()
+    s.mean_all_but(["shift", "center"])
+    s.set_units("center", "s")
+    best_shift = s.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
     if fl is not None:
         fl.next("cost function %s - freq filter" % title_str)
         fl.twinx(orig=False, color="red")
-        residual.name("cost function")
-        fl.plot(residual, color="r", alpha=0.5, human_units=False)
-        fl.plot(residual["center" : (best_shift - 4e-3, best_shift)], ':', alpha=0.5, human_units=False)
-        #ylim(0, residual["center" : (best_shift - 4e-3, best_shift)].data.max())
-        print("I find max",residual["center" : (best_shift - 4e-3, best_shift)].data.max())
+        s.name("cost function")
+        fl.plot(s, color="r", alpha=0.5, human_units=False)
+        fl.plot(s["center" : (best_shift - 4e-3, best_shift)], ':', alpha=0.5, human_units=False)
+        #ylim(0, s["center" : (best_shift - 4e-3, best_shift)].data.max())
+        print("I find max",s["center" : (best_shift - 4e-3, best_shift)].data.max())
         axvline(x=best_shift, c="k", linestyle="--")
         text(x = best_shift+0.0005,
-                y = residual.max()-0.001,
+                y = s.max()-0.001,
                 s = "best shift is: %f"%best_shift,
                 fontsize = 16,
                 color='red'
