@@ -253,8 +253,9 @@ def hermitian_function_test(
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
-    probable_center = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).argmax(direct).item() # convolve just for some signal averaging
-    residual = s[direct:(ini_start,ini_start+(probable_center-ini_start)*2)]
+    half_decay_range = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).contiguous(lambda x: x < 0.5 * abs(x).data.max())
+    half_decay_pt = half_decay_range[0][0]
+    residual = s[direct:(ini_start,ini_start+(half_decay_pt-ini_start)*2)]
     if fl is not None:
         fl.plot(abs(residual), ':', ax=ax_list[0, 0], human_units=False)
     N = ndshape(residual)[direct]
