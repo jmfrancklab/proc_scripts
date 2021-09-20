@@ -36,7 +36,7 @@ colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
 for thisfile, exp_type, nodename in [
     (
         "201113_TEMPOL_capillary_probe_16Scans_noModCoil",
-        "ODNP_NMR_comp/test_equipment",
+        "ODNP_NMR_comp/old",
         "signal",
     )
 ]:
@@ -105,7 +105,7 @@ for thisfile, exp_type, nodename in [
     s_integral = s["t2":frq_slice].C # the "official" copy of the integral
     s_integral = select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
-    avg_d = s_integral.C.mean().item()
+    avg_d = s_integral.C.mean().real.item()
     s_integral /= avg_d
     s /= avg_d
     # }}}
