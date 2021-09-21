@@ -53,5 +53,5 @@ mysgn = determine_sign(select_pathway(myslice, signal_pathway), fl=fl)
 data_int, data = process_data(s=data,signal_pathway=signal_pathway,
         f_range=f_range,t_range=t_range, sgn=mysgn,indirect='vd',fl=fl)
 fl.next('s_int')
-fl.plot(select_pathway(data_int,signal_pathway))
+fl.plot(select_pathway(data_int,signal_pathway),'o')
 fl.show()
