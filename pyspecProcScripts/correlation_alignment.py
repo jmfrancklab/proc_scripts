@@ -64,7 +64,7 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 the data in the calculation of the correlation function.
     """
 
-    logging.info(strm("Applying the correlation routine"))
+    logging.debug(strm("Applying the correlation routine"))
     if avg_dim:
         phcycdims = [j for j in s_orig.dimlabels if j.startswith('ph')]
         indirect = set(s_orig.dimlabels)-set(phcycdims)-set([direct])
@@ -96,12 +96,12 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
     for x in range(len(signal_keys)):
         for_nu_center = for_nu_center[signal_keys[x],signal_values[x]]
     nu_center = for_nu_center.mean(indirect_dim).C.argmax(direct)
-    logging.info(strm("Center frequency", nu_center))
+    logging.debug(strm("Center frequency", nu_center))
     for my_iter in range(100):
         i += 1
-        logging.info(strm("*** *** ***"))
-        logging.info(strm("CORRELATION ALIGNMENT ITERATION NO. ",i))
-        logging.info(strm("*** *** ***"))
+        logging.debug(strm("*** *** ***"))
+        logging.debug(strm("CORRELATION ALIGNMENT ITERATION NO. ",i))
+        logging.debug(strm("*** *** ***"))
         s_orig.ift(direct)
         s_copy = s_orig.C
         if align_phases:
@@ -127,7 +127,7 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
                 indirect_dim).run(conj)
         correl.reorder([indirect_dim,direct],first=False)
         if my_iter ==0:
-            logging.info(strm("holder"))
+            logging.debug(strm("holder"))
             if fl:
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[1])
@@ -138,7 +138,7 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
             correl.ft(['Delta%s'%k.capitalize()])
             correl = correl['Delta'+k.capitalize(),v]+correl['Delta'+k.capitalize(),0]
         if my_iter ==0:
-            logging.info(strm("holder"))
+            logging.debug(strm("holder"))
             if fl:
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[2],human_units=False)
@@ -152,19 +152,19 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
         s_orig.ft(direct)
         s_copy.ft(direct)
         if my_iter == 0:
-            logging.info(strm("holder"))
+            logging.debug(strm("holder"))
             if fl:
                 fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[3],human_units=False)
                 ax_list[3].set_title('after correlation\nbefore ph0 restore')
-        logging.info(strm('signal energy per transient (recalc to check that it stays the same):',(abs(s_copy**2).data.sum().item() / N)))
+        logging.debug(strm('signal energy per transient (recalc to check that it stays the same):',(abs(s_copy**2).data.sum().item() / N)))
 
         this_E = (abs(s_copy.C.sum(indirect_dim))**2).data.sum().item() / N**2
         energy_vals.append(this_E / sig_energy)
-        logging.info(strm('averaged signal energy (per transient):', this_E))
+        logging.debug(strm('averaged signal energy (per transient):', this_E))
         if last_E is not None:
             energy_diff = (this_E - last_E)/sig_energy
-            logging.info(strm(energy_diff))
+            logging.debug(strm(energy_diff))
             if abs(energy_diff) < tol and my_iter > 4:
                 break
         last_E = this_E
