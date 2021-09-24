@@ -8,8 +8,6 @@ from numpy import r_, c_
 from scipy import linalg
 import logging
 import matplotlib.pyplot as plt
-
-
 def zeroth_order_ph(d, fl=None):
     r"""determine the covariance of the datapoints
     in complex plane, and use to phase the
@@ -106,6 +104,7 @@ def zeroth_order_ph(d, fl=None):
             evec_forplot[0, 0], evec_forplot[1, 0], "o", alpha=0.5, label="first evec"
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
+        fl.plot(
         fl.plot(
             rotation_vector[0],
             rotation_vector[1],
