@@ -52,7 +52,7 @@ myslice = data['t2':f_range]
 mysgn = determine_sign(select_pathway(myslice, signal_pathway), fl=fl)
 data_int, data = process_data(s=data,signal_pathway=signal_pathway,
         f_range=f_range,t_range=t_range, sgn=mysgn,
-        indirect='vd',error_bars=False,correlate=False,
+        indirect='vd',error_bars=True,correlate=False,
         fl=fl)
 fl.next('s_int')
 fl.plot(data_int,'o')
