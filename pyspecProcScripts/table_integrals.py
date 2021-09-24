@@ -43,21 +43,9 @@ def process_data(s,searchstr='',
     s.ft(direct)
     s.ft(list(signal_pathway))
     #}}}
-    zero_crossing=abs(select_pathway(s,signal_pathway)).sum(direct).argmin(indirect,raw_index=True).item()
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(direct)
-    rough_center = (
-            abs(select_pathway(s,signal_pathway))
-            .C.convolve(direct,0.3e-3)
-            .mean_all_but(direct)
-            .argmax(direct)
-            .item()
-            )
-    s.setaxis(direct, lambda x: x - rough_center).register_axis({direct:0})
-    s.ft(direct)
-    s.ift(direct)
-    s /= zeroth_order_ph(select_pathway(s,signal_pathway),fl=fl)
     best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),signal_pathway).C.convolve(direct,3e-4))
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
@@ -65,10 +53,10 @@ def process_data(s,searchstr='',
         fl.next('time domain after hermitian')
         fl.image(s)
         s.ft(direct)
-        print("phasing")
         fl.next('frequency domain after hermitian')
         fl.image(s)
         s.ift(direct)
+    s /= zeroth_order_ph(select_pathway(s,signal_pathway),fl=fl)
     s.ft(direct)
     if fl is not None:
         fl.next('phase corrected data -- frequency domain')
@@ -110,6 +98,7 @@ def process_data(s,searchstr='',
     if fl is not None:
         fl.next('FID sliced')
         fl.image(s)
+    s *= sgn
     if error_bars:
         if indirect is 'vd':
             error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
@@ -127,5 +116,6 @@ def process_data(s,searchstr='',
         x[:] /= sqrt(2)
     else:
         s_int = s.mean(direct)
+        s_int = select_pathway(s_int,signal_pathway)
     return s_int, s
     

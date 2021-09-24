@@ -27,7 +27,7 @@ fl = fl_mod()
 # offset of 300 Hz, FWHM 10 Hz
 t2, td, vd, ph1, ph2 = s.symbols('t2 td vd ph1 ph2')
 signal_pathway = {'ph1':0,'ph2':1}
-f_range = (-200,300)
+f_range = (-250,350)
 t_range= (0,30e-3)
 echo_time = 5e-3
 data = fake_data(
@@ -51,7 +51,9 @@ fl.image(data)
 myslice = data['t2':f_range]
 mysgn = determine_sign(select_pathway(myslice, signal_pathway), fl=fl)
 data_int, data = process_data(s=data,signal_pathway=signal_pathway,
-        f_range=f_range,t_range=t_range, sgn=mysgn,indirect='vd',fl=fl)
+        f_range=f_range,t_range=t_range, sgn=mysgn,
+        indirect='vd',error_bars=False,correlate=False,
+        fl=fl)
 fl.next('s_int')
-fl.plot(select_pathway(data_int,signal_pathway),'o')
+fl.plot(data_int,'o')
 fl.show()
