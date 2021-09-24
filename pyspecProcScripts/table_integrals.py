@@ -69,7 +69,7 @@ def process_data(s,searchstr='',
         s.ift(list(signal_pathway))
         fl.basename='correlation subroutine:'
         opt_shift, sigma, my_mask = correl_align(s,indirect_dim=indirect,
-                signal_pathway=signal_pathway, sigma=10)
+                signal_pathway=signal_pathway,sigma = 125,fl=fl)
         s.ift(direct)
         s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(direct))
         s.ft(direct)
