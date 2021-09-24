@@ -105,7 +105,6 @@ def zeroth_order_ph(d, fl=None):
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
         fl.plot(
-        fl.plot(
             rotation_vector[0],
             rotation_vector[1],
             "o",
