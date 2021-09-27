@@ -20,7 +20,7 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 1
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-f_range = (-150, 150)
+f_range = (-200, 200)
 filename = '201113_TEMPOL_capillary_probe_var_tau_1'
 signal_pathway = {'ph1':1,'ph2':0}
 with figlist_var() as fl:
@@ -34,11 +34,8 @@ with figlist_var() as fl:
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,
                 postproc=postproc,lookup=lookup_table,fl=fl)
-        #fl.show();quit()
-        #print(data.get_prop('acq_params'))
-        #quit()
         tau_list = list(data.getaxis('tau'))
-        print("programmed tau:",tau_list[7])
+        logger.info(strm("programmed tau:",tau_list[7]))
         programmed_tau = tau_list[7]
         data = data['tau',7]
         fl.basename = "(%s)" %programmed_tau
@@ -48,15 +45,15 @@ with figlist_var() as fl:
         fl.next("Data processing", fig=fig)
         fl.image(data['t2':(-1e3,1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
+        data.extend('t2',15e3)
+        data.extend('t2',-15e3)
         data = data['t2':f_range]
-        data.extend('t2',500)
-        data.extend('t2',-500)
         fl.next('extended')
         fl.image(data)
         data.ift("t2")
         best_shift = hermitian_function_test(
             select_pathway(data.C, signal_pathway),
-            aliasing_slop=3,
+            aliasing_slop=9,
             fl=fl
         )
         print("best shift is:",best_shift)
