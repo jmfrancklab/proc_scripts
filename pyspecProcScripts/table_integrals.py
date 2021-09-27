@@ -25,7 +25,8 @@ def process_data(s,searchstr='',
         fl=None):
     if fl is not None:
         fl.basename = "(%s)"%searchstr
-        fig, ax_list = subplots(1,4,figsize=(12,7))
+        fig, ax_list = subplots(1,4,gridspec_kw={'width_ratios':[1,1,1,5]})
+        fig.suptitle(fl.basename)
         fl.next('integration of 2D dataset')
         fl.image(s,ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
@@ -65,12 +66,14 @@ def process_data(s,searchstr='',
         s.reorder(['ph1','ph2','vd',direct])
     else:
         s.reorder(['ph1',indirect,direct])
+    #}}}
+    #{{{Correlate
     if correlate:
         s.ft(direct)
         s.ift(list(signal_pathway))
         fl.basename='correlation subroutine:'
         opt_shift, sigma, my_mask = correl_align(s,indirect_dim=indirect,
-                signal_pathway=signal_pathway,sigma = 125)
+                signal_pathway=signal_pathway,sigma=125)
         s.ift(direct)
         s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(direct))
         s.ft(direct)
@@ -82,11 +85,7 @@ def process_data(s,searchstr='',
             s.reorder(['ph1','ph2',indirect,direct])
         else:
             s.reorder(['ph1',indirect,direct])
-        s.ift(direct)
-        if fl is not None:
-            s.ft(direct)
-            fl.next('Aligned Data')
-            fl.image(s*sgn)
+     #}}}    
     s.ift(direct)
     s = s[direct:(0,t_range[-1])]
     s[direct,0] *= 0.5
@@ -95,6 +94,7 @@ def process_data(s,searchstr='',
     if fl is not None:
         fl.image(s,ax=ax_list[2])
         ax_list[2].set_title('FID sliced')
+    #{{{Integrate with error bars
     if error_bars:
         if indirect is 'vd':
             error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
@@ -110,6 +110,7 @@ def process_data(s,searchstr='',
                 indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
         x[:] /= sqrt(2)
+    #}}}    
     else:
         s_int = s.mean(direct)
         s_int = select_pathway(s_int,signal_pathway)
