@@ -1,4 +1,4 @@
-import pylab as plb
+from pylab import *
 from pyspecdata import *
 from scipy.optimize import minimize, leastsq
 from sympy import exp as s_exp
@@ -23,6 +23,12 @@ def process_data(s,searchstr='',
         error_bars = False,
         correlate = False,
         fl=None):
+    if fl is not None:
+        fl.basename = "(%s)"%searchstr
+        fig, ax_list = subplots(1,4,figsize=(12,7))
+        fl.next('integration of 2D dataset')
+        fl.image(s,ax=ax_list[0])
+        ax_list[0].set_title("Raw Data")
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     s *= sgn
@@ -49,34 +55,26 @@ def process_data(s,searchstr='',
     best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),signal_pathway).C.convolve(direct,3e-4))
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
+    s /= zeroth_order_ph(select_pathway(s,signal_pathway))
     if fl is not None:
-        fl.next('time domain after hermitian')
-        fl.image(s)
         s.ft(direct)
-        fl.next('frequency domain after hermitian')
-        fl.image(s)
+        fl.image(s*sgn,ax=ax_list[1])
+        ax_list[1].set_title("Phased Data")
         s.ift(direct)
-    s /= zeroth_order_ph(select_pathway(s,signal_pathway),fl=fl)
-    s.ft(direct)
-    if fl is not None:
-        fl.next('phase corrected data -- frequency domain')
-        fl.image(s)
     if indirect is 'vd':
         s.reorder(['ph1','ph2','vd',direct])
     else:
         s.reorder(['ph1',indirect,direct])
     if correlate:
+        s.ft(direct)
         s.ift(list(signal_pathway))
         fl.basename='correlation subroutine:'
         opt_shift, sigma, my_mask = correl_align(s,indirect_dim=indirect,
-                signal_pathway=signal_pathway,sigma = 125,fl=fl)
+                signal_pathway=signal_pathway,sigma = 125)
         s.ift(direct)
         s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(direct))
         s.ft(direct)
         fl.basename=None
-        if fl is not None:
-            fl.next(r'after correlation, $\varphi$ domain')
-            fl.image(s)
         s.ift(direct)
         s.ft(list(signal_pathway))
         s.ft(direct)
@@ -86,19 +84,17 @@ def process_data(s,searchstr='',
             s.reorder(['ph1',indirect,direct])
         s.ift(direct)
         if fl is not None:
-            fl.next('After Correlation -- time domain')
-            fl.image(s)
             s.ft(direct)
-            fl.next('After Correlation -- frequency domain')
-            fl.image(s)
+            fl.next('Aligned Data')
+            fl.image(s*sgn)
     s.ift(direct)
     s = s[direct:(0,t_range[-1])]
     s[direct,0] *= 0.5
     s.ft(direct)
-    if fl is not None:
-        fl.next('FID sliced')
-        fl.image(s)
     s *= sgn
+    if fl is not None:
+        fl.image(s,ax=ax_list[2])
+        ax_list[2].set_title('FID sliced')
     if error_bars:
         if indirect is 'vd':
             error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
@@ -111,11 +107,14 @@ def process_data(s,searchstr='',
                     - set([(signal_pathway['ph1'])]))
             error_path = [{'ph1':j} for j in error_path]
         s_int,frq_slice = integral_w_errors(s,signal_pathway,error_path,
-                indirect=indirect, fl=fl, return_frq_slice = True)
+                indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
         x[:] /= sqrt(2)
     else:
         s_int = s.mean(direct)
         s_int = select_pathway(s_int,signal_pathway)
+    if fl is not None:
+        fl.plot(s_int,'o',ax=ax_list[3])
+        ax_list[3].set_title('Integrated Data')
     return s_int, s
     

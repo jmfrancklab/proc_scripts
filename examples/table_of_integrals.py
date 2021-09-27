@@ -54,6 +54,4 @@ data_int, data = process_data(s=data,signal_pathway=signal_pathway,
         f_range=f_range,t_range=t_range, sgn=mysgn,
         indirect='vd',error_bars=True,correlate=True,
         fl=fl)
-fl.next('s_int')
-fl.plot(data_int,'o')
 fl.show()
