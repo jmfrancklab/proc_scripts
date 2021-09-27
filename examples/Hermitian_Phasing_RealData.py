@@ -33,12 +33,9 @@ with figlist_var() as fl:
         #    'tau is 11.135 ms')
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,
-                postproc=postproc,lookup=lookup_table,fl=fl)
-        #fl.show();quit()
-        #print(data.get_prop('acq_params'))
-        #quit()
+                postproc=postproc,lookup=lookup_table,fl=None)
         tau_list = list(data.getaxis('tau'))
-        print("programmed tau:",tau_list[7])
+        logger.info(strm("programmed tau:",tau_list[7]))
         programmed_tau = tau_list[7]
         data = data['tau',7]
         fl.basename = "(%s)" %programmed_tau
@@ -55,7 +52,7 @@ with figlist_var() as fl:
             aliasing_slop=3,
             fl=fl
         )
-        print("best shift is:",best_shift)
+        logger.info(strm("best shift is:",best_shift))
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data /= zeroth_order_ph(select_pathway(data,signal_pathway), fl=fl)
         data.ft('t2')
@@ -65,5 +62,5 @@ with figlist_var() as fl:
         fl.image(data, ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Phased and Centered (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-        print("difference between programmed and estimated",(best_shift-programmed_tau)*1e6)
+        logger.info(strm("difference between programmed and estimated",(best_shift-programmed_tau)*1e6))
 
