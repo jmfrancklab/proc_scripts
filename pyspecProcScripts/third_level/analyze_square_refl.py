@@ -12,7 +12,6 @@ from scipy.optimize import minimize,leastsq
 import sympy as s
 import matplotlib.pyplot as plt
 from pyspecdata import *
-logger = init_logging(level='debug')
 def analyze_square_refl(d, label='', fl=None,
         frq_bw=15e6,
         keep_after_pulse=2e-6,
