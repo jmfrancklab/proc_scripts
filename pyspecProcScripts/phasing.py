@@ -237,7 +237,6 @@ def hermitian_function_test(
     if not s.get_ft_prop(direct):
         s.ft(direct)
     s.ift(direct, pad=1024 * 16)
-    s.extend(direct,95.32)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     ini_start = s.getaxis(direct)[0]

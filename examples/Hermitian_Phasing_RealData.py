@@ -45,13 +45,12 @@ with figlist_var() as fl:
         fl.next("Data processing", fig=fig)
         fl.image(data['t2':(-1e3,1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
-        data.ift('t2')
-        fl.next('time')
-        fl.image(data)
-        #fl.show();quit()
-        data.ft('t2')
         data = data['t2':f_range]
         data.ift("t2")
+        logger.debug(strm("shape before extend",ndshape(data)))
+        data.extend("t2", tau_list[-1]*2)
+        logger.debug(strm("extending to", tau_list[-1]*2))
+        logger.debug(strm("shape after extend",ndshape(data)))
         best_shift = hermitian_function_test(
             select_pathway(data.C, signal_pathway),
             aliasing_slop=3,
