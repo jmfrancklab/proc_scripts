@@ -21,7 +21,6 @@ plt.rcParams.update({
     "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
     "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
 })
-logger = init_logging("info")
 t2 = symbols('t2')
 thesecolors = cycle(list('bgrcmykw'))
 def select_pathway(s,pathway):

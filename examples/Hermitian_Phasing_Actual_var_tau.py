@@ -6,6 +6,11 @@ Take real data with varying echo times,
 and demonstrate how we can automatically find the zeroth order phase and the
 center of the echo in order to get data that's purely real in the frequency
 domain.
+
+Here, we specifically check to see whether or not the offset between the
+programmed τ and the center of the echo
+(as found by :func:`hermitian_function_test`)
+is consistent.
 """
 from pyspecdata import *
 from pyspecProcScripts import *
