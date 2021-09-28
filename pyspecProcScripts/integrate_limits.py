@@ -1,10 +1,6 @@
-from pyspecdata import *
-from pylab import subplots, axvline
+import pyspecdata as psp
 import numpy as np
-from .fwhm_calculate import fwhm_calculator
-import logging
-from pylab import r_,fft,ifft,ifftshift,fftshift,exp,ones_like
-from matplotlib.pyplot import annotate
+import matplotlib.pyplot as plt
 from .apod_matched_filter import apod_matched_filter
 
 def integrate_limits(s, axis="t2",
@@ -58,7 +54,7 @@ def integrate_limits(s, axis="t2",
     # Might make sense to rather have `.real` above do this, since the
     # reasoning should always apply!  (discuss)
     # AB: Yes, then I agree `.real` should be doing this.
-    temp.set_ft_prop(axis,['start','time'],-s.get_ft_prop(axis,'dt')*(ndshape(s)[axis]//2))
+    temp.set_ft_prop(axis, ['start','time'], -s.get_ft_prop(axis,'dt') * (psp.ndshape(s)[axis] // 2))
     # }}}
     convolve_method = convolve_method.lower()
     if fl is not None:
@@ -77,9 +73,9 @@ def integrate_limits(s, axis="t2",
     freq_limits = temp.contiguous(lambda x: x.real > cutoff * x.real.data.max())[0]
     if fl is not None:
         fl.next('integration diagnostic')
-        axvline(x = freq_limits[0], c='k', alpha=0.75)
-        axvline(x = freq_limits[-1], c='k', alpha=0.75)
-        annotate(str(freq_limits), xy=(freq_limits[-1],0.85))
+        plt.axvline(x = freq_limits[0], c='k', alpha=0.75)
+        plt.axvline(x = freq_limits[-1], c='k', alpha=0.75)
+        plt.annotate(str(freq_limits), xy=(freq_limits[-1], 0.85))
         fl.pop_marker()
     freq_limits = np.array(freq_limits)
     # Think still need to return 'temp' if lorentzian_to_gaussian 

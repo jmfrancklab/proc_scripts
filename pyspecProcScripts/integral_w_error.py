@@ -14,8 +14,9 @@ def integral_w_errors(s,sig_path,error_path, convolve_method=None, indirect='vd'
     error_path: dict
                 Dictionary of all coherence pathways that are 
                 not the signal pathway.
-    convolve_meth: str
+    convolve_method: str
                 method of convolution used in integrating limits
+                passed on to :func:`integrate_limits`
     indirect:   str
                 Indirect axis.
     direct:     str
