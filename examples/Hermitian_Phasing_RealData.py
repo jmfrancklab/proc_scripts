@@ -45,11 +45,7 @@ with figlist_var() as fl:
         fl.next("Data processing", fig=fig)
         fl.image(data['t2':(-1e3,1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
-        data.extend('t2',15e3)
-        data.extend('t2',-15e3)
         data = data['t2':f_range]
-        fl.next('extended')
-        fl.image(data)
         data.ift("t2")
         best_shift = hermitian_function_test(
             select_pathway(data.C, signal_pathway),
