@@ -237,18 +237,14 @@ def hermitian_function_test(
     if not s.get_ft_prop(direct):
         s.ft(direct)
     s.ift(direct, pad=1024 * 16)
-    print("I'm extending the time domain")
-    s.extend(direct,101.5)
-    print("done extending")
+    s.extend(direct,95.32)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     ini_start = s.getaxis(direct)[0]
-    print("1")
     if aliasing_slop > 0:
         s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
     ini_delay = s.getaxis(direct)[0]
     logger.debug(strm("ini delay is",ini_delay))
-    print("2")
     if fl is not None:
         fl.push_marker()
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
@@ -258,13 +254,11 @@ def hermitian_function_test(
     half_decay_range = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).contiguous(lambda x: x < 0.5 * abs(x).data.max())
     half_decay_pt = half_decay_range[0][0]
     s = s[direct:(ini_start,ini_start+(half_decay_pt-ini_start)*2)]
-    print("3")
     if fl is not None:
         fl.plot(abs(s), ':', ax=ax_list[0, 0], human_units=False)
     N = ndshape(s)[direct]
     mid_idx = N // 2 + N % 2 - 1
     s = s[direct, 0 : 2 * mid_idx + 1]
-    print("4")
     if fl is not None:
         if band_mask:
             title_str = "rectangular mask"
@@ -289,13 +283,11 @@ def hermitian_function_test(
     # https://jmfrancklab.slack.com/archives/CLMMYDD98/p1623354066039100
     shifts = nddata(dt * (r_[0:mid_idx]), "shift")
     shifts.set_units("shift", "s")
-    print("5")
     logger.debug(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
     s.ft(direct)
     s *= np.exp(-1j * 2 * pi * shifts * s.fromaxis(direct))
     s.ift(direct)
     logger.debug(strm("Length of t2 dimension:", ndshape(s)[direct]))
-    print("6")
     assert (
         ndshape(s)[direct] % 2 == 1
     ), "t2 dimension *must* be odd, please check what went wrong."
