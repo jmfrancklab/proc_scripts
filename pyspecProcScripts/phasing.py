@@ -236,7 +236,7 @@ def hermitian_function_test(
     orig_dt = s.get_ft_prop(direct, "dt")
     if not s.get_ft_prop(direct):
         s.ft(direct)
-    s.ift(direct, pad=1024 * 16)
+    s.ift(direct, pad=1024 * 4)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     ini_start = s.getaxis(direct)[0]
@@ -245,7 +245,7 @@ def hermitian_function_test(
     ini_delay = s.getaxis(direct)[0]
     logger.debug(strm("ini delay is",ini_delay))
     if fl is not None:
-        fl.push_marker()
+        #fl.push_marker()
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
@@ -353,14 +353,13 @@ def hermitian_function_test(
     best_shift = s.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
     if fl is not None:
+        fl.push_marker()
         fl.next("cost function %s - freq filter" % title_str)
         fl.twinx(orig=False, color="red")
         s.name("cost function")
         fl.plot(s, color="r", alpha=0.5, human_units=False)
         fl.plot(s["center" : (best_shift - 4e-3, best_shift)], ':', alpha=0.5, human_units=False)
-        print("I find max",s["center" : (best_shift - 4e-3, best_shift)].data.max())
         axvline(x=best_shift, c="k", linestyle="--")
-        print(s.max())
         text(x = best_shift+0.0005,
                 y = s.max(),
                 s = "best shift is: %f"%best_shift,
