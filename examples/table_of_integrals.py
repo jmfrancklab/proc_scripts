@@ -73,6 +73,5 @@ with figlist_var() as fl:
         mysgn = determine_sign(select_pathway(myslice, signal_pathway))
         data_int, data = process_data(s=data,signal_pathway=signal_pathway,
                 searchstr=label, f_range=f_range,t_range=t_range, 
-                sgn=mysgn, indirect=indirect,error_bars=True,correlate=True,
-                fl=fl)
+                sgn=mysgn, indirect=indirect,fl=fl)
 

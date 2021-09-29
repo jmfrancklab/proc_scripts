@@ -13,7 +13,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         label_spacing_multiplier = 50,
         allow_for_text_default = 10,
         allow_for_ticks_default = 70,
-        text_height = 20,
+        text_height = 10,
         LHS_pad = 0.01,
         RHS_pad = 0.05,
         shareaxis = False,
@@ -44,7 +44,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         labels_in_order = []
         for j in range(n_ph):
             temp = all_possibilities[:,j]
-            temp = ', '.join(['%d'%j for j in
+            temp = ', '.join(['%+d'%j for j in
                 temp[isfinite(temp)]])
             if len(temp) == 0: temp = 'X'
             labels_in_order.append(temp)
@@ -287,12 +287,12 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             print(ordered_labels[thisdim])
             if my_data.get_ft_prop(thisdim) == True:    
                 if j == 0:
-                    draw_span(last_axes,first_axes,"%s"%ordered_labels[thisdim][0],this_label_num=depth)
+                    draw_span(last_axes,first_axes,("%s")%ordered_labels[thisdim][0],this_label_num=depth)
                 else:
-                    draw_span(last_axes,first_axes,'%s'%ordered_labels[thisdim][j],
+                    draw_span(last_axes,first_axes,('%s')%ordered_labels[thisdim][j],
                         this_label_num=depth)
             else:
-                draw_span(last_axes,first_axes,"%d"%(j),this_label_num=depth)
+                draw_span(last_axes,first_axes,("%d")%(j),this_label_num=depth)
 
             place_labels(ax_list[0],"%s"%my_data.unitify_axis('%s'%thisdim), label_placed,
                     this_label_num=depth)
@@ -308,5 +308,4 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         return LHS_pad+LHS_labels,axes_bottom[0],width,axes_bottom[-1]-top_pad
     else:
         return LHS_pad+LHS_labels,axes_bottom[-1]+axes_height,width,top_pad-RHS_pad
-
 

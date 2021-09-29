@@ -9,7 +9,8 @@ from pyspecProcScripts import *
 from .simple_functions import select_pathway
 from .correlation_alignment import correl_align
 from .integral_w_error import integral_w_errors
-
+from .DCCT_func import DCCT
+this_figsize = (6,12)
 t2 = symbols('t2')
 logger = init_logging('info')
 def process_data(s,searchstr='',
@@ -20,16 +21,9 @@ def process_data(s,searchstr='',
         sgn=None,
         direct='t2',
         indirect='indirect',
-        error_bars = False,
-        correlate = False,
+        error_bars = True,
+        correlate = True,
         fl=None):
-    if fl is not None:
-        fl.basename = "(%s)"%searchstr
-        fig, ax_list = subplots(1,4,gridspec_kw={'width_ratios':[1,1,1,5]})
-        fig.suptitle(fl.basename)
-        fl.next('integration of 2D dataset')
-        fl.image(s,ax=ax_list[0])
-        ax_list[0].set_title("Raw Data")
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     s *= sgn
@@ -52,6 +46,12 @@ def process_data(s,searchstr='',
     #}}}
     #{{{phase correction
     s = s[direct:f_range]
+    s.ift(list(signal_pathway))
+    if fl is not None:
+        fl.basename = "(%s)"%searchstr
+        DCCT(s,fl.next('%s'%searchstr,figsize=this_figsize),
+                total_spacing=0.2)
+    s.ft(list(signal_pathway))
     s.ift(direct)
     best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),signal_pathway).C.convolve(direct,3e-4))
     logger.info(strm("best shift is", best_shift))
@@ -59,8 +59,8 @@ def process_data(s,searchstr='',
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
     if fl is not None:
         s.ft(direct)
-        fl.image(s*sgn,ax=ax_list[1])
-        ax_list[1].set_title("Phased Data")
+        DCCT(s,fl.next('Phased Data for %s'%searchstr,figsize=this_figsize),
+                total_spacing=0.2)
         s.ift(direct)
     if indirect is 'vd':
         s.reorder(['ph1','ph2','vd',direct])
@@ -85,6 +85,9 @@ def process_data(s,searchstr='',
             s.reorder(['ph1','ph2',indirect,direct])
         else:
             s.reorder(['ph1',indirect,direct])
+        if fl is not None:
+            DCCT(s,fl.next('Aligned %s'%searchstr,figsize=this_figsize),
+                    total_spacing=0.2)
      #}}}    
     s.ift(direct)
     s = s[direct:(0,t_range[-1])]
@@ -92,8 +95,8 @@ def process_data(s,searchstr='',
     s.ft(direct)
     s *= sgn
     if fl is not None:
-        fl.image(s,ax=ax_list[2])
-        ax_list[2].set_title('FID sliced')
+        DCCT(s,fl.next('FID sliced %s'%searchstr,figsize=this_figsize),
+                total_spacing=0.2)
     #{{{Integrate with error bars
     if error_bars:
         if indirect is 'vd':
@@ -115,7 +118,8 @@ def process_data(s,searchstr='',
         s_int = s.mean(direct)
         s_int = select_pathway(s_int,signal_pathway)
     if fl is not None:
-        fl.plot(s_int,'o',ax=ax_list[3])
-        ax_list[3].set_title('Integrated Data')
+        fl.basename=None
+        fl.next('Integrated Data for %s'%searchstr)
+        fl.plot(s_int,'o')
     return s_int, s
     
