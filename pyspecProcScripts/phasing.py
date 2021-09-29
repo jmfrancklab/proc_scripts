@@ -245,7 +245,8 @@ def hermitian_function_test(
     ini_delay = s.getaxis(direct)[0]
     logger.debug(strm("ini delay is",ini_delay))
     if fl is not None:
-        #fl.push_marker()
+        fl.push_marker()
+        fl.basename = None
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
@@ -353,7 +354,6 @@ def hermitian_function_test(
     best_shift = s.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
     if fl is not None:
-        fl.push_marker()
         fl.next("cost function %s - freq filter" % title_str)
         fl.twinx(orig=False, color="red")
         s.name("cost function")
