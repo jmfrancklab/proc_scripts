@@ -49,6 +49,7 @@ with figlist_var() as fl:
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean("nScans"), signal_pathway),
             aliasing_slop=alias_slop,
+            searchstr = nodename,
             fl=fl
         )
         logging.info(strm("best shift is:",best_shift))
