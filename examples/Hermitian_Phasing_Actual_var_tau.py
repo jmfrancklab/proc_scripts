@@ -45,10 +45,11 @@ for nodename,file_location,postproc,label in [
         this_data = data['tau',j]
         this_data.ift("t2")
         if programmed_tau > 0.04:
-            this_data.extend("t2", tau_list[-1]*2)
+            this_data.extend("t2", tau_list[-1]*2.5)
         best_shift = hermitian_function_test(
             select_pathway(this_data, signal_pathway),
-            aliasing_slop=3, fl=fl)
+            aliasing_slop=3, searchstr=str(programmed_tau),
+            fl=fl)
         logger.info(strm("best shift is:",best_shift))
         table[j+1].append(str(best_shift))
         diff = abs(best_shift - programmed_tau)

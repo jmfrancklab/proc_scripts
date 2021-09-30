@@ -201,6 +201,7 @@ def hermitian_function_test(
     direct="t2",
     aliasing_slop=3,
     band_mask=False,
+    searchstr=None,
     fl=None,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
@@ -246,7 +247,7 @@ def hermitian_function_test(
     logger.debug(strm("ini delay is",ini_delay))
     if fl is not None:
         fl.push_marker()
-        fl.basename = None
+        fl.basename = '(%s)'%searchstr
         fig, ax_list = subplots(2, 3, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
@@ -357,6 +358,7 @@ def hermitian_function_test(
         fl.next("cost function %s - freq filter" % title_str)
         fl.twinx(orig=False, color="red")
         s.name("cost function")
+        fl.basename=None
         fl.plot(s, color="r", alpha=0.5, human_units=False)
         fl.plot(s["center" : (best_shift - 4e-3, best_shift)], ':', alpha=0.5, human_units=False)
         axvline(x=best_shift, c="k", linestyle="--")
