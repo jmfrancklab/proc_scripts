@@ -113,6 +113,12 @@ def process_data(s,searchstr='',
                 indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
         x[:] /= sqrt(2)
+        if indirect is 'vd':
+            s_int = s_int
+        else:
+            idx_maxpower = np.argmax(s.getaxis('power'))
+            s_int *= -1
+            s_int /= max(s_int.data)
     #}}}    
     else:
         s_int = s.mean(direct)
