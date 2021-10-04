@@ -27,16 +27,16 @@ f_range = (-500, 500)
 filename = '210604_50mM_4AT_AOT_w11_cap_probe_echo'
 signal_pathway = {'ph1':1,'ph2':0}
 with figlist_var() as fl:
-    for nodename,file_location,postproc,label in [
+    for nodename,file_location,postproc,label,alias_slop in [
         ('tau_1000','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 1 ms'),
+            'tau is 1 ms',1),
         ('tau_3500','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 3.5 ms'),
+            'tau is 3.5 ms',3),
         ('tau_11135','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 11.135 ms')
+            'tau is 11.135 ms',3),
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,
-                postproc=postproc,lookup=lookup_table,fl=fl)
+                postproc=postproc,lookup=lookup_table)
         fl.basename = "(%s)" % label
         fig, ax_list = subplots(1, 3, figsize = (7,7))
         fig.suptitle(fl.basename)
@@ -48,12 +48,13 @@ with figlist_var() as fl:
         data.ift("t2")
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean("nScans"), signal_pathway),
-            aliasing_slop=3,
+            aliasing_slop=alias_slop,
+            searchstr = nodename,
             fl=fl
         )
-        print("best shift is:",best_shift)
+        logging.info(strm("best shift is:",best_shift))
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-        data /= zeroth_order_ph(select_pathway(data,signal_pathway), fl=fl)
+        data /= zeroth_order_ph(select_pathway(data,signal_pathway))
         data.ft('t2')
         fl.image(data['t2':(-1e3,1e3)], ax=ax_list[1])
         ax_list[1].set_title("Phased and centered (ν)")
