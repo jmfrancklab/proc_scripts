@@ -33,22 +33,25 @@ for nodename,file_location,postproc,label in [
         ]:
     data = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=lookup_table)
+    data = data['tau',:-6]
     tau_list = list(data.getaxis('tau'))
     data.reorder(['ph1','ph2','tau','t2'])
     data = data['t2':f_range]
     table = [[] for i in (range(len(tau_list)+1))]
     table[0].append('programmed tau--------------estimated tau------difference')
     for j in range(len(tau_list)):
+        alias_slop=3
         programmed_tau = tau_list[j]
         table[j+1].append(str(programmed_tau))
         logger.info(strm("programmed tau:",programmed_tau))
         this_data = data['tau',j]
         this_data.ift("t2")
-        if programmed_tau > 0.04:
-            this_data.extend("t2", tau_list[-1]*2.5)
+        if programmed_tau > 0.045:
+            #this_data = this_data['t2':((programmed_tau-(0.5*programmed_tau)),None)]
+            alias_slop=7
         best_shift = hermitian_function_test(
             select_pathway(this_data, signal_pathway),
-            aliasing_slop=3, searchstr=str(programmed_tau),
+            aliasing_slop=alias_slop, searchstr=str(programmed_tau),
             fl=fl)
         logger.info(strm("best shift is:",best_shift))
         table[j+1].append(str(best_shift))
