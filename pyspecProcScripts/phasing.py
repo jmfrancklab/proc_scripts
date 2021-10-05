@@ -242,15 +242,13 @@ def hermitian_function_test(
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     if aliasing_slop > 0:
         s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
-    ini_delay = s.getaxis(direct)[0]
-    logger.debug(strm("ini delay is",ini_delay))
     if fl is not None:
         fl.push_marker()
         fig, ax_list = subplots(2, 2, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
-    signal_range = abs(s).mean_all_but(direct).contiguous(lambda x: x > 0.5 * abs(x).data.max())
+    signal_range = abs(s).mean_all_but(direct).contiguous(lambda x: x > 0.25 * abs(x).data.max())
     start_sig = signal_range[0][0]
     end_sig = signal_range[0][-1]
     peak = s[direct:(signal_range[0][0],signal_range[0][-1])].mean_all_but(direct).argmax()
@@ -262,7 +260,9 @@ def hermitian_function_test(
     else:    
         s = s[direct:(start_sig,end_sig+(extension_right*3))]
     if fl is not None:
-        fl.plot(abs(s), ':', ax=ax_list[0, 0], human_units=False)
+        fl.plot(abs(s), ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
+    ini_delay = s.getaxis(direct)[0]
+    logger.debug(strm("ini delay is",ini_delay))
     N = ndshape(s)[direct]
     mid_idx = N // 2 + N % 2 - 1
     s = s[direct, 0 : 2 * mid_idx + 1]

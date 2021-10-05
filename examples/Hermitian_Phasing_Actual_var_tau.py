@@ -47,11 +47,12 @@ for nodename,file_location,postproc,label in [
         logger.info(strm("programmed tau:",programmed_tau))
         this_data = data['tau',j]
         this_data.ift("t2")
-        if programmed_tau >0.025:
-            if programmed_tau >0.060:
-                this_data = this_data['t2':((tau_list[j]-(0.3*tau_list[j])),None)]
-            else:
-                this_data = this_data['t2':((tau_list[j]-(0.5*tau_list[j])),None)]
+        
+        #if programmed_tau >0.025:
+        #    if programmed_tau >0.060:
+        #        this_data = this_data['t2':((tau_list[j]-(0.3*tau_list[j])),None)]
+        #    else:
+        #        this_data = this_data['t2':((tau_list[j]-(0.5*tau_list[j])),None)]
         fl.basename = str(programmed_tau)
         best_shift = hermitian_function_test(
             select_pathway(this_data, signal_pathway),
