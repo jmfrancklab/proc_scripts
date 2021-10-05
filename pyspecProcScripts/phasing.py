@@ -240,7 +240,6 @@ def hermitian_function_test(
     s.ift(direct, pad=1024 * 4)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
-    ini_start = s.getaxis(direct)[0]
     if aliasing_slop > 0:
         s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
     ini_delay = s.getaxis(direct)[0]
@@ -251,9 +250,17 @@ def hermitian_function_test(
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
-    half_decay_range = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).contiguous(lambda x: x < 0.5 * abs(x).data.max())
-    half_decay_pt = half_decay_range[0][0]
-    s = s[direct:(ini_start,ini_start+(half_decay_pt-ini_start)*2)]
+    signal_range = abs(s).mean_all_but(direct).contiguous(lambda x: x > 0.5 * abs(x).data.max())
+    start_sig = signal_range[0][0]
+    end_sig = signal_range[0][-1]
+    peak = s[direct:(signal_range[0][0],signal_range[0][-1])].mean_all_but(direct).argmax()
+    extension_right = end_sig-peak.data
+    extension_left = peak.data - start_sig
+    if extension_right < extension_left:
+        start_sig = peak.data - extension_right
+        s = s[direct:(start_sig,end_sig)]
+    else:    
+        s = s[direct:(start_sig,end_sig+(extension_right*3))]
     if fl is not None:
         fl.plot(abs(s), ':', ax=ax_list[0, 0], human_units=False)
     N = ndshape(s)[direct]
@@ -305,7 +312,7 @@ def hermitian_function_test(
         ["shift", direct]
     )
     if fl is not None:
-        fl.image(s, ax=ax_list[0, 1])
+        fl.image(s, ax=ax_list[0, 1],human_units=False)
         ax_list[0, 1].set_title("Residual 2D")
     # {{{ the "center axis makes more sense, so implement it sooner"
     shift_idxunits = s.fromaxis("shift").data / dt # used below
@@ -315,7 +322,7 @@ def hermitian_function_test(
     )
     s.set_units("center", "s")
     if fl is not None:
-        fl.image(s.C.cropped_log()['center',::-1], ax=ax_list[1, 0])
+        fl.image(s.C.cropped_log()['center',::-1], ax=ax_list[1, 0],human_units=False)
         ax_list[1, 0].set_title("Residual 2D\nrelabel, signal weight, and cropped log")
     # }}}
     if band_mask:
@@ -344,7 +351,7 @@ def hermitian_function_test(
         mask.setaxis("center", s.getaxis("center"))
         s *= mask
     if fl is not None:
-        fl.image(s.C.cropped_log()["center",::-1], ax=ax_list[1, 1])
+        fl.image(s.C.cropped_log()["center",::-1], ax=ax_list[1, 1],human_units=False)
         ax_list[1, 1].set_title("cropped log of Masked Residual")
         fig.tight_layout()
     s = s["center", ::-1]
