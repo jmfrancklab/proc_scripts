@@ -157,13 +157,11 @@ def process_data(s,searchstr='',
         s_int = s_after.mean(direct)
         s_int = select_pathway(s_int,signal_pathway)
         s_int *= -1
-
-        if fl is not None:
-            fl.basename=None
-            fig = figure(figsize=this_figsize)
-            fl.next('Integrated Data for %s'%searchstr,fig=fig)
-            fl.plot(s_int,'o')
-
+    if fl is not None:
+        fl.basename=None
+        new_fig = figure(figsize=this_figsize)
+        fl.next('Integrated Data for %s'%searchstr)
+        fl.plot(s_int,'o')
     #}}}    
     return s_int, s
     
