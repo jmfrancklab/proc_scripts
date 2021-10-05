@@ -49,9 +49,10 @@ for nodename,file_location,postproc,label in [
         if programmed_tau > 0.045:
             #this_data = this_data['t2':((programmed_tau-(0.5*programmed_tau)),None)]
             alias_slop=7
+        fl.basename = str(programmed_tau)
         best_shift = hermitian_function_test(
             select_pathway(this_data, signal_pathway),
-            aliasing_slop=alias_slop, searchstr=str(programmed_tau),
+            aliasing_slop=alias_slop,
             fl=fl)
         logger.info(strm("best shift is:",best_shift))
         table[j+1].append(str(best_shift))
