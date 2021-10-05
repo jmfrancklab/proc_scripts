@@ -46,10 +46,10 @@ with figlist_var() as fl:
         ax_list[0].set_title("Raw Data")
         data = data['t2':f_range]
         data.ift("t2")
+        fl.basename = nodename
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean("nScans"), signal_pathway),
             aliasing_slop=alias_slop,
-            searchstr = nodename,
             fl=fl
         )
         logging.info(strm("best shift is:",best_shift))

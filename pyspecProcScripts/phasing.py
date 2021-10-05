@@ -1,6 +1,7 @@
 """This module includes routines for phasing NMR spectra."""
 from pyspecdata import *
 from matplotlib.patches import Ellipse
+from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
 from pylab import xlim, subplots, axvline, ylim, sca
 import numpy as np
@@ -201,7 +202,6 @@ def hermitian_function_test(
     direct="t2",
     aliasing_slop=3,
     band_mask=False,
-    searchstr=None,
     fl=None,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
@@ -247,8 +247,7 @@ def hermitian_function_test(
     logger.debug(strm("ini delay is",ini_delay))
     if fl is not None:
         fl.push_marker()
-        fl.basename = '(%s)'%searchstr
-        fig, ax_list = subplots(2, 3, figsize=(15, 15))
+        fig, ax_list = subplots(2, 2, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
@@ -302,15 +301,23 @@ def hermitian_function_test(
         else:
             fl.image(s, ax=ax_list[0, 1])
         ax_list[0, 1].set_title("shifted and phased")
-    # I tried removing the following line, and the 2D s actually
-    # looks sharper, but then the 1D plot of the cost function disappears
-    # -- what's up with that?
     s = abs(s - s[direct, ::-1].runcopy(np.conj)).mean_all_but(
         ["shift", direct]
     )
     if fl is not None:
-        fl.image(s, ax=ax_list[0, 2])
-        ax_list[0, 2].set_title("Residual 2D")
+        fl.image(s, ax=ax_list[0, 1])
+        ax_list[0, 1].set_title("Residual 2D")
+    # {{{ the "center axis makes more sense, so implement it sooner"
+    shift_idxunits = s.fromaxis("shift").data / dt # used below
+    s /= abs(center_point.C.mean_all_but(["shift",direct])) # weight the cost by the amplitude of the center point
+    s.rename("shift", "center").setaxis(
+        "center", dt * (mid_idx - r_[0:mid_idx]) + ini_delay
+    )
+    s.set_units("center", "s")
+    if fl is not None:
+        fl.image(s.C.cropped_log()['center',::-1], ax=ax_list[1, 0])
+        ax_list[1, 0].set_title("Residual 2D\nrelabel, signal weight, and cropped log")
+    # }}}
     if band_mask:
         n_mask_pts = int(band_mask / dt)
         if n_mask_pts % 2:
@@ -323,7 +330,7 @@ def hermitian_function_test(
         A = r_[-mid_idx : mid_idx + 1]
         A = -abs(A)
         A += mid_idx
-        B = s.fromaxis("shift").data / dt
+        B = shift_idxunits 
         A = A.reshape(-1, 1)
         B = B.reshape(1, -1)
         mask = np.greater_equal(A, B)
@@ -332,45 +339,38 @@ def hermitian_function_test(
         norm = np.floor(mid_idx - B)
         norm = norm.astype(float)
         mask /= ((norm) * 2)**2
-        mask = nddata(mask, [direct, "shift"])
+        mask = nddata(mask, [direct, "center"])
         mask.setaxis(direct, s.getaxis(direct))
-        mask.setaxis("shift", s.getaxis("shift"))
-        if fl is not None:
-            fl.image(mask, ax=ax_list[1, 0], human_units=False)
-            ax_list[1, 0].set_title("Mask")
+        mask.setaxis("center", s.getaxis("center"))
         s *= mask
     if fl is not None:
-        fl.image(s, ax=ax_list[1, 1])
-        ax_list[1, 1].set_title("Masked Residual")
-    s.rename("shift", "center").setaxis(
-        "center", dt * (mid_idx - r_[0:mid_idx]) + ini_delay
-    )
-    s = s["center", ::-1]
-    if fl is not None:
-        fl.image(s, ax=ax_list[1, 2], human_units=False)
-        ax_list[1, 2].set_title("Masked Residual -- Relabeled")
+        fl.image(s.C.cropped_log()["center",::-1], ax=ax_list[1, 1])
+        ax_list[1, 1].set_title("cropped log of Masked Residual")
         fig.tight_layout()
-    s.mean_all_but(["shift", "center"])
-    s.set_units("center", "s")
+    s = s["center", ::-1]
+    s.mean_all_but(["center"])
     best_shift = s.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
     if fl is not None:
         fl.next("cost function %s - freq filter" % title_str)
         fl.twinx(orig=False, color="red")
         s.name("cost function")
-        fl.basename=None
         fl.plot(s, color="r", alpha=0.5, human_units=False)
-        fl.plot(s["center" : (best_shift - 4e-3, best_shift)], ':', alpha=0.5, human_units=False)
-        axvline(x=best_shift, c="k", linestyle="--")
+        cost_scale = s['center':(-4*orig_dt+best_shift,4*orig_dt+best_shift)].max().item()
+        ylim((0,cost_scale))
+        axvline(x=best_shift, c="r", linestyle="--")
+        ax = plt.gca()
+        trans = blended_transform_factory(x_transform=ax.transData, y_transform=ax.transAxes)
         text(x = best_shift+0.0005,
-                y = s.max(),
+                y = 0.8,
                 s = "best shift is: %f"%best_shift,
                 fontsize = 16,
-                color='red'
+                color='red',
+                transform=trans,
                 )
         for dwell_int in r_[-5:5]:
             axvline(
-                x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="k", linestyle=":"
+                x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
             )
         fl.pop_marker()
     return best_shift
