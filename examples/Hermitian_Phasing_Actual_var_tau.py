@@ -47,12 +47,6 @@ for nodename,file_location,postproc,label in [
         logger.info(strm("programmed tau:",programmed_tau))
         this_data = data['tau',j]
         this_data.ift("t2")
-        
-        #if programmed_tau >0.025:
-        #    if programmed_tau >0.060:
-        #        this_data = this_data['t2':((tau_list[j]-(0.3*tau_list[j])),None)]
-        #    else:
-        #        this_data = this_data['t2':((tau_list[j]-(0.5*tau_list[j])),None)]
         fl.basename = str(programmed_tau)
         best_shift = hermitian_function_test(
             select_pathway(this_data, signal_pathway),
@@ -64,31 +58,4 @@ for nodename,file_location,postproc,label in [
         table[j+1].append(str(diff))
     logger.info(strm(tabulate(table)))
     fl.show();quit()
-    
-    
-    this_data = data['tau',8]
-    this_data.ift('t2')
-    this_data = this_data['t2':((tau_list[8]-(0.3*tau_list[8])),(tau_list[8]+(0.5*tau_list[8])))]
-    best_shift = hermitian_function_test(
-            select_pathway(this_data, signal_pathway),
-            aliasing_slop=3,
-            fl=fl)
-    that_data = data['tau',0]
-    that_data.ift('t2')
-    best_shift = hermitian_function_test(
-            select_pathway(that_data, signal_pathway),
-            aliasing_slop=3,
-            fl=fl)
-    fl.show();quit()
-    
-    
-    
-    
-    
- 
-    
-    
-    
-    
-    
 

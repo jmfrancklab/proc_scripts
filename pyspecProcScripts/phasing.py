@@ -248,7 +248,7 @@ def hermitian_function_test(
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
-    signal_range = abs(s).mean_all_but(direct).contiguous(lambda x: x > 0.25 * abs(x).data.max())
+    signal_range = abs(s).mean_all_but(direct).contiguous(lambda x: x > 0.5 * abs(x).data.max())
     start_sig = signal_range[0][0]
     end_sig = signal_range[0][-1]
     peak = s[direct:(signal_range[0][0],signal_range[0][-1])].mean_all_but(direct).argmax()
@@ -364,7 +364,7 @@ def hermitian_function_test(
         s.name("cost function")
         fl.plot(s, color="r", alpha=0.5, human_units=False)
         cost_scale = s['center':(-4*orig_dt+best_shift,4*orig_dt+best_shift)].max().item()
-        ylim((0,cost_scale))
+        #ylim((0,cost_scale))
         axvline(x=best_shift, c="r", linestyle="--")
         ax = plt.gca()
         trans = blended_transform_factory(x_transform=ax.transData, y_transform=ax.transAxes)
