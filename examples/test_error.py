@@ -61,7 +61,7 @@ for thisfile, exp_type, nodename in [
     s = s["t2":f_range]
     # {{{Phase corrections
     s.ift("t2")
-    best_shift, window_size = hermitian_function_test(select_pathway(s, signal_pathway))
+    best_shift = hermitian_function_test(select_pathway(s, signal_pathway))
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
     ph0 = select_pathway(s, signal_pathway)["t2":0]
     ph0 /= abs(ph0)

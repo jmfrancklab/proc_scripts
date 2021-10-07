@@ -2,6 +2,7 @@ import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
 import logging
+import numpy as np
 def integral_w_errors(s,sig_path,error_path, convolve_method=None, indirect='vd', direct='t2',fl=None,return_frq_slice=False):
     """Calculates the propagation of error for the given signal and returns
     signal with the error associated.
@@ -114,7 +115,7 @@ def active_propagation(s, signal_path, indirect='vd', direct='t2',fl=None,offset
                 +str(extra_dims))
     s_forerror = select_pathway(s, signal_path)
     N = psp.ndshape(s_forerror)[direct]
-    s_forerror.run(real).run(lambda x: abs(x)**2).mean_all_but([direct,indirect]).mean(direct)
+    s_forerror.run(np.real).run(lambda x: abs(x)**2).mean_all_but([direct,indirect]).mean(direct)
     s_forerror *= df**2
     s_forerror *= N
     return s_forerror.run(psp.sqrt)
