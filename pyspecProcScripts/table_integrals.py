@@ -49,8 +49,8 @@ def process_data(s,searchstr='',
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
     if fl is not None:
-        fl.basename = "(%s)"%searchstr
-        DCCT(s,fl.next('',figsize=this_figsize), total_spacing=0.2,
+        fl.next('')
+        DCCT(s,fl.next('Raw',figsize=this_figsize), total_spacing=0.2,
                 plot_title='raw data for %s'%searchstr)
     s.ft(list(signal_pathway))
     s.ift(direct)
@@ -58,11 +58,11 @@ def process_data(s,searchstr='',
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
+    s.ft(direct)
     if fl is not None:
-        s.ft(direct)
-        DCCT(s,fl.next('',figsize=this_figsize), total_spacing=0.2,
+        DCCT(s,fl.next('phased',figsize=this_figsize), total_spacing=0.2,
                 plot_title='Phased Data for %s'%searchstr)
-        s.ift(direct)
+    s.ift(direct)
     if indirect is 'vd':
         s.reorder(['ph1','ph2','vd',direct])
     else:
@@ -86,7 +86,7 @@ def process_data(s,searchstr='',
         else:
             s.reorder(['ph1',indirect,direct])
         if fl is not None:
-            DCCT(s,fl.next('Alignment'), total_spacing=0.2,
+            DCCT(s,fl.next('Alignment',figsize=this_figsize), total_spacing=0.2,
                     plot_title='Aligned Data for %s'%searchstr)
      #}}}  
     s_after = s.C 
@@ -95,8 +95,7 @@ def process_data(s,searchstr='',
     s_after[direct,0] *= 0.5
     s_after.ft(direct)
     if fl is not None:
-        fl.basename=searchstr
-        DCCT(s_after,fl.next(''), total_spacing=0.2,
+        DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
                 plot_title='FID sliced %s'%searchstr)
     if indirect is 'vd':
         error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
@@ -115,9 +114,8 @@ def process_data(s,searchstr='',
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:
-            left_pad, bottom_pad, width_pad, top_pad = DCCT(s,fl.next('Real with Integration Bounds %s'%searchstr),just_2D=True)
-            fl.basename=None
-            pass_frq_slice=True
+            fl.basename='(%s)'%searchstr
+            left_pad, bottom_pad, width_pad, top_pad = DCCT(s,fl.next('Real with Integration Bounds %s'%searchstr,figsize=this_figsize),just_2D=True)
             x = s_after.getaxis(direct)
             dx = x[1]-x[0]
             y = s_after.getaxis(indirect)
@@ -148,9 +146,6 @@ def process_data(s,searchstr='',
             ax.add_patch(q)
     if indirect is 'vd':
         s_int = s_int
-        if fl is not None:
-            fl.next('Integrated Data for %s'%searchstr)
-            fl.plot(s_int,'o')
     else:
         idx_maxpower = np.argmax(s.getaxis('power'))
         s_int /= max(s_int.data)
@@ -158,9 +153,8 @@ def process_data(s,searchstr='',
         s_int = select_pathway(s_int,signal_pathway)
         s_int *= -1
     if fl is not None:
-        fl.basename=None
-        new_fig = figure(figsize=this_figsize)
-        fl.next('Integrated Data for %s'%searchstr)
+        fig = figure(figsize=this_figsize)
+        fl.next('Integrated Data for %s'%searchstr,fig=fig)
         fl.plot(s_int,'o')
     #}}}    
     return s_int, s
