@@ -24,7 +24,7 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 fl=figlist_var()
 # sphinx_gallery_thumbnail_number = 1
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-f_range = (-150, 150)
+f_range = (-400, 400)
 filename = '201113_TEMPOL_capillary_probe_var_tau_1'
 signal_pathway = {'ph1':1,'ph2':0}
 for nodename,file_location,postproc,label in [
@@ -33,8 +33,7 @@ for nodename,file_location,postproc,label in [
         ]:
     data = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=lookup_table)
-
-    data = data['tau',:-8]
+    data = data['tau',:-7]
     tau_list = list(data.getaxis('tau'))
     data.reorder(['ph1','ph2','tau','t2'])
     data = data['t2':f_range]
@@ -57,5 +56,5 @@ for nodename,file_location,postproc,label in [
         diff = abs(best_shift - programmed_tau)
         table[j+1].append(str(diff))
     logger.info(strm(tabulate(table)))
-    fl.show();quit()
+    fl.show()
 

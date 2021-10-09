@@ -237,32 +237,50 @@ def hermitian_function_test(
     orig_dt = s.get_ft_prop(direct, "dt")
     if not s.get_ft_prop(direct):
         s.ft(direct)
-    s.ift(direct, pad=1024 * 4)
+    s.ift(direct, pad=ndshape(s)[direct]*50)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     if aliasing_slop > 0:
         s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
+    s_envelope = s.C.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.push_marker()
         fig, ax_list = subplots(2, 2, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
-        fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
+        fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
-    signal_range = abs(s).mean_all_but(direct).contiguous(lambda x: x > 0.5 * abs(x).data.max())
-    start_sig = signal_range[0][0]
-    end_sig = signal_range[0][-1]
-    peak = s[direct:(signal_range[0][0],signal_range[0][-1])].mean_all_but(direct).argmax()
-    extension_right = end_sig-peak.data
-    extension_left = peak.data - start_sig
-    if extension_right < extension_left:
-        start_sig = peak.data - extension_right
-        s = s[direct:(start_sig,end_sig)]
-    else:    
-        s = s[direct:(start_sig,end_sig+(extension_right*3))]
+    #s_envelope.convolve(direct, orig_dt*3)
+    #if fl is not None:
+    #    fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
+    #peak_triple = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).contiguous(lambda x: x > 0.25 * x.data.max())[0,:]
+    peak_triple = s_envelope.contiguous(lambda x: x > 0.25 * x.data.max())[0,:]
+    # {{{ the peak triple gives the left and right thresholds, with the
+    #     peak max in the middle
+    #     we move the left point as needed to make sure that peak is in
+    #     the first half of the resulting slice
+    peak_triple = r_[ peak_triple[0],
+            s[direct:peak_triple].mean_all_but(direct).run(abs).argmax().item(),
+            peak_triple[1] ]
     if fl is not None:
+        for j in range(3):
+            ax_list[0, 0].axvline(x=peak_triple[j], ls=':', color='k', alpha=0.5, linewidth=2)
+    extension_left, extension_right = abs(np.diff(peak_triple))
+    if extension_right < extension_left + orig_dt:
+        if peak_triple[2] < s.getaxis(direct)[-1]:
+            peak_triple[2] = s.getaxis(direct)[-1]
+            extension_left, extension_right = abs(np.diff(peak_triple))
+        if extension_right < extension_left + orig_dt:
+            extension_left = extension_right - orig_dt
+            peak_triple[0] = peak_triple[1] - extension_left
+    s = s[direct:peak_triple[r_[0,-1]]]
+    # }}}
+    if fl is not None:
+        ax_list[0,0].axvspan(0,orig_dt,color='k',alpha=0.1)
+        for j in range(3):
+            ax_list[0, 0].axvline(x=peak_triple[j], color='k', alpha=0.5, linewidth=2)
         fl.plot(abs(s), ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
-    ini_delay = s.getaxis(direct)[0]
-    logger.debug(strm("ini delay is",ini_delay))
+    direct_startpoint = s.getaxis(direct)[0]
+    logger.debug(strm("ini delay is",direct_startpoint))
     N = ndshape(s)[direct]
     mid_idx = N // 2 + N % 2 - 1
     s = s[direct, 0 : 2 * mid_idx + 1]
@@ -312,17 +330,17 @@ def hermitian_function_test(
         ["shift", direct]
     )
     if fl is not None:
-        fl.image(s, ax=ax_list[0, 1],human_units=False)
+        fl.image(s, ax=ax_list[0, 1])
         ax_list[0, 1].set_title("Residual 2D")
     # {{{ the "center axis makes more sense, so implement it sooner"
     shift_idxunits = s.fromaxis("shift").data / dt # used below
-    s /= abs(center_point.C.mean_all_but(["shift",direct])) # weight the cost by the amplitude of the center point
+    #s /= abs(center_point.C.mean_all_but(["shift",direct])) # weight the cost by the amplitude of the center point
     s.rename("shift", "center").setaxis(
-        "center", dt * (mid_idx - r_[0:mid_idx]) + ini_delay
+        "center", dt * (mid_idx - r_[0:mid_idx]) + direct_startpoint
     )
     s.set_units("center", "s")
     if fl is not None:
-        fl.image(s.C.cropped_log()['center',::-1], ax=ax_list[1, 0],human_units=False)
+        fl.image(s.C.cropped_log()['center',::-1], ax=ax_list[1, 0])
         ax_list[1, 0].set_title("Residual 2D\nrelabel, signal weight, and cropped log")
     # }}}
     if band_mask:
@@ -351,7 +369,7 @@ def hermitian_function_test(
         mask.setaxis("center", s.getaxis("center"))
         s *= mask
     if fl is not None:
-        fl.image(s.C.cropped_log()["center",::-1], ax=ax_list[1, 1],human_units=False)
+        fl.image(s.C.cropped_log()["center",::-1], ax=ax_list[1, 1])
         ax_list[1, 1].set_title("cropped log of Masked Residual")
         fig.tight_layout()
     s = s["center", ::-1]
@@ -364,7 +382,7 @@ def hermitian_function_test(
         s.name("cost function")
         fl.plot(s, color="r", alpha=0.5, human_units=False)
         cost_scale = s['center':(-4*orig_dt+best_shift,4*orig_dt+best_shift)].max().item()
-        #ylim((0,cost_scale))
+        ylim((0,cost_scale))
         axvline(x=best_shift, c="r", linestyle="--")
         ax = plt.gca()
         trans = blended_transform_factory(x_transform=ax.transData, y_transform=ax.transAxes)
