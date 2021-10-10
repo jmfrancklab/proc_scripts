@@ -280,35 +280,29 @@ def hermitian_function_test(
             ax_list[0, 0].axvline(x=peak_triple[j], color='k', alpha=0.5, linewidth=2)
         fl.plot(abs(s)[direct,slice(slice_start,slice_stop)], ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
     N = ndshape(s)[direct]
+    direct_startpoint = s.getaxis(direct)[0]
     center_startpoint = s.getaxis(direct)[slice_start]
-    rms = ndshape(s)
-    rms.pop(direct)
-    rms += (N//2,direct)
-    rms += (slice_stop-slice_start,'center')
-    rms = rms.alloc(dtype='float')
-    rms.labels({direct:s.getaxis(direct)[:N//2],
-        'center':s.getaxis(direct)[slice_start:slice_stop]})
-    rms.set_units(direct,'s')
-    rms.set_units('center','s')
+    # {{{ put test_center at the start/bottom of the data
+    test_center = nddata(s.getaxis(direct)[slice_start:slice_stop],'center')
+    s.rename(direct,'offset')
+    s.setaxis('offset', lambda x: x-direct_startpoint) # so it starts at 0 now
+    s.ft('offset')
+    s *= np.exp(1j * 2 * pi * test_center * s.fromaxis('offset'))
+    s.ift('offset')
+    phcorr = s['offset', 0]
+    phcorr /= abs(phcorr)
+    s /= phcorr
+    # }}}
+    if fl is not None:
+        fl.image(s, ax=ax_list[0, 1])
+        ax_list[0, 1].set_title("shifted and phased")
+    # {{{ calculate the mask
     center_idx = r_[slice_start:slice_stop] # test these points to see if they are the center
     # Now, excluding the center point, determine how many points our "mask"
     rms_size = N - center_idx - 1 # number of points between (not including) the center and the end of the data
     rms_size[rms_size > center_idx] = center_idx[rms_size > center_idx] # if there are fewer points on the other side, we are limited by those
-    for test_center in range(slice_start,slice_stop):
-        # we are going to assume we rely on the padding to upsample for us, so
-        # here we don't need Fourier math, just normal index map and a loop →
-        # this makes life easier for implementing the variable-shaped mask
-        j = test_center-slice_start
-        this_size = rms_size[j]
-        if this_size > 1:
-            phcorr = s[direct, test_center].C
-            phcorr /= abs(phcorr)
-            right = s[direct, test_center+1:test_center+1+this_size]/phcorr
-            # for the following, I tried to slice backwards in one step, but
-            # that doesn't seem to be possible in numpy (bug??) -- e.g.
-            # array[1:-1:-1] doesn't work as expected (return 1,0)
-            left = s[direct, test_center-this_size:test_center][direct, ::-1]/phcorr
-            rms['center', j, direct, :this_size] = abs(right-left.run(np.conj)).mean_all_but(direct)
+    mymask = nddata(r_[1:N],'offset') <= nddata(rms_size,'center')
+    # }}}
     if band_mask:
         raise ValueError("band mask no longer supported -- use an earlier version")
     if fl is not None:
@@ -317,38 +311,38 @@ def hermitian_function_test(
         s.name("absolute value")
         fl.plot(
             abs(s)
-            .mean_all_but(direct)
-            .rename(direct, "center")
+            .mean_all_but('offset')
+            .rename('offset', "center")
             .set_units("center", "s"),
             color="k",
             alpha=0.5,
             human_units=False,
         )
-    dt = s.get_ft_prop(direct, "dt")
+    s = abs(s['offset',1:] - s['offset', :0:-1].runcopy(np.conj)).mean_all_but(
+        ["center", 'offset']
+    )
     if fl is not None:
-        #fl.image(s, ax=ax_list[0, 1])
-        ax_list[0, 1].set_title("shifted and phased")
-    if fl is not None:
-        fl.image(rms, ax=ax_list[1, 0])
+        fl.image(s, ax=ax_list[1, 0])
         ax_list[1, 0].set_title("Residual 2D")
-    rms /= nddata(rms_size,'center')**2 # it's an L1 difference, but this is
-    #                                     squared - this is just what worked
-    #                                     well -- we could use a rationale for
-    #                                     the squared, actually
-    #                                     → maybe once for normalization, once for probability?
+    s *= mymask
+    s /= nddata(rms_size,'center')**2 # it's an L1 difference, but this is
+    #                                   squared - this is just what worked
+    #                                   well -- we could use a rationale for
+    #                                   the squared, actually
+    #                                   → maybe once for normalization, once for probability?
     if fl is not None:
-        fl.image(rms.C.cropped_log(), ax=ax_list[1, 1])
+        fl.image(s.C.cropped_log(), ax=ax_list[1, 1])
         ax_list[1, 1].set_title("cropped log of Masked Residual")
         fig.tight_layout()
-    rms.mean_all_but(["center"])
-    best_shift = rms.C.argmin("center").item()
+    s.mean_all_but(["center"])
+    best_shift = s.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
     if fl is not None:
         fl.next("cost function %s - freq filter" % title_str)
         fl.twinx(orig=False, color="red")
         s.name("cost function")
-        fl.plot(rms, color="r", alpha=0.5, human_units=False)
-        cost_scale = rms['center':(-4*orig_dt+best_shift,4*orig_dt+best_shift)].max().item()
+        fl.plot(s, color="r", alpha=0.5, human_units=False)
+        cost_scale = s['center':(-4*orig_dt+best_shift,4*orig_dt+best_shift)].max().item()
         ylim((0,cost_scale))
         axvline(x=best_shift, c="r", linestyle="--")
         ax = plt.gca()
@@ -365,5 +359,4 @@ def hermitian_function_test(
                 x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
             )
         fl.pop_marker()
-    del rms
     return best_shift

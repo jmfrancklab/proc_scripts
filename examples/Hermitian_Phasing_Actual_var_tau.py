@@ -33,7 +33,8 @@ for nodename,file_location,postproc,label in [
         ]:
     data = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=lookup_table)
-    data = data['tau',:-7]
+    #data = data['tau',:-7]
+    data = data['tau',r_[1,3,5]]
     tau_list = list(data.getaxis('tau'))
     data.reorder(['ph1','ph2','tau','t2'])
     data = data['t2':f_range]
