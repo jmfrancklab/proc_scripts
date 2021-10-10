@@ -248,7 +248,10 @@ def hermitian_function_test(
         fig, ax_list = subplots(2, 2, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
         fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
-        ax_list[0, 0].set_title("Data with Padding")
+        if fl.basename is not None:
+            ax_list[0, 0].set_title(fl.basename)
+        else:
+            ax_list[0, 0].set_title("Data with Padding")
     #s_envelope.convolve(direct, orig_dt*3)
     #if fl is not None:
     #    fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
