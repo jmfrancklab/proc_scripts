@@ -272,13 +272,14 @@ def hermitian_function_test(
         if extension_right < extension_left + orig_dt:
             extension_left = extension_right - orig_dt
             peak_triple[0] = peak_triple[1] - extension_left
-    s = s[direct:peak_triple[r_[0,-1]]]
+    slice_start,slice_stop = s.get_range(direct,*peak_triple[r_[0,-1]])
     # }}}
     if fl is not None:
         ax_list[0,0].axvspan(0,orig_dt,color='k',alpha=0.1)
         for j in range(3):
             ax_list[0, 0].axvline(x=peak_triple[j], color='k', alpha=0.5, linewidth=2)
-        fl.plot(abs(s), ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
+        fl.plot(abs(s)[direct,slice(slice_start,slice_stop)], ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
+    s = s[direct,slice(slice_start,slice_stop)]
     direct_startpoint = s.getaxis(direct)[0]
     logger.debug(strm("ini delay is",direct_startpoint))
     N = ndshape(s)[direct]
