@@ -264,14 +264,12 @@ def hermitian_function_test(
     if fl is not None:
         for j in range(3):
             ax_list[0, 0].axvline(x=peak_triple[j], ls=':', color='k', alpha=0.5, linewidth=2)
-    extension_left, extension_right = abs(np.diff(peak_triple))
-    if extension_right < extension_left + orig_dt:
-        if peak_triple[2] < s.getaxis(direct)[-1]:
-            peak_triple[2] = s.getaxis(direct)[-1]
-            extension_left, extension_right = abs(np.diff(peak_triple))
-        if extension_right < extension_left + orig_dt:
-            extension_left = extension_right - orig_dt
-            peak_triple[0] = peak_triple[1] - extension_left
+    # {{{ make sure we don't test for center too close to either edge
+    if peak_triple[0] < s.getaxis(direct)[0]+orig_dt:
+        peak_triple[0] = s.getaxis(direct)[0]+orig_dt
+    if peak_triple[2] > s.getaxis(direct)[-1]-orig_dt:
+        peak_triple[2] = s.getaxis(direct)[-1]-orig_dt
+    # }}}
     slice_start,slice_stop = s.get_range(direct,*peak_triple[r_[0,-1]])
     # }}}
     if fl is not None:
@@ -282,11 +280,27 @@ def hermitian_function_test(
     N = ndshape(s)[direct]
     direct_startpoint = s.getaxis(direct)[0]
     center_startpoint = s.getaxis(direct)[slice_start]
+    if fl is not None:
+        title_str = "triangular mask"
+        fl.next("cost function %s - freq filter" % title_str)
+        s.name("absolute value")
+        fl.plot(
+            abs(s)
+            .mean_all_but(direct)
+            .rename(direct, "center")
+            .set_units("center", "s"),
+            color="k",
+            alpha=0.5,
+            human_units=False,
+        )
     # {{{ put test_center at the start/bottom of the data
     test_center = nddata(s.getaxis(direct)[slice_start:slice_stop],'center')
     s.rename(direct,'offset')
     s.setaxis('offset', lambda x: x-direct_startpoint) # so it starts at 0 now
     s.ft('offset')
+    # the following confused me a little -- I wanted to take the difference between test_center and the start of the axis,
+    # but pyspecdata handles issues about the start of the axis,
+    # so we just shift so that test_center moves to zero
     s *= np.exp(1j * 2 * pi * test_center * s.fromaxis('offset'))
     s.ift('offset')
     phcorr = s['offset', 0]
@@ -305,19 +319,6 @@ def hermitian_function_test(
     # }}}
     if band_mask:
         raise ValueError("band mask no longer supported -- use an earlier version")
-    if fl is not None:
-        title_str = "triangular mask"
-        fl.next("cost function %s - freq filter" % title_str)
-        s.name("absolute value")
-        fl.plot(
-            abs(s)
-            .mean_all_but('offset')
-            .rename('offset', "center")
-            .set_units("center", "s"),
-            color="k",
-            alpha=0.5,
-            human_units=False,
-        )
     s = abs(s['offset',1:] - s['offset', :0:-1].runcopy(np.conj)).mean_all_but(
         ["center", 'offset']
     )
