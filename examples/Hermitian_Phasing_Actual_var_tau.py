@@ -37,7 +37,7 @@ for nodename,file_location,postproc,label in [
     data.reorder(['ph1','ph2','tau','t2'])
     data = data['t2':f_range]
     mytable = []
-    mytable.append(['programmed tau','estimated tau','difference'])
+    mytable.append(['programmed tau / ms','estimated tau / ms','difference / ms'])
     for j in range(len(tau_list)):
         tablerow = []
         alias_slop=3
