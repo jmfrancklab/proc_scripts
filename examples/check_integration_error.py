@@ -17,7 +17,7 @@ from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import integrate_limits, integral_w_errors
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 1
 
 init_logging(level="debug")
 fl = figlist_var()

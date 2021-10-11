@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from pylab import *
 from sympy import exp as s_exp
 from itertools import cycle
+from .simple_functions import select_pathway
 plt.rcParams.update({
     "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
     "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
@@ -23,11 +24,6 @@ plt.rcParams.update({
 })
 t2 = symbols('t2')
 thesecolors = cycle(list('bgrcmykw'))
-def select_pathway(s,pathway):
-    retval = s
-    for k,v in pathway.items():
-        retval = retval[k,v]
-    return retval
 def as_scan_nbr(s):
         return s.C.setaxis('power','#').set_units('power','scan #')
 # slice out the FID from the echoes,

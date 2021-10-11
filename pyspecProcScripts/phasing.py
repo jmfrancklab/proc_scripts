@@ -5,10 +5,10 @@ from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
 from pylab import xlim, subplots, axvline, ylim, sca
 import numpy as np
+from numpy import r_, c_
 from scipy import linalg
 import logging
 import matplotlib.pyplot as plt
-
 
 def zeroth_order_ph(d, fl=None):
     r"""determine the covariance of the datapoints
@@ -107,7 +107,7 @@ def zeroth_order_ph(d, fl=None):
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
         fl.plot(
-            rotation_vector[0],
+        fl.plot(
             rotation_vector[1],
             "o",
             alpha=0.5,
@@ -206,6 +206,21 @@ def hermitian_function_test(
     fl=None,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
+
+    Parameters
+    ==========
+    direct:             str
+        Axis of data (i.e., direct dimension).
+    aliasing_slop:          int
+        Because we sinc interpolate here, we need to allow for the fact that
+        the very beginning and ending of the time-domain signal are
+        interpolated to match.
+        This value is the multiple of the dwell time of the original signal
+        that is sliced out due to the fact this amount of signal is aliased 
+        at the beginning and end of the time-domain signal.
+    band_mask:          boolean
+        determines the type of mask used on the 2D
+
 
     Parameters
     ==========
