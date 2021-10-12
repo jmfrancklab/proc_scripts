@@ -106,7 +106,6 @@ def zeroth_order_ph(d, fl=None):
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
         fl.plot(
-            rotation_vector[0],
             rotation_vector[1],
             "o",
             alpha=0.5,
@@ -201,9 +200,25 @@ def hermitian_function_test(
     direct="t2",
     aliasing_slop=3,
     band_mask=False,
+    amp_threshold=0.5,
     fl=None,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
+
+    Parameters
+    ==========
+    direct:             str
+        Axis of data (i.e., direct dimension).
+    aliasing_slop:          int
+        Because we sinc interpolate here, we need to allow for the fact that
+        the very beginning and ending of the time-domain signal are
+        interpolated to match.
+        This value is the multiple of the dwell time of the original signal
+        that is sliced out due to the fact this amount of signal is aliased 
+        at the beginning and end of the time-domain signal.
+    band_mask:          boolean
+        determines the type of mask used on the 2D
+
 
     Parameters
     ==========
@@ -236,40 +251,54 @@ def hermitian_function_test(
     orig_dt = s.get_ft_prop(direct, "dt")
     if not s.get_ft_prop(direct):
         s.ft(direct)
-    s.ift(direct, pad=1024 * 4)
+    s.ift(direct, pad=ndshape(s)[direct]*50)
     new_dt = s.get_ft_prop(direct, "dt")
     non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
     if aliasing_slop > 0:
         s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
+    s_envelope = s.C.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.push_marker()
         fig, ax_list = subplots(2, 2, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics", fig=fig)
-        fl.plot(abs(s), ax=ax_list[0, 0], human_units=False)
-        ax_list[0, 0].set_title("Data with Padding")
-    signal_range = abs(s).mean_all_but(direct).contiguous(lambda x: x > 0.5 * abs(x).data.max())
-    start_sig = signal_range[0][0]
-    end_sig = signal_range[0][-1]
-    peak = s[direct:(signal_range[0][0],signal_range[0][-1])].mean_all_but(direct).argmax()
-    extension_right = end_sig-peak.data
-    extension_left = peak.data - start_sig
-    if extension_right < extension_left:
-        start_sig = peak.data - extension_right
-        s = s[direct:(start_sig,end_sig)]
-    else:    
-        s = s[direct:(start_sig,end_sig+(extension_right*3))]
-    if fl is not None:
-        fl.plot(abs(s), ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
-    ini_delay = s.getaxis(direct)[0]
-    logger.debug(strm("ini delay is",ini_delay))
-    N = ndshape(s)[direct]
-    mid_idx = N // 2 + N % 2 - 1
-    s = s[direct, 0 : 2 * mid_idx + 1]
-    if fl is not None:
-        if band_mask:
-            title_str = "rectangular mask"
+        fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
+        if fl.basename is not None:
+            ax_list[0, 0].set_title(fl.basename)
         else:
-            title_str = "triangular mask"
+            ax_list[0, 0].set_title("Data with Padding")
+    #s_envelope.convolve(direct, orig_dt*3)
+    #if fl is not None:
+    #    fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
+    #peak_triple = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).contiguous(lambda x: x > 0.25 * x.data.max())[0,:]
+    peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[0,:]
+    # {{{ the peak triple gives the left and right thresholds, with the
+    #     peak max in the middle
+    #     we move the left point as needed to make sure that peak is in
+    #     the first half of the resulting slice
+    peak_triple = r_[ peak_triple[0],
+            s[direct:peak_triple].mean_all_but(direct).run(abs).argmax().item(),
+            peak_triple[1] ]
+    if fl is not None:
+        for j in range(3):
+            ax_list[0, 0].axvline(x=peak_triple[j], ls=':', color='k', alpha=0.5, linewidth=2)
+    # {{{ make sure we don't test for center too close to either edge
+    if peak_triple[0] < s.getaxis(direct)[0]+orig_dt:
+        peak_triple[0] = s.getaxis(direct)[0]+orig_dt
+    if peak_triple[2] > s.getaxis(direct)[-1]-orig_dt:
+        peak_triple[2] = s.getaxis(direct)[-1]-orig_dt
+    # }}}
+    slice_start,slice_stop = s.get_range(direct,*peak_triple[r_[0,-1]])
+    # }}}
+    if fl is not None:
+        ax_list[0,0].axvspan(0,orig_dt,color='k',alpha=0.1)
+        for j in range(3):
+            ax_list[0, 0].axvline(x=peak_triple[j], color='k', alpha=0.5, linewidth=2)
+        fl.plot(abs(s)[direct,slice(slice_start,slice_stop)], ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
+    N = ndshape(s)[direct]
+    direct_startpoint = s.getaxis(direct)[0]
+    center_startpoint = s.getaxis(direct)[slice_start]
+    if fl is not None:
+        title_str = "triangular mask"
         fl.next("cost function %s - freq filter" % title_str)
         s.name("absolute value")
         fl.plot(
@@ -281,79 +310,48 @@ def hermitian_function_test(
             alpha=0.5,
             human_units=False,
         )
-    dt = s.get_ft_prop(direct, "dt")
-    # the shifts themselves run from 0 to mid_idx -- the echo-centers
-    # these correspond to are different. Also, we're not really
-    # worried about the sub-integer shift here, because we can just
-    # use sinc interpolation before we start -- see:
-    # https://jmfrancklab.slack.com/archives/CLMMYDD98/p1623354066039100
-    shifts = nddata(dt * (r_[0:mid_idx]), "shift")
-    shifts.set_units("shift", "s")
-    logger.debug(strm("Length of shifts dimension:", ndshape(shifts)["shift"]))
-    s.ft(direct)
-    s *= np.exp(-1j * 2 * pi * shifts * s.fromaxis(direct))
-    s.ift(direct)
-    logger.debug(strm("Length of t2 dimension:", ndshape(s)[direct]))
-    assert (
-        ndshape(s)[direct] % 2 == 1
-    ), "t2 dimension *must* be odd, please check what went wrong."
-    # {{{phase correct 
-    center_point = s[direct, mid_idx]
-    s /= center_point/abs(center_point)
+    # {{{ put test_center at the start/bottom of the data
+    test_center = nddata(s.getaxis(direct)[slice_start:slice_stop],'center')
+    s.rename(direct,'offset')
+    s.setaxis('offset', lambda x: x-direct_startpoint) # so it starts at 0 now
+    s.ft('offset')
+    # the following confused me a little -- I wanted to take the difference between test_center and the start of the axis,
+    # but pyspecdata handles issues about the start of the axis,
+    # so we just shift so that test_center moves to zero
+    s *= np.exp(1j * 2 * pi * test_center * s.fromaxis('offset'))
+    s.ift('offset')
+    phcorr = s['offset', 0]
+    phcorr /= abs(phcorr)
+    s /= phcorr
     # }}}
     if fl is not None:
-        if "power" in s.dimlabels:
-            fl.image(s["power", -4], ax=ax_list[0, 1])
-        else:
-            fl.image(s, ax=ax_list[0, 1])
+        fl.image(s, ax=ax_list[0, 1])
         ax_list[0, 1].set_title("shifted and phased")
-    s = abs(s - s[direct, ::-1].runcopy(np.conj)).mean_all_but(
-        ["shift", direct]
-    )
-    if fl is not None:
-        fl.image(s, ax=ax_list[0, 1],human_units=False)
-        ax_list[0, 1].set_title("Residual 2D")
-    # {{{ the "center axis makes more sense, so implement it sooner"
-    shift_idxunits = s.fromaxis("shift").data / dt # used below
-    s /= abs(center_point.C.mean_all_but(["shift",direct])) # weight the cost by the amplitude of the center point
-    s.rename("shift", "center").setaxis(
-        "center", dt * (mid_idx - r_[0:mid_idx]) + ini_delay
-    )
-    s.set_units("center", "s")
-    if fl is not None:
-        fl.image(s.C.cropped_log()['center',::-1], ax=ax_list[1, 0],human_units=False)
-        ax_list[1, 0].set_title("Residual 2D\nrelabel, signal weight, and cropped log")
+    # {{{ calculate the mask
+    center_idx = r_[slice_start:slice_stop] # test these points to see if they are the center
+    # Now, excluding the center point, determine how many points our "mask"
+    rms_size = N - center_idx - 1 # number of points between (not including) the center and the end of the data
+    rms_size[rms_size > center_idx] = center_idx[rms_size > center_idx] # if there are fewer points on the other side, we are limited by those
+    mymask = nddata(r_[1:N],'offset') <= nddata(rms_size,'center')
     # }}}
     if band_mask:
-        n_mask_pts = int(band_mask / dt)
-        if n_mask_pts % 2:
-            n_mask_pts -= 1
-        s[direct, mid_idx + n_mask_pts :] = 0
-        s[direct, : mid_idx - n_mask_pts] = 0
-    else:
-        # Here we would do the calculation outlined for the triangle mask,
-        # but with only two new variables -- A and B
-        A = r_[-mid_idx : mid_idx + 1]
-        A = -abs(A)
-        A += mid_idx
-        B = shift_idxunits 
-        A = A.reshape(-1, 1)
-        B = B.reshape(1, -1)
-        mask = np.greater_equal(A, B)
-        mask = np.multiply(mask, 1)
-        mask = mask.astype(float)
-        norm = np.floor(mid_idx - B)
-        norm = norm.astype(float)
-        mask /= ((norm) * 2)**2
-        mask = nddata(mask, [direct, "center"])
-        mask.setaxis(direct, s.getaxis(direct))
-        mask.setaxis("center", s.getaxis("center"))
-        s *= mask
+        raise ValueError("band mask no longer supported -- use an earlier version")
+    s = abs(s['offset',1:] - s['offset', :0:-1].runcopy(np.conj)).mean_all_but(
+        ["center", 'offset']
+    )
     if fl is not None:
-        fl.image(s.C.cropped_log()["center",::-1], ax=ax_list[1, 1],human_units=False)
+        fl.image(s, ax=ax_list[1, 0])
+        ax_list[1, 0].set_title("Residual 2D")
+    s *= mymask
+    s /= nddata(rms_size,'center')**2 # it's an L1 difference, but this is
+    #                                   squared - this is just what worked
+    #                                   well -- we could use a rationale for
+    #                                   the squared, actually
+    #                                   → maybe once for normalization, once for probability?
+    if fl is not None:
+        fl.image(s.C.cropped_log(), ax=ax_list[1, 1])
         ax_list[1, 1].set_title("cropped log of Masked Residual")
         fig.tight_layout()
-    s = s["center", ::-1]
     s.mean_all_but(["center"])
     best_shift = s.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum
@@ -363,7 +361,7 @@ def hermitian_function_test(
         s.name("cost function")
         fl.plot(s, color="r", alpha=0.5, human_units=False)
         cost_scale = s['center':(-4*orig_dt+best_shift,4*orig_dt+best_shift)].max().item()
-        #ylim((0,cost_scale))
+        ylim((0,cost_scale))
         axvline(x=best_shift, c="r", linestyle="--")
         ax = plt.gca()
         trans = blended_transform_factory(x_transform=ax.transData, y_transform=ax.transAxes)
