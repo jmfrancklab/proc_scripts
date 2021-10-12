@@ -28,23 +28,23 @@ t_range= (0,40e-3)
 echo_time = 5e-3
 with figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label,f_range in [
-        #(
-        #    (
-        #        21
-        #        *(1 - 2*s.exp(-vd / 0.2))
-        #        *s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*50*s.pi)
-        #    ),
-        #    [
-        #        ("vd" , nddata(r_[0:1:40j], "vd")),
-        #        ("ph1" , nddata(r_[0, 2] / 4.0, "ph1")),
-        #        ("ph2" , nddata(r_[0:4] / 4.0, "ph2")),
-        #        ("t2" , nddata(r_[0:0.2:256j]-echo_time, "t2"))
-        #    ],
-        #    {"ph1": 0, "ph2": 1},
-        #    "vd",
-        #    "IR",
-        #    (-350,350)
-        #),
+        (
+            (
+                21
+                *(1 - 2*s.exp(-vd / 0.2))
+                *s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*50*s.pi)
+            ),
+            [
+                ("vd" , nddata(r_[0:1:40j], "vd")),
+                ("ph1" , nddata(r_[0, 2] / 4.0, "ph1")),
+                ("ph2" , nddata(r_[0:4] / 4.0, "ph2")),
+                ("t2" , nddata(r_[0:0.2:256j]-echo_time, "t2"))
+            ],
+            {"ph1": 0, "ph2": 1},
+            "vd",
+            "IR",
+            (-350,350)
+        ),
         (
             (
                 21

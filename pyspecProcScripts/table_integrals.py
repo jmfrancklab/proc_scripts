@@ -53,7 +53,7 @@ def process_data(s,searchstr='',
                 plot_title='raw data for %s'%searchstr)
     s.ft(list(signal_pathway))
     s.ift(direct)
-    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=8,fl=fl)
+    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
@@ -62,10 +62,6 @@ def process_data(s,searchstr='',
         DCCT(s,fl.next('phased',figsize=this_figsize), total_spacing=0.2,
                 plot_title='Phased Data for %s'%searchstr)
     s.ift(direct)
-    if fl is not None:
-        fl.next('time after herm')
-        fl.image(s)
-        fl.show();quit()
     if indirect is 'vd':
         s.reorder(['ph1','ph2','vd',direct])
     else:
