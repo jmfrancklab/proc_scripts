@@ -253,7 +253,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                 #scaling = 60.6856
                 K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=scaling_factor)
             if not custom_scaling:
-                K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=abs(A).data.max())
+                K = imagehsv(A['smooshed',j].data,**imagehsvkwargs)
         sca(ax_list[j])
         imshow(K,extent=myext,**kwargs)
         ax_list[j].set_ylabel(None)
