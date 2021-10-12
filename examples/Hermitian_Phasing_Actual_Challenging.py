@@ -23,7 +23,7 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 1
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-f_range = (-0.75e3, 0.75e3)
+f_range = (-0.75e3, 0.75e3) # to deal with the shorter echoes, we really just need to use shorter dwell times
 filename = '210604_50mM_4AT_AOT_w11_cap_probe_echo'
 signal_pathway = {'ph1':1,'ph2':0}
 with figlist_var() as fl:
