@@ -1,6 +1,6 @@
 """
-Phasing and Timing Correction
-=============================
+Phasing and Timing Correction With Fake Data
+============================================
 
 Take fake data with a relatively symmetric echo 
 (:math:`T_2^*=1/50\pi`, echo time of 10 ms),

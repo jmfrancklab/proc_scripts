@@ -1,6 +1,6 @@
 """
-Phasing and Timing Correction
-=============================
+Phasing and Timing Correction Using a Varied Tau Experiment
+===========================================================
 
 Take real data with varying echo times, 
 and demonstrate how we can automatically find the zeroth order phase and the
