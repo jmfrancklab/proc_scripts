@@ -92,6 +92,10 @@ def process_data(s,searchstr='',
     s_after.ift(direct)
     s_after = s_after[direct:(0,t_range[-1])]
     s_after[direct,0] *= 0.5
+
+    ph0 = s_after['t2',0].data.mean()
+    ph0 /= abs(ph0)
+    s_after /= ph0
     s_after.ft(direct)
     if fl is not None:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
@@ -109,6 +113,7 @@ def process_data(s,searchstr='',
             #{{{Integrate with error bars
     if error_bars:
         s_int,frq_slice = integral_w_errors(s_after,signal_pathway,error_path,
+                convolve_method='Gaussian',
                 indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
         x[:] /= sqrt(2)
@@ -131,11 +136,11 @@ def process_data(s,searchstr='',
             ax.set_ylabel(None)
             fl.image(select_pathway(s.real.run(complex128),signal_pathway),
                 black=False)
-            x1 = x[0] -dx
+            x1 = x[0]
             y1 = start_y - dy
-            x2 = frq_slice[-1]+dx
+            x2 = frq_slice[-1]
             tall = (y[-1]+dy)-(y[0]-dy)
-            wide = frq_slice[0] - x1
+            wide = frq_slice[0] - x1 - dx
             wide2 = (x[-1]+dx)-x2
             p = patches.Rectangle((x1,y1),wide,tall,angle=0.0,linewidth=1,fill=None,
                     hatch='//',ec='k')
