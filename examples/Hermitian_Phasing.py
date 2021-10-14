@@ -71,7 +71,7 @@ with figlist_var() as fl:
         data.ift("t2")
         data /= zeroth_order_ph(select_pathway(data,signal_pathway), fl=fl)
         fl.image(data, ax=ax_list[1], human_units=False)
-        ax_list[1].set_title("Zeroth Order Phase Corrected")
+        ax_list[1].set_title("Zeroth Order \n Phase Corrected")
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway), 
             fl=fl
