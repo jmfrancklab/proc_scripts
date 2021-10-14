@@ -267,10 +267,6 @@ def hermitian_function_test(
             ax_list[0, 0].set_title(fl.basename)
         else:
             ax_list[0, 0].set_title("Data with Padding")
-    #s_envelope.convolve(direct, orig_dt*3)
-    #if fl is not None:
-    #    fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
-    #peak_triple = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).contiguous(lambda x: x > 0.25 * x.data.max())[0,:]
     peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[0,:]
     # {{{ the peak triple gives the left and right thresholds, with the
     #     peak max in the middle
