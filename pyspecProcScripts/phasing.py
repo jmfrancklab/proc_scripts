@@ -1,13 +1,14 @@
 """This module includes routines for phasing NMR spectra."""
 from pyspecdata import *
 from matplotlib.patches import Ellipse
+from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
-from pylab import xlim
+from pylab import xlim, subplots, axvline, ylim, sca
 import numpy as np
 from numpy import r_, c_
 from scipy import linalg
 import logging
-
+import matplotlib.pyplot as plt
 
 def zeroth_order_ph(d, fl=None):
     r"""determine the covariance of the datapoints
@@ -106,7 +107,6 @@ def zeroth_order_ph(d, fl=None):
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
         fl.plot(
-            rotation_vector[0],
             rotation_vector[1],
             "o",
             alpha=0.5,
@@ -168,8 +168,8 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
         fl.plot(s_cost, ".")
     s_cost.smoosh(["vd", "phcorr"], "transients")
     ph1_opt = np.asarray(s_cost.argmin("transients").item())
-    logging.info(strm("THIS IS PH1_OPT", ph1_opt))
-    logging.info(strm("optimal phase correction", repr(ph1_opt)))
+    logging.debug(strm("THIS IS PH1_OPT", ph1_opt))
+    logging.debug(strm("optimal phase correction", repr(ph1_opt)))
     # }}}
     # {{{ apply the phase corrections
     def applyphase(arg, ph1):
@@ -180,7 +180,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
         return arg
 
     def costfun(ph1):
-        logging.info(strm("PH1 IS THIS:", ph1))
+        logging.debug(strm("PH1 IS THIS:", ph1))
         if type(ph1) is np.ndarray:
             ph1 = ph1.item()
         temp = s.C
@@ -197,236 +197,178 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 
 
 def hermitian_function_test(
-    s, down_from_max=0.5, rel_shift=1.5, shift_points=1200, fl=None
+    s,
+    direct="t2",
+    aliasing_slop=3,
+    band_mask=False,
+    amp_threshold=0.5,
+    fl=None,
 ):
-    r"""determine the center of the echo
+    r"""determine the center of the echo via hermitian symmetry of the time domain.
 
-     Parameters
-     ==========
-     down_from_max:  float
-         Slice determine the portion of the time axis where the echo
-         is at this fraction of the echo max, and use this as the
-         "peak bounds" of the echo.
+    Parameters
+    ==========
+    direct:             str
+        Axis of data (i.e., direct dimension).
+    aliasing_slop:          int
+        Because we sinc interpolate here, we need to allow for the fact that
+        the very beginning and ending of the time-domain signal are
+        interpolated to match.
+        This value is the multiple of the dwell time of the original signal
+        that is sliced out due to the fact this amount of signal is aliased 
+        at the beginning and end of the time-domain signal.
+    band_mask:          boolean
+        determines the type of mask used on the 2D
 
-         Use the width of this peak location as the width of the window
-         used for the Hermitian function test calculation
-    rel_shift:       float
-         When testing the cost function, shift up to half the time
-         range (see down_from_max) in either direction, multiplied
-         (expanded/contracted) by this number
+
+    Parameters
+    ==========
+    direct:             str
+        Axis of data (i.e., direct dimension).
+    aliasing_slop:          int
+        Because we sinc interpolate here, we need to allow for the fact that
+        the very beginning and ending of the time-domain signal are
+        interpolated to match.
+        This value is the multiple of the dwell time of the original signal
+        that is sliced out due to the fact this amount of signal is aliased 
+        at the beginning and end of the time-domain signal.
+    band_mask:          boolean
+        determines the type of mask used on the 2D
+        residual for accurate calculation of cost
+        function. The mask is used to circumvent
+        aliasing of the cost function.
+        When True, applies rectangular mask to the
+        2D residual.
+        When False, applies triangular mask to the
+        2D residual.
+    band_mask_no:       int
+        determines number of points for rectangular mask
+    final_range:        tuple
+        range that will slice out everything but the very first few points
+        which gives an artificial minimum and messes with the
+        cost function.
     """
-    # {{{ determine where the "peak" of the echo is,
-    # and use it to determine the max shift
-    s = s.C  # need to copy, since I'm manipulating the axis here
-    dt = np.diff(s.getaxis("t2")[:2]).item()
-    logging.info(strm("For hermitian test, my dwell time is", dt))
-    # am assuming the axis of the source data is not manipulated
-    data_for_peak = abs(s).mean_all_but(["t2"])
-    max_val = data_for_peak.data.max()
-    data_for_peak /= max_val
-    pairs = data_for_peak.contiguous(lambda x: abs(x) > down_from_max)
-    peak_bounds = pairs[0, :]  # gives the longest pair
-    peak_center = data_for_peak["t2":(0.1e-3, None)].argmax("t2").item()
-    s.setaxis("t2", lambda x: x - peak_center)
-    s.register_axis({"t2": 0})
-    logging.debug(
-        strm("closest to 0", s.getaxis("t2")[np.argmin(abs(s.getaxis("t2") - 0))])
-    )
-    max_shift = np.min(abs(peak_center - peak_bounds))
+    s = s.C # work on a copy, so that we're not messing w/ anything
+    orig_dt = s.get_ft_prop(direct, "dt")
+    if not s.get_ft_prop(direct):
+        s.ft(direct)
+    s.ift(direct, pad=ndshape(s)[direct]*50)
+    new_dt = s.get_ft_prop(direct, "dt")
+    non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
+    if aliasing_slop > 0:
+        s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
+    s_envelope = s.C.mean_all_but(direct).run(abs)
+    if fl is not None:
+        fl.push_marker()
+        fig_forlist, ax_list = plt.subplots(2, 2, figsize=(15, 15))
+        fl.next("Hermitian Function Test Diagnostics")
+        fig_forlist.suptitle(" ".join(["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]))
+        fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
+        ax_list[0, 0].set_title("Data with Padding")
+    peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[0,:]
+    # {{{ the peak triple gives the left and right thresholds, with the
+    #     peak max in the middle
+    #     we move the left point as needed to make sure that peak is in
+    #     the first half of the resulting slice
+    peak_triple = r_[ peak_triple[0],
+            s[direct:peak_triple].mean_all_but(direct).run(abs).argmax().item(),
+            peak_triple[1] ]
+    if fl is not None:
+        for j in range(3):
+            ax_list[0, 0].axvline(x=peak_triple[j], ls=':', color='k', alpha=0.5, linewidth=2)
+    # {{{ make sure we don't test for center too close to either edge
+    if peak_triple[0] < s.getaxis(direct)[0]+orig_dt:
+        peak_triple[0] = s.getaxis(direct)[0]+orig_dt
+    if peak_triple[2] > s.getaxis(direct)[-1]-orig_dt:
+        peak_triple[2] = s.getaxis(direct)[-1]-orig_dt
     # }}}
-    # {{{construct test arrays for T2 decay and shift
-    if np.isscalar(rel_shift):
-        rel_shift = [-rel_shift, rel_shift]
-    shift_t = nddata(
-        r_[rel_shift[0] : rel_shift[1] : shift_points * 1j] * max_shift, "shift"
-    )
-    data_for_peak.setaxis("t2", lambda x: x - peak_center)  # for plotting later
-    logging.debug(
-        strm("closest to 0", s.getaxis("t2")[np.argmin(abs(s.getaxis("t2") - 0))])
-    )
+    slice_start,slice_stop = s.get_range(direct,*peak_triple[r_[0,-1]])
     # }}}
-    # {{{time shift and correct for T2 decay
-    orig_t2 = ndshape(s)["t2"]
-    s.ft("t2", pad=orig_t2 * 2)
-    s *= np.exp(1j * 2 * pi * shift_t * s.fromaxis("t2"))
-    s.set_units("shift", "s")
-    s.ift("t2")
-    s = s["t2", :orig_t2]
-    logging.debug(
-        strm("closest to 0", s.getaxis("t2")[np.argmin(abs(s.getaxis("t2") - 0))])
-    )
-    s.reorder(["t2"], first=False)
-    if fl:
-        fig_forlist, ax_list = plt.subplots(4, 1, figsize=(10, 10))
-        fl.next("hermitian diagnostic", fig=fig_forlist)
-        fig_forlist.suptitle(
-            " ".join(
-                ["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]
-            )
-        )
-        fl.image(s.C.mean_all_but(["shift", "t2"]), ax=ax_list[0])
-        ax_list[0].set_title("Shifted Data")
-    # }}}
-    # {{{make sure there's an odd number of points and set phase of center point to 0
-    logging.debug(
-        strm("before taking the slice, endpoints are", s.getaxis("t2")[r_[0, -1]])
-    )
-    logging.debug(
-        strm("closest to 0", s.getaxis("t2")[np.argmin(abs(s.getaxis("t2") - 0))])
-    )
-    # {{{ this passes the assertion, but I
-    #     need jf_hack for the next step to
-    #     work -- this means the axis isn't
-    #     made of numerically exactly equal
-    #     steps, for some reason
-    jf_hack = True
-    test = np.diff(s.getaxis("t2"))
-    assert np.allclose(dt * np.ones_like(test), test)
-    if jf_hack:
-        x = s.getaxis("t2")
-        x[:] /= dt
-        x[:] = np.round(x)
-        x *= dt
-    # }}}
-    s_hermitian = s["t2":(-max_shift, max_shift)].C
-    logging.debug(
-        strm("closest to 0", s.getaxis("t2")[np.argmin(abs(s.getaxis("t2") - 0))])
-    )
-    n_points = ndshape(s_hermitian)["t2"]
-    logging.debug(strm("size of axis", len(s_hermitian.getaxis("t2"))))
-    logging.debug(strm("steps", np.unique(np.diff(s_hermitian.getaxis("t2")))))
-    logging.debug(strm("full list of axis after slice", s_hermitian.getaxis("t2")))
-    logging.debug(
-        strm(
-            "check for endpoints",
-            s_hermitian.getaxis("t2")[r_[0, -1]],
-            s_hermitian.getaxis("t2")[0] + s_hermitian.getaxis("t2")[-1],
-            s_hermitian.getaxis("t2")[n_points // 2],
-        )
-    )
-    if n_points % 2 == 0:
-        raise ValueError(
-            "Getting an even slice -- shouldn't happen if your "
-            "axis coord are in register with t=0 and you take a slice "
-            "(-max_shift,max_shift)"
-        )
-    logging.debug(
-        "check for center",
-        n_points,
-        s_hermitian.getaxis("t2")[n_points // 2 : n_points // 2 + 3],
-    )
-    assert s_hermitian.getaxis("t2")[n_points // 2] == 0
-    center_point = s_hermitian["t2", n_points // 2]
-    logging.debug(strm(center_point / abs(center_point)))
-    # I want to do this center_point = s_hermitian['t2':0], but why not be consistent
-    s_hermitian /= center_point / abs(center_point)
-    if fl:
-        fl.image(s_hermitian.C.mean_all_but(["shift", "t2"]), ax=ax_list[1])
-        ax_list[1].set_title("Hermitian Data")
-    # }}}
-    # though we want to average the residual for each FID, try making an average
-    # FID and calculating the residual, as I do in the test towards the end
-    # mean_before = s_hermitian.C.mean_all_but(['shift','t2'])
-    # residual = abs(mean_before - mean_before['t2',::-1].runcopy(conj))
-    #
-    # I have something like ΣⱼΣᵢ |aᵢⱼ-bᵢⱼ|² -- (say i vector subscript and j
-    # repeats) -- pushing the Σⱼ inside the |...|² does matter, so I do restore
-    # the original code here, though it's likely slower for large datasets
-    #
-    # actually, we find empirically that ΣⱼΣᵢ |aᵢⱼ-bᵢⱼ|,
-    # rather than ΣⱼΣᵢ |aᵢⱼ-bᵢⱼ|²  has a steeper minimum
-    residual = abs(s_hermitian - s_hermitian["t2", ::-1].runcopy(np.conj)).mean_all_but(
-        ["shift", "t2"]
-    )
-    residual.mean("t2")
-    best_shift = residual.C.argmin("shift").item()
-
-    s_FID = s["t2":(0, None)].C
-    s_FID["t2", 0] *= 0.5
-    ph0 = s_FID["t2":0.0]
-    ph0 /= abs(ph0)
-    s_FID /= ph0
-    if fl:
-        fl.image(s_FID.C.mean_all_but(["shift", "t2"]), ax=ax_list[2])
-        ax_list[2].set_title("FID Data")
-    s_FID.ft("t2")
-    if fl:
-        fl.image(
-            s_FID.C.mean_all_but(["shift", "t2"]), ax=ax_list[3], human_units=False
-        )
-        ax_list[3].set_title("FT of FID Data")
-        fig_forlist.tight_layout(rect=[0, 0.03, 1, 0.95])
-    sum_abs_real = abs(s_FID.real).sum("t2").mean_all_but(["shift"])
-    sum_abs_imag = abs(s_FID.imag).sum("t2").mean_all_but(["shift"])
-    best_abs_real = (sum_abs_real / sum_abs_imag).argmin("shift").item()
-    if fl:
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
-        fl.next("Hermitian Diagnostic - Mirror Tests", fig=fig)
-
-        def real_imag_mirror(forplot, ax):
-            l = fl.plot(forplot.real, alpha=0.5, ax=ax, label="real", human_units=False)
-            fl.plot(
-                forplot.C.setaxis("t2", lambda x: -x),
-                color=l[-1].get_color(),
-                alpha=0.2,
-                ax=ax,
-                human_units=False,
-            )
-            l = fl.plot(forplot.imag, alpha=0.5, ax=ax, human_units=False)
-            fl.plot(
-                -forplot.imag.C.setaxis("t2", lambda x: -x),
-                color=l[-1].get_color(),
-                alpha=0.2,
-                ax=ax,
-                human_units=False,
-            )
-            residual = forplot["t2":(-max_shift, max_shift)]
-            if ndshape(residual)["t2"] % 2 == 0:
-                residual = residual["t2", :-1]
-            fl.plot(
-                abs(residual - residual["t2", ::-1].runcopy(np.conj)) * 20,
-                ax=ax,
-                label="residual x 20",
-                human_units=False,
-            )
-            ax.legend()
-
-        # {{{show test for best_shift
-        forplot = s["shift":best_shift].C.mean_all_but(["shift", "t2"])
-        forplot /= forplot["t2":0] / abs(forplot["t2":0])
-        real_imag_mirror(forplot, ax1)
-        ax1.set_title("best_shift")
-        # }}}
-        # {{{show test for shift=0
-        forplot = s["shift":best_abs_real].C.mean_all_but(["shift", "t2"])
-        forplot /= forplot["t2":0] / abs(forplot["t2":0])
-        real_imag_mirror(forplot, ax3)
-        ax3.set_title("best abs real")
-        # }}}
-        # {{{ show test for shift = 0
-        forplot = s["shift":0].C.mean_all_but(["shift", "t2"])
-        forplot /= forplot["t2":0] / abs(forplot["t2":0])
-        real_imag_mirror(forplot, ax2)
-        ax2.set_title("shift=0")
-        # }}}
-        fl.next("Hermitian Diagnostic - Cost Functions")
-
-        def rescale(forplot):
-            retval = forplot.C
-            retval -= retval.data.min()
-            retval /= retval.data.max()
-            return retval
-
-        fl.twinx(orig=True)
-        residual.name("hermitian test")
-        fl.plot(residual, c="k", human_units=False)
-        fl.twinx(orig=False, color="red")
-        fl.plot([], c="k", human_units=False)
-        data_for_peak *= max_val
-        data_for_peak.name("absolute value")
+    if fl is not None:
+        ax_list[0,0].axvspan(0,orig_dt,color='k',alpha=0.1)
+        for j in range(3):
+            ax_list[0, 0].axvline(x=peak_triple[j], color='k', alpha=0.5, linewidth=2)
+        fl.plot(abs(s)[direct,slice(slice_start,slice_stop)], ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
+    N = ndshape(s)[direct]
+    direct_startpoint = s.getaxis(direct)[0]
+    center_startpoint = s.getaxis(direct)[slice_start]
+    if fl is not None:
+        title_str = "triangular mask"
+        fl.next("cost function %s - freq filter" % title_str)
+        s.name("absolute value")
         fl.plot(
-            data_for_peak.C.rename("t2", "shift").set_units("shift", "s"),
-            c="red",
+            abs(s)
+            .mean_all_but(direct)
+            .rename(direct, "center")
+            .set_units("center", "s"),
+            color="k",
+            alpha=0.5,
             human_units=False,
         )
-    return best_shift + peak_center, max_shift
+    # {{{ put test_center at the start/bottom of the data
+    test_center = nddata(s.getaxis(direct)[slice_start:slice_stop],'center')
+    s.rename(direct,'offset')
+    s.setaxis('offset', lambda x: x-direct_startpoint) # so it starts at 0 now
+    s.ft('offset')
+    # the following confused me a little -- I wanted to take the difference between test_center and the start of the axis,
+    # but pyspecdata handles issues about the start of the axis,
+    # so we just shift so that test_center moves to zero
+    s *= np.exp(1j * 2 * pi * test_center * s.fromaxis('offset'))
+    s.ift('offset')
+    phcorr = s['offset', 0]
+    phcorr /= abs(phcorr)
+    s /= phcorr
+    # }}}
+    if fl is not None:
+        fl.image(s, ax=ax_list[0, 1])
+        ax_list[0, 1].set_title("shifted and phased")
+    # {{{ calculate the mask
+    center_idx = r_[slice_start:slice_stop] # test these points to see if they are the center
+    # Now, excluding the center point, determine how many points our "mask"
+    rms_size = N - center_idx - 1 # number of points between (not including) the center and the end of the data
+    rms_size[rms_size > center_idx] = center_idx[rms_size > center_idx] # if there are fewer points on the other side, we are limited by those
+    mymask = nddata(r_[1:N],'offset') <= nddata(rms_size,'center')
+    # }}}
+    if band_mask:
+        raise ValueError("band mask no longer supported -- use an earlier version")
+    s = abs(s['offset',1:] - s['offset', :0:-1].runcopy(np.conj)).mean_all_but(
+        ["center", 'offset']
+    )
+    if fl is not None:
+        fl.image(s, ax=ax_list[1, 0])
+        ax_list[1, 0].set_title("Residual 2D")
+    s *= mymask
+    s /= nddata(rms_size,'center')**2 # it's an L1 difference, but this is
+    #                                   squared - this is just what worked
+    #                                   well -- we could use a rationale for
+    #                                   the squared, actually
+    #                                   → maybe once for normalization, once for probability?
+    if fl is not None:
+        fl.image(s.C.cropped_log(), ax=ax_list[1, 1])
+        ax_list[1, 1].set_title("cropped log of Masked Residual")
+    s.mean_all_but(["center"])
+    best_shift = s.C.argmin("center").item()
+    # slices first few points out as usually the artifacts give a minimum
+    if fl is not None:
+        fl.next("cost function %s - freq filter" % title_str)
+        fl.twinx(orig=False, color="red")
+        s.name("cost function")
+        fl.plot(s, color="r", alpha=0.5, human_units=False)
+        cost_scale = s['center':(-4*orig_dt+best_shift,4*orig_dt+best_shift)].max().item()
+        ylim((0,cost_scale))
+        axvline(x=best_shift, c="r", linestyle="--")
+        ax = plt.gca()
+        trans = blended_transform_factory(x_transform=ax.transData, y_transform=ax.transAxes)
+        text(x = best_shift+0.0005,
+                y = 0.8,
+                s = "best shift is: %f"%best_shift,
+                fontsize = 16,
+                color='red',
+                transform=trans,
+                )
+        for dwell_int in r_[-5:5]:
+            axvline(
+                x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
+            )
+        fl.pop_marker()
+    return best_shift
