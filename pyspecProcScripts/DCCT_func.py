@@ -58,7 +58,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             my_data.data = my_data.data.real
             real_data = True
     my_data.human_units()
-    print("DIMLABELS ARE",my_data.dimlabels)
     grid_bottom += bottom_pad
     grid_top -= top_pad
     a_shape = ndshape(this_nddata)
@@ -68,7 +67,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     for j,thisdim in enumerate(a_shape.dimlabels[::-1][2:]):
         old = [j/2.0 for j in divisions]
         divisions = (old + [1])*(a_shape[thisdim]-1)+old
-        print("for",thisdim,"I get",divisions)
     divisions = [j*total_spacing/sum(divisions) for j in divisions]
     axes_height = (grid_top-grid_bottom-total_spacing)/prod(a_shape.shape[:-2])
     axes_bottom = np.cumsum([axes_height+j for j in divisions]) # becomes ndarray
@@ -253,7 +251,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                 #scaling = 60.6856
                 K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=scaling_factor)
             if not custom_scaling:
-                K = imagehsv(A['smooshed',j].data,**imagehsvkwargs)
+                K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=abs(A).data.max())
         sca(ax_list[j])
         imshow(K,extent=myext,**kwargs)
         ax_list[j].set_ylabel(None)
