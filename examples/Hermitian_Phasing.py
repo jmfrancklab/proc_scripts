@@ -72,6 +72,7 @@ with figlist_var() as fl:
         data /= zeroth_order_ph(select_pathway(data,signal_pathway), fl=fl)
         fl.image(data, ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Zeroth Order \n Phase Corrected")
+        fl.basename = "(%s)"%label
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway), 
             fl=fl
