@@ -261,12 +261,11 @@ def hermitian_function_test(
     if fl is not None:
         fl.push_marker()
         fig, ax_list = subplots(2, 2, figsize=(15, 15))
-        fl.next("Hermitian Function Test Diagnostics", fig=fig)
+        fl.next("Hermitian Function Test Diagnostics")
         fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
         if fl.basename is not None:
-            ax_list[0, 0].set_title(fl.basename)
-        else:
-            ax_list[0, 0].set_title("Data with Padding")
+            fig.suptitle(" ".join(["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]))
+        ax_list[0, 0].set_title("Data with Padding")
     peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[0,:]
     # {{{ the peak triple gives the left and right thresholds, with the
     #     peak max in the middle
