@@ -52,7 +52,6 @@ def process_data(s,searchstr='',
         DCCT(s,fl.next('Raw',figsize=this_figsize), total_spacing=0.2,
                 custom_scaling=True, scaling_factor = 17.97621,
                 plot_title='raw data for %s'%searchstr)
-        fl.show();quit()
     s.ft(list(signal_pathway))
     s.ift(direct)
     best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway))
