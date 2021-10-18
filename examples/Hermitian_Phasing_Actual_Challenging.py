@@ -1,6 +1,6 @@
 """
-Phasing and Timing Correction
-=============================
+Phasing and Timing Correction with Real Data
+============================================
 
 Take real data with varying echo times, 
 and demonstrate how we can automatically find the zeroth order phase and the
@@ -23,7 +23,7 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 1
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-f_range = (-0.75e3, 0.75e3)
+f_range = (-0.75e3, 0.75e3) # to deal with the shorter echoes, we really just need to use shorter dwell times
 filename = '210604_50mM_4AT_AOT_w11_cap_probe_echo'
 signal_pathway = {'ph1':1,'ph2':0}
 with figlist_var() as fl:
@@ -46,7 +46,7 @@ with figlist_var() as fl:
         ax_list[0].set_title("Raw Data")
         data = data['t2':f_range]
         data.ift("t2")
-        fl.basename = nodename
+        fl.basename = "(%s)"%label
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean("nScans"), signal_pathway),
             aliasing_slop=alias_slop,

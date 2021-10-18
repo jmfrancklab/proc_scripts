@@ -34,7 +34,8 @@ def integral_w_errors(s,sig_path,error_path, convolve_method=None, indirect='vd'
     else:
         kwargs = {}
     frq_slice = integrate_limits(select_pathway(s,sig_path),
-            convolve_method=convolve_method)
+            cutoff=0.15,
+            convolve_method=convolve_method,fl=fl)
     logging.debug(psp.strm('frq_slice is', frq_slice))
     s = s[direct:frq_slice]
     f = s.getaxis(direct)

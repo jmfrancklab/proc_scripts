@@ -259,17 +259,11 @@ def hermitian_function_test(
     s_envelope = s.C.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.push_marker()
-        fig, ax_list = subplots(2, 2, figsize=(15, 15))
-        fl.next("Hermitian Function Test Diagnostics", fig=fig)
+        fig_forlist, ax_list = plt.subplots(2, 2, figsize=(15, 15))
+        fl.next("Hermitian Function Test Diagnostics")
+        fig_forlist.suptitle(" ".join(["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]))
         fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
-        if fl.basename is not None:
-            ax_list[0, 0].set_title(fl.basename)
-        else:
-            ax_list[0, 0].set_title("Data with Padding")
-    #s_envelope.convolve(direct, orig_dt*3)
-    #if fl is not None:
-    #    fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
-    #peak_triple = abs(s).mean_all_but(direct).convolve(direct,orig_dt*3).contiguous(lambda x: x > 0.25 * x.data.max())[0,:]
+        ax_list[0, 0].set_title("Data with Padding")
     peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[0,:]
     # {{{ the peak triple gives the left and right thresholds, with the
     #     peak max in the middle
@@ -351,7 +345,6 @@ def hermitian_function_test(
     if fl is not None:
         fl.image(s.C.cropped_log(), ax=ax_list[1, 1])
         ax_list[1, 1].set_title("cropped log of Masked Residual")
-        fig.tight_layout()
     s.mean_all_but(["center"])
     best_shift = s.C.argmin("center").item()
     # slices first few points out as usually the artifacts give a minimum

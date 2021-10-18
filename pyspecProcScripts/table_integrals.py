@@ -22,6 +22,7 @@ def process_data(s,searchstr='',
         sgn=None,
         direct='t2',
         indirect='indirect',
+        clock_correction = True,
         error_bars = True,
         correlate = True,
         fl=None):
@@ -54,7 +55,28 @@ def process_data(s,searchstr='',
                 plot_title='raw data for %s'%searchstr)
     s.ft(list(signal_pathway))
     s.ift(direct)
-    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway))
+    if clock_correction:
+        #{{{clock correction
+        clock_corr = nddata(np.linspace(-2,2,2500),'clock_corr')
+        s.ft(direct)
+        if 'vd' is indirect:
+            s_clock = s['ph1',0]['ph2',1].sum(direct)
+        else:
+            s_clock = s['ph1',0].sum(direct)
+        s.ift(list(signal_pathway))
+        min_index = abs(s_clock).argmin(indirect,raw_index=True).item()
+        s_clock *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
+        s_clock[indirect,:min_index+1] *= -1
+        s_clock.sum(indirect).run(abs)
+        clock_corr = s_clock.argmax('clock_corr').item()
+        s *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
+        s.ft(list(signal_pathway))
+        if fl is not None:
+            DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
+                    plot_title='After Auto-Clock Correction')
+        s.ift(direct)   
+        #}}}
+    best_shift = hermitian_function_test(select_pathway((s.C.mean(indirect)),signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
@@ -94,9 +116,9 @@ def process_data(s,searchstr='',
     s_after = s_after[direct:(0,t_range[-1])]
     s_after[direct,0] *= 0.5
 
-    ph0 = s_after['t2',0].data.mean()
-    ph0 /= abs(ph0)
-    s_after /= ph0
+    #ph0 = s_after['t2',0].data.mean()
+    #ph0 /= abs(ph0)
+    #s_after /= ph0
     s_after.ft(direct)
     if fl is not None:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
