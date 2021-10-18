@@ -25,42 +25,42 @@ fl = fl_mod()
 t2, td, vd, power, ph1, ph2 = s.symbols('t2 td vd power ph1 ph2')
 signal_pathway = {'ph1':0,'ph2':1}
 t_range= (0,40e-3)
-echo_time = 5e-3
+echo_time = 10e-3
 with figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label,f_range in [
-        #(
-        #    (
-        #        21
-        #        *(1 - 2*s.exp(-vd / 0.2))
-        #        *s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*50*s.pi)
-        #    ),
-        #    [
-        #        ("vd" , nddata(r_[0:1:40j], "vd")),
-        #        ("ph1" , nddata(r_[0, 2] / 4.0, "ph1")),
-        #        ("ph2" , nddata(r_[0:4] / 4.0, "ph2")),
-        #        ("t2" , nddata(r_[0:0.2:256j]-echo_time, "t2"))
-        #    ],
-        #    {"ph1": 0, "ph2": 1},
-        #    "vd",
-        #    "IR",
-        #    (-500,500)
-        #),
         (
             (
-                21
-                * (1-(32*power/(0.25+power))*150e-6*659.33)
-                *s.exp(+1j*2*s.pi*100*t2-abs(t2)*50*s.pi)
+                23
+                *(1 - 2*s.exp(-vd / 0.2))
+                *s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*50*s.pi)
             ),
             [
-                ("power",nddata(r_[0:4:25j],"power")),
-                ("ph1",nddata(r_[0:4]/4.0,"ph1")),
-                ("t2",nddata(r_[0:0.2:256j]-echo_time,"t2")),
+                ("vd" , nddata(r_[0:1:40j], "vd")),
+                ("ph1" , nddata(r_[0:4] / 4.0, "ph1")),
+                ("ph2" , nddata(r_[0,2] / 4.0, "ph2")),
+                ("t2" , nddata(r_[0:0.2:256j]-echo_time, "t2"))
             ],
-            {"ph1":1},
-            "power",
-            "Enhancement",
-            (-500,500)
+            {"ph1": 0, "ph2": 1},
+            "vd",
+            "IR",
+            (-400,400),
         ),
+        #(
+        #    (
+        #        23
+        #        * (1-(32*power/(0.25+power))*150e-6*659.33)
+        #        *s.exp(+1j*2*s.pi*100*t2-abs(t2)*50*s.pi)
+        #    ),
+        #    [
+        #        ("power",nddata(r_[0:4:25j],"power")),
+        #        ("ph1",nddata(r_[0:4]/4.0,"ph1")),
+        #        ("t2",nddata(r_[0:0.2:256j]-echo_time,"t2")),
+        #    ],
+        #    {"ph1":1},
+        #    "power",
+        #    "Enhancement",
+        #    (-200,600),
+        #    ),
         ]: 
         fl.basename = "(%s)"%label
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)

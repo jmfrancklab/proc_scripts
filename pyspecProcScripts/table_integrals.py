@@ -29,12 +29,7 @@ def process_data(s,searchstr='',
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     s.ift(direct)
-    if indirect is 'vd':
-        s['ph2',0]['ph1',0]['t2':0] = 0 #kill axial noise
-        s.reorder(['ph1','ph2','vd','t2'])
-    else:
-        s['ph1',0]['t2':0] = 0
-        s.reorder(['ph1','power','t2'])
+    s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
     s.ift(list(signal_pathway))
     t_start = t_range[-1] / 4
@@ -45,16 +40,17 @@ def process_data(s,searchstr='',
     s.ft(direct)
     s.ft(list(signal_pathway))
     #}}}
+    zero_crossing = abs(select_pathway(s[direct:f_range],signal_pathway)).C.sum(direct).argmin(indirect,raw_index=True).item()
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
     if fl is not None:
         fl.next('')
-        DCCT(s,fl.next('Raw',figsize=this_figsize), total_spacing=0.2,
-                custom_scaling=True, scaling_factor = 17.97621,
+        DCCT(s,fl.next('Raw'), total_spacing=0.2,
                 plot_title='raw data for %s'%searchstr)
     s.ft(list(signal_pathway))
     s.ift(direct)
+    s /= zeroth_order_ph(select_pathway(s,signal_pathway))
     if clock_correction:
         #{{{clock correction
         clock_corr = nddata(np.linspace(-2,2,2500),'clock_corr')
@@ -76,10 +72,9 @@ def process_data(s,searchstr='',
                     plot_title='After Auto-Clock Correction')
         s.ift(direct)   
         #}}}
-    best_shift = hermitian_function_test(select_pathway((s.C.mean(indirect)),signal_pathway))
+    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
-    s /= zeroth_order_ph(select_pathway(s,signal_pathway))
     s.ft(direct)
     if fl is not None:
         DCCT(s,fl.next('phased',figsize=this_figsize), total_spacing=0.2,
@@ -96,7 +91,7 @@ def process_data(s,searchstr='',
         mysgn = determine_sign(select_pathway(s['t2':f_range], signal_pathway))
         s.ift(list(signal_pathway))
         opt_shift, sigma, my_mask = correl_align(s*mysgn,indirect_dim=indirect,
-                signal_pathway=signal_pathway,sigma=125)
+                signal_pathway=signal_pathway)
         s.ift(direct)
         s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(direct))
         s.ft(direct)
@@ -113,12 +108,11 @@ def process_data(s,searchstr='',
      #}}}  
     s_after = s.C 
     s_after.ift(direct)
-    s_after = s_after[direct:(0,t_range[-1])]
+    s_after = s_after[direct:(0,None)]
     s_after[direct,0] *= 0.5
-
-    #ph0 = s_after['t2',0].data.mean()
-    #ph0 /= abs(ph0)
-    #s_after /= ph0
+    ph0 = s_after['t2',0].data.mean()
+    ph0 /= abs(ph0)
+    s_after /= ph0
     s_after.ft(direct)
     if fl is not None:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
@@ -137,7 +131,7 @@ def process_data(s,searchstr='',
     if error_bars:
         s_int,frq_slice = integral_w_errors(s_after,signal_pathway,error_path,
                 convolve_method='Gaussian',
-                indirect=indirect, return_frq_slice = True)
+                indirect=indirect, return_frq_slice = True,fl=fl)
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:
@@ -174,7 +168,6 @@ def process_data(s,searchstr='',
     if indirect is 'vd':
         s_int = s_int
     else:
-        idx_maxpower = np.argmax(s.getaxis('power'))
         s_int /= max(s_int.data)
         s_int = s_after.mean(direct)
         s_int = select_pathway(s_int,signal_pathway)
