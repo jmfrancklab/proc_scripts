@@ -188,7 +188,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             label_spacing = this_label_num*80
             # from here https://stackoverflow.com/questions/44012436/python-matplotlib-get-position-of-xtick-labels
             # then searching for BBox docs
-            print("tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()])
+            logger.info(strm("tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()]))
             x_textdisp = [j.get_window_extent().bounds for j in ax1.get_yticklabels()][0][0]
             x_textdisp -= text_height/2
             x_text,y1 = fig.transFigure.inverted().transform(r_[x_textdisp,y1disp-y_space])
@@ -255,7 +255,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         sca(ax_list[j])
         imshow(K,extent=myext,**kwargs)
         ax_list[j].set_ylabel(None)
-        print(ndshape(A))
         if pass_frq_slice:
             start_y = A.getaxis(A.dimlabels[1])[0]
             stop_y = A.getaxis(A.dimlabels[1])[-1]
@@ -274,16 +273,13 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     depth = num_dims
     def decorate_axes(idx,remaining_dim,depth):
         thisdim=remaining_dim[0]
-        print("This is remaining dim",remaining_dim)
-        print("This dim is",thisdim)
-        print(ndshape(idx))
         depth -= 1
         for j in range(a_shape[thisdim]):
             idx_slice = idx[thisdim,j]
-            print("For",thisdim,"element",j,idx_slice.data.ravel())
+            logger.info(strm("For",thisdim,"element",j,idx_slice.data.ravel()))
             first_axes = ax_list[idx_slice.data.ravel()[0]]
             last_axes = ax_list[idx_slice.data.ravel()[-1]]
-            print(ordered_labels[thisdim])
+            logger.info(strm(ordered_labels[thisdim]))
             if my_data.get_ft_prop(thisdim) == True:    
                 if j == 0:
                     draw_span(last_axes,first_axes,("%s")%ordered_labels[thisdim][0],this_label_num=depth)
@@ -298,7 +294,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             new_remaining_dim = remaining_dim[1:]
             if len(remaining_dim) > 1:
                 decorate_axes(idx_slice,new_remaining_dim,depth)
-    print("call recursive function")
     decorate_axes(idx,remaining_dim,depth)
     place_labels(ax_list[0],
             "%s"%(a_shape.dimlabels[-2]), label_placed,this_label_num=depth-1, 

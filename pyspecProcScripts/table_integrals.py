@@ -22,6 +22,7 @@ def process_data(s,searchstr='',
         sgn=None,
         direct='t2',
         indirect='indirect',
+        alias_slop=3,
         clock_correction = True,
         error_bars = True,
         correlate = True,
@@ -44,11 +45,7 @@ def process_data(s,searchstr='',
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
-    if fl:
-        fl.push_marker()
-        #fl.next('Diagnostics')
-        DCCT(s,fl.next('Raw'), total_spacing=0.2,
-                plot_title='raw data for %s'%searchstr)
+    raw_s = s.C
     s.ft(list(signal_pathway))
     s.ift(direct)
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
@@ -56,11 +53,9 @@ def process_data(s,searchstr='',
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
-    if fl:
-        DCCT(s,fl.next('phased',figsize=this_figsize), total_spacing=0.2,
-                plot_title='Phased Data for %s'%searchstr)
+    ph_corr_s = s.C
     s.ift(direct)
-    if indirect is 'vd':
+    if 'ph2' in s.dimlabels:
         s.reorder(['ph1','ph2','vd',direct])
     else:
         s.reorder(['ph1',indirect,direct])
@@ -78,14 +73,25 @@ def process_data(s,searchstr='',
         s.ift(direct)
         s.ft(list(signal_pathway))
         s.ft(direct)
-        if indirect is 'vd':
+        if 'ph2' in s.dimlabels:
             s.reorder(['ph1','ph2',indirect,direct])
         else:
             s.reorder(['ph1',indirect,direct])
-        if fl:
-            DCCT(s,fl.next('Alignment',figsize=this_figsize), total_spacing=0.2,
-                    plot_title='Aligned Data for %s'%searchstr)
+        aligned_s = s.C
+        scale_factor = s.data.max()
      #}}}  
+    if fl:
+        fl.push_marker()
+        DCCT(raw_s,fl.next('Raw Data'),total_spacing=0.2,
+                custom_scaling=True, scaling_factor = scale_factor,
+                plot_title = 'Raw Data for %s'%searchstr)
+        DCCT(ph_corr_s,fl.next('Phased'),total_spacing=0.2,
+                custom_scaling=True, scaling_factor = scale_factor,
+                plot_title = 'Phase Corrected Data for %s'%searchstr)
+        if correlate:
+            DCCT(aligned_s,fl.next('Aligned'),total_spacing=0.2,
+                    custom_scaling=True, scaling_factor = scale_factor,
+                    plot_title = 'Aligned Data for %s'%searchstr)
     s.ift(direct)
     if clock_correction:
         #{{{clock correction
@@ -105,10 +111,10 @@ def process_data(s,searchstr='',
         s.ft(list(signal_pathway))
         if fl:
             DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
+                    custom_scaling=True, scaling_factor = scale_factor, 
                     plot_title='After Auto-Clock Correction')
         s.ift(direct)   
         #}}}
-     
     s_after = s.C 
     s_after[indirect,zero_crossing] *= -1
     s_after *= -1
@@ -122,8 +128,9 @@ def process_data(s,searchstr='',
     s_after.ft(direct)
     if fl:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
+                custom_scaling=True, scaling_factor = scale_factor, 
                 plot_title='FID sliced %s'%searchstr)
-    if indirect is 'vd':
+    if 'ph2' in s.dimlabels:
         error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
                 - set(excluded_pathways)
                 - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
@@ -181,12 +188,12 @@ def process_data(s,searchstr='',
         s_int[indirect,:] /= s_int.data[0]
         #s_int = s_after.mean(direct)
         #s_int = select_pathway(s_int,signal_pathway)
-        #s_int *= -1
+        s_int *= -1
     if fl is not None:
         fl.push_marker()
         fig = figure(figsize=this_figsize)
         fl.next('Integrated Data for %s'%searchstr,fig=fig)
-        fl.plot(s_int,'o')
+        fl.plot(s_int['power',:-3],'o')
         fl.pop_marker()
     #}}}    
     return s_int, s
