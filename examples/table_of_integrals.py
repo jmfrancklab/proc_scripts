@@ -27,7 +27,7 @@ signal_pathway = {'ph1':0,'ph2':1}
 t_range= (0,40e-3)
 echo_time = 10e-3
 with figlist_var() as fl:
-    for expression, orderedDict, signal_pathway, indirect, label,f_range in [
+    for expression, orderedDict, signal_pathway, indirect, clock_correction, label,f_range in [
         (
             (
                 23
@@ -42,25 +42,27 @@ with figlist_var() as fl:
             ],
             {"ph1": 0, "ph2": 1},
             "vd",
+            True,
             "IR",
             (-400,400),
         ),
-        #(
-        #    (
-        #        23
-        #        * (1-(32*power/(0.25+power))*150e-6*659.33)
-        #        *s.exp(+1j*2*s.pi*100*t2-abs(t2)*50*s.pi)
-        #    ),
-        #    [
-        #        ("power",nddata(r_[0:4:25j],"power")),
-        #        ("ph1",nddata(r_[0:4]/4.0,"ph1")),
-        #        ("t2",nddata(r_[0:0.2:256j]-echo_time,"t2")),
-        #    ],
-        #    {"ph1":1},
-        #    "power",
-        #    "Enhancement",
-        #    (-200,600),
-        #    ),
+        (
+            (
+                23
+                * (1-(32*power/(0.25+power))*150e-6*659.33)
+                *s.exp(+1j*2*s.pi*100*t2-abs(t2)*50*s.pi)
+            ),
+            [
+                ("power",nddata(r_[0:4:25j],"power")),
+                ("ph1",nddata(r_[0:4]/4.0,"ph1")),
+                ("t2",nddata(r_[0:0.2:256j]-echo_time,"t2")),
+            ],
+            {"ph1":1},
+            "power",
+            False,
+            "Enhancement",
+            (-200,600),
+            ),
         ]: 
         fl.basename = "(%s)"%label
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
@@ -73,5 +75,5 @@ with figlist_var() as fl:
         mysgn = determine_sign(select_pathway(myslice, signal_pathway))
         data_int, data = process_data(s=data,signal_pathway=signal_pathway,
                 searchstr=label, f_range=f_range,t_range=t_range, 
-                sgn=mysgn, indirect=indirect,fl=fl)
+                sgn=mysgn, indirect=indirect,clock_correction=clock_correction,fl=fl)
 

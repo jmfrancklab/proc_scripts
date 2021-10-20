@@ -44,39 +44,19 @@ def process_data(s,searchstr='',
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
-    if fl is not None:
-        fl.next('')
+    if fl:
+        fl.push_marker()
+        #fl.next('Diagnostics')
         DCCT(s,fl.next('Raw'), total_spacing=0.2,
                 plot_title='raw data for %s'%searchstr)
     s.ft(list(signal_pathway))
     s.ift(direct)
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-    if clock_correction:
-        #{{{clock correction
-        clock_corr = nddata(np.linspace(-2,2,2500),'clock_corr')
-        s.ft(direct)
-        if 'vd' is indirect:
-            s_clock = s['ph1',0]['ph2',1].sum(direct)
-        else:
-            s_clock = s['ph1',0].sum(direct)
-        s.ift(list(signal_pathway))
-        min_index = abs(s_clock).argmin(indirect,raw_index=True).item()
-        s_clock *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
-        s_clock[indirect,:min_index+1] *= -1
-        s_clock.sum(indirect).run(abs)
-        clock_corr = s_clock.argmax('clock_corr').item()
-        s *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
-        s.ft(list(signal_pathway))
-        if fl is not None:
-            DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
-                    plot_title='After Auto-Clock Correction')
-        s.ift(direct)   
-        #}}}
     best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
-    if fl is not None:
+    if fl:
         DCCT(s,fl.next('phased',figsize=this_figsize), total_spacing=0.2,
                 plot_title='Phased Data for %s'%searchstr)
     s.ift(direct)
@@ -102,11 +82,37 @@ def process_data(s,searchstr='',
             s.reorder(['ph1','ph2',indirect,direct])
         else:
             s.reorder(['ph1',indirect,direct])
-        if fl is not None:
+        if fl:
             DCCT(s,fl.next('Alignment',figsize=this_figsize), total_spacing=0.2,
                     plot_title='Aligned Data for %s'%searchstr)
      #}}}  
+    s.ift(direct)
+    if clock_correction:
+        #{{{clock correction
+        clock_corr = nddata(np.linspace(-2,2,2500),'clock_corr')
+        s.ft(direct)
+        if 'vd' is indirect:
+            s_clock = s['ph1',0]['ph2',1].sum(direct)
+        else:
+            s_clock = s['ph1',0].sum(direct)
+        s.ift(list(signal_pathway))
+        min_index = abs(s_clock).argmin(indirect,raw_index=True).item()
+        s_clock *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
+        s_clock[indirect,:min_index+1] *= -1
+        s_clock.sum(indirect).run(abs)
+        clock_corr = s_clock.argmax('clock_corr').item()
+        s *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
+        s.ft(list(signal_pathway))
+        if fl:
+            DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
+                    plot_title='After Auto-Clock Correction')
+        s.ift(direct)   
+        #}}}
+     
     s_after = s.C 
+    s_after[indirect,zero_crossing] *= -1
+    s_after *= -1
+    s_after.ft(direct)
     s_after.ift(direct)
     s_after = s_after[direct:(0,None)]
     s_after[direct,0] *= 0.5
@@ -114,7 +120,7 @@ def process_data(s,searchstr='',
     ph0 /= abs(ph0)
     s_after /= ph0
     s_after.ft(direct)
-    if fl is not None:
+    if fl:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
                 plot_title='FID sliced %s'%searchstr)
     if indirect is 'vd':
@@ -131,10 +137,12 @@ def process_data(s,searchstr='',
     if error_bars:
         s_int,frq_slice = integral_w_errors(s_after,signal_pathway,error_path,
                 convolve_method='Gaussian',
-                indirect=indirect, return_frq_slice = True,fl=fl)
+                indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:
+            fl.pop_marker()
+            fl.push_marker()
             fl.basename='(%s)'%searchstr
             left_pad, bottom_pad, width_pad, top_pad = DCCT(s,fl.next('Real with Integration Bounds %s'%searchstr,figsize=this_figsize),just_2D=True)
             x = s_after.getaxis(direct)
@@ -143,6 +151,7 @@ def process_data(s,searchstr='',
             dy = y[1]-y[0]
             start_y = s_after.getaxis(indirect)[0]
             stop_y = s_after.getaxis(indirect)[-1]
+            #Does not plot properly if below figure is not produced
             figure(figsize=this_figsize)
             ax = plt.axes([left_pad,bottom_pad,width_pad,top_pad])
             yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
@@ -151,7 +160,7 @@ def process_data(s,searchstr='',
             ax.xaxis.set_major_locator(majorLocator())
             ax.xaxis.set_minor_locator(minorLocator())
             ax.set_ylabel(None)
-            fl.image(select_pathway(s.real.run(complex128),signal_pathway),
+            fl.image(select_pathway(s_after.real.run(complex128),signal_pathway),
                 black=False)
             x1 = x[0]
             y1 = start_y - dy
@@ -165,17 +174,20 @@ def process_data(s,searchstr='',
             q = patches.Rectangle((x2,y1),wide2,tall,angle=0.0,linewidth=1,fill=None,
                     hatch='//',ec='k')
             ax.add_patch(q)
+            fl.pop_marker()
     if indirect is 'vd':
         s_int = s_int
     else:
-        s_int /= max(s_int.data)
-        s_int = s_after.mean(direct)
-        s_int = select_pathway(s_int,signal_pathway)
-        s_int *= -1
+        s_int[indirect,:] /= s_int.data[0]
+        #s_int = s_after.mean(direct)
+        #s_int = select_pathway(s_int,signal_pathway)
+        #s_int *= -1
     if fl is not None:
+        fl.push_marker()
         fig = figure(figsize=this_figsize)
         fl.next('Integrated Data for %s'%searchstr,fig=fig)
         fl.plot(s_int,'o')
+        fl.pop_marker()
     #}}}    
     return s_int, s
     
