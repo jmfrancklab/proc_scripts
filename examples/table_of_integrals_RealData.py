@@ -26,9 +26,9 @@ t_range= (0,85e-3)
 
 with figlist_var() as fl:
     for filename, exp_type, nodename, postproc, indirect, clock_correction, label, f_range in [
-            ('211019_150uM_TEMPOL_cap_probe_1','ODNP_NMR_comp/ODNP', 'enhancement',
-                'spincore_ODNP_v1','power',False,'150 uM TEMPOL enhancement', 
-                (-0.7e3,0.7e3))
+            ('211021_6mM_TEMPOL_cap_probe','ODNP_NMR_comp/ODNP', 'enhancement',
+                'spincore_ODNP_v1','power',False,'6 mM TEMPOL enhancement', 
+                (-0.5e3,0.5e3))
             ]:
         fl.basename = "(%s)"%label
         s = find_file(filename, exp_type=exp_type, expno=nodename,
@@ -39,6 +39,6 @@ with figlist_var() as fl:
         mysgn = determine_sign(select_pathway(myslice,signal_pathway))
         s_int, s = process_data(s,signal_pathway=signal_pathway,
                 searchstr = label, f_range=f_range, t_range=t_range,
-                sgn = mysgn,indirect='power', alias_slop=1,
+                sgn = mysgn,indirect='power', Real =True, alias_slop=1,
                 clock_correction=clock_correction,
                 fl=fl)

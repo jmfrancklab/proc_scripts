@@ -22,6 +22,7 @@ def process_data(s,searchstr='',
         sgn=None,
         direct='t2',
         indirect='indirect',
+        Real=False,
         alias_slop=3,
         clock_correction = True,
         error_bars = True,
@@ -30,6 +31,12 @@ def process_data(s,searchstr='',
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     s.ift(direct)
+    if Real:
+        p_axis = s.getaxis('power')
+        power_axis_dBm = array(s.get_prop('meter_powers'))
+        power_axis_W = zeros_like(power_axis_dBm)
+        power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
+        power_axis_W = r_[0,power_axis_W]
     s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
     s.ift(list(signal_pathway))
@@ -39,17 +46,17 @@ def process_data(s,searchstr='',
     rx_offset_corr = rx_offset_corr.data.mean()
     s -= rx_offset_corr
     s.ft(direct)
-    s.ft(list(signal_pathway))
+    s.ft(list(signal_pathway),unitary=True)
     #}}}
     zero_crossing = abs(select_pathway(s[direct:f_range],signal_pathway)).C.sum(direct).argmin(indirect,raw_index=True).item()
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
     raw_s = s.C
-    s.ft(list(signal_pathway))
+    s.ft(list(signal_pathway),unitary=True)
     s.ift(direct)
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway))
+    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop)
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
@@ -71,7 +78,7 @@ def process_data(s,searchstr='',
         s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(direct))
         s.ft(direct)
         s.ift(direct)
-        s.ft(list(signal_pathway))
+        s.ft(list(signal_pathway),unitary=True)
         s.ft(direct)
         if 'ph2' in s.dimlabels:
             s.reorder(['ph1','ph2',indirect,direct])
@@ -108,7 +115,7 @@ def process_data(s,searchstr='',
         s_clock.sum(indirect).run(abs)
         clock_corr = s_clock.argmax('clock_corr').item()
         s *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
-        s.ft(list(signal_pathway))
+        s.ft(list(signal_pathway),unitary=True)
         if fl:
             DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
                     custom_scaling=True, scaling_factor = scale_factor, 
@@ -189,6 +196,8 @@ def process_data(s,searchstr='',
         #s_int = s_after.mean(direct)
         #s_int = select_pathway(s_int,signal_pathway)
         s_int *= -1
+        if Real:
+            s_int.setaxis('power',power_axis_W)
     if fl is not None:
         fl.push_marker()
         fig = figure(figsize=this_figsize)

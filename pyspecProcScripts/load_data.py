@@ -390,7 +390,7 @@ def proc_spincore_ODNP_v1(s,fl=None):
     s.set_units('t2','s')
     s.labels({'ph1':r_[0.,1.,2.,3.]/4})
     s.ft('t2',shift=True)
-    s.ft(['ph1']) # Fourier Transforms coherence channels
+    s.ft(['ph1'],unitary=True) # Fourier Transforms coherence channels
     s.reorder(['ph1','power'])
     s.C.setaxis('power','#').set_units('power','scan #')
     if fl is not None:
