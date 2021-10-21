@@ -398,7 +398,7 @@ def determine_sign(s, direct="t2", fl=None):
         fl.image(s.C.setaxis(
 'vd','#').set_units('vd','scan #'))
     data_sgn = s.C.sum(direct)
-    data_sgn /= data_sgn.max().item() # rather than doing this, we should use the zeroth-order phasing
+    data_sgn /= zeroth_order_ph(data_sgn)
     data_sgn.run(np.real).run(lambda x: np.sign(x))
     if fl is not None:
         fl.next('check sign')
