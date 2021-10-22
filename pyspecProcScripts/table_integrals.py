@@ -55,7 +55,7 @@ def process_data(s,searchstr='',
     s.ft(list(signal_pathway),unitary=True)
     s.ift(direct)
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop)
+    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop,fl=fl)
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
