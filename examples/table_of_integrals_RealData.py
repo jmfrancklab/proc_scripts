@@ -21,13 +21,13 @@ rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 init_logging(level="debug")
 fl = fl_mod()
 t2, td, vd, power, ph1, ph2 = s.symbols('t2 td vd power ph1 ph2')
-signal_pathway = {'ph1':1}
+signal_pathway = {'ph1':1,'ph2':0}
 t_range= (0,85e-3)
 
 with figlist_var() as fl:
     for filename, exp_type, nodename, postproc, indirect, clock_correction, label, f_range in [
-            ('211021_6mM_TEMPOL_cap_probe','ODNP_NMR_comp/ODNP', 'enhancement',
-                'spincore_ODNP_v1','power',False,'6 mM TEMPOL enhancement', 
+            ('201113_TEMPOL_capillary_probe_DNP_1','ODNP_NMR_comp/old', 'signal',
+                'spincore_ODNP_v2','power',False,'no power', 
                 (-0.5e3,0.5e3))
             ]:
         fl.basename = "(%s)"%label
@@ -39,6 +39,6 @@ with figlist_var() as fl:
         mysgn = determine_sign(select_pathway(myslice,signal_pathway))
         s_int, s = process_data(s,signal_pathway=signal_pathway,
                 searchstr = label, f_range=f_range, t_range=t_range,
-                sgn = mysgn,indirect='power', Real =True, alias_slop=1,
+                sgn = mysgn,indirect='power', Real =True, alias_slop=3,
                 clock_correction=clock_correction,
                 fl=fl)

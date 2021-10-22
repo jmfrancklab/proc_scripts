@@ -10,7 +10,6 @@ from .simple_functions import select_pathway
 from .correlation_alignment import correl_align
 from .integral_w_error import integral_w_errors
 from .DCCT_func import DCCT
-from .simple_functions import determine_sign
 import matplotlib.patches as patches
 this_figsize = (6,12)
 t2 = symbols('t2')
@@ -63,7 +62,7 @@ def process_data(s,searchstr='',
     ph_corr_s = s.C
     s.ift(direct)
     if 'ph2' in s.dimlabels:
-        s.reorder(['ph1','ph2','vd',direct])
+        s.reorder(['ph1','ph2',indirect,direct])
     else:
         s.reorder(['ph1',indirect,direct])
     #}}}
@@ -85,20 +84,17 @@ def process_data(s,searchstr='',
         else:
             s.reorder(['ph1',indirect,direct])
         aligned_s = s.C
-        scale_factor = s.data.max()
+        scale_factor = s.max()
      #}}}  
     if fl:
         fl.push_marker()
-        DCCT(raw_s,fl.next('Raw Data'),total_spacing=0.2,
-                custom_scaling=True, scaling_factor = scale_factor,
-                plot_title = 'Raw Data for %s'%searchstr)
-        DCCT(ph_corr_s,fl.next('Phased'),total_spacing=0.2,
-                custom_scaling=True, scaling_factor = scale_factor,
-                plot_title = 'Phase Corrected Data for %s'%searchstr)
+        DCCT(raw_s,fl.next('Raw Data',figsize=(6,12)),total_spacing=0.1,
+                scaling_factor = scale_factor)
+        DCCT(ph_corr_s,fl.next('Phased',figsize=(6,12)),total_spacing=0.1,
+                scaling_factor = scale_factor)
         if correlate:
-            DCCT(aligned_s,fl.next('Aligned'),total_spacing=0.2,
-                    custom_scaling=True, scaling_factor = scale_factor,
-                    plot_title = 'Aligned Data for %s'%searchstr)
+            DCCT(aligned_s,fl.next('Aligned',figsize=(6,12)),total_spacing=0.1,
+                    scaling_factor = scale_factor)
     s.ift(direct)
     if clock_correction:
         #{{{clock correction
@@ -124,19 +120,18 @@ def process_data(s,searchstr='',
         #}}}
     s_after = s.C 
     s_after[indirect,zero_crossing] *= -1
-    s_after *= -1
+    #s_after *= -1
     s_after.ft(direct)
     s_after.ift(direct)
     s_after = s_after[direct:(0,None)]
     s_after[direct,0] *= 0.5
-    ph0 = s_after['t2',0].data.mean()
-    ph0 /= abs(ph0)
-    s_after /= ph0
+    #ph0 = s_after['t2',0].data.mean()
+    #ph0 /= abs(ph0)
+    #s_after /= ph0
     s_after.ft(direct)
     if fl:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
-                custom_scaling=True, scaling_factor = scale_factor, 
-                plot_title='FID sliced %s'%searchstr)
+                scaling_factor = scale_factor)
     if 'ph2' in s.dimlabels:
         error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
                 - set(excluded_pathways)
@@ -151,7 +146,7 @@ def process_data(s,searchstr='',
     if error_bars:
         s_int,frq_slice = integral_w_errors(s_after,signal_pathway,error_path,
                 convolve_method='Gaussian',
-                indirect=indirect, return_frq_slice = True)
+                indirect=indirect, return_frq_slice = True,fl=fl)
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:

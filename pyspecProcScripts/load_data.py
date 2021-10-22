@@ -397,6 +397,34 @@ def proc_spincore_ODNP_v1(s,fl=None):
         fl.next('all data: frequency domain')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
     return s
+def proc_spincore_ODNP_v2(s,fl=None):
+    logging.info("loading pre-processing for ODNP")
+    prog_power = s.getaxis('power').copy()
+    logging.info(strm("programmed powers",prog_power))
+    s.setaxis('power',r_[
+        0:len(s.getaxis('power'))])
+    logging.info(strm("meter powers",s.get_prop('meter_powers')))
+    logging.info(strm("actual powers",s.getaxis('power')))
+    logging.info(strm("ratio of actual to programmed power",
+               s.getaxis('power')/prog_power))
+    nPoints = s.get_prop('acq_params')['nPoints']
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nScans = s.get_prop('acq_params')['nScans']
+    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
+    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.set_units('t2','s')
+    s.setaxis('ph2',r_[0.,2.]/4)
+    s.setaxis('ph1',r_[0:4.]/4)
+    s.ft('t2',shift=True)
+    s.ft(['ph1','ph2'],unitary=True) # Fourier Transforms coherence channels
+    s['ph1',:] *= 1./sqrt(0.25)
+    s['ph2',:] *=1./sqrt(0.5)
+    s.C.setaxis('power','#').set_units('power','scan #')
+    s.reorder(['ph1','ph2','power'])
+    if fl is not None:
+        fl.next('all data: frequency domain')
+        fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+    return s
 
 def proc_capture(s):
     logging.info("loading pre-processing for square wave capture")
@@ -488,6 +516,7 @@ lookup_table = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_nutation_v2':proc_nutation_amp,
         'spincore_nutation_v3':proc_nutation_chunked,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
+        'spincore_ODNP_v2':proc_spincore_ODNP_v2,
         'spincore_echo_v1':proc_spincore_echo_v1,
         'spincore_var_tau_v1':proc_var_tau,
         'square_wave_capture_v1':proc_capture,

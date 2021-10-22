@@ -1,8 +1,11 @@
 from pylab import *
 from pyspecdata import *
 import matplotlib.lines as lines
-from matplotlib.patches import FancyArrow, FancyArrowPatch
+from matplotlib.patches import FancyArrow, FancyArrowPatch, Circle
+from matplotlib.lines import Line2D
 from pyspecdata.plot_funcs.image import imagehsv
+
+diagnostic = False
 
 def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         grid_bottom = 0.0,
@@ -23,7 +26,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         just_2D = False,
         scaling_factor=1,
         max_coh_jump={'ph1':2,'ph2':1},
-        plot_title='DCCT map',
+        direct='t2',
         **kwargs):
     """DCCT plot
 
@@ -45,8 +48,12 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         labels_in_order = []
         for j in range(n_ph):
             temp = all_possibilities[:,j]
-            temp = ', '.join(['%+d'%j for j in
-                temp[isfinite(temp)]])
+            if j == 0:
+                temp = ', '.join(['%d'%j for j in 
+                    temp[isfinite(temp)]])
+            else:    
+                temp = ', '.join(['%+d'%j for j in
+                    temp[isfinite(temp)]])
             if len(temp) == 0: temp = 'X'
             labels_in_order.append(temp)
         ordered_labels[this_dim] = labels_in_order
@@ -58,6 +65,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             my_data.data = my_data.data.real
             real_data = True
     my_data.human_units()
+    print("DIMLABELS ARE",my_data.dimlabels)
     grid_bottom += bottom_pad
     grid_top -= top_pad
     a_shape = ndshape(this_nddata)
@@ -67,6 +75,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     for j,thisdim in enumerate(a_shape.dimlabels[::-1][2:]):
         old = [j/2.0 for j in divisions]
         divisions = (old + [1])*(a_shape[thisdim]-1)+old
+        print("for",thisdim,"I get",divisions)
     divisions = [j*total_spacing/sum(divisions) for j in divisions]
     axes_height = (grid_top-grid_bottom-total_spacing)/prod(a_shape.shape[:-2])
     axes_bottom = np.cumsum([axes_height+j for j in divisions]) # becomes ndarray
@@ -154,56 +163,72 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
 
     def place_labels(ax1, label, label_placed, this_label_num, check_for_label_num = True,
             allow_for_text=allow_for_text_default,
-            allow_for_ticks=allow_for_ticks_default, y_space=30, arrow_width_px=3,
-            push_bottom_label=0):
-        if check_for_label_num:
-            if not label_placed[this_label_num]:
-                x1disp,y1disp = ax1.transAxes.transform(r_[0,0])
-                label_spacing = this_label_num*label_spacing_multiplier
-                x_text_disp = x1disp-(allow_for_text+allow_for_ticks)-label_spacing-text_height/2
-                x_text,y1 = fig.transFigure.inverted().transform(r_[
-                    x_text_disp+push_bottom_label,
-                    y1disp-y_space])
-                # push the arrow slightly below the topline of the text
-                x_arrow,y_arrow = fig.transFigure.inverted().transform(r_[
-                    x_text_disp,
-                    y1disp-y_space-2*arrow_width_px])
-                arrow_width,_ = fig.transFigure.inverted().transform(r_[arrow_width_px,0])
-                dx,dy = fig.transFigure.inverted().transform(r_[
-                    0,y_space-arrow_width_px])
-                a = FancyArrow(x_arrow-arrow_width/2, y_arrow, dx, dy,
-                        arrow_width,  alpha=0.1,  color='k')
-                # could do fancier w/ the following, but need to mess w/ width parameters
-                #arrow_base = r_[x_arrow-arrow_width/2, y_arrow]
-                #a = FancyArrowPatch(arrow_base, arrow_base+r_[dx, dy],
-                #        arrowstyle='|-|',
-                #        alpha=0.1,  color='k')
-                fig.add_artist(a)
+            allow_for_ticks=allow_for_ticks_default,
+            y_space_px=30, arrow_width_px=4,
+            arrow_head_vs_width=3):
+        if not check_for_label_num or not label_placed[this_label_num]:
+            x_axorigindisp,y_axorigindisp = ax1.transAxes.transform(r_[0,0])
+            # {{{ determine the x and y position of the label in display coords
+            if check_for_label_num:
                 # the labels of the outer dimensions
-                text(x_text, y1, label, va='top', ha='right', rotation=45,
-                        transform=fig.transFigure, color='k')
-                label_placed[this_label_num] = 1
-        else:
-            x1,y1disp = ax1.transAxes.transform(r_[0,0])
-            label_spacing = this_label_num*80
-            # from here https://stackoverflow.com/questions/44012436/python-matplotlib-get-position-of-xtick-labels
-            # then searching for BBox docs
-            logger.info(strm("tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()]))
-            x_textdisp = [j.get_window_extent().bounds for j in ax1.get_yticklabels()][0][0]
+                label_spacing = this_label_num*label_spacing_multiplier
+                x_textdisp = x_axorigindisp-(allow_for_text+allow_for_ticks)-label_spacing-text_height/2
+            else:
+                # same as above, but determine text
+                # position based on tick labels
+                label = my_data.unitify_axis(my_data.dimlabels[-2])
+                x_axorigindisp,y_axorigindisp = ax1.transAxes.transform(r_[0,0])
+                # from here https://stackoverflow.com/questions/44012436/python-matplotlib-get-position-of-xtick-labels
+                # then searching for BBox docs
+                logger.debug("tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()])
+                x_textdisp = [j.get_window_extent().bounds for j in ax1.get_yticklabels()][0][0]
             x_textdisp -= text_height/2
-            x_text,y1 = fig.transFigure.inverted().transform(r_[x_textdisp,y1disp-y_space])
-            text(x_text, y1, my_data.unitify_axis(my_data.dimlabels[-2]), 
-                    va='top', ha='right', rotation=45, transform=fig.transFigure, color='k')
+            y_textdisp = y_axorigindisp-0.8*y_space_px-arrow_head_vs_width*arrow_width_px
+            y_textdisp -= 2*text_height/3
+            if diagnostic:
+                a = Circle((x_textdisp, y_axorigindisp-y_textdisp), 3,
+                        clip_on=False,
+                        transform=None,
+                        color='r')
+                fig.add_artist(a)
+            # }}}
+            x_textfig,y_textfig = fig.transFigure.inverted().transform(r_[
+                x_textdisp+arrow_width_px,
+                y_textdisp])
             # push the arrow slightly below the topline of the text
-            x_arrow,y_arrow = fig.transFigure.inverted().transform(r_[
+            x_arrowbase_fig,y_arrowbase_fig = fig.transFigure.inverted().transform(r_[
                 x_textdisp,
-                y1disp-y_space-2*arrow_width_px])
+                y_textdisp-0.2*y_space_px])
             arrow_width,_ = fig.transFigure.inverted().transform(r_[arrow_width_px,0])
             dx,dy = fig.transFigure.inverted().transform(r_[
-                0,y_space-arrow_width_px])
-            a = FancyArrow(x_arrow-arrow_width/2,y_arrow,dx,dy,arrow_width, alpha=0.1, color='k')
+                0,y_space_px-arrow_width_px])
+            a = FancyArrow(x_arrowbase_fig,y_arrowbase_fig,
+                    dx, dy,
+                    arrow_width,
+                    transform=fig.transFigure,
+                    alpha=0.1,  color='k')
+            # could do fancier w/ the following, but need to mess w/ width parameters
+            #arrow_base = r_[x_arrowbase_fig-arrow_width/2, y_arrowbase_fig]
+            #a = FancyArrowPatch(arrow_base, arrow_base+r_[dx, dy],
+            #        arrowstyle='|-|',
+            #        alpha=0.1,  color='k')
             fig.add_artist(a)
-
+            if diagnostic:
+                a = Line2D([x_arrowbase_fig, x_arrowbase_fig+dx],
+                        [y_arrowbase_fig, y_arrowbase_fig+dy],
+                        transform=fig.transFigure,
+                        color='r')
+                fig.add_artist(a)
+                a = Circle((x_textfig, y_textfig), 0.01,
+                        clip_on=False,
+                        transform=fig.transFigure,
+                        color='r')
+                fig.add_artist(a)
+            text(x_textfig, y_textfig, label,
+                    va='top', ha='right', rotation=45,
+                    transform=fig.transFigure, color='k')
+            if check_for_label_num:
+                label_placed[this_label_num] = 1
     imagehsvkwargs = {}
     for k,v in list(kwargs.items()):
         if k in ['black','logscale']:
@@ -218,7 +243,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             ('renumber',None)],kwargs,
             pass_through=True)
         if isinstance(x, list):
-            x = np.array(my_data.getaxis('t2'))
+            x = np.array(my_data.getaxis(direct))
         if isinstance(y, list):
             y = np.array(my_data.getaxis(my_data.dimlabels[-2]))
         if len(x)==0:
@@ -255,6 +280,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         sca(ax_list[j])
         imshow(K,extent=myext,**kwargs)
         ax_list[j].set_ylabel(None)
+        print(ndshape(A))
         if pass_frq_slice:
             start_y = A.getaxis(A.dimlabels[1])[0]
             stop_y = A.getaxis(A.dimlabels[1])[-1]
@@ -273,13 +299,16 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     depth = num_dims
     def decorate_axes(idx,remaining_dim,depth):
         thisdim=remaining_dim[0]
+        print("This is remaining dim",remaining_dim)
+        print("This dim is",thisdim)
+        print(ndshape(idx))
         depth -= 1
         for j in range(a_shape[thisdim]):
             idx_slice = idx[thisdim,j]
-            logger.info(strm("For",thisdim,"element",j,idx_slice.data.ravel()))
+            print("For",thisdim,"element",j,idx_slice.data.ravel())
             first_axes = ax_list[idx_slice.data.ravel()[0]]
             last_axes = ax_list[idx_slice.data.ravel()[-1]]
-            logger.info(strm(ordered_labels[thisdim]))
+            print(ordered_labels[thisdim])
             if my_data.get_ft_prop(thisdim) == True:    
                 if j == 0:
                     draw_span(last_axes,first_axes,("%s")%ordered_labels[thisdim][0],this_label_num=depth)
@@ -294,11 +323,11 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             new_remaining_dim = remaining_dim[1:]
             if len(remaining_dim) > 1:
                 decorate_axes(idx_slice,new_remaining_dim,depth)
+    print("call recursive function")
     decorate_axes(idx,remaining_dim,depth)
     place_labels(ax_list[0],
             "%s"%(a_shape.dimlabels[-2]), label_placed,this_label_num=depth-1, 
             check_for_label_num = False, allow_for_text = -50)
-    plt.title('%s'%plot_title)
     if just_2D:
         return LHS_pad+LHS_labels,axes_bottom[0],width,axes_bottom[-1]-top_pad
     else:
