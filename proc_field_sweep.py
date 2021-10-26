@@ -7,31 +7,43 @@ A field sweep to detect the ESR via NMR-ODNP!
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
-from pyspecProcScripts import postproc_dict
-from scipy.optimize import leastsq,minimize,basinhopping
+from pyspecProcScripts import lookup_table
+#from scipy.optimize import leastsq,minimize,basinhopping
 from sympy import symbols
-# sphinx_gallery_thumbnail_number = 2
-rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
-
-fl = figlist_var()
+fl = fl_mod()
 t2 = symbols('t2')
 filter_bandwidth = 20e3
-filename = '210702_500uM_TEMPO_hexane_cap_probe_field_dep' #'210611_S175R1a_pR_DDM_field_dep'
-gamma_eff = (14.824903/3489.4)#(14.893851/3505.6) # MHz / G
-f_dip = 9.8214286#9.82103 # GHz
-for nodename,postproc,label_str,freq_slice,field_slice in [
-        ('field_sweep_2',#'32dBm_finer',
-        'field_sweep','TEMPO field sweep',(-500,700),(-200,500)),
+gamma_eff = (14.897706/3506.5)#(14.893851/3505.6) # MHz / G
+f_dip = 9.8216745#9.82103 # GHz
+for thisfile,exp_type,nodename,postproc,label_str,freq_slice,field_slice in [
+        ('211020_TEMPOL_heat_exch_289uM_field_dep','ODNP_NMR_comp/field_dependent',
+            'field_sweep_1','field_sweep_v1',
+            'TEMPO field sweep',(-1e3,1e3),(-300,300)),
         ]:
-    s = find_file(filename,exp_type='ODNP_NMR_comp/field_dependent',
-            expno=nodename,postproc=postproc,lookup=postproc_dict,fl=fl)
+    s = find_file(thisfile,exp_type=exp_type,expno=nodename)#,
+            #postproc=postproc,lookup=lookup_table)
+    nPoints = s.get_prop('acq_params')['nPoints']
+    nEchoes = s.get_prop('acq_params')['nEchoes']
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nScans = s.get_prop('acq_params')['nScans']
+    s.reorder('t',first=True)
+    s.chunk('t',['ph1','t2'],[4,-1])
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.reorder('t2',first=False)
+    t2_max = s.getaxis('t2')[-1]
+    rx_offset_corr = s['t2':(t2_max*0.75,None)]
+    rx_offset_corr = rx_offset_corr.data.mean()
+    s -= rx_offset_corr
+    s.ft(['ph1'])
+    fl.next('raw data -- coherence channels')
+    s.reorder(['ph1','Field','power','t2'])
+    fl.image(s)
+    s.ft('t2',shift=True)
+    fl.next('frequency domain raw data')
+    fl.image(s)
     freqs = s.get_prop('acq_params')['mw_freqs']
     s = s['t2':freq_slice]
-    if s.get_prop('acq_params')['nPhaseSteps'] == 8:
-        s.mean('nScans')
-        s = s['ph1',1]['ph0',0].C
-    else:
-        s=s['ph1',1]['power',0]['nScans',0].C
+    s=s['ph1',1]['power',0]['nScans',0].C
     s.ift('t2')
     s.ft('t2')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
@@ -42,14 +54,16 @@ for nodename,postproc,label_str,freq_slice,field_slice in [
     fl.next('line plots')
     for z in range(len(s.getaxis('Field'))):
         fl.plot(abs(s['Field',z]),label='%d'%z)
-    #fl.show();quit()
+    #fl.show();quit()    
     s_ = s['t2':field_slice].sum('t2')
     fl.next('sweep, without hermitian')
     fl.plot(abs(s_),'o-')
     field_idx = (abs(s_.data)).argmax()
-    print('At $B_0$ = %0.1f, $f_0$ = %0.8e'%(s.getaxis('Field')[field_idx],freqs[field_idx]))
     fitting = abs(s_).polyfit('Field',order=2)
-    Field = nddata(r_[3503.5:3508:100j],'Field')
-    #fl.plot(Field.eval_poly(fitting,'Field'),label='fit')
-    print('I found a max at',Field.eval_poly(fitting,'Field').argmax().item())
+    Field = nddata(r_[3502:3508:100j],'Field')
+    fl.plot(Field.eval_poly(fitting,'Field'),label='fit')
+    print("ESR frequency is %f"%(freqs[0]/1e9))
+    print('I found a max of the fit at',Field.eval_poly(fitting,'Field').argmax().item())
+    print('I found data max at', abs(s_).argmax().item())
 fl.show()
+
