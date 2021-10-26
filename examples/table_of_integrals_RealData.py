@@ -32,9 +32,7 @@ with figlist_var() as fl:
             ]:
         fl.basename = "(%s)"%label
         s = find_file(filename, exp_type=exp_type, expno=nodename,
-                postproc=postproc,lookup=lookup_table,fl=fl)
-        if 'nScans' in s.dimlabels:
-            s.mean('nScans')
+                postproc=postproc,lookup=lookup_table)
         myslice = s['t2':f_range]
         mysgn = determine_sign(select_pathway(myslice,signal_pathway))
         s_int, s = process_data(s,signal_pathway=signal_pathway,

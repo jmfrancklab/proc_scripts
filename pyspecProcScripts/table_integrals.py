@@ -55,7 +55,7 @@ def process_data(s,searchstr='',
     s.ft(list(signal_pathway),unitary=True)
     s.ift(direct)
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop,fl=fl)
+    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop)
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
@@ -84,14 +84,14 @@ def process_data(s,searchstr='',
         else:
             s.reorder(['ph1',indirect,direct])
         aligned_s = s.C
-        scale_factor = s.max()
+        scale_factor = abs(aligned_s.C).max().item()
      #}}}  
     if fl:
         fl.push_marker()
         DCCT(raw_s,fl.next('Raw Data',figsize=(6,12)),total_spacing=0.1,
-                scaling_factor = scale_factor)
+                custom_scaling=True, scaling_factor = scale_factor)
         DCCT(ph_corr_s,fl.next('Phased',figsize=(6,12)),total_spacing=0.1,
-                scaling_factor = scale_factor)
+                custom_scaling=True,scaling_factor = scale_factor)
         if correlate:
             DCCT(aligned_s,fl.next('Aligned',figsize=(6,12)),total_spacing=0.1,
                     scaling_factor = scale_factor)
@@ -120,14 +120,10 @@ def process_data(s,searchstr='',
         #}}}
     s_after = s.C 
     s_after[indirect,zero_crossing] *= -1
-    #s_after *= -1
     s_after.ft(direct)
     s_after.ift(direct)
     s_after = s_after[direct:(0,None)]
     s_after[direct,0] *= 0.5
-    #ph0 = s_after['t2',0].data.mean()
-    #ph0 /= abs(ph0)
-    #s_after /= ph0
     s_after.ft(direct)
     if fl:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
@@ -146,7 +142,7 @@ def process_data(s,searchstr='',
     if error_bars:
         s_int,frq_slice = integral_w_errors(s_after,signal_pathway,error_path,
                 convolve_method='Gaussian',
-                indirect=indirect, return_frq_slice = True,fl=fl)
+                indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:
