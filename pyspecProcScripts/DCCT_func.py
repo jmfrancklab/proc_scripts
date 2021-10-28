@@ -4,9 +4,36 @@ import matplotlib.lines as lines
 from matplotlib.patches import FancyArrow, FancyArrowPatch, Circle
 from matplotlib.lines import Line2D
 from pyspecdata.plot_funcs.image import imagehsv
+@FuncFormatter
+def ph2(x,pos):
+    ordered_labels = {}
+    n_ph = 2 
+    this_max_coh_jump = 1
+    all_possibilities = empty((int((2*this_max_coh_jump+1)/n_ph)+1)*n_ph)
+    all_possibilities[:] = nan
+    all_possibilities[:this_max_coh_jump+1] = r_[0:this_max_coh_jump+1]
+    all_possibilities[-this_max_coh_jump:] = r_[-this_max_coh_jump:0]
+    all_possibilities = all_possibilities.reshape((-1,n_ph))
+    labels_in_order = []
+    for j in range(n_ph):
+        temp = all_possibilities[:,j]
+        if j == 0:
+            temp = ', '.join(['%d'%j for j in 
+                temp[isfinite(temp)]])
+        else:    
+            temp = ', '.join(['%+d'%j for j in
+                temp[isfinite(temp)]])
+        if len(temp) == 0: temp = 'X'
+        labels_in_order.append(temp)
+    ordered_labels['ph2'] = labels_in_order
+    if x == 0:
+        temp = ("%s")%ordered_labels['ph2'][0]
+    #else:
+    #    temp = ('%s')%ordered_labels['ph2'][]
+    return temp
+
 
 diagnostic = False
-
 def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         grid_bottom = 0.0,
         bottom_pad = 0.15,
@@ -37,6 +64,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     """
     my_data = this_nddata.C
     ordered_labels = {}
+    # {{{ Generate alias labels - goes to scientific fn
     for this_dim in [j for j in my_data.dimlabels if j.startswith('ph')]:
         n_ph = ndshape(my_data)[this_dim]
         this_max_coh_jump = max_coh_jump[this_dim]
@@ -57,6 +85,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             if len(temp) == 0: temp = 'X'
             labels_in_order.append(temp)
         ordered_labels[this_dim] = labels_in_order
+    # }}}
     real_data = False
     if cmap is not None:
         assert all(isclose(my_data.data.imag,0)), "In order to use a color map, you must pass real data"
@@ -65,12 +94,12 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             my_data.data = my_data.data.real
             real_data = True
     my_data.human_units()
-    print("DIMLABELS ARE",my_data.dimlabels)
     grid_bottom += bottom_pad
     grid_top -= top_pad
     a_shape = ndshape(this_nddata)
     num_dims = len(a_shape.dimlabels[:-2])
     divisions = []
+    
     # should be looping in backward order from printed shape
     for j,thisdim in enumerate(a_shape.dimlabels[::-1][2:]):
         old = [j/2.0 for j in divisions]
@@ -91,7 +120,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     LHS_labels,_ = fig.transFigure.inverted().transform(
             (label_spacing_multiplier*num_dims + allow_for_ticks_default, 0))
     width = 1.-(LHS_pad+RHS_pad+LHS_labels)
-
     for j,b in enumerate(axes_bottom):
         if j !=0 and shareaxis:
             ax_list.append(axes([LHS_labels+LHS_pad,b,width,axes_height],
@@ -125,10 +153,18 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     # {{{ all subplots
     for j in range(0,len(axes_bottom)):
         ax_list[j].set_ylabel(a_shape.dimlabels[-2])
-        ax_list[j].yaxis.set_minor_locator(minorLocator())
-        ax_list[j].yaxis.set_ticks_position('both')
+        inner_dim = a_shape.dimlabels[-2]
+        inner_dim = str(inner_dim)
+        if inner_dim == 'ph2':
+            print("Inner dimension is phase cycling dimension")
+            ax_list[j].yaxis.set_major_formatter(ph2)
+            ax_list[j].yaxis.set_major_locator(MaxNLocator(integer=True))
+        else:
+            ax_list[j].yaxis.set_minor_locator(minorLocator())
+            ax_list[j].yaxis.set_ticks_position('both')
         for tick in ax_list[j].get_yticklabels():
-            tick.set_rotation(0)
+            tick.set_rotation(90)
+            tick.set_va('center')
     # }}}
     # }}}
 
@@ -180,7 +216,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                 x_axorigindisp,y_axorigindisp = ax1.transAxes.transform(r_[0,0])
                 # from here https://stackoverflow.com/questions/44012436/python-matplotlib-get-position-of-xtick-labels
                 # then searching for BBox docs
-                logger.debug("tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()])
+                logger.debug(strm( "tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()] ))
                 x_textdisp = [j.get_window_extent().bounds for j in ax1.get_yticklabels()][0][0]
             x_textdisp -= text_height/2
             y_textdisp = y_axorigindisp-0.8*y_space_px-arrow_head_vs_width*arrow_width_px
@@ -280,7 +316,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         sca(ax_list[j])
         imshow(K,extent=myext,**kwargs)
         ax_list[j].set_ylabel(None)
-        print(ndshape(A))
         if pass_frq_slice:
             start_y = A.getaxis(A.dimlabels[1])[0]
             stop_y = A.getaxis(A.dimlabels[1])[-1]
@@ -301,14 +336,12 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         thisdim=remaining_dim[0]
         print("This is remaining dim",remaining_dim)
         print("This dim is",thisdim)
-        print(ndshape(idx))
         depth -= 1
         for j in range(a_shape[thisdim]):
             idx_slice = idx[thisdim,j]
             print("For",thisdim,"element",j,idx_slice.data.ravel())
             first_axes = ax_list[idx_slice.data.ravel()[0]]
             last_axes = ax_list[idx_slice.data.ravel()[-1]]
-            print(ordered_labels[thisdim])
             if my_data.get_ft_prop(thisdim) == True:    
                 if j == 0:
                     draw_span(last_axes,first_axes,("%s")%ordered_labels[thisdim][0],this_label_num=depth)
@@ -323,7 +356,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             new_remaining_dim = remaining_dim[1:]
             if len(remaining_dim) > 1:
                 decorate_axes(idx_slice,new_remaining_dim,depth)
-    print("call recursive function")
     decorate_axes(idx,remaining_dim,depth)
     place_labels(ax_list[0],
             "%s"%(a_shape.dimlabels[-2]), label_placed,this_label_num=depth-1, 
@@ -331,5 +363,5 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     if just_2D:
         return LHS_pad+LHS_labels,axes_bottom[0],width,axes_bottom[-1]-top_pad
     else:
-        return LHS_pad+LHS_labels,axes_bottom[-1]+axes_height,width,top_pad-RHS_pad
+        return ax_list, LHS_pad+LHS_labels,axes_bottom[-1]+axes_height,width,top_pad-RHS_pad
 

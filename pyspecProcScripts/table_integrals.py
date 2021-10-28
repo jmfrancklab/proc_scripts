@@ -87,6 +87,7 @@ def process_data(s,searchstr='',
         scale_factor = abs(aligned_s.C).max().item()
      #}}}  
     if fl:
+        fl.basename = '(%s)'%searchstr
         fl.push_marker()
         DCCT(raw_s,fl.next('Raw Data',figsize=(6,12)),total_spacing=0.1,
                 custom_scaling=True, scaling_factor = scale_factor)
@@ -114,8 +115,7 @@ def process_data(s,searchstr='',
         s.ft(list(signal_pathway),unitary=True)
         if fl:
             DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
-                    custom_scaling=True, scaling_factor = scale_factor, 
-                    plot_title='After Auto-Clock Correction')
+                    custom_scaling=True, scaling_factor = scale_factor)
         s.ift(direct)   
         #}}}
     s_after = s.C 
@@ -146,9 +146,6 @@ def process_data(s,searchstr='',
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:
-            fl.pop_marker()
-            fl.push_marker()
-            fl.basename='(%s)'%searchstr
             left_pad, bottom_pad, width_pad, top_pad = DCCT(s,fl.next('Real with Integration Bounds %s'%searchstr,figsize=this_figsize),just_2D=True)
             x = s_after.getaxis(direct)
             dx = x[1]-x[0]
@@ -179,22 +176,23 @@ def process_data(s,searchstr='',
             q = patches.Rectangle((x2,y1),wide2,tall,angle=0.0,linewidth=1,fill=None,
                     hatch='//',ec='k')
             ax.add_patch(q)
-            fl.pop_marker()
     if indirect is 'vd':
         s_int = s_int
+        if fl is not None:
+            fig=figure(figsize=this_figsize)
+            fl.next('Integrated Data for %s'%searchstr, fig=fig)
+            fl.plot(s_int,'o')
+            fl.pop_marker()
     else:
         s_int[indirect,:] /= s_int.data[0]
-        #s_int = s_after.mean(direct)
-        #s_int = select_pathway(s_int,signal_pathway)
-        s_int *= -1
+        #s_int *= -1
         if Real:
             s_int.setaxis('power',power_axis_W)
-    if fl is not None:
-        fl.push_marker()
-        fig = figure(figsize=this_figsize)
-        fl.next('Integrated Data for %s'%searchstr,fig=fig)
-        fl.plot(s_int['power',:-3],'o')
-        fl.pop_marker()
+        if fl is not None:
+            fig = figure(figsize=this_figsize)
+            fl.next('Integrated Data for %s'%searchstr,fig=fig)
+            fl.plot(s_int['power',:-3],'o')
+            fl.pop_marker()
     #}}}    
     return s_int, s
     
