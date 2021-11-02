@@ -228,13 +228,13 @@ def process_data(s,searchstr='',
     if indirect is 'vd':
         s_int = s_int
         if fl is not None:
+            #fl.push_marker()
             fig=figure(figsize=this_figsize)
             fl.next('Integrated Data for %s'%searchstr, fig=fig)
             fl.plot(s_int,'o')
             fl.pop_marker()
     else:
         s_int[indirect,:] /= s_int.data[0]
-        #s_int *= -1
         if Real:
             s_int.setaxis('power',power_axis_W)
         if fl is not None:
