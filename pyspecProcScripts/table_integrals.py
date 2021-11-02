@@ -27,6 +27,50 @@ def process_data(s,searchstr='',
         error_bars = True,
         correlate = True,
         fl=None):
+    """Applies appropriate phase corrections, along with DC offset corrections, 
+    alignment, and integrates the data to transform 2D datasets into a table
+    of integrals.
+
+    Parameters
+    ==========
+    searchstr:      str
+                    string for the title of the plots produced.
+    signal_pathway: dict
+                    Dictionary of the path of the desired signal.
+    excluded_pathways:  dict
+                        Dictionary of all coherence pathways that are not 
+                        the signal pathway.
+    f_range:        tuple
+                    Frequency range over which the signal resides.
+    t_range:        tuple
+                    Time range over which the signal resides.
+    sgn:            nddata
+                    A dataset with all +1 or -1 (giving the sign of the original signal)
+                    Does *not* include the 'direct' dimension.
+    direct:         str
+                    Direct dimension of the signal
+    indirect:       str
+                    Indirect dimension of the signal. Usually 'power' or 'nScans' 
+                    for example.
+    Real:           bool
+                    If true applies power axis corrections as it is real data.
+    alias_slop:     int
+                    Aliasing_slop used in the hermitian function.
+    clock_correction:   bool
+                        If true, will apply a clock correction. Is needed for IR
+                        but not enhancement data.
+    error_bars:     bool
+                    Option to apply integration *with* error bars.
+    correlate:      bool
+                    Option to apply correlation alignment to data.
+            
+    Returns
+    =======
+    s:              nddata
+                    Data with applied corrections but *not* integrated
+    s_int:          nddata
+                    Integrated and corrected data
+    """                
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     s.ift(direct)
