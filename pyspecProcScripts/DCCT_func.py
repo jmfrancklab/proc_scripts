@@ -104,7 +104,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     for j,thisdim in enumerate(a_shape.dimlabels[::-1][2:]):
         old = [j/2.0 for j in divisions]
         divisions = (old + [1])*(a_shape[thisdim]-1)+old
-        print("for",thisdim,"I get",divisions)
     divisions = [j*total_spacing/sum(divisions) for j in divisions]
     axes_height = (grid_top-grid_bottom-total_spacing)/prod(a_shape.shape[:-2])
     axes_bottom = np.cumsum([axes_height+j for j in divisions]) # becomes ndarray
@@ -116,7 +115,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
     majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=2, steps=[1,10])
     minorLocator = lambda: mticker.AutoMinorLocator(n=4)
-
     LHS_labels,_ = fig.transFigure.inverted().transform(
             (label_spacing_multiplier*num_dims + allow_for_ticks_default, 0))
     width = 1.-(LHS_pad+RHS_pad+LHS_labels)
@@ -156,7 +154,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         inner_dim = a_shape.dimlabels[-2]
         inner_dim = str(inner_dim)
         if inner_dim == 'ph2':
-            print("Inner dimension is phase cycling dimension")
             ax_list[j].yaxis.set_major_formatter(ph2)
             ax_list[j].yaxis.set_major_locator(MaxNLocator(integer=True))
         else:
@@ -334,12 +331,9 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     depth = num_dims
     def decorate_axes(idx,remaining_dim,depth):
         thisdim=remaining_dim[0]
-        print("This is remaining dim",remaining_dim)
-        print("This dim is",thisdim)
         depth -= 1
         for j in range(a_shape[thisdim]):
             idx_slice = idx[thisdim,j]
-            print("For",thisdim,"element",j,idx_slice.data.ravel())
             first_axes = ax_list[idx_slice.data.ravel()[0]]
             last_axes = ax_list[idx_slice.data.ravel()[-1]]
             if my_data.get_ft_prop(thisdim) == True:    

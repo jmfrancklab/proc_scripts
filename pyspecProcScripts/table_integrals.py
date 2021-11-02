@@ -91,11 +91,14 @@ def process_data(s,searchstr='',
         fl.push_marker()
         DCCT(raw_s,fl.next('Raw Data',figsize=(6,12)),total_spacing=0.1,
                 custom_scaling=True, scaling_factor = scale_factor)
+        plt.title('Raw Data for %s'%searchstr)
         DCCT(ph_corr_s,fl.next('Phased',figsize=(6,12)),total_spacing=0.1,
                 custom_scaling=True,scaling_factor = scale_factor)
+        plt.title('Phased for %s'%searchstr)
         if correlate:
             DCCT(aligned_s,fl.next('Aligned',figsize=(6,12)),total_spacing=0.1,
                     scaling_factor = scale_factor)
+            plt.title('Aligned Data for %s'%searchstr)
     s.ift(direct)
     if clock_correction:
         #{{{clock correction
@@ -105,7 +108,7 @@ def process_data(s,searchstr='',
             s_clock = s['ph1',0]['ph2',1].sum(direct)
         else:
             s_clock = s['ph1',0].sum(direct)
-        s.ift(list(signal_pathway))
+        s.ift(list(signal_pathway),unitary=True)
         min_index = abs(s_clock).argmin(indirect,raw_index=True).item()
         s_clock *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
         s_clock[indirect,:min_index+1] *= -1
@@ -116,6 +119,7 @@ def process_data(s,searchstr='',
         if fl:
             DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
                     custom_scaling=True, scaling_factor = scale_factor)
+            plt.title('After Auto-Clock Correction for %s'%searchstr)
         s.ift(direct)   
         #}}}
     s_after = s.C 
@@ -128,6 +132,7 @@ def process_data(s,searchstr='',
     if fl:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
                 scaling_factor = scale_factor)
+        plt.title('FID of %s'%searchstr)
     if 'ph2' in s.dimlabels:
         error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
                 - set(excluded_pathways)
