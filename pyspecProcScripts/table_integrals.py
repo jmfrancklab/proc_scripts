@@ -131,16 +131,16 @@ def process_data(s,searchstr='',
         scale_factor = abs(aligned_s.C).max().item()
      #}}}  
     if fl:
-        fl.basename = '(%s)'%searchstr
-        fl.push_marker()
+        if fl.basename=='(Enhancement)':
+            fl.next('')
         DCCT(raw_s,fl.next('Raw Data',figsize=(6,12)),total_spacing=0.1,
                 custom_scaling=True, scaling_factor = scale_factor)
         plt.title('Raw Data for %s'%searchstr)
-        DCCT(ph_corr_s,fl.next('Phased',figsize=(6,12)),total_spacing=0.1,
+        DCCT(ph_corr_s,fl.next('Phased Data',figsize=(6,12)),total_spacing=0.1,
                 custom_scaling=True,scaling_factor = scale_factor)
-        plt.title('Phased for %s'%searchstr)
+        plt.title('Phased Data for %s'%searchstr)
         if correlate:
-            DCCT(aligned_s,fl.next('Aligned',figsize=(6,12)),total_spacing=0.1,
+            DCCT(aligned_s,fl.next('Aligned Data',figsize=(6,12)),total_spacing=0.1,
                     scaling_factor = scale_factor)
             plt.title('Aligned Data for %s'%searchstr)
     s.ift(direct)
@@ -163,7 +163,7 @@ def process_data(s,searchstr='',
         if fl:
             DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
                     custom_scaling=True, scaling_factor = scale_factor)
-            plt.title('After Auto-Clock Correction for %s'%searchstr)
+            plt.title('After Auto-Clock Correction %s'%searchstr)
         s.ift(direct)   
         #}}}
     s_after = s.C 
@@ -176,7 +176,7 @@ def process_data(s,searchstr='',
     if fl:
         DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
                 scaling_factor = scale_factor)
-        plt.title('FID of %s'%searchstr)
+        plt.title('FID')
     if 'ph2' in s.dimlabels:
         error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
                 - set(excluded_pathways)
@@ -195,7 +195,8 @@ def process_data(s,searchstr='',
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:
-            left_pad, bottom_pad, width_pad, top_pad = DCCT(s,fl.next('Real with Integration Bounds %s'%searchstr,figsize=this_figsize),just_2D=True)
+            fl.next('Real with Integration Bounds',figsize=this_figsize)
+            left_pad, bottom_pad, width_pad, top_pad = DCCT(s,fl.next('Real with Integration Bounds',figsize=this_figsize),just_2D=True)
             x = s_after.getaxis(direct)
             dx = x[1]-x[0]
             y = s_after.getaxis(indirect)
@@ -228,20 +229,17 @@ def process_data(s,searchstr='',
     if indirect is 'vd':
         s_int = s_int
         if fl is not None:
-            #fl.push_marker()
-            fig=figure(figsize=this_figsize)
-            fl.next('Integrated Data for %s'%searchstr, fig=fig)
+            fig2=figure(figsize=this_figsize)
+            fl.next('Integrated Data', fig=fig2)
             fl.plot(s_int,'o')
-            fl.pop_marker()
     else:
         s_int[indirect,:] /= s_int.data[0]
         if Real:
             s_int.setaxis('power',power_axis_W)
         if fl is not None:
-            fig = figure(figsize=this_figsize)
-            fl.next('Integrated Data for %s'%searchstr,fig=fig)
+            fig1 = figure(figsize=this_figsize)
+            fl.next('Integrated Data',fig=fig1)
             fl.plot(s_int['power',:-3],'o')
-            fl.pop_marker()
     #}}}    
     return s_int, s
     
