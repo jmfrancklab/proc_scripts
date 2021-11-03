@@ -204,7 +204,6 @@ def process_data(s,searchstr='',
             start_y = s_after.getaxis(indirect)[0]
             stop_y = s_after.getaxis(indirect)[-1]
             #Does not plot properly if below figure is not produced
-            figure(figsize=this_figsize)
             ax = plt.axes([left_pad,bottom_pad,width_pad,top_pad])
             yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
             majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=2, steps=[1,10])
