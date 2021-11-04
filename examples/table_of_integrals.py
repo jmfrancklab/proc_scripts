@@ -17,7 +17,7 @@ from collections import OrderedDict
 seed(2021)
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 
-# sphinx_gallery_thumbnail_number = 5
+# sphinx_gallery_thumbnail_number = 7
 
 # {{{ generate the fake data
 init_logging(level="debug")

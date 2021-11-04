@@ -16,7 +16,7 @@ import sympy as s
 from collections import OrderedDict
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 
-# sphinx_gallery_thumbnail_number = 8
+# sphinx_gallery_thumbnail_number = 6
 
 init_logging(level="debug")
 fl = fl_mod()
