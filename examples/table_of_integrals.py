@@ -77,5 +77,4 @@ with figlist_var() as fl:
                 searchstr=label, f_range=f_range,t_range=t_range, 
                 sgn=mysgn, indirect=indirect,Real=False,
                 clock_correction=clock_correction,fl=fl)
-        print("fl check at end of %s"%label,fl)
 

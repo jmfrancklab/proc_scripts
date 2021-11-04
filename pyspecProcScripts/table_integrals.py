@@ -131,8 +131,6 @@ def process_data(s,searchstr='',
         scale_factor = abs(aligned_s.C).max().item()
      #}}}  
     if fl:
-        if fl.basename=='(Enhancement)':
-            fl.next('')
         DCCT(raw_s,fl.next('Raw Data',figsize=(6,12)),total_spacing=0.1,
                 custom_scaling=True, scaling_factor = scale_factor)
         plt.title('Raw Data for %s'%searchstr)
@@ -195,24 +193,23 @@ def process_data(s,searchstr='',
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:
-            fl.next('Real with Integration Bounds',figsize=this_figsize)
-            left_pad, bottom_pad, width_pad, top_pad = DCCT(s,fl.next('Real with Integration Bounds',figsize=this_figsize),just_2D=True)
+            fig0 = figure(figsize=this_figsize)
             x = s_after.getaxis(direct)
             dx = x[1]-x[0]
             y = s_after.getaxis(indirect)
             dy = y[1]-y[0]
             start_y = s_after.getaxis(indirect)[0]
             stop_y = s_after.getaxis(indirect)[-1]
-            #Does not plot properly if below figure is not produced
-            ax = plt.axes([left_pad,bottom_pad,width_pad,top_pad])
+            fl.next('Real Integrated Data with Bounds',fig=fig0)
+            ax1 = plt.axes([0.2933,0.15,0.6567,0.713])
             yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
             majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=2, steps=[1,10])
             minorLocator = lambda: mticker.AutoMinorLocator(n=4)
-            ax.xaxis.set_major_locator(majorLocator())
-            ax.xaxis.set_minor_locator(minorLocator())
-            ax.set_ylabel(None)
+            ax1.xaxis.set_major_locator(majorLocator())
+            ax1.xaxis.set_minor_locator(minorLocator())
+            ax1.set_ylabel(None)
             fl.image(select_pathway(s_after.real.run(complex128),signal_pathway),
-                black=False)
+                black=False,ax=ax1)
             x1 = x[0]
             y1 = start_y - dy
             x2 = frq_slice[-1]
@@ -221,10 +218,10 @@ def process_data(s,searchstr='',
             wide2 = (x[-1]+dx)-x2
             p = patches.Rectangle((x1,y1),wide,tall,angle=0.0,linewidth=1,fill=None,
                     hatch='//',ec='k')
-            ax.add_patch(p)
+            ax1.add_patch(p)
             q = patches.Rectangle((x2,y1),wide2,tall,angle=0.0,linewidth=1,fill=None,
                     hatch='//',ec='k')
-            ax.add_patch(q)
+            ax1.add_patch(q)
     if indirect is 'vd':
         s_int = s_int
         if fl is not None:
