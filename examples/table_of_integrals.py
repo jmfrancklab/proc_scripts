@@ -17,7 +17,7 @@ from collections import OrderedDict
 seed(2021)
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 
-# sphinx_gallery_thumbnail_number = 8
+# sphinx_gallery_thumbnail_number = 5
 
 # {{{ generate the fake data
 init_logging(level="debug")
@@ -75,6 +75,6 @@ with figlist_var() as fl:
         mysgn = determine_sign(select_pathway(myslice, signal_pathway))
         data_int, data = process_data(s=data,signal_pathway=signal_pathway,
                 searchstr=label, f_range=f_range,t_range=t_range, 
-                sgn=mysgn, indirect=indirect,Real=False,
+                sgn=mysgn, indirect=indirect, Real=False,
                 clock_correction=clock_correction,fl=fl)
 
