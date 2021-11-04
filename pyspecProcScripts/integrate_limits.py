@@ -56,7 +56,8 @@ def integrate_limits(s, axis="t2",
     # AB: Yes, then I agree `.real` should be doing this.
     temp.set_ft_prop(axis, ['start','time'], -s.get_ft_prop(axis,'dt') * (psp.ndshape(s)[axis] // 2))
     # }}}
-    convolve_method = convolve_method.lower()
+    if convolve_method is not None:
+        convolve_method = convolve_method.lower()
     if fl is not None:
         fl.push_marker()
         forplot = temp
