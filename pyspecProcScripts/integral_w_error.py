@@ -3,7 +3,7 @@ from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
 import logging
 import numpy as np
-def integral_w_errors(s,sig_path,error_path, convolve_method=None, indirect='vd', direct='t2',fl=None,return_frq_slice=False):
+def integral_w_errors(s,sig_path,error_path, convolve_method='Gaussian', indirect='vd', direct='t2',fl=None,return_frq_slice=False):
     """Calculates the propagation of error for the given signal and returns
     signal with the error associated.
     
