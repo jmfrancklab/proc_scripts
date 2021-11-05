@@ -131,15 +131,18 @@ def process_data(s,searchstr='',
         scale_factor = abs(aligned_s.C).max().item()
      #}}}  
     if fl:
-        DCCT(raw_s,fl.next('Raw Data',figsize=(6,12)),total_spacing=0.1,
+        DCCT(raw_s,fl.next('Raw Data',figsize=(4.5,12)),total_spacing=0.1,
+                label_spacing_multiplier=38, text_height=40,
                 custom_scaling=True, scaling_factor = scale_factor)
         plt.title('Raw Data for %s'%searchstr)
-        DCCT(ph_corr_s,fl.next('Phased Data',figsize=(6,12)),total_spacing=0.1,
-                custom_scaling=True,scaling_factor = scale_factor)
+        DCCT(ph_corr_s,fl.next('Phased Data',figsize=(4.5,12)),total_spacing=0.1,
+                custom_scaling=True, label_spacing_multiplier = 38,
+                text_height=40, scaling_factor = scale_factor)
         plt.title('Phased Data for %s'%searchstr)
         if correlate:
-            DCCT(aligned_s,fl.next('Aligned Data',figsize=(6,12)),total_spacing=0.1,
-                    scaling_factor = scale_factor)
+            DCCT(aligned_s,fl.next('Aligned Data',figsize=(4.5,12)),total_spacing=0.1,
+                    custom_scaling=True,
+                    label_spacing_multiplier=38,scaling_factor = scale_factor)
             plt.title('Aligned Data for %s'%searchstr)
     s.ift(direct)
     if clock_correction:
@@ -159,8 +162,11 @@ def process_data(s,searchstr='',
         s *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
         s.ft(list(signal_pathway),unitary=True)
         if fl:
-            DCCT(s,fl.next('After Auto-Clock Correction'),total_spacing=0.2,
-                    custom_scaling=True, scaling_factor = scale_factor)
+            DCCT(s,fl.next('After Auto-Clock Correction',figsize=this_figsize),
+                    total_spacing=0.2,
+                    custom_scaling=True, 
+                    label_spacing_multiplier=38,
+                    scaling_factor = scale_factor)
             plt.title('After Auto-Clock Correction %s'%searchstr)
         s.ift(direct)   
         #}}}
@@ -172,7 +178,9 @@ def process_data(s,searchstr='',
     s_after[direct,0] *= 0.5
     s_after.ft(direct)
     if fl:
-        DCCT(s_after,fl.next('FID',figsize=this_figsize), total_spacing=0.2,
+        DCCT(s_after,fl.next('FID',figsize=this_figsize), 
+                custom_scaling=True, total_spacing=0.2,
+                label_spacing_multiplier=38,
                 scaling_factor = scale_factor)
         plt.title('FID')
     if 'ph2' in s.dimlabels:
