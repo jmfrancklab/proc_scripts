@@ -3,6 +3,7 @@ from pyspecdata import *
 import matplotlib.lines as lines
 from matplotlib.patches import FancyArrow, FancyArrowPatch, Circle
 from matplotlib.lines import Line2D
+from matplotlib.transforms import ScaledTranslation
 from pyspecdata.plot_funcs.image import imagehsv
 import logging
 @FuncFormatter
@@ -34,7 +35,7 @@ def ph2(x,pos):
     return temp
 
 
-diagnostic = False
+diagnostic = True
 def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         grid_bottom = 0.0,
         bottom_pad = 0.15,
@@ -114,9 +115,11 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     axes_top = grid_bottom + grid_top
     fig = this_fig_obj
     ax_list = []
-    yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
-    majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=2, steps=[1,10])
-    minorLocator = lambda: mticker.AutoMinorLocator(n=4)
+    yMajorLocator = lambda: mticker.MaxNLocator(nbins='auto',
+                        steps=[1,2,5,10])
+    majorLocator = lambda: mticker.MaxNLocator(nbins='auto',
+            steps=[1,2,2.5,5,10])
+    minorLocator = lambda: mticker.AutoMinorLocator(n=5)
     LHS_labels,_ = fig.transFigure.inverted().transform(
             (label_spacing_multiplier*num_dims + allow_for_ticks_default, 0))
     width = 1.-(LHS_pad+RHS_pad+LHS_labels)
@@ -208,7 +211,8 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             if check_for_label_num:
                 # the labels of the outer dimensions
                 label_spacing = this_label_num*label_spacing_multiplier
-                x_textdisp = x_axorigindisp-(allow_for_text+allow_for_ticks)-label_spacing-text_height/2
+                Dx_textdisp = -(allow_for_text+allow_for_ticks)-label_spacing-text_height/2
+                x_textdisp = x_axorigindisp+Dx_textdisp
             else:
                 # same as above, but determine text
                 # position based on tick labels
@@ -219,13 +223,14 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                 logging.debug(strm( "tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()] ))
                 x_textdisp = [j.get_window_extent().bounds for j in ax1.get_yticklabels()][0][0]
             x_textdisp -= text_height/2
-            y_textdisp = y_axorigindisp-0.8*y_space_px-arrow_head_vs_width*arrow_width_px
-            y_textdisp -= 2*text_height/3
+            Dy_textdisp = -0.8*y_space_px-arrow_head_vs_width*arrow_width_px
+            Dy_textdisp -= 2*text_height/3
+            y_textdisp = y_axorigindisp+Dy_textdisp
             if diagnostic:
                 a = Circle((x_textdisp, y_axorigindisp-y_textdisp), 3,
                         clip_on=False,
                         transform=None,
-                        color='r')
+                        color='b')
                 fig.add_artist(a)
             # }}}
             x_textfig,y_textfig = fig.transFigure.inverted().transform(r_[

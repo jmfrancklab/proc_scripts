@@ -73,7 +73,7 @@ with figlist_var() as fl:
         # }}}
         myslice = data['t2':f_range]
         mysgn = determine_sign(select_pathway(myslice, signal_pathway))
-        data_int, data = process_data(s=data,signal_pathway=signal_pathway,
+        data_int, data = peak_intensities(s=data,signal_pathway=signal_pathway,
                 searchstr=label, f_range=f_range,t_range=t_range, 
                 sgn=mysgn, indirect=indirect, Real=False,
                 clock_correction=clock_correction,fl=fl)

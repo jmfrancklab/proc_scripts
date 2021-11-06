@@ -35,7 +35,7 @@ with figlist_var() as fl:
                 postproc=postproc,lookup=lookup_table)
         myslice = s['t2':f_range]
         mysgn = determine_sign(select_pathway(myslice,signal_pathway))
-        s_int, s = process_data(s,signal_pathway=signal_pathway,
+        s_int, s = peak_intensities(s,signal_pathway=signal_pathway,
                 searchstr = label, f_range=f_range, t_range=t_range,
                 sgn = mysgn,indirect='power', Real =True, alias_slop=3,
                 clock_correction=clock_correction,

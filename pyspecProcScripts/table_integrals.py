@@ -13,7 +13,7 @@ from .DCCT_func import DCCT
 import matplotlib.patches as patches
 this_figsize = (6,12)
 t2 = symbols('t2')
-def process_data(s,searchstr='',
+def peak_intensities(s,searchstr='',
         signal_pathway={'ph1':0,'ph2':1},
         excluded_pathways = [(0,0)],
         f_range=(None,None),
