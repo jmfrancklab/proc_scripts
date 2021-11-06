@@ -82,21 +82,21 @@ def peak_intensities(s,searchstr='',
         power_axis_W = r_[0,power_axis_W]
     s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
-    s.ift(list(signal_pathway), unitary=True)
+    s.ift(list(signal_pathway))
     t_start = t_range[-1] / 4
     t_start *= 3
     rx_offset_corr = s['t2':(t_start,None)]
     rx_offset_corr = rx_offset_corr.data.mean()
     s -= rx_offset_corr
     s.ft(direct)
-    s.ft(list(signal_pathway),unitary=True)
+    s.ft(list(signal_pathway))
     #}}}
     zero_crossing = abs(select_pathway(s[direct:f_range],signal_pathway)).C.sum(direct).argmin(indirect,raw_index=True).item()
     #{{{phase correction
     s = s[direct:f_range]
-    s.ift(list(signal_pathway), unitary=True)
+    s.ift(list(signal_pathway))
     raw_s = s.C
-    s.ft(list(signal_pathway),unitary=True)
+    s.ft(list(signal_pathway))
     s.ift(direct)
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
     best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop)
@@ -114,14 +114,14 @@ def peak_intensities(s,searchstr='',
     if correlate:
         s.ft(direct)
         mysgn = determine_sign(select_pathway(s['t2':f_range], signal_pathway))
-        s.ift(list(signal_pathway), unitary=True)
+        s.ift(list(signal_pathway))
         opt_shift, sigma, my_mask = correl_align(s*mysgn,indirect_dim=indirect,
                 signal_pathway=signal_pathway)
         s.ift(direct)
         s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(direct))
         s.ft(direct)
         s.ift(direct)
-        s.ft(list(signal_pathway),unitary=True)
+        s.ft(list(signal_pathway))
         s.ft(direct)
         if 'ph2' in s.dimlabels:
             s.reorder(['ph1','ph2',indirect,direct])
@@ -153,14 +153,14 @@ def peak_intensities(s,searchstr='',
             s_clock = s['ph1',0]['ph2',1].sum(direct)
         else:
             s_clock = s['ph1',0].sum(direct)
-        s.ift(list(signal_pathway),unitary=True)
+        s.ift(list(signal_pathway))
         min_index = abs(s_clock).argmin(indirect,raw_index=True).item()
         s_clock *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
         s_clock[indirect,:min_index+1] *= -1
         s_clock.sum(indirect).run(abs)
         clock_corr = s_clock.argmax('clock_corr').item()
         s *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
-        s.ft(list(signal_pathway),unitary=True)
+        s.ft(list(signal_pathway))
         if fl:
             DCCT(s,fl.next('After Auto-Clock Correction',figsize=this_figsize),
                     total_spacing=0.2,
