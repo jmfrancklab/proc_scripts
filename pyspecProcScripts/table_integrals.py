@@ -82,7 +82,7 @@ def peak_intensities(s,searchstr='',
         power_axis_W = r_[0,power_axis_W]
     s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
-    s.ift(list(signal_pathway))
+    s.ift(list(signal_pathway), unitary=True)
     t_start = t_range[-1] / 4
     t_start *= 3
     rx_offset_corr = s['t2':(t_start,None)]
@@ -94,7 +94,7 @@ def peak_intensities(s,searchstr='',
     zero_crossing = abs(select_pathway(s[direct:f_range],signal_pathway)).C.sum(direct).argmin(indirect,raw_index=True).item()
     #{{{phase correction
     s = s[direct:f_range]
-    s.ift(list(signal_pathway))
+    s.ift(list(signal_pathway), unitary=True)
     raw_s = s.C
     s.ft(list(signal_pathway),unitary=True)
     s.ift(direct)
@@ -114,7 +114,7 @@ def peak_intensities(s,searchstr='',
     if correlate:
         s.ft(direct)
         mysgn = determine_sign(select_pathway(s['t2':f_range], signal_pathway))
-        s.ift(list(signal_pathway))
+        s.ift(list(signal_pathway), unitary=True)
         opt_shift, sigma, my_mask = correl_align(s*mysgn,indirect_dim=indirect,
                 signal_pathway=signal_pathway)
         s.ift(direct)
