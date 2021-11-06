@@ -4,6 +4,7 @@ import matplotlib.lines as lines
 from matplotlib.patches import FancyArrow, FancyArrowPatch, Circle
 from matplotlib.lines import Line2D
 from pyspecdata.plot_funcs.image import imagehsv
+import logging
 @FuncFormatter
 def ph2(x,pos):
     ordered_labels = {}
@@ -104,6 +105,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     for j,thisdim in enumerate(a_shape.dimlabels[::-1][2:]):
         old = [j/2.0 for j in divisions]
         divisions = (old + [1])*(a_shape[thisdim]-1)+old
+        logging.debug(strm("for",thisdim,"I get",divisions))
     divisions = [j*total_spacing/sum(divisions) for j in divisions]
     axes_height = (grid_top-grid_bottom-total_spacing)/prod(a_shape.shape[:-2])
     axes_bottom = np.cumsum([axes_height+j for j in divisions]) # becomes ndarray
@@ -154,6 +156,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         inner_dim = a_shape.dimlabels[-2]
         inner_dim = str(inner_dim)
         if inner_dim == 'ph2':
+            logging.debug("Inner dimension is phase cycling dimension")
             ax_list[j].yaxis.set_major_formatter(ph2)
             ax_list[j].yaxis.set_major_locator(MaxNLocator(integer=True))
         else:
@@ -213,7 +216,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                 x_axorigindisp,y_axorigindisp = ax1.transAxes.transform(r_[0,0])
                 # from here https://stackoverflow.com/questions/44012436/python-matplotlib-get-position-of-xtick-labels
                 # then searching for BBox docs
-                logger.debug(strm( "tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()] ))
+                logging.debug(strm( "tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()] ))
                 x_textdisp = [j.get_window_extent().bounds for j in ax1.get_yticklabels()][0][0]
             x_textdisp -= text_height/2
             y_textdisp = y_axorigindisp-0.8*y_space_px-arrow_head_vs_width*arrow_width_px
@@ -331,9 +334,12 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     depth = num_dims
     def decorate_axes(idx,remaining_dim,depth):
         thisdim=remaining_dim[0]
+        logging.debug(strm("This is remaining dim",remaining_dim))
+        logging.debug(strm("This dim is",thisdim))
         depth -= 1
         for j in range(a_shape[thisdim]):
             idx_slice = idx[thisdim,j]
+            logging.debug(strm("For",thisdim,"element",j,idx_slice.data.ravel()))
             first_axes = ax_list[idx_slice.data.ravel()[0]]
             last_axes = ax_list[idx_slice.data.ravel()[-1]]
             if my_data.get_ft_prop(thisdim) == True:    
