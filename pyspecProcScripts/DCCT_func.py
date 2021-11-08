@@ -3,7 +3,7 @@ from pyspecdata import *
 import matplotlib.lines as lines
 from matplotlib.patches import FancyArrow, FancyArrowPatch, Circle
 from matplotlib.lines import Line2D
-from matplotlib.transforms import ScaledTranslation
+from matplotlib.transforms import ScaledTranslation,IdentityTransform
 from pyspecdata.plot_funcs.image import imagehsv
 import logging
 @FuncFormatter
@@ -35,7 +35,7 @@ def ph2(x,pos):
     return temp
 
 
-diagnostic = True
+diagnostic = False
 def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         grid_bottom = 0.0,
         bottom_pad = 0.15,
@@ -45,7 +45,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         label_spacing_multiplier = 50,
         allow_for_text_default = 10,
         allow_for_ticks_default = 70,
-        text_height = 10,
+        text_height = 40,
         LHS_pad = 0.01,
         RHS_pad = 0.05,
         shareaxis = False,
@@ -203,7 +203,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     def place_labels(ax1, label, label_placed, this_label_num, check_for_label_num = True,
             allow_for_text=allow_for_text_default,
             allow_for_ticks=allow_for_ticks_default,
-            y_space_px=30, arrow_width_px=4,
+            y_space_px=30, arrow_width_px=4.0,
             arrow_head_vs_width=3):
         if not check_for_label_num or not label_placed[this_label_num]:
             x_axorigindisp,y_axorigindisp = ax1.transAxes.transform(r_[0,0])
@@ -222,10 +222,8 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                 # then searching for BBox docs
                 logging.debug(strm( "tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()] ))
                 x_textdisp = [j.get_window_extent().bounds for j in ax1.get_yticklabels()][0][0]
-            x_textdisp -= text_height/2
-            Dy_textdisp = -0.8*y_space_px-arrow_head_vs_width*arrow_width_px
-            Dy_textdisp -= 2*text_height/3
-            y_textdisp = y_axorigindisp+Dy_textdisp
+            x_textdisp -= 3.7*text_height - arrow_width_px
+            y_textdisp = -25.0 
             if diagnostic:
                 a = Circle((x_textdisp, y_axorigindisp-y_textdisp), 3,
                         clip_on=False,
@@ -233,27 +231,21 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                         color='b')
                 fig.add_artist(a)
             # }}}
-            x_textfig,y_textfig = fig.transFigure.inverted().transform(r_[
-                x_textdisp+arrow_width_px,
-                y_textdisp])
-            # push the arrow slightly below the topline of the text
-            x_arrowbase_fig,y_arrowbase_fig = fig.transFigure.inverted().transform(r_[
-                x_textdisp,
-                y_textdisp-0.2*y_space_px])
-            arrow_width,_ = fig.transFigure.inverted().transform(r_[arrow_width_px,0])
-            dx,dy = fig.transFigure.inverted().transform(r_[
-                0,y_space_px-arrow_width_px])
-            a = FancyArrow(x_arrowbase_fig,y_arrowbase_fig,
-                    dx, dy,
-                    arrow_width,
-                    transform=fig.transFigure,
+            axis_to_figure = ax1.transAxes + fig.transFigure.inverted()
+            ax_x,ax_y = axis_to_figure.transform(r_[0,0])
+            AnArrow = FancyArrow(x_textdisp,y_textdisp,
+                    2, 5,
+                    width=arrow_width_px,
+                    clip_on=False,
+                    transform=(IdentityTransform()
+                        +ScaledTranslation(ax_x,ax_y,fig.transFigure)),#fig.transFigure,
                     alpha=0.1,  color='k')
             # could do fancier w/ the following, but need to mess w/ width parameters
             #arrow_base = r_[x_arrowbase_fig-arrow_width/2, y_arrowbase_fig]
             #a = FancyArrowPatch(arrow_base, arrow_base+r_[dx, dy],
             #        arrowstyle='|-|',
             #        alpha=0.1,  color='k')
-            fig.add_artist(a)
+            fig.add_artist(AnArrow)
             if diagnostic:
                 a = Line2D([x_arrowbase_fig, x_arrowbase_fig+dx],
                         [y_arrowbase_fig, y_arrowbase_fig+dy],
@@ -265,9 +257,14 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                         transform=fig.transFigure,
                         color='r')
                 fig.add_artist(a)
+            x_textfig = x_textdisp + arrow_width_px
+            y_textfig = y_textdisp - 5.0
             text(x_textfig, y_textfig, label,
                     va='top', ha='right', rotation=45,
-                    transform=fig.transFigure, color='k')
+                    clip_on=False,
+                    transform=(IdentityTransform()
+                        +ScaledTranslation(ax_x,ax_y,fig.transFigure)),
+                    color='k')
             if check_for_label_num:
                 label_placed[this_label_num] = 1
     imagehsvkwargs = {}

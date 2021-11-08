@@ -15,7 +15,7 @@ this_figsize = (6,12)
 t2 = symbols('t2')
 def peak_intensities(s,searchstr='',
         signal_pathway={'ph1':0,'ph2':1},
-        excluded_pathways = [(0,0)],
+        excluded_pathways = [(0,0),(0,3)],
         f_range=(None,None),
         t_range=(0,0.083),
         sgn=None,
@@ -199,7 +199,7 @@ def peak_intensities(s,searchstr='',
                 convolve_method='Gaussian',
                 indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
-        x[:] /= sqrt(2)
+        #x[:] /= sqrt(2)
         if fl is not None:
             fig0 = figure(figsize=this_figsize)
             x = s_after.getaxis(direct)
@@ -210,9 +210,11 @@ def peak_intensities(s,searchstr='',
             stop_y = s_after.getaxis(indirect)[-1]
             fl.next('Real Integrated Data with Bounds',fig=fig0)
             ax1 = plt.axes([0.2933,0.15,0.6567,0.713])
-            yMajorLocator = lambda: mticker.MaxNLocator(steps=[1,10])
-            majorLocator = lambda: mticker.MaxNLocator(min_n_ticks=2, steps=[1,10])
-            minorLocator = lambda: mticker.AutoMinorLocator(n=4)
+            yMajorLocator = lambda: mticker.MaxNLocator(nbins='auto',
+                    steps=[1,2,5,10])
+            majorLocator = lambda: mticker.MaxNLocator(nbins='auto',
+                    steps=[1,2,2.5,5,10])
+            minorLocator = lambda: mticker.AutoMinorLocator(n=5)
             ax1.xaxis.set_major_locator(majorLocator())
             ax1.xaxis.set_minor_locator(minorLocator())
             ax1.set_ylabel(None)
@@ -233,17 +235,15 @@ def peak_intensities(s,searchstr='',
     if indirect is 'vd':
         s_int = s_int
         if fl is not None:
-            fig2=figure(figsize=this_figsize)
-            fl.next('Integrated Data', fig=fig2)
-            fl.plot(s_int,'o')
+            fl.next('Integrated Data')
+            fl.plot(s_int,'o',capsize=6,alpha=0.3)
     else:
         s_int[indirect,:] /= s_int.data[0]
         if Real:
             s_int.setaxis('power',power_axis_W)
         if fl is not None:
-            fig1 = figure(figsize=this_figsize)
-            fl.next('Integrated Data',fig=fig1)
-            fl.plot(s_int['power',:-3],'o')
+            fl.next('Integrated Data')
+            fl.plot(s_int['power',:-3],'o',capsize=6,alpha=0.3)
     #}}}    
     return s_int, s
     

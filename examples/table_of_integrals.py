@@ -30,9 +30,9 @@ with figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, clock_correction, label,f_range in [
         (
             (
-                23
+                21
                 *(1 - 2*s.exp(-vd / 0.2))
-                *s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*50*s.pi)
+                *s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*10*s.pi)
             ),
             [
                 ("vd" , nddata(r_[0:1:40j], "vd")),
@@ -48,9 +48,9 @@ with figlist_var() as fl:
         ),
         (
             (
-                23
+                21
                 * (1-(32*power/(0.25+power))*150e-6*659.33)
-                *s.exp(+1j*2*s.pi*100*t2-abs(t2)*50*s.pi)
+                *s.exp(+1j*2*s.pi*100*t2-abs(t2)*10*s.pi)
             ),
             [
                 ("power",nddata(r_[0:4:25j],"power")),
