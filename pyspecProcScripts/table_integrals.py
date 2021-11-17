@@ -15,7 +15,7 @@ this_figsize = (6,12)
 t2 = symbols('t2')
 def peak_intensities(s,searchstr='',
         signal_pathway={'ph1':0,'ph2':1},
-        excluded_pathways = [(0,0),(0,3)],
+        excluded_pathways = [(0,0)],
         f_range=(None,None),
         t_range=(0,0.083),
         sgn=None,
@@ -199,7 +199,7 @@ def peak_intensities(s,searchstr='',
                 convolve_method='Gaussian',
                 indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
-        #x[:] /= sqrt(2)
+        x[:] /= sqrt(2)
         if fl is not None:
             fig0 = figure(figsize=this_figsize)
             x = s_after.getaxis(direct)
