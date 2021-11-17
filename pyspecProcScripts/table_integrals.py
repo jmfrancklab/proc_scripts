@@ -92,6 +92,7 @@ def peak_intensities(s,searchstr='',
     s.ft(list(signal_pathway))
     #}}}
     zero_crossing = abs(select_pathway(s[direct:f_range],signal_pathway)).C.sum(direct).argmin(indirect,raw_index=True).item()
+    print("ZERO CROSSING IS",zero_crossing)
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
@@ -171,7 +172,10 @@ def peak_intensities(s,searchstr='',
         s.ift(direct)   
         #}}}
     s_after = s.C 
-    s_after[indirect,zero_crossing] *= -1
+    if Real:
+        pass
+    else:
+        s_after[indirect,zero_crossing] *= -1
     s_after.ft(direct)
     s_after.ift(direct)
     s_after = s_after[direct:(0,None)]
@@ -184,6 +188,7 @@ def peak_intensities(s,searchstr='',
                 scaling_factor = scale_factor)
         plt.title('FID')
     if 'ph2' in s.dimlabels:
+        print("PH2 IS PRESENT")
         error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
                 - set(excluded_pathways)
                 - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
