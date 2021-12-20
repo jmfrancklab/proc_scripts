@@ -1,3 +1,10 @@
+"""
+Scaled Transform
+================
+
+Transforms added figures or text from the display coordinates of the 
+original plot to a new sizing using the IdentityTransform.
+"""
 from pylab import *
 from matplotlib.transforms import ScaledTranslation, IdentityTransform
 from matplotlib.patches import FancyArrow, FancyArrowPatch, Circle
