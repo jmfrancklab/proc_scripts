@@ -6,8 +6,8 @@ from pyspecProcScripts.third_level.process_enhancement import process_enhancemen
 from sympy import symbols, Symbol, latex,limit,init_printing
 fl = fl_mod()
 # {{{ input parameters
-thisfile = '210609_TEMPOL_100mM_cap_probe_DNP'
-exp_type='ODNP_NMR_comp/test_equipment'
+thisfile = '211112_Ras_M67R1a_capProbe'
+exp_type='ODNP_NMR_comp/'
 save_npz = False
 power_list = r_[0.001,0.5,1,1.5,2]
 R1w = 1/2.172
