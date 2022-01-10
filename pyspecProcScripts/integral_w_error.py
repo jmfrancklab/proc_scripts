@@ -5,7 +5,9 @@ import logging
 import numpy as np
 def integral_w_errors(s,sig_path,error_path, convolve_method='Gaussian', indirect='vd', direct='t2',fl=None,return_frq_slice=False):
     """Calculates the propagation of error for the given signal and returns
-    signal with the error associated.
+    signal with the error associated. Before declaring the error_path, be sure
+    to look at examples such as integration_w_error.py to see how to decide which
+    excluded pathways to take the error over.
     
     Parameters
     ==========
