@@ -281,10 +281,25 @@ def hermitian_function_test(
     if peak_triple[2] > s.getaxis(direct)[-1]-orig_dt:
         peak_triple[2] = s.getaxis(direct)[-1]-orig_dt
     # }}}
+    # {{{ we don't want *all* of the blue line, only part
+    logging.debug("about to slice the data used for hermitian")
+    outermost = peak_triple[r_[0,-1]] # the orange edges
+    logging.debug(strm("start with",outermost))
+    blue_edges = s.getaxis(direct)[r_[0,-1]]
+    outermost += (outermost-blue_edges[::-1]) # the most it can require to calculate the cost is from the orange edge to the opposite blue edge
+    logging.debug(strm("expand to",outermost))
+    mask = r_[-1,1]*(outermost - s.getaxis(direct)[r_[0,-1]]) > 0
+    logging.debug(strm("beyond range?",mask))
+    outermost[mask] = blue_edges[mask]
+    logging.debug(strm("cropped",outermost))
+    s = s[direct:tuple(outermost)]
+    # }}}
     slice_start,slice_stop = s.get_range(direct,*peak_triple[r_[0,-1]])
     # }}}
     if fl is not None:
         ax_list[0,0].axvspan(0,orig_dt,color='k',alpha=0.1)
+        for j in range(2):
+            ax_list[0, 0].axvline(x=outermost[j], ls='--', color='k', alpha=1, linewidth=1)
         for j in range(3):
             ax_list[0, 0].axvline(x=peak_triple[j], color='k', alpha=0.5, linewidth=2)
         fl.plot(abs(s)[direct,slice(slice_start,slice_stop)], ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
