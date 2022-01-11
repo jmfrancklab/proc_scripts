@@ -74,7 +74,7 @@ def peak_intensities(s,searchstr='',
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     s.ift(direct)
-    if Real:
+    if 'ph2' not in s.dimlabels:
         p_axis = s.getaxis('power')
         power_axis_dBm = array(s.get_prop('meter_powers'))
         power_axis_W = zeros_like(power_axis_dBm)
@@ -145,7 +145,6 @@ def peak_intensities(s,searchstr='',
                 allow_for_text_default = 5,
                 allow_for_ticks_default = 50,
                 text_height=50,
-                label_factor_default=13,
                 custom_scaling=True,scaling_factor = scale_factor,
                 plot_title = 'Phased Data \nfor %s'%searchstr)
         if correlate:
@@ -156,7 +155,6 @@ def peak_intensities(s,searchstr='',
                     LHS_pad = 0.5,RHS_pad=0.27,
                     scaling_factor = scale_factor,
                     text_height = 50,
-                    label_factor_default = 23,
                     plot_title = 'Aligned Data \nfor %s'%searchstr)
     s.ift(direct)
     if clock_correction:
@@ -195,7 +193,6 @@ def peak_intensities(s,searchstr='',
                 LHS_pad = 0.74,
                 scaling_factor = scale_factor,
                 text_height=50,
-                label_factor_default = 32.5,
                 plot_title = 'FID \nfor %s'%searchstr)
     if 'ph2' in s.dimlabels:
         print("PH2 IS PRESENT")

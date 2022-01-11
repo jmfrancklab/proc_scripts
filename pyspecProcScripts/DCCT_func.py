@@ -56,8 +56,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         scaling_factor=1,
         max_coh_jump={'ph1':2,'ph2':1},
         direct='t2',
-        plot_title = 'DCCT',
-        label_factor_default=3.7,
         **kwargs):
     """DCCT plot
 
@@ -206,7 +204,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             allow_for_text=allow_for_text_default,
             allow_for_ticks=allow_for_ticks_default,
             y_space_px=30, arrow_width_px=4.0,
-            label_factor=label_factor_default,
             arrow_head_vs_width=3):
         if not check_for_label_num or not label_placed[this_label_num]:
             x_axorigindisp,y_axorigindisp = ax1.transAxes.transform(r_[0,0])
@@ -225,7 +222,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                 # then searching for BBox docs
                 logging.debug(strm( "tick locations",[j.get_window_extent().bounds for j in ax1.get_yticklabels()] ))
                 x_textdisp = [j.get_window_extent().bounds for j in ax1.get_yticklabels()][0][0]
-            x_textdisp -= label_factor*text_height - arrow_width_px
+            x_textdisp -= 3.7*text_height - arrow_width_px
             y_textdisp = -25.0 
             if diagnostic:
                 a = Circle((x_textdisp, y_axorigindisp-y_textdisp), 3,
@@ -365,7 +362,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     place_labels(ax_list[0],
             "%s"%(a_shape.dimlabels[-2]), label_placed,this_label_num=depth-1, 
             check_for_label_num = False, allow_for_text = -50)
-    plt.title(plot_title)
     if just_2D:
         return LHS_pad+LHS_labels,axes_bottom[0],width,axes_bottom[-1]-top_pad
     else:
