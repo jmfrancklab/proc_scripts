@@ -56,6 +56,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         scaling_factor=1,
         max_coh_jump={'ph1':2,'ph2':1},
         direct='t2',
+        plot_title = 'DCCT',
         **kwargs):
     """DCCT plot
 
@@ -362,6 +363,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
     place_labels(ax_list[0],
             "%s"%(a_shape.dimlabels[-2]), label_placed,this_label_num=depth-1, 
             check_for_label_num = False, allow_for_text = -50)
+    plt.title(plot_title)
     if just_2D:
         return LHS_pad+LHS_labels,axes_bottom[0],width,axes_bottom[-1]-top_pad
     else:

@@ -37,14 +37,14 @@ with figlist_var() as fl:
         f_range,
     ) in [
         (
-            "201113_TEMPOL_capillary_probe_DNP_1",
-            "ODNP_NMR_comp/old",
-            "signal",
-            "spincore_ODNP_v2",
-            "power",
+            "211223_Ras_M67R1a_capProbe",
+            "ODNP_NMR_comp/ODNP",
+            "FIR_36dBm",
+            "spincore_IR_v1",
+            "vd",
             False,
-            "no power",
-            (-0.5e3, 0.5e3),
+            "30 dBm",
+            (-0.15e3, 0.15e3),
         )
     ]:
         fl.basename = "(%s)" % label
@@ -55,7 +55,10 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
+        print(s.get_prop('acq_params'))
         myslice = s["t2":f_range]
+        if 'nScans' in s.dimlabels:
+            s.mean('nScans')
         mysgn = determine_sign(select_pathway(myslice, signal_pathway))
         s_int, s = peak_intensities(
             s,
@@ -64,8 +67,8 @@ with figlist_var() as fl:
             f_range=f_range,
             t_range=t_range,
             sgn=mysgn,
-            indirect="power",
-            Real=True,
+            indirect=indirect,
+            Real=False,
             alias_slop=3,
             clock_correction=clock_correction,
             fl=fl,

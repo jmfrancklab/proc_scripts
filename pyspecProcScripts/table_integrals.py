@@ -74,7 +74,7 @@ def peak_intensities(s,searchstr='',
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     s.ift(direct)
-    if 'ph2' not in s.dimlabels:
+    if Real:
         p_axis = s.getaxis('power')
         power_axis_dBm = array(s.get_prop('meter_powers'))
         power_axis_W = zeros_like(power_axis_dBm)
@@ -100,7 +100,7 @@ def peak_intensities(s,searchstr='',
     s.ft(list(signal_pathway))
     s.ift(direct)
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop)
+    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop,fl=fl)
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
@@ -156,6 +156,7 @@ def peak_intensities(s,searchstr='',
                     scaling_factor = scale_factor,
                     text_height = 50,
                     plot_title = 'Aligned Data \nfor %s'%searchstr)
+        fl.show();quit()    
     s.ift(direct)
     if clock_correction:
         #{{{clock correction
