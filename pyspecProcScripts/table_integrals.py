@@ -132,19 +132,32 @@ def peak_intensities(s,searchstr='',
         scale_factor = abs(aligned_s.C).max().item()
      #}}}  
     if fl:
-        DCCT(raw_s,fl.next('Raw Data',figsize=(4.5,12)),total_spacing=0.1,
-                label_spacing_multiplier=38, text_height=40,
-                custom_scaling=True, scaling_factor = scale_factor)
-        plt.title('Raw Data for %s'%searchstr)
-        DCCT(ph_corr_s,fl.next('Phased Data',figsize=(4.5,12)),total_spacing=0.1,
-                custom_scaling=True, label_spacing_multiplier = 38,
-                text_height=40, scaling_factor = scale_factor)
-        plt.title('Phased Data for %s'%searchstr)
+        this_fig = figure(figsize=(20,10))
+        DCCT(raw_s,this_fig,total_spacing=0.1,
+                RHS_pad = 0.76,
+                allow_for_text_default = 5,
+                allow_for_ticks_default = 50,
+                text_height=50,
+                custom_scaling=True, scaling_factor = scale_factor,
+                plot_title = 'Raw Data \n for %s'%searchstr)
+        DCCT(ph_corr_s,this_fig,total_spacing=0.1,
+                LHS_pad = 0.25, RHS_pad = 0.51,
+                allow_for_text_default = 5,
+                allow_for_ticks_default = 50,
+                text_height=50,
+                label_factor_default=13,
+                custom_scaling=True,scaling_factor = scale_factor,
+                plot_title = 'Phased Data \nfor %s'%searchstr)
         if correlate:
-            DCCT(aligned_s,fl.next('Aligned Data',figsize=(4.5,12)),total_spacing=0.1,
+            DCCT(aligned_s,this_fig,total_spacing=0.1,
                     custom_scaling=True,
-                    label_spacing_multiplier=38,scaling_factor = scale_factor)
-            plt.title('Aligned Data for %s'%searchstr)
+                    allow_for_text_default = 5,
+                    allow_for_ticks_default = 50,
+                    LHS_pad = 0.5,RHS_pad=0.27,
+                    scaling_factor = scale_factor,
+                    text_height = 50,
+                    label_factor_default = 23,
+                    plot_title = 'Aligned Data \nfor %s'%searchstr)
     s.ift(direct)
     if clock_correction:
         #{{{clock correction
@@ -162,13 +175,6 @@ def peak_intensities(s,searchstr='',
         clock_corr = s_clock.argmax('clock_corr').item()
         s *= np.exp(-1j*clock_corr*s.fromaxis(indirect))
         s.ft(list(signal_pathway))
-        if fl:
-            DCCT(s,fl.next('After Auto-Clock Correction',figsize=this_figsize),
-                    total_spacing=0.2,
-                    custom_scaling=True, 
-                    label_spacing_multiplier=38,
-                    scaling_factor = scale_factor)
-            plt.title('After Auto-Clock Correction %s'%searchstr)
         s.ift(direct)   
         #}}}
     s_after = s.C 
@@ -182,11 +188,15 @@ def peak_intensities(s,searchstr='',
     s_after[direct,0] *= 0.5
     s_after.ft(direct)
     if fl:
-        DCCT(s_after,fl.next('FID',figsize=this_figsize), 
+        DCCT(s_after,this_fig, 
                 custom_scaling=True, total_spacing=0.2,
-                label_spacing_multiplier=38,
-                scaling_factor = scale_factor)
-        plt.title('FID')
+                allow_for_text_default = 5,
+                allow_for_ticks_default = 50,
+                LHS_pad = 0.74,
+                scaling_factor = scale_factor,
+                text_height=50,
+                label_factor_default = 32.5,
+                plot_title = 'FID \nfor %s'%searchstr)
     if 'ph2' in s.dimlabels:
         print("PH2 IS PRESENT")
         error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
@@ -240,14 +250,16 @@ def peak_intensities(s,searchstr='',
     if indirect is 'vd':
         s_int = s_int
         if fl is not None:
-            fl.next('Integrated Data')
+            fig1 = figure()
+            fl.next('Integrated Data',fig = fig1)
             fl.plot(s_int,'o',capsize=6,alpha=0.3)
     else:
         s_int[indirect,:] /= s_int.data[0]
         if Real:
             s_int.setaxis('power',power_axis_W)
         if fl is not None:
-            fl.next('Integrated Data')
+            fig1 = figure()
+            fl.next('Integrated Data',fig = fig1)
             fl.plot(s_int['power',:-3],'o',capsize=6,alpha=0.3)
     #}}}    
     return s_int, s
