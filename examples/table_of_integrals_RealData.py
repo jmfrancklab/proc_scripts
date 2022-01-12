@@ -22,8 +22,8 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 init_logging(level="debug")
 fl = fl_mod()
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-signal_pathway = {"ph1": 1, "ph2": 0}
-t_range = (0, 85e-3)
+signal_pathway = {"ph1": 1}
+t_range = (0, 0.1)
 
 with figlist_var() as fl:
     for (
@@ -39,12 +39,12 @@ with figlist_var() as fl:
         (
             "211223_Ras_M67R1a_capProbe",
             "ODNP_NMR_comp/ODNP",
-            "FIR_36dBm",
-            "spincore_IR_v1",
-            "vd",
+            "enhancement",
+            "spincore_ODNP_v1",
+            "power",
             False,
-            "30 dBm",
-            (-0.15e3, 0.15e3),
+            "M67 Ras mutation",
+            (-0.5e3, 0.5e3),
         )
     ]:
         fl.basename = "(%s)" % label
@@ -68,8 +68,8 @@ with figlist_var() as fl:
             t_range=t_range,
             sgn=mysgn,
             indirect=indirect,
-            Real=False,
-            alias_slop=3,
+            Real=True,
+            alias_slop=2,
             clock_correction=clock_correction,
             fl=fl,
         )

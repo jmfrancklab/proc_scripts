@@ -17,7 +17,7 @@ def peak_intensities(s,searchstr='',
         signal_pathway={'ph1':0,'ph2':1},
         excluded_pathways = [(0,0)],
         f_range=(None,None),
-        t_range=(0,0.083),
+        t_range=(None,0.083),
         sgn=None,
         direct='t2',
         indirect='indirect',
@@ -100,7 +100,7 @@ def peak_intensities(s,searchstr='',
     s.ft(list(signal_pathway))
     s.ift(direct)
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect)*sgn,signal_pathway),aliasing_slop=alias_slop,fl=fl)
+    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),signal_pathway),aliasing_slop=alias_slop)
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
@@ -156,7 +156,6 @@ def peak_intensities(s,searchstr='',
                     scaling_factor = scale_factor,
                     text_height = 50,
                     plot_title = 'Aligned Data \nfor %s'%searchstr)
-        fl.show();quit()    
     s.ift(direct)
     if clock_correction:
         #{{{clock correction
