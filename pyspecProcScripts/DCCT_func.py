@@ -219,7 +219,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             ('renumber',None)],kwargs,
             pass_through=True)
         if isinstance(x, list):
-            x = np.array(my_data.getaxis('t2'))
+            x = np.array(my_data.getaxis(my_data.dimlabels[-1]))
         if isinstance(y, list):
             y = np.array(my_data.getaxis(my_data.dimlabels[-2]))
         if len(x)==0:
