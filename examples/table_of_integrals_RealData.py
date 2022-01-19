@@ -23,7 +23,7 @@ init_logging(level="debug")
 fl = fl_mod()
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 signal_pathway = {"ph1": 1}
-t_range = (0, 0.1)
+t_max = 0.1
 
 with figlist_var() as fl:
     for (
@@ -65,10 +65,10 @@ with figlist_var() as fl:
             signal_pathway=signal_pathway,
             searchstr=label,
             f_range=f_range,
-            t_range=t_range,
+            t_max=t_max,
             sgn=mysgn,
             indirect=indirect,
-            Real=True,
+            Ep=True,
             alias_slop=2,
             clock_correction=clock_correction,
             fl=fl,

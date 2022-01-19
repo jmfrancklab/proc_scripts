@@ -17,11 +17,11 @@ def peak_intensities(s,searchstr='',
         signal_pathway={'ph1':0,'ph2':1},
         excluded_pathways = [(0,0)],
         f_range=(None,None),
-        t_range=(None,0.083),
+        t_max=0.083,
         sgn=None,
         direct='t2',
         indirect='indirect',
-        Real=False,
+        Ep=False,
         alias_slop=3,
         clock_correction = True,
         error_bars = True,
@@ -42,8 +42,8 @@ def peak_intensities(s,searchstr='',
                         the signal pathway.
     f_range:        tuple
                     Frequency range over which the signal resides.
-    t_range:        tuple
-                    Time range over which the signal resides.
+    t_max:          int
+                    max time of time range
     sgn:            nddata
                     A dataset with all +1 or -1 (giving the sign of the original signal)
                     Does *not* include the 'direct' dimension.
@@ -52,8 +52,8 @@ def peak_intensities(s,searchstr='',
     indirect:       str
                     Indirect dimension of the signal. Usually 'power' or 'nScans' 
                     for example.
-    Real:           bool
-                    If true applies power axis corrections as it is real data.
+    Ep:             bool
+                    If true applies power axis corrections to the enhancement data.
     alias_slop:     int
                     Aliasing_slop used in the hermitian function.
     clock_correction:   bool
@@ -74,7 +74,7 @@ def peak_intensities(s,searchstr='',
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     s.ift(direct)
-    if Real:
+    if Ep:
         p_axis = s.getaxis('power')
         power_axis_dBm = array(s.get_prop('meter_powers'))
         power_axis_W = zeros_like(power_axis_dBm)
@@ -83,16 +83,12 @@ def peak_intensities(s,searchstr='',
     s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
     s.ift(list(signal_pathway))
-    t_start = t_range[-1] / 4
-    t_start *= 3
-    rx_offset_corr = s['t2':(t_start,None)]
-    rx_offset_corr = rx_offset_corr.data.mean()
+    rx_offset_corr = s['t2':(t_max*0.75,None)]
+    rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft(direct)
     s.ft(list(signal_pathway))
     #}}}
-    zero_crossing = abs(select_pathway(s[direct:f_range],signal_pathway)).C.sum(direct).argmin(indirect,raw_index=True).item()
-    print("ZERO CROSSING IS",zero_crossing)
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
@@ -176,10 +172,6 @@ def peak_intensities(s,searchstr='',
         s.ift(direct)   
         #}}}
     s_after = s.C 
-    if Real:
-        pass
-    else:
-        s_after[indirect,zero_crossing] *= -1
     s_after.ft(direct)
     s_after.ift(direct)
     s_after = s_after[direct:(0,None)]
@@ -252,7 +244,7 @@ def peak_intensities(s,searchstr='',
             fl.plot(s_int,'o',capsize=6,alpha=0.3)
     else:
         s_int[indirect,:] /= s_int.data[0]
-        if Real:
+        if Ep:
             s_int.setaxis('power',power_axis_W)
         if fl is not None:
             fig1 = figure()
