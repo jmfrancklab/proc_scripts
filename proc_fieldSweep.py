@@ -49,7 +49,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
         offset = abs(s['Field',z].C).argmax('t2')
         offsets.append(offset)
         true_carrier_freq = s.getaxis('Field')[z] * gamma_eff
-        v_rf = (s.get_prop('acq_params')['carrierFreq_MHz']*1e6 + (offset))/1e6
+        v_rf = (true_carrier_freq*1e6 + (offset))/1e6
         #plt.axvline(x=freq_slice[0])
         #plt.axvline(x=freq_slice[-1])
         v_NMR.append(v_rf.data) 
