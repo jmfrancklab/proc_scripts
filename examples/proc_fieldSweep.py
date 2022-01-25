@@ -1,3 +1,16 @@
+"""Check ppt value using a field sweep
+======================================
+
+A DC offset correction, initial frequency slice 
+and rough centering are applied to a previously
+acquired TEMPOL dataset. It is then sliced more based
+on the 1D diagnostic plot labeled 'Field Slicing'. The 
+field is converted to ppt using the frequency stored as
+an acquisition parameter in the dataset and the effective
+gamma used that day. This will verify the previously required
+ppt value for a given spin label.
+"""
+
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
