@@ -3,6 +3,7 @@ from pyspecdata import *
 from pyspecProcScripts import *
 from pyspecProcScripts import lookup_table
 from sympy import symbols
+import matplotlib.pyplot as plt
 fl = fl_mod()
 t2 = symbols('t2')
 filter_bandwidth = 20e3
@@ -12,13 +13,10 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
             'field_sweep_1','field_sweep_v1',
             'TEMPO field sweep',(-250,250)),
         ]:
-    s = find_file(thisfile,exp_type=exp_type,expno=nodename)
+    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
+            postproc=postproc,lookup = lookup_table)
     #{{{Obtain ESR frequency and chunk/reorder dimensions
-    v_esr = (s.get_prop('acq_params')['mw_freqs'][0])/1e9
-    s.reorder('t',first=True)
-    s.chunk('t',['ph1','t2'],[4,-1])
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.reorder('t2',first=False)
+    v_B12 = (s.get_prop('acq_params')['mw_freqs'][0])/1e9
     #}}}
     #{{{DC offset correction
     t2_max = s.getaxis('t2')[-1]
@@ -40,26 +38,35 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s.ft('t2')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
-    rough_center = abs(s).C.convolve('t2',0.0001).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
+    best_shift = hermitian_function_test(s)
+    s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
     fl.next('line plots')
+    v_NMR = []
+    offsets = []
     for z in range(len(s.getaxis('Field'))):
-        fl.plot(abs(s['Field',z]),label='%d'%z)
+        fl.plot(abs(s['Field',z]),label = '%0.2f'%s.getaxis('Field')[z])
+        offset = abs(s['Field',z].C).argmax('t2')
+        offsets.append(offset)
+        true_carrier_freq = s.getaxis('Field')[z] * gamma_eff
+        v_rf = (s.get_prop('acq_params')['carrierFreq_MHz']*1e6 + (offset))/1e6
+        #plt.axvline(x=freq_slice[0])
+        #plt.axvline(x=freq_slice[-1])
+        v_NMR.append(v_rf.data) 
     s_ = s['t2':freq_slice].sum('t2')
-    #}}}
-    #{{{Convert field to v_NMR
-    field = s_.getaxis('Field')
-    new_field = field * gamma_eff
+    print("s.getaxis('Field') =", s.getaxis('Field'))
+    print("offsets:",offsets)
+    #fl.show();quit()
     #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR
-    ppt = new_field / v_esr 
+    ppt = (v_NMR / v_B12)
     s_.setaxis('Field',ppt)
     s_.rename('Field','ppt')
     #}}}
     #{{{Fitting
     fl.next('sweep, without hermitian')
-    fl.plot(abs(s_),'o-')
+    fl.plot(abs(s_),'-o')
+    fl.show();quit()
     field_idx = (abs(s_.data)).argmax()
     fitting = abs(s_).polyfit('ppt',order=2)
     x_min = s_.getaxis('ppt')[0]
@@ -67,7 +74,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     Field = nddata(r_[x_min:x_max:100j],'ppt')
     fl.plot(Field.eval_poly(fitting,'ppt'),label='fit')
     #}}}
-    logger.info(strm("ESR frequency is %f"%(v_esr)))
+    logger.info(strm("ESR frequency is %f"%(v_B12)))
     logger.info(strm('The fit finds a max with ppt value:',
         Field.eval_poly(fitting,'ppt').argmax().item()))
     logger.info(strm('The data finds a ppt value', abs(s_).argmax().item()))

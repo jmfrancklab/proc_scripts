@@ -30,14 +30,11 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
             'field_sweep','field_sweep_v1',
             'TEMPOL field sweep',(-500,250)),
         ]:
-    s = find_file(thisfile,exp_type=exp_type,expno=nodename)
-    fig, ax_list = subplots(1, 4)
+    s = find_file(thisfile,exp_type=exp_type,expno=nodename,
+            postproc=postproc,lookup=lookup_table)
+    fig, ax_list = subplots(1, 3)
     #{{{Obtain ESR frequency and chunk/reorder dimensions
-    v_esr = (s.get_prop('acq_params')['mw_freqs'][0])/1e9
-    s.reorder('t',first=True)
-    s.chunk('t',['ph1','t2'],[4,-1])
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.reorder('t2',first=False)
+    v_B12 = (s.get_prop('acq_params')['mw_freqs'][0])/1e9
     #}}}
     #{{{DC offset correction
     t2_max = s.getaxis('t2')[-1]
@@ -47,27 +44,25 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s.ft(['ph1'])
     s.reorder(['ph1','Field','power','t2'])
     fl.next('Field Sweep Processing',fig=fig)
-    fl.image(s, ax = ax_list[0])
-    ax_list[0].set_title('Raw Data\nCoherence Channels')
     #}}}
     #{{{frequency filtering and rough center
     s.ft('t2',shift=True)
-    fl.image(s,ax = ax_list[1])
-    ax_list[1].set_title('Raw data\nFrequency Domain')
+    fl.image(s,ax = ax_list[0])
+    ax_list[0].set_title('Raw data\nFrequency Domain')
     s = s['t2':(-1e3,1e3)]
     s=s['ph1',1]['power',0]['nScans',0].C
     s.ift('t2')
     s.ft('t2')
     s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
     s.ift('t2')
-    rough_center = abs(s).C.convolve('t2',0.0001).mean_all_but('t2').argmax('t2').item()
-    s.setaxis(t2-rough_center)
+    best_shift = hermitian_function_test(s)
+    s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
     for z in range(len(s.getaxis('Field'))):
-        fl.plot(abs(s['Field',z]),label='%d'%z,ax=ax_list[2])
-    ax_list[2].axvline(x = freq_slice[0])
-    ax_list[2].axvline(x=freq_slice[-1])
-    ax_list[2].set_title('Field Slicing')
+        fl.plot(abs(s['Field',z]),ax=ax_list[1])
+    ax_list[1].axvline(x = freq_slice[0])
+    ax_list[1].axvline(x=freq_slice[-1])
+    ax_list[1].set_title('Field Slicing')
     s_ = s['t2':freq_slice].sum('t2')
     #}}}
     #{{{Convert field to v_NMR
@@ -75,22 +70,22 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     new_field = field * gamma_eff
     #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR
-    ppt = new_field / v_esr 
+    ppt = new_field / v_B12 
     s_.setaxis('Field',ppt)
     s_.rename('Field','ppt')
     #}}}
     #{{{Fitting
-    fl.plot(abs(s_),'o-',ax=ax_list[3])
-    ax_list[3].set_title('Sweep, \nwithout a Hermitian')
+    fl.plot(abs(s_),'o-',ax=ax_list[2])
+    ax_list[2].set_title('Sweep, \nwithout a Hermitian')
     field_idx = (abs(s_.data)).argmax()
     fitting = abs(s_).polyfit('ppt',order=2)
     x_min = s_.getaxis('ppt')[0]
     x_max = s_.getaxis('ppt')[-1]
     Field = nddata(r_[x_min:x_max:100j],'ppt')
-    fl.plot(Field.eval_poly(fitting,'ppt'),label='fit',ax=ax_list[3])
+    fl.plot(Field.eval_poly(fitting,'ppt'),label='fit',ax=ax_list[2])
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     #}}}
-    logger.info(strm("ESR frequency is %f"%(v_esr)))
+    logger.info(strm("ESR frequency is %f"%(v_B12)))
     logger.info(strm('The fit finds a max with ppt value:',
         Field.eval_poly(fitting,'ppt').argmax().item()))
     logger.info(strm('The data finds a ppt value', abs(s_).argmax().item()))

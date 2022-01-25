@@ -474,7 +474,15 @@ def proc_ESR(s):
     s.setaxis('$B_0$',lambda x: x-center_field)
     s_integral = s.C.run_nopop(np.cumsum,'$B_0$')
     logging.info(strm(s_integral))
-    return s    
+    return s  
+def proc_field_sweep(s):
+    logging.info("loading preprocessing for fieldsweep")
+    s.reorder('t',first=True)
+    s.chunk('t',['ph1','t2'],[4,-1])
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.reorder('t2',first=False)
+    return s
+
 
 lookup_table = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'ab_ir2h':proc_bruker_deut_IR_mancyc,
@@ -493,5 +501,6 @@ lookup_table = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG,
         'ESR_linewidth':proc_ESR,
+        'field_sweep_v1': proc_field_sweep,
 
 }
