@@ -19,16 +19,16 @@ from sympy import symbols
 fl = figlist_var()
 t2 = symbols('t2')
 filter_bandwidth = 20e3
-gamma_eff = (14.903537/3507.48) # MHz / G
+gamma_eff = (14.904100/3507.57) # MHz / G
 rcParams["image.aspect"] = "auto" # needed for sphinx gallery
 
 #sphinx_gallery_thumbnail_number = 1
 
 
 for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
-        ('220124_150mM_TEMPOL_field_dep_2','ODNP_NMR_comp/field_dependent',
+        ('220126_150mM_TEMPOL_field_dep','ODNP_NMR_comp/field_dependent',
             'field_sweep','field_sweep_v1',
-            'TEMPOL field sweep',(-500,250)),
+            'TEMPOL field sweep',(-250,250)),
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=lookup_table)
@@ -42,12 +42,12 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft(['ph1'])
-    s.reorder(['ph1','Field','power','t2'])
+    s.reorder(['ph1','indirect','power','t2'])
     fl.next('Field Sweep Processing',fig=fig)
     #}}}
     #{{{frequency filtering and rough center
     s.ft('t2',shift=True)
-    fl.image(s,ax = ax_list[0])
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'),ax = ax_list[0])
     ax_list[0].set_title('Raw data\nFrequency Domain')
     s = s['t2':(-1e3,1e3)]
     s=s['ph1',1]['power',0]['nScans',0].C
@@ -58,21 +58,26 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     best_shift = hermitian_function_test(s)
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
-    for z in range(len(s.getaxis('Field'))):
-        fl.plot(abs(s['Field',z]),ax=ax_list[1])
-    ax_list[1].axvline(x = freq_slice[0])
-    ax_list[1].axvline(x=freq_slice[-1])
+    v_NMR=[]
+    offsets = []
+    s = s['indirect',:-1]
+    for z in range(len(s.getaxis('indirect')[:]['Field'])):
+        fl.plot(abs(s['indirect',z]),ax=ax_list[1])
+        offset = abs(s['indirect',z].C).argmax('t2')
+        offsets.append(offset)
+        true_carrier_freq = s.getaxis('indirect')[z]['carrierFreq']
+        v_rf = true_carrier_freq*1e6 + (offset)
+        v_rf /= 1e6
+        v_NMR.append(v_rf.data) 
+        ax_list[1].axvline(x = freq_slice[0])
+        ax_list[1].axvline(x=freq_slice[-1])
     ax_list[1].set_title('Field Slicing')
     s_ = s['t2':freq_slice].sum('t2')
     #}}}
-    #{{{Convert field to v_NMR
-    field = s_.getaxis('Field')
-    new_field = field * gamma_eff
-    #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR
-    ppt = new_field / v_B12 
-    s_.setaxis('Field',ppt)
-    s_.rename('Field','ppt')
+    ppt = v_NMR / v_B12 
+    s_.setaxis('indirect',ppt)
+    s_.rename('indirect','ppt')
     #}}}
     #{{{Fitting
     fl.plot(abs(s_),'o-',ax=ax_list[2])

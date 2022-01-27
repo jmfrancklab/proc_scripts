@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 fl = fl_mod()
 t2 = symbols('t2')
 filter_bandwidth = 20e3
-gamma_eff = (14.903537/3507.48) # MHz / G
+gamma_eff = (14.904100/3507.57) # MHz / G
 for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
-        ('220112_150uM_TEMPOL_field_dep_1','ODNP_NMR_comp/field_dependent',
-            'field_sweep_1','field_sweep_v1',
+        ('220126_150mM_TEMPOL_field_dep','ODNP_NMR_comp/field_dependent',
+            'field_sweep','field_sweep_v1',
             'TEMPO field sweep',(-250,250)),
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
@@ -25,13 +25,16 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s -= rx_offset_corr
     s.ft(['ph1'])
     fl.next('raw data -- coherence channels')
-    s.reorder(['ph1','Field','power','t2'])
-    fl.image(s)
+    print(ndshape(s))
+    s.reorder(['ph1','indirect','power','t2'])
+    fl.image(s.C.setaxis(
+'indirect','#').set_units('indirect','scan #'))
     #}}}
     #{{{frequency filtering and rough center
     s.ft('t2',shift=True)
     fl.next('frequency domain raw data')
-    fl.image(s)
+    fl.image(s.C.setaxis(
+'indirect','#').set_units('indirect','scan #'))
     s = s['t2':(-1e3,1e3)]
     s=s['ph1',1]['power',0]['nScans',0].C
     s.ift('t2')
@@ -44,29 +47,27 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     fl.next('line plots')
     v_NMR = []
     offsets = []
-    for z in range(len(s.getaxis('Field'))):
-        fl.plot(abs(s['Field',z]),label = '%0.2f'%s.getaxis('Field')[z])
-        offset = abs(s['Field',z].C).argmax('t2')
+    s = s['indirect',:-1]
+    for z in range(len(s.getaxis('indirect')[:]['Field'])):
+        fl.plot(abs(s['indirect',z]),label = '%0.2f'%s.getaxis('indirect')[z]['Field'])
+        offset = abs(s['indirect',z].C).argmax('t2')
         offsets.append(offset)
-        true_carrier_freq = s.getaxis('Field')[z] * gamma_eff
-        v_rf = (true_carrier_freq*1e6 + (offset))/1e6
-        #plt.axvline(x=freq_slice[0])
-        #plt.axvline(x=freq_slice[-1])
+        true_carrier_freq = s.getaxis('indirect')[z]['carrierFreq']
+        v_rf = true_carrier_freq*1e6 + (offset)
+        v_rf /= 1e6
+        plt.axvline(x=freq_slice[0])
+        plt.axvline(x=freq_slice[-1])
         v_NMR.append(v_rf.data) 
     s_ = s['t2':freq_slice].sum('t2')
-    print("s.getaxis('Field') =", s.getaxis('Field'))
-    print("offsets:",offsets)
-    #fl.show();quit()
     #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR
     ppt = (v_NMR / v_B12)
-    s_.setaxis('Field',ppt)
-    s_.rename('Field','ppt')
+    s_.setaxis('indirect',ppt)
+    s_.rename('indirect','ppt')
     #}}}
     #{{{Fitting
     fl.next('sweep, without hermitian')
     fl.plot(abs(s_),'-o')
-    fl.show();quit()
     field_idx = (abs(s_.data)).argmax()
     fitting = abs(s_).polyfit('ppt',order=2)
     x_min = s_.getaxis('ppt')[0]
