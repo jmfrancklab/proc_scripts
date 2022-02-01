@@ -16,7 +16,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup = lookup_table)
     #{{{Obtain ESR frequency and chunk/reorder dimensions
-    v_B12 = (s.get_prop('acq_params')['mw_freqs'][0])/1e9
+    nu_B12 = (s.get_prop('acq_params')['mw_freqs'][0])/1e9
     #}}}
     #{{{DC offset correction
     t2_max = s.getaxis('t2')[-1]
@@ -45,7 +45,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
     fl.next('line plots')
-    v_NMR = []
+    nu_NMR = []
     offsets = []
     s = s['indirect',:-1]
     for z in range(len(s.getaxis('indirect')[:]['Field'])):
@@ -53,15 +53,15 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
         offset = abs(s['indirect',z].C).argmax('t2')
         offsets.append(offset)
         true_carrier_freq = s.getaxis('indirect')[z]['carrierFreq']
-        v_rf = true_carrier_freq*1e6 + (offset)
-        v_rf /= 1e6
+        nu_rf = true_carrier_freq*1e6 + (offset)
+        nu_rf /= 1e6
         plt.axvline(x=freq_slice[0])
         plt.axvline(x=freq_slice[-1])
-        v_NMR.append(v_rf.data) 
+        nu_NMR.append(nu_rf.data) 
     s = s['t2':freq_slice].sum('t2')
     #}}}
-    #{{{convert x axis to ppt = v_NMR/v_ESR
-    ppt = (v_NMR / v_B12)
+    #{{{convert x axis to ppt = nu_NMR/nu_ESR
+    ppt = (nu_NMR / nu_B12)
     s.setaxis('indirect',ppt)
     s.rename('indirect','ppt')
     #}}}
@@ -75,7 +75,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     Field = nddata(r_[x_min:x_max:100j],'ppt')
     fl.plot(Field.eval_poly(fitting,'ppt'),label='fit')
     #}}}
-    logger.info(strm("ESR frequency is %f"%(v_B12)))
+    logger.info(strm("ESR frequency is %f"%(nu_B12)))
     logger.info(strm('The fit finds a max with ppt value:',
         Field.eval_poly(fitting,'ppt').argmax().item()))
     logger.info(strm('The data finds a ppt value', abs(s).argmax().item()))
