@@ -58,25 +58,25 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
         plt.axvline(x=freq_slice[0])
         plt.axvline(x=freq_slice[-1])
         v_NMR.append(v_rf.data) 
-    s_ = s['t2':freq_slice].sum('t2')
+    s = s['t2':freq_slice].sum('t2')
     #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR
     ppt = (v_NMR / v_B12)
-    s_.setaxis('indirect',ppt)
-    s_.rename('indirect','ppt')
+    s.setaxis('indirect',ppt)
+    s.rename('indirect','ppt')
     #}}}
     #{{{Fitting
     fl.next('sweep, without hermitian')
-    fl.plot(abs(s_),'-o')
-    field_idx = (abs(s_.data)).argmax()
-    fitting = abs(s_).polyfit('ppt',order=2)
-    x_min = s_.getaxis('ppt')[0]
-    x_max = s_.getaxis('ppt')[-1]
+    fl.plot(abs(s),'-o')
+    field_idx = (abs(s.data)).argmax()
+    fitting = abs(s).polyfit('ppt',order=2)
+    x_min = s.getaxis('ppt')[0]
+    x_max = s.getaxis('ppt')[-1]
     Field = nddata(r_[x_min:x_max:100j],'ppt')
     fl.plot(Field.eval_poly(fitting,'ppt'),label='fit')
     #}}}
     logger.info(strm("ESR frequency is %f"%(v_B12)))
     logger.info(strm('The fit finds a max with ppt value:',
         Field.eval_poly(fitting,'ppt').argmax().item()))
-    logger.info(strm('The data finds a ppt value', abs(s_).argmax().item()))
+    logger.info(strm('The data finds a ppt value', abs(s).argmax().item()))
 fl.show()
