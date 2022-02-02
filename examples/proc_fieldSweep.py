@@ -34,7 +34,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
             postproc=postproc,lookup=lookup_table)
     fig, ax_list = subplots(1, 3)
     #{{{Obtain ESR frequency and chunk/reorder dimensions
-    v_B12 = (s.get_prop('acq_params')['mw_freqs'][0])/1e9
+    nu_B12 = (s.get_prop('acq_params')['mw_freqs'][0])/1e9
     #}}}
     #{{{DC offset correction
     t2_max = s.getaxis('t2')[-1]
@@ -58,40 +58,41 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     best_shift = hermitian_function_test(s)
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
-    v_NMR=[]
+    nu_NMR=[]
     offsets = []
     s = s['indirect',:-1]
     for z in range(len(s.getaxis('indirect')[:]['Field'])):
-        fl.plot(abs(s['indirect',z]),ax=ax_list[1])
+        fl.plot(abs(s['indirect',z]),label = '%0.2f'%s.getaxis('indirect')[z]['Field'],
+                ax=ax_list[1])
         offset = abs(s['indirect',z].C).argmax('t2')
         offsets.append(offset)
         true_carrier_freq = s.getaxis('indirect')[z]['carrierFreq']
-        v_rf = true_carrier_freq*1e6 + (offset)
-        v_rf /= 1e6
-        v_NMR.append(v_rf.data) 
+        nu_rf = true_carrier_freq*1e6 + (offset)
+        nu_rf /= 1e6
+        nu_NMR.append(nu_rf.data) 
         ax_list[1].axvline(x = freq_slice[0])
         ax_list[1].axvline(x=freq_slice[-1])
     ax_list[1].set_title('Field Slicing')
-    s_ = s['t2':freq_slice].sum('t2')
+    s = s['t2':freq_slice].sum('t2')
     #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR
-    ppt = v_NMR / v_B12 
-    s_.setaxis('indirect',ppt)
-    s_.rename('indirect','ppt')
+    ppt = nu_NMR / nu_B12 
+    s.setaxis('indirect',ppt)
+    s.rename('indirect','ppt')
     #}}}
     #{{{Fitting
-    fl.plot(abs(s_),'o-',ax=ax_list[2])
+    fl.plot(abs(s),'o-',ax=ax_list[2])
     ax_list[2].set_title('Sweep, \nwithout a Hermitian')
-    field_idx = (abs(s_.data)).argmax()
-    fitting = abs(s_).polyfit('ppt',order=2)
-    x_min = s_.getaxis('ppt')[0]
-    x_max = s_.getaxis('ppt')[-1]
+    field_idx = (abs(s.data)).argmax()
+    fitting = abs(s).polyfit('ppt',order=2)
+    x_min = s.getaxis('ppt')[0]
+    x_max = s.getaxis('ppt')[-1]
     Field = nddata(r_[x_min:x_max:100j],'ppt')
     fl.plot(Field.eval_poly(fitting,'ppt'),label='fit',ax=ax_list[2])
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     #}}}
-    logger.info(strm("ESR frequency is %f"%(v_B12)))
+    logger.info(strm("ESR frequency is %f"%(nu_B12)))
     logger.info(strm('The fit finds a max with ppt value:',
         Field.eval_poly(fitting,'ppt').argmax().item()))
-    logger.info(strm('The data finds a ppt value', abs(s_).argmax().item()))
+    logger.info(strm('The data finds a ppt value', abs(s).argmax().item()))
 fl.show()
