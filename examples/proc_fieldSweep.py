@@ -17,18 +17,19 @@ from pyspecProcScripts import *
 from pyspecProcScripts import lookup_table
 from sympy import symbols
 fl = figlist_var()
-t2 = symbols('t2')
-filter_bandwidth = 20e3
-gamma_eff = (14.904100/3507.57) # MHz / G
+gamma_eff = (14.904307/3507.61) # MHz / G
 rcParams["image.aspect"] = "auto" # needed for sphinx gallery
 
 #sphinx_gallery_thumbnail_number = 1
 
 
 for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
-        ('220126_150mM_TEMPOL_field_dep','ODNP_NMR_comp/field_dependent',
-            'field_sweep','field_sweep_v1',
-            'TEMPOL field sweep',(-250,250)),
+        ('220203_150mM_TEMPOL_field_dep',
+            'ODNP_NMR_comp/field_dependent',
+            'field_sweep',
+            'field_sweep_v1',
+            'TEMPOL field sweep',
+            (-250,250)),
         ]:
     s = find_file(thisfile,exp_type=exp_type,expno=nodename,
             postproc=postproc,lookup=lookup_table)
@@ -42,7 +43,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
     s.ft(['ph1'])
-    s.reorder(['ph1','indirect','power','t2'])
+    s.reorder(['ph1','indirect','nScans','t2'])
     fl.next('Field Sweep Processing',fig=fig)
     #}}}
     #{{{frequency filtering and rough center
@@ -50,17 +51,14 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'),ax = ax_list[0])
     ax_list[0].set_title('Raw data\nFrequency Domain')
     s = s['t2':(-1e3,1e3)]
-    s=s['ph1',1]['power',0]['nScans',0].C
-    s.ift('t2')
-    s.ft('t2')
-    s = s['t2':(-filter_bandwidth/2,filter_bandwidth/2)]
+    s=s['ph1',1]['nScans',0]
     s.ift('t2')
     best_shift = hermitian_function_test(s)
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
     nu_NMR=[]
     offsets = []
-    s = s['indirect',:-1]
+    s = s['indirect',:-1]#As it stands right now, the last idx of indirect is empty. This will need a PR in future to debug and find out why this is. But for now I just throw out the empty idx.
     for z in range(len(s.getaxis('indirect')[:]['Field'])):
         fl.plot(abs(s['indirect',z]),label = '%0.2f'%s.getaxis('indirect')[z]['Field'],
                 ax=ax_list[1])
@@ -83,7 +81,6 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     #{{{Fitting
     fl.plot(abs(s),'o-',ax=ax_list[2])
     ax_list[2].set_title('Sweep, \nwithout a Hermitian')
-    field_idx = (abs(s.data)).argmax()
     fitting = abs(s).polyfit('ppt',order=2)
     x_min = s.getaxis('ppt')[0]
     x_max = s.getaxis('ppt')[-1]
