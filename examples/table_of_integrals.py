@@ -24,7 +24,6 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 init_logging(level="debug")
 fl = fl_mod()
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-signal_pathway = {"ph1": 0, "ph2": 1}
 t_max = 0.04
 echo_time = 10e-3
 with figlist_var() as fl:
@@ -75,11 +74,11 @@ with figlist_var() as fl:
     ]:
         fl.basename = "(%s)" % label
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
-        data.reorder([indirect, "t2"], first=False)
+#}}}        
         data.ft("t2")
-        # {{{ make it unitary again
+# {{{ make data unitary again
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        # }}}
+# }}}
         myslice = data["t2":f_range]
         mysgn = determine_sign(select_pathway(myslice, signal_pathway))
         data_int, data = peak_intensities(
@@ -88,9 +87,8 @@ with figlist_var() as fl:
             searchstr=label,
             f_range=f_range,
             t_max=t_max,
-            sgn=mysgn,
             indirect=indirect,
-            Ep=False,
+            Ep_real=False,
             clock_correction=clock_correction,
             fl=fl,
         )

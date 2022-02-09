@@ -18,10 +18,9 @@ def peak_intensities(s,searchstr='',
         excluded_pathways = [(0,0)],
         f_range=(None,None),
         t_max=0.083,
-        sgn=None,
         direct='t2',
         indirect='indirect',
-        Ep=False,
+        Ep_real=False,
         alias_slop=3,
         clock_correction = True,
         error_bars = True,
@@ -42,17 +41,14 @@ def peak_intensities(s,searchstr='',
                         the signal pathway.
     f_range:        tuple
                     Frequency range over which the signal resides.
-    t_max:          int
+    t_max:          float
                     max time of time range
-    sgn:            nddata
-                    A dataset with all +1 or -1 (giving the sign of the original signal)
-                    Does *not* include the 'direct' dimension.
     direct:         str
                     Direct dimension of the signal
     indirect:       str
                     Indirect dimension of the signal. Usually 'power' or 'nScans' 
                     for example.
-    Ep:             bool
+    Ep_real:        bool
                     If true applies power axis corrections to the enhancement data.
     alias_slop:     int
                     Aliasing_slop used in the hermitian function.
@@ -71,16 +67,14 @@ def peak_intensities(s,searchstr='',
     s_int:          nddata
                     Integrated and corrected data
     """                
-    signal_keys = list(signal_pathway)
-    signal_values = list(signal_pathway.values())
     s.ift(direct)
-    if Ep:
+    if Ep_real:
         p_axis = s.getaxis('power')
         power_axis_dBm = array(s.get_prop('meter_powers'))
         power_axis_W = zeros_like(power_axis_dBm)
         power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
         power_axis_W = r_[0,power_axis_W]
-    s.reorder([indirect,direct],first=False)
+    #s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
     s.ift(list(signal_pathway))
     rx_offset_corr = s['t2':(t_max*0.75,None)]
@@ -244,7 +238,7 @@ def peak_intensities(s,searchstr='',
             fl.plot(s_int,'o',capsize=6,alpha=0.3)
     else:
         s_int[indirect,:] /= s_int.data[0]
-        if Ep:
+        if Ep_real:
             s_int.setaxis('power',power_axis_W)
         if fl is not None:
             fig1 = figure()
