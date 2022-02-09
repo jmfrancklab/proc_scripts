@@ -99,8 +99,7 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{Normalization
-    frq_slice = integrate_limits(select_pathway(s, signal_pathway),
-            convolve_method='Lorentzian')
+    frq_slice = integrate_limits(select_pathway(s, signal_pathway))
     s_integral = s["t2":frq_slice].C # the "official" copy of the integral
     s_integral = select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
