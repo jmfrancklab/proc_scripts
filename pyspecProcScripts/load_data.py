@@ -481,6 +481,8 @@ def proc_field_sweep(s):
     s.chunk('t',['ph1','t2'],[4,-1])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.reorder('t2',first=False)
+    s.ft('t2',shift=True)
+    s.ft(['ph1'])
     return s
 
 
