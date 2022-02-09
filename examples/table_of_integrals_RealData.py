@@ -21,7 +21,6 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 init_logging(level="debug")
 fl = fl_mod()
-t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 signal_pathway = {"ph1": 1}
 t_max = 0.1
 
@@ -55,20 +54,14 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
-        print(s.get_prop('acq_params'))
-        myslice = s["t2":f_range]
-        if 'nScans' in s.dimlabels:
-            s.mean('nScans')
-        mysgn = determine_sign(select_pathway(myslice, signal_pathway))
         s_int, s = peak_intensities(
             s,
             signal_pathway=signal_pathway,
             searchstr=label,
             f_range=f_range,
             t_max=t_max,
-            sgn=mysgn,
             indirect=indirect,
-            Ep=True,
+            Ep_real=True,
             alias_slop=2,
             clock_correction=clock_correction,
             fl=fl,

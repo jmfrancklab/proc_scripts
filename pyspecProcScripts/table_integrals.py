@@ -74,7 +74,7 @@ def peak_intensities(s,searchstr='',
         power_axis_W = zeros_like(power_axis_dBm)
         power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
         power_axis_W = r_[0,power_axis_W]
-    #s.reorder([indirect,direct],first=False)
+    s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
     s.ift(list(signal_pathway))
     rx_offset_corr = s['t2':(t_max*0.75,None)]
@@ -86,39 +86,40 @@ def peak_intensities(s,searchstr='',
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
-    raw_s = s.C
+    raw_s = s.C #will be used for imaging raw data with proper scaling
     s.ft(list(signal_pathway))
     s.ift(direct)
-    s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-    best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),signal_pathway),aliasing_slop=alias_slop)
+    if 'nScans' in s.dimlabels:
+        s /= zeroth_order_ph(select_pathway(s.C.mean('nScans'),signal_pathway))
+        best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect).mean('nScans'),signal_pathway),aliasing_slop=alias_slop)
+    else:    
+        s /= zeroth_order_ph(select_pathway(s,signal_pathway))
+        best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),
+            signal_pathway),aliasing_slop=alias_slop)
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
-    ph_corr_s = s.C
+    ph_corr_s = s.C #will be used for imaging phased data with proper scaling later
     s.ift(direct)
-    if 'ph2' in s.dimlabels:
-        s.reorder(['ph1','ph2',indirect,direct])
-    else:
-        s.reorder(['ph1',indirect,direct])
     #}}}
     #{{{Correlate
     if correlate:
         s.ft(direct)
-        mysgn = determine_sign(select_pathway(s['t2':f_range], signal_pathway))
-        s.ift(list(signal_pathway))
-        opt_shift, sigma, my_mask = correl_align(s*mysgn,indirect_dim=indirect,
-                signal_pathway=signal_pathway)
+        if 'nScans' in s.dimlabels:
+            mysgn = determine_sign(select_pathway(s.C.mean('nScans'),signal_pathway))
+            s.ift(list(signal_pathway))
+            opt_shift,sigma,my_mask = correl_align(s.C.mean('nScans')*mysgn,
+                    indirect_dim = indirect, signal_pathway=signal_pathway)
+        else:    
+            mysgn = determine_sign(select_pathway(s, signal_pathway))
+            s.ift(list(signal_pathway))
+            opt_shift, sigma, my_mask = correl_align(s*mysgn,indirect_dim=indirect,
+                    signal_pathway=signal_pathway)
         s.ift(direct)
         s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(direct))
-        s.ft(direct)
-        s.ift(direct)
         s.ft(list(signal_pathway))
         s.ft(direct)
-        if 'ph2' in s.dimlabels:
-            s.reorder(['ph1','ph2',indirect,direct])
-        else:
-            s.reorder(['ph1',indirect,direct])
-        aligned_s = s.C
+        aligned_s = s.C #will be used for imaging aligned data with proper scaling later
         scale_factor = abs(aligned_s.C).max().item()
      #}}}  
     if fl:
@@ -181,7 +182,7 @@ def peak_intensities(s,searchstr='',
                 text_height=50,
                 plot_title = 'FID \nfor %s'%searchstr)
     if 'ph2' in s.dimlabels:
-        print("PH2 IS PRESENT")
+        logger.info(strm("PH2 IS PRESENT"))
         error_path = (set(((j,k) for j in range(ndshape(s)['ph1']) for k in range(ndshape(s)['ph2'])))
                 - set(excluded_pathways)
                 - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
@@ -193,9 +194,14 @@ def peak_intensities(s,searchstr='',
         error_path = [{'ph1':j} for j in error_path]
             #{{{Integrate with error bars
     if error_bars:
-        s_int,frq_slice = integral_w_errors(s_after,signal_pathway,error_path,
-                convolve_method='Gaussian',
-                indirect=indirect, return_frq_slice = True)
+        if 'nScans' in s.dimlabels:
+            s_int,frq_slice = integral_w_errors(s_after.C.mean('nScans'),signal_pathway,
+                    error_path, convolve_method='Gaussian', indirect=indirect,
+                    return_frq_slice = True)
+        else:    
+            s_int,frq_slice = integral_w_errors(s_after,signal_pathway,error_path,
+                    convolve_method='Gaussian',
+                    indirect=indirect, return_frq_slice = True)
         x = s_int.get_error()
         x[:] /= sqrt(2)
         if fl is not None:
