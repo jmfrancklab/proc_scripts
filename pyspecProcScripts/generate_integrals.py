@@ -16,7 +16,7 @@ this_figsize = (6, 12)
 t2 = symbols("t2")
 
 
-def peak_intensities(
+def generate_integrals(
     s,
     searchstr="",
     signal_pathway={"ph1": 0, "ph2": 1},

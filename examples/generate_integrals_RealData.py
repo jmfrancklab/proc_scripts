@@ -52,7 +52,7 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
-        s_int, s = peak_intensities(
+        s_int, s = generate_integrals(
             s,
             signal_pathway=signal_pathway,
             searchstr=label,

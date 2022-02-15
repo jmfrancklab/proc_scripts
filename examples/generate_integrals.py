@@ -76,7 +76,7 @@ with figlist_var() as fl:
         # {{{ make data unitary again
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
         # }}}
-        data_int, data = peak_intensities(
+        data_int, data = generate_integrals(
             s=data,
             signal_pathway=signal_pathway,
             searchstr=label,
