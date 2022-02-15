@@ -12,7 +12,6 @@ def ph2(x,pos):
     n_ph = 2 
     this_max_coh_jump = 1
     all_possibilities = empty((int((2*this_max_coh_jump+1)/n_ph)+1)*n_ph)
-    all_possibilities[:] = nan
     all_possibilities[:this_max_coh_jump+1] = r_[0:this_max_coh_jump+1]
     all_possibilities[-this_max_coh_jump:] = r_[-this_max_coh_jump:0]
     all_possibilities = all_possibilities.reshape((-1,n_ph))
@@ -30,13 +29,11 @@ def ph2(x,pos):
     ordered_labels['ph2'] = labels_in_order
     if x == 0:
         temp = ("%s")%ordered_labels['ph2'][0]
-    #else:
-    #    temp = ('%s')%ordered_labels['ph2'][]
     return temp
 
-
 diagnostic = False
-def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
+def DCCT(this_nddata, this_fig_obj, 
+        custom_scaling=False,
         grid_bottom = 0.0,
         bottom_pad = 0.15,
         grid_top = 1.0,
@@ -51,7 +48,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         shareaxis = False,
         cmap = None,
         pass_frq_slice = False,
-        frq_slice = [],
         just_2D = False,
         scaling_factor=1,
         max_coh_jump={'ph1':2,'ph2':1},
@@ -62,9 +58,54 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
 
     Parameters
     ==========
-    shareaxis: boolean
-        subplots scale together, but currently, this means there must be tick labels on both top and bottom
+    this_nddata:    nddata
+                    data being plotted
+    thi_fig_obj:    figure
+                    size/type of figure to be plotted on
+    custom_scaling: boolean
+                    allows user to scale the intensity of data presented
+    grid_bottom:    float
+                    coordinate for bottom of DCCT plot
+    bottom_pad:     float
+                    distance between bottom of grid and bottom of figure
+    grid_top:       float
+                    coordinate top of grid in figure
+    top_pad:        float
+                    distance between top of figure and top of grid
+    total_spacing:  float
+                    affects spacing between phase cycle dimensions
+    label_spacing_multiplier:   int  
+                                spacing between axes labels
+    allow_for_text_default:     int
+                                adjusts distance between tick labels and ticks
+    allow_for_ticks_default:    int 
+                                adjusts distance between ticks
+    text_height:    int
+                    adjusts sizing of axis labels and tick labels
+    LHS_pad:        float
+                    adjusts padding on left hand side of DCCT plot
+    RHS_pad:        float
+                    adjusts padding on right hand side of DCCT plot
+    shareaxis:      boolean
+                    subplots scale together, but currently, this means there must be tick 
+                    labels on both top and bottom
+    cmap:           str
+                    string for color mapping if specified
+    pass_frq_slice: boolean
+                    if true will show the frequency sliced out with hatching
+    just_2D:        boolean
+                    If true will only return axis coordinates/shape NOT ax_list
+    scaling_factor: float
+                    If using custom scaling this allows user to set the scaling factor
+    max_coh_jump:   dict
+                    maximum allowed transitions for each phase cycle
+    direct:         str
+                    name of direct axis
+    plot_title:     str
+                    title for DCCT plot
     """
+    x = []
+    y = []
     my_data = this_nddata.C
     ordered_labels = {}
     # {{{ Generate alias labels - goes to scientific fn
@@ -239,7 +280,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
                     width=arrow_width_px,
                     clip_on=False,
                     transform=(IdentityTransform()
-                        +ScaledTranslation(ax_x,ax_y,fig.transFigure)),#fig.transFigure,
+                        +ScaledTranslation(ax_x,ax_y,fig.transFigure)),
                     alpha=0.1,  color='k')
             # could do fancier w/ the following, but need to mess w/ width parameters
             #arrow_base = r_[x_arrowbase_fig-arrow_width/2, y_arrowbase_fig]
@@ -312,7 +353,6 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
             K = A['smooshed',j].data / abs(A).data.max()
         else:
             if custom_scaling:
-                #scaling = 60.6856
                 K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=scaling_factor)
             if not custom_scaling:
                 K = imagehsv(A['smooshed',j].data,**imagehsvkwargs,scaling=abs(A).data.max())
@@ -320,6 +360,7 @@ def DCCT(this_nddata, this_fig_obj, x=[], y=[], custom_scaling=False,
         imshow(K,extent=myext,**kwargs)
         ax_list[j].set_ylabel(None)
         if pass_frq_slice:
+            frq_slice = []
             start_y = A.getaxis(A.dimlabels[1])[0]
             stop_y = A.getaxis(A.dimlabels[1])[-1]
             ax_list[j].fill([x[0],frq_slice[0],frq_slice[0],x[0]],
