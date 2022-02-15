@@ -39,8 +39,6 @@ def peak_intensities(s,searchstr='',
                         the signal pathway.
     f_range:        tuple
                     Frequency range over which the signal resides.
-    t_max:          float
-                    max time of time range
     direct:         str
                     Direct dimension of the signal
     indirect:       str
@@ -66,7 +64,7 @@ def peak_intensities(s,searchstr='',
     s.ift(direct)
     s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
-    s.ift(list(signal_pathway))
+    s.ift(list(signal_pathway)) # list(signal_pathway) takes the keys of the signal_pathway dictionary
     t_max = s.getaxis('t2').max()
     rx_offset_corr = s['t2':(t_max*0.75,None)]
     rx_offset_corr = rx_offset_corr.mean(['t2'])
@@ -77,16 +75,24 @@ def peak_intensities(s,searchstr='',
     #{{{phase correction
     s = s[direct:f_range]
     s.ift(list(signal_pathway))
-    raw_s = s.C #will be used for imaging raw data with proper scaling
+    raw_s = s.C # will be used for imaging raw data with proper scaling
     s.ft(list(signal_pathway))
     s.ift(direct)
     if 'nScans' in s.dimlabels:
-        s /= zeroth_order_ph(select_pathway(s.C.mean('nScans'),signal_pathway))
-        best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect).mean('nScans'),signal_pathway),aliasing_slop=alias_slop)
-    else:    
-        s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-        best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),
-            signal_pathway),aliasing_slop=alias_slop)
+        s_mean = s.C.mean('nScans')
+    else:
+        s_mean = s.C
+    ph0 = zeroth_order_ph(select_pathway(s_mean,signal_pathway))
+    s_mean /= ph0
+    s /= ph0
+    s_mean.ft(direct)
+    mysgn = determine_sign(select_pathway(s_mean,signal_pathway))
+    s_mean.ift(direct)
+    s_mean *= mysgn
+    best_shift = hermitian_function_test(
+            select_pathway(s_mean.mean(indirect),signal_pathway),
+            aliasing_slop=alias_slop)
+    del s_mean, ph0
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
@@ -96,22 +102,14 @@ def peak_intensities(s,searchstr='',
     #{{{Correlate
     if correlate:
         s.ft(direct)
-        if 'nScans' in s.dimlabels:
-            mysgn = determine_sign(select_pathway(s.C.mean('nScans'),signal_pathway))
-            s.ift(list(signal_pathway))
-            opt_shift,sigma,my_mask = correl_align(s.C.mean('nScans')*mysgn,
-                    indirect_dim = indirect, signal_pathway=signal_pathway)
-        else:    
-            mysgn = determine_sign(select_pathway(s, signal_pathway))
-            s.ift(list(signal_pathway))
-            opt_shift, sigma, my_mask = correl_align(s*mysgn,indirect_dim=indirect,
-                    signal_pathway=signal_pathway)
+        s.ift(list(signal_pathway))
+        opt_shift,sigma,my_mask = correl_align(s*mysgn,
+                indirect_dim = indirect, signal_pathway=signal_pathway)
         s.ift(direct)
         s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(direct))
         s.ft(list(signal_pathway))
         s.ft(direct)
-        aligned_s = s.C #will be used for imaging aligned data with proper scaling later
-        scale_factor = abs(aligned_s.C).max().item()
+        scale_factor = abs(s.C).max().item()
      #}}}  
     if fl:
         this_fig = figure(figsize=(20,10))
@@ -130,7 +128,7 @@ def peak_intensities(s,searchstr='',
                 custom_scaling=True,scaling_factor = scale_factor,
                 plot_title = 'Phased Data \nfor %s'%searchstr)
         if correlate:
-            DCCT(aligned_s,this_fig,total_spacing=0.1,
+            DCCT(s,this_fig,total_spacing=0.1,
                     custom_scaling=True,
                     allow_for_text_default = 5,
                     allow_for_ticks_default = 50,
@@ -199,10 +197,6 @@ def peak_intensities(s,searchstr='',
             fig0 = figure(figsize=this_figsize)
             x = s_after.getaxis(direct)
             dx = x[1]-x[0]
-            y = s_after.getaxis(indirect)
-            dy = y[1]-y[0]
-            start_y = s_after.getaxis(indirect)[0]
-            stop_y = s_after.getaxis(indirect)[-1]
             fl.next('Real Integrated Data with Bounds',fig=fig0)
             ax1 = plt.axes([0.2933,0.15,0.6567,0.713])
             yMajorLocator = lambda: mticker.MaxNLocator(nbins='auto',
@@ -216,15 +210,14 @@ def peak_intensities(s,searchstr='',
             fl.image(select_pathway(s_after.real.run(complex128),signal_pathway),
                 black=False,ax=ax1)
             x1 = x[0]
-            y1 = start_y - dy
             x2 = frq_slice[-1]
-            tall = (y[-1]+dy)-(y[0]-dy)
             wide = frq_slice[0] - x1 - dx
             wide2 = (x[-1]+dx)-x2
-            p = patches.Rectangle((x1,y1),wide,tall,angle=0.0,linewidth=1,fill=None,
+            y_bottom,y_top = ax1.get_ylim()
+            p = patches.Rectangle((x1,y_bottom),wide,y_top-y_bottom,angle=0.0,linewidth=1,fill=None,
                     hatch='//',ec='k')
             ax1.add_patch(p)
-            q = patches.Rectangle((x2,y1),wide2,tall,angle=0.0,linewidth=1,fill=None,
+            q = patches.Rectangle((x2,y_bottom),wide2,y_top-y_bottom,angle=0.0,linewidth=1,fill=None,
                     hatch='//',ec='k')
             ax1.add_patch(q)
     if indirect is 'vd':

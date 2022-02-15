@@ -5,8 +5,10 @@ import logging
 import numpy as np
 def integral_w_errors(s,sig_path,error_path, convolve_method='Gaussian', indirect='vd', direct='t2',fl=None,return_frq_slice=False):
     """Calculates the propagation of error for the given signal and returns
-    signal with the error associated. Before declaring the error_path, be sure
-    to look at examples such as integration_w_error.py to see how to decide which
+    signal with the error associated.
+
+    Before declaring the error_path,
+    look at an examples such as integration_w_error.py to see how to decide which
     excluded pathways to take the error over.
     
     Parameters
@@ -16,6 +18,10 @@ def integral_w_errors(s,sig_path,error_path, convolve_method='Gaussian', indirec
     error_path: dict
                 Dictionary of all coherence pathways that are 
                 not the signal pathway.
+
+                Before declaring the error_path,
+                look at an examples such as integration_w_error.py to see how to decide which
+                excluded pathways to take the error over.
     convolve_method: str
                 method of convolution used in integrating limits
                 passed on to :func:`integrate_limits`
@@ -36,7 +42,6 @@ def integral_w_errors(s,sig_path,error_path, convolve_method='Gaussian', indirec
     else:
         kwargs = {}
     frq_slice = integrate_limits(select_pathway(s,sig_path),
-            cutoff=0.15,
             convolve_method=convolve_method,fl=fl)
     logging.debug(psp.strm('frq_slice is', frq_slice))
     s = s[direct:frq_slice]

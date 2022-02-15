@@ -11,15 +11,12 @@ Demonstrate on a fake dataset of an inversion recovery with multiple repeats (φ
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
-from numpy.random import normal, seed
 import sympy as s
-from collections import OrderedDict
+init_logging(level="debug")
 
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
-
 # sphinx_gallery_thumbnail_number = 6
 
-init_logging(level="debug")
 fl = fl_mod()
 signal_pathway = {"ph1": 1}
 t_max = 0.1
@@ -59,9 +56,7 @@ with figlist_var() as fl:
             signal_pathway=signal_pathway,
             searchstr=label,
             f_range=f_range,
-            t_max=t_max,
             indirect=indirect,
-            Ep_real=True,
             alias_slop=2,
             clock_correction=clock_correction,
             fl=fl,
