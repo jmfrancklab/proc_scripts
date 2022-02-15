@@ -14,22 +14,19 @@ from pyspecProcScripts import *
 from numpy.random import seed
 import sympy as s
 from collections import OrderedDict
+init_logging(level="debug")
 
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
-
 # sphinx_gallery_thumbnail_number = 7
 
-# {{{ generate the fake data
-init_logging(level="debug")
 fl = fl_mod()
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-t_max = 0.04
 echo_time = 10e-3
 with figlist_var() as fl:
     for (
         expression,
-        orderedDict,
+        variable_defs,
         signal_pathway,
         indirect,
         clock_correction,
@@ -73,20 +70,17 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
-#}}}        
+        data = fake_data(expression, OrderedDict(variable_defs), signal_pathway)
         data.ft("t2")
-# {{{ make data unitary again
+        # {{{ make data unitary again
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-# }}}
+        # }}}
         data_int, data = peak_intensities(
             s=data,
             signal_pathway=signal_pathway,
             searchstr=label,
             f_range=f_range,
-            t_max=t_max,
             indirect=indirect,
-            Ep_real=False,
             clock_correction=clock_correction,
             fl=fl,
         )

@@ -396,6 +396,14 @@ def proc_spincore_ODNP_v1(s,fl=None):
     if fl is not None:
         fl.next('all data: frequency domain')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+    # {{{ since the power axis was saved with settings and not meter powers, fix that here
+    p_axis = s.getaxis('power')
+    power_axis_dBm = array(s.get_prop('meter_powers'))
+    power_axis_W = zeros_like(power_axis_dBm)
+    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
+    power_axis_W = r_[0,power_axis_W]
+    s.setaxis('power',power_axis_W)
+    # }}}
     return s
 def proc_spincore_ODNP_v2(s,fl=None):
     logging.info("loading pre-processing for ODNP")
@@ -422,6 +430,14 @@ def proc_spincore_ODNP_v2(s,fl=None):
     if fl is not None:
         fl.next('all data: frequency domain')
         fl.image(s.C.setaxis('power','#').set_units('power','scan #'))
+    # {{{ since the power axis was saved with settings and not meter powers, fix that here
+    p_axis = s.getaxis('power')
+    power_axis_dBm = array(s.get_prop('meter_powers'))
+    power_axis_W = zeros_like(power_axis_dBm)
+    power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
+    power_axis_W = r_[0,power_axis_W]
+    s.setaxis('power',power_axis_W)
+    # }}}
     return s
 
 def proc_capture(s):
@@ -520,5 +536,4 @@ lookup_table = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG,
         'ESR_linewidth':proc_ESR,
-
 }

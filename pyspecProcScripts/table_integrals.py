@@ -17,10 +17,8 @@ def peak_intensities(s,searchstr='',
         signal_pathway={'ph1':0,'ph2':1},
         excluded_pathways = [(0,0)],
         f_range=(None,None),
-        t_max=0.083,
         direct='t2',
         indirect='indirect',
-        Ep_real=False,
         alias_slop=3,
         clock_correction = True,
         error_bars = True,
@@ -48,8 +46,6 @@ def peak_intensities(s,searchstr='',
     indirect:       str
                     Indirect dimension of the signal. Usually 'power' or 'nScans' 
                     for example.
-    Ep_real:        bool
-                    If true applies power axis corrections to the enhancement data.
     alias_slop:     int
                     Aliasing_slop used in the hermitian function.
     clock_correction:   bool
@@ -68,15 +64,10 @@ def peak_intensities(s,searchstr='',
                     Integrated and corrected data
     """                
     s.ift(direct)
-    if Ep_real:
-        p_axis = s.getaxis('power')
-        power_axis_dBm = array(s.get_prop('meter_powers'))
-        power_axis_W = zeros_like(power_axis_dBm)
-        power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
-        power_axis_W = r_[0,power_axis_W]
     s.reorder([indirect,direct],first=False)
     #{{{DC offset correction
     s.ift(list(signal_pathway))
+    t_max = s.getaxis('t2').max()
     rx_offset_corr = s['t2':(t_max*0.75,None)]
     rx_offset_corr = rx_offset_corr.mean(['t2'])
     s -= rx_offset_corr
@@ -244,8 +235,6 @@ def peak_intensities(s,searchstr='',
             fl.plot(s_int,'o',capsize=6,alpha=0.3)
     else:
         s_int[indirect,:] /= s_int.data[0]
-        if Ep_real:
-            s_int.setaxis('power',power_axis_W)
         if fl is not None:
             fig1 = figure()
             fl.next('Integrated Data',fig = fig1)
