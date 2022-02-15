@@ -21,11 +21,11 @@ rcParams["image.aspect"] = "auto" # needed for sphinx gallery
 
 #sphinx_gallery_thumbnail_number = 1
 
-
+signal_pathway = {'ph1':1}
 for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
-        ('220203_150mM_TEMPOL_field_dep',
+        ('220204_150mM_TEMPOL_field_dep',
             'ODNP_NMR_comp/field_dependent',
-            'field_sweep',
+            'Field_sweep',
             'field_sweep_v1',
             'TEMPOL field sweep',
             (-250,250)),
@@ -51,16 +51,15 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     ax_list[0].set_title('Raw data\nFrequency Domain')
     #{{{frequency filtering and rough center
     s = s['t2':(-1e3,1e3)]
-    s=s['ph1',1]#['nScans',0]
     s.ift('t2')
-    best_shift = hermitian_function_test(s.C.mean('nScans'))
+    best_shift = hermitian_function_test(select_pathway(s.C.mean('indirect').mean('nScans'),signal_pathway))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
+    s = select_pathway(s,signal_pathway)
     nu_NMR=[]
     offsets = []
-    s = s['indirect',:-1]#As it stands right now, the last idx of indirect is empty. This will need a PR in future to debug and find out why this is. But for now I just throw out the empty idx.
     for z in range(len(s.getaxis('indirect')[:]['Field'])):
-        fl.plot(abs(s['indirect',z]),label = '%0.2f'%s.getaxis('indirect')[z]['Field'],
+        fl.plot(abs(s['indirect',z].C.mean('nScans')),label = '%0.2f'%s.getaxis('indirect')[z]['Field'],
                 ax=ax_list[1])
         offset = abs(s['indirect',z].C.mean('nScans')).argmax('t2')
         offsets.append(offset)
