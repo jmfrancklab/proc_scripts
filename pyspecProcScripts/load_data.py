@@ -498,11 +498,11 @@ lookup_table = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
         'spincore_nutation_v2':proc_nutation_amp,
         'spincore_nutation_v3':proc_nutation_chunked,
         'spincore_ODNP_v1':proc_spincore_ODNP_v1,
+        'spincore_ODNP_v3':proc_spincore_ODNP_v1,
         'spincore_echo_v1':proc_spincore_echo_v1,
         'spincore_var_tau_v1':proc_var_tau,
         'square_wave_capture_v1':proc_capture,
         'DOSY_CPMG_v1':proc_DOSY_CPMG,
         'ESR_linewidth':proc_ESR,
         'field_sweep_v1': proc_field_sweep,
-
 }
