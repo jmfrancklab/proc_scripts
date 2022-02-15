@@ -12,6 +12,7 @@ from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
 import sympy as s
+
 init_logging(level="debug")
 
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
