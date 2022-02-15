@@ -79,23 +79,14 @@ def peak_intensities(s,searchstr='',
     s.ft(list(signal_pathway))
     s.ift(direct)
     if 'nScans' in s.dimlabels:
-        s_mean = s.C.mean('nScans')
-    else:
-        s_mean = s.C
-    ph0 = zeroth_order_ph(select_pathway(s_mean,signal_pathway))
-    s_mean /= ph0
-    s /= ph0
-    s_mean.ft(direct)
-    mysgn = determine_sign(select_pathway(s_mean,signal_pathway))
-    s_mean.ift(direct)
-    s_mean *= mysgn
-    best_shift = hermitian_function_test(
-            select_pathway(s_mean.mean(indirect),signal_pathway),
-            aliasing_slop=alias_slop)
-    del s_mean, ph0
+        best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect).mean('nScans'),signal_pathway),aliasing_slop=alias_slop)
+    else:    
+        best_shift = hermitian_function_test(select_pathway(s.C.mean(indirect),
+            signal_pathway),aliasing_slop=alias_slop)
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct,lambda x: x-best_shift).register_axis({direct:0})
     s.ft(direct)
+    s /= zeroth_order_ph(select_pathway(s,signal_pathway))
     ph_corr_s = s.C #will be used for imaging phased data with proper scaling later
     s.ift(direct)
     #}}}
@@ -103,6 +94,10 @@ def peak_intensities(s,searchstr='',
     if correlate:
         s.ft(direct)
         s.ift(list(signal_pathway))
+        if 'nScans' in s.dimlabels:
+            mysgn = determine_sign(select_pathway(s.C.mean('nScans'),signal_pathway))
+        else:
+            mysgn = determine_sign(select_pathway(s,signal_pathway))
         opt_shift,sigma,my_mask = correl_align(s*mysgn,
                 indirect_dim = indirect, signal_pathway=signal_pathway)
         s.ift(direct)
