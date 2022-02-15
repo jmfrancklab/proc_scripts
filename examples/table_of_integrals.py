@@ -11,7 +11,7 @@ Demonstrate on a fake dataset of an inversion recovery with multiple repeats (φ
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
-from numpy.random import normal, seed
+from numpy.random import seed
 import sympy as s
 from collections import OrderedDict
 
@@ -79,8 +79,6 @@ with figlist_var() as fl:
 # {{{ make data unitary again
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
 # }}}
-        myslice = data["t2":f_range]
-        mysgn = determine_sign(select_pathway(myslice, signal_pathway))
         data_int, data = peak_intensities(
             s=data,
             signal_pathway=signal_pathway,
