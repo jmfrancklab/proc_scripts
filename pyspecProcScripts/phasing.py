@@ -10,6 +10,7 @@ from scipy import linalg
 import logging
 import matplotlib.pyplot as plt
 
+
 def zeroth_order_ph(d, fl=None):
     r"""determine the covariance of the datapoints
     in complex plane, and use to phase the
@@ -215,7 +216,7 @@ def hermitian_function_test(
         the very beginning and ending of the time-domain signal are
         interpolated to match.
         This value is the multiple of the dwell time of the original signal
-        that is sliced out due to the fact this amount of signal is aliased 
+        that is sliced out due to the fact this amount of signal is aliased
         at the beginning and end of the time-domain signal.
     band_mask:          boolean
         determines the type of mask used on the 2D
@@ -230,7 +231,7 @@ def hermitian_function_test(
         the very beginning and ending of the time-domain signal are
         interpolated to match.
         This value is the multiple of the dwell time of the original signal
-        that is sliced out due to the fact this amount of signal is aliased 
+        that is sliced out due to the fact this amount of signal is aliased
         at the beginning and end of the time-domain signal.
     band_mask:          boolean
         determines the type of mask used on the 2D
@@ -248,47 +249,82 @@ def hermitian_function_test(
         which gives an artificial minimum and messes with the
         cost function.
     """
-    s = s.C # work on a copy, so that we're not messing w/ anything
+    s = s.C  # work on a copy, so that we're not messing w/ anything
     orig_dt = s.get_ft_prop(direct, "dt")
     if not s.get_ft_prop(direct):
         s.ft(direct)
-    s.ift(direct, pad=ndshape(s)[direct]*50)
+    s.ift(direct, pad=ndshape(s)[direct] * 50)
     new_dt = s.get_ft_prop(direct, "dt")
-    non_aliased_range = r_[aliasing_slop,-aliasing_slop]*int(orig_dt/new_dt)
+    non_aliased_range = r_[aliasing_slop, -aliasing_slop] * int(orig_dt / new_dt)
     if aliasing_slop > 0:
-        s = s[direct,non_aliased_range[0]:non_aliased_range[1]]
+        s = s[direct, non_aliased_range[0] : non_aliased_range[1]]
     s_envelope = s.C.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.push_marker()
         fig_forlist, ax_list = plt.subplots(2, 2, figsize=(15, 15))
         fl.next("Hermitian Function Test Diagnostics")
-        fig_forlist.suptitle(" ".join(["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]))
+        fig_forlist.suptitle(
+            " ".join(
+                ["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]
+            )
+        )
         fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
         ax_list[0, 0].set_title("Data with Padding")
-    peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[0,:]
+    peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[
+        0, :
+    ]
     # {{{ the peak triple gives the left and right thresholds, with the
     #     peak max in the middle
     #     we move the left point as needed to make sure that peak is in
     #     the first half of the resulting slice
-    peak_triple = r_[ peak_triple[0],
-            s[direct:peak_triple].mean_all_but(direct).run(abs).argmax().item(),
-            peak_triple[1] ]
+    peak_triple = r_[
+        peak_triple[0],
+        s[direct:peak_triple].mean_all_but(direct).run(abs).argmax().item(),
+        peak_triple[1],
+    ]
     if fl is not None:
         for j in range(3):
-            ax_list[0, 0].axvline(x=peak_triple[j], ls=':', color='k', alpha=0.5, linewidth=2)
+            ax_list[0, 0].axvline(
+                x=peak_triple[j], ls=":", color="k", alpha=0.5, linewidth=2
+            )
     # {{{ make sure we don't test for center too close to either edge
-    if peak_triple[0] < s.getaxis(direct)[0]+orig_dt:
-        peak_triple[0] = s.getaxis(direct)[0]+orig_dt
-    if peak_triple[2] > s.getaxis(direct)[-1]-orig_dt:
-        peak_triple[2] = s.getaxis(direct)[-1]-orig_dt
+    if peak_triple[0] < s.getaxis(direct)[0] + orig_dt:
+        peak_triple[0] = s.getaxis(direct)[0] + orig_dt
+    if peak_triple[2] > s.getaxis(direct)[-1] - orig_dt:
+        peak_triple[2] = s.getaxis(direct)[-1] - orig_dt
     # }}}
-    slice_start,slice_stop = s.get_range(direct,*peak_triple[r_[0,-1]])
+    # {{{ we don't want *all* of the blue line, only part
+    logging.debug("about to slice the data used for hermitian")
+    outermost = peak_triple[r_[0, -1]]  # the orange edges
+    logging.debug(strm("start with", outermost))
+    blue_edges = s.getaxis(direct)[r_[0, -1]]
+    outermost += (
+        outermost - blue_edges[::-1]
+    )  # the most it can require to calculate the cost is from the orange edge to the opposite blue edge
+    logging.debug(strm("expand to", outermost))
+    mask = r_[-1, 1] * (outermost - s.getaxis(direct)[r_[0, -1]]) > 0
+    logging.debug(strm("beyond range?", mask))
+    outermost[mask] = blue_edges[mask]
+    logging.debug(strm("cropped", outermost))
+    s = s[direct : tuple(outermost)]
+    # }}}
+    slice_start, slice_stop = s.get_range(direct, *peak_triple[r_[0, -1]])
     # }}}
     if fl is not None:
-        ax_list[0,0].axvspan(0,orig_dt,color='k',alpha=0.1)
+        ax_list[0, 0].axvspan(0, orig_dt, color="k", alpha=0.1)
+        for j in range(2):
+            ax_list[0, 0].axvline(
+                x=outermost[j], ls="--", color="k", alpha=1, linewidth=1
+            )
         for j in range(3):
-            ax_list[0, 0].axvline(x=peak_triple[j], color='k', alpha=0.5, linewidth=2)
-        fl.plot(abs(s)[direct,slice(slice_start,slice_stop)], ':', ax=ax_list[0, 0], linewidth=4, human_units=False)
+            ax_list[0, 0].axvline(x=peak_triple[j], color="k", alpha=0.5, linewidth=2)
+        fl.plot(
+            abs(s)[direct, slice(slice_start, slice_stop)],
+            ":",
+            ax=ax_list[0, 0],
+            linewidth=4,
+            human_units=False,
+        )
     N = ndshape(s)[direct]
     direct_startpoint = s.getaxis(direct)[0]
     center_startpoint = s.getaxis(direct)[slice_start]
@@ -306,16 +342,16 @@ def hermitian_function_test(
             human_units=False,
         )
     # {{{ put test_center at the start/bottom of the data
-    test_center = nddata(s.getaxis(direct)[slice_start:slice_stop],'center')
-    s.rename(direct,'offset')
-    s.setaxis('offset', lambda x: x-direct_startpoint) # so it starts at 0 now
-    s.ft('offset')
+    test_center = nddata(s.getaxis(direct)[slice_start:slice_stop], "center")
+    s.rename(direct, "offset")
+    s.setaxis("offset", lambda x: x - direct_startpoint)  # so it starts at 0 now
+    s.ft("offset")
     # the following confused me a little -- I wanted to take the difference between test_center and the start of the axis,
     # but pyspecdata handles issues about the start of the axis,
     # so we just shift so that test_center moves to zero
-    s *= np.exp(1j * 2 * pi * test_center * s.fromaxis('offset'))
-    s.ift('offset')
-    phcorr = s['offset', 0]
+    s *= np.exp(1j * 2 * pi * test_center * s.fromaxis("offset"))
+    s.ift("offset")
+    phcorr = s["offset", 0]
     phcorr /= abs(phcorr)
     s /= phcorr
     # }}}
@@ -323,22 +359,28 @@ def hermitian_function_test(
         fl.image(s, ax=ax_list[0, 1])
         ax_list[0, 1].set_title("shifted and phased")
     # {{{ calculate the mask
-    center_idx = r_[slice_start:slice_stop] # test these points to see if they are the center
+    center_idx = r_[
+        slice_start:slice_stop
+    ]  # test these points to see if they are the center
     # Now, excluding the center point, determine how many points our "mask"
-    rms_size = N - center_idx - 1 # number of points between (not including) the center and the end of the data
-    rms_size[rms_size > center_idx] = center_idx[rms_size > center_idx] # if there are fewer points on the other side, we are limited by those
-    mymask = nddata(r_[1:N],'offset') <= nddata(rms_size,'center')
+    rms_size = (
+        N - center_idx - 1
+    )  # number of points between (not including) the center and the end of the data
+    rms_size[rms_size > center_idx] = center_idx[
+        rms_size > center_idx
+    ]  # if there are fewer points on the other side, we are limited by those
+    mymask = nddata(r_[1:N], "offset") <= nddata(rms_size, "center")
     # }}}
     if band_mask:
         raise ValueError("band mask no longer supported -- use an earlier version")
-    s = abs(s['offset',1:] - s['offset', :0:-1].runcopy(np.conj)).mean_all_but(
-        ["center", 'offset']
+    s = abs(s["offset", 1:] - s["offset", :0:-1].runcopy(np.conj)).mean_all_but(
+        ["center", "offset"]
     )
     if fl is not None:
         fl.image(s, ax=ax_list[1, 0])
         ax_list[1, 0].set_title("Residual 2D")
     s *= mymask
-    s /= nddata(rms_size,'center')**2 # it's an L1 difference, but this is
+    s /= nddata(rms_size, "center") ** 2  # it's an L1 difference, but this is
     #                                   squared - this is just what worked
     #                                   well -- we could use a rationale for
     #                                   the squared, actually
@@ -354,21 +396,65 @@ def hermitian_function_test(
         fl.twinx(orig=False, color="red")
         s.name("cost function")
         fl.plot(s, color="r", alpha=0.5, human_units=False)
-        cost_scale = s['center':(-4*orig_dt+best_shift,4*orig_dt+best_shift)].max().item()
-        ylim((0,cost_scale))
+        cost_scale = (
+            s["center" : (-4 * orig_dt + best_shift, 4 * orig_dt + best_shift)]
+            .max()
+            .item()
+        )
+        ylim((0, cost_scale))
         axvline(x=best_shift, c="r", linestyle="--")
         ax = plt.gca()
-        trans = blended_transform_factory(x_transform=ax.transData, y_transform=ax.transAxes)
-        text(x = best_shift+0.0005,
-                y = 0.8,
-                s = "best shift is: %f"%best_shift,
-                fontsize = 16,
-                color='red',
-                transform=trans,
-                )
+        trans = blended_transform_factory(
+            x_transform=ax.transData, y_transform=ax.transAxes
+        )
+        text(
+            x=best_shift + 0.0005,
+            y=0.8,
+            s="best shift is: %f" % best_shift,
+            fontsize=16,
+            color="red",
+            transform=trans,
+        )
         for dwell_int in r_[-5:5]:
             axvline(
                 x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
             )
         fl.pop_marker()
     return best_shift
+
+
+def determine_sign(s, direct="t2", fl=None):
+    """Given that the signal resides in `pathway`, determine the sign of the signal.
+    The sign can be used, e.g. so that all data in an inversion-recover or
+    enhancement curve can be aligned together.
+
+    Parameters
+    ==========
+    s: nddata
+        data with a single (dominant) peak, where you want to return the sign
+        of the integral over all the data.
+        This should only contain **a single coherence pathway**.
+    direct: str (default "t2")
+        Name of the direct dimension, along which the sum/integral is taken
+
+    Returns
+    =======
+    data_sgn: nddata
+        A dataset with all +1 or -1 (giving the sign of the original signal).
+        Does *not* include the `direct` dimension
+    """
+    assert s.get_ft_prop(
+        direct
+    ), "this only works on data that has been FT'd along the direct dimension"
+    if fl is not None:
+        fl.push_marker()
+        fl.next("selected pathway")
+        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
+    data_sgn = s.C.sum(direct)
+    data_sgn /= zeroth_order_ph(data_sgn)
+    data_sgn.run(np.real).run(lambda x: np.sign(x))
+    if fl is not None:
+        fl.next("check sign")
+        fl.image((s.C.setaxis("vd", "#").set_units("vd", "scan #")) * data_sgn)
+        fl.pop_marker()
+    return data_sgn
