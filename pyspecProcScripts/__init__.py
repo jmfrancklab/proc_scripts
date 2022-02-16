@@ -1,5 +1,6 @@
-from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs
+from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs,determine_sign
 from .first_level.fake_data import fake_data
+from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits,draw_limits,fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
@@ -10,7 +11,7 @@ from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
-from .simple_functions import select_pathway, determine_sign
+from .simple_functions import select_pathway
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
@@ -25,6 +26,7 @@ __all__ = ['calc_baseline',
         'draw_limits',
         'expand_limits',
         'fake_data',
+        'generate_integrals',
         'fl_mod',
         'hermitian_function_test',
         'integral_w_errors',
