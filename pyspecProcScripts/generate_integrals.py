@@ -300,4 +300,3 @@ def generate_integrals(
             fl.plot(s_int["power", :-3], "o", capsize=6, alpha=0.3)
     # }}}
     return s_int, s
-

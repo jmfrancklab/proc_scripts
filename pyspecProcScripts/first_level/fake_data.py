@@ -106,4 +106,3 @@ def fake_data(
     data.register_axis({direct: 0})
     data.set_units(direct, "s")
     return data
-

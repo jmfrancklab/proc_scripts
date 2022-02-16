@@ -81,4 +81,3 @@ def integrate_limits(s, axis="t2", convolve_method="gaussian", cutoff=0.25, fl=N
     freq_limits = np.array(freq_limits)
     # Think still need to return 'temp' if lorentzian_to_gaussian
     return freq_limits
-

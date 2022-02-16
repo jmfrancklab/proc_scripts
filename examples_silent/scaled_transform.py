@@ -35,4 +35,3 @@ minorLocator = lambda: mticker.AutoMinorLocator(n=5)
 ax.xaxis.set_major_locator(majorLocator())
 ax.xaxis.set_minor_locator(minorLocator())
 show()
-

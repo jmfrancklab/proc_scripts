@@ -152,4 +152,3 @@ def active_propagation(
     s_forerror *= df ** 2
     s_forerror *= N
     return s_forerror.run(psp.sqrt)
-

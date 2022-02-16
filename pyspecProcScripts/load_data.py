@@ -613,4 +613,3 @@ lookup_table = {
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
 }
-
