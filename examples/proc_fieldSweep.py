@@ -18,7 +18,7 @@ rcParams["image.aspect"] = "auto" # needed for sphinx gallery
 
 signal_pathway = {'ph1':1}
 for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
-        ('220204_150mM_TEMPOL_field_dep',
+        ('220217_5mM_TEMPOL_field_dep',
             'ODNP_NMR_comp/field_dependent',
             'Field_sweep',
             'field_sweep_v1',# in newer version files, we should be setting
@@ -60,8 +60,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     nu_NMR=[]
     offsets = []
     for z in range(len(s.getaxis('indirect')[:]['Field'])):
-        fl.plot(abs(s['indirect',z].C.mean('nScans')),label = '%0.2f'%s.getaxis('indirect')[z]['Field'],
-                ax=ax_list[1])
+        fl.plot(abs(s['indirect',z]),ax=ax_list[1])
         offset = abs(s['indirect',z].C.mean('nScans')).argmax('t2')
         offsets.append(offset)
         true_carrier_freq = s.getaxis('indirect')[z]['carrierFreq']
@@ -82,9 +81,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     fl.plot(abs(s),'o-',ax=ax_list[2])
     ax_list[2].set_title('Field Sweep ppt')
     fitting = abs(s).polyfit('ppt',order=2)
-    x_min = s.getaxis('ppt')[0]
-    x_max = s.getaxis('ppt')[-1]
-    Field = nddata(r_[x_min:x_max:100j],'ppt')
+    Field = nddata(r_[s.getaxis('ppt')[0]:s.getaxis('ppt')[-1]:100j],'ppt')
     fl.plot(Field.eval_poly(fitting,'ppt'),label='fit',ax=ax_list[2])
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     #}}}
