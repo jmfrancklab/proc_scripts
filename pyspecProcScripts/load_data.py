@@ -590,35 +590,47 @@ def proc_ESR(s):
     s.setaxis("$B_0$", lambda x: x - center_field)
     s_integral = s.C.run_nopop(np.cumsum, "$B_0$")
     logging.info(strm(s_integral))
-    return s  
-def proc_field_sweep(s):
-    logging.info("loading preprocessing for fieldsweep")
-    s.reorder('t',first=True)
-    s.chunk('t',['ph1','t2'],[4,-1])
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.reorder('t2',first=False)
-    s.ft('t2',shift=True)
-    s.ft(['ph1'])
     return s
 
 
-lookup_table = {'ag_IR2H':proc_bruker_deut_IR_withecho_mancyc,
-        'ab_ir2h':proc_bruker_deut_IR_mancyc,
-        'ag_CPMG_strob':proc_bruker_CPMG_v1,
-        'ag_T1CPMG_2h':proc_bruker_T1CPMG_v1,
-        'chirp':proc_capture,
-        'spincore_CPMG_v1':proc_spincore_CPMG_v1,
-        'spincore_Hahn_echoph_v1':proc_Hahn_echoph,
-        'spincore_IR_v1':proc_spincore_IR,#for 4 x 2 phase cycle
-        'spincore_nutation_v1':proc_nutation,
-        'spincore_nutation_v2':proc_nutation_amp,
-        'spincore_nutation_v3':proc_nutation_chunked,
-        'spincore_ODNP_v1':proc_spincore_ODNP_v1,
-        'spincore_ODNP_v3':proc_spincore_ODNP_v1,
-        'spincore_echo_v1':proc_spincore_echo_v1,
-        'spincore_var_tau_v1':proc_var_tau,
-        'square_wave_capture_v1':proc_capture,
-        'DOSY_CPMG_v1':proc_DOSY_CPMG,
-        'ESR_linewidth':proc_ESR,
-        'field_sweep_v1': proc_field_sweep,
+def proc_field_sweep_v1(s):
+    logging.info("WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!")
+    logging.info("loading preprocessing for fieldsweep")
+    s.reorder("t", first=True)
+    s.chunk("t", ["ph1", "t2"], [4, -1])
+    s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
+    s.reorder("t2", first=False)
+    s.ft("t2", shift=True)
+    s.ft("ph1", unitary=True)
+    return s
+
+def proc_field_sweep_v2(s):
+    logging.info("WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!")
+    logging.info("loading preprocessing for fieldsweep")
+    s.ft("t2", shift=True)
+    s.ft("ph1", unitary=True)
+    return s
+
+
+lookup_table = {
+    "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,
+    "ab_ir2h": proc_bruker_deut_IR_mancyc,
+    "ag_CPMG_strob": proc_bruker_CPMG_v1,
+    "ag_T1CPMG_2h": proc_bruker_T1CPMG_v1,
+    "chirp": proc_capture,
+    "spincore_CPMG_v1": proc_spincore_CPMG_v1,
+    "spincore_Hahn_echoph_v1": proc_Hahn_echoph,
+    "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
+    "spincore_nutation_v1": proc_nutation,
+    "spincore_nutation_v2": proc_nutation_amp,
+    "spincore_nutation_v3": proc_nutation_chunked,
+    "spincore_ODNP_v1": proc_spincore_ODNP_v1,
+    "spincore_ODNP_v2": proc_spincore_ODNP_v2,
+    "spincore_echo_v1": proc_spincore_echo_v1,
+    "spincore_var_tau_v1": proc_var_tau,
+    "square_wave_capture_v1": proc_capture,
+    "DOSY_CPMG_v1": proc_DOSY_CPMG,
+    "ESR_linewidth": proc_ESR,
+    "field_sweep_v1": proc_field_sweep_v1,
+    "field_sweep_v2": proc_field_sweep_v2,
 }
