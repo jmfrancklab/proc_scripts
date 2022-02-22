@@ -593,6 +593,23 @@ def proc_ESR(s):
     return s
 
 
+def proc_field_sweep_v1(s):
+    logging.info("WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!")
+    logging.info("loading preprocessing for fieldsweep")
+    s.reorder("t", first=True)
+    s.chunk("t", ["ph1", "t2"], [4, -1])
+    s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
+    s.reorder("t2", first=False)
+    s.ft("t2", shift=True)
+    s.ft("ph1", unitary=True)
+    return s
+
+def proc_field_sweep_v2(s):
+    s.ft("t2", shift=True)
+    s.ft("ph1", unitary=True)
+    return s
+
+
 lookup_table = {
     "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,
     "ab_ir2h": proc_bruker_deut_IR_mancyc,
@@ -612,4 +629,6 @@ lookup_table = {
     "square_wave_capture_v1": proc_capture,
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
+    "field_sweep_v1": proc_field_sweep_v1,
+    "field_sweep_v2": proc_field_sweep_v2,
 }
