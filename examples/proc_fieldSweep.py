@@ -11,6 +11,7 @@ from pyspecdata import *
 from pyspecProcScripts import *
 from pyspecProcScripts import lookup_table
 from sympy import symbols
+init_logging(level='debug')
 fl = figlist_var()
 rcParams["image.aspect"] = "auto" # needed for sphinx gallery
 
@@ -43,7 +44,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s.ft('t2')
     #}}}
     # {{{ set up figure and plot raw data
-    fig, ax_list = subplots(1, 3)
+    fig, ax_list = subplots(1, 4, figsize=(10,3))
     fl.next('Field Sweep Processing',fig=fig)
     fl.image(s,ax = ax_list[0])
     ax_list[0].set_title('Raw data\nFrequency Domain')
@@ -60,46 +61,54 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s /= zeroth_order_ph(s.C.mean('t2'))
     nu_NMR=[]
     assert set(s.getaxis('indirect').dtype.names) == {'Field', 'carrierFreq'}, "'indirect' axis should be a structured array that stores the carrier frequency and the field"
-    all_fields = zeros(len(s.getaxis('indirect')))
-    all_rf = zeros(len(s.getaxis('indirect')))
-    all_rf_sub = zeros(len(s.getaxis('indirect')))
+    # {{{ the following works fine for all the cases that we've tested, and so
+    # there's no need to change it.  But, after resolving everything, realized
+    # that the best way to deal with this would be to run a correlation on all
+    # the scans to determine the relative offsets, which would give both the
+    # relative offsets and the frequency shifts needed to align the signals, at
+    # the end.
+    all_offsets = zeros(len(s.getaxis('indirect')))
     for z in range(len(s.getaxis('indirect'))):
         fl.plot(s['indirect',z],ax=ax_list[1])
-        ax_list[1].axvline(color='k',x = freq_slice[0])
-        ax_list[1].axvline(color='k',x=freq_slice[-1])
+        if z == 0:
+            ax_list[1].axvline(color='k',x = freq_slice[0])
+            ax_list[1].axvline(color='k',x=freq_slice[-1])
         offset = s['indirect',z].C.mean('nScans').argmax('t2').item()
-        ax_list[1].axvline(ls=':',color='r',x=offset)
+        all_offsets[z] = offset
         carrier_freq_MHz = s.getaxis('indirect')[z]['carrierFreq']
         field = s.getaxis('indirect')[z]['Field']
-        nu_rf = carrier_freq_MHz + offset/1e6
-        nu_rf_sub = carrier_freq_MHz - offset/1e6
+        nu_rf = carrier_freq_MHz - offset/1e6 # because in order to make my
+        #                                       offset more negative, I
+        #                                       increase my field, or decrease
+        #                                       my carrier -- in other words
+        #                                       the frequency axis for our FID
+        #                                       is the negative of (ν_RF-ν_carrier)
         nu_NMR.append(nu_rf) 
-        all_fields[z] = field
-        all_rf[z] = nu_rf
-        all_rf_sub[z] = nu_rf_sub
     ax_list[1].set_title('Field Slicing')
-    fl.next('verify sign of offset')
-    gammabar = 0.5*mean(all_fields/all_rf) + 0.5*mean(all_fields/all_rf_sub)
-    fl.plot(all_fields,all_rf-all_fields/gammabar, 'o-', label='offset added')
-    fl.plot(all_fields,all_rf_sub-all_fields/gammabar, 'o-', label='offset subtracted')
-    fl.show();quit()
-    s = s['t2':freq_slice].mean('nScans').sum('t2')
+    s.ift('t2')
+    s *= exp(-1j*2*pi*nddata(all_offsets, [-1], ['indirect'])*s.fromaxis('t2'))
+    s.ft('t2')
+    # }}}
+    fl.plot(s.C.mean('nScans'), ax = ax_list[2])
+    s = s['t2':freq_slice].mean('nScans').integrate('t2')
     #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR
     ppt = nu_NMR / nu_B12_GHz 
     s.setaxis('indirect',ppt)
-    s.rename('indirect','ppt')
+    s.set_units('indirect','MHz/GHz')
+    s.rename('indirect','resonance ratio')
     #}}}
     #{{{Fitting
-    fl.plot(s,'o-',ax=ax_list[2])
-    ax_list[2].set_title('Field Sweep ppt')
-    fitting = s.polyfit('ppt',order=2)
-    Field = nddata(r_[s.getaxis('ppt')[0]:s.getaxis('ppt')[-1]:100j],'ppt')
-    fl.plot(Field.eval_poly(fitting,'ppt'),label='fit',ax=ax_list[2])
+    fl.plot(s,'o-',ax=ax_list[3])
+    ax_list[3].set_title('Field Sweep ppt')
+    fitting = s.polyfit('resonance ratio',order=2)
+    field_fine = nddata(r_[s.getaxis('resonance ratio')[0]:s.getaxis('resonance ratio')[-1]:100j],'resonance ratio')
+    polyline = fl.plot(field_fine.eval_poly(fitting,'resonance ratio'),label='fit',ax=ax_list[3])
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    _, B, A = fitting
+    center = -B/2/A
     #}}}
     logger.info(strm("ESR frequency is %f"%(nu_B12_GHz)))
-    logger.info(strm('The fit finds a max with ppt value:',
-        Field.eval_poly(fitting,'ppt').argmax().item()))
-    logger.info(strm('The data finds a ppt value', s.argmax().item()))
+    logger.info(strm("MHz/GHz value at peak/dip appears to be:",center))
+    ax_list[3].axvline(x=center, color=polyline[0].get_color(), ls=':')
 fl.show()
