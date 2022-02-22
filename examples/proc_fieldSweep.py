@@ -58,14 +58,12 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s /= zeroth_order_ph(s.C.mean('t2'))
     ## JF review to here
     nu_NMR=[]
-    offsets = []
     for z in range(len(s.getaxis('indirect')[:]['Field'])):
-        fl.plot(abs(s['indirect',z]),ax=ax_list[1])
+        fl.plot(abs(s['indirect',z]),ax=ax_list[1]) #there is some rolling of baseline without abs
         offset = abs(s['indirect',z].C.mean('nScans')).argmax('t2')
-        offsets.append(offset)
         true_carrier_freq = s.getaxis('indirect')[z]['carrierFreq']
-        nu_rf = true_carrier_freq*1e6 + (offset)
-        nu_rf /= 1e6
+        nu_rf = true_carrier_freq*1e6 + (offset) #in Hz
+        nu_rf /= 1e6 #back to MHz
         nu_NMR.append(nu_rf.data) 
         ax_list[1].axvline(x = freq_slice[0])
         ax_list[1].axvline(x=freq_slice[-1])
@@ -78,9 +76,9 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s.rename('indirect','ppt')
     #}}}
     #{{{Fitting
-    fl.plot(abs(s),'o-',ax=ax_list[2])
+    fl.plot(s,'o-',ax=ax_list[2])
     ax_list[2].set_title('Field Sweep ppt')
-    fitting = abs(s).polyfit('ppt',order=2)
+    fitting = s.polyfit('ppt',order=2)
     Field = nddata(r_[s.getaxis('ppt')[0]:s.getaxis('ppt')[-1]:100j],'ppt')
     fl.plot(Field.eval_poly(fitting,'ppt'),label='fit',ax=ax_list[2])
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -88,5 +86,5 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     logger.info(strm("ESR frequency is %f"%(nu_B12_GHz)))
     logger.info(strm('The fit finds a max with ppt value:',
         Field.eval_poly(fitting,'ppt').argmax().item()))
-    logger.info(strm('The data finds a ppt value', abs(s).argmax().item()))
+    logger.info(strm('The data finds a ppt value', s.argmax().item()))
 fl.show()
