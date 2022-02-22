@@ -605,8 +605,6 @@ def proc_field_sweep_v1(s):
     return s
 
 def proc_field_sweep_v2(s):
-    logging.info("WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!")
-    logging.info("loading preprocessing for fieldsweep")
     s.ft("t2", shift=True)
     s.ft("ph1", unitary=True)
     return s
