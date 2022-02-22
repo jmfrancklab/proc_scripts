@@ -53,21 +53,24 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s.ift('t2')
     best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
+    s = s['t2':(0,None)]
+    s['t2',0] *= 0.5
     s.ft('t2')
     s = select_pathway(s,signal_pathway)
     s /= zeroth_order_ph(s.C.mean('t2'))
-    ## JF review to here
     nu_NMR=[]
-    for z in range(len(s.getaxis('indirect')[:]['Field'])):
-        fl.plot(abs(s['indirect',z]),ax=ax_list[1]) #there is some rolling of baseline without abs
-        offset = abs(s['indirect',z].C.mean('nScans')).argmax('t2')
-        true_carrier_freq = s.getaxis('indirect')[z]['carrierFreq']
-        nu_rf = true_carrier_freq*1e6 + (offset) #in Hz
-        nu_rf /= 1e6 #back to MHz
-        nu_NMR.append(nu_rf.data) 
-        ax_list[1].axvline(x = freq_slice[0])
-        ax_list[1].axvline(x=freq_slice[-1])
+    assert set(s.getaxis('indirect').names) == {'Field', 'carrierFreq'}, "'indirect' axis should be a structured array that stores the carrier frequency and the field"
+    for z in range(len(s.getaxis('indirect'))):
+        fl.plot(s['indirect',z],ax=ax_list[1])
+        ax_list[1].axvline(color='k',x = freq_slice[0])
+        ax_list[1].axvline(color='k',x=freq_slice[-1])
+        offset = s['indirect',z].C.mean('nScans').argmax('t2').item()
+        ax_list[1].axvline(ls=':',color='r',x=offset)
+        carrier_freq_MHz = s.getaxis('indirect')[z]['carrierFreq']
+        nu_rf = carrier_freq_MHz + offset/1e6
+        nu_NMR.append(nu_rf) 
     ax_list[1].set_title('Field Slicing')
+    fl.show();quit()
     s = s['t2':freq_slice].mean('nScans').sum('t2')
     #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR
