@@ -59,7 +59,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s = select_pathway(s,signal_pathway)
     s /= zeroth_order_ph(s.C.mean('t2'))
     nu_NMR=[]
-    assert set(s.getaxis('indirect').names) == {'Field', 'carrierFreq'}, "'indirect' axis should be a structured array that stores the carrier frequency and the field"
+    assert set(s.getaxis('indirect').dtype.names) == {'Field', 'carrierFreq'}, "'indirect' axis should be a structured array that stores the carrier frequency and the field"
     for z in range(len(s.getaxis('indirect'))):
         fl.plot(s['indirect',z],ax=ax_list[1])
         ax_list[1].axvline(color='k',x = freq_slice[0])
