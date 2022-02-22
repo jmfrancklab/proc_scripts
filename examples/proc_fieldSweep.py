@@ -75,12 +75,12 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
         nu_rf_sub = carrier_freq_MHz - offset/1e6
         nu_NMR.append(nu_rf) 
         all_fields[z] = field
-        all_carriers[z] = carrier_freq_MHz
-        all_carriers_sub[z] = carrier_freq_MHz_sub
+        all_carriers[z] = nu_rf
+        all_carriers_sub[z] = nu_rf_sub
     ax_list[1].set_title('Field Slicing')
     fl.next('verify sign of offset')
-    fl.plot(all_fields,all_carriers, 'o', label='offset added')
-    fl.plot(all_fields,all_carriers_sub, 'o', label='offset subtracted')
+    fl.plot(all_fields,all_carriers, 'o-', label='offset added')
+    fl.plot(all_fields,all_carriers_sub, 'o-', label='offset subtracted')
     fl.show();quit()
     s = s['t2':freq_slice].mean('nScans').sum('t2')
     #}}}
