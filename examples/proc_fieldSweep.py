@@ -60,6 +60,9 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s /= zeroth_order_ph(s.C.mean('t2'))
     nu_NMR=[]
     assert set(s.getaxis('indirect').dtype.names) == {'Field', 'carrierFreq'}, "'indirect' axis should be a structured array that stores the carrier frequency and the field"
+    all_fields = zeros(len(s.getaxis('indirect')))
+    all_carriers = zeros(len(s.getaxis('indirect')))
+    all_carriers_sub = zeros(len(s.getaxis('indirect')))
     for z in range(len(s.getaxis('indirect'))):
         fl.plot(s['indirect',z],ax=ax_list[1])
         ax_list[1].axvline(color='k',x = freq_slice[0])
@@ -67,9 +70,17 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
         offset = s['indirect',z].C.mean('nScans').argmax('t2').item()
         ax_list[1].axvline(ls=':',color='r',x=offset)
         carrier_freq_MHz = s.getaxis('indirect')[z]['carrierFreq']
+        field = s.getaxis('indirect')[z]['Field']
         nu_rf = carrier_freq_MHz + offset/1e6
+        nu_rf_sub = carrier_freq_MHz - offset/1e6
         nu_NMR.append(nu_rf) 
+        all_fields[z] = field
+        all_carriers[z] = carrier_freq_MHz
+        all_carriers_sub[z] = carrier_freq_MHz_sub
     ax_list[1].set_title('Field Slicing')
+    fl.next('verify sign of offset')
+    fl.plot(all_fields,all_carriers, 'o', label='offset added')
+    fl.plot(all_fields,all_carriers_sub, 'o', label='offset subtracted')
     fl.show();quit()
     s = s['t2':freq_slice].mean('nScans').sum('t2')
     #}}}
