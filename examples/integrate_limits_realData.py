@@ -20,7 +20,8 @@ from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
 fl = figlist_var()
-
+rcParams["image.aspect"] = "auto"
+# sphinx_gallery_thumbnail_number = 1
 for filename, expno, subplot_name, in [
         #('210604_50mM_4AT_AOT_w11_cap_probe_echo_tau_1000_before_noApod_ex','prealignment','tau1000, before'),
         #('210604_50mM_4AT_AOT_w11_cap_probe_echo_tau_1000_after_noApod_ex','aligned','tau1000, after'),
