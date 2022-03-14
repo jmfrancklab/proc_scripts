@@ -11,7 +11,7 @@ from pylab import *
 from sympy import symbols, latex, Symbol
 
 rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 3
 
 with figlist_var() as fl:
     for filename, folder_name, nodename, t_min, t_max,ninety_range,oneeighty_range in [
