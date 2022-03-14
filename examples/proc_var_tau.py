@@ -9,6 +9,8 @@ from pylab import *
 from pyspecdata import *
 from pyspecProcScripts.load_data import lookup_table
 import h5py as h5
+rcParams["image.aspect"] = "auto"
+# sphinx_gallery_thumbnail_number = 3
 
 with figlist_var() as fl:
     for filename, expno, exp_type, postproc, frequency, f_range in [
