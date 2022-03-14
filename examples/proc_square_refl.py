@@ -11,6 +11,8 @@ from pyspecdata import *
 from pyspecProcScripts.third_level.analyze_square_refl import analyze_square_refl
 from pyspecProcScripts import * 
 init_logging(level="debug")
+rcParams["image.aspect"] ="auto"
+# sphinx_gallery_thumbnail_number = 3
 with fl_mod() as fl:
     for filename, expno, dataset_name in [("210125_sqwv_cap_probe_1", "capture1", "hairpin probe"),
             ('210111_sqwv_sol_probe_1', 'capture1', 'solenoid probe')]:
