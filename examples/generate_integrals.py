@@ -19,7 +19,7 @@ init_logging(level="debug")
 
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
-# sphinx_gallery_thumbnail_number = 7
+# sphinx_gallery_thumbnail_number = 3
 
 fl = fl_mod()
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
