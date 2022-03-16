@@ -16,7 +16,7 @@ import sympy as s
 init_logging(level="debug")
 
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
-# sphinx_gallery_thumbnail_number = 6
+# sphinx_gallery_thumbnail_number = 3
 
 fl = fl_mod()
 signal_pathway = {"ph1": 1}
