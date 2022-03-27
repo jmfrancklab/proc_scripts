@@ -317,7 +317,7 @@ def proc_spincore_IR(s, fl=None):
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
     s.setaxis("ph1", r_[0, 2.0] / 4)
     s.setaxis("ph2", r_[0, 2.0] / 4)
-    s.reorder(["ph2", "ph1"]).set_units("t2", "s")
+    s.reorder(["ph1", "ph2"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     if fl is not None:
@@ -340,7 +340,7 @@ def proc_spincore_IR_v2(s, fl=None):
         s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
     s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
     s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
-    s.reorder(["ph2", "ph1"]).set_units("t2", "s")
+    s.reorder(["ph1", "ph2"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     if fl is not None:
