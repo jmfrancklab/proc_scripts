@@ -313,10 +313,10 @@ def proc_Hahn_echoph(s, fl=None):
 
 def proc_spincore_IR(s, fl=None):
     vd_axis = s.getaxis("vd")
-    if 't' in s.dimlabels:
-        s.chunk('t',['ph2','ph1','t2'],[2,2,-1])
-    s.setaxis('ph1',r_[0,2]/4)
-    s.setaxis('ph2',r_[0,2]/4)
+    if "t" in s.dimlabels:
+        s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
+    s.setaxis("ph1", r_[0, 2.0] / 4)
+    s.setaxis("ph2", r_[0, 2.0] / 4)
     s.reorder(["ph2", "ph1"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
@@ -333,12 +333,13 @@ def proc_spincore_IR(s, fl=None):
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
     return s
 
-def proc_spincore_IR_v2(s, fl = None):
+
+def proc_spincore_IR_v2(s, fl=None):
     vd_axis = s.getaxis("vd")
-    if 't' in s.dimlabels:
-        s.chunk('t',['ph2','ph1','t2'],[4,4,-1])
-    s.setaxis('ph1',r_[0,1,2,3]/4)
-    s.setaxis('ph2',r_[0,1,2,3]/4)
+    if "t" in s.dimlabels:
+        s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
+    s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
+    s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
     s.reorder(["ph2", "ph1"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
@@ -354,6 +355,7 @@ def proc_spincore_IR_v2(s, fl = None):
         fl.next("frequency domain (all $\\Delta p$)")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
     return s
+
 
 def proc_nutation(s, fl=None):
     logging.info("loading pre-processing for nutation")
@@ -517,46 +519,46 @@ def proc_spincore_ODNP_v2(s, fl=None):
     # }}}
     return s
 
-def proc_spincore_ODNP_v3(s, fl = None):
-    if 't' in s.dimlabels:
-        t.chunk('t',['ph1','t2'],[4,-1])
-        s.setaxis('ph1',r_[0,1,2,3]/4)
-        s.labels({'ph1':r_[0.,1.,2.,3.]/4})
-    if 'indirect' in s.dimlabels:
-        s.rename('indirect','power')
-    s.set_units('t2', 's') 
-    s.rename('power','time')
-    s.ft('t2',shift=True)
-    s.ft(['ph1'])
+
+def proc_spincore_ODNP_v3(s, fl=None):
+    if "t" in s.dimlabels:
+        t.chunk("t", ["ph1", "t2"], [4, -1])
+        s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
+    if "indirect" in s.dimlabels:
+        s.rename("indirect", "power")
+    s.set_units("t2", "s")
+    s.rename("power", "time")
+    s.ft("t2", shift=True)
+    s.ft(["ph1"], unitary=True)
     if fl is not None:
-        fl.next('Raw Data \n Frequency Domain')
+        fl.next("Raw Data \n Frequency Domain")
         fl.image(s)
-        s.ift('t2')
-        fl.next('Raw Data \n Time Domain')
+        s.ift("t2")
+        fl.next("Raw Data \n Time Domain")
         fl.image(s)
-        s.ft('t2')
+        s.ft("t2")
     return s
 
-def proc_spincore_ODNP_v4(s,fl = None):
-    if 't' in s.dimlabels:
-        t.chunk('t',['ph2','ph1','t2'],[4,4,-1])
-        s.setaxis('ph1',r_[0,1,2,3]/4)
-        s.setaxis('ph2',r_[0,1,2,3]/4)
-        s.set_units('t2','s')
-    s.rename('power','time')
-    s.labels({'ph1':r_[0.,1.,2.,3.]/4})
-    s.labels({'ph2':r_[0.,1.,2.,3.]/4})
-    s.ft('t2',shift=True)
-    s.ft(['ph1','ph2'])
-    s.reorder(['ph1','ph2','time'])
+
+def proc_spincore_ODNP_v4(s, fl=None):
+    if "t" in s.dimlabels:
+        t.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
+        s.set_units("t2", "s")
+    s.rename("power", "time")
+    s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
+    s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
+    s.ft("t2", shift=True)
+    s.ft(["ph1", "ph2"], unitary=True)
+    s.reorder(["ph1", "ph2", "time"])
     if fl is not None:
-        fl.next('Raw Data \n Frequency Domain')
+        fl.next("Raw Data \n Frequency Domain")
         fl.image(s)
-        s.ift('t2')
-        fl.next('Raw Data \n Time Domain')
+        s.ift("t2")
+        fl.next("Raw Data \n Time Domain")
         fl.image(s)
-        s.ft('t2')
-    return s    
+        s.ft("t2")
+    return s
+
 
 def proc_capture(s):
     logging.info("loading pre-processing for square wave capture")
@@ -659,7 +661,9 @@ def proc_ESR(s):
 
 
 def proc_field_sweep_v1(s):
-    logging.info("WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!")
+    logging.info(
+        "WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!"
+    )
     logging.info("loading preprocessing for fieldsweep")
     s.reorder("t", first=True)
     s.chunk("t", ["ph1", "t2"], [4, -1])
@@ -668,6 +672,7 @@ def proc_field_sweep_v1(s):
     s.ft("t2", shift=True)
     s.ft("ph1", unitary=True)
     return s
+
 
 def proc_field_sweep_v2(s):
     s.ft("t2", shift=True)
@@ -684,14 +689,14 @@ lookup_table = {
     "spincore_CPMG_v1": proc_spincore_CPMG_v1,
     "spincore_Hahn_echoph_v1": proc_Hahn_echoph,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
-    "spincore_IR_v2": proc_spincore_IR_v2, #for 4 x 4 phase cycle data
+    "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_amp,
     "spincore_nutation_v3": proc_nutation_chunked,
-    "spincore_ODNP_v1": proc_spincore_ODNP_v1, #for 4 x 1 phase cycle take meter power
-    "spincore_ODNP_v2": proc_spincore_ODNP_v2, #for 2 x 2 phase cycle take meter powers
-    "spincore_ODNP_v3": proc_spincore_ODNP_v3, #for 4 x 1 phase cycle no meter powers
-    "spincore_ODNP_v4": proc_spincore_ODNP_v4, #for 4 x 4 phase cycle no meter powers
+    "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
+    "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
+    "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no meter powers
+    "spincore_ODNP_v4": proc_spincore_ODNP_v4,  # for 4 x 4 phase cycle no meter powers
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
     "square_wave_capture_v1": proc_capture,
