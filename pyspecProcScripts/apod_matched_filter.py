@@ -37,7 +37,7 @@ def apod_matched_filter(s, axis='t2',
     """
 
     temp = s.C
-    sigma = nddata(np.linspace(1e-10,1e-1,1000),'sigma').set_units('sigma','s')
+    sigma = nddata(np.linspace(1e-10,1e-1,10000),'sigma').set_units('sigma','s')
     if convolve_method == 'gaussian':
         convolution_set = np.exp(-temp.fromaxis(axis)**2/2/sigma**2)
     elif convolve_method == 'lorentzian':

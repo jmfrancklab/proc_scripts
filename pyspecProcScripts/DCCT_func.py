@@ -45,9 +45,9 @@ def DCCT(
     grid_top=1.0,
     top_pad=0.1,
     total_spacing=0.055,
-    label_spacing_multiplier=50,
+    label_spacing_multiplier=30,
     allow_for_text_default=10,
-    allow_for_ticks_default=70,
+    allow_for_ticks_default=40,
     text_height=40,
     LHS_pad=0.01,
     RHS_pad=0.05,
@@ -165,9 +165,9 @@ def DCCT(
     axes_top = grid_bottom + grid_top
     fig = this_fig_obj
     ax_list = []
-    yMajorLocator = lambda: mticker.MaxNLocator(nbins="auto", steps=[1, 2, 5, 10])
-    majorLocator = lambda: mticker.MaxNLocator(nbins="auto", steps=[1, 2, 2.5, 5, 10])
-    minorLocator = lambda: mticker.AutoMinorLocator(n=5)
+    yMajorLocator = lambda: mticker.MaxNLocator(nbins="auto", steps=[1, 5, 10])
+    majorLocator = lambda: mticker.MaxNLocator(nbins="auto", steps=[1, 5, 10])
+    minorLocator = lambda: mticker.AutoMinorLocator(n=1)
     LHS_labels, _ = fig.transFigure.inverted().transform(
         (label_spacing_multiplier * num_dims + allow_for_ticks_default, 0)
     )
