@@ -56,7 +56,8 @@ with figlist_var() as fl:
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data /= zeroth_order_ph(select_pathway(data,signal_pathway))
         data.ft('t2')
-        fl.image(data['t2':(-1e3,1e3)], ax=ax_list[1])
+        fl.image(data['t2':(-1e3,1e3)], ax=ax_list[1],
+                human_units=False)
         ax_list[1].set_title("Phased and centered (ν)")
         data.ift("t2")
         fl.image(data, ax=ax_list[2], human_units=False)

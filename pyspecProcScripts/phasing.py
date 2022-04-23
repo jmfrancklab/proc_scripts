@@ -302,11 +302,6 @@ def hermitian_function_test(
         raise ValueError("right now, only programmed to work with results of s, ms and μs")
     fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
     axvline(x=echo_peak/divisor, linestyle=":")
-    fl.next("cost function - zoomed")
-    fl.plot(cost_func[direct : (2 * min_echo, cost_min * 3)], c="violet", alpha=0.5)
-    fl.plot(
-        cost_min / 2, forplot[direct : cost_min / 2].data, "o", c="violet", alpha=0.3
-    )
     # }}}
     return echo_peak
 
