@@ -79,7 +79,7 @@ with figlist_var() as fl:
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
-        fl.image(data, ax=ax_list[2])
+        fl.image(data, ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Hermitian Test (ν)")
         data.ift("t2")
         fl.image(data, ax=ax_list[3], human_units=False)

@@ -200,9 +200,8 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 def hermitian_function_test(
     s,
     direct="t2",
-    aliasing_slop=3,
-    band_mask=False,
-    amp_threshold=0.5,
+    aliasing_slop=3,  # will become a kwarg
+    amp_threshold=0.05,  # region over which we have signal
     fl=None,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
@@ -211,216 +210,105 @@ def hermitian_function_test(
     ==========
     direct:             str
         Axis of data (i.e., direct dimension).
-    aliasing_slop:          int
-        Because we sinc interpolate here, we need to allow for the fact that
-        the very beginning and ending of the time-domain signal are
-        interpolated to match.
-        This value is the multiple of the dwell time of the original signal
-        that is sliced out due to the fact this amount of signal is aliased
-        at the beginning and end of the time-domain signal.
-    band_mask:          boolean
-        determines the type of mask used on the 2D
 
+    .. todo::
 
-    Parameters
-    ==========
-    direct:             str
-        Axis of data (i.e., direct dimension).
-    aliasing_slop:          int
-        Because we sinc interpolate here, we need to allow for the fact that
-        the very beginning and ending of the time-domain signal are
-        interpolated to match.
-        This value is the multiple of the dwell time of the original signal
-        that is sliced out due to the fact this amount of signal is aliased
-        at the beginning and end of the time-domain signal.
-    band_mask:          boolean
-        determines the type of mask used on the 2D
-        residual for accurate calculation of cost
-        function. The mask is used to circumvent
-        aliasing of the cost function.
-        When True, applies rectangular mask to the
-        2D residual.
-        When False, applies triangular mask to the
-        2D residual.
-    band_mask_no:       int
-        determines number of points for rectangular mask
-    final_range:        tuple
-        range that will slice out everything but the very first few points
-        which gives an artificial minimum and messes with the
-        cost function.
+        AG fix docstring
     """
-    s = s.C  # work on a copy, so that we're not messing w/ anything
-    orig_dt = s.get_ft_prop(direct, "dt")
-    if not s.get_ft_prop(direct):
-        s.ft(direct)
-    s.ift(direct, pad=ndshape(s)[direct] * 50)
-    new_dt = s.get_ft_prop(direct, "dt")
-    non_aliased_range = r_[aliasing_slop, -aliasing_slop] * int(orig_dt / new_dt)
-    if aliasing_slop > 0:
-        s = s[direct, non_aliased_range[0] : non_aliased_range[1]]
-    s_envelope = s.C.mean_all_but(direct).run(abs)
-    if fl is not None:
-        fl.push_marker()
-        fig_forlist, ax_list = plt.subplots(2, 2, figsize=(15, 15))
-        fl.next("Hermitian Function Test Diagnostics")
-        fig_forlist.suptitle(
-            " ".join(
-                ["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]
-            )
-        )
-        fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
-        ax_list[0, 0].set_title("Data with Padding")
-    peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[
-        0, :
-    ]
-    # {{{ the peak triple gives the left and right thresholds, with the
-    #     peak max in the middle
-    #     we move the left point as needed to make sure that peak is in
-    #     the first half of the resulting slice
-    peak_triple = r_[
-        peak_triple[0],
-        s[direct:peak_triple].mean_all_but(direct).run(abs).argmax().item(),
-        peak_triple[1],
-    ]
-    if fl is not None:
-        for j in range(3):
-            ax_list[0, 0].axvline(
-                x=peak_triple[j], ls=":", color="k", alpha=0.5, linewidth=2
-            )
-    # {{{ make sure we don't test for center too close to either edge
-    if peak_triple[0] < s.getaxis(direct)[0] + orig_dt:
-        peak_triple[0] = s.getaxis(direct)[0] + orig_dt
-    if peak_triple[2] > s.getaxis(direct)[-1] - orig_dt:
-        peak_triple[2] = s.getaxis(direct)[-1] - orig_dt
+    # {{{ zero fill
+    if s.get_ft_prop(direct):
+        s_ext = s.C.ift(direct)
+    else:
+        s_ext = s.C
+    s_ext.extend(
+        direct, s.getaxis(direct)[0] + 2 * np.diff(s.getaxis(direct)[r_[-1, 0]]).item()
+    )  # zero fill
+    s_ext.register_axis({direct: 0}).ft(direct).set_ft_prop(
+        direct, "start_time", 0
+    ).ift(
+        direct
+    )  # forces the axis to *start* at 0
+    fl.next("data extended")
+    if len(s_ext.dimlabels) > 1:
+        fl.image(s_ext)
+    else:
+        fl.plot(s_ext)
+    s_ext /= (
+        abs(s_ext).mean_all_but(direct).data.max()
+    )  # normalize by the average echo peak (for plotting purposes)
+    fl.next("power terms")
+    fl.plot(abs(s_ext).mean_all_but(direct), label="echo envelope")
     # }}}
-    # {{{ we don't want *all* of the blue line, only part
-    logging.debug("about to slice the data used for hermitian")
-    outermost = peak_triple[r_[0, -1]]  # the orange edges
-    logging.debug(strm("start with", outermost))
-    blue_edges = s.getaxis(direct)[r_[0, -1]]
-    outermost += (
-        outermost - blue_edges[::-1]
-    )  # the most it can require to calculate the cost is from the orange edge to the opposite blue edge
-    logging.debug(strm("expand to", outermost))
-    mask = r_[-1, 1] * (outermost - s.getaxis(direct)[r_[0, -1]]) > 0
-    logging.debug(strm("beyond range?", mask))
-    outermost[mask] = blue_edges[mask]
-    logging.debug(strm("cropped", outermost))
-    s = s[direct : tuple(outermost)]
+    # {{{ the integral of the signal power up to t=Δt
+    #     (first term in the paper)
+    s_energy = s_ext.C
+    s_energy.run(lambda x: abs(x) ** 2)
+    s_energy.integrate(direct, cumulative=True)
+    t_dw = s_energy.get_ft_prop(direct, "dt")
+    normalization_term = 2 * t_dw / (s_energy.fromaxis(direct) + t_dw)
+    s_energy *= normalization_term
+    s_energy.mean_all_but(direct)
+    forplot = s_energy / t_dw
+    forplot.setaxis(direct, lambda x: x / 2)
+    fl.plot(forplot, label="first energy term")
     # }}}
-    slice_start, slice_stop = s.get_range(direct, *peak_triple[r_[0, -1]])
+    # {{{ calculation the correlation between the echo and its hermitian
+    #     conjugate
+    #     → by definition, at the center of the echo, this should be
+    #     equal to the previous (integral of the power) term
+    s_correl = s_ext.C
+    s_correl.ft(direct)
+    s_correl.run(lambda x: x ** 2)
+    s_correl.ift(direct)
+    s_correl.mean_all_but(direct).run(abs)
+    s_correl *= normalization_term
+    forplot = s_correl / t_dw
+    forplot.setaxis(direct, lambda x: x / 2)
+    fl.plot(forplot, label="correlation function")
     # }}}
-    if fl is not None:
-        ax_list[0, 0].axvspan(0, orig_dt, color="k", alpha=0.1)
-        for j in range(2):
-            ax_list[0, 0].axvline(
-                x=outermost[j], ls="--", color="k", alpha=1, linewidth=1
-            )
-        for j in range(3):
-            ax_list[0, 0].axvline(x=peak_triple[j], color="k", alpha=0.5, linewidth=2)
-        fl.plot(
-            abs(s)[direct, slice(slice_start, slice_stop)],
-            ":",
-            ax=ax_list[0, 0],
-            linewidth=4,
-            human_units=False,
-        )
-    N = ndshape(s)[direct]
-    direct_startpoint = s.getaxis(direct)[0]
-    center_startpoint = s.getaxis(direct)[slice_start]
-    if fl is not None:
-        title_str = "triangular mask"
-        fl.next("cost function %s - freq filter" % title_str)
-        s.name("absolute value")
-        fl.plot(
-            abs(s)
-            .mean_all_but(direct)
-            .rename(direct, "center")
-            .set_units("center", "s"),
-            color="k",
-            alpha=0.5,
-            human_units=False,
-        )
-    # {{{ put test_center at the start/bottom of the data
-    test_center = nddata(s.getaxis(direct)[slice_start:slice_stop], "center")
-    s.rename(direct, "offset")
-    s.setaxis("offset", lambda x: x - direct_startpoint)  # so it starts at 0 now
-    s.ft("offset")
-    # the following confused me a little -- I wanted to take the difference between test_center and the start of the axis,
-    # but pyspecdata handles issues about the start of the axis,
-    # so we just shift so that test_center moves to zero
-    s *= np.exp(1j * 2 * pi * test_center * s.fromaxis("offset"))
-    s.ift("offset")
-    phcorr = s["offset", 0]
-    phcorr /= abs(phcorr)
-    s /= phcorr
-    # }}}
-    if fl is not None:
-        fl.image(s, ax=ax_list[0, 1])
-        ax_list[0, 1].set_title("shifted and phased")
-    # {{{ calculate the mask
-    center_idx = r_[
-        slice_start:slice_stop
-    ]  # test these points to see if they are the center
-    # Now, excluding the center point, determine how many points our "mask"
-    rms_size = (
-        N - center_idx - 1
-    )  # number of points between (not including) the center and the end of the data
-    rms_size[rms_size > center_idx] = center_idx[
-        rms_size > center_idx
-    ]  # if there are fewer points on the other side, we are limited by those
-    mymask = nddata(r_[1:N], "offset") <= nddata(rms_size, "center")
-    # }}}
-    if band_mask:
-        raise ValueError("band mask no longer supported -- use an earlier version")
-    s = abs(s["offset", 1:] - s["offset", :0:-1].runcopy(np.conj)).mean_all_but(
-        ["center", "offset"]
+    # {{{ calculate the cost function and determine where the center of the echo is!
+    cost_func = s_energy - s_correl
+    forplot = cost_func / t_dw
+    forplot.setaxis(direct, lambda x: x / 2)
+    min_echo = aliasing_slop * t_dw
+    cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
+    fl.plot(
+        forplot[direct : (min_echo, cost_min * 3 / 2)],
+        label="cost function",
+        c="violet",
+        alpha=0.5,
     )
-    if fl is not None:
-        fl.image(s, ax=ax_list[1, 0])
-        ax_list[1, 0].set_title("Residual 2D")
-    s *= mymask
-    s /= nddata(rms_size, "center") ** 2  # it's an L1 difference, but this is
-    #                                   squared - this is just what worked
-    #                                   well -- we could use a rationale for
-    #                                   the squared, actually
-    #                                   → maybe once for normalization, once for probability?
-    if fl is not None:
-        fl.image(s.C.cropped_log(), ax=ax_list[1, 1])
-        ax_list[1, 1].set_title("cropped log of Masked Residual")
-    s.mean_all_but(["center"])
-    best_shift = s.C.argmin("center").item()
-    # slices first few points out as usually the artifacts give a minimum
-    if fl is not None:
-        fl.next("cost function %s - freq filter" % title_str)
-        fl.twinx(orig=False, color="red")
-        s.name("cost function")
-        fl.plot(s, color="r", alpha=0.5, human_units=False)
-        cost_scale = (
-            s["center" : (-4 * orig_dt + best_shift, 4 * orig_dt + best_shift)]
-            .max()
-            .item()
-        )
-        ylim((0, cost_scale))
-        axvline(x=best_shift, c="r", linestyle="--")
-        ax = plt.gca()
-        trans = blended_transform_factory(
-            x_transform=ax.transData, y_transform=ax.transAxes
-        )
-        text(
-            x=best_shift + 0.0005,
-            y=0.8,
-            s="best shift is: %f" % best_shift,
-            fontsize=16,
-            color="red",
-            transform=trans,
-        )
-        for dwell_int in r_[-5:5]:
-            axvline(
-                x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
-            )
-        fl.pop_marker()
-    return best_shift
+    cost_func.run(sqrt)  # based on what we'd seen previously (empirically), I
+    #                     take the square root for a well-defined minimum -- it
+    #                     could be better to do this before averaging in the
+    #                     future
+    forplot = cost_func / sqrt(t_dw)
+    forplot.setaxis(direct, lambda x: x / 2)
+    cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
+    fl.plot(
+        forplot[direct : (min_echo, cost_min * 3 / 2)],
+        label="cost function",
+        c="violet",
+        alpha=0.5,
+    )
+    echo_peak = cost_min / 2.0
+    if fl.units[fl.current] == 's':
+        divisor = 1
+    elif fl.units[fl.current] == 'ms':
+        divisor = 1e-3
+    elif fl.units[fl.current] == '\\mu s':
+        divisor = 1e-6
+    else:
+        raise ValueError("right now, only programmed to work with results of s, ms and μs")
+    fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
+    axvline(x=echo_peak/divisor, linestyle=":")
+    fl.next("cost function - zoomed")
+    fl.plot(cost_func[direct : (2 * min_echo, cost_min * 3)], c="violet", alpha=0.5)
+    fl.plot(
+        cost_min / 2, forplot[direct : cost_min / 2].data, "o", c="violet", alpha=0.3
+    )
+    # }}}
+    return echo_peak
 
 
 def determine_sign(s, direct="t2", fl=None):
