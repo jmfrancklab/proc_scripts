@@ -466,6 +466,8 @@ def proc_spincore_ODNP_v1(s, fl=None):
     s.chunk("t", ["ph1", "t2"], [4, -1])
     s.set_units("t2", "s")
     s.labels({"ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft(["ph1"], unitary=True)  # Fourier Transforms coherence channels
     s.reorder(["ph1", "power"])
