@@ -1,5 +1,6 @@
 """This module includes routines for phasing NMR spectra."""
 from pyspecdata import *
+import time
 from matplotlib.patches import Ellipse
 from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
@@ -203,6 +204,8 @@ def hermitian_function_test(
     aliasing_slop=3,  # will become a kwarg
     amp_threshold=0.05,  # region over which we have signal
     fl=None,
+    basename=None,
+    show_extended=False,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
 
@@ -228,16 +231,23 @@ def hermitian_function_test(
     ).ift(
         direct
     )  # forces the axis to *start* at 0
-    fl.next("data extended")
-    if len(s_ext.dimlabels) > 1:
-        fl.image(s_ext)
-    else:
-        fl.plot(s_ext)
-    s_ext /= (
-        abs(s_ext).mean_all_but(direct).data.max()
+    if fl is not None:
+        fl.push_marker()
+        if basename is None:
+            basename = f'randombasename{int(time.time()*10):d}'
+        fl.basename = basename
+        if show_extended:
+            fl.next("data extended")
+            if len(s_ext.dimlabels) > 1:
+                fl.image(s_ext)
+            else:
+                fl.plot(s_ext)
+        s_ext /= (
+            abs(s_ext).mean_all_but(direct).data.max()
     )  # normalize by the average echo peak (for plotting purposes)
-    fl.next("power terms")
-    fl.plot(abs(s_ext).mean_all_but(direct), label="echo envelope")
+    if fl is not None:
+        fl.next("power terms")
+        fl.plot(abs(s_ext).mean_all_but(direct), label="echo envelope")
     # }}}
     # {{{ the integral of the signal power up to t=Δt
     #     (first term in the paper)
@@ -250,7 +260,8 @@ def hermitian_function_test(
     s_energy.mean_all_but(direct)
     forplot = s_energy / t_dw
     forplot.setaxis(direct, lambda x: x / 2)
-    fl.plot(forplot, label="first energy term")
+    if fl is not None:
+        fl.plot(forplot, label="first energy term")
     # }}}
     # {{{ calculation the correlation between the echo and its hermitian
     #     conjugate
@@ -264,7 +275,8 @@ def hermitian_function_test(
     s_correl *= normalization_term
     forplot = s_correl / t_dw
     forplot.setaxis(direct, lambda x: x / 2)
-    fl.plot(forplot, label="correlation function")
+    if fl is not None:
+        fl.plot(forplot, label="correlation function")
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
@@ -272,12 +284,13 @@ def hermitian_function_test(
     forplot.setaxis(direct, lambda x: x / 2)
     min_echo = aliasing_slop * t_dw
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
-    fl.plot(
-        forplot[direct : (min_echo, cost_min * 3 / 2)],
-        label="cost function",
-        c="violet",
-        alpha=0.5,
-    )
+    if fl is not None:
+        fl.plot(
+            forplot[direct : (min_echo, cost_min * 3 / 2)],
+            label="cost function",
+            c="violet",
+            alpha=0.5,
+        )
     cost_func.run(sqrt)  # based on what we'd seen previously (empirically), I
     #                     take the square root for a well-defined minimum -- it
     #                     could be better to do this before averaging in the
@@ -285,23 +298,26 @@ def hermitian_function_test(
     forplot = cost_func / sqrt(t_dw)
     forplot.setaxis(direct, lambda x: x / 2)
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
-    fl.plot(
-        forplot[direct : (min_echo, cost_min * 3 / 2)],
-        label="cost function",
-        c="violet",
-        alpha=0.5,
-    )
+    if fl is not None:
+        fl.plot(
+            forplot[direct : (min_echo, cost_min * 3 / 2)],
+            label="cost function",
+            c="violet",
+            alpha=0.5,
+        )
     echo_peak = cost_min / 2.0
-    if fl.units[fl.current] == 's':
-        divisor = 1
-    elif fl.units[fl.current] == 'ms':
-        divisor = 1e-3
-    elif fl.units[fl.current] == '\\mu s':
-        divisor = 1e-6
-    else:
-        raise ValueError("right now, only programmed to work with results of s, ms and μs")
-    fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
-    axvline(x=echo_peak/divisor, linestyle=":")
+    if fl is not None:
+        if fl.units[fl.current] == 's':
+            divisor = 1
+        elif fl.units[fl.current] == 'ms':
+            divisor = 1e-3
+        elif fl.units[fl.current] == '\\mu s':
+            divisor = 1e-6
+        else:
+            raise ValueError("right now, only programmed to work with results of s, ms and μs")
+        fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
+        axvline(x=echo_peak/divisor, linestyle=":")
+        fl.pop_marker()
     # }}}
     return echo_peak
 
@@ -331,6 +347,9 @@ def determine_sign(s, direct="t2", fl=None):
     ), "this only works on data that has been FT'd along the direct dimension"
     if fl is not None:
         fl.push_marker()
+        if basename is None:
+            basename = f'randombasename{time.time()*10:d}'
+        fl.basename = basename
         fl.next("selected pathway")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
     data_sgn = s.C.sum(direct)
