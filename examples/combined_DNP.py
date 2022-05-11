@@ -23,15 +23,15 @@ rcParams["image.aspect"] = "auto" #needed for sphinx gallery
 color_cycle = cycle(['#1f77b4', '#ff7f0e', '#2ca02c',
     '#d62728', '#9467bd', '#8c564b', '#e377c2',
     '#7f7f7f', '#bcbd22', '#17becf'])
+# {{{ this is just to show all the parameters
 def list_symbs(f):
-    # {{{ this is just to show all the parameters
     list_symbs = []
     for j, k in f.output().items():
         s_repr = sp.latex(sp.Symbol(j))
         list_symbs.append(f"${s_repr} = {k:0.5g}$")
     list_symbs = "\n".join(list_symbs)
-    # }}}
     return list_symbs
+#}}}
 fl = figlist_var()
 #{{{variables to set
 filename = "220429_50mM_TEMPOL_DNP_2"
@@ -93,7 +93,7 @@ for (nodename, clock_correction, label) in [
         ('FIR_34.5dBm', False, '34.5 dBm'),
         ('FIR_36.0dBm', False, '36.0 dBm')
         ]:
-    #fl.basename = "(%s)" % label
+    fl.basename = "(%s)" % label
     thiscolor = next(color_cycle)
     IR = find_file(filename, 
             exp_type=file_location,
@@ -108,7 +108,7 @@ for (nodename, clock_correction, label) in [
             indirect = 'vd',
             alias_slop=0,
             clock_correction = clock_correction,
-            fl=fl)
+            fl=None)
     #}}}
     #{{{Fit with lmfit
     M0, Mi, R1, vd = symbols("M_0 M_inf R_1 vd", real=True)
@@ -122,15 +122,19 @@ for (nodename, clock_correction, label) in [
             M_inf = dict(value=5e6-1, min = 0, max = 5e6),
             R_1 = dict(value=30, min=0.001, max = 100)
             )
-    #fl.basename = None
-    fl.next('IR fits')
-    fl.plot(IR_int, 'o', color = thiscolor, label = label)
+    fl.basename = None
+    fl.next('IR fits - normalized')
     IR_fit.settoguess()
     guess = IR_fit.eval(100)
     IR_fit.fit()
     T1 = 1./IR_fit.output('R_1')
+    Mi = IR_fit.output('M_inf')
+    s_norm = IR_int/Mi
+    fl.plot(s_norm, 'o', color=thiscolor,label = '%s normalized data'%label)
     T1_list.append(T1)
-    fit_line = fl.plot(IR_fit.eval(100),
+    fit = IR_fit.eval(100)
+    fit /= Mi
+    fl.plot(fit,
             color=thiscolor,
             alpha=0.5, label = '%s fit'%label)
     ax=plt.gca()
@@ -138,7 +142,6 @@ for (nodename, clock_correction, label) in [
     #}}}
     #{{{add power to power list
     if log_acquired:
-        #fl.basename = None
         start_time = IR.get_prop('start_time')-log_start_time
         stop_time = IR.get_prop('stop_time')-log_start_time
         avg_power = power_axis['time':(start_time,stop_time)].mean('time',std=True)
@@ -161,6 +164,7 @@ for (nodename, clock_correction, label) in [
         power_W = (10**((power_dB+coupler_atten)/10+3))/1e6
         power_list.append(power_W)
     #}}}
+fl.show();quit()    
 #{{{ process enhancement dataset
 for nodename,postproc in [
         ('enhancement','spincore_ODNP_v3')
