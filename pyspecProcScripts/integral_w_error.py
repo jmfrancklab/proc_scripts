@@ -9,7 +9,7 @@ def integral_w_errors(
     s,
     sig_path,
     error_path,
-    cutoff = 0.1,
+    cutoff = 0.25,
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
