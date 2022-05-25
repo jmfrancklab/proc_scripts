@@ -9,7 +9,7 @@ def integral_w_errors(
     s,
     sig_path,
     error_path,
-    cutoff = 0.1,
+    cutoff = 0.25,
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
@@ -85,7 +85,7 @@ def integral_w_errors(
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
         s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
+        s_forerror.run(lambda x: abs(x) ** 2).mean_all_but([direct, indirect]).mean(
             direct
         )
         s_forerror *= df ** 2  # Δf
@@ -133,6 +133,8 @@ def active_propagation(
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     frq_slice = integrate_limits(select_pathway(s, signal_path), fl=fl)
     logging.debug(psp.strm("frq_slice is", frq_slice))
+    full_s = s.C
+    full_s = full_s[direct:frq_slice]
     s = s[direct : ((frq_slice[-1] + offset), None)]  # grab all data more than
     #                                             offset to the right of the
     #                                             peak
@@ -147,9 +149,12 @@ def active_propagation(
         )
     s_forerror = select_pathway(s, signal_path)
     N = psp.ndshape(s_forerror)[direct]
+    s_forerror -= s_forerror.C.mean_all_but([indirect,direct]).mean(direct)
     s_forerror.run(np.real).run(lambda x: abs(x) ** 2).mean_all_but(
-        [direct, indirect]
-    ).mean(direct)
+        [direct, indirect]).mean(direct)
     s_forerror *= df ** 2
     s_forerror *= N
-    return s_forerror.run(psp.sqrt)
+    s_full = select_pathway(full_s,signal_path)
+    retval = s_full.integrate(direct).set_error(psp.sqrt(s_forerror.data))
+    return retval
+
