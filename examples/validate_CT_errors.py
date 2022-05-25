@@ -121,24 +121,16 @@ s_integral = expected.get_error()
 # {{{ Plotting Errors
 fl.next("fake data comparison, nScans = 500", legend=True)
 for i in range(len(error_lst)):
-    fl.plot(
-        error_lst[i],
-        "o",
-        color=colors[i],
-        label="Error on excluded path of \n %s" % error_pathway[i],
-    )
+    fl.plot(error_lst[i], "o", color=colors[i], alpha=0.5,
+        label="Error on excluded path of \n %s" % error_pathway[i])
 fl.plot(avg_active_error, "x", 
         label="Error from active CT\nin noise slice")
 fl.plot(averaged_inactive_error, "o", color="brown",
     label="Error from all inactive CTs",
 )
 for i in range(len(error_lst)):
-    axhline(
-        y=avg_error_lst[i],
-        linestyle=":",
-        color=colors[i],
-        label="averaged propagated error over %s" % error_pathway[i],
-    )
+    axhline(y=avg_error_lst[i], linestyle=":", color=colors[i],
+        label="averaged propagated error over \n %s" % error_pathway[i])
 axhline(
     y=avg_avg_active_err,
     linestyle="--",
