@@ -130,15 +130,18 @@ def active_propagation(
     retval: nddata
         just a data object with the error that this method predicts
     """
+    fl = psp.figlist_var()
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    frq_slice = integrate_limits(select_pathway(s, signal_path), fl=fl)
+    frq_slice = integrate_limits(select_pathway(s.C, signal_path),cutoff = 0.1)
     logging.debug(psp.strm("frq_slice is", frq_slice))
     full_s = s.C
     full_s = full_s[direct:frq_slice]
-    s = s[direct : ((frq_slice[-1] + offset), None)]  # grab all data more than
+    first_lim = (frq_slice[-1]+offset)
+    second_lim = first_lim+200
+    s = s[direct : (first_lim, second_lim)]  # grab all data more than
     #                                             offset to the right of the
     #                                             peak
-    df = s.get_ft_prop(direct, "df")
+    df = full_s.get_ft_prop(direct, "df")
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
@@ -150,7 +153,7 @@ def active_propagation(
     s_forerror = select_pathway(s, signal_path)
     N = psp.ndshape(s_forerror)[direct]
     s_forerror -= s_forerror.C.mean_all_but([indirect,direct]).mean(direct)
-    s_forerror.run(np.real).run(lambda x: abs(x) ** 2 / 2).mean_all_but(
+    s_forerror.run(lambda x: np.real(x) ** 2).mean_all_but(
         [direct, indirect]).mean(direct)
     s_forerror *= df ** 2
     s_forerror *= N

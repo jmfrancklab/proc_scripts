@@ -85,7 +85,31 @@ for thisfile, exp_type, nodename in [
         - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
     )
     error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
-    # {{{ Calculating propagated error averaged over all inactive CTs (as the
+    # {{{Making lists for all individual inactive pathways to get error
+    # associated with each one
+    var_lst = []
+    std_lst = []
+    avg_var_lst = []
+    avg_std_lst = []
+    for thispathway in error_pathway:
+        s_thisint, frq_slice_check = integral_w_errors(
+            data.C,
+            signal_pathway,
+            [thispathway],
+            indirect="nScans",
+            return_frq_slice=True,
+        )
+        assert all(frq_slice_check == frq_slice)
+        std = s_thisint.get_error()
+        var = std**2
+        var_lst.append(var)
+        std_lst.append(std)
+        avg_var = var.mean().item()
+        avg_std = sqrt(avg_var)
+        avg_var_lst.append(avg_var)
+        avg_std_lst.append(avg_std)
+    # }}}
+# {{{ Calculating propagated error averaged over all inactive CTs (as the
     #     function is meant to be called)
     data_int, frq_slice = integral_w_errors(
         data.C,
@@ -94,55 +118,108 @@ for thisfile, exp_type, nodename in [
         indirect="nScans",
         return_frq_slice=True,
     )
-    prop_inactive_err = data_int.get_error()
-    avg_inactive_error = prop_inactive_err.mean().item()
+    inactive_std = data_int.get_error()
+    inactive_var = inactive_std**2
+    avg_inactive_var = inactive_var.mean().item()
+    avg_inactive_std = sqrt(avg_inactive_var)
     # }}}
     # {{{ Calculating propagated error along active CT on noise slice
     active_int = active_propagation(data, signal_pathway, offset = 700, indirect="nScans")
-    prop_active_error = active_int.get_error()
-    avg_active_err = prop_active_error.mean().item()
+    active_std = active_int.get_error()
+    active_var = active_std**2
+    avg_active_var = active_var.mean().item()
+    avg_active_std = sqrt(avg_active_var)
     # }}}
     # {{{ Calculating the std dev -- error associated with the integrals
     expected = s_integral.run(real).mean('nScans', std=True)
-    expected_err = expected.get_error()
+    expected_std = expected.get_error()
+    expected_var = expected_std**2
     # }}}
     # {{{ Plotting Errors
     fl.next("Comparison of propagated error - Real Data", legend=True)
-    fl.plot(prop_active_error, "x", alpha=0.5,
-            label="propagated error from integration of\nactive CT in noise slice")
-    fl.plot(prop_inactive_err, "o", color="brown", alpha=0.5,
-        label="Error from all inactive CTs")
+    for i in range(len(var_lst)):
+        fl.plot(
+            var_lst[i],
+            "o",
+            color=colors[i],
+            label="on excluded path of %s" % error_pathway[i],
+        )
+    fl.plot(active_var, "x", alpha=0.5,
+            label="from integration of\nactive CT in noise slice")
+    fl.plot(inactive_var, "o", color="brown", alpha=0.5,
+        label="from all inactive CTs")
     axhline(
-        y=avg_active_err,
+        y=avg_active_var,
+        linestyle="--",
+        label="averaged variance\nfrom active CT in noise slice",
+    )
+    axhline(
+        y=avg_inactive_var,
+        linestyle="--",
+        color="brown",
+        label="averaged variance\nfrom all inactive CTs",
+    )
+    axhline(
+        y=expected_var,
+        c="k",
+        linestyle="-",
+        label="expected variance",
+    )
+    ylabel('variance Associated')
+    xlabel('nScans')
+    fl.next('comparison of standard deviations',legend=True)
+    for i in range(len(std_lst)):
+        fl.plot(
+            std_lst[i],
+            "o",
+            color=colors[i],
+            label="on excluded path of %s" % error_pathway[i],
+        )
+    fl.plot(active_std, "x", 
+            label="propagated error from integration of\nactive CT in noise slice")
+    fl.plot(inactive_std, "o", color="brown",
+        label="Error from all inactive CTs")
+    for i in range(len(std_lst)):
+        axhline(
+            y=avg_std_lst[i],
+            linestyle=":",
+            color=colors[i],
+            label="averaged %s" % error_pathway[i],
+        )
+    axhline(
+        y=avg_active_std,
         linestyle="--",
         label="averaged propagated error\nfrom active CT in noise slice",
     )
     axhline(
-        y=avg_inactive_error,
+        y=avg_inactive_std,
         linestyle="--",
         color="brown",
         label="averaged propagated error\nfrom all inactive CTs",
     )
     axhline(
-        y=expected_err,
+        y=expected_std,
         c="k",
         linestyle="-",
         label="traditional std using numpy",
     )
-    ylabel('Error Associated')
     xlabel('nScans')
+    ylabel('Associated Std')
+    #}}}
     print("**** *** ***")
-    print("estimated noise of the integral:",expected_err)
+    print("estimated noise of the integral:",expected_std)
     print("**** *** ***")
     print("**** *** ***")
-    print("propagated error along inactive pathways on noise slice (integral_w_errors):",avg_inactive_error)
+    print("propagated error along inactive pathways on noise slice (integral_w_errors):",avg_inactive_std)
     print("**** *** ***")
     print("**** *** ***")
-    print("propagated error along active pathways on noise slice (active_propagation):",avg_active_err)
+    print("propagated error along active pathways on noise slice (active_propagation):",avg_active_std)
     print("**** *** ***")
-    # }}}
     plt.axis("tight")
     ax = plt.gca()
+    lims = list(ax.get_ylim())
+    lims[0] = 0
+    ax.set_ylim(lims)
     plt.legend()
     fl.show()
 
