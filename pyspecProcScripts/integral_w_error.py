@@ -85,7 +85,7 @@ def integral_w_errors(
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
         s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
-        s_forerror.run(lambda x: abs(x) ** 2).mean_all_but([direct, indirect]).mean(
+        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
             direct
         )
         s_forerror *= df ** 2  # Δf
@@ -150,7 +150,7 @@ def active_propagation(
     s_forerror = select_pathway(s, signal_path)
     N = psp.ndshape(s_forerror)[direct]
     s_forerror -= s_forerror.C.mean_all_but([indirect,direct]).mean(direct)
-    s_forerror.run(np.real).run(lambda x: abs(x) ** 2).mean_all_but(
+    s_forerror.run(np.real).run(lambda x: abs(x) ** 2 / 2).mean_all_but(
         [direct, indirect]).mean(direct)
     s_forerror *= df ** 2
     s_forerror *= N
