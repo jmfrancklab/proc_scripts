@@ -43,16 +43,14 @@ data = fake_data(
         ("nScans" , nddata(ones(500), "nScans")),
         ("ph1" , nddata(r_[0.0, 1.0, 2.0, 3.0] / 4, "ph1")),
         ("ph2" , nddata(r_[0.0, 2.0] / 4, "ph2")),
-        ("t2" , nddata(r_[0:0.085:256j]-echo_time, "t2"))]),
-        signal_pathway, scale = 0.0)
+        ("t2" , nddata(r_[0:0.085:256j], "t2"))]),
+        signal_pathway, scale = 15.0)
 # {{{ just have the data phased
 data.labels({'ph1':r_[0.0,2.0]/4,'ph1':r_[0.0,1.0,2.0,3.0]/4})
 data.reorder(["ph1", "ph2", "nScans", "t2"])
 data.ft('t2')
 data /= sqrt(ndshape(data)['t2'])*data.get_ft_prop('t2','dt')
 data.ift('t2')
-data.setaxis('t2', lambda x: x-echo_time).register_axis({"t2":0})
-data /= zeroth_order_ph(select_pathway(data['t2':0],signal_pathway))
 data.ft('t2')
 # }}}
 data.ift("t2")
@@ -66,6 +64,8 @@ s_integral = select_pathway(data['t2':frq_slice].C, signal_pathway).integrate('t
 avg_d = s_integral.C.mean().real.item()
 s_integral /= avg_d
 data /= avg_d
+fl.next('prior')
+fl.plot(select_pathway(data.C.mean('nScans'), signal_pathway))
 # }}}
 error_pathway = (
     set(

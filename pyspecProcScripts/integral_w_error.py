@@ -132,13 +132,11 @@ def active_propagation(
     """
     fl = psp.figlist_var()
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    frq_slice = integrate_limits(select_pathway(s.C, signal_path),cutoff = 0.1)
+    frq_slice = integrate_limits(select_pathway(s.C, signal_path),cutoff = 0.01)
     logging.debug(psp.strm("frq_slice is", frq_slice))
     full_s = s.C
     full_s = full_s[direct:frq_slice]
-    first_lim = (frq_slice[-1]+offset)
-    second_lim = first_lim+200
-    s = s[direct : (first_lim, second_lim)]  # grab all data more than
+    s = s[direct : (frq_slice[-1]+offset, None)]  # grab all data more than
     #                                             offset to the right of the
     #                                             peak
     df = full_s.get_ft_prop(direct, "df")
