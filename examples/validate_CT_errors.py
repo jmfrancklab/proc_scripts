@@ -35,8 +35,7 @@ signal_pathway = {"ph1": 1, "ph2": 0}
 excluded_pathways = [(0, 0), (0, 3)]
 colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
 # {{{ generate the fake data
-t2, td, nScans, ph1, ph2 = s.symbols('t2 td nScans ph1 ph2')
-echo_time = 10.6e-3
+t2, nScans, ph1, ph2 = s.symbols('t2 nScans ph1 ph2')
 data = fake_data(
     (23*(5+1e-8*nScans)*(s.exp(+1j*2*s.pi*100*(t2) - abs(t2)*25*s.pi))),
     OrderedDict([
@@ -44,16 +43,14 @@ data = fake_data(
         ("ph1" , nddata(r_[0.0, 1.0, 2.0, 3.0] / 4, "ph1")),
         ("ph2" , nddata(r_[0.0, 2.0] / 4, "ph2")),
         ("t2" , nddata(r_[0:0.085:256j], "t2"))]),
-        signal_pathway, scale = 15.0)
+        signal_pathway, scale = 0.0)
 # {{{ just have the data phased
 data.labels({'ph1':r_[0.0,2.0]/4,'ph1':r_[0.0,1.0,2.0,3.0]/4})
 data.reorder(["ph1", "ph2", "nScans", "t2"])
 data.ft('t2')
 data /= sqrt(ndshape(data)['t2'])*data.get_ft_prop('t2','dt')
 data.ift('t2')
-data.ft('t2')
 # }}}
-data.ift("t2")
 data = data["t2" : (0,None)]
 data["t2":0] *= 0.5
 data.ft("t2")
@@ -64,9 +61,10 @@ s_integral = select_pathway(data['t2':frq_slice].C, signal_pathway).integrate('t
 avg_d = s_integral.C.mean().real.item()
 s_integral /= avg_d
 data /= avg_d
-fl.next('prior')
-fl.plot(select_pathway(data.C.mean('nScans'), signal_pathway))
+data.ift("t2")
 # }}}
+data.ft('t2')
+this_data = data.C
 error_pathway = (
     set(
         ((j, k) for j in range(ndshape(data)["ph1"]) for k in range(ndshape(data)["ph2"]))
@@ -114,7 +112,14 @@ avg_inact_var = inactive_var.mean().item()
 avg_inact_std = sqrt(avg_inact_var)
 # }}}
 # {{{ Calculating propagated error along active CT on noise slice
-active_int = active_propagation(data, signal_pathway, offset = 700, indirect="nScans")
+#test_active_path = {"ph1": 1, "ph2": 1}
+#active_int_test = active_propagation(data.C, test_active_path, offset = 500, indirect="nScans")
+#active_std_test = active_int_test.get_error()
+#active_var_test = active_std_test**2
+#avg_active_var_test = active_var_test.mean().item()
+#avg_active_std_test = sqrt(avg_active_var_test)
+
+active_int = active_propagation(this_data, signal_pathway, offset = 500, indirect="nScans")
 active_std = active_int.get_error()
 active_var = active_std**2
 avg_active_var = active_var.mean().item()
@@ -136,6 +141,7 @@ for i in range(len(var_lst)):
     )
 fl.plot(active_var, "x", 
         label="propagated error from integration of\nactive CT in noise slice")
+#fl.plot(active_var_test, 'x', label = 'test for active')
 fl.plot(inactive_var, "o", color="brown",
     label="Error from all inactive CTs")
 for i in range(len(std_lst)):
@@ -150,6 +156,9 @@ axhline(
     linestyle="--",
     label="averaged propagated error\nfrom active CT in noise slice",
 )
+#axhline(
+#        y=avg_active_var_test,
+#        linestyle='--',label='test active')
 axhline(
     y=avg_inact_var,
     linestyle="--",
@@ -174,6 +183,7 @@ for i in range(len(std_lst)):
     )
 fl.plot(active_std, "x", 
         label="propagated error from integration of\nactive CT in noise slice")
+#fl.plot(active_std_test,'x', label='test active')
 fl.plot(inactive_std, "o", color="brown",
     label="Error from all inactive CTs")
 for i in range(len(std_lst)):
@@ -188,6 +198,7 @@ axhline(
     linestyle="--",
     label="averaged propagated error\nfrom active CT in noise slice",
 )
+#axhline(y=avg_active_std_test, linestyle='--', label='test active')
 axhline(
     y=avg_inact_std,
     linestyle="--",
