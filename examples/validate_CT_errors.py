@@ -64,7 +64,6 @@ data /= avg_d
 data.ift("t2")
 # }}}
 data.ft('t2')
-this_data = data.C
 error_pathway = (
     set(
         ((j, k) for j in range(ndshape(data)["ph1"]) for k in range(ndshape(data)["ph2"]))
@@ -103,6 +102,7 @@ data_int, frq_slice = integral_w_errors(
     data.C,
     signal_pathway,
     error_pathway,
+    cutoff = 0.1,
     indirect="nScans",
     return_frq_slice=True,
 )
@@ -112,14 +112,7 @@ avg_inact_var = inactive_var.mean().item()
 avg_inact_std = sqrt(avg_inact_var)
 # }}}
 # {{{ Calculating propagated error along active CT on noise slice
-#test_active_path = {"ph1": 1, "ph2": 1}
-#active_int_test = active_propagation(data.C, test_active_path, offset = 500, indirect="nScans")
-#active_std_test = active_int_test.get_error()
-#active_var_test = active_std_test**2
-#avg_active_var_test = active_var_test.mean().item()
-#avg_active_std_test = sqrt(avg_active_var_test)
-
-active_int = active_propagation(this_data, signal_pathway, offset = 500, indirect="nScans")
+active_int = active_propagation(data.C, signal_pathway, offset = 500, cutoff=0.1, indirect="nScans")
 active_std = active_int.get_error()
 active_var = active_std**2
 avg_active_var = active_var.mean().item()
