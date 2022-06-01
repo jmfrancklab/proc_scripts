@@ -1,7 +1,6 @@
 import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
-import matplotlib.pyplot as plt
 import logging
 import numpy as np
 
@@ -11,7 +10,6 @@ def integral_w_errors(
     sig_path,
     error_path,
     cutoff = 0.25,
-    convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
     fl=None,
@@ -49,14 +47,9 @@ def integral_w_errors(
              Data with error associated with coherence pathways
              not included in the signal pathway.
     """
-    fl = psp.figlist_var()
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    if convolve_method is not None:
-        kwargs = {"convolve_method": convolve_method}
-    else:
-        kwargs = {}
     frq_slice = integrate_limits(
-        select_pathway(s, sig_path), convolve_method=convolve_method, 
+        select_pathway(s, sig_path),  
         cutoff=cutoff, fl=fl)
     logging.debug(psp.strm("frq_slice is", frq_slice))
     s = s[direct:frq_slice]
@@ -72,7 +65,6 @@ def integral_w_errors(
             + str(extra_dims))
     collected_variance = psp.ndshape([psp.ndshape(s)[indirect], len(error_path)], 
         [indirect, "pathways"]).alloc()
-    avg_error = []
     for j in range(len(error_path)):
         # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
         # where N₂ is the number of points in the indirect dimension
@@ -88,12 +80,6 @@ def integral_w_errors(
         s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([indirect])
         s_forerror *= df ** 2  # Δf
         s_forerror *= N2
-        avg_error.append(s_forerror)
-    avg_error = sum(avg_error) / len(avg_error)
-    # {{{ variance calculation for debug
-    # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
-    # print("automatically calculated integral error:",sqrt(collected_variance.data))
-    # }}}
     s = select_pathway(s, sig_path)
     retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
     if not return_frq_slice:
@@ -103,7 +89,7 @@ def integral_w_errors(
 
 
 def active_propagation(
-    s, signal_path, cutoff = 0.25, convolve_method="Gaussian", indirect="vd", direct="t2", fl=None, offset=500.0
+    s, signal_path, cutoff = 0.25, indirect="vd", direct="t2", fl=None, offset=500.0
 ):
     """propagate error from the region `offset` to the right of the peak (where
     we assume there is only noise),  in the signal pathway `signal_path`, which
@@ -128,30 +114,18 @@ def active_propagation(
     retval: nddata
         just a data object with the error that this method predicts
     """
-    fl = psp.figlist_var()
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    if convolve_method is not None:
-        kwargs = {"convolve_method":convolve_method}
-    else:
-        kwargs={}
     frq_slice = integrate_limits(
-            select_pathway(s, signal_path),convolve_method=convolve_method,
+            select_pathway(s, signal_path),
             cutoff = cutoff, fl=fl)
     logging.debug(psp.strm("frq_slice is", frq_slice))
     slice_span = frq_slice[-1]-frq_slice[0]
     slice_start = frq_slice[-1] + offset 
-    off_res_frq_slice = (slice_start, slice_start+slice_span)
+    off_res_frq_slice = (slice_start,slice_start+slice_span)
     full_s = s.C
     s = s[direct : off_res_frq_slice]  # grab all data more than
     #                                             offset to the right of the
     #                                             peak
-    fl.next('test')
-    fl.plot(select_pathway(full_s.C.mean('nScans'),signal_path))
-    plt.axvline(slice_start,color='red')
-    plt.axvline(slice_start+slice_span,color='red')
-    plt.axvline(frq_slice[0])
-    plt.axvline(frq_slice[-1])
-    fl.show()
     f = s.getaxis(direct)
     df = f[1] - f[0]
     all_labels = set(s.dimlabels)
