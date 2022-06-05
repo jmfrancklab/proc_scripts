@@ -56,8 +56,8 @@ data["t2":0] *= 0.5
 data.ft("t2")
 # }}}
 # {{{Normalization
-frq_slice = integrate_limits(select_pathway(data.C, signal_pathway))
-s_integral = select_pathway(data['t2':frq_slice].C, signal_pathway).integrate('t2')
+int_frq_slice = integrate_limits(select_pathway(data.C, signal_pathway),cutoff=0.1)
+s_integral = select_pathway(data['t2':int_frq_slice].C, signal_pathway).integrate('t2')
 avg_d = s_integral.C.mean().real.item()
 s_integral /= avg_d
 data /= avg_d
@@ -83,10 +83,11 @@ for thispathway in error_pathway:
         data.C,
         signal_pathway,
         [thispathway],
+        cutoff = 0.1,
         indirect="nScans",
         return_frq_slice=True,
     )
-    assert all(frq_slice_check == frq_slice)
+    assert all(frq_slice_check == int_frq_slice)
     std = s_thisint.get_error()
     var = std**2
     var_lst.append(var)
