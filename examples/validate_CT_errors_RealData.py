@@ -44,10 +44,7 @@ for thisfile, exp_type, nodename in [
         postproc="spincore_Hahn_echoph_v2",
         lookup=lookup_table,
     )
-    fl.next('testing')
-    fl.plot(select_pathway(data.C.mean('nScans'),signal_pathway))
-    fl.show();quit()
-    
+    data *= -1 #frequency drift causes inverted data
     data.ift("t2")
     # {{{DC offset correction
     data.ift(["ph1"])

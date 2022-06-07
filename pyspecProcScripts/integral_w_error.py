@@ -122,7 +122,6 @@ def active_propagation(
     slice_span = frq_slice[-1]-frq_slice[0]
     slice_start = frq_slice[-1] + offset 
     off_res_frq_slice = (slice_start,slice_start+slice_span)
-    full_s = s.C
     s = s[direct : off_res_frq_slice]  # grab all data more than
     #                                             offset to the right of the
     #                                             peak
