@@ -311,6 +311,26 @@ def proc_Hahn_echoph(s, fl=None):
     return s
 
 
+def proc_Hahn_echoph_v2(s,fl=None):
+    logging.info("loading pre-processing for 4 step Hahn echo")
+    nPhaseSteps = 4
+    nScans = s.get_prop("acq_params")["nScans"]
+    s.reorder("t", first=True)
+    s.chunk("t", ["ph1", "t2"], [4, -1])
+    s.labels({"ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.reorder(["ph1"])
+    s.setaxis("nScans", r_[0:nScans])
+    s.reorder("t2", first=False)
+    s.ft("t2", shift=True)
+    if fl is not None:
+        fl.next("raw data, chunked")
+        fl.image(abs(s))
+    s.ft(["ph1"], unitary=True)
+    if fl is not None:
+        fl.next("coherence")
+        fl.image(abs(s))
+    return s
+
 def proc_spincore_IR(s, fl=None):
     vd_axis = s.getaxis("vd")
     if "t" in s.dimlabels:
@@ -687,7 +707,8 @@ lookup_table = {
     "ag_T1CPMG_2h": proc_bruker_T1CPMG_v1,
     "chirp": proc_capture,
     "spincore_CPMG_v1": proc_spincore_CPMG_v1,
-    "spincore_Hahn_echoph_v1": proc_Hahn_echoph,
+    "spincore_Hahn_echoph_v1": proc_Hahn_echoph, #8 step
+    "spincore_Hahn_echoph_v2": proc_Hahn_echoph_v2, #4 step
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
