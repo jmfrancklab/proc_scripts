@@ -246,6 +246,8 @@ def hermitian_function_test(
             abs(s_ext).mean_all_but(direct).data.max()
     )  # normalize by the average echo peak (for plotting purposes)
     if fl is not None:
+        fl.next("manuscript fig")
+        fl.plot(abs(s_ext).mean_all_but(direct), label="echo envelope")
         fl.next("power terms")
         fl.plot(abs(s_ext).mean_all_but(direct), label="echo envelope")
     # }}}
@@ -280,6 +282,8 @@ def hermitian_function_test(
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
+    cost_func.ft(direct)
+    cost_func.ift(direct,pad=4096)
     forplot = cost_func / t_dw
     forplot.setaxis(direct, lambda x: x / 2)
     min_echo = aliasing_slop * t_dw
@@ -299,6 +303,14 @@ def hermitian_function_test(
     forplot.setaxis(direct, lambda x: x / 2)
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
     if fl is not None:
+        fl.next("manuscript fig")
+        fl.plot(
+            forplot[direct : (min_echo, cost_min * 3 / 2)],
+            label="cost function",
+            c="violet",
+            alpha=0.5,
+        )
+        fl.next("power terms")
         fl.plot(
             forplot[direct : (min_echo, cost_min * 3 / 2)],
             label="cost function",
@@ -315,6 +327,10 @@ def hermitian_function_test(
             divisor = 1e-6
         else:
             raise ValueError("right now, only programmed to work with results of s, ms and μs")
+        fl.next("manuscript fig")
+        fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
+        axvline(x=echo_peak/divisor, linestyle=":")
+        fl.next("power terms")
         fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
         axvline(x=echo_peak/divisor, linestyle=":")
         fl.pop_marker()
