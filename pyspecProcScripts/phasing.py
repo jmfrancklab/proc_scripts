@@ -219,6 +219,7 @@ def hermitian_function_test(
 
         AG fix docstring
     """
+    save_cost_function = False
     # {{{ zero fill
     orig_dt = s.get_ft_prop(direct, "dt")
     #s = s[direct : tuple(outermost)]
@@ -249,7 +250,10 @@ def hermitian_function_test(
             abs(s_ext).mean_all_but(direct).data.max()
     )  # normalize by the average echo peak (for plotting purposes)
     if fl is not None:
-        fl.next("")
+        if save_cost_function:
+            fl.next("")
+        if not save_cost_function:
+            fl.next("cost function")
         s_ext.name("absolute_value")
         fl.plot(abs(s_ext)
                 .mean_all_but(direct)
@@ -314,7 +318,10 @@ def hermitian_function_test(
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
     echo_peak = cost_min / 2.0
     if fl is not None:
-        fl.next("")
+        if save_cost_function:
+            fl.next("")
+        if not save_cost_function:
+            fl.next("cost function")
         fl.twinx(orig=False, color="red")
         forplot.name("cost function")
         forplot = forplot[direct : (min_echo, cost_min * 3 / 2)]
@@ -344,8 +351,7 @@ def hermitian_function_test(
             axvline(
                 x=echo_peak - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
             )
-        save_fig = False
-        if save_fig:
+        if save_cost_function:
             savefig('figures/Hermitian_phasing_costFuncs.pdf',
                     transparent=True,
                     bbox_inches='tight',
