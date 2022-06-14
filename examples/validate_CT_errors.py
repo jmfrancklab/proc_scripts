@@ -43,7 +43,7 @@ data = fake_data(
         ("ph2" , nddata(r_[0.0,2.0] / 4, "ph2")),
         ("ph1" , nddata(r_[0., 1., 2., 3.] / 4, "ph1")),
         ("t2" , nddata(r_[0:0.085:256j], "t2"))]),
-        signal_pathway, scale = 0.0)
+        signal_pathway, scale = 15.0)
 # {{{ just have the data phased
 data.labels({'ph2':r_[0.0,2.0]/4,'ph1':r_[0.0,1.0,2.0,3.0]/4})
 data.reorder(["ph1", "ph2"])
