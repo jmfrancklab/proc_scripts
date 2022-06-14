@@ -362,7 +362,7 @@ def real_absolute(s, direct="t2", fl=None,
     s_forrealabs['t2',0] *= 0.5 # heaviside
     s_forrealabs.ft('t2')
     real_abs = abs(s_forrealabs).sum('t2')/(s_forrealabs.C.run(lambda x: abs(x)**2).sum('t2')) # equation 12
-    real_abs.name('real absolute')
+    real_abs.name('cost function')
     if fl is not None:
         fl.next('real absolute cost function')
         fl.plot(real_abs)
