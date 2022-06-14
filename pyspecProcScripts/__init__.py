@@ -1,4 +1,4 @@
-from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs,determine_sign
+from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs,determine_sign,real_absolute
 from .first_level.fake_data import fake_data
 from .generate_integrals import generate_integrals
 from .load_data import lookup_table
@@ -29,6 +29,7 @@ __all__ = ['calc_baseline',
         'generate_integrals',
         'fl_mod',
         'hermitian_function_test',
+        'real_absolute',
         'integral_w_errors',
         'active_propagation',
         'fwhm_calculator',

@@ -10,7 +10,6 @@ from numpy import r_, c_
 from scipy import linalg
 import logging
 import matplotlib.pyplot as plt
-from pylab import savefig
 
 
 def zeroth_order_ph(d, fl=None):
@@ -219,10 +218,7 @@ def hermitian_function_test(
 
         AG fix docstring
     """
-    save_cost_function = True
     # {{{ zero fill
-    orig_dt = s.get_ft_prop(direct, "dt")
-    #s = s[direct : tuple(outermost)]
     if s.get_ft_prop(direct):
         s_ext = s.C.ift(direct)
     else:
@@ -238,7 +234,7 @@ def hermitian_function_test(
     if fl is not None:
         fl.push_marker()
         if basename is None:
-            basename = None
+            basename = f'randombasename{int(time.time()*10):d}'
         fl.basename = basename
         if show_extended:
             fl.next("data extended")
@@ -250,20 +246,8 @@ def hermitian_function_test(
             abs(s_ext).mean_all_but(direct).data.max()
     )  # normalize by the average echo peak (for plotting purposes)
     if fl is not None:
-        if save_cost_function:
-            fl.next("",figsize=(9,5.56))
-        if not save_cost_function:
-            fl.next("cost function")
-        s_ext.name("absolute value")
-        fl.plot(abs(s_ext)
-                .mean_all_but(direct)
-                .rename(direct, "center")
-                .set_units("center", "s"),
-                color = "k",
-                alpha = 0.5,
-                human_units = False,
-                )
         fl.next("power terms")
+        fl.plot(abs(s_ext).mean_all_but(direct), label="echo envelope")
     # }}}
     # {{{ the integral of the signal power up to t=Δt
     #     (first term in the paper)
@@ -316,99 +300,12 @@ def hermitian_function_test(
     forplot = cost_func / sqrt(t_dw)
     forplot.setaxis(direct, lambda x: x / 2)
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
-    fl.next('cost function 2')
-    cost_func.name('Hermitian cost function')
-    cost_func.ft('t2')
-    cost_func.ift('t2',pad=4096)
-    fl.plot(cost_func, color='k')
     echo_peak = cost_min / 2.0
     if fl is not None:
-        if save_cost_function:
-            fl.next("",figsize=(9,5.56))
-        if not save_cost_function:
-            fl.next("cost function")
-        fl.twinx(orig=False, color="red")
-        s.ft('t2')
-        # in the frequency domain
-        s_forrealabs = s.C 
-        # so that time domain has zeros at the end
-        s_forrealabs.ift('t2', pad=ndshape(s_forrealabs)['t2']*2) 
-        s_forrealabs.ft('t2')
-        # time shift backwards by center -- "center" is an ndshape with a new dimension
-        center = nddata(r_[0:24e-3:1000j],'center').set_units('center','s')
-        s_forrealabs *= np.exp(-1j*2*pi*center*s_forrealabs.fromaxis('t2')) 
-        s_forrealabs.ift('t2')
-        # slice out the original FID length -- ones that are shifted left are now zero filled at the end
-        s_forrealabs = s_forrealabs['t2',0:ndshape(s)['t2']] 
-        ph0 = s_forrealabs['t2',0]
-        ph0 /= abs(ph0)
-        s_forrealabs /= ph0 # zeroth order phase shift so the sum of the spectrum is +1
-        s_forrealabs['t2',0] *= 0.5 # heaviside
-        fl.next('diagnose')
-        fl.image(s_forrealabs)
-        s_forrealabs.ft('t2')
-        realabs = abs(s_forrealabs).sum('t2')/(s_forrealabs.C.run(lambda x: abs(x)**2).sum('t2')) # equation 12
-        fl.next('cost function 2')
-        fl.twinx(orig=False, color="blue")
-        realabs.name("real absolute")
-        fl.plot(realabs,
-                color = "blue", alpha=0.5,
-                )
-        axvline(x=cost_min*1e3, c="blue", linestyle="--")
-        xlim(10,24)
-        ax = plt.gca()
-        trans = blended_transform_factory(
-            x_transform=ax.transData, y_transform=ax.transAxes
-        )
-        text(
-            x=cost_min*1e3,
-            y=0.8,
-            s="minimum is: %f" % cost_min,
-            fontsize=16,
-            color="blue",
-            transform=trans,
-        )
-        fl.show();quit()
-        if save_cost_function:
-            fl.next("",figsize=(9,5.56))
-        if not save_cost_function:
-            fl.next("cost function")
-        forplot.name("cost function")
         forplot = forplot[direct : (min_echo, cost_min * 3 / 2)]
-        fl.plot(forplot, color="r", alpha=0.5, human_units=False)
-        cost_scale = (
-            forplot[direct : (-4 * orig_dt + echo_peak, 4 * orig_dt + echo_peak)]
-            .max()
-            .item()
-        )
-        cost_scale = cost_scale.real
-        ylim((0, cost_scale))
-        xlim(0.002,0.035)
-        axvline(x=echo_peak, c="r", linestyle="--")
-        ax = plt.gca()
-        trans = blended_transform_factory(
-            x_transform=ax.transData, y_transform=ax.transAxes
-        )
-        text(
-            x=echo_peak + 0.0005,
-            y=0.8,
-            s="best shift is: %f" % echo_peak,
-            fontsize=16,
-            color="red",
-            transform=trans,
-        )
-        for dwell_int in r_[-5:5]:
-            axvline(
-                x=echo_peak - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
-            )
-        fl.show();quit()
-        if save_cost_function:
-            savefig('figures/Hermitian_phasing_costFuncs.pdf',
-                    transparent=True,
-                    bbox_inches='tight',
-                    pad_inches=0)
-            fl.show();quit()
-    fl.next("power terms")
+        fl.plot(forplot, color="r", alpha=0.5)
+        cost_func_return = forplot
+    echo_peak = cost_min / 2.0
     if fl is not None:
         if fl.units[fl.current] == 's':
             divisor = 1
@@ -418,13 +315,36 @@ def hermitian_function_test(
             divisor = 1e-6
         else:
             raise ValueError("right now, only programmed to work with results of s, ms and μs")
-        fl.next("power terms")
         fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
         axvline(x=echo_peak/divisor, linestyle=":")
         fl.pop_marker()
     # }}}
-    return echo_peak
+    return echo_peak,cost_func_return
 
+def real_absolute(s, direct="t2", fl=None):
+    s.ft('t2')
+    # in the frequency domain
+    s_forrealabs = s.C 
+    # so that time domain has zeros at the end
+    s_forrealabs.ift('t2', pad=ndshape(s_forrealabs)['t2']*2) 
+    s_forrealabs.ft('t2')
+    # time shift backwards by center -- "center" is an ndshape with a new dimension
+    center = nddata(r_[0:24e-3:1000j],'center').set_units('center','s')
+    s_forrealabs *= np.exp(-1j*2*pi*center*s_forrealabs.fromaxis('t2')) 
+    s_forrealabs.ift('t2')
+    # slice out the original FID length -- ones that are shifted left are now zero filled at the end
+    s_forrealabs = s_forrealabs['t2',0:ndshape(s)['t2']] 
+    ph0 = s_forrealabs['t2',0]
+    ph0 /= abs(ph0)
+    s_forrealabs /= ph0 # zeroth order phase shift so the sum of the spectrum is +1
+    s_forrealabs['t2',0] *= 0.5 # heaviside
+    s_forrealabs.ft('t2')
+    real_abs = abs(s_forrealabs).sum('t2')/(s_forrealabs.C.run(lambda x: abs(x)**2).sum('t2')) # equation 12
+    real_abs.name('real absolute')
+    if fl is not None:
+        fl.next('real absolute cost function')
+        fl.plot(real_abs)
+    return real_abs
 
 def determine_sign(s, direct="t2", fl=None):
     """Given that the signal resides in `pathway`, determine the sign of the signal.
