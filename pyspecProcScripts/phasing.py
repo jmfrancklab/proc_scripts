@@ -321,7 +321,30 @@ def hermitian_function_test(
     # }}}
     return echo_peak,cost_func_return
 
-def real_absolute(s, direct="t2", fl=None):
+def real_absolute(s, direct="t2", fl=None,
+        center_axis = nddata(r_[0:24e-3:1000j],'center').set_units('center','s')):
+    r"""generates cost function for real absolute
+    value
+
+    Parameters
+    ==========
+    s:                  nddata
+        Data in frequency domain.
+    direct:             str
+        Axis of data (i.e., direct dimension).
+    fl:                 figlist_var
+        Include if want to see sample plot.
+    center_axis:        nddata
+        Axis of the resulting function (as an nddata),
+        corresponds to the range of echo 'centers'
+        that are explored (see
+        hermitian_function_test).
+        
+    Returns
+    =======
+    real_abs:           nddata
+        The cost function
+    """
     s.ft('t2')
     # in the frequency domain
     s_forrealabs = s.C 
@@ -329,8 +352,7 @@ def real_absolute(s, direct="t2", fl=None):
     s_forrealabs.ift('t2', pad=ndshape(s_forrealabs)['t2']*2) 
     s_forrealabs.ft('t2')
     # time shift backwards by center -- "center" is an ndshape with a new dimension
-    center = nddata(r_[0:24e-3:1000j],'center').set_units('center','s')
-    s_forrealabs *= np.exp(-1j*2*pi*center*s_forrealabs.fromaxis('t2')) 
+    s_forrealabs *= np.exp(-1j*2*pi*center_axis*s_forrealabs.fromaxis('t2')) 
     s_forrealabs.ift('t2')
     # slice out the original FID length -- ones that are shifted left are now zero filled at the end
     s_forrealabs = s_forrealabs['t2',0:ndshape(s)['t2']] 
