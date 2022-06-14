@@ -219,7 +219,7 @@ def hermitian_function_test(
 
         AG fix docstring
     """
-    save_cost_function = False
+    save_cost_function = True
     # {{{ zero fill
     orig_dt = s.get_ft_prop(direct, "dt")
     #s = s[direct : tuple(outermost)]
@@ -316,6 +316,11 @@ def hermitian_function_test(
     forplot = cost_func / sqrt(t_dw)
     forplot.setaxis(direct, lambda x: x / 2)
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
+    fl.next('cost function 2')
+    cost_func.name('Hermitian cost function')
+    cost_func.ft('t2')
+    cost_func.ift('t2',pad=4096)
+    fl.plot(cost_func, color='k')
     echo_peak = cost_min / 2.0
     if fl is not None:
         if save_cost_function:
@@ -323,6 +328,51 @@ def hermitian_function_test(
         if not save_cost_function:
             fl.next("cost function")
         fl.twinx(orig=False, color="red")
+        s.ft('t2')
+        # in the frequency domain
+        s_forrealabs = s.C 
+        # so that time domain has zeros at the end
+        s_forrealabs.ift('t2', pad=ndshape(s_forrealabs)['t2']*2) 
+        s_forrealabs.ft('t2')
+        # time shift backwards by center -- "center" is an ndshape with a new dimension
+        center = nddata(r_[0:24e-3:1000j],'center').set_units('center','s')
+        s_forrealabs *= np.exp(-1j*2*pi*center*s_forrealabs.fromaxis('t2')) 
+        s_forrealabs.ift('t2')
+        # slice out the original FID length -- ones that are shifted left are now zero filled at the end
+        s_forrealabs = s_forrealabs['t2',0:ndshape(s)['t2']] 
+        ph0 = s_forrealabs['t2',0]
+        ph0 /= abs(ph0)
+        s_forrealabs /= ph0 # zeroth order phase shift so the sum of the spectrum is +1
+        s_forrealabs['t2',0] *= 0.5 # heaviside
+        fl.next('diagnose')
+        fl.image(s_forrealabs)
+        s_forrealabs.ft('t2')
+        realabs = abs(s_forrealabs).sum('t2')/(s_forrealabs.C.run(lambda x: abs(x)**2).sum('t2')) # equation 12
+        fl.next('cost function 2')
+        fl.twinx(orig=False, color="blue")
+        realabs.name("real absolute")
+        fl.plot(realabs,
+                color = "blue", alpha=0.5,
+                )
+        axvline(x=cost_min*1e3, c="blue", linestyle="--")
+        xlim(10,24)
+        ax = plt.gca()
+        trans = blended_transform_factory(
+            x_transform=ax.transData, y_transform=ax.transAxes
+        )
+        text(
+            x=cost_min*1e3,
+            y=0.8,
+            s="minimum is: %f" % cost_min,
+            fontsize=16,
+            color="blue",
+            transform=trans,
+        )
+        fl.show();quit()
+        if save_cost_function:
+            fl.next("",figsize=(9,5.56))
+        if not save_cost_function:
+            fl.next("cost function")
         forplot.name("cost function")
         forplot = forplot[direct : (min_echo, cost_min * 3 / 2)]
         fl.plot(forplot, color="r", alpha=0.5, human_units=False)
@@ -351,6 +401,7 @@ def hermitian_function_test(
             axvline(
                 x=echo_peak - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
             )
+        fl.show();quit()
         if save_cost_function:
             savefig('figures/Hermitian_phasing_costFuncs.pdf',
                     transparent=True,
