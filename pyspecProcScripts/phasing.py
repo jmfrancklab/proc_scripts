@@ -251,10 +251,10 @@ def hermitian_function_test(
     )  # normalize by the average echo peak (for plotting purposes)
     if fl is not None:
         if save_cost_function:
-            fl.next("")
+            fl.next("",figsize=(9,5.56))
         if not save_cost_function:
             fl.next("cost function")
-        s_ext.name("absolute_value")
+        s_ext.name("absolute value")
         fl.plot(abs(s_ext)
                 .mean_all_but(direct)
                 .rename(direct, "center")
@@ -319,7 +319,7 @@ def hermitian_function_test(
     echo_peak = cost_min / 2.0
     if fl is not None:
         if save_cost_function:
-            fl.next("")
+            fl.next("",figsize=(9,5.56))
         if not save_cost_function:
             fl.next("cost function")
         fl.twinx(orig=False, color="red")
