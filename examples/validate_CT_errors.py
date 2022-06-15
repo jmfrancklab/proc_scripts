@@ -56,7 +56,6 @@ data["t2":0] *= 0.5
 data.ft("t2")
 fl.next('Fake Data -- 0.0 scale for freq var')
 fl.image(data)
-fl.show();quit()
 # }}}
 # {{{Normalization
 int_frq_slice = integrate_limits(select_pathway(data.C, signal_pathway),cutoff=0.1)
