@@ -203,6 +203,7 @@ def hermitian_function_test(
     direct="t2",
     aliasing_slop=3,  # will become a kwarg
     amp_threshold=0.05,  # region over which we have signal
+    multiplier = 50, # used to prevent false minima 
     fl=None,
     basename=None,
     show_extended=False,
@@ -280,8 +281,8 @@ def hermitian_function_test(
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
-    cost_func.ft(direct)
-    cost_func.ift(direct,pad=4096)
+    #cost_func.ft(direct)
+    #cost_func.ift(direct,pad=4096)
     forplot = cost_func / t_dw
     forplot.setaxis(direct, lambda x: x / 2)
     min_echo = aliasing_slop * t_dw
@@ -299,7 +300,7 @@ def hermitian_function_test(
     #                     future
     forplot = cost_func / sqrt(t_dw)
     forplot.setaxis(direct, lambda x: x / 2)
-    cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
+    cost_min = cost_func[direct:(min_echo, min_echo*multiplier)].C.argmin(direct).item()
     echo_peak = cost_min / 2.0
     forplot = forplot[direct : (min_echo, cost_min * 3 / 2)]
     if fl is not None:
