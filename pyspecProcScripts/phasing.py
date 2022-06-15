@@ -301,10 +301,10 @@ def hermitian_function_test(
     forplot.setaxis(direct, lambda x: x / 2)
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
     echo_peak = cost_min / 2.0
+    forplot = forplot[direct : (min_echo, cost_min * 3 / 2)]
     if fl is not None:
-        forplot = forplot[direct : (min_echo, cost_min * 3 / 2)]
         fl.plot(forplot, color="r", alpha=0.5)
-        cost_func_return = forplot
+    cost_func_return = forplot
     echo_peak = cost_min / 2.0
     if fl is not None:
         if fl.units[fl.current] == 's':
