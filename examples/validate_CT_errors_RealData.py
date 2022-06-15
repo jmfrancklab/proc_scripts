@@ -28,35 +28,32 @@ rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 4
 
 fl = figlist_var()
-signal_pathway = {"ph1": 1}
-f_range = (-500, 1.5e3)
+signal_pathway = {"ph1": 1, "ph2": 0}
+f_range = (-1e3, 1e3)
 excluded_pathways = [(0, 0), (0, 3)]
 colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
 for thisfile, exp_type, nodename in [
-    ("220606_150mM_TEMPOL_200scan",
-        "ODNP_NMR_comp/Echoes", "echo")
+    ("201113_TEMPOL_capillary_probe_16Scans_ModCoil",
+        "ODNP_NMR_comp/old", "signal")
     ]:
     # {{{processing data
     data = find_file(
         thisfile,
         exp_type=exp_type,
         expno=nodename,
-        postproc="spincore_Hahn_echoph_v2",
+        postproc="spincore_echo_v1",
         lookup=lookup_table,
     )
-    data *= -1 #frequency drift causes inverted data
     data.ift("t2")
     # {{{DC offset correction
-    data.ift(["ph1"])
+    data.ift(["ph1", "ph2"])
     t_rx = data.C.getaxis('t2')[-1]
     t_rx = data["t2":(t_rx*0.75, None)]
     t_rx = t_rx.mean(['t2'])
     data -= t_rx
-    data.ft(["ph1"])
+    data.ft(["ph1", "ph2"])
     # }}}
     data.ft("t2")
-    fl.next('raw')
-    fl.image(data)
     data = data["t2":f_range]
     # {{{Phase corrections
     data.ift("t2")
@@ -69,7 +66,10 @@ for thisfile, exp_type, nodename in [
     data = data["t2" : (0,None)]
     data["t2":0] *= 0.5
     data.ft("t2")
-    data.reorder(["ph1", "nScans", "t2"])
+    data.reorder(["ph1", "ph2", "nScans", "t2"])
+    fl.next('Real Data phased')
+    fl.image(data)
+    fl.show();quit()
     # }}}
     # {{{Normalization
     frq_slice = integrate_limits(select_pathway(data.C, signal_pathway))
@@ -77,15 +77,17 @@ for thisfile, exp_type, nodename in [
     avg_d = s_integral.C.mean().real.item()
     s_integral /= avg_d
     data /= avg_d
+    fl.next('Normalized Real Data')
+    fl.plot(select_pathway(data.C.mean('nScans'),signal_pathway))
     # }}}
     error_pathway = (
         set(
-            (j for j in range(ndshape(data)["ph1"]))
+            ((j, k) for j in range(ndshape(data)["ph1"]) for k in range(ndshape(data)["ph2"]))
         )
         - set(excluded_pathways)
-        - set([(signal_pathway["ph1"])])
+        - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
     )
-    error_pathway = [{"ph1": j} for j in error_pathway]
+    error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
     # {{{Making lists for all individual inactive pathways to get error
     # associated with each one
     var_lst = []
@@ -99,7 +101,6 @@ for thisfile, exp_type, nodename in [
             [thispathway],
             indirect="nScans",
             return_frq_slice=True,
-            fl = fl
         )
         assert all(frq_slice_check == frq_slice)
         std = s_thisint.get_error()
@@ -126,7 +127,7 @@ for thisfile, exp_type, nodename in [
     avg_inactive_std = sqrt(avg_inactive_var)
     # }}}
     # {{{ Calculating propagated error along active CT on noise slice
-    active_int = active_propagation(data, signal_pathway, indirect="nScans")
+    active_int = active_propagation(data, signal_pathway, offset = 700, indirect="nScans")
     active_std = active_int.get_error()
     active_var = active_std**2
     avg_active_var = active_var.mean().item()

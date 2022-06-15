@@ -43,7 +43,7 @@ data = fake_data(
         ("ph2" , nddata(r_[0.0,2.0] / 4, "ph2")),
         ("ph1" , nddata(r_[0., 1., 2., 3.] / 4, "ph1")),
         ("t2" , nddata(r_[0:0.085:256j], "t2"))]),
-        signal_pathway, scale = 15.0)
+        signal_pathway, scale = 0.0)
 # {{{ just have the data phased
 data.labels({'ph2':r_[0.0,2.0]/4,'ph1':r_[0.0,1.0,2.0,3.0]/4})
 data.reorder(["ph1", "ph2"])
@@ -54,6 +54,9 @@ data.ift('t2')
 data = data["t2" : (0,None)]
 data["t2":0] *= 0.5
 data.ft("t2")
+fl.next('Fake Data -- 0.0 scale for freq var')
+fl.image(data)
+fl.show();quit()
 # }}}
 # {{{Normalization
 int_frq_slice = integrate_limits(select_pathway(data.C, signal_pathway),cutoff=0.1)
@@ -195,7 +198,7 @@ axhline(
  )
 xlabel('nScans')
 ylabel('Associated variances')
-fl.next('comparison of standard deviations',legend=True)
+fl.next('comparison of standard deviations - frequency drift scale = 0',legend=True)
 #for i in range(len(std_lst)):
 #    fl.plot(
 #        std_lst[i],
