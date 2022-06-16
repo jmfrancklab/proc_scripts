@@ -30,7 +30,7 @@ rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
 fl = figlist_var()
 signal_pathway = {"ph1": 1}
 f_range = (0, 1.1e3)
-excluded_pathways = [(0, 0), (0, 3)]
+excluded_pathways = [(0,0),(0,2),(0,3)]# 0), (0, 3)]
 colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
 for thisfile, exp_type, nodename in [
     ("220606_150mM_TEMPOL_200scan",
@@ -68,10 +68,10 @@ for thisfile, exp_type, nodename in [
     # }}}
     #{{{ Alignment??
     data.ift(['ph1'])
-    opt_shift,sigma, my_mask = correl_align(data, indirect_dim = 'nScans',
-            signal_pathway=signal_pathway, sigma = 1500)
+    #opt_shift,sigma, my_mask = correl_align(data, indirect_dim = 'nScans',
+    #        signal_pathway=signal_pathway, sigma = 1500)
     data.ift('t2')
-    data *= np.exp(-1j*2*pi*opt_shift*data.fromaxis('t2'))
+    #data *= np.exp(-1j*2*pi*opt_shift*data.fromaxis('t2'))
     data.ft(['ph1'])
     data.ft('t2')
     fl.next('aligned')
@@ -83,8 +83,10 @@ for thisfile, exp_type, nodename in [
     data.reorder(["ph1", "nScans", "t2"])
     fl.next('Real Data phased - 200 scans')
     fl.image(data)
+    og_data = data.C
     #fl.show();quit()
     # }}}
+    #}}}
     # {{{Normalization
     int_frq_slice_start = integrate_limits(select_pathway(data['nScans',0].C, signal_pathway),cutoff = 0.1)
     int_frq_slice_end = integrate_limits(select_pathway(data['nScans',-1].C,signal_pathway),cutoff = 0.1)
@@ -104,30 +106,6 @@ for thisfile, exp_type, nodename in [
         - set([(signal_pathway["ph1"])])
     )
     error_pathway = [{"ph1": j} for j in error_pathway]
-    # {{{Making lists for all individual inactive pathways to get error
-    # associated with each one
-    var_lst = []
-    std_lst = []
-    avg_var_lst = []
-    avg_std_lst = []
-    #for thispathway in error_pathway:
-    #    s_thisint, frq_slice_check = integral_w_errors(
-    #        data.C,
-    #        signal_pathway,
-    #        [thispathway],
-    #        indirect="nScans",
-    #        return_frq_slice=True,
-    #    )
-    #    assert all(frq_slice_check == frq_slice)
-    #    std = s_thisint.get_error()
-    #    var = std**2
-    #    var_lst.append(var)
-    #    std_lst.append(std)
-    #    avg_var = var.mean().item()
-    #    avg_std = sqrt(avg_var)
-    #    avg_var_lst.append(avg_var)
-    #    avg_std_lst.append(avg_std)
-    # }}}
 # {{{ Calculating propagated error averaged over all inactive CTs (as the
     #     function is meant to be called)
     fl.next('test limits last scan')
@@ -162,6 +140,19 @@ for thisfile, exp_type, nodename in [
     axvline(int_slice[0],color='blue')
     #fl.show();quit()
     # }}}
+        # {{{Making lists for all individual inactive pathways to get error
+    # associated with each one
+    test = data.C
+    test = test['t2':int_slice]
+    test['ph1',1] = 0
+    test_var = test.C.getaxis('t2').run(lambda x: abs(x) ** 2/2)
+    test_var *= ((N2)*(df**2))
+    print(ndshape(test_var))
+    print(test_var)
+    print(test_var.data)
+    quit()
+    # }}}
+
     # {{{ Calculating propagated error along active CT on noise slice
     act_frq_slice = integrate_limits(
             select_pathway(data['nScans',-1].C, signal_pathway),
@@ -184,50 +175,48 @@ for thisfile, exp_type, nodename in [
     axvline(s.getaxis('t2')[-1],color='k')
     # }}}
     # {{{ Calculating the std dev -- error associated with the integrals
-    expected = s_integral.run(real).mean('nScans',std=True)
+    expected = s_integral.C.run(real).mean('nScans',std=True)
     expected_std = expected.get_error()
     expected_var = expected_std**2
+    integral_diff = s_integral.C.real - s_integral.C.mean().real
+    integral_diff_sq = abs(s_integral.C.real - s_integral.C.mean().real)**2
     # }}}
     # {{{ Plotting Errors
-    fl.next("Comparison of variances", legend=True)
+    #{{{variances
+    fl.next("Comparison of variances - not aligned", legend=True)
     #for i in range(len(var_lst)):
-        #fl.plot(
-        #    var_lst[i],
-        #    "o",
-        #    color=colors[i],
-        #    label="on excluded path of %s" % error_pathway[i],
-        #)
+    #    fl.plot(
+    #        var_lst[i],
+    #        "o",
+    #        color=colors[i],
+    #        label="on excluded path of %s" % error_pathway[i],
+    #    )
     fl.plot(active_var, "x", 
             label="propagated error from integration of\nactive CT in noise slice")
-    fl.plot(inact_var, "o", color="brown",
-        label="Error from all inactive CTs")
+    fl.plot(inact_var, "o", color="brown",label="Error from all inactive CTs")
+    #fl.plot(integral_diff_sq, 'o',color = 'k',label = 'integral diff squared')
     #for i in range(len(std_lst)):
     #    axhline(
-    #        y=avg_var_lst[i],
-    #        linestyle=":",
-    #        color=colors[i],
+   #         y=avg_var_lst[i],
+   #         linestyle=":",
+   #         color=colors[i],
+   #         alpha = 0.4,
     #        label="averaged %s" % error_pathway[i],
     #    )
-    axhline(
-        y=avg_active_var,
-        linestyle="--",
-        label="averaged propagated error\nfrom active CT in noise slice",
-    )
-    axhline(
-        y=avg_inact_var,
-        linestyle="--",
-        color="brown",
-        label="averaged propagated error\nfrom all inactive CTs",
-    )
-    axhline(
-        y=expected_var,
-        c="k",
-        linestyle="-",
-        label="traditional std using numpy",
-     )
+    axhline(y = avg_test_var,color = 'blue',label = 'averaged by hand')
+    axhline(y = test_0_var,alpha = 0.5,color='red',label = 'ph1=0')
+    axhline(y = test_2_var,alpha = 0.5,color='orange',label='ph1=2')
+    axhline(y = test_3_var, alpha = 0.5,color='green',label = 'ph1=3')
+    axhline(y=avg_active_var,linestyle="--",
+        label="averaged propagated error\nfrom active CT in noise slice")
+    axhline(y=avg_inact_var,linestyle="--",color="blue",
+        label="averaged propagated error\nfrom all inactive CTs")
+    axhline(y=expected_var, c="k",linestyle="-",
+        label="traditional std using numpy")
     xlabel('nScans')
     ylabel('Associated variances')
-    fl.next('comparison of standard deviations - frequency drift scale = 0',legend=True)
+    #}}}
+    fl.next('comparison of standard deviations- not aligned',legend=True)
     #for i in range(len(std_lst)):
     #    fl.plot(
     #        std_lst[i],
@@ -235,10 +224,10 @@ for thisfile, exp_type, nodename in [
     #        color=colors[i],
     #        label="on excluded path of %s" % error_pathway[i],
     #    )
+    fl.plot(integral_diff, 'o', color = 'k')
     fl.plot(active_std, "x", 
             label="propagated error from integration of\nactive CT in noise slice")
-    fl.plot(inact_std, "o", color="brown",
-        label="Error from all inactive CTs")
+    fl.plot(inact_std, "o", color="brown", label="Error from all inactive CTs")
     #for i in range(len(std_lst)):
     #    axhline(
     #        y=avg_std_lst[i],
@@ -246,23 +235,12 @@ for thisfile, exp_type, nodename in [
     #        color=colors[i],
     #        label="averaged %s" % error_pathway[i],
     #    )
-    axhline(
-        y=avg_active_std,
-        linestyle="--",
-        label="averaged propagated error\nfrom active CT in noise slice",
-    )
-    axhline(
-        y=avg_inact_std,
-        linestyle="--",
-        color="orange",
-        label="averaged propagated error\nfrom all inactive CTs",
-    )
-    axhline(
-        y=expected_std,
-        c="k",
-        linestyle="-",
-        label="traditional std using numpy",
-    )
+    axhline(y=avg_active_std,linestyle="--",
+        label="averaged propagated error\nfrom active CT in noise slice")
+    axhline(y=avg_inact_std,linestyle="--",color="orange",
+        label="averaged propagated error\nfrom all inactive CTs")
+    axhline(y=expected_std,c="k",linestyle="-",
+        label="traditional std using numpy")
     xlabel('nScans')
     ylabel('Associated Std')
     #}}}
