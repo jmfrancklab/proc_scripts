@@ -68,10 +68,10 @@ for thisfile, exp_type, nodename in [
     # }}}
     #{{{ Alignment??
     data.ift(['ph1'])
-    opt_shift,sigma, my_mask = correl_align(data, indirect_dim = 'nScans',
-            signal_pathway=signal_pathway, sigma = 1500)
+    #opt_shift,sigma, my_mask = correl_align(data, indirect_dim = 'nScans',
+    #        signal_pathway=signal_pathway, sigma = 1500)
     data.ift('t2')
-    data *= np.exp(-1j*2*pi*opt_shift*data.fromaxis('t2'))
+    #data *= np.exp(-1j*2*pi*opt_shift*data.fromaxis('t2'))
     data.ft(['ph1'])
     data.ft('t2')
     fl.next('aligned')
