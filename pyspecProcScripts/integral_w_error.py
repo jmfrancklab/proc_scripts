@@ -9,8 +9,7 @@ def integral_w_errors(
     s,
     sig_path,
     error_path,
-    cutoff = 0.1,
-    convolve_method="Gaussian",
+    cutoff = 0.25,
     indirect="vd",
     direct="t2",
     fl=None,
@@ -49,13 +48,9 @@ def integral_w_errors(
              not included in the signal pathway.
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    if convolve_method is not None:
-        kwargs = {"convolve_method": convolve_method}
-    else:
-        kwargs = {}
     frq_slice = integrate_limits(
-        select_pathway(s, sig_path), convolve_method=convolve_method, cutoff=cutoff, fl=fl
-    )
+        select_pathway(s, sig_path),  
+        cutoff=cutoff, fl=fl)
     logging.debug(psp.strm("frq_slice is", frq_slice))
     s = s[direct:frq_slice]
     f = s.getaxis(direct)
@@ -67,12 +62,9 @@ def integral_w_errors(
     if len(extra_dims) > 0:
         raise ValueError(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
-            + str(extra_dims)
-        )
-    collected_variance = psp.ndshape(
-        [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
-    ).alloc()
-    avg_error = []
+            + str(extra_dims))
+    collected_variance = psp.ndshape([psp.ndshape(s)[indirect], len(error_path)], 
+        [indirect, "pathways"]).alloc()
     for j in range(len(error_path)):
         # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
         # where N₂ is the number of points in the indirect dimension
@@ -84,18 +76,10 @@ def integral_w_errors(
             N2 = psp.ndshape(s_forerror)[direct]
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
-        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
-            direct
-        )
+        s_forerror -= s_forerror.C.mean_all_but([indirect])
+        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([indirect])
         s_forerror *= df ** 2  # Δf
         s_forerror *= N2
-        avg_error.append(s_forerror)
-    avg_error = sum(avg_error) / len(avg_error)
-    # {{{ variance calculation for debug
-    # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
-    # print("automatically calculated integral error:",sqrt(collected_variance.data))
-    # }}}
     s = select_pathway(s, sig_path)
     retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
     if not return_frq_slice:
@@ -105,7 +89,7 @@ def integral_w_errors(
 
 
 def active_propagation(
-    s, signal_path, indirect="vd", direct="t2", fl=None, offset=500.0
+    s, signal_path, cutoff = 0.25, indirect="vd", direct="t2", fl=None, offset=500.0
 ):
     """propagate error from the region `offset` to the right of the peak (where
     we assume there is only noise),  in the signal pathway `signal_path`, which
@@ -131,25 +115,32 @@ def active_propagation(
         just a data object with the error that this method predicts
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    frq_slice = integrate_limits(select_pathway(s, signal_path), fl=fl)
+    frq_slice = integrate_limits(
+            select_pathway(s, signal_path),
+            cutoff = cutoff, fl=fl)
     logging.debug(psp.strm("frq_slice is", frq_slice))
-    s = s[direct : ((frq_slice[-1] + offset), None)]  # grab all data more than
+    slice_span = frq_slice[-1]-frq_slice[0]
+    slice_start = frq_slice[-1] + offset 
+    off_res_frq_slice = (slice_start,slice_start+slice_span)
+    s = s[direct : off_res_frq_slice]  # grab all data more than
     #                                             offset to the right of the
     #                                             peak
-    df = s.get_ft_prop(direct, "df")
+    f = s.getaxis(direct)
+    df = f[1] - f[0]
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
     if len(extra_dims) > 0:
         raise ValueError(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
-            + str(extra_dims)
-        )
+            + str(extra_dims))
     s_forerror = select_pathway(s, signal_path)
-    N = psp.ndshape(s_forerror)[direct]
-    s_forerror.run(np.real).run(lambda x: abs(x) ** 2).mean_all_but(
-        [direct, indirect]
-    ).mean(direct)
+    N2 = psp.ndshape(s_forerror)[direct]
+    s_forerror -= s_forerror.C.mean_all_but([indirect])
+    s_forerror.run(lambda x: np.real(x) ** 2).mean_all_but([indirect])
     s_forerror *= df ** 2
-    s_forerror *= N
-    return s_forerror.run(psp.sqrt)
+    s_forerror *= N2
+    s = select_pathway(s,signal_path)
+    retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
+    return retval
+
