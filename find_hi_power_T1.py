@@ -7,13 +7,13 @@ from pyspecProcScripts import lookup_table
 logger = init_logging("info")
 IR_signal_pathway = {'ph1':0,'ph2':-1}
 fl=fl_mod()
-filename='220616_ras_I21_capProbe_ODNP'
+filename='220617_pR_Y191_capProbe_ODNP'
 file_location = 'ODNP_NMR_comp/ODNP'
 excluded_pathways = [(0,0)]
 W = 4+1.024
 #{{{IR processing
 for nodename, postproc, IR_f_slice, int_slice, M in [
-        ('FIR_36dBm','spincore_IR_v1',(-20,140),(0,100),1e6),
+        ('FIR_36dBm','spincore_IR_v1',(-100,500),(0,100),1e6),
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
             postproc=postproc,lookup=lookup_table)
@@ -70,7 +70,9 @@ for nodename, postproc, IR_f_slice, int_slice, M in [
     #{{{Alignment
     IR.ft('t2')
     last_vd_max = select_pathway(IR['vd',-1],IR_signal_pathway).C.argmax('t2').item()
-    first_vd_max = select_pathway(IR['vd',0]*-1,IR_signal_pathway).C.argmax('t2').item()
+    first_vd_max = select_pathway(IR['vd',0],IR_signal_pathway).C.argmax('t2').item()
+    print(first_vd_max)
+    print(last_vd_max)
     if first_vd_max <0:
         first_span = 0-(first_vd_max* -1)
         drift = last_vd_max + first_span
@@ -107,7 +109,7 @@ for nodename, postproc, IR_f_slice, int_slice, M in [
         IR.ft(['ph1','ph2'])
     fl.next('Aligned')
     fl.image(IR)
-    #fl.show();quit()################################################################
+    fl.show();quit()################################################################
     #}}}
     IR.ift('t2')
     #{{{FID slice
