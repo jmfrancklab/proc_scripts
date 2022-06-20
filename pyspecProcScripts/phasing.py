@@ -219,12 +219,15 @@ def hermitian_function_test(
         AG fix docstring
     """
     # {{{ zero fill
+    assert s.get_units(direct) is not None
     if s.get_ft_prop(direct):
         s_ext = s.C.ift(direct)
     else:
         s_ext = s.C
+    print("trying to extend from",s_ext.getaxis(direct)[r_[0,-1]],"to",
+            s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item())
     s_ext.extend(
-        direct, s.getaxis(direct)[0] + 2 * np.diff(s.getaxis(direct)[r_[-1, 0]]).item()
+        direct, s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item()
     )  # zero fill
     s_ext.register_axis({direct: 0}).ft(direct).set_ft_prop(
         direct, "start_time", 0
@@ -314,7 +317,7 @@ def hermitian_function_test(
         elif fl.units[fl.current] == '\\mu s':
             divisor = 1e-6
         else:
-            raise ValueError("right now, only programmed to work with results of s, ms and μs")
+            raise ValueError(f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs")
         fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
         axvline(x=echo_peak/divisor, linestyle=":")
         fl.pop_marker()
