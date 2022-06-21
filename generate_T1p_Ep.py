@@ -21,7 +21,6 @@ excluded_pathways = [(0,0)]
 W = 4+1.024
 h5filename = "processed_ras.h5"
 conctag = "I21_220616"
-#{{{IR processing
 T1_list = []
 power_list = []
 start_times = []
@@ -29,7 +28,7 @@ stop_times = []
 errors=[]
 FIR=True
 Ep = True
-#{{{make T1(zap)
+#{{{make T1(p)
 if FIR:
     for nodename, postproc, IR_f_slice, power in [
             ('FIR_noPower','spincore_IR_v1',(-47,253),0),
@@ -96,16 +95,25 @@ if FIR:
         IR.ft('t2')
         last_vd_max = select_pathway(IR['vd',-1],IR_signal_pathway).C.argmax('t2').item()
         first_vd_max = select_pathway(IR['vd',0],IR_signal_pathway).C.argmax('t2').item()
-        if first_vd_max < 0:
-            print(first_vd_max)
-            first_span = 0-(first_vd_max* -1)
-            drift = last_vd_max + first_span
-        else:
+        if (last_vd_max < 0) and (first_vd_max <0):
+            last_vd_max *= -1
+            first_vd_max *= -1
             if last_vd_max > first_vd_max:
                 drift = last_vd_max - first_vd_max
             else:
                 drift = first_vd_max - last_vd_max
-        print("your signal has a smear that spans %d Hz"%drift)    
+        elif (last_vd_max>0) and (first_vd_max >0):
+            if last_vd_max > first_vd_max:
+                drift = last_vd_max - first_vd_max
+            else:
+                drift = first_vd_max - last_vd_max
+        elif (last_vd_max>0) and(first_vd_max <0):
+            first_vd_max *= -1
+            drift = first_vd_max +last_vd_max
+        elif (last_vd_max <0) and(first_vd_max >0):
+            last_vd_max *= -1
+            drift = last_vd_max +first_vd_max
+print("your signal has a smear that spans %d Hz"%drift)    
         if drift < 60:
             mysgn = determine_sign(select_pathway(IR,IR_signal_pathway))
             IR.ift(['ph1','ph2'])
