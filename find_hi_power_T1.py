@@ -7,7 +7,7 @@ from pyspecProcScripts import lookup_table
 logger = init_logging("info")
 IR_signal_pathway = {'ph1':0,'ph2':-1}
 fl=fl_mod()
-filename='220617_pR_Y191_capProbe_ODNP'
+filename='220621_ras_K5_capProbe_ODNP'
 file_location = 'ODNP_NMR_comp/ODNP'
 excluded_pathways = [(0,0)]
 W = 4+1.024
@@ -71,14 +71,25 @@ for nodename, postproc, IR_f_slice, int_slice, M in [
     IR.ft('t2')
     last_vd_max = select_pathway(IR['vd',-1],IR_signal_pathway).C.argmax('t2').item()
     first_vd_max = select_pathway(IR['vd',0],IR_signal_pathway).C.argmax('t2').item()
-    print(first_vd_max)
-    print(last_vd_max)
-    if first_vd_max <0:
-        first_span = 0-(first_vd_max* -1)
-        drift = last_vd_max + first_span
-    else:
-        drift = last_vd_max - first_vd_max
-    print("your signal has a smear that spans %d Hz"%drift)    
+    if (last_vd_max < 0) and (first_vd_max <0):
+        last_vd_max *= -1
+        first_vd_max *= -1
+        if last_vd_max > first_vd_max:
+            drift = last_vd_max - first_vd_max
+        else:
+            drift = first_vd_max - last_vd_max
+    elif (last_vd_max>0) and (first_vd_max >0):
+        if last_vd_max > first_vd_max:
+            drift = last_vd_max - first_vd_max
+        else:
+            drift = first_vd_max - last_vd_max
+    elif (last_vd_max>0) and(first_vd_max <0):
+        first_vd_max *= -1
+        drift = first_vd_max +last_vd_max
+    elif (last_vd_max <0) and(first_vd_max >0):
+        last_vd_max *= -1
+        drift = last_vd_max +first_vd_max
+    print("your signal has a smear that spans %d Hz"%drift)   
     if drift < 50:
         mysgn = determine_sign(select_pathway(IR,IR_signal_pathway))
         IR.ift(['ph1','ph2'])
