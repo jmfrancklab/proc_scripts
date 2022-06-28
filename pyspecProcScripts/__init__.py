@@ -17,6 +17,7 @@ from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
 from .lorentzian_to_gaussian import L2G
 from .generate_T1_Ep import generate_T1_Ep
+from .simple_functions import select_pathway
 __all__ = ['calc_baseline',
         'center_echo',
         'correl_align',
@@ -44,6 +45,7 @@ __all__ = ['calc_baseline',
         'zeroth_order_ph',
         'apod_matched_filter',
         'L2G',
-        'generate_T1_Ep'
+        'generate_T1_Ep',
+        'select_pathway'
         ]
 
