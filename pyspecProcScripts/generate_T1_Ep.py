@@ -41,7 +41,7 @@ def generate_T1_Ep(filename,
         IR_full_flip=False,
         push_zero_time = 0,
         coupler_atten = 22,
-        fl=figlist_var()):
+        fl=None):
     T1_list = []
     errors = []
     power_list = []
@@ -51,7 +51,7 @@ def generate_T1_Ep(filename,
     #{{{load in log
         my_filename = search_filename(filename+".h5",exp_type='ODNP_NMR_comp/ODNP',unique=True)
         with h5py.File(my_filename,'r') as f:
-            logging.debug(strm("for log, loading file",my_filename))
+            #logging.debug(strm("for log, loading file",my_filename))
             log_grp = f['log']
             thislog = logobj.from_group(log_grp)
             read_array = thislog.total_log
@@ -76,7 +76,7 @@ def generate_T1_Ep(filename,
             ax_Rx.axvline(x=thisevent['time']-log_start_time)
             ax_power.axvline(x=thisevent['time']-log_start_time)
             y_pos = j/n_events
-        ax_power.legend(**dict(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.))
+        #ax_power.legend(**dict(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.))
         plt.tight_layout()
         power_axis = nddata(read_array['power'],[-1],['time'])
         power_axis.setaxis('time',relative_time)
@@ -291,7 +291,7 @@ def generate_T1_Ep(filename,
                 powers.append(power_W)
                 power_list.append(power_W)
             #}}}        
-        logger.info(strm("T1 list:",T1_list))
+        #logger.info(strm("T1 list:",T1_list))
         #{{{make T1p 
         T10 = T1_list[0]
         T1p = nddata(T1_list,[-1],['power'])
