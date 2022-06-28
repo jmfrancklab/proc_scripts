@@ -114,7 +114,7 @@ def generate_T1_Ep(filename,
                 right_f = select_pathway(for_lims['vd',0],IR_signal_pathway).argmax() + 200
                 left_f = select_pathway(IR.C.mean('nScans')['vd',-1],IR_signal_pathway).argmax() - 200
                 IR_f_slice = (left_f.data,right_f.data)
-                print("I found this frequency slice", IR_f_slice)
+                #print("I found this frequency slice", IR_f_slice)
             zero_crossing = abs(select_pathway(IR['t2':IR_f_slice].C.mean('nScans'),IR_signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
             fl.next('Raw IR')
             fl.image(IR.C.mean('nScans'))
@@ -143,7 +143,7 @@ def generate_T1_Ep(filename,
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
             if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
                 best_shift = actual_tau
-            print(best_shift)
+            #print(best_shift)
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
             IR /= zeroth_order_ph(select_pathway(IR['t2':0],IR_signal_pathway))
             IR.ft('t2')
@@ -171,7 +171,7 @@ def generate_T1_Ep(filename,
             elif (last_vd_max <=0) and(first_vd_max >=0):
                 last_vd_max *= -1
                 drift = last_vd_max +first_vd_max
-            print("your signal has a smear that spans %d Hz"%drift)
+            #print("your signal has a smear that spans %d Hz"%drift)
             mysgn = determine_sign(select_pathway(IR.C,IR_signal_pathway))
             if drift < drift_max:
                 IR.ift(['ph1','ph2'])
@@ -324,7 +324,7 @@ def generate_T1_Ep(filename,
         #{{{phasing
         best_shift = hermitian_function_test(select_pathway(s,
             Ep_signal_pathway),aliasing_slop=0)
-        print("estimated best_shift:",best_shift)
+        #print("estimated best_shift:",best_shift)
         actual_tau = s.get_prop('acq_params')['tau_us']/1e6
         if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
             best_shift = actual_tau
@@ -355,7 +355,7 @@ def generate_T1_Ep(filename,
         elif (last_p_max <=0) and(first_p_max >=0):
             last_p_max *= -1
             drift = last_p_max +first_p_max
-        print("your signal has a smear that spans %d Hz"%drift)    
+        #print("your signal has a smear that spans %d Hz"%drift)    
         if drift < 100:
             mysgn = determine_sign(select_pathway(s.C,Ep_signal_pathway))
             s.ift(['ph1'])
