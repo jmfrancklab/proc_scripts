@@ -40,8 +40,7 @@ def generate_T1_Ep(filename,
         older = False,
         IR_full_flip=False,
         push_zero_time = 0,
-        coupler_atten = 22,
-        fl=None):
+        coupler_atten = 22):
     T1_list = []
     errors = []
     power_list = []
@@ -116,7 +115,7 @@ def generate_T1_Ep(filename,
                 IR_f_slice = (left_f.data,right_f.data)
                 #print("I found this frequency slice", IR_f_slice)
             zero_crossing = abs(select_pathway(IR['t2':IR_f_slice].C.mean('nScans'),IR_signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
-            fl.next('Raw IR')
+            fl.next('Raw IR for %s'%nodename)
             fl.image(IR.C.mean('nScans'))
             IR=IR['t2':IR_f_slice]
             IR.ift('t2')
@@ -143,12 +142,11 @@ def generate_T1_Ep(filename,
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
             if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
                 best_shift = actual_tau
-            #print(best_shift)
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
             IR /= zeroth_order_ph(select_pathway(IR['t2':0],IR_signal_pathway))
             IR.ft('t2')
-            fl.next('IR Phase Corrected')
-            fl.image(IR)
+            #fl.next('IR Phase Corrected')
+            #fl.image(IR)
             #}}}
             #{{{Alignment
             last_vd_max = select_pathway(IR['vd',-1].C.mean('nScans'),IR_signal_pathway).C.argmax('t2').item()
@@ -171,7 +169,7 @@ def generate_T1_Ep(filename,
             elif (last_vd_max <=0) and(first_vd_max >=0):
                 last_vd_max *= -1
                 drift = last_vd_max +first_vd_max
-            #print("your signal has a smear that spans %d Hz"%drift)
+            print("your signal has a smear that spans %d Hz"%drift)
             mysgn = determine_sign(select_pathway(IR.C,IR_signal_pathway))
             if drift < drift_max:
                 IR.ift(['ph1','ph2'])
@@ -200,8 +198,8 @@ def generate_T1_Ep(filename,
                 IR *= np.exp(-1j*2*pi*opt_shift*IR.fromaxis('t2'))
                 IR.ft('t2')
                 IR.ft(['ph1','ph2'])
-                IR['vd',:zero_crossing] *= -1
-            fl.next('IR Aligned')
+                IR['vd',zero_crossing:] *= -1
+            fl.next('IR Aligned - %s'%nodename)
             fl.image(IR)
             #}}}
             IR.ift('t2')
@@ -213,6 +211,9 @@ def generate_T1_Ep(filename,
             #}}}
             #{{{Integrate with error
             this_IR = (d.C*mysgn).mean('nScans')
+            fl.next('test')
+            for j in range(len(d.getaxis('vd'))):
+                fl.plot(select_pathway((d.C*mysgn).mean('nScans')['vd',j],IR_signal_pathway),label = '%d'%j)
             error_pathway = (set(((j,k) for j in range(ndshape(d)['ph1']) for k in range(ndshape(d)['ph2'])))
                     - set(excluded_pathways)
                     -set([(IR_signal_pathway['ph1'],IR_signal_pathway['ph2'])]))
@@ -220,12 +221,11 @@ def generate_T1_Ep(filename,
             s_int,frq_slice = integral_w_errors(this_IR,IR_signal_pathway,error_pathway,
                     cutoff = IR_cutoff,
                     indirect='vd',return_frq_slice=True)
-            if nodename == 'FIR_noPower':
-                fl.next('IR Integration Limits')
-                for j in range(len(d.getaxis('vd'))):
-                    fl.plot(select_pathway((d.C*mysgn).mean('nScans')['vd',j],IR_signal_pathway),label = '%d'%j)
-                plt.axvline(frq_slice[0])
-                plt.axvline(frq_slice[-1])
+            fl.next('IR Integration Limits - %s'%nodename)
+            for j in range(len(d.getaxis('vd'))):
+                fl.plot(select_pathway((d.C*mysgn).mean('nScans')['vd',j],IR_signal_pathway),label = '%d'%j)
+            plt.axvline(frq_slice[0])
+            plt.axvline(frq_slice[-1])
             #}}}
             #{{{Fitting
             #s_int *= mysgn.mean('nScans')
@@ -300,6 +300,7 @@ def generate_T1_Ep(filename,
         fl.plot(T1p,'o')
         plt.ylabel(r'$T_{1}$ / s')
         plt.xlabel('Power / W')
+        #fl.show();quit()
     #}}}
     #}}}
     if has_Ep:
@@ -356,10 +357,10 @@ def generate_T1_Ep(filename,
             last_p_max *= -1
             drift = last_p_max +first_p_max
         #print("your signal has a smear that spans %d Hz"%drift)    
+        mysgn = determine_sign(select_pathway(s.C,Ep_signal_pathway))
         if drift < 100:
-            mysgn = determine_sign(select_pathway(s.C,Ep_signal_pathway))
             s.ift(['ph1'])
-            opt_shift,sigma, my_mask = correl_align((s*mysgn),
+            opt_shift,sigma, my_mask = correl_align((s.C*mysgn),
                     indirect_dim='time',
                     signal_pathway=Ep_signal_pathway)
             s.ift('t2')
@@ -400,7 +401,7 @@ def generate_T1_Ep(filename,
                 - set(excluded_pathways)
                 -set([(Ep_signal_pathway['ph1'])]))
         error_pathway = [{'ph1':j} for j in error_pathway]
-        s_int,frq_slice = integral_w_errors(d.C.mean('nScans'),Ep_signal_pathway,error_pathway,
+        s_int,frq_slice = integral_w_errors(d.C.mean('nScans')*mysgn.mean('nScans'),Ep_signal_pathway,error_pathway,
                 cutoff=Ep_cutoff,
                 indirect='time',return_frq_slice=True)
         fl.next('E(p) Integration Limits')
@@ -424,7 +425,6 @@ def generate_T1_Ep(filename,
             s_int.setaxis('time',power_W)
         #}}}
         #{{{Normalize
-        s_before
         s_int['time',:] /= s_int.data[0]
         if Ep_flip:
             s_int['time',1:] *= -1
