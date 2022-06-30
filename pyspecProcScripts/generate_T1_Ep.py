@@ -211,9 +211,6 @@ def generate_T1_Ep(filename,
             #}}}
             #{{{Integrate with error
             this_IR = (d.C*mysgn).mean('nScans')
-            fl.next('test')
-            for j in range(len(d.getaxis('vd'))):
-                fl.plot(select_pathway((d.C*mysgn).mean('nScans')['vd',j],IR_signal_pathway),label = '%d'%j)
             error_pathway = (set(((j,k) for j in range(ndshape(d)['ph1']) for k in range(ndshape(d)['ph2'])))
                     - set(excluded_pathways)
                     -set([(IR_signal_pathway['ph1'],IR_signal_pathway['ph2'])]))
