@@ -40,7 +40,8 @@ def generate_T1_Ep(filename,
         older = False,
         IR_full_flip=False,
         push_zero_time = 0,
-        coupler_atten = 22):
+        coupler_atten = 22,
+        fl=None):
     T1_list = []
     errors = []
     power_list = []
@@ -59,24 +60,26 @@ def generate_T1_Ep(filename,
             thistime,thisrx,thispower,thiscmd = read_array[j]
         log_start_time = read_array['time'][0]
         relative_time = read_array['time']
-        fig, (ax_Rx,ax_power) = plt.subplots(2,1, figsize=(10,8))
-        fl.next("log figure",fig=fig)
-        ax_Rx.set_ylabel('Rx/mV')
-        ax_Rx.plot(relative_time-log_start_time, read_array['Rx'],'.')
-        ax_power.set_ylabel('power/W')
-        ax_power.plot(relative_time-log_start_time,10**(read_array['power']/10+3+coupler_atten/10),'.')
+        if fl is not None:
+            fig, (ax_Rx,ax_power) = plt.subplots(2,1, figsize=(10,8))
+            fl.next("log figure",fig=fig)
+            ax_Rx.set_ylabel('Rx/mV')
+            ax_Rx.plot(relative_time-log_start_time, read_array['Rx'],'.')
+            ax_power.set_ylabel('power/W')
+            ax_power.plot(relative_time-log_start_time,10**(read_array['power']/10+3+coupler_atten/10),'.')
         mask = read_array['cmd'] != 0
         n_events = len(relative_time[mask])
-        trans_power = transforms.blended_transform_factory(
-                ax_power.transData,ax_power.transAxes)
-        trans_Rx = transforms.blended_transform_factory(
-                ax_Rx.transData, ax_Rx.transAxes)
-        for j, thisevent in enumerate(read_array[mask]):
-            ax_Rx.axvline(x=thisevent['time']-log_start_time)
-            ax_power.axvline(x=thisevent['time']-log_start_time)
-            y_pos = j/n_events
-        #ax_power.legend(**dict(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.))
-        plt.tight_layout()
+        
+        #trans_power = transforms.blended_transform_factory(
+        #        ax_power.transData,ax_power.transAxes)
+        #trans_Rx = transforms.blended_transform_factory(
+        #        ax_Rx.transData, ax_Rx.transAxes)
+        if fl is not None:
+            for j, thisevent in enumerate(read_array[mask]):
+                ax_Rx.axvline(x=thisevent['time']-log_start_time)
+                ax_power.axvline(x=thisevent['time']-log_start_time)
+                y_pos = j/n_events
+            plt.tight_layout()
         power_axis = nddata(read_array['power'],[-1],['time'])
         power_axis.setaxis('time',relative_time)
         power_axis.setaxis('time',lambda x: x - log_start_time)
@@ -84,8 +87,9 @@ def generate_T1_Ep(filename,
         power_axis.setaxis('time',relative_time)
         power_axis.name('power')
         power_axis.data = (10**((power_axis.data+coupler_atten)/10+3))/1e6 #convert to W
-        fl.next('Instrument Power Log')
-        fl.plot(power_axis,'.')
+        if fl is not None:
+            fl.next('Instrument Power Log')
+            fl.plot(power_axis,'.')
     #}}}
     if has_IR:
     #{{{IR processing
@@ -113,10 +117,10 @@ def generate_T1_Ep(filename,
                 right_f = select_pathway(for_lims['vd',0],IR_signal_pathway).argmax() + 200
                 left_f = select_pathway(IR.C.mean('nScans')['vd',-1],IR_signal_pathway).argmax() - 200
                 IR_f_slice = (left_f.data,right_f.data)
-                #print("I found this frequency slice", IR_f_slice)
             zero_crossing = abs(select_pathway(IR['t2':IR_f_slice].C.mean('nScans'),IR_signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
-            fl.next('Raw IR for %s'%nodename)
-            fl.image(IR.C.mean('nScans'))
+            if fl is not None:
+                fl.next('Raw IR for %s'%nodename)
+                fl.image(IR.C.mean('nScans'))
             IR=IR['t2':IR_f_slice]
             IR.ift('t2')
             #{{{clock correction
@@ -142,11 +146,11 @@ def generate_T1_Ep(filename,
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
             if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
                 best_shift = actual_tau
+                if fl is not None:
+                    fl.text(r'\textcolot{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
             IR /= zeroth_order_ph(select_pathway(IR['t2':0],IR_signal_pathway))
             IR.ft('t2')
-            #fl.next('IR Phase Corrected')
-            #fl.image(IR)
             #}}}
             #{{{Alignment
             last_vd_max = select_pathway(IR['vd',-1].C.mean('nScans'),IR_signal_pathway).C.argmax('t2').item()
@@ -199,8 +203,6 @@ def generate_T1_Ep(filename,
                 IR.ft('t2')
                 IR.ft(['ph1','ph2'])
                 IR['vd',zero_crossing:] *= -1
-            fl.next('IR Aligned - %s'%nodename)
-            fl.image(IR)
             #}}}
             IR.ift('t2')
             #{{{FID slice
@@ -208,6 +210,9 @@ def generate_T1_Ep(filename,
             d = d['t2':(0,None)]
             d['t2':0] *= 0.5
             d.ft('t2')
+            if fl is not None:
+                fl.next('IR aligned and FID sliced - %s'%nodename)
+                fl.image(d)
             #}}}
             #{{{Integrate with error
             this_IR = (d.C*mysgn).mean('nScans')
@@ -218,14 +223,15 @@ def generate_T1_Ep(filename,
             s_int,frq_slice = integral_w_errors(this_IR,IR_signal_pathway,error_pathway,
                     cutoff = IR_cutoff,
                     indirect='vd',return_frq_slice=True)
-            fl.next('IR Integration Limits - %s'%nodename)
-            for j in range(len(d.getaxis('vd'))):
-                fl.plot(select_pathway((d.C*mysgn).mean('nScans')['vd',j],IR_signal_pathway),label = '%d'%j)
-            plt.axvline(frq_slice[0])
-            plt.axvline(frq_slice[-1])
+            if fl is not None:
+                fl.next('IR Integration Limits - %s'%nodename)
+                for j in range(len(d.getaxis('vd'))):
+                    fl.plot(select_pathway((d.C*mysgn).mean('nScans')['vd',j],
+                        IR_signal_pathway),label = '%d'%j)
+                plt.axvline(frq_slice[0])
+                plt.axvline(frq_slice[-1])
             #}}}
             #{{{Fitting
-            #s_int *= mysgn.mean('nScans')
             s_int['vd',:zero_crossing] *= -1
             thiscolor = next(color_cycle)
             if IR_full_flip:
@@ -242,8 +248,6 @@ def generate_T1_Ep(filename,
                     M_inf = dict(value=Mi_max-1, min = 0, max=Mi_max),
                     R_1 = dict(value=5, min=0.001, max=100)
                     )
-            fl.next('IR fit - before norm')
-            fl.plot(s_int, 'o', color=thiscolor, label='%s'%nodename)
             f.settoguess()
             guess = f.eval(100)
             f.fit()
@@ -252,16 +256,19 @@ def generate_T1_Ep(filename,
             T1_list.append(T1)
             this_ls = "-"
             fit = f.eval(100)
-            fl.plot(fit, ls = this_ls, color=thiscolor,alpha=0.5)
-            fl.next('IR fit - normalized')
-            fl.plot(s_int/Mi, 'o', color=thiscolor, label=nodename)
-            fl.plot(fit/Mi, 
-                    ls=this_ls,
-                    color=thiscolor,
-                    alpha=0.5,
-                    label='fit for %s'%nodename,
-                    )
-            ax=plt.gca()
+            if fl is not None:
+                fl.next('IR fit - before norm')
+                fl.plot(s_int, 'o', color=thiscolor, label='%s'%nodename)
+                fl.plot(fit, ls = this_ls, color=thiscolor,alpha=0.5)
+                fl.next('IR fit - normalized')
+                fl.plot(s_int/Mi, 'o', color=thiscolor, label=nodename)
+                fl.plot(fit/Mi, 
+                        ls=this_ls,
+                        color=thiscolor,
+                        alpha=0.5,
+                        label='fit for %s'%nodename,
+                        )
+                ax=plt.gca()
             #}}}
             #{{{set power axis
             if log:
@@ -273,31 +280,32 @@ def generate_T1_Ep(filename,
                 power_list.append(avg_power)
                 powers.append(avg_power.data)
                 start_times.append(start_time)
-                fl.next('Instrument Power Log')
-                plt.axvline(x=start_time,color='k',alpha=0.5)
-                plt.axvline(x=stop_time,linestyle = ':', color='k',alpha=0.5)
+                if fl is not None:
+                    fl.next('Instrument Power Log')
+                    plt.axvline(x=start_time,color='k',alpha=0.5)
+                    plt.axvline(x=stop_time,linestyle = ':', color='k',alpha=0.5)
                 nddata_p_vs_t = nddata(power_list,[-1],['time'])
                 nddata_p_vs_t.setaxis('time',start_times)
                 for j in range(len(power_list)):
                     nddata_p_vs_t['time',j] = power_list[j]
                 nddata_p_vs_t.set_error(errors)
-                fl.plot(nddata_p_vs_t,'ko',capsize=6)
+                if fl is not None:
+                    fl.plot(nddata_p_vs_t,'ko',capsize=6)
             else:
                 power_dB = IR.get_prop('acq_params')['meter_power']
                 power_W = (1e-2*10**((power_dB)*1e-1))*1e-1 
                 powers.append(power_W)
                 power_list.append(power_W)
             #}}}        
-        #logger.info(strm("T1 list:",T1_list))
         #{{{make T1p 
         T10 = T1_list[0]
         T1p = nddata(T1_list,[-1],['power'])
         T1p.setaxis('power',powers)
-        fl.next(r'$T_{1}$(p)')
-        fl.plot(T1p,'o')
-        plt.ylabel(r'$T_{1}$ / s')
-        plt.xlabel('Power / W')
-        #fl.show();quit()
+        if fl is not None:
+            fl.next(r'$T_{1}$(p)')
+            fl.plot(T1p,'o')
+            plt.ylabel(r'$T_{1}$ / s')
+            plt.xlabel('Power / W')
     #}}}
     #}}}
     if has_Ep:
@@ -305,8 +313,9 @@ def generate_T1_Ep(filename,
         s = find_file(filename, exp_type = 'ODNP_NMR_comp/ODNP', expno= Ep_nodename, 
                 postproc=Ep_postproc, lookup=lookup_table)
         s.reorder(['ph1','time'])
-        fl.next('Raw E(p)')
-        fl.image(s)
+        if fl is not None:
+            fl.next('Raw E(p)')
+            fl.image(s)
         #{{{DC offset correction    
         s.ift('t2')
         s.ift(['ph1'])
@@ -322,15 +331,14 @@ def generate_T1_Ep(filename,
         #{{{phasing
         best_shift = hermitian_function_test(select_pathway(s,
             Ep_signal_pathway),aliasing_slop=0)
-        #print("estimated best_shift:",best_shift)
         actual_tau = s.get_prop('acq_params')['tau_us']/1e6
         if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
             best_shift = actual_tau
+            if fl is not None:
+                fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%datasetname)
         s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
         s /= zeroth_order_ph(select_pathway(s['t2':0],Ep_signal_pathway))
         s.ft('t2')
-        fl.next('E(p) phase corrected')
-        fl.image(s)
         #}}}
         #{{{Alignment
         last_p_max = select_pathway(s['time',-1],Ep_signal_pathway).C.argmax('t2').item()
@@ -353,9 +361,9 @@ def generate_T1_Ep(filename,
         elif (last_p_max <=0) and(first_p_max >=0):
             last_p_max *= -1
             drift = last_p_max +first_p_max
-        #print("your signal has a smear that spans %d Hz"%drift)    
+        print("your Ep signal has a smear that spans %d Hz"%drift)    
         mysgn = determine_sign(select_pathway(s.C,Ep_signal_pathway))
-        if drift < 100:
+        if drift < drift_max:
             s.ift(['ph1'])
             opt_shift,sigma, my_mask = correl_align((s.C*mysgn),
                     indirect_dim='time',
@@ -378,13 +386,11 @@ def generate_T1_Ep(filename,
             s /= ph0
             s.ift(['ph1'])
             opt_shift,sigma, my_mask = correl_align((s),indirect_dim='time',
-                    signal_pathway=Ep_signal_pathway,sigma = 1500)
+                    signal_pathway=Ep_signal_pathway,sigma = 150)
             s.ift('t2')
             s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
             s.ft('t2')
             s.ft(['ph1'])
-        fl.next('Aligned E(p)')
-        fl.image(s)
         #}}}
         s.ift('t2')
         #{{{FID slice
@@ -392,6 +398,9 @@ def generate_T1_Ep(filename,
         d = d['t2':(0,None)]
         d['t2':0] *= 0.5
         d.ft('t2')
+        if fl is not None:
+            fl.next('FID slice after alignment')
+            fl.image(d)
         #}}}
         #{{{Integrate with error
         error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
@@ -401,10 +410,11 @@ def generate_T1_Ep(filename,
         s_int,frq_slice = integral_w_errors(d.C.mean('nScans')*mysgn.mean('nScans'),Ep_signal_pathway,error_pathway,
                 cutoff=Ep_cutoff,
                 indirect='time',return_frq_slice=True)
-        fl.next('E(p) Integration Limits')
-        fl.plot(select_pathway(d.C.mean('nScans'),Ep_signal_pathway))
-        plt.axvline(x=frq_slice[0])
-        plt.axvline(x=frq_slice[-1])
+        if fl is not None:
+            fl.next('E(p) Integration Limits')
+            fl.plot(select_pathway(d.C.mean('nScans'),Ep_signal_pathway))
+            plt.axvline(x=frq_slice[0])
+            plt.axvline(x=frq_slice[-1])
         #}}}
         #{{{set time axis
         if log:
@@ -414,8 +424,11 @@ def generate_T1_Ep(filename,
             time_axis = s_int.getaxis('time')[:]['start_times']
             s_int.setaxis('time',time_axis)
         else:
-            power_dB = s.get_prop('acq_params')['power_settings']
-            powers_W = [0]
+            if ('power_settings') in s.get_prop('acq_params'):
+                power_dB = s.get_prop('acq_params')['power_settings']
+                powers_W = [0]
+            else:
+                power_dB = s.get_prop('acq_params')['power_settings_dBm']
             for j in range(len(power_dB)):
                 power_W = (1e-2*10**((power_dB[j])+10.)*1e-1)
                 powers_W.append(power_W)
@@ -440,20 +453,22 @@ def generate_T1_Ep(filename,
             power_vs_time.setaxis('time',new_time_axis.data)
         #}}}
         #{{{find values for Ep
-            fl.next('Instrument Power Log')
             for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[:]['start_times'],dnp_time_axis[:]['stop_times'])):
                 power_vs_time['time',j] = power_axis['time':((time_start),(time_stop))].mean('time',std=True)
                 power_vs_time.set_units('time','s')
-                plt.axvline(x=time_start,color='red',alpha=0.5)
-                plt.axvline(x=time_stop,linestyle=':',color='red',alpha=0.5)
+                if fl is not None:
+                    fl.next('Instrument Power Log')
+                    plt.axvline(x=time_start,color='red',alpha=0.5)
+                    plt.axvline(x=time_stop,linestyle=':',color='red',alpha=0.5)
             avg_p_vs_t = nddata(power_vs_time.data,[-1],['time'])
             avg_p_vs_t.set_error(power_vs_time.get_error())
             avg_p_vs_t.setaxis('time',dnp_time_axis[:]['start_times'])
             avg_p_vs_t.data[0] = 0
             avg_p_vs_t['time',0].set_error(0)
-            fl.plot(avg_p_vs_t,'ro',capsize=6)
-            plt.xlabel('Time / s')
-            plt.ylabel('Power / W')
+            if fl is not None:
+                fl.plot(avg_p_vs_t,'ro',capsize=6)
+                plt.xlabel('Time / s')
+                plt.ylabel('Power / W')
         #}}}
         #{{{set time axis to power for Ep
         s_int.rename('time','power')
@@ -464,9 +479,10 @@ def generate_T1_Ep(filename,
         else:
             pass
         enhancement=s_int
-        fl.next('Final Integrated Enhancement')
-        fl.plot(s_int['power',:-3],'o',capsize=6)
-        fl.plot(s_int['power',-3:],'ro',capsize=6)
+        if fl is not None:
+            fl.next('Final Integrated Enhancement')
+            fl.plot(s_int['power',:-3],'o',capsize=6)
+            fl.plot(s_int['power',-3:],'ro',capsize=6)
         #}}}
     #}}}
     if (has_IR and has_Ep):
