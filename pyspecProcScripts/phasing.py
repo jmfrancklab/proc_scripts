@@ -377,7 +377,7 @@ def hermitian_function_test(
         ["center", "offset"]
     )
     if fl is not None:
-        fl.image(s, ax=ax_list[1, 0])
+        fl.image(s, ax=ax_list[1, 0],human_units=False)
         ax_list[1, 0].set_title("Residual 2D")
     s *= mymask
     s /= nddata(rms_size, "center") ** 2  # it's an L1 difference, but this is
@@ -386,7 +386,7 @@ def hermitian_function_test(
     #                                   the squared, actually
     #                                   → maybe once for normalization, once for probability?
     if fl is not None:
-        fl.image(s.C.cropped_log(), ax=ax_list[1, 1])
+        fl.image(s.C.cropped_log(), ax=ax_list[1, 1],human_units=False)
         ax_list[1, 1].set_title("cropped log of Masked Residual")
     s.mean_all_but(["center"])
     best_shift = s.C.argmin("center").item()

@@ -35,7 +35,7 @@ def generate_T1_Ep(filename,
         IR_cutoff = 0.15,
         Ep_cutoff = 0.15,
         log=True,
-        Ep_flip = False, 
+        Ep_flip = False,
         clock_correction = True,
         older = False,
         IR_full_flip=False,
@@ -141,13 +141,17 @@ def generate_T1_Ep(filename,
             IR.ift('t2')
             #}}}
             #{{{phasing
-            best_shift = hermitian_function_test(select_pathway(IR,
+            best_shift = hermitian_function_test(select_pathway(IR.C,
                 IR_signal_pathway),aliasing_slop=0)
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
             if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
-                best_shift = actual_tau
                 if fl is not None:
-                    fl.text(r'\textcolot{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
+                    fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
+                    fl.basename = nodename
+                    best_shift = hermitian_function_test(select_pathway(IR.C,
+                        IR_signal_pathway),aliasing_slop=0,fl=fl)
+                    fl.basename=None
+                best_shift = actual_tau
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
             IR /= zeroth_order_ph(select_pathway(IR['t2':0],IR_signal_pathway))
             IR.ft('t2')
@@ -184,7 +188,8 @@ def generate_T1_Ep(filename,
                 IR.ft(['ph1','ph2'])
                 IR.ft('t2')
             else:
-                IR['vd',:zero_crossing] *= -1
+                IR *= mysgn
+                #IR['vd',:zero_crossing] *= -1
                 freq_diff = abs(select_pathway(IR['nScans',0]['vd',-1],IR_signal_pathway)).argmax().item() - abs(select_pathway(IR['nScans',0]['vd',0], IR_signal_pathway)).argmax().item()
                 freq_diff /= len(IR.getaxis('vd'))
                 IR.ift('t2')
@@ -202,7 +207,7 @@ def generate_T1_Ep(filename,
                 IR *= np.exp(-1j*2*pi*opt_shift*IR.fromaxis('t2'))
                 IR.ft('t2')
                 IR.ft(['ph1','ph2'])
-                IR['vd',zero_crossing:] *= -1
+                IR *= mysgn
             #}}}
             IR.ift('t2')
             #{{{FID slice
@@ -232,7 +237,7 @@ def generate_T1_Ep(filename,
                 plt.axvline(frq_slice[-1])
             #}}}
             #{{{Fitting
-            s_int['vd',:zero_crossing] *= -1
+            s_int *= mysgn.mean('nScans')
             thiscolor = next(color_cycle)
             if IR_full_flip:
                 if s_int['vd',-1] <0:
@@ -427,11 +432,15 @@ def generate_T1_Ep(filename,
             if ('power_settings') in s.get_prop('acq_params'):
                 power_dB = s.get_prop('acq_params')['power_settings']
                 powers_W = [0]
-            else:
-                power_dB = s.get_prop('acq_params')['power_settings_dBm']
-            for j in range(len(power_dB)):
-                power_W = (1e-2*10**((power_dB[j])+10.)*1e-1)
+                for j in range(len(power_dB)):
+                    power_W = (1e-2*10**((power_dB[j])+10.)*1e-1)
                 powers_W.append(power_W)
+            else:
+                powers_W = []
+                power_dB = s.get_prop('acq_params')['power_settings_dBm']
+                for j in range(len(power_dB)):
+                    power_W = (10**((power_dB[j])-30))
+                    powers_W.append(power_W)
             s_int.setaxis('time',power_W)
         #}}}
         #{{{Normalize
