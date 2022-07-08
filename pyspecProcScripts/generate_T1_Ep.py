@@ -391,7 +391,7 @@ def generate_T1_Ep(filename,
             s /= ph0
             s.ift(['ph1'])
             opt_shift,sigma, my_mask = correl_align((s),indirect_dim='time',
-                    signal_pathway=Ep_signal_pathway,sigma = 150)
+                    signal_pathway=Ep_signal_pathway,sigma = 1500)
             s.ift('t2')
             s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
             s.ft('t2')
