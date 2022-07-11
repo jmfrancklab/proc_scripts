@@ -26,6 +26,7 @@ def generate_T1_Ep(filename,
         manual_IR_meter_powers = None,
         Ep_f_slice = (-500,500),
         IR_f_slice = None,
+        IR_f_slice_auto_scale = 500,
         Mi_max = 1e6,
         drift_max = 200,
         excluded_pathways = [(0,0)],
@@ -136,16 +137,22 @@ def generate_T1_Ep(filename,
             IR.ft('t2')
             IR.ft(['ph1','ph2'])
             #}}}
-            if IR_f_slice == None:
+            if IR_f_slice is None:
                 for_lims = IR.C.mean('nScans')
-                right_f = select_pathway(for_lims['vd',0],IR_signal_pathway).argmax() + 200
-                left_f = select_pathway(IR.C.mean('nScans')['vd',-1],IR_signal_pathway).argmax() - 200
-                IR_f_slice = (left_f.data,right_f.data)
-            zero_crossing = abs(select_pathway(IR['t2':IR_f_slice].C.mean('nScans'),IR_signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
+                drift_bounds = [
+                        select_pathway(for_lims['vd',0],IR_signal_pathway).argmax().item()
+                        ,
+                        select_pathway(IR.C.mean('nScans')['vd',-1],IR_signal_pathway).argmax().item()
+                        ]
+                drift_bounds.sort()
+                this_IR_f_slice = array(drift_bounds) + r_[-IR_f_slice_auto_scale,IR_f_slice_auto_scale]
+            else:
+                this_IR_f_slice = IR_f_slice
+            zero_crossing = abs(select_pathway(IR['t2':this_IR_f_slice].C.mean('nScans'),IR_signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
             if fl is not None:
                 fl.next('Raw IR for %s'%nodename)
                 fl.image(IR.C.mean('nScans'))
-            IR=IR['t2':IR_f_slice]
+            IR=IR['t2':this_IR_f_slice]
             IR.ift('t2')
             #{{{clock correction
             clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
@@ -166,7 +173,8 @@ def generate_T1_Ep(filename,
             #}}}
             #{{{phasing
             best_shift,cost_fn = hermitian_function_test(select_pathway(IR.C,
-                IR_signal_pathway),aliasing_slop=1)
+                IR_signal_pathway),
+                echo_before=IR.get_prop('acq_params')['tau_us']*1e-6*1.5)
             better = float("{:.6f}".format(best_shift))
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
             if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
@@ -174,7 +182,8 @@ def generate_T1_Ep(filename,
                     fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
                     fl.basename = nodename
                     best_shift = hermitian_function_test(select_pathway(IR.C,
-                        IR_signal_pathway),aliasing_slop=1,fl=fl)
+                        IR_signal_pathway),fl=fl,
+                        echo_before=IR.get_prop('acq_params')['tau_us']*1e-6*1.5)
                     fl.basename=None
                 best_shift = actual_tau
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
@@ -364,7 +373,8 @@ def generate_T1_Ep(filename,
         s.ift('t2')
         #{{{phasing
         best_shift = hermitian_function_test(select_pathway(s,
-            Ep_signal_pathway),aliasing_slop=0)
+            Ep_signal_pathway),
+            echo_before=s.get_prop('acq_params')['tau_us']*1e-6*1.5)
         actual_tau = s.get_prop('acq_params')['tau_us']/1e6
         if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
             best_shift = actual_tau

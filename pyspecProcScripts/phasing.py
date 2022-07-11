@@ -203,10 +203,10 @@ def hermitian_function_test(
     direct="t2",
     aliasing_slop=3,  # will become a kwarg
     amp_threshold=0.05,  # region over which we have signal
-    multiplier = 50, # used to prevent false minima 
     fl=None,
     basename=None,
     show_extended=False,
+    echo_before=None,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
 
@@ -220,18 +220,29 @@ def hermitian_function_test(
         AG fix docstring
     """
     # {{{ zero fill
+    assert s.get_units(direct) is not None
     if s.get_ft_prop(direct):
-        s_ext = s.C.ift(direct)
+        s_ext = s.C.ift(ift)
     else:
         s_ext = s.C
+    t_dw = s.get_ft_prop(direct,'dt')
+    #s_ext[direct] *= 1e3
+    #s_ext.set_units('ms')
+    print("trying to extend from",s_ext.getaxis(direct)[r_[0,-1]],"to",
+            s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item())
+    orig_bounds = s.getaxis(direct)[r_[0,-1]]
+    orig_bounds -= orig_bounds[0]
     s_ext.extend(
-        direct, s.getaxis(direct)[0] + 2 * np.diff(s.getaxis(direct)[r_[-1, 0]]).item()
+        direct, s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item()
     )  # zero fill
     s_ext.register_axis({direct: 0}).ft(direct).set_ft_prop(
         direct, "start_time", 0
     ).ift(
         direct
     )  # forces the axis to *start* at 0
+    #s_ext.ft(direct)
+    #s_ext.ift(direct, pad=
+    #        2**(round(np.log(ndshape(s)[direct]*10)/np.log(2))))
     if fl is not None:
         fl.push_marker()
         if basename is None:
@@ -242,27 +253,29 @@ def hermitian_function_test(
             if len(s_ext.dimlabels) > 1:
                 fl.image(s_ext)
             else:
-                fl.plot(s_ext)
+                fl.plot(s_ext, human_units=False)
         s_ext /= (
             abs(s_ext).mean_all_but(direct).data.max()
-    )  # normalize by the average echo peak (for plotting purposes)
-    if fl is not None:
+            )  # normalize by the average echo peak (for plotting purposes)
         fl.next("power terms")
-        fl.plot(abs(s_ext).mean_all_but(direct), label="echo envelope")
+        fl.plot(abs(s_ext).mean_all_but(
+            direct)[direct:orig_bounds], label="echo envelope",
+            human_units=False)
     # }}}
     # {{{ the integral of the signal power up to t=Δt
     #     (first term in the paper)
     s_energy = s_ext.C
     s_energy.run(lambda x: abs(x) ** 2)
     s_energy.integrate(direct, cumulative=True)
-    t_dw = s_energy.get_ft_prop(direct, "dt")
-    normalization_term = 2 * t_dw / (s_energy.fromaxis(direct) + t_dw)
+    t_dwos = s_energy.get_ft_prop(direct, "dt")
+    normalization_term = 2 * t_dwos / (s_energy.fromaxis(direct) + t_dwos)
     s_energy *= normalization_term
     s_energy.mean_all_but(direct)
-    forplot = s_energy / t_dw
+    forplot = s_energy / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
-        fl.plot(forplot, label="first energy term",human_units=False)
+        fl.plot(forplot[direct:orig_bounds], label="first energy term",
+                human_units=False)
     # }}}
     # {{{ calculation the correlation between the echo and its hermitian
     #     conjugate
@@ -274,50 +287,36 @@ def hermitian_function_test(
     s_correl.ift(direct)
     s_correl.mean_all_but(direct).run(abs)
     s_correl *= normalization_term
-    forplot = s_correl / t_dw
+    forplot = s_correl / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
-        fl.plot(forplot, label="correlation function",human_units=False)
+        fl.plot(forplot[direct:orig_bounds], label="correlation function",
+                human_units=False)
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
-    #cost_func.ft(direct)
-    #cost_func.ift(direct,pad=4096)
-    forplot = cost_func / t_dw
-    forplot.setaxis(direct, lambda x: x / 2)
     min_echo = aliasing_slop * t_dw
-    cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
-    if fl is not None:
-        fl.plot(
-            forplot[direct : (min_echo, cost_min * 3 / 2)],
-            label="cost function",
-            c="violet",
-            alpha=0.5,
-            human_units=False)
     cost_func.run(sqrt)  # based on what we'd seen previously (empirically), I
     #                     take the square root for a well-defined minimum -- it
     #                     could be better to do this before averaging in the
     #                     future
-    forplot = cost_func / sqrt(t_dw)
+    forplot = cost_func / sqrt(t_dwos)
     forplot.setaxis(direct, lambda x: x / 2)
-    cost_min = cost_func[direct:(min_echo, min_echo*multiplier)].C.argmin(direct).item()
-    echo_peak = cost_min / 2.0
-    forplot = forplot[direct : (min_echo, cost_min * 3 / 2)]
+    cost_min = cost_func[direct:orig_bounds][direct:(min_echo,echo_before*2)].C.argmin(direct).item()
     if fl is not None:
-        fl.plot(forplot, color="r", alpha=0.5,human_units=False)
+        fl.plot(
+            forplot[direct:orig_bounds],
+            label="cost function",
+            c="violet",
+            alpha=0.5,
+            human_units=False,
+        )
     cost_func_return = forplot
     echo_peak = cost_min / 2.0
     if fl is not None:
-        if fl.units[fl.current] == 's':
-            divisor = 1
-        elif fl.units[fl.current] == 'ms':
-            divisor = 1e-3
-        elif fl.units[fl.current] == '\\mu s':
-            divisor = 1e-6
-        else:
-            raise ValueError("right now, only programmed to work with results of s, ms and μs")
-        fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3)
-        axvline(x=echo_peak/divisor, linestyle=":")
+        fl.plot(echo_peak, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3,
+                human_units=False)
+        axvline(x=echo_peak, linestyle=":")
         fl.pop_marker()
     # }}}
     return echo_peak,cost_func_return
