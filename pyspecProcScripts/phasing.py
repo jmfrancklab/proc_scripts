@@ -224,8 +224,10 @@ def hermitian_function_test(
         s_ext = s.C
     else:
         s_ext = s.C.ft(direct)
+    t_dw = s.get_ft_prop(direct,'dt')
     s_ext.ift(direct, pad=
-            2**(round(np.log(ndshape(s)['t2']*10)/np.log(2))))
+            2**(round(np.log(ndshape(s)[direct]*10)/np.log(2))))
+    #s_ext = s_ext[direct:(s_ext.getaxis(direct)[0]+2*t_dw,None)]
     print("trying to extend from",s_ext.getaxis(direct)[r_[0,-1]],"to",
             s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item())
     s_ext.extend(
@@ -261,11 +263,11 @@ def hermitian_function_test(
     s_energy = s_ext.C
     s_energy.run(lambda x: abs(x) ** 2)
     s_energy.integrate(direct, cumulative=True)
-    t_dw = s_energy.get_ft_prop(direct, "dt")
-    normalization_term = 2 * t_dw / (s_energy.fromaxis(direct) + t_dw)
+    t_dwos = s_energy.get_ft_prop(direct, "dt")
+    normalization_term = 2 * t_dwos / (s_energy.fromaxis(direct) + t_dwos)
     s_energy *= normalization_term
     s_energy.mean_all_but(direct)
-    forplot = s_energy / t_dw
+    forplot = s_energy / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
         fl.plot(forplot, label="first energy term",
@@ -281,7 +283,7 @@ def hermitian_function_test(
     s_correl.ift(direct)
     s_correl.mean_all_but(direct).run(abs)
     s_correl *= normalization_term
-    forplot = s_correl / t_dw
+    forplot = s_correl / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
         fl.plot(forplot, label="correlation function",
@@ -289,7 +291,7 @@ def hermitian_function_test(
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
-    forplot = cost_func / t_dw
+    forplot = cost_func / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     min_echo = aliasing_slop * t_dw
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
@@ -305,7 +307,7 @@ def hermitian_function_test(
     #                     take the square root for a well-defined minimum -- it
     #                     could be better to do this before averaging in the
     #                     future
-    forplot = cost_func / sqrt(t_dw)
+    forplot = cost_func / sqrt(t_dwos)
     forplot.setaxis(direct, lambda x: x / 2)
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
     if fl is not None:
