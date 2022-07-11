@@ -227,7 +227,6 @@ def hermitian_function_test(
     t_dw = s.get_ft_prop(direct,'dt')
     s_ext.ift(direct, pad=
             2**(round(np.log(ndshape(s)[direct]*10)/np.log(2))))
-    #s_ext = s_ext[direct:(s_ext.getaxis(direct)[0]+2*t_dw,None)]
     print("trying to extend from",s_ext.getaxis(direct)[r_[0,-1]],"to",
             s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item())
     s_ext.extend(
@@ -255,8 +254,7 @@ def hermitian_function_test(
     if fl is not None:
         fl.next("power terms")
         fl.plot(abs(s_ext).mean_all_but(
-            direct)['t2',0:ndshape(s)['t2']], label="echo envelope",
-            human_units=False)
+            direct)['t2',0:ndshape(s)['t2']], label="echo envelope")
     # }}}
     # {{{ the integral of the signal power up to t=Δt
     #     (first term in the paper)
@@ -270,8 +268,7 @@ def hermitian_function_test(
     forplot = s_energy / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
-        fl.plot(forplot, label="first energy term",
-                human_units=False)
+        fl.plot(forplot, label="first energy term")
     # }}}
     # {{{ calculation the correlation between the echo and its hermitian
     #     conjugate
@@ -286,8 +283,7 @@ def hermitian_function_test(
     forplot = s_correl / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
-        fl.plot(forplot, label="correlation function",
-                human_units=False)
+        fl.plot(forplot, label="correlation function")
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
@@ -301,7 +297,6 @@ def hermitian_function_test(
             label="cost function",
             c="violet",
             alpha=0.5,
-            human_units=False
         )
     cost_func.run(sqrt)  # based on what we'd seen previously (empirically), I
     #                     take the square root for a well-defined minimum -- it
@@ -316,25 +311,20 @@ def hermitian_function_test(
             label="cost function",
             c="violet",
             alpha=0.5,
-            human_units=False
         )
     echo_peak = cost_min / 2.0
     if fl is not None:
-        # this is good code, but currently, I'm setting human units to false --
-        # the whole human units thing is why I wanted to add all data to the
-        # plotting context first before choosing the units!
-        #
-        #if fl.units[fl.current] == 's':
-        #    divisor = 1
-        #elif fl.units[fl.current] == 'ms':
-        #    divisor = 1e-3
-        #elif fl.units[fl.current] == '\\mu s':
-        #    divisor = 1e-6
-        #else:
-        #    raise ValueError(f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs")
-        fl.plot(echo_peak, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3,
+        if fl.units[fl.current] == 's':
+            divisor = 1
+        elif fl.units[fl.current] == 'ms':
+            divisor = 1e-3
+        elif fl.units[fl.current] == '\\mu s':
+            divisor = 1e-6
+        else:
+            raise ValueError(f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs")
+        fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3,
                 human_units=False)
-        axvline(x=echo_peak, linestyle=":")
+        axvline(x=echo_peak/divisor, linestyle=":")
         fl.pop_marker()
     # }}}
     return echo_peak
