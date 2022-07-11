@@ -250,7 +250,8 @@ def hermitian_function_test(
     )  # normalize by the average echo peak (for plotting purposes)
     if fl is not None:
         fl.next("power terms")
-        fl.plot(abs(s_ext).mean_all_but(direct), label="echo envelope")
+        fl.plot(abs(s_ext).mean_all_but(
+            direct)['t2',0:ndshape(s)['t2']], label="echo envelope")
     # }}}
     # {{{ the integral of the signal power up to t=Δt
     #     (first term in the paper)
