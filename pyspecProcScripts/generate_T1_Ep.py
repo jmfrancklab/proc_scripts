@@ -26,7 +26,7 @@ def generate_T1_Ep(filename,
         Ep_f_slice = (-500,500),
         IR_f_slice = (-500,500),
         Mi_max = 1e6,
-        drift_max = 100,
+        drift_max = 200,
         excluded_pathways = [(0,0)],
         Ep_postproc = 'spincore_ODNP_v3',
         IR_postproc='spincore_IR_v1',
@@ -141,15 +141,16 @@ def generate_T1_Ep(filename,
             IR.ift('t2')
             #}}}
             #{{{phasing
-            best_shift = hermitian_function_test(select_pathway(IR.C,
-                IR_signal_pathway),aliasing_slop=0)
+            best_shift,cost_fn = hermitian_function_test(select_pathway(IR.C,
+                IR_signal_pathway),aliasing_slop=1)
+            better = float("{:.6f}".format(best_shift))
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
             if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
                 if fl is not None:
                     fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
                     fl.basename = nodename
                     best_shift = hermitian_function_test(select_pathway(IR.C,
-                        IR_signal_pathway),aliasing_slop=0,fl=fl)
+                        IR_signal_pathway),aliasing_slop=1,fl=fl)
                     fl.basename=None
                 best_shift = actual_tau
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
@@ -182,7 +183,7 @@ def generate_T1_Ep(filename,
             if drift < drift_max:
                 IR.ift(['ph1','ph2'])
                 opt_shift,sigma, my_mask = correl_align((IR.C*mysgn),indirect_dim='vd',
-                        signal_pathway=IR_signal_pathway,sigma=1200)#again, bad data
+                        signal_pathway=IR_signal_pathway,sigma=1500)#again, bad data
                 IR.ift('t2')
                 IR *= np.exp(-1j*2*pi*opt_shift*IR.fromaxis('t2'))
                 IR.ft(['ph1','ph2'])
