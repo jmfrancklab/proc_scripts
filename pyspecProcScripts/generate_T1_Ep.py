@@ -22,9 +22,10 @@ def generate_T1_Ep(filename,
         Ep_signal_pathway={'ph1':1},
         IR_signal_pathway = {'ph1':0,'ph2':1},
         Ep_nodename = 'enhancement',
-        IR_nodenames = [('FIR_noPower'),('FIR_30.0dBm'),('FIR_33.0dBm'),('FIR_34.5dBm'),('FIR_36.0dBm')],
+        IR_nodenames = None,
+        manual_IR_meter_powers = None,
         Ep_f_slice = (-500,500),
-        IR_f_slice = (-500,500),
+        IR_f_slice = None,
         Mi_max = 1e6,
         drift_max = 100,
         excluded_pathways = [(0,0)],
@@ -92,10 +93,33 @@ def generate_T1_Ep(filename,
             fl.plot(power_axis,'.')
     #}}}
     if has_IR:
+        if fl is not None:
+            # have these come right after the log
+            fl.text("Overall fits:\n\n")
+            fl.next('IR fit - before norm')
+            fl.next('IR fit - normalized')
+            fl.text(r"\par\par")
     #{{{IR processing
+        if IR_nodenames is None:
+            # if set to None, just assume any node with
+            # "IR" is an IR -- this could be misleading!
+            #
+            # note that this requires post 7/11/22
+            # pyspecdata
+            all_nodes = find_file(filename,
+                    exp_type='ODNP_NMR_comp/ODNP',
+                    return_list=True)
+            IR_nodenames = [j for j in all_nodes if
+                    'IR' in j]
         for (j,nodename) in enumerate(IR_nodenames):
+            fl.text("processing "+lsafen(nodename))
             IR = find_file(filename, exp_type='ODNP_NMR_comp/ODNP', expno=nodename,
                     postproc=IR_postproc, lookup=lookup_table)
+            if manual_IR_meter_powers is not None:
+                try:
+                    IR.get_prop('acq_params')['meter_power'] = manual_IR_meter_powers[nodename]
+                except:
+                    raise ValueError(f"you need to supply the power for node {nodename}")
             if older:
                 IR = IR['indirect',j]
             else:
@@ -243,6 +267,10 @@ def generate_T1_Ep(filename,
                 if s_int['vd',-1] <0:
                     s_int *= -1
             M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd",real=True)
+            logger.debug(strm("acq keys",IR.get_prop('acq_params')))
+            W = (IR.get_prop('acq_params')['repetition_us']*1e-6
+                    +
+                    IR.get_prop('acq_params')['acq_time_ms']+1e-3)
             functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
             IR_data = nddata(s_int.data,['vd'])
             IR_data.setaxis('vd',s_int.getaxis('vd'))
