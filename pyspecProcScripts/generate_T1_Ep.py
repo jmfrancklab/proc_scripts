@@ -174,17 +174,14 @@ def generate_T1_Ep(filename,
             #{{{phasing
             best_shift,cost_fn = hermitian_function_test(select_pathway(IR.C,
                 IR_signal_pathway),
-                echo_before=IR.get_prop('acq_params')['tau_us']*1e-6*1.5)
+                echo_before=IR.get_prop('acq_params')['tau_us']*1e-6*1.5,
+                basename=f"Herm for {nodename}",
+                fl=fl)
             better = float("{:.6f}".format(best_shift))
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
             if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
                 if fl is not None:
                     fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
-                    fl.basename = nodename
-                    best_shift = hermitian_function_test(select_pathway(IR.C,
-                        IR_signal_pathway),fl=fl,
-                        echo_before=IR.get_prop('acq_params')['tau_us']*1e-6*1.5)
-                    fl.basename=None
                 best_shift = actual_tau
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
             IR /= zeroth_order_ph(select_pathway(IR['t2':0],IR_signal_pathway))
@@ -374,7 +371,9 @@ def generate_T1_Ep(filename,
         #{{{phasing
         best_shift = hermitian_function_test(select_pathway(s,
             Ep_signal_pathway),
-            echo_before=s.get_prop('acq_params')['tau_us']*1e-6*1.5)
+            echo_before=s.get_prop('acq_params')['tau_us']*1e-6*1.5,
+            basename=f"Herm for {nodename}",
+            fl=fl)
         actual_tau = s.get_prop('acq_params')['tau_us']/1e6
         if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
             best_shift = actual_tau
