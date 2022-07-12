@@ -31,7 +31,6 @@ def generate_T1_Ep(filename,
         Ep_postproc = 'spincore_ODNP_v3',
         IR_postproc='spincore_IR_v1',
         nPowers = 15,
-        W = 7+1.024,
         IR_cutoff = 0.15,
         Ep_cutoff = 0.15,
         log=True,
@@ -40,6 +39,7 @@ def generate_T1_Ep(filename,
         older = False,
         IR_full_flip=False,
         push_zero_time = 0,
+        W = 5+1.024,
         coupler_atten = 22,
         fl=None):
     T1_list = []
@@ -153,6 +153,7 @@ def generate_T1_Ep(filename,
                         IR_signal_pathway),aliasing_slop=1,fl=fl)
                     fl.basename=None
                 best_shift = actual_tau
+
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
             IR /= zeroth_order_ph(select_pathway(IR['t2':0],IR_signal_pathway))
             IR.ft('t2')
@@ -334,13 +335,16 @@ def generate_T1_Ep(filename,
         s = s['t2':Ep_f_slice]
         s.ift('t2')
         #{{{phasing
-        best_shift = hermitian_function_test(select_pathway(s,
+        best_shift,cost_fn = hermitian_function_test(select_pathway(s,
             Ep_signal_pathway),aliasing_slop=0)
+        better = float("{:.6f}".format(best_shift))
         actual_tau = s.get_prop('acq_params')['tau_us']/1e6
         if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
             if fl is not None:
-                fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%datasetname)
+                fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset Ep}}')
                 fl.basename =None
+                best_shift = hermitian_function_test(select_pathway(s.C,
+                    Ep_signal_pathway),aliasing_slop=0,fl=fl)
             best_shift = actual_tau
         s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
         s /= zeroth_order_ph(select_pathway(s['t2':0],Ep_signal_pathway))
