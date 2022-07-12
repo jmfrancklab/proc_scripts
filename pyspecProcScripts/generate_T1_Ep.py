@@ -190,7 +190,6 @@ def generate_T1_Ep(filename,
                 IR.ft('t2')
             else:
                 IR *= mysgn
-                #IR['vd',:zero_crossing] *= -1
                 freq_diff = abs(select_pathway(IR['nScans',0]['vd',-1],IR_signal_pathway)).argmax().item() - abs(select_pathway(IR['nScans',0]['vd',0], IR_signal_pathway)).argmax().item()
                 freq_diff /= len(IR.getaxis('vd'))
                 IR.ift('t2')
@@ -339,9 +338,10 @@ def generate_T1_Ep(filename,
             Ep_signal_pathway),aliasing_slop=0)
         actual_tau = s.get_prop('acq_params')['tau_us']/1e6
         if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
-            best_shift = actual_tau
             if fl is not None:
                 fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%datasetname)
+                fl.basename =None
+            best_shift = actual_tau
         s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
         s /= zeroth_order_ph(select_pathway(s['t2':0],Ep_signal_pathway))
         s.ft('t2')
