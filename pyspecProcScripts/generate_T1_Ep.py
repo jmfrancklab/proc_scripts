@@ -11,6 +11,9 @@ from pyspecProcScripts import lookup_table
 from Instruments.logobj import logobj
 from scipy.io import loadmat
 from itertools import cycle
+import re
+hack_IR_re = re.compile('FIR_([0-9]+)(d[bB]m){0,1}(_[0-9]+){0,1}')
+hack_IR_nopower_re = re.compile('FIR_noPower(_[0-9]+){0,1}')
 fl = figlist_var()
 color_cycle = cycle(['red','orange','yellow','green','cyan','blue','purple','magenta',
     '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2',
@@ -24,6 +27,7 @@ def generate_T1_Ep(filename,
         Ep_nodename = 'enhancement',
         IR_nodenames = None,
         manual_IR_meter_powers = None,
+        hack_IR_powers = False,
         Ep_f_slice = (-500,500),
         IR_f_slice = None,
         IR_f_slice_auto_scale = 500,
@@ -50,7 +54,7 @@ def generate_T1_Ep(filename,
     start_times = []
     powers = []
     if log:
-    #{{{load in log
+        #{{{load in log
         my_filename = search_filename(filename+".h5",exp_type='ODNP_NMR_comp/ODNP',unique=True)
         with h5py.File(my_filename,'r') as f:
             #logging.debug(strm("for log, loading file",my_filename))
@@ -92,7 +96,10 @@ def generate_T1_Ep(filename,
         if fl is not None:
             fl.next('Instrument Power Log')
             fl.plot(power_axis,'.')
-    #}}}
+        #}}}
+        powername = 'time'
+    else:
+        powername = 'power'
     if has_IR:
         if fl is not None:
             # have these come right after the log
@@ -121,6 +128,15 @@ def generate_T1_Ep(filename,
                     IR.get_prop('acq_params')['meter_power'] = manual_IR_meter_powers[nodename]
                 except:
                     raise ValueError(f"you need to supply the power for node {nodename}")
+            if hack_IR_powers:
+                if('meter_power' in IR.get_prop('acq_params').keys()): raise ValueError("you don't need to hack your powers!")
+                m = hack_IR_nopower_re.match(nodename)
+                if m is not None:
+                    IR.get_prop('acq_params')['meter_power'] = 0
+                else:
+                    m = hack_IR_re.match(nodename)
+                    if m is None: raise ValueError(f"your node name {nodename} doesn't match the usual pattern for hacking!")
+                    IR.get_prop('acq_params')['meter_power'] = 10**(0.1*np.double(m.groups()[0])-3)
             if older:
                 IR = IR['indirect',j]
             else:
@@ -349,10 +365,10 @@ def generate_T1_Ep(filename,
     #}}}
     #}}}
     if has_Ep:
-    #{{{Ep processing    
+        #{{{Ep processing    
         s = find_file(filename, exp_type = 'ODNP_NMR_comp/ODNP', expno= Ep_nodename, 
                 postproc=Ep_postproc, lookup=lookup_table)
-        s.reorder(['ph1','time'])
+        s.reorder(['ph1',powername])
         if fl is not None:
             fl.next('Raw E(p)')
             fl.image(s)
@@ -369,7 +385,7 @@ def generate_T1_Ep(filename,
         s = s['t2':Ep_f_slice]
         s.ift('t2')
         #{{{phasing
-        best_shift = hermitian_function_test(select_pathway(s,
+        best_shift,_ = hermitian_function_test(select_pathway(s,
             Ep_signal_pathway),
             echo_before=s.get_prop('acq_params')['tau_us']*1e-6*1.5,
             basename=f"Herm for {nodename}",
@@ -384,8 +400,8 @@ def generate_T1_Ep(filename,
         s.ft('t2')
         #}}}
         #{{{Alignment
-        last_p_max = select_pathway(s['time',-1],Ep_signal_pathway).C.argmax('t2').item()
-        first_p_max = select_pathway(s['time',0],Ep_signal_pathway).C.argmax('t2').item()
+        last_p_max = select_pathway(s[powername,-1],Ep_signal_pathway).C.argmax('t2').item()
+        first_p_max = select_pathway(s[powername,0],Ep_signal_pathway).C.argmax('t2').item()
         if (last_p_max <= 0) and (first_p_max <=0):
             last_p_max *= -1
             first_p_max *= -1
@@ -409,7 +425,7 @@ def generate_T1_Ep(filename,
         if drift < drift_max:
             s.ift(['ph1'])
             opt_shift,sigma, my_mask = correl_align((s.C*mysgn),
-                    indirect_dim='time',
+                    indirect_dim=powername,
                     signal_pathway=Ep_signal_pathway,
                     sigma = 1500)
             s.ift('t2')
@@ -417,19 +433,19 @@ def generate_T1_Ep(filename,
             s.ft(['ph1'])
             s.ft('t2')
         else:
-            freq_diff = abs(select_pathway(s['nScans',0]['time',-1],
+            freq_diff = abs(select_pathway(s['nScans',0][powername,-1],
                 Ep_signal_pathway)).argmax().item() - abs(select_pathway(
-                    s['nScans',0]['time',0], Ep_signal_pathway)).argmax().item()
-            freq_diff /= len(s.getaxis('time'))
+                    s['nScans',0][powername,0], Ep_signal_pathway)).argmax().item()
+            freq_diff /= len(s.getaxis(powername))
             s.ift('t2')
-            for i in range(len(s.getaxis('time'))):
-                s['time',i] *= np.exp(-1j*2*pi*(freq_diff+i*freq_diff)*s.fromaxis('t2'))
+            for i in range(len(s.getaxis(powername))):
+                s[powername,i] *= np.exp(-1j*2*pi*(freq_diff+i*freq_diff)*s.fromaxis('t2'))
             s.ft('t2')
             ph0 = s['t2':(-900,0)].C.sum('t2')
             ph0 /= abs(ph0)
             s /= ph0
             s.ift(['ph1'])
-            opt_shift,sigma, my_mask = correl_align((s),indirect_dim='time',
+            opt_shift,sigma, my_mask = correl_align((s),indirect_dim=powername,
                     signal_pathway=Ep_signal_pathway,sigma = 1500)
             s.ift('t2')
             s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
@@ -453,7 +469,7 @@ def generate_T1_Ep(filename,
         error_pathway = [{'ph1':j} for j in error_pathway]
         s_int,frq_slice = integral_w_errors(d.C.mean('nScans')*mysgn.mean('nScans'),Ep_signal_pathway,error_pathway,
                 cutoff=Ep_cutoff,
-                indirect='time',return_frq_slice=True)
+                indirect=powername,return_frq_slice=True)
         if fl is not None:
             fl.next('E(p) Integration Limits')
             fl.plot(select_pathway(d.C.mean('nScans'),Ep_signal_pathway))
@@ -462,64 +478,52 @@ def generate_T1_Ep(filename,
         #}}}
         #{{{set time axis
         if log:
-            s_int.getaxis('time')[:]['start_times'] -= log_start_time
-            s_int.getaxis('time')[:]['stop_times'] -= log_start_time
-            s_int.getaxis('time')[-1]['stop_times'] =power_axis.getaxis('time')[-1]
-            time_axis = s_int.getaxis('time')[:]['start_times']
-            s_int.setaxis('time',time_axis)
+            s_int.getaxis(powername)[:]['start_times'] -= log_start_time
+            s_int.getaxis(powername)[:]['stop_times'] -= log_start_time
+            s_int.getaxis(powername)[-1]['stop_times'] =power_axis.getaxis(powername)[-1]
+            time_axis = s_int.getaxis(powername)[:]['start_times']
+            s_int.setaxis(powername,time_axis)
         else:
-            if ('power_settings') in s.get_prop('acq_params'):
-                power_dB = s.get_prop('acq_params')['power_settings']
-                powers_W = [0]
-                for j in range(len(power_dB)):
-                    power_W = (1e-2*10**((power_dB[j])+10.)*1e-1)
-                powers_W.append(power_W)
-            else:
-                powers_W = []
-                power_dB = s.get_prop('acq_params')['power_settings_dBm']
-                for j in range(len(power_dB)):
-                    power_W = (10**((power_dB[j])-30))
-                    powers_W.append(power_W)
-            s_int.setaxis('time',power_W)
+            assert Ep_postproc == 'spincore_ODNP_v1', "if you don't have a log, you should be loading from meter powers using spincore_ODNP_v1"
         #}}}
         #{{{Normalize
-        s_int['time',:] /= s_int.data[0]
+        s_int[powername,:] /= s_int.data[0]
         if Ep_flip:
-            s_int['time',1:] *= -1
+            s_int[powername,1:] *= -1
         #}}}
         #{{{finding average power over steps
         if log:
-            dnp_time_axis = s.C.getaxis('time').copy()
+            dnp_time_axis = s.C.getaxis(powername).copy()
             dnp_time_axis[0]['start_times'] = log_start_time
             dnp_time_axis[:]['start_times'] -= log_start_time
             dnp_time_axis[:]['stop_times'] -= log_start_time
-            nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
+            nddata_time_axis = nddata(dnp_time_axis,[-1],[powername])
             new_time_axis = nddata_time_axis.C.data
-            new_time_axis = nddata(new_time_axis,[-1],['time'])
-            power_vs_time = ndshape(nddata_time_axis).alloc().set_units('time','s')
+            new_time_axis = nddata(new_time_axis,[-1],[powername])
+            power_vs_time = ndshape(nddata_time_axis).alloc().set_units(powername,'s')
             power_vs_time.set_error(0)
-            power_vs_time.setaxis('time',new_time_axis.data)
+            power_vs_time.setaxis(powername,new_time_axis.data)
         #}}}
         #{{{find values for Ep
             for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[:]['start_times'],dnp_time_axis[:]['stop_times'])):
-                power_vs_time['time',j] = power_axis['time':((time_start),(time_stop))].mean('time',std=True)
-                power_vs_time.set_units('time','s')
+                power_vs_time[powername,j] = power_axis[powername:((time_start),(time_stop))].mean(powername,std=True)
+                power_vs_time.set_units(powername,'s')
                 if fl is not None:
                     fl.next('Instrument Power Log')
                     plt.axvline(x=time_start,color='red',alpha=0.5)
                     plt.axvline(x=time_stop,linestyle=':',color='red',alpha=0.5)
-            avg_p_vs_t = nddata(power_vs_time.data,[-1],['time'])
+            avg_p_vs_t = nddata(power_vs_time.data,[-1],[powername])
             avg_p_vs_t.set_error(power_vs_time.get_error())
-            avg_p_vs_t.setaxis('time',dnp_time_axis[:]['start_times'])
+            avg_p_vs_t.setaxis(powername,dnp_time_axis[:]['start_times'])
             avg_p_vs_t.data[0] = 0
-            avg_p_vs_t['time',0].set_error(0)
+            avg_p_vs_t[powername,0].set_error(0)
             if fl is not None:
                 fl.plot(avg_p_vs_t,'ro',capsize=6)
                 plt.xlabel('Time / s')
                 plt.ylabel('Power / W')
         #}}}
         #{{{set time axis to power for Ep
-        s_int.rename('time','power')
+        s_int.rename(powername,'power')
         if log:
             power_axis = np.real(power_vs_time.data)
             s_int.setaxis('power',power_axis)
@@ -532,7 +536,7 @@ def generate_T1_Ep(filename,
             fl.plot(s_int['power',:-3],'o',capsize=6)
             fl.plot(s_int['power',-3:],'ro',capsize=6)
         #}}}
-    #}}}
+        #}}}
     if (has_IR and has_Ep):
         return T1p,enhancement
     elif (has_IR):
