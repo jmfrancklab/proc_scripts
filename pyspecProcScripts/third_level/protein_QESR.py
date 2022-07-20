@@ -26,7 +26,7 @@ fieldaxis = "$B_0$"
 myconcs = []
 # }}}
 
-def protein_QESR(file_name, label, pushout=0.5, pickle_file=None, background=None, fl=None, exp_type="francklab_esr/Farhana", which_plot=None):
+def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None, background=None, fl=None, exp_type="francklab_esr/Farhana", which_plot=None):
     if which_plot is None:
         which_plot = file_name
     if fl is None:
@@ -112,11 +112,11 @@ def protein_QESR(file_name, label, pushout=0.5, pickle_file=None, background=Non
     d -= background # subtract background in derivative mode
     d_abs = d.C.integrate(fieldaxis, cumulative=True)
     fl.plot(d_abs, alpha=0.5, label=label)
-    # for a protein, we assume we have 1 broad peak that's always over 0.1*max
+    # for a protein, we assume we have 1 broad peak that's always over threshold*max
     right_side = abs(d_abs.data)[-1]
-    # define a peak as anything that rises above 0.1*max
+    # define a peak as anything that rises above threshold*max
     peaklist = d_abs.contiguous(
-        lambda x: abs(x) > right_side + (abs(x).data.max() - right_side) * 0.1
+        lambda x: abs(x) > right_side + (abs(x).data.max() - right_side) * threshold
     )
     # pull the furthest left and furthest right boundaries of any peaks that we find
     specrange = (peaklist.ravel().min(), peaklist.ravel().max())
@@ -134,15 +134,11 @@ def protein_QESR(file_name, label, pushout=0.5, pickle_file=None, background=Non
     ]
     fl.next(f"{which_plot} baseline diagnostic")
     fl.plot(d_baseline, ".", alpha=0.3, label=label, human_units=False)
-    middle_field = np.diff(d_baseline.getaxis(fieldaxis)[r_[0, -1]]).item()
-    d_baseline.setaxis(fieldaxis, lambda x: x - middle_field)
-    c = d_baseline.polyfit(fieldaxis, order=7)
-    polybaseline = (
-        d.fromaxis(fieldaxis)
-        .setaxis(fieldaxis, lambda x: x - middle_field)
-        .eval_poly(c, fieldaxis)
-    )
-    polybaseline.setaxis(fieldaxis, lambda x: x + middle_field)
+    # {{{ we don't have a spline in pyspecdata yet, so just hack it
+    spl = UnivariateSpline(d_baseline.getaxis(fieldaxis), d_baseline.data)
+    polybaseline = d.copy(data=False)
+    polybaseline.data = spl(d.getaxis(fieldaxis))
+    # }}}
     fl.plot(polybaseline, alpha=0.5, human_units=False)
     fl.next(f"{which_plot} absorption, bg. no bl.")
     fl.plot(polybaseline, alpha=0.5)
