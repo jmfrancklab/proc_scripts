@@ -15,7 +15,6 @@ fl = figlist_var()
 color_cycle = cycle(['red','orange','yellow','green','cyan','blue','purple','magenta',
     '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2',
     '#7f7f7f', '#bcbd22', '#17becf'])
-
 def generate_T1_Ep(filename,
         has_Ep = True,
         has_IR = True,
@@ -23,14 +22,13 @@ def generate_T1_Ep(filename,
         IR_signal_pathway = {'ph1':0,'ph2':1},
         Ep_nodename = 'enhancement',
         IR_nodenames = [('FIR_noPower'),('FIR_30.0dBm'),('FIR_33.0dBm'),('FIR_34.5dBm'),('FIR_36.0dBm')],
-        manual_IR_meter_powers = None,
         Ep_f_slice = None,
         IR_f_slice = None,
         IR_f_slice_auto_scale = 500,
         Ep_f_slice_auto_scale = 500,
         Mi_max = 1e6,
         drift_max = 200,
-        excluded_pathways = [(0,0)],
+        Ep_drift_max = 200,
         Ep_postproc = 'spincore_ODNP_v3',
         IR_postproc='spincore_IR_v1',
         nPowers = 15,
@@ -42,19 +40,18 @@ def generate_T1_Ep(filename,
         clock_correction = True,
         older = False,
         IR_full_flip=False,
-        push_zero_time = 0,
-        coupler_atten = 22,
         fl=None):
     T1_list = []
     errors = []
     power_list = []
     start_times = []
     powers = []
+    excluded_pathways = [(0,0)]
+    coupler_atten = 22
     if log:
     #{{{load in log
         my_filename = search_filename(filename+".h5",exp_type='ODNP_NMR_comp/ODNP',unique=True)
         with h5py.File(my_filename,'r') as f:
-            #logging.debug(strm("for log, loading file",my_filename))
             log_grp = f['log']
             thislog = logobj.from_group(log_grp)
             read_array = thislog.total_log
@@ -72,11 +69,6 @@ def generate_T1_Ep(filename,
             ax_power.plot(relative_time-log_start_time,10**(read_array['power']/10+3+coupler_atten/10),'.')
         mask = read_array['cmd'] != 0
         n_events = len(relative_time[mask])
-        
-        #trans_power = transforms.blended_transform_factory(
-        #        ax_power.transData,ax_power.transAxes)
-        #trans_Rx = transforms.blended_transform_factory(
-        #        ax_Rx.transData, ax_Rx.transAxes)
         if fl is not None:
             for j, thisevent in enumerate(read_array[mask]):
                 ax_Rx.axvline(x=thisevent['time']-log_start_time)
@@ -116,7 +108,10 @@ def generate_T1_Ep(filename,
             IR.ft(['ph1','ph2'])
             #}}}
             if IR_f_slice is None:
-                for_lims = IR.C.mean('nScans')
+                if nodename == 'FIR_noPower':
+                    for_lims = IR['nScans',-1].C
+                else:    
+                    for_lims = IR.C.mean('nScans')
                 drift_bounds = [
                         select_pathway(for_lims['vd',0],IR_signal_pathway).argmax().item()
                         ,
@@ -230,7 +225,7 @@ def generate_T1_Ep(filename,
             d.ft('t2')
             if fl is not None:
                 fl.next('IR aligned and FID sliced - %s'%nodename)
-                fl.image(d)
+                fl.image(d.C.mean('nScans'))
             #}}}
             #{{{Integrate with error
             this_IR = (d.C*mysgn).mean('nScans')
@@ -359,7 +354,9 @@ def generate_T1_Ep(filename,
         s.ift('t2')
         #{{{phasing
         best_shift,cost_fn = hermitian_function_test(select_pathway(s,
-            Ep_signal_pathway),aliasing_slop=0)
+            Ep_signal_pathway),
+            echo_before=s.get_prop('acq_params')['tau_us']*1e-6*1.5,
+            aliasing_slop=1)
         better = float("{:.6f}".format(best_shift))
         actual_tau = s.get_prop('acq_params')['tau_us']/1e6
         if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
@@ -367,7 +364,9 @@ def generate_T1_Ep(filename,
                 fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset Ep}}')
                 fl.basename =None
                 best_shift = hermitian_function_test(select_pathway(s.C,
-                    Ep_signal_pathway),aliasing_slop=0,fl=fl)
+                    Ep_signal_pathway),
+                    echo_before=s.get_prop('acq_params')['tau_us']*1e-6*1.5,
+                    aliasing_slop=0,fl=fl)
             best_shift = actual_tau
         s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
         s /= zeroth_order_ph(select_pathway(s['t2':0],Ep_signal_pathway))
@@ -396,7 +395,7 @@ def generate_T1_Ep(filename,
             drift = last_p_max +first_p_max
         print("your Ep signal has a smear that spans %d Hz"%drift)    
         mysgn = determine_sign(select_pathway(s.C,Ep_signal_pathway))
-        if drift < drift_max:
+        if drift < Ep_drift_max:
             s.ift(['ph1'])
             opt_shift,sigma, my_mask = correl_align((s.C*mysgn),
                     indirect_dim='time',
