@@ -20,6 +20,7 @@ from .generate_T1_Ep import generate_T1_Ep
 from .simple_functions import select_pathway
 from .QESR_calc import act_conc
 from .third_level.protein_QESR import protein_QESR
+from .first_level.show_pickle_table import show_pickle_table
 __all__ = [
         "DCCT",
         "L2G",
@@ -50,6 +51,7 @@ __all__ = [
         "recovery",
         "select_pathway",
         "select_pathway",
+        "show_pickle_table",
         "slice_FID_from_echo",
         "zeroth_order_ph",
         ]

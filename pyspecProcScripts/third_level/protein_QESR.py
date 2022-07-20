@@ -156,11 +156,5 @@ def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None
     fl.plot(d_abs, alpha=0.5, label=f"{label}, %0.4f μM" % final_conc)
     fl.grid()
     vars[label] = final_conc
-    print("info stored in pickle file looks like this:")
-    fl.text(r'\par\begin{tabular}{cc}')
-    fl.text(r'\textbf{label} & \textbf{concentration}\\\hline\hline')
-    for k, v in vars.items():
-        fl.text(f"{k} & {v} \\\\")
-    fl.text(r'\end{tabular}\par')
-    with open("I36Ras_concs.pickle", "wb") as fp:
+    with open(pickle_file, "wb") as fp:
         vars = pickle.dump(vars, fp)
