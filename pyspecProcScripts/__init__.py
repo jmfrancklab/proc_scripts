@@ -21,9 +21,11 @@ from .simple_functions import select_pathway
 from .QESR_calc import act_conc
 from .third_level.protein_QESR import protein_QESR
 from .first_level.show_pickle_table import show_pickle_table
+from .first_level.QESR_rescale import QESR_scalefactor
 __all__ = [
         "DCCT",
         "L2G",
+        "QESR_scalefactor",
         "Vpp2power",
         "act_conc",
         "active_propagation",
