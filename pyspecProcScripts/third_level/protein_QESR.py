@@ -85,7 +85,8 @@ def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None
         f"$n_B={n_B:~L} $\n",
         f"$S={S:~L} $\n",
         f"$c={c:~L} $\n",
-        f"$signal\;denom={signal_denom:~L}$",
+        f"signal denom$={signal_denom:~L}$",
+        f"doubleint conversion$={dint_conversion}$",
     ))
     # {{{ configure all the plots -- I like to do this in one place so I
     #     can easily control placement in the PDF
