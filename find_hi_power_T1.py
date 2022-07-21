@@ -120,7 +120,7 @@ for nodename, postproc, IR_f_slice, int_slice, M in [
         IR.ft(['ph1','ph2'])
     fl.next('Aligned')
     fl.image(IR)
-    fl.show();quit()################################################################
+   # fl.show();quit()################################################################
     #}}}
     IR.ift('t2')
     #{{{FID slice
