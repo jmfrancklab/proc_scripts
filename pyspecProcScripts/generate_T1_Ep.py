@@ -22,8 +22,8 @@ def generate_T1_Ep(filename,
         has_Ep = True,
         has_IR = True,
         Ep_signal_pathway={'ph1':1},
-        IR_signal_pathway = {'ph1':0,'ph2':1},
-        Ep_nodename = 'enhancement',
+        IR_signal_pathway = {'ph1':1,'ph2':0},
+        Ep_nodename = 'ODNP',
         IR_nodenames = None,
         manual_IR_meter_powers = None,
         hack_IR_powers = False,
@@ -165,7 +165,12 @@ def generate_T1_Ep(filename,
             if fl is not None:
                 fl.next('Raw IR for %s'%nodename)
                 fl.image(IR.C.mean('nScans'))
+                fl.next('1d 1')
+                fl.plot(select_pathway(IR.C.mean('nScans'),IR_signal_pathway))
             IR=IR['t2':this_IR_f_slice]
+            if fl is not None:
+                fl.next('sliced')
+                fl.image(IR)
             IR.ift('t2')
             #{{{clock correction
             clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
@@ -182,22 +187,20 @@ def generate_T1_Ep(filename,
             clock_corr = s_clock.argmax('clock_corr').item()
             IR *= np.exp(-1j*clock_corr*IR.fromaxis('vd'))
             IR.ft(['ph1','ph2'])
+            if fl is not None:
+                fl.next('after clock')
+                fl.image(IR)
             IR.ift('t2')
             #}}}
             #{{{phasing
+            IR.set_units('t2','s')
             best_shift,cost_fn = hermitian_function_test(select_pathway(IR.C,
                 IR_signal_pathway),
                 echo_before=IR.get_prop('acq_params')['tau_us']*1e-6*1.5,
                 basename=f"Herm for {nodename}")
             better = float("{:.6f}".format(best_shift))
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
-            if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
-                if fl is not None:
-                    fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
-                best_shift = actual_tau
-            better = float("{:.6f}".format(best_shift))
-            actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
-            if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
+            if (best_shift < actual_tau-1e-2) or (best_shift > actual_tau+1e-2):
                 if fl is not None:
                     fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
                     fl.basename = nodename
@@ -208,12 +211,21 @@ def generate_T1_Ep(filename,
                     fl.basename=None
                 best_shift = actual_tau
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
-            IR /= zeroth_order_ph(select_pathway(IR['t2':0],IR_signal_pathway))
+            IR /= zeroth_order_ph(select_pathway(IR['t2',0].C,IR_signal_pathway))
+            IR = IR['t2':(0,None)]
+            IR['t2':0] *= 0.5
             IR.ft('t2')
+            if fl is not None:
+                print(best_shift)
+                fl.next('phased')
+                fl.image(IR)
+                fl.next('test')
+                for j in range(8):
+                    fl.plot(select_pathway(IR['vd',j].C,IR_signal_pathway),label="vd %d"%j)
             #}}}
             #{{{Alignment
             last_vd_max = select_pathway(IR['vd',-1].C.mean('nScans'),IR_signal_pathway).C.argmax('t2').item()
-            first_vd_max = select_pathway(IR['vd',0].C.mean('nScans'),IR_signal_pathway).C.argmax('t2').item()
+            first_vd_max = select_pathway(IR['vd',0].C.mean('nScans'),IR_signal_pathway).C.argmin('t2').item()
             if (last_vd_max <= 0) and (first_vd_max <= 0):
                 last_vd_max *= -1
                 first_vd_max *= -1
@@ -251,7 +263,7 @@ def generate_T1_Ep(filename,
                     IR['vd',i] *= np.exp(-1j*2*pi*(freq_diff+i*freq_diff)*IR.fromaxis('t2'))
                 IR.ft('t2')
                 IR['vd',:zero_crossing] *= -1
-                ph0 = IR['t2':(-900,0)].C.sum('t2')
+                ph0 = IR['t2':(-900,-500)].C.sum('t2')
                 ph0 /= abs(ph0)
                 IR /= ph0
                 IR.ift(['ph1','ph2'])
@@ -264,14 +276,15 @@ def generate_T1_Ep(filename,
                 IR *= mysgn
             #}}}
             IR.ift('t2')
-            #{{{FID slice
+            #{{{FID slicez
             d=IR.C
             d = d['t2':(0,None)]
             d['t2':0] *= 0.5
             d.ft('t2')
             if fl is not None:
                 fl.next('IR aligned and FID sliced - %s'%nodename)
-                fl.image(d.C.mean('nScans'))
+                fl.image(d)
+                fl.show();quit()
             #}}}
             #{{{Integrate with error
             this_IR = (d.C*mysgn).mean('nScans')
@@ -298,9 +311,14 @@ def generate_T1_Ep(filename,
                     s_int *= -1
             M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd",real=True)
             logger.debug(strm("acq keys",IR.get_prop('acq_params')))
-            W = (IR.get_prop('acq_params')['repetition_us']*1e-6
-                    +
-                    IR.get_prop('acq_params')['acq_time_ms']+1e-3)
+            if 'repetition_us' in IR.get_prop('acq_params'):
+                W = (IR.get_prop('acq_params')['repetition_us']*1e-6
+                        +
+                        IR.get_prop('acq_params')['acq_time_ms']+1e-3)
+            else:
+                W = (IR.get_prop('acq_params')['FIR_rd']*1e-6
+                        +
+                        IR.get_prop('acq_params')['acq_time_ms']*1e-3)
             functional_form = Mi*(1-(2-s_exp(-W*R1))*s_exp(-vd*R1))
             IR_data = nddata(s_int.data,['vd'])
             IR_data.setaxis('vd',s_int.getaxis('vd'))
@@ -322,7 +340,8 @@ def generate_T1_Ep(filename,
             if fl is not None:
                 fl.next('IR fit - before norm')
                 fl.plot(s_int, 'o', color=thiscolor, label='%s'%nodename)
-                fl.plot(fit, ls = this_ls, color=thiscolor,alpha=0.5)
+                fl.plot(fit, ls = this_ls, color=thiscolor,alpha=0.5,
+                        label = 'fit for %s'%nodename)
                 fl.next('IR fit - normalized')
                 fl.plot(s_int/Mi, 'o', color=thiscolor, label=nodename)
                 fl.plot(fit/Mi, 
