@@ -40,6 +40,7 @@ def generate_T1_Ep(filename,
         W = 7+1.024,
         IR_cutoff = 0.15,
         Ep_cutoff = 0.15,
+        scan_no = -1,
         log=True,
         Ep_flip = False,
         clock_correction = True,
@@ -148,10 +149,7 @@ def generate_T1_Ep(filename,
             IR.ft(['ph1','ph2'])
             #}}}
             if IR_f_slice is None:
-                if nodename == 'FIR_noPower':
-                    for_lims = IR['nScans',-1].C
-                else:    
-                    for_lims = IR.C.mean('nScans')
+                for_lims = IR.C.mean('nScans')
                 drift_bounds = [
                         select_pathway(for_lims['vd',0],IR_signal_pathway).argmax().item()
                         ,
@@ -167,6 +165,7 @@ def generate_T1_Ep(filename,
                 fl.image(IR.C.mean('nScans'))
                 fl.next('1d 1')
                 fl.plot(select_pathway(IR.C.mean('nScans'),IR_signal_pathway))
+                fl.show();quit()
             IR=IR['t2':this_IR_f_slice]
             if fl is not None:
                 fl.next('sliced')
@@ -211,10 +210,10 @@ def generate_T1_Ep(filename,
                     fl.basename=None
                 best_shift = actual_tau
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
-            IR /= zeroth_order_ph(select_pathway(IR['t2',0].C,IR_signal_pathway))
-            IR = IR['t2':(0,None)]
-            IR['t2':0] *= 0.5
             IR.ft('t2')
+            ph0 = IR['t2':(-900,-500)].C.sum('t2')
+            ph0 /= abs(ph0)
+            IR /= ph0
             if fl is not None:
                 print(best_shift)
                 fl.next('phased')
@@ -395,6 +394,12 @@ def generate_T1_Ep(filename,
         s = find_file(filename, exp_type = 'ODNP_NMR_comp/ODNP', expno= Ep_nodename, 
                 postproc=Ep_postproc, lookup=lookup_table)
         s.reorder(['ph1',powername])
+        for j in range(len(powername)):
+            if j ==0:
+                s[powername,j].setaxis('nScans',s['nScans',-2])
+                thermal = thermal['nScans',scan_no]
+            else:
+                s[powername,j] = s[powername,j]['nScans',0]
         if fl is not None:
             fl.next('Raw E(p)')
             fl.image(s)
