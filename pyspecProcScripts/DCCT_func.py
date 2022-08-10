@@ -527,7 +527,7 @@ def DCCT(
         check_for_label_num=False,
         allow_for_text=-50,
     )
-    plt.title(plot_title)
+    #plt.title(plot_title)
     if just_2D:
         return LHS_pad + LHS_labels, axes_bottom[0], width, axes_bottom[-1] - top_pad
     else:
