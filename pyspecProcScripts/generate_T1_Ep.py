@@ -40,7 +40,6 @@ def generate_T1_Ep(filename,
         W = 7+1.024,
         IR_cutoff = 0.15,
         Ep_cutoff = 0.15,
-        scan_no = -1,
         log=True,
         Ep_flip = False,
         clock_correction = True,
@@ -118,6 +117,7 @@ def generate_T1_Ep(filename,
             fl.text("processing "+lsafen(nodename))
             IR = find_file(filename, exp_type='ODNP_NMR_comp/ODNP', expno=nodename,
                     postproc=IR_postproc, lookup=lookup_table)
+            #{{{using manual powers
             if manual_IR_meter_powers is not None:
                 try:
                     IR.get_prop('acq_params')['meter_power'] = manual_IR_meter_powers[nodename]
@@ -132,6 +132,7 @@ def generate_T1_Ep(filename,
                     m = hack_IR_re.match(nodename)
                     if m is None: raise ValueError(f"your node name {nodename} doesn't match the usual pattern for hacking!")
                     IR.get_prop('acq_params')['meter_power'] = 10**(0.1*np.double(m.groups()[0])-3)
+            #}}}
             if older:
                 IR = IR['indirect',j]
             else:
@@ -153,7 +154,7 @@ def generate_T1_Ep(filename,
                 drift_bounds = [
                         select_pathway(for_lims['vd',0],IR_signal_pathway).argmax().item()
                         ,
-                        select_pathway(IR.C.mean('nScans')['vd',-1],IR_signal_pathway).argmax().item()
+                        select_pathway(for_lims['vd',-1],IR_signal_pathway).argmax().item()
                         ]
                 drift_bounds.sort()
                 this_IR_f_slice = array(drift_bounds) + r_[-IR_f_slice_auto_scale,IR_f_slice_auto_scale]
@@ -163,13 +164,11 @@ def generate_T1_Ep(filename,
             if fl is not None:
                 fl.next('Raw IR for %s'%nodename)
                 fl.image(IR.C.mean('nScans'))
-                fl.next('1d 1')
-                fl.plot(select_pathway(IR.C.mean('nScans'),IR_signal_pathway))
-                fl.show();quit()
+                print(this_IR_f_slice)
             IR=IR['t2':this_IR_f_slice]
             if fl is not None:
                 fl.next('sliced')
-                fl.image(IR)
+                fl.image(IR.C.mean('nScans'))
             IR.ift('t2')
             #{{{clock correction
             clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
@@ -188,7 +187,7 @@ def generate_T1_Ep(filename,
             IR.ft(['ph1','ph2'])
             if fl is not None:
                 fl.next('after clock')
-                fl.image(IR)
+                fl.image(IR.C.mean('nScans'))
             IR.ift('t2')
             #}}}
             #{{{phasing
@@ -199,7 +198,7 @@ def generate_T1_Ep(filename,
                 basename=f"Herm for {nodename}")
             better = float("{:.6f}".format(best_shift))
             actual_tau = IR.get_prop('acq_params')['tau_us']/1e6
-            if (best_shift < actual_tau-1e-2) or (best_shift > actual_tau+1e-2):
+            if (best_shift < actual_tau-1e-3) or (best_shift > actual_tau+1e-3):
                 if fl is not None:
                     fl.text(r'\textcolor{red}{\textbf{I am hard-setting the first-order phase for dataset %s}}'%nodename)
                     fl.basename = nodename
@@ -208,58 +207,39 @@ def generate_T1_Ep(filename,
                         echo_before=IR.get_prop('acq_params')['tau_us']*1e-6*1.5,
                         fl=fl)
                     fl.basename=None
-                best_shift = actual_tau
+                best_shift = actual_tau + 0.0002
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
+            IR /= zeroth_order_ph(select_pathway(IR['t2',0],IR_signal_pathway))
+            IR = IR['t2':(0,None)]
+            IR['t2':0] *= 0.5
             IR.ft('t2')
-            ph0 = IR['t2':(-900,-500)].C.sum('t2')
-            ph0 /= abs(ph0)
-            IR /= ph0
             if fl is not None:
-                print(best_shift)
                 fl.next('phased')
-                fl.image(IR)
-                fl.next('test')
-                for j in range(8):
-                    fl.plot(select_pathway(IR['vd',j].C,IR_signal_pathway),label="vd %d"%j)
-            #}}}
+                fl.image(IR.C.mean('nScans'))
+             #}}}
             #{{{Alignment
-            last_vd_max = select_pathway(IR['vd',-1].C.mean('nScans'),IR_signal_pathway).C.argmax('t2').item()
-            first_vd_max = select_pathway(IR['vd',0].C.mean('nScans'),IR_signal_pathway).C.argmin('t2').item()
-            if (last_vd_max <= 0) and (first_vd_max <= 0):
-                last_vd_max *= -1
-                first_vd_max *= -1
-                if last_vd_max > first_vd_max:
-                    drift = last_vd_max - first_vd_max
-                else:
-                    drift = first_vd_max - last_vd_max
-            elif (last_vd_max>=0) and (first_vd_max >=0):
-                if last_vd_max > first_vd_max:
-                    drift = last_vd_max - first_vd_max
-                else:
-                    drift = first_vd_max - last_vd_max
-            elif (last_vd_max>=0) and(first_vd_max <=0):
-                first_vd_max *= -1
-                drift = first_vd_max +last_vd_max
-            elif (last_vd_max <=0) and(first_vd_max >=0):
-                last_vd_max *= -1
-                drift = last_vd_max +first_vd_max
-            print("your signal has a smear that spans %d Hz"%drift)
             mysgn = determine_sign(select_pathway(IR.C,IR_signal_pathway))
+            first = abs(select_pathway(IR['nScans',0]['vd',0].C,IR_signal_pathway)).argmax().item()
+            last =abs(select_pathway(IR['nScans',0]['vd',-1].C,IR_signal_pathway)).argmax().item() 
+            if last > first:
+                drift = last - first
+            else:
+                drift = first - last
+            print("Your signal has a drift of %.4f"%drift)    
             if drift < drift_max:
                 IR.ift(['ph1','ph2'])
-                opt_shift,sigma, my_mask = correl_align((IR.C*mysgn),indirect_dim='vd',
-                        signal_pathway=IR_signal_pathway,sigma=1500)#again, bad data
+                opt_shift,sigma, my_mask = correl_align(abs(IR.C),indirect_dim='vd',
+                        signal_pathway=IR_signal_pathway,sigma=1500,fl=fl)#again, bad data
                 IR.ift('t2')
                 IR *= np.exp(-1j*2*pi*opt_shift*IR.fromaxis('t2'))
                 IR.ft(['ph1','ph2'])
                 IR.ft('t2')
             else:
                 IR *= mysgn
-                freq_diff = abs(select_pathway(IR['nScans',0]['vd',-1],IR_signal_pathway)).argmax().item() - abs(select_pathway(IR['nScans',0]['vd',0], IR_signal_pathway)).argmax().item()
-                freq_diff /= len(IR.getaxis('vd'))
+                drift /= len(IR.getaxis('vd'))
                 IR.ift('t2')
                 for i in range(len(IR.getaxis('vd'))):
-                    IR['vd',i] *= np.exp(-1j*2*pi*(freq_diff+i*freq_diff)*IR.fromaxis('t2'))
+                    IR['vd',i] *= np.exp(-1j*2*pi*(drift+i*drift)*IR.fromaxis('t2'))
                 IR.ft('t2')
                 IR['vd',:zero_crossing] *= -1
                 ph0 = IR['t2':(-900,-500)].C.sum('t2')
@@ -282,28 +262,33 @@ def generate_T1_Ep(filename,
             d.ft('t2')
             if fl is not None:
                 fl.next('IR aligned and FID sliced - %s'%nodename)
-                fl.image(d)
-                fl.show();quit()
+                fl.image(d.C.mean('nScans'))
             #}}}
             #{{{Integrate with error
-            this_IR = (d.C*mysgn).mean('nScans')
+            this_IR = (d.C.mean('nScans'))
+            if fl is not None:
+                fl.next('what')
+                this_IR['vd',:zero_crossing] *= -1
+                fl.image(this_IR)
+                fl.next('what 1d')
+                fl.plot(select_pathway(this_IR,IR_signal_pathway))
             error_pathway = (set(((j,k) for j in range(ndshape(d)['ph1']) for k in range(ndshape(d)['ph2'])))
                     - set(excluded_pathways)
                     -set([(IR_signal_pathway['ph1'],IR_signal_pathway['ph2'])]))
             error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-            s_int,frq_slice = integral_w_errors(this_IR,IR_signal_pathway,error_pathway,
+            s_int,frq_slice = integral_w_errors(this_IR.C,IR_signal_pathway,error_pathway,
                     cutoff = IR_cutoff,
-                    indirect='vd',return_frq_slice=True)
+                    indirect='vd',return_frq_slice=True,fl=fl)
             if fl is not None:
                 fl.next('IR Integration Limits - %s'%nodename)
                 for j in range(len(d.getaxis('vd'))):
-                    fl.plot(select_pathway((d.C*mysgn).mean('nScans')['vd',j],
+                    fl.plot(select_pathway(this_IR['vd',j],
                         IR_signal_pathway),label = '%d'%j)
                 plt.axvline(frq_slice[0])
                 plt.axvline(frq_slice[-1])
             #}}}
             #{{{Fitting
-            s_int *= mysgn.mean('nScans')
+            #s_int *= mysgn.mean('nScans')
             thiscolor = next(color_cycle)
             if IR_full_flip:
                 if s_int['vd',-1] <0:
@@ -341,6 +326,7 @@ def generate_T1_Ep(filename,
                 fl.plot(s_int, 'o', color=thiscolor, label='%s'%nodename)
                 fl.plot(fit, ls = this_ls, color=thiscolor,alpha=0.5,
                         label = 'fit for %s'%nodename)
+                fl.show();quit()
                 fl.next('IR fit - normalized')
                 fl.plot(s_int/Mi, 'o', color=thiscolor, label=nodename)
                 fl.plot(fit/Mi, 
@@ -394,12 +380,6 @@ def generate_T1_Ep(filename,
         s = find_file(filename, exp_type = 'ODNP_NMR_comp/ODNP', expno= Ep_nodename, 
                 postproc=Ep_postproc, lookup=lookup_table)
         s.reorder(['ph1',powername])
-        for j in range(len(powername)):
-            if j ==0:
-                s[powername,j].setaxis('nScans',s['nScans',-2])
-                thermal = thermal['nScans',scan_no]
-            else:
-                s[powername,j] = s[powername,j]['nScans',0]
         if fl is not None:
             fl.next('Raw E(p)')
             fl.image(s)
