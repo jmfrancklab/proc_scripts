@@ -3,7 +3,9 @@ from pint import UnitRegistry
 from numpy import sqrt
 default_Q = float(pyspec_config.get_setting("default Q", default=4700))
 # note that this will fail if you don't have "QESR Conversion" set in your pyspecdata file
-dint_conversion = float(pyspec_config.get_setting("QESR Conversion"))
+dint_conversion = pyspec_config.get_setting("QESR Conversion")
+if dint_conversion is not None:
+    dint_conversion = float(dint_conversion)
 
 ureg = UnitRegistry(
     system="mks", autoconvert_offset_to_baseunit=True, auto_reduce_dimensions=True
