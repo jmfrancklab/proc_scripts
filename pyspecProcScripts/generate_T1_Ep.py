@@ -22,7 +22,7 @@ def generate_T1_Ep(filename,
         has_Ep = True,
         has_IR = True,
         Ep_signal_pathway={'ph1':1},
-        IR_signal_pathway = {'ph1':1,'ph2':0},
+        IR_signal_pathway = {'ph1':0,'ph2':-1},
         Ep_nodename = 'ODNP',
         IR_nodenames = None,
         manual_IR_meter_powers = None,
@@ -115,7 +115,7 @@ def generate_T1_Ep(filename,
                     'IR' in j]
         for (j,nodename) in enumerate(IR_nodenames):
             fl.text("processing "+lsafen(nodename))
-            IR = find_file(filename, exp_type='ODNP_NMR_comp/ODNP', expno=nodename,
+            IR = find_file(filename, exp_type='ODNP_NMR_comp/inv_rec', expno=nodename,
                     postproc=IR_postproc, lookup=lookup_table)
             #{{{using manual powers
             if manual_IR_meter_powers is not None:
@@ -210,8 +210,8 @@ def generate_T1_Ep(filename,
                 best_shift = actual_tau + 0.0002
             IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
             IR /= zeroth_order_ph(select_pathway(IR['t2',0],IR_signal_pathway))
-            IR = IR['t2':(0,None)]
-            IR['t2':0] *= 0.5
+            #IR = IR['t2':(0,None)]
+            #IR['t2':0] *= 0.5
             IR.ft('t2')
             if fl is not None:
                 fl.next('phased')
@@ -229,7 +229,7 @@ def generate_T1_Ep(filename,
             if drift < drift_max:
                 IR.ift(['ph1','ph2'])
                 opt_shift,sigma, my_mask = correl_align(abs(IR.C),indirect_dim='vd',
-                        signal_pathway=IR_signal_pathway,sigma=1500,fl=fl)#again, bad data
+                        signal_pathway=IR_signal_pathway,sigma=1200,fl=fl)#again, bad data
                 IR.ift('t2')
                 IR *= np.exp(-1j*2*pi*opt_shift*IR.fromaxis('t2'))
                 IR.ft(['ph1','ph2'])
@@ -255,7 +255,7 @@ def generate_T1_Ep(filename,
                 IR *= mysgn
             #}}}
             IR.ift('t2')
-            #{{{FID slicez
+            #{{{FID slice
             d=IR.C
             d = d['t2':(0,None)]
             d['t2':0] *= 0.5
@@ -266,12 +266,6 @@ def generate_T1_Ep(filename,
             #}}}
             #{{{Integrate with error
             this_IR = (d.C.mean('nScans'))
-            if fl is not None:
-                fl.next('what')
-                this_IR['vd',:zero_crossing] *= -1
-                fl.image(this_IR)
-                fl.next('what 1d')
-                fl.plot(select_pathway(this_IR,IR_signal_pathway))
             error_pathway = (set(((j,k) for j in range(ndshape(d)['ph1']) for k in range(ndshape(d)['ph2'])))
                     - set(excluded_pathways)
                     -set([(IR_signal_pathway['ph1'],IR_signal_pathway['ph2'])]))
@@ -321,6 +315,7 @@ def generate_T1_Ep(filename,
             T1_list.append(T1)
             this_ls = "-"
             fit = f.eval(100)
+            print(T1)
             if fl is not None:
                 fl.next('IR fit - before norm')
                 fl.plot(s_int, 'o', color=thiscolor, label='%s'%nodename)
