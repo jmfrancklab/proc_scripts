@@ -1,4 +1,6 @@
 from pyspecdata.datadir import pyspec_config # piggyback on _pyspecdata
+from pyspecdata.general_functions import strm
+import logging
 from pint import UnitRegistry
 from numpy import sqrt
 default_Q = float(pyspec_config.get_setting("default Q", default=4700))
@@ -25,17 +27,17 @@ def QESR_scalefactor(d):
     signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s"))
     # }}}
-    print(
-            f"$G_R={G_R:~L}$\n",
-            f"$C_t={C_t:~L}$\n",
-            f"$power={power:~L}$\n",
-            f"$B_m={B_m:~L}$\n",
-            f"$Q={Q:~L} $\n",
-            f"$n_B={n_B:~L} $\n",
-            f"$S={S:~L} $\n",
-            f"$c={c:~L} $\n",
-            f"signal denom$={signal_denom:~L}$",
+    logging.debug(strm(
+            f"$G_R={G_R:~P}$\n",
+            f"$C_t={C_t:~P}$\n",
+            f"$power={power:~P}$\n",
+            f"$B_m={B_m:~P}$\n",
+            f"$Q={Q:~P} $\n",
+            f"$n_B={n_B:~P} $\n",
+            f"$S={S:~P} $\n",
+            f"$c={c:~P} $\n",
+            f"signal denom$={signal_denom:~P}$",
             f"doubleint conversion$={dint_conversion}$",
-            )
+            ))
     # normally, we divide by signal_denom.magnitude and multiply by dint_conversion and divide by 1e-6
     return signal_denom.magnitude/dint_conversion*1e-6
