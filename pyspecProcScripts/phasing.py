@@ -225,18 +225,26 @@ def hermitian_function_test(
     else:
         s_ext = s.C.ft(direct)
     t_dw = s.get_ft_prop(direct,'dt')
+    # {{{ first, move into over-sampled time domain
     s_ext.ift(direct, pad=
             2**(round(np.log(ndshape(s)[direct]*10)/np.log(2))))
-    print("trying to extend from",s_ext.getaxis(direct)[r_[0,-1]],"to",
-            s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item())
+    # }}}
+    # {{{ then, zero-fill the time axis out to twice the
+    #     length (manually)
+    t_len = np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item()
+    logging.debug(strm("trying to extend from",s_ext.getaxis(direct)[r_[0,-1]],"to",
+        s_ext.getaxis(direct)[0] + 2 * t_len))
     s_ext.extend(
-        direct, s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item()
-    )  # zero fill
+        direct, s_ext.getaxis(direct)[0] + 2 * t_len 
+    )
+    # }}}
+    # {{{ force the axis to *start* at 0
     s_ext.register_axis({direct: 0}).ft(direct).set_ft_prop(
         direct, "start_time", 0
     ).ift(
         direct
-    )  # forces the axis to *start* at 0
+    )
+    # }}}
     if fl is not None:
         fl.push_marker()
         if basename is None:
