@@ -8,6 +8,7 @@ from pylab import xlim, subplots, axvline, ylim, sca
 import numpy as np
 from numpy import r_, c_
 from scipy import linalg
+import scipy.signal.windows as sci_win
 import logging
 import matplotlib.pyplot as plt
 
@@ -109,10 +110,7 @@ def zeroth_order_ph(d, fl=None):
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
         fl.plot(
-            rotation_vector[1],
-            "o",
-            alpha=0.5,
-            label="rotation vector",
+            rotation_vector[1], "o", alpha=0.5, label="rotation vector",
         )
         norms = sqrt((evec_forplot ** 2).sum(axis=0))
         ell = Ellipse(
@@ -205,7 +203,7 @@ def hermitian_function_test(
     amp_threshold=0.05,  # region over which we have signal
     fl=None,
     basename=None,
-    show_extended=False,
+    show_extended=True,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
 
@@ -218,37 +216,44 @@ def hermitian_function_test(
 
         AG fix docstring
     """
-    # {{{ zero fill
+    # {{{ zero fill and upsample
+    # {{{ get in time domain and grab dwell time
     assert s.get_units(direct) is not None
     if s.get_ft_prop(direct):
-        s_ext = s.C
+        s_ext = s.C.ift(direct)
     else:
-        s_ext = s.C.ft(direct)
-    t_dw = s.get_ft_prop(direct,'dt')
-    # {{{ first, move into over-sampled time domain
-    s_ext.ift(direct, pad=
-            2**(round(np.log(ndshape(s)[direct]*10)/np.log(2))))
-    # }}}
-    # {{{ then, zero-fill the time axis out to twice the
-    #     length (manually)
-    t_len = np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item()
-    logging.debug(strm("trying to extend from",s_ext.getaxis(direct)[r_[0,-1]],"to",
-        s_ext.getaxis(direct)[0] + 2 * t_len))
-    s_ext.extend(
-        direct, s_ext.getaxis(direct)[0] + 2 * t_len 
-    )
+        s_ext = s.C
+    assert (
+        s.getaxis(direct)[0] == 0.0
+    ), """In order to
+    calculate the signal energy term correctly, the
+    signal must start at t=0  so set the start of the
+    acquisition in the *non-aliased* time domain to 0 (something like
+    data['t2'] -= acqstart) to avoid confusion"""
+    t_dw = s.get_ft_prop(direct, "dt")
+    orig_bounds = s.getaxis(direct)[r_[0, -1]]
     # }}}
     # {{{ force the axis to *start* at 0
-    s_ext.register_axis({direct: 0}).ft(direct).set_ft_prop(
-        direct, "start_time", 0
-    ).ift(
-        direct
+    #     since we're doing FT here, also extend to
+    #     twice the length!
+    logging.debug(strm("initial size", ndshape(s_ext), "direct is", direct))
+    s_ext.ft(
+        direct, pad=2 ** int(np.ceil(np.log(ndshape(s_ext)[direct]) / np.log(2)) + 1)
     )
+    assert (
+        s_ext.get_ft_prop(direct, "start_time") == 0
+    ), "FT start point should also be equal to zero -- doing otherwise doesn't make sense"
+    # }}}
+    # {{{ move into over-sampled time domain -- do this
+    # *after* previous to avoid aliasing glitch
+    tukeyfilter = s_ext.fromaxis(direct).run(lambda x: sci_win.tukey(len(x)))
+    s_ext *= tukeyfilter
+    s_ext.ift(direct, pad=2 ** (round(np.log(ndshape(s)[direct] * 10) / np.log(2))))
     # }}}
     if fl is not None:
         fl.push_marker()
         if basename is None:
-            basename = f'randombasename{int(time.time()*10):d}'
+            basename = f"randombasename{int(time.time()*10):d}"
         fl.basename = basename
         if show_extended:
             fl.next("data extended")
@@ -258,11 +263,12 @@ def hermitian_function_test(
                 fl.plot(s_ext)
         s_ext /= (
             abs(s_ext).mean_all_but(direct).data.max()
-    )  # normalize by the average echo peak (for plotting purposes)
+        )  # normalize by the average echo peak (for plotting purposes)
     if fl is not None:
         fl.next("power terms")
-        fl.plot(abs(s_ext).mean_all_but(
-            direct)['t2',0:ndshape(s)['t2']], label="echo envelope")
+        fl.plot(
+            abs(s_ext).mean_all_but(direct)[direct:orig_bounds], label="echo envelope",
+        )
     # }}}
     # {{{ the integral of the signal power up to t=Δt
     #     (first term in the paper)
@@ -270,12 +276,12 @@ def hermitian_function_test(
     s_energy.run(lambda x: abs(x) ** 2)
     s_energy.integrate(direct, cumulative=True)
     t_dwos = s_energy.get_ft_prop(direct, "dt")
+    s_energy.mean_all_but(direct)
     normalization_term = 2 * t_dwos / (s_energy.fromaxis(direct) + t_dwos)
     s_energy *= normalization_term
-    s_energy.mean_all_but(direct)
-    forplot = s_energy / t_dwos
-    forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
+        forplot = s_energy / t_dwos
+        forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(forplot, label="first energy term")
     # }}}
     # {{{ calculation the correlation between the echo and its hermitian
@@ -288,9 +294,9 @@ def hermitian_function_test(
     s_correl.ift(direct)
     s_correl.mean_all_but(direct).run(abs)
     s_correl *= normalization_term
-    forplot = s_correl / t_dwos
-    forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
+        forplot = s_correl / t_dwos
+        forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(forplot, label="correlation function")
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
@@ -322,17 +328,25 @@ def hermitian_function_test(
         )
     echo_peak = cost_min / 2.0
     if fl is not None:
-        if fl.units[fl.current] == 's':
+        if fl.units[fl.current] == "s":
             divisor = 1
-        elif fl.units[fl.current] == 'ms':
+        elif fl.units[fl.current] == "ms":
             divisor = 1e-3
-        elif fl.units[fl.current] == '\\mu s':
+        elif fl.units[fl.current] == "\\mu s":
             divisor = 1e-6
         else:
-            raise ValueError(f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs")
-        fl.plot(echo_peak/divisor, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3,
-                human_units=False)
-        axvline(x=echo_peak/divisor, linestyle=":")
+            raise ValueError(
+                f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs"
+            )
+        fl.plot(
+            echo_peak / divisor,
+            forplot[direct:echo_peak].item(),
+            "o",
+            c="violet",
+            alpha=0.3,
+            human_units=False,
+        )
+        axvline(x=echo_peak / divisor, linestyle=":")
         fl.pop_marker()
     # }}}
     return echo_peak
@@ -364,7 +378,7 @@ def determine_sign(s, direct="t2", fl=None):
     if fl is not None:
         fl.push_marker()
         if basename is None:
-            basename = f'randombasename{time.time()*10:d}'
+            basename = f"randombasename{time.time()*10:d}"
         fl.basename = basename
         fl.next("selected pathway")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
