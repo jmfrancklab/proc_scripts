@@ -204,6 +204,7 @@ def hermitian_function_test(
     fl=None,
     basename=None,
     show_extended=True,
+    individual_summation=True,
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
 
@@ -211,6 +212,9 @@ def hermitian_function_test(
     ==========
     direct:             str
         Axis of data (i.e., direct dimension).
+    individual_summation:   bool
+        sum over energy and correlation terms individually,
+        rather than subtract sqrt and sum at end
 
     .. todo::
 
@@ -276,11 +280,13 @@ def hermitian_function_test(
     s_energy.run(lambda x: abs(x) ** 2)
     s_energy.integrate(direct, cumulative=True)
     t_dwos = s_energy.get_ft_prop(direct, "dt")
-    s_energy.mean_all_but(direct)
+    if individual_summation:
+        s_energy.mean_all_but(direct)
     normalization_term = 2 * t_dwos / (s_energy.fromaxis(direct) + t_dwos)
     s_energy *= normalization_term
     if fl is not None:
         forplot = s_energy / t_dwos
+        forplot.mean_all_but(direct)
         forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(forplot, label="first energy term")
     # }}}
@@ -292,34 +298,30 @@ def hermitian_function_test(
     s_correl.ft(direct)
     s_correl.run(lambda x: x ** 2)
     s_correl.ift(direct)
-    s_correl.mean_all_but(direct).run(abs)
+    if individual_summation:
+        s_correl.mean_all_but(direct).run(abs)
+    else:
+        s_correl.run(abs)
     s_correl *= normalization_term
     if fl is not None:
         forplot = s_correl / t_dwos
+        forplot.mean_all_but(direct)
         forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(forplot, label="correlation function")
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
-    forplot = cost_func / t_dwos
-    forplot.setaxis(direct, lambda x: x / 2)
     min_echo = aliasing_slop * t_dw
-    cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
-    if fl is not None:
-        fl.plot(
-            forplot[direct : (min_echo, cost_min * 3 / 2)],
-            label="cost function",
-            c="violet",
-            alpha=0.5,
-        )
+    if not individual_summation:
+        cost_func.mean_all_but(direct)
     cost_func.run(sqrt)  # based on what we'd seen previously (empirically), I
     #                     take the square root for a well-defined minimum -- it
     #                     could be better to do this before averaging in the
     #                     future
-    forplot = cost_func / sqrt(t_dwos)
-    forplot.setaxis(direct, lambda x: x / 2)
     cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
     if fl is not None:
+        forplot = cost_func / sqrt(t_dwos)
+        forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(
             forplot[direct : (min_echo, cost_min * 3 / 2)],
             label="cost function",
