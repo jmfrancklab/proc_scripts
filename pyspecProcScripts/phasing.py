@@ -205,8 +205,22 @@ def hermitian_function_test(
     basename=None,
     show_extended=True,
     individual_summation=True,
+    upsampling=10,
 ):
-    r"""determine the center of the echo via hermitian symmetry of the time domain.
+    r"""Determine the center of the echo via hermitian symmetry of the time domain.
+
+    Note the following issues/feature:
+
+    -   Data *must* start at t=0 (due to the way that we calculate the energy
+        term in the expression)
+    -   Data typically has a rising edge, which can lead to ringing.
+        Therefore, we apply a Tukey filter to the data.  Because this
+        suppresses the edges in frequency space, you will likely want to slice
+        a slightly wider bandwidth than you are interested in.
+    -   If you have an initial portion of signal that has very low SNR (i.e. if
+        your echo time is long relative to :math:`T_2^*`), that will affect the
+        SNR of the cost function.  Trailing noise will not affect the SNR of
+        the cost function, only lead to slightly longer calculation times.
 
     Parameters
     ==========
@@ -218,7 +232,7 @@ def hermitian_function_test(
 
     .. todo::
 
-        AG fix docstring
+        AG fix docstring + cite coherence paper
     """
     # {{{ zero fill and upsample
     # {{{ get in time domain and grab dwell time
@@ -252,7 +266,7 @@ def hermitian_function_test(
     # *after* previous to avoid aliasing glitch
     tukeyfilter = s_ext.fromaxis(direct).run(lambda x: sci_win.tukey(len(x)))
     s_ext *= tukeyfilter
-    s_ext.ift(direct, pad=2 ** (round(np.log(ndshape(s)[direct] * 10) / np.log(2))))
+    s_ext.ift(direct, pad=2 ** (round(np.log(ndshape(s)[direct] * upsampling) / np.log(2))))
     # }}}
     if fl is not None:
         fl.push_marker()
