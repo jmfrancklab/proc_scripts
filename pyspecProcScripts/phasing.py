@@ -203,9 +203,10 @@ def hermitian_function_test(
     amp_threshold=0.05,  # region over which we have signal
     fl=None,
     basename=None,
-    show_extended=True,
+    show_extended=False,
     sqrt_before_sum=False,
     upsampling=10,
+    energy_threshold=0.2,
 ):
     r"""Determine the center of the echo via hermitian symmetry of the time domain.
 
@@ -226,6 +227,10 @@ def hermitian_function_test(
     ==========
     direct:             str
         Axis of data (i.e., direct dimension).
+    energy_threshold:   float
+        To avoid picking a minimum that's based off of very little data, only
+        recognize the cost function over an interval where the normalized
+        energy function is equal to `energy_threshold` of its max value.
     sqrt_before_sum:   bool
         calculate the sqrt before taking the sum.
         Included because this is a conceivable alternative, but it seems to not work as well!
@@ -302,7 +307,7 @@ def hermitian_function_test(
         forplot = s_energy / t_dwos
         forplot.mean_all_but(direct)
         forplot.setaxis(direct, lambda x: x / 2)
-        fl.plot(forplot, label="first energy term")
+        fl.plot(forplot[direct:orig_bounds], label="first energy term")
     # }}}
     # {{{ calculation the correlation between the echo and its hermitian
     #     conjugate
@@ -321,10 +326,13 @@ def hermitian_function_test(
         forplot = s_correl / t_dwos
         forplot.mean_all_but(direct)
         forplot.setaxis(direct, lambda x: x / 2)
-        fl.plot(forplot, label="correlation function")
+        fl.plot(forplot[direct:orig_bounds], label="correlation function")
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
+    reasonable_energy_range = s_energy.contiguous(lambda x: abs(x) > energy_threshold*abs(x.data).max())[0,:]
+    print(reasonable_energy_range)
+    cost_func = cost_func[direct:reasonable_energy_range]
     min_echo = aliasing_slop * t_dw
     if sqrt_before_sum:
         cost_func[lambda x: x<0] = 0
@@ -339,7 +347,7 @@ def hermitian_function_test(
         forplot = cost_func / sqrt(t_dwos)
         forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(
-            forplot[direct : (min_echo, cost_min * 3 / 2)],
+            forplot,
             label="cost function",
             c="violet",
             alpha=0.5,
