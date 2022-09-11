@@ -204,7 +204,7 @@ def hermitian_function_test(
     fl=None,
     basename=None,
     show_extended=True,
-    individual_summation=True,
+    sqrt_before_sum=False,
     upsampling=10,
 ):
     r"""Determine the center of the echo via hermitian symmetry of the time domain.
@@ -226,9 +226,9 @@ def hermitian_function_test(
     ==========
     direct:             str
         Axis of data (i.e., direct dimension).
-    individual_summation:   bool
-        sum over energy and correlation terms individually,
-        rather than subtract sqrt and sum at end
+    sqrt_before_sum:   bool
+        calculate the sqrt before taking the sum.
+        Included because this is a conceivable alternative, but it seems to not work as well!
 
     .. todo::
 
@@ -294,7 +294,7 @@ def hermitian_function_test(
     s_energy.run(lambda x: abs(x) ** 2)
     s_energy.integrate(direct, cumulative=True)
     t_dwos = s_energy.get_ft_prop(direct, "dt")
-    if individual_summation:
+    if not sqrt_before_sum:
         s_energy.mean_all_but(direct)
     normalization_term = 2 * t_dwos / (s_energy.fromaxis(direct) + t_dwos)
     s_energy *= normalization_term
@@ -312,10 +312,10 @@ def hermitian_function_test(
     s_correl.ft(direct)
     s_correl.run(lambda x: x ** 2)
     s_correl.ift(direct)
-    if individual_summation:
-        s_correl.mean_all_but(direct).run(abs)
-    else:
+    if sqrt_before_sum:
         s_correl.run(abs)
+    else:
+        s_correl.mean_all_but(direct).run(abs)
     s_correl *= normalization_term
     if fl is not None:
         forplot = s_correl / t_dwos
@@ -326,7 +326,9 @@ def hermitian_function_test(
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
     min_echo = aliasing_slop * t_dw
-    if not individual_summation:
+    if sqrt_before_sum:
+        cost_func[lambda x: x<0] = 0
+        cost_func.run(sqrt)
         cost_func.mean_all_but(direct)
     cost_func.run(sqrt)  # based on what we'd seen previously (empirically), I
     #                     take the square root for a well-defined minimum -- it
