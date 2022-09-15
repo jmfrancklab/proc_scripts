@@ -206,7 +206,7 @@ def hermitian_function_test(
     show_extended=False,
     sqrt_before_sum=False,
     upsampling=10,
-    energy_threshold=0.2,
+    energy_threshold=0.6,
 ):
     r"""Determine the center of the echo via hermitian symmetry of the time domain.
 
