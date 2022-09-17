@@ -4,7 +4,7 @@ import time
 from matplotlib.patches import Ellipse
 from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
-from pylab import xlim, subplots, axvline, ylim, sca
+from pylab import xlim, subplots, axvline, ylim, sca, rand
 import numpy as np
 from numpy import r_, c_
 from scipy import linalg
@@ -205,8 +205,9 @@ def hermitian_function_test(
     basename=None,
     show_extended=False,
     sqrt_before_sum=False,
-    upsampling=10,
-    energy_threshold=0.6,
+    upsampling=20,
+    energy_threshold=0.98,
+    energy_threshold_lower=0.1
 ):
     r"""Determine the center of the echo via hermitian symmetry of the time domain.
 
@@ -231,6 +232,20 @@ def hermitian_function_test(
         To avoid picking a minimum that's based off of very little data, only
         recognize the cost function over an interval where the normalized
         energy function is equal to `energy_threshold` of its max value.
+    aliasing_slop: int (default 3)
+        The signal typically has an initial rising
+        portion where -- even due to FIR or
+        instrumental filters in the raw data,
+        the signal has some kind of Gibbs ringing in the
+        transition between signal an zero.
+        This portion of the signal will not mirror the
+        signal on the other side of the echo, and
+        should not even be included in the cost
+        function!
+        We believe the most consistent way to specify
+        the amount of signal that should be excluded as
+        an number of datapoints, hence why we ask for
+        an integer here.
     sqrt_before_sum:   bool
         calculate the sqrt before taking the sum.
         Included because this is a conceivable alternative, but it seems to not work as well!
@@ -255,6 +270,7 @@ def hermitian_function_test(
     data['t2'] -= acqstart) to avoid confusion"""
     t_dw = s.get_ft_prop(direct, "dt")
     orig_bounds = s.getaxis(direct)[r_[0, -1]]
+    plot_bounds = orig_bounds # allow this to be set to ± inf if I want to see all
     # }}}
     # {{{ force the axis to *start* at 0
     #     since we're doing FT here, also extend to
@@ -271,22 +287,23 @@ def hermitian_function_test(
     # *after* previous to avoid aliasing glitch
     tukeyfilter = s_ext.fromaxis(direct).run(lambda x: sci_win.tukey(len(x)))
     s_ext *= tukeyfilter
-    s_ext.ift(direct, pad=2 ** (round(np.log(ndshape(s)[direct] * upsampling) / np.log(2))))
+    s_ext.ift(direct, pad=2 ** int(np.ceil(np.log(ndshape(s)[direct] * upsampling) / np.log(2))))
+    s_ext[direct:(orig_bounds[-1],None)] = 0 # explicitly zero, in case there are aliased negative times!
     # }}}
     # {{{ now I need to throw out the initial, aliased
     #     portion of the signal -- do this manually by
     #     index -- this is more lines than needed in
-    #     order to be explanatory
+    #     order to be explanatory.  Note that I
+    #     plot the signal before I actually throw stuff
+    #     out
     t_dwos = s_ext.get_ft_prop(direct, "dt") # oversampled dwell
     min_echo = aliasing_slop * t_dw
     min_echo_idx = int(min_echo/t_dwos + 0.5)
     min_echo = min_echo_idx * t_dwos
-    s_ext[direct, 0:-min_echo_idx = s_ext[direct, min_echo_idx:]
-    # }}}
     if fl is not None:
         fl.push_marker()
         if basename is None:
-            basename = f"randombasename{int(time.time()*10):d}"
+            basename = f"randombasename{int(rand()*1e5):d}"
         fl.basename = basename
         if show_extended:
             fl.next("data extended")
@@ -298,9 +315,23 @@ def hermitian_function_test(
             abs(s_ext).mean_all_but(direct).data.max()
         )  # normalize by the average echo peak (for plotting purposes)
         fl.next("power terms")
+        forplot = abs(s_ext).mean_all_but(direct)[direct:plot_bounds]
+        forplot[direct] -= min_echo # so zero is the
+        #                             first part of the
+        #                             echo after the
+        #                             aliasing slop, as
+        #                             indicated below
         fl.plot(
-            abs(s_ext).mean_all_but(direct)[direct:orig_bounds], label="echo envelope",
+            forplot, label="echo envelope",
         )
+    s_ext[direct, :-min_echo_idx] = s_ext[direct, min_echo_idx:]
+    if fl is not None:
+        fl.next("power terms")
+        forplot = abs(s_ext).mean_all_but(direct)[direct:plot_bounds]
+        fl.plot(
+            forplot, label="echo envelope",
+        )
+    # }}}
     # }}}
     # {{{ the integral of the signal power up to t=Δt
     #     (first term in the paper)
@@ -316,7 +347,7 @@ def hermitian_function_test(
         forplot = s_energy / t_dwos
         forplot.mean_all_but(direct)
         forplot.setaxis(direct, lambda x: x / 2)
-        fl.plot(forplot[direct:orig_bounds], label="first energy term")
+        fl.plot(forplot[direct:plot_bounds], label="first energy term")
     # }}}
     # {{{ calculation the correlation between the echo and its hermitian
     #     conjugate
@@ -335,22 +366,29 @@ def hermitian_function_test(
         forplot = s_correl / t_dwos
         forplot.mean_all_but(direct)
         forplot.setaxis(direct, lambda x: x / 2)
-        fl.plot(forplot[direct:orig_bounds], label="correlation function")
+        fl.plot(forplot[direct:plot_bounds], label="correlation function")
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
     cost_func = s_energy - s_correl
     reasonable_energy_range = s_energy.contiguous(lambda x: abs(x) > energy_threshold*abs(x.data).max())[0,:]
+    _,reasonable_energy_range[1] = s_energy.contiguous(lambda x: abs(x) >
+            energy_threshold*energy_threshold_lower*abs(x.data).max())[0,:]
     print(reasonable_energy_range)
     cost_func = cost_func[direct:reasonable_energy_range]
     if sqrt_before_sum:
         cost_func[lambda x: x<0] = 0
         cost_func.run(sqrt)
         cost_func.mean_all_but(direct)
-    cost_func.run(sqrt)  # based on what we'd seen previously (empirically), I
-    #                     take the square root for a well-defined minimum -- it
-    #                     could be better to do this before averaging in the
-    #                     future
-    cost_min = cost_func[direct:(min_echo, None)].C.argmin(direct).item()
+    else:
+        cost_func.run(lambda x: x/sqrt(abs(x)))  # based on what we'd seen
+        #                      previously
+        #                      (empirically), I take
+        #                      the square root for a
+        #                      well-defined minimum --
+        #                      it could be better to do
+        #                      this before averaging in
+        #                      the future
+    cost_min = cost_func.C.argmin(direct).item()
     if fl is not None:
         forplot = cost_func / sqrt(t_dwos)
         forplot.setaxis(direct, lambda x: x / 2)
@@ -383,9 +421,7 @@ def hermitian_function_test(
         axvline(x=echo_peak / divisor, linestyle=":")
         fl.pop_marker()
     # }}}
-    return echo_peak
-
-
+    return echo_peak + min_echo
 def determine_sign(s, direct="t2", fl=None):
     """Given that the signal resides in `pathway`, determine the sign of the signal.
     The sign can be used, e.g. so that all data in an inversion-recover or
@@ -412,7 +448,7 @@ def determine_sign(s, direct="t2", fl=None):
     if fl is not None:
         fl.push_marker()
         if basename is None:
-            basename = f"randombasename{time.time()*10:d}"
+            basename = f"randombasename{int(rand()*1e5):d}"
         fl.basename = basename
         fl.next("selected pathway")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
