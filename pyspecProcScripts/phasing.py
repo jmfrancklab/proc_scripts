@@ -273,6 +273,16 @@ def hermitian_function_test(
     s_ext *= tukeyfilter
     s_ext.ift(direct, pad=2 ** (round(np.log(ndshape(s)[direct] * upsampling) / np.log(2))))
     # }}}
+    # {{{ now I need to throw out the initial, aliased
+    #     portion of the signal -- do this manually by
+    #     index -- this is more lines than needed in
+    #     order to be explanatory
+    t_dwos = s_ext.get_ft_prop(direct, "dt") # oversampled dwell
+    min_echo = aliasing_slop * t_dw
+    min_echo_idx = int(min_echo/t_dwos + 0.5)
+    min_echo = min_echo_idx * t_dwos
+    s_ext[direct, 0:-min_echo_idx = s_ext[direct, min_echo_idx:]
+    # }}}
     if fl is not None:
         fl.push_marker()
         if basename is None:
@@ -287,7 +297,6 @@ def hermitian_function_test(
         s_ext /= (
             abs(s_ext).mean_all_but(direct).data.max()
         )  # normalize by the average echo peak (for plotting purposes)
-    if fl is not None:
         fl.next("power terms")
         fl.plot(
             abs(s_ext).mean_all_but(direct)[direct:orig_bounds], label="echo envelope",
@@ -333,7 +342,6 @@ def hermitian_function_test(
     reasonable_energy_range = s_energy.contiguous(lambda x: abs(x) > energy_threshold*abs(x.data).max())[0,:]
     print(reasonable_energy_range)
     cost_func = cost_func[direct:reasonable_energy_range]
-    min_echo = aliasing_slop * t_dw
     if sqrt_before_sum:
         cost_func[lambda x: x<0] = 0
         cost_func.run(sqrt)
