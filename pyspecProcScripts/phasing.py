@@ -12,6 +12,18 @@ import scipy.signal.windows as sci_win
 import logging
 import matplotlib.pyplot as plt
 
+def det_devisor(fl):
+    if fl.units[fl.current] == "s":
+        divisor = 1
+    elif fl.units[fl.current] == "ms":
+        divisor = 1e-3
+    elif fl.units[fl.current] == "\\mu s":
+        divisor = 1e-6
+    else:
+        raise ValueError(
+            f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs"
+        )
+    return divisor
 
 def zeroth_order_ph(d, fl=None):
     r"""determine the covariance of the datapoints
@@ -204,10 +216,10 @@ def hermitian_function_test(
     fl=None,
     basename=None,
     show_extended=False,
-    sqrt_before_sum=False,
-    upsampling=20,
+    upsampling=40,
     energy_threshold=0.98,
-    energy_threshold_lower=0.1
+    energy_threshold_lower=0.1,
+    enable_refinement=False,
 ):
     r"""Determine the center of the echo via hermitian symmetry of the time domain.
 
@@ -246,9 +258,6 @@ def hermitian_function_test(
         the amount of signal that should be excluded as
         an number of datapoints, hence why we ask for
         an integer here.
-    sqrt_before_sum:   bool
-        calculate the sqrt before taking the sum.
-        Included because this is a conceivable alternative, but it seems to not work as well!
 
     .. todo::
 
@@ -258,9 +267,10 @@ def hermitian_function_test(
     # {{{ get in time domain and grab dwell time
     assert s.get_units(direct) is not None
     if s.get_ft_prop(direct):
-        s_ext = s.C.ift(direct)
+        s_timedom = s.C.ift(direct)
     else:
-        s_ext = s.C
+        s_timedom = s.C
+    s_ext = s_timedom.C
     assert (
         s.getaxis(direct)[0] == 0.0
     ), """In order to
@@ -338,16 +348,10 @@ def hermitian_function_test(
     s_energy = s_ext.C
     s_energy.run(lambda x: abs(x) ** 2)
     s_energy.integrate(direct, cumulative=True)
+    s_energy.mean_all_but(direct)
     t_dwos = s_energy.get_ft_prop(direct, "dt")
-    if not sqrt_before_sum:
-        s_energy.mean_all_but(direct)
     normalization_term = 2 * t_dwos / (s_energy.fromaxis(direct) + t_dwos)
     s_energy *= normalization_term
-    if fl is not None:
-        forplot = s_energy / t_dwos
-        forplot.mean_all_but(direct)
-        forplot.setaxis(direct, lambda x: x / 2)
-        fl.plot(forplot[direct:plot_bounds], label="first energy term")
     # }}}
     # {{{ calculation the correlation between the echo and its hermitian
     #     conjugate
@@ -357,39 +361,31 @@ def hermitian_function_test(
     s_correl.ft(direct)
     s_correl.run(lambda x: x ** 2)
     s_correl.ift(direct)
-    if sqrt_before_sum:
-        s_correl.run(abs)
-    else:
-        s_correl.mean_all_but(direct).run(abs)
+    s_correl.mean_all_but(direct).run(abs)
     s_correl *= normalization_term
-    if fl is not None:
-        forplot = s_correl / t_dwos
-        forplot.mean_all_but(direct)
-        forplot.setaxis(direct, lambda x: x / 2)
-        fl.plot(forplot[direct:plot_bounds], label="correlation function")
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
-    cost_func = s_energy - s_correl
+    cost_func = abs(s_energy - s_correl) # b/c this should not be less than 0, so penalize for numerical error when it's not!
     reasonable_energy_range = s_energy.contiguous(lambda x: abs(x) > energy_threshold*abs(x.data).max())[0,:]
     _,reasonable_energy_range[1] = s_energy.contiguous(lambda x: abs(x) >
             energy_threshold*energy_threshold_lower*abs(x.data).max())[0,:]
     print(reasonable_energy_range)
     cost_func = cost_func[direct:reasonable_energy_range]
-    if sqrt_before_sum:
-        cost_func[lambda x: x<0] = 0
-        cost_func.run(sqrt)
-        cost_func.mean_all_but(direct)
-    else:
-        cost_func.run(lambda x: x/sqrt(abs(x)))  # based on what we'd seen
-        #                      previously
-        #                      (empirically), I take
-        #                      the square root for a
-        #                      well-defined minimum --
-        #                      it could be better to do
-        #                      this before averaging in
-        #                      the future
+    cost_func.run(lambda x: x/sqrt(abs(x)))  # based on what we'd seen
+    #             previously (empirically), I take the
+    #             square root for a well-defined
+    #             minimum -- it could be better to do
+    #             this before averaging in the future
     cost_min = cost_func.C.argmin(direct).item()
     if fl is not None:
+        forplot = s_energy / t_dwos
+        forplot.mean_all_but(direct)
+        forplot.setaxis(direct, lambda x: x / 2)
+        fl.plot(forplot[direct:plot_bounds], label="first energy term")
+        forplot = s_correl / t_dwos
+        forplot.mean_all_but(direct)
+        forplot.setaxis(direct, lambda x: x / 2)
+        fl.plot(forplot[direct:plot_bounds], label="correlation function")
         forplot = cost_func / sqrt(t_dwos)
         forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(
@@ -400,28 +396,63 @@ def hermitian_function_test(
         )
     echo_peak = cost_min / 2.0
     if fl is not None:
-        if fl.units[fl.current] == "s":
-            divisor = 1
-        elif fl.units[fl.current] == "ms":
-            divisor = 1e-3
-        elif fl.units[fl.current] == "\\mu s":
-            divisor = 1e-6
-        else:
-            raise ValueError(
-                f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs"
-            )
         fl.plot(
-            echo_peak / divisor,
+            echo_peak / det_devisor(fl),
             forplot[direct:echo_peak].item(),
             "o",
             c="violet",
             alpha=0.3,
             human_units=False,
         )
-        axvline(x=echo_peak / divisor, linestyle=":")
-        fl.pop_marker()
+        axvline(x=echo_peak / det_devisor(fl), linestyle=":")
     # }}}
-    return echo_peak + min_echo
+    echo_idx = int((echo_peak + min_echo)/t_dw+0.5)
+    if enable_refinement and echo_idx-aliasing_slop > 3:
+        s_foropt = s_timedom[direct,
+                aliasing_slop:2*(echo_idx-aliasing_slop)+1]
+        center_idx = (2*(echo_idx-aliasing_slop)+1-aliasing_slop)//2+1
+        if fl is not None:
+            fl.next('foropt')
+            fl.plot(abs(s_foropt), human_units=False)
+            axvline(x=(echo_peak + min_echo), alpha=0.5)
+            axvline(x=s_foropt.getaxis(direct)[ndshape(s_foropt)[direct]//2+1],
+                    color='r',ls=':', alpha=0.5)
+        shifts = nddata(
+                t_dw*r_[-1.5:1.5:300j],'echo shift')
+        s_foropt.ft(direct)
+        # negative pushes time domain to right --
+        # should represent that echo occured earlier
+        # than expected, needed to be pushed right to
+        # be centered
+        s_foropt *= np.exp(-1j*2*np.pi*shifts*s_foropt.fromaxis(direct))
+        s_foropt.ift(direct)
+        ph0 = s_foropt[direct,
+                center_idx].C
+        ph0 = zeroth_order_ph(ph0)
+        s_foropt /= ph0
+        s_foropt = s_foropt[direct,2:-2]
+        s_foropt -= s_foropt.C[direct,::-1].run(np.conj)
+        s_foropt.run(lambda x: abs(x)**2)
+        s_foropt.mean_all_but('echo shift')
+        if fl is not None:
+            fl.next('refinement')
+            fl.plot(s_foropt, human_units=False)
+        s_foropt = s_foropt.argmin('echo shift').item()
+        if fl is not None:
+            fl.next('refinement')
+            axvline(x=s_foropt)
+            fl.next("power terms")
+            axvline(x=(t_dw*echo_idx-s_foropt -min_echo)/det_devisor(fl),
+                    ls='--',
+                    alpha=0.25)
+        if fl is not None:
+            fl.pop_marker()
+        return t_dw*echo_idx - s_foropt
+    else:
+        logging.info("warning: can't do hermitian phasing refinement -- not enough points")
+        if fl is not None:
+            fl.pop_marker()
+        return echo_peak + min_echo
 def determine_sign(s, direct="t2", fl=None):
     """Given that the signal resides in `pathway`, determine the sign of the signal.
     The sign can be used, e.g. so that all data in an inversion-recover or
