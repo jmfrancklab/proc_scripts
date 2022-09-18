@@ -11,6 +11,10 @@ from scipy import linalg
 import scipy.signal.windows as sci_win
 import logging
 import matplotlib.pyplot as plt
+from .simple_functions import select_pathway
+from itertools import cycle
+
+default_matplotlib_cycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
 
 def det_devisor(fl):
     if fl.units[fl.current] == "s":
@@ -208,6 +212,98 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
+def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2"):
+    # {{{ autodetermine slice range
+    freq_envelope = (abs(d) ** 2).mean_all_but(direct)
+    noiselevel = np.sort(freq_envelope.data)[
+        int(len(freq_envelope.data) * (1 - fraction_nonnoise) * 10 + 0.5) // 10
+    ]
+    # we've removed the noise baseline, so that 80%
+    # of the points are assumed to be noise and just set
+    # to 0
+    freq_envelope[lambda x: x < noiselevel] = 0
+    freq_envelope /= freq_envelope.C.integrate(direct).item()  # normalize
+    avg_frq = (freq_envelope * freq_envelope.fromaxis(direct)).integrate(direct).item()
+    std_frq = sqrt(
+        (freq_envelope * (freq_envelope.fromaxis(direct)) ** 2).integrate(direct).item()
+        - avg_frq ** 2
+    )
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False)
+        axvline(x=avg_frq, color="k", alpha=0.5)
+        axvline(x=avg_frq - 2 * std_frq, color="k", alpha=0.5)
+        axvline(x=avg_frq + 2 * std_frq, color="k", alpha=0.5)
+    slice_range = r_[-0.5, 0.5] * 6 * std_frq
+    # }}}
+    d = d[direct:slice_range]
+    d.ift(direct)
+    # {{{ apply phasing, and check the residual
+    d[direct] -= d.getaxis(direct)[0]
+    best_shift = hermitian_function_test(
+        select_pathway(d, signal_pathway), basename=fl.basename + " hermitian", fl=fl
+    )
+    d_save = d.C
+    t_dw = d_save.get_ft_prop(direct,'dt')
+    for test_offset in (
+        t_dw/3 * r_[-3, -2, -1, 1, 2, 3, 0]
+    ):  # do 0 last, so that's what it uses
+        test_shift = best_shift + test_offset
+        d = d_save.C
+        if test_offset == 0:
+            thiscolor = "k"
+        else:
+            thiscolor = next(default_matplotlib_cycle)
+        d.set_plot_color(thiscolor)
+        d.setaxis(direct, lambda x: x - test_shift).register_axis({direct: 0})
+        ph0 = zeroth_order_ph(select_pathway(d, signal_pathway)[direct:0.0])
+        d /= ph0
+        if fl is not None:
+            t_start = d.getaxis(direct)[0]
+            fl.next("residual after shift")
+            d_sigcoh = select_pathway(d, signal_pathway)[direct : (t_start, -2 * t_start)]
+            s_flipped = d_sigcoh[direct:(t_start, -t_start)]
+            s_flipped[direct] = s_flipped[direct][::-1]
+            s_flipped = s_flipped[direct, ::-1]
+            for_resid = (
+                abs(s_flipped -
+                    d_sigcoh[direct:(t_start,
+                        -t_start)].C.run(np.conj)) ** 2
+            )
+            for_resid.mean_all_but(direct).run(sqrt)
+            resi_sum = for_resid[direct, 7:-7].mean(direct).item()
+            fl.plot(for_resid, human_units=False, label="best shift%+e" % test_offset)
+            fl.plot(
+                abs(d_sigcoh).mean_all_but(direct),
+                alpha=0.8,
+                human_units=False,
+                label=None,
+            )
+            fl.plot(
+                abs(s_flipped).mean_all_but(direct),
+                alpha=0.5,
+                human_units=False,
+                label=None,
+            )
+            fl.next("resi sum")
+            fl.plot(test_offset, resi_sum, "o", color=thiscolor)
+    # }}}
+    if add_rising:
+        d_rising = d[direct:(None, 0)][direct, 0:-1]  # leave out first few points
+        d_rising.run(np.conj)
+        N_rising = ndshape(d_rising)[direct]
+        print("$N_{rising}=%d$" % N_rising)
+    d = d[direct:(0, None)]
+    if add_rising:
+        d[direct, 1 : N_rising + 1] = (
+            d_rising[direct, ::-1] + d[direct, 1 : N_rising + 1]
+        ) / 2
+    d[direct, 0] *= 0.5
+    d.ft(direct)
+    if fl is not None:
+        fl.next("FID data")
+        fl.image(d)
+    return d
 def hermitian_function_test(
     s,
     direct="t2",
@@ -408,32 +504,29 @@ def hermitian_function_test(
     # }}}
     echo_idx = int((echo_peak + min_echo)/t_dw+0.5)
     if enable_refinement and echo_idx-aliasing_slop > 3:
-        s_foropt = s_timedom[direct,
-                aliasing_slop:2*(echo_idx-aliasing_slop)+1]
+        s_foropt = s_timedom
         center_idx = (2*(echo_idx-aliasing_slop)+1-aliasing_slop)//2+1
-        if fl is not None:
-            fl.next('foropt')
-            fl.plot(abs(s_foropt), human_units=False)
-            axvline(x=(echo_peak + min_echo), alpha=0.5)
-            axvline(x=s_foropt.getaxis(direct)[ndshape(s_foropt)[direct]//2+1],
-                    color='r',ls=':', alpha=0.5)
         shifts = nddata(
-                t_dw*r_[-1.5:1.5:300j],'echo shift')
+                t_dw*r_[-2:2:300j],'echo shift')
         s_foropt.ft(direct)
-        # negative pushes time domain to right --
-        # should represent that echo occured earlier
-        # than expected, needed to be pushed right to
+        # positive pushes time domain to left --
+        # should represent that echo occurred later
+        # than expected, needed to be pushed left to
         # be centered
-        s_foropt *= np.exp(-1j*2*np.pi*shifts*s_foropt.fromaxis(direct))
+        s_foropt *= np.exp(1j*2*np.pi*shifts*s_foropt.fromaxis(direct))
         s_foropt.ift(direct)
+        s_foropt = s_foropt[direct,
+                aliasing_slop:aliasing_slop+2*(echo_idx-aliasing_slop)+1]
         ph0 = s_foropt[direct,
                 center_idx].C
+        ph0 /= abs(ph0)
         ph0 = zeroth_order_ph(ph0)
         s_foropt /= ph0
         s_foropt = s_foropt[direct,2:-2]
         s_foropt -= s_foropt.C[direct,::-1].run(np.conj)
         s_foropt.run(lambda x: abs(x)**2)
         s_foropt.mean_all_but('echo shift')
+        s_foropt.run(sqrt)
         if fl is not None:
             fl.next('refinement')
             fl.plot(s_foropt, human_units=False)
@@ -441,15 +534,19 @@ def hermitian_function_test(
         if fl is not None:
             fl.next('refinement')
             axvline(x=s_foropt)
+            axvline(x=(echo_peak+min_echo)-t_dw*echo_idx,
+                    ls=':',
+                    alpha=0.25)
             fl.next("power terms")
-            axvline(x=(t_dw*echo_idx-s_foropt -min_echo)/det_devisor(fl),
-                    ls='--',
+            axvline(x=(t_dw*echo_idx+s_foropt - min_echo)/det_devisor(fl),
+                    ls='-',
                     alpha=0.25)
         if fl is not None:
             fl.pop_marker()
-        return t_dw*echo_idx - s_foropt
+        return t_dw*echo_idx + s_foropt
     else:
-        logging.info("warning: can't do hermitian phasing refinement -- not enough points")
+        if not enable_refinement:
+            logging.info("warning: can't do hermitian phasing refinement -- not enough points")
         if fl is not None:
             fl.pop_marker()
         return echo_peak + min_echo
