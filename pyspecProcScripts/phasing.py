@@ -4,7 +4,7 @@ import time
 from matplotlib.patches import Ellipse
 from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
-from pylab import xlim, subplots, axvline, ylim, sca, rand
+from pylab import xlim, subplots, axvline, axhline, ylim, sca, rand
 import numpy as np
 from numpy import r_, c_
 from scipy import linalg
@@ -212,16 +212,39 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
-def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2"):
+def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2",
+        slice_multiplier=18,
+        exclude_rising=3,
+        show_residuals=False):
     # {{{ autodetermine slice range
-    freq_envelope = (abs(d) ** 2).mean_all_but(direct)
-    noiselevel = np.sort(freq_envelope.data)[
-        int(len(freq_envelope.data) * (1 - fraction_nonnoise) * 10 + 0.5) // 10
-    ]
-    # we've removed the noise baseline, so that 80%
+    freq_envelope = d.C.mean_all_but(direct).run(abs)
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False)
+    freq_envelope.convolve(direct,
+            freq_envelope.get_ft_prop(direct,'df')*5,
+            enforce_causality=False)
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False)
+    freq_envelope[direct:0] = 0
+    # {{{ iteratively find the noise and then
+    #     noiselevel
+    thenoise = freq_envelope.data.copy()
+    for j in range(3):
+        print("number of thenoise points",len(thenoise))
+        thenoise = thenoise[thenoise <
+                3*np.std(thenoise)
+                + np.mean(thenoise)]
+    noiselevel = np.mean(thenoise) + 3*np.std(thenoise)
+    # }}}
+    # we've removed the noise baseline, so that 90%
     # of the points are assumed to be noise and just set
     # to 0
     freq_envelope[lambda x: x < noiselevel] = 0
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False)
     freq_envelope /= freq_envelope.C.integrate(direct).item()  # normalize
     avg_frq = (freq_envelope * freq_envelope.fromaxis(direct)).integrate(direct).item()
     std_frq = sqrt(
@@ -230,24 +253,37 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
     )
     if fl is not None:
         fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False)
+        axhline(y=noiselevel, color='r', alpha=0.25)
         axvline(x=avg_frq, color="k", alpha=0.5)
-        axvline(x=avg_frq - 2 * std_frq, color="k", alpha=0.5)
-        axvline(x=avg_frq + 2 * std_frq, color="k", alpha=0.5)
-    slice_range = r_[-0.5, 0.5] * 6 * std_frq
+        axvline(x=avg_frq - std_frq, color="k", alpha=0.25)
+        axvline(x=avg_frq - slice_multiplier*std_frq, color="k", alpha=0.5)
+        axvline(x=avg_frq + std_frq, color="k", alpha=0.25)
+        axvline(x=avg_frq + slice_multiplier*std_frq, color="k", alpha=0.5)
+    slice_range = r_[-1, 1] * slice_multiplier * std_frq + avg_frq
     # }}}
     d = d[direct:slice_range]
     d.ift(direct)
     # {{{ apply phasing, and check the residual
+    print('-four',d.getaxis(direct))
     d[direct] -= d.getaxis(direct)[0]
+    print('-three',d.getaxis(direct))
+    if fl is not None:
+        thebasename = fl.basename
+    else:
+        thebasename = ""
     best_shift = hermitian_function_test(
-        select_pathway(d, signal_pathway), basename=fl.basename + " hermitian", fl=fl
+        select_pathway(d, signal_pathway), basename=' '.join([
+            thebasename,"hermitian"]), fl=fl
     )
     d_save = d.C
+    print('-two',d.getaxis(direct))
     t_dw = d_save.get_ft_prop(direct,'dt')
-    for test_offset in (
-        t_dw/3 * r_[-3, -2, -1, 1, 2, 3, 0]
-    ):  # do 0 last, so that's what it uses
+    if show_residuals:
+        test_array = t_dw/3 * r_[-6, -3, -1, 1, 3, 6, 0]# do 0 last, so that's what it uses
+    else:
+        test_array = r_[0]
+    print('-one',d.getaxis(direct))
+    for test_offset in ( test_array):
         test_shift = best_shift + test_offset
         d = d_save.C
         if test_offset == 0:
@@ -260,45 +296,54 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         d /= ph0
         if fl is not None:
             t_start = d.getaxis(direct)[0]
-            fl.next("residual after shift")
             d_sigcoh = select_pathway(d, signal_pathway)[direct : (t_start, -2 * t_start)]
             s_flipped = d_sigcoh[direct:(t_start, -t_start)]
-            s_flipped[direct] = s_flipped[direct][::-1]
-            s_flipped = s_flipped[direct, ::-1]
-            for_resid = (
-                abs(s_flipped -
-                    d_sigcoh[direct:(t_start,
-                        -t_start)].C.run(np.conj)) ** 2
-            )
-            for_resid.mean_all_but(direct).run(sqrt)
-            resi_sum = for_resid[direct, 7:-7].mean(direct).item()
-            fl.plot(for_resid, human_units=False, label="best shift%+e" % test_offset)
-            fl.plot(
-                abs(d_sigcoh).mean_all_but(direct),
-                alpha=0.8,
-                human_units=False,
-                label=None,
-            )
-            fl.plot(
-                abs(s_flipped).mean_all_but(direct),
-                alpha=0.5,
-                human_units=False,
-                label=None,
-            )
-            fl.next("resi sum")
-            fl.plot(test_offset, resi_sum, "o", color=thiscolor)
+            idx = (ndshape(s_flipped)[direct])//2 
+            if (s_flipped.getaxis(direct)[idx] == 0
+                    and
+                    d_sigcoh.getaxis(direct)[idx] ==
+                    0): # should be centered about zero, but will not be if too lopsided
+                fl.next("residual after shift")
+                #s_flipped[direct] = s_flipped[direct][::-1]
+                s_flipped = s_flipped[direct, ::-1]
+                for_resid = (
+                    abs(s_flipped -
+                        d_sigcoh[direct:(t_start,
+                            -t_start)].C.run(np.conj)) ** 2
+                )
+                for_resid.mean_all_but(direct)
+                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
+                for_resid.run(sqrt)
+                fl.plot(for_resid, human_units=False, label="best shift%+e" % test_offset)
+                fl.plot(
+                    (abs(d_sigcoh)**2).mean_all_but(direct).run(sqrt),
+                    alpha=0.8,
+                    human_units=False,
+                    label=None,
+                )
+                fl.plot(
+                    (abs(s_flipped)**2).mean_all_but(direct).run(sqrt),
+                    alpha=0.5,
+                    human_units=False,
+                    label=None,
+                )
     # }}}
     if add_rising:
-        d_rising = d[direct:(None, 0)][direct, 0:-1]  # leave out first few points
+        d_rising = d[direct:(None, 0)][direct, exclude_rising:-1]  # leave out first few points
         d_rising.run(np.conj)
         N_rising = ndshape(d_rising)[direct]
         print("$N_{rising}=%d$" % N_rising)
+    print('one',d.getaxis(direct))
     d = d[direct:(0, None)]
+    print('two',d.getaxis(direct))
     if add_rising:
         d[direct, 1 : N_rising + 1] = (
-            d_rising[direct, ::-1] + d[direct, 1 : N_rising + 1]
+            d[direct, 1 : N_rising + 1]
+            + d_rising[direct, ::-1]
         ) / 2
+    print('three',d.getaxis(direct))
     d[direct, 0] *= 0.5
+    print('four',d.getaxis(direct))
     d.ft(direct)
     if fl is not None:
         fl.next("FID data")
@@ -354,6 +399,16 @@ def hermitian_function_test(
         the amount of signal that should be excluded as
         an number of datapoints, hence why we ask for
         an integer here.
+    enable_refinement: boolean
+        Do not use -- an attempt to correct for cases where we don't get
+        the lowest residual out of the Fourier technique.
+        The idea was that this was based on the fact that the correlation
+        function is calculated between the two upsampled (sinc
+        interpolated) functions, and so we should explicitly calculate
+        the residual in the original resolution.
+        But, there appears to be an error that would need to be debugged
+        -- fails some of the basic tests, and the residual does not
+        always appear to be the lowest.
 
     .. todo::
 
@@ -503,26 +558,27 @@ def hermitian_function_test(
         axvline(x=echo_peak / det_devisor(fl), linestyle=":")
     # }}}
     echo_idx = int((echo_peak + min_echo)/t_dw+0.5)
-    if enable_refinement and echo_idx-aliasing_slop > 3:
+    shift_range = 4
+    if enable_refinement and echo_idx-aliasing_slop > shift_range+1:
         s_foropt = s_timedom
-        center_idx = (2*(echo_idx-aliasing_slop)+1-aliasing_slop)//2+1
         shifts = nddata(
-                t_dw*r_[-2:2:300j],'echo shift')
+                t_dw*r_[-shift_range:shift_range:300j],'echo shift')
         s_foropt.ft(direct)
         # positive pushes time domain to left --
         # should represent that echo occurred later
-        # than expected, needed to be pushed left to
-        # be centered
+        # than expected, and so should be added to the echo_idx*t_dw
+        # estimate of the echo time
         s_foropt *= np.exp(1j*2*np.pi*shifts*s_foropt.fromaxis(direct))
         s_foropt.ift(direct)
         s_foropt = s_foropt[direct,
                 aliasing_slop:aliasing_slop+2*(echo_idx-aliasing_slop)+1]
-        ph0 = s_foropt[direct,
-                center_idx].C
+        # the center is now at echo_idx-aliasing_slop
+        # {{{ phasing must be done independently for each echo shift
+        ph0 = s_foropt[direct, echo_idx-aliasing_slop]
         ph0 /= abs(ph0)
-        ph0 = zeroth_order_ph(ph0)
+        # }}}
         s_foropt /= ph0
-        s_foropt = s_foropt[direct,2:-2]
+        s_foropt = s_foropt[direct,shift_range:-shift_range]
         s_foropt -= s_foropt.C[direct,::-1].run(np.conj)
         s_foropt.run(lambda x: abs(x)**2)
         s_foropt.mean_all_but('echo shift')
@@ -541,11 +597,10 @@ def hermitian_function_test(
             axvline(x=(t_dw*echo_idx+s_foropt - min_echo)/det_devisor(fl),
                     ls='-',
                     alpha=0.25)
-        if fl is not None:
             fl.pop_marker()
         return t_dw*echo_idx + s_foropt
     else:
-        if not enable_refinement:
+        if enable_refinement:
             logging.info("warning: can't do hermitian phasing refinement -- not enough points")
         if fl is not None:
             fl.pop_marker()
