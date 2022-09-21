@@ -304,7 +304,7 @@ def generate_T1_Ep(filename,
                 fl.plot(select_pathway(this_IR,IR_signal_pathway))
             s_int,frq_slice = integral_w_errors(abs(this_IR.C),IR_signal_pathway,error_pathway,
                     cutoff = IR_cutoff,
-                    indirect='vd',return_frq_slice=True,fl=fl)
+                    indirect='vd',return_frq_slice=True)
             if fl is not None:
                 fl.next('IR Integration Limits - %s'%nodename)
                 for j in range(len(d.getaxis('vd'))):
@@ -397,7 +397,7 @@ def generate_T1_Ep(filename,
             fl.plot(T1p,'o')
             plt.ylabel(r'$T_{1}$ / s')
             plt.xlabel('Power / W')
-            fl.show();quit()#WARREN UNCOMMENTING THIS WILL LET YOU SEE THE FIT! 
+            #fl.show();quit()#WARREN UNCOMMENTING THIS WILL LET YOU SEE THE FIT! 
     #}}}
     #}}}
     if has_Ep:
