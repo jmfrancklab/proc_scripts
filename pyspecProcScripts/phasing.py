@@ -226,12 +226,10 @@ def hermitian_function_test(
     else:
         s_ext = s.C
     t_dw = s.get_ft_prop(direct,'dt')
-    #s_ext[direct] *= 1e3
-    #s_ext.set_units('ms')
     print("trying to extend from",s_ext.getaxis(direct)[r_[0,-1]],"to",
             s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item())
     orig_bounds = s.getaxis(direct)[r_[0,-1]]
-    orig_bounds -= orig_bounds[0]
+    orig_bounds -= orig_bounds[0] #starting point is at 0 for orig_bounds
     s_ext.extend(
         direct, s_ext.getaxis(direct)[0] + 2 * np.diff(s_ext.getaxis(direct)[r_[0, -1]]).item()
     )  # zero fill
@@ -240,9 +238,6 @@ def hermitian_function_test(
     ).ift(
         direct
     )  # forces the axis to *start* at 0
-    #s_ext.ft(direct)
-    #s_ext.ift(direct, pad=
-    #        2**(round(np.log(ndshape(s)[direct]*10)/np.log(2))))
     if fl is not None:
         fl.push_marker()
         if basename is None:
