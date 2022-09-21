@@ -315,8 +315,6 @@ def proc_spincore_IR(s, fl=None):
     vd_axis = s.getaxis("vd")
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
-    s.setaxis("ph1", r_[0, 2.0] / 4)
-    s.setaxis("ph2", r_[0, 2.0] / 4)
     s.reorder(["ph2", "ph1"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
@@ -338,24 +336,13 @@ def proc_spincore_IR_v2(s, fl=None):
     vd_axis = s.getaxis("vd")
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
-    s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
-    s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
-    s.reorder(["ph2", "ph1"]).set_units("t2", "s")
-    s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"], unitary=True)
     if fl is not None:
         fl.next("raw data -- coherence channels")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-    s.ift("t2")
-    if fl is not None:
-        fl.next("time domain (all $\\Delta p$)")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-    s.ft("t2")
-    if fl is not None:
-        fl.next("frequency domain (all $\\Delta p$)")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
     return s
-
+def proc_spincore_IR_v3(s,fl=None):
+    vd_axis = s.getaxis('vd')
+    return s
 
 def proc_nutation(s, fl=None):
     logging.info("loading pre-processing for nutation")
@@ -541,22 +528,14 @@ def proc_spincore_ODNP_v3(s, fl=None):
 
 
 def proc_spincore_ODNP_v4(s, fl=None):
-    if "t" in s.dimlabels:
-        t.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
-        s.set_units("t2", "s")
-    s.rename("power", "time")
-    s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
-    s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
-    s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"], unitary=True)
-    s.reorder(["ph1", "ph2", "time"])
     if fl is not None:
         fl.next("Raw Data \n Frequency Domain")
         fl.image(s)
-        s.ift("t2")
+    s.ift("t2")
+    if fl is not None:
         fl.next("Raw Data \n Time Domain")
         fl.image(s)
-        s.ft("t2")
+    s.ft("t2")
     return s
 
 
@@ -688,7 +667,7 @@ lookup_table = {
     "chirp": proc_capture,
     "spincore_CPMG_v1": proc_spincore_CPMG_v1,
     "spincore_Hahn_echoph_v1": proc_Hahn_echoph,
-    "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
+    "spincore_IR_v1": proc_spincore_IR,  # for 2 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_amp,
