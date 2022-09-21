@@ -18,6 +18,27 @@ myconcs = []
 # }}}
 
 def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None, background=None, fl=None, exp_type="francklab_esr/Farhana", which_plot=None):
+    """
+    Parameters
+    ==========
+    fl: figure list
+        required!
+    background: nddata
+        the background spectrum (loaded data)
+    pushout: float
+        really shouldn't need adjustment, but adjusts the "generous limits"
+    threshold: float
+      peak defined as anything that rises above threshold*max
+    pickle_file: str
+        name of pickle file you want to append the concentration to
+    background: HDF5 file that has been opened. 
+        Will be used as the background that is subtracted 
+        from the dataset.
+    exp_type: str
+        where the file of interest is
+    which_plot: str
+        name that will be used in titles of plots
+    """
     if which_plot is None:
         which_plot = file_name
     if fl is None:
@@ -30,9 +51,9 @@ def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None
         #     residue, so should be good identifier
         if os.path.exists(pickle_file):
             with open(pickle_file, "rb") as fp:
-                vars = pickle.load(fp)
+                pickle_vars = pickle.load(fp)
         else:
-            vars = {}
+            pickle_vars = {}
         # }}}
     # {{{ load the file of interest, and get set up
     d = find_file(file_name, exp_type=exp_type)
@@ -119,6 +140,7 @@ def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None
     d_abs.name("conc").set_units("μM")
     fl.plot(d_abs, alpha=0.5, label=f"{label}, %0.4f μM" % final_conc)
     fl.grid()
-    vars[label] = final_conc
-    with open(pickle_file, "wb") as fp:
-        vars = pickle.dump(vars, fp)
+    if pickle_file is not None:
+        pickle_vars[label] = final_conc
+        with open(pickle_file, "wb") as fp:
+            pickle_vars = pickle.dump(pickle_vars, fp)
