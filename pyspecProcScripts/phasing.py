@@ -4,7 +4,7 @@ import time
 from matplotlib.patches import Ellipse
 from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
-from pylab import xlim, subplots, axvline, axhline, ylim, sca, rand
+from pylab import xlim, subplots, axvline, axhline, ylim, sca, rand, legend
 import numpy as np
 from numpy import r_, c_
 from scipy import linalg
@@ -220,46 +220,31 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
     freq_envelope = d.C.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False)
+        fl.plot(freq_envelope, human_units=False, label="signal energy")
     freq_envelope.convolve(direct,
             freq_envelope.get_ft_prop(direct,'df')*5,
             enforce_causality=False)
+    freq_envelope -= (
+            freq_envelope[direct,-1].item()
+            +
+            freq_envelope[direct,0].item())/2
     if fl is not None:
         fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False)
+        fl.plot(freq_envelope, human_units=False, label="signal energy\nconv + baselined")
     freq_envelope[direct:0] = 0
-    # {{{ iteratively find the noise and then
-    #     noiselevel
-    thenoise = freq_envelope.data.copy()
-    for j in range(3):
-        print("number of thenoise points",len(thenoise))
-        thenoise = thenoise[thenoise <
-                3*np.std(thenoise)
-                + np.mean(thenoise)]
-    noiselevel = np.mean(thenoise) + 3*np.std(thenoise)
-    # }}}
-    # we've removed the noise baseline, so that 90%
-    # of the points are assumed to be noise and just set
-    # to 0
-    freq_envelope[lambda x: x < noiselevel] = 0
+    half_width_slice = freq_envelope.contiguous(
+            lambda x: x>0.5*x.data.max())[0,:]
+    frq_center = np.mean(half_width_slice).item()
+    frq_half = np.diff(half_width_slice).item()/2
     if fl is not None:
         fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False)
-    freq_envelope /= freq_envelope.C.integrate(direct).item()  # normalize
-    avg_frq = (freq_envelope * freq_envelope.fromaxis(direct)).integrate(direct).item()
-    std_frq = sqrt(
-        (freq_envelope * (freq_envelope.fromaxis(direct)) ** 2).integrate(direct).item()
-        - avg_frq ** 2
-    )
-    if fl is not None:
-        fl.next("autoslicing!")
-        axhline(y=noiselevel, color='r', alpha=0.25)
-        axvline(x=avg_frq, color="k", alpha=0.5)
-        axvline(x=avg_frq - std_frq, color="k", alpha=0.25)
-        axvline(x=avg_frq - slice_multiplier*std_frq, color="k", alpha=0.5)
-        axvline(x=avg_frq + std_frq, color="k", alpha=0.25)
-        axvline(x=avg_frq + slice_multiplier*std_frq, color="k", alpha=0.5)
-    slice_range = r_[-1, 1] * slice_multiplier * std_frq + avg_frq
+        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
+        axvline(x=frq_center - frq_half, color="k", ls=':', alpha=0.25, label="half width")
+        axvline(x=frq_center - slice_multiplier*frq_half, color="k", ls='--', alpha=0.5, label='final slice')
+        axvline(x=frq_center + frq_half, color="k", ls=':', alpha=0.25)
+        axvline(x=frq_center + slice_multiplier*frq_half, color="k", ls='--', alpha=0.5, label='final slice')
+        legend()
+    slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
     # }}}
     d = d[direct:slice_range]
     d.ift(direct)
@@ -335,19 +320,19 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         print("$N_{rising}=%d$" % N_rising)
     print('one',d.getaxis(direct))
     d = d[direct:(0, None)]
-    print('two',d.getaxis(direct))
-    if add_rising:
-        d[direct, 1 : N_rising + 1] = (
-            d[direct, 1 : N_rising + 1]
-            + d_rising[direct, ::-1]
-        ) / 2
-    print('three',d.getaxis(direct))
-    d[direct, 0] *= 0.5
-    print('four',d.getaxis(direct))
-    d.ft(direct)
-    if fl is not None:
-        fl.next("FID data")
-        fl.image(d)
+    #print('two',d.getaxis(direct))
+    #if add_rising:
+    #    d[direct, 1 : N_rising + 1] = (
+    #        d[direct, 1 : N_rising + 1]
+    #        + d_rising[direct, ::-1]
+    #    ) / 2
+    #print('three',d.getaxis(direct))
+    #d[direct, 0] *= 0.5
+    #print('four',d.getaxis(direct))
+    #d.ft(direct)
+    #if fl is not None:
+    #    fl.next("FID data")
+    #    fl.image(d)
     return d
 def hermitian_function_test(
     s,
