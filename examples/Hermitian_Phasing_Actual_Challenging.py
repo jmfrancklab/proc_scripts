@@ -45,13 +45,21 @@ with figlist_var() as fl:
         fl.image(data['t2':(-1e3,1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
         data = data['t2':f_range]
+        data.ift("t2")
         fl.basename = "(%s)"%label
-        data = fid_from_echo(data, signal_pathway,
-                fl=fl)
-        #fl.image(data['t2':(-1e3,1e3)], ax=ax_list[1],
-        #        human_units=False)
-        #ax_list[1].set_title("Phased and centered (ν)")
-        #data.ift("t2")
-        #fl.image(data, ax=ax_list[2], human_units=False)
-        #ax_list[2].set_title("Phased and Centered (t)")
-        #fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+        best_shift = hermitian_function_test(
+            select_pathway(data.C.mean('nScans'), signal_pathway),
+            aliasing_slop=alias_slop,
+            fl=fl
+        )
+        logging.info(strm("best shift is:",best_shift))
+        data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
+        data /= zeroth_order_ph(select_pathway(data,signal_pathway))
+        data.ft('t2')
+        fl.image(data['t2':(-1e3,1e3)], ax=ax_list[1],
+                human_units=False)
+        ax_list[1].set_title("Phased and centered (ν)")
+        data.ift("t2")
+        fl.image(data, ax=ax_list[2], human_units=False)
+        ax_list[2].set_title("Phased and Centered (t)")
+        fig.tight_layout(rect=[0, 0.03, 1, 0.95])

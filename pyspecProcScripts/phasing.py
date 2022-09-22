@@ -408,14 +408,14 @@ def hermitian_function_test(
         s_timedom = s.C
     s_ext = s_timedom.C
     assert (
-        s.getaxis(direct)[0] == 0.0
+        s_timedom.getaxis(direct)[0] == 0.0
     ), """In order to
     calculate the signal energy term correctly, the
     signal must start at t=0  so set the start of the
     acquisition in the *non-aliased* time domain to 0 (something like
     data['t2'] -= acqstart) to avoid confusion"""
-    t_dw = s.get_ft_prop(direct, "dt")
-    orig_bounds = s.getaxis(direct)[r_[0, -1]]
+    t_dw = s_timedom.get_ft_prop(direct, "dt")
+    orig_bounds = s_timedom.getaxis(direct)[r_[0, -1]]
     plot_bounds = orig_bounds # allow this to be set to ± inf if I want to see all
     # }}}
     # {{{ force the axis to *start* at 0
@@ -433,7 +433,7 @@ def hermitian_function_test(
     # *after* previous to avoid aliasing glitch
     tukeyfilter = s_ext.fromaxis(direct).run(lambda x: sci_win.tukey(len(x)))
     s_ext *= tukeyfilter
-    s_ext.ift(direct, pad=2 ** int(np.ceil(np.log(ndshape(s)[direct] * upsampling) / np.log(2))))
+    s_ext.ift(direct, pad=2 ** int(np.ceil(np.log(ndshape(s_timedom)[direct] * upsampling) / np.log(2))))
     s_ext[direct:(orig_bounds[-1],None)] = 0 # explicitly zero, in case there are aliased negative times!
     # }}}
     # {{{ now I need to throw out the initial, aliased
