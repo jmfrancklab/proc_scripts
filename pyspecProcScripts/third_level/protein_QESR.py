@@ -144,3 +144,4 @@ def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None
         pickle_vars[label] = final_conc
         with open(pickle_file, "wb") as fp:
             pickle_vars = pickle.dump(pickle_vars, fp)
+    return final_conc
