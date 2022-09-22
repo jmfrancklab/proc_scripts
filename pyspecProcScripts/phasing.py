@@ -245,6 +245,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         axvline(x=frq_center + slice_multiplier*frq_half, color="k", ls='--', alpha=0.5, label='final slice')
         legend()
     slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
+    reduced_slice_range = r_[-1, 1] * 2 * frq_half + frq_center
     # }}}
     d = d[direct:slice_range]
     d.ift(direct)
@@ -254,7 +255,24 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         thebasename = fl.basename
     else:
         thebasename = ""
-    input_for_hermitian = select_pathway(d, signal_pathway).C.mean_all_but(direct)
+    # {{{ sign flip and average input for hermitian
+    input_for_hermitian = select_pathway(d, signal_pathway).C
+    signflip = input_for_hermitian.C.ft(direct)
+    signflip = signflip[direct:reduced_slice_range]
+    idx = abs(signflip).mean_all_but(direct).data.argmax()
+    signflip = signflip[direct,idx]
+    ph0 = zeroth_order_ph(signflip)
+    signflip /= ph0
+    signflip.run(np.real)
+    signflip /= abs(signflip)
+    input_for_hermitian /= signflip
+    if fl is not None:
+        fl.next('sign flipped for hermitian')
+        input_for_hermitian.reorder(direct,
+                first=False)
+        fl.image(input_for_hermitian)
+    input_for_hermitian.mean_all_but(direct)
+    # }}}
     best_shift = hermitian_function_test(
             input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
