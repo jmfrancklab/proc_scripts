@@ -213,9 +213,9 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 
 
 def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2",
-        slice_multiplier=18,
+        slice_multiplier=90,
         exclude_rising=3,
-        show_residuals=False):
+        show_residuals=True):
     # {{{ autodetermine slice range
     freq_envelope = d.C.mean_all_but(direct).run(abs)
     if fl is not None:
@@ -249,25 +249,22 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
     d = d[direct:slice_range]
     d.ift(direct)
     # {{{ apply phasing, and check the residual
-    print('-four',d.getaxis(direct))
     d[direct] -= d.getaxis(direct)[0]
-    print('-three',d.getaxis(direct))
     if fl is not None:
         thebasename = fl.basename
     else:
         thebasename = ""
+    input_for_hermitian = select_pathway(d, signal_pathway).C.mean_all_but(direct)
     best_shift = hermitian_function_test(
-        select_pathway(d, signal_pathway), basename=' '.join([
+            input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
     )
     d_save = d.C
-    print('-two',d.getaxis(direct))
     t_dw = d_save.get_ft_prop(direct,'dt')
     if show_residuals:
         test_array = t_dw/3 * r_[-6, -3, -1, 1, 3, 6, 0]# do 0 last, so that's what it uses
     else:
         test_array = r_[0]
-    print('-one',d.getaxis(direct))
     for test_offset in ( test_array):
         test_shift = best_shift + test_offset
         d = d_save.C
@@ -317,22 +314,14 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         d_rising = d[direct:(None, 0)][direct, exclude_rising:-1]  # leave out first few points
         d_rising.run(np.conj)
         N_rising = ndshape(d_rising)[direct]
-        print("$N_{rising}=%d$" % N_rising)
-    print('one',d.getaxis(direct))
     d = d[direct:(0, None)]
-    #print('two',d.getaxis(direct))
-    #if add_rising:
-    #    d[direct, 1 : N_rising + 1] = (
-    #        d[direct, 1 : N_rising + 1]
-    #        + d_rising[direct, ::-1]
-    #    ) / 2
-    #print('three',d.getaxis(direct))
-    #d[direct, 0] *= 0.5
-    #print('four',d.getaxis(direct))
-    #d.ft(direct)
-    #if fl is not None:
-    #    fl.next("FID data")
-    #    fl.image(d)
+    if add_rising:
+        d[direct, 1 : N_rising + 1] = (
+            d[direct, 1 : N_rising + 1]
+            + d_rising[direct, ::-1]
+        ) / 2
+    d[direct, 0] *= 0.5
+    d.ft(direct)
     return d
 def hermitian_function_test(
     s,
@@ -505,7 +494,6 @@ def hermitian_function_test(
     reasonable_energy_range = s_energy.contiguous(lambda x: abs(x) > energy_threshold*abs(x.data).max())[0,:]
     _,reasonable_energy_range[1] = s_energy.contiguous(lambda x: abs(x) >
             energy_threshold*energy_threshold_lower*abs(x.data).max())[0,:]
-    print(reasonable_energy_range)
     cost_func = cost_func[direct:reasonable_energy_range]
     cost_func.run(lambda x: x/sqrt(abs(x)))  # based on what we'd seen
     #             previously (empirically), I take the
