@@ -30,7 +30,7 @@ def det_devisor(fl):
     return divisor
 
 def zeroth_order_ph(d, fl=None):
-    r"""determine the covariance of the datapoints
+    r"""determine the moment of inertial of the datapoints
     in complex plane, and use to phase the
     zeroth-order even if the data is both negative
     and positive.
@@ -55,49 +55,25 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     """
-    cov_mat = np.cov(
-        c_[d.data.real.ravel(), d.data.imag.ravel()].T,
-        aweights=abs(d.data).ravel() ** 2  # when running proc_square_refl, having
-        # this line dramatically reduces the size of the imaginary component
-        # during the "blips," and the magnitude squared seems to perform
-        # slightly better than the magnitude -- this should be both a robust
-        # test and a resolution for issue #23
-    )
-    eigenValues, eigenVectors = linalg.eigh(cov_mat)
+    realvector = d.data.real.ravel()
+    imvector = d.data.imag.ravel()
+    R2 = np.mean(realvector**2)
+    I2 = np.mean(imvector**2)
+    C = np.mean(realvector*imvector) # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution, rather than at right angles
+    inertia_matrix = np.array([[R2,C],
+        [C,I2]])
+    eigenValues, eigenVectors = linalg.eigh(inertia_matrix)
     mean_point = d.data.ravel().mean()
     mean_vec = r_[mean_point.real, mean_point.imag]
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
     idx = eigenValues.argsort()[::-1]
     eigenValues = eigenValues[idx]
-    eigenVectors = eigenVectors[:, idx]  # first dimension x,y second evec #
-    # determine the phase angle from direction of the
-    # largest principle axis plus the mean
-    # the vector in the direction of the largest
-    # principle axis would have a norm equal to the
-    # sqrt (std not variance) of the eigenvalue, except
-    # that we only want to rotate when the distribution
-    # is assymetric, so include only the excess of the
-    # larger eval over the smaller
-    assymetry_mag = float(sqrt(eigenValues[0]) - sqrt(eigenValues[1]))
-    try:
-        assym_ineq = (assymetry_mag * eigenVectors[:, 0] * mean_vec).sum()
-    except:
-        raise ValueError(
-            strm(
-                "check the sizes of the following:",
-                size(assymetry_mag),
-                size(eigenVectors),
-                size(mean_vec),
-            )
-        )
-    if assym_ineq > 0:
-        # we want the eigenvector on the far side of the ellipse
-        rotation_vector = mean_vec + assymetry_mag * eigenVectors[:, 0]
-    else:
-        rotation_vector = mean_vec - assymetry_mag * eigenVectors[:, 0]
+    eigenVectors = eigenVectors[:, idx]
+    rotation_vector = eigenVectors[:,0]
     ph0 = np.arctan2(rotation_vector[1], rotation_vector[0])
     if fl is not None:
+        fl.push_marker()
         d_forplot = d.C
         fl.next("check covariance test")
         fl.plot(
@@ -107,6 +83,8 @@ def zeroth_order_ph(d, fl=None):
             alpha=0.25,
             label="before",
         )
+        plt.xlabel('real')
+        plt.ylabel('imag')
         d_forplot /= np.exp(1j * ph0)
         fl.plot(
             d_forplot.data.ravel().real,
@@ -116,23 +94,18 @@ def zeroth_order_ph(d, fl=None):
             label="after",
         )
         fl.plot(0, 0, "ko", alpha=0.5)
-        fl.plot(mean_vec[0], mean_vec[1], "kx", label="mean", alpha=0.5)
         evec_forplot = (
-            sqrt(eigenValues.reshape(1, 2)) * np.ones((2, 1)) * eigenVectors
+            2 * sqrt(eigenValues.reshape(1, 2)) * np.ones((2, 1)) * eigenVectors
         )  # scale by the std, not the variance!
-        evec_forplot += mean_vec.reshape((-1, 1)) * np.ones((1, 2))
         fl.plot(
             evec_forplot[0, 0], evec_forplot[1, 0], "o", alpha=0.5, label="first evec"
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
-        fl.plot(
-            rotation_vector[1], "o", alpha=0.5, label="rotation vector",
-        )
         norms = sqrt((evec_forplot ** 2).sum(axis=0))
         ell = Ellipse(
-            xy=mean_vec,
-            width=2 * sqrt(eigenValues[0]),
-            height=2 * sqrt(eigenValues[1]),
+            xy=[0,0],
+            width=4 * sqrt(eigenValues[0]),
+            height=4 * sqrt(eigenValues[1]),
             angle=180 / pi * np.arctan2(eigenVectors[1, 0], eigenVectors[0, 0]),
             color="k",
             fill=False,
@@ -140,7 +113,8 @@ def zeroth_order_ph(d, fl=None):
         ax = plt.gca()
         ax.set_aspect("equal", adjustable="box")
         ax.add_patch(ell)
-    return np.exp(1j * ph0)
+        fl.pop_marker()
+    return np.exp(1j * ph0) * np.sign((mean_point / np.exp(1j * ph0)).real)
 
 
 def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
@@ -215,6 +189,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2",
         slice_multiplier=90,
         exclude_rising=3,
+        show_hermitian_sign_flipped=False,
         show_residuals=True):
     # {{{ autodetermine slice range
     freq_envelope = d.C.mean_all_but(direct).run(abs)
@@ -266,7 +241,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
     signflip.run(np.real)
     signflip /= abs(signflip)
     input_for_hermitian /= signflip
-    if fl is not None:
+    if fl is not None and show_hermitian_sign_flipped:
         fl.next('sign flipped for hermitian')
         input_for_hermitian.reorder(direct,
                 first=False)
@@ -288,11 +263,15 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         d = d_save.C
         if test_offset == 0:
             thiscolor = "k"
+            zeroth_fl = fl
         else:
             thiscolor = next(default_matplotlib_cycle)
+            zeroth_fl = None
         d.set_plot_color(thiscolor)
         d.setaxis(direct, lambda x: x - test_shift).register_axis({direct: 0})
-        ph0 = zeroth_order_ph(select_pathway(d, signal_pathway)[direct:0.0])
+        ph0 = zeroth_order_ph(select_pathway(d,
+            signal_pathway)[direct:0.0],
+            fl=zeroth_fl)
         d /= ph0
         if fl is not None:
             t_start = d.getaxis(direct)[0]

@@ -61,7 +61,7 @@ with figlist_var() as fl:
         fig, ax_list = subplots(1, 4, figsize = (7,7))
         fig.suptitle(fl.basename)
         fl.next("Data processing", fig=fig)
-        data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
+        data = exp(1j*pi/4)*fake_data(expression, OrderedDict(orderedDict), signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
