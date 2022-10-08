@@ -190,7 +190,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         slice_multiplier=90,
         exclude_rising=3,
         show_hermitian_sign_flipped=False,
-        show_residuals=True):
+        show_shifted_residuals=False):
     # {{{ autodetermine slice range
     freq_envelope = d.C.mean_all_but(direct).run(abs)
     if fl is not None:
@@ -254,7 +254,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
     )
     d_save = d.C
     t_dw = d_save.get_ft_prop(direct,'dt')
-    if show_residuals:
+    if show_shifted_residuals:
         test_array = t_dw/3 * r_[-6, -3, -1, 1, 3, 6, 0]# do 0 last, so that's what it uses
     else:
         test_array = r_[0]
@@ -267,7 +267,8 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         else:
             thiscolor = next(default_matplotlib_cycle)
             zeroth_fl = None
-        d.set_plot_color(thiscolor)
+        if show_shifted_residuals:
+            d.set_plot_color(thiscolor)
         d.setaxis(direct, lambda x: x - test_shift).register_axis({direct: 0})
         ph0 = zeroth_order_ph(select_pathway(d,
             signal_pathway)[direct:0.0],
@@ -276,36 +277,40 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         if fl is not None:
             t_start = d.getaxis(direct)[0]
             d_sigcoh = select_pathway(d, signal_pathway)[direct : (t_start, -2 * t_start)]
-            s_flipped = d_sigcoh[direct:(t_start, -t_start)]
+            d_sigcoh = select_pathway(d, signal_pathway).squeeze()
+            s_flipped = d_sigcoh[direct:(t_start, -t_start)][direct,::-1].C
             idx = (ndshape(s_flipped)[direct])//2 
+            ph0 = zeroth_order_ph(d_sigcoh[direct,idx])
+            d_sigcoh /= ph0
+            s_flipped /= ph0
+            s_flipped.run(np.conj)
+            s_flipped[direct] = s_flipped[direct][::-1]
             if (s_flipped.getaxis(direct)[idx] == 0
                     and
                     d_sigcoh.getaxis(direct)[idx] ==
                     0): # should be centered about zero, but will not be if too lopsided
                 fl.next("residual after shift")
-                #s_flipped[direct] = s_flipped[direct][::-1]
-                s_flipped = s_flipped[direct, ::-1]
-                for_resid = (
-                    abs(s_flipped -
-                        d_sigcoh[direct:(t_start,
-                            -t_start)].C.run(np.conj)) ** 2
-                )
-                for_resid.mean_all_but(direct)
+                for_resid = abs((s_flipped -
+                            d_sigcoh[direct:(t_start,
+                                -t_start)]).mean_all_but(direct))
                 resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 for_resid.run(sqrt)
-                fl.plot(for_resid, human_units=False, label="best shift%+e" % test_offset)
+                fl.plot(for_resid, human_units=False, label="best shift%+e, mean of residual" % test_offset)
                 fl.plot(
-                    (abs(d_sigcoh)**2).mean_all_but(direct).run(sqrt),
+                    d_sigcoh.C.mean_all_but(direct).run(abs),
                     alpha=0.8,
                     human_units=False,
-                    label=None,
+                    label="best shift%+e, abs of mean" % test_offset,
                 )
                 fl.plot(
-                    (abs(s_flipped)**2).mean_all_but(direct).run(sqrt),
+                    s_flipped.C.mean_all_but(direct).run(abs),
                     alpha=0.5,
                     human_units=False,
-                    label=None,
+                    label="best shift%+e, abs of flipped mean" % test_offset,
                 )
+                ax = plt.gca()
+                yl = ax.get_ylim()
+                ax.set_ylim((0,yl[-1]))
     # }}}
     if add_rising:
         d_rising = d[direct:(None, 0)][direct, exclude_rising:-1]  # leave out first few points

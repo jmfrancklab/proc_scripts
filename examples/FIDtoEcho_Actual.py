@@ -26,7 +26,6 @@ with figlist_var(file_name="tempdata220922final.pdf") as fl:
         "enhancement_21C",
         "enhancement_5C",
     ]:
-        fl.text(f"\\par {nodename.replace('_',' ')} \\par")
         d = find_file(
             "211103_TEMPOL_269uM_HeatExch.h5",
             exp_type="ODNP_NMR_comp/ODNP",
