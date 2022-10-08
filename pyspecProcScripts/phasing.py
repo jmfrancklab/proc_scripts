@@ -62,7 +62,7 @@ def zeroth_order_ph(d, fl=None):
     C = np.mean(realvector*imvector) # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution
     # note that this effectively changes the relative sign of x and y, reflecting the ellipse so that it circles the elements rather than going around them, and it's note the same as just flipping the eigenvalues
     inertia_matrix = np.array([[R2,C],
-        [C,I2]])
+        [C,I2]]) # moment of inertia, with C inverted -- see comment below
     eigenValues, eigenVectors = linalg.eigh(inertia_matrix)
     mean_point = d.data.ravel().mean()
     # next 3 lines from stackexchange -- sort by
@@ -70,6 +70,7 @@ def zeroth_order_ph(d, fl=None):
     idx = eigenValues.argsort()[::-1]
     eigenValues = eigenValues[idx]
     eigenVectors = eigenVectors[:, idx]
+    # eigenVectors[1,:] *= -1 # leave this line -- uncommenting this and negating the C above yields the same result!
     rotation_vector = eigenVectors[:,0]
     ph0 = np.arctan2(rotation_vector[1], rotation_vector[0])
     if fl is not None:
