@@ -329,6 +329,7 @@ def proc_spincore_IR(s, fl=None):
     if fl is not None:
         fl.next("frequency domain (all $\\Delta p$)")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
+        fl.show()
     return s
 
 
