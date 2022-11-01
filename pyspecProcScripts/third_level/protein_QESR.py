@@ -17,7 +17,7 @@ fieldaxis = "$B_0$"
 myconcs = []
 # }}}
 
-def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None, background=None, fl=None, exp_type="francklab_esr/Farhana", which_plot=None):
+def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None, background=None, fl=None, exp_type="francklab_esr/Farhana", which_plot=None, color=None):
     """
     Parameters
     ==========
@@ -86,7 +86,9 @@ def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None
     fl.next(f"{which_plot} baseline diagnostic")
     gca().set_title("zoomed-in baseline diagnostic\nshowing only baseline\n(data and fit)")
     # }}}
-    d.set_plot_color(next(colors)["color"])
+    if color is None:
+        color = next(colors)["color"]
+    d.set_plot_color(color)
     fl.next(f"{which_plot} show background subtraction in abs mode")
     forplot = background.C.integrate(fieldaxis, cumulative=True)
     forplot.set_plot_color(d.get_plot_color())
