@@ -58,10 +58,15 @@ for thisfile, exp_type, nodename in [
     s.ft(["ph1", "ph2"])
     # }}}
     s.ft("t2")
+    fl.next('raw freq')
+    fl.image(s)
     s = s["t2":f_range]
     # {{{Phase corrections
     s.ift("t2")
-    best_shift = hermitian_function_test(select_pathway(s.C.mean('nScans'), signal_pathway))
+    best_shift,_ = hermitian_function_test(select_pathway(s, signal_pathway),
+            echo_before = s.get_prop('acq_params')['tau_us']*1e-6*1.5,
+            fl=fl)
+    print(best_shift)
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
     s /= zeroth_order_ph(select_pathway(s.C.mean('nScans'),signal_pathway))
     fl.next("Phase corrected freq. domain")
@@ -91,7 +96,7 @@ for thisfile, exp_type, nodename in [
     # s.ift('t2')
     ##}}}
     fl.next("FID sliced")
-    s = s["t2" : t_range]
+    s = s["t2" : (0,None)]
     s["t2":0] *= 0.5
     s.ft("t2")
     fl.image(s)
@@ -99,7 +104,8 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{Normalization
-    frq_slice = integrate_limits(select_pathway(s, signal_pathway))
+    frq_slice = integrate_limits(select_pathway(s.C.mean('nScans'), signal_pathway))
+    print(frq_slice)
     s_integral = s["t2":frq_slice].C # the "official" copy of the integral
     s_integral = select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
@@ -127,10 +133,16 @@ for thisfile, exp_type, nodename in [
             s,
             signal_pathway,
             [thispathway],
+            cutoff = 0.2,
             indirect="nScans",
             return_frq_slice=True,
+            fl=fl
         )
         assert all(frq_slice_check == frq_slice)
+        fl.next('Integration with error frequency slice')
+        fl.plot(select_pathway(s,signal_pathway))
+        plt.axvline(x = frq_slice [0])
+        plt.axvline(x = frq_slice[-1])
         error = s_thisint.get_error()
         avg_error = error.mean().item()
         s_int_lst.append(s_thisint)
@@ -158,47 +170,47 @@ for thisfile, exp_type, nodename in [
 
     # {{{ Plotting Errors
     fl.next("comparison of std", legend=True)
-    for i in range(len(s_int_lst)):
-        fl.plot(
-            error_lst[i],
-            "o",
-            color=colors[i],
-            label="on excluded path of %s" % error_pathway[i],
-        )
-    fl.plot(active_error, "x", label="propagated error from active CT\nin noise slice")
+    #for i in range(len(s_int_lst)):
+    #    fl.plot(
+    #        error_lst[i],
+    #        "o",
+    #        color=colors[i],
+    #        label="on excluded path of %s" % error_pathway[i],
+    #    )
+    #fl.plot(active_error, "x", label="propagated error from active CT\nin noise slice")
     fl.plot(
-        averaged_inactive_error,
-        "o",
+        averaged_inactive,#_error,
+        "o", capsize = 6,
         color="brown",
         label="averaged propagated error\nfrom all inactive CTs",
     )
-    for i in range(len(s_int_lst)):
-        axhline(
-            y=avg_error_lst[i],
-            linestyle=":",
-            color=colors[i],
-            label="averaged %s" % error_pathway[i],
-        )
-    axhline(
-        y=avg_active_error,
-        linestyle="--",
-        label="averaged propagated error\nfrom active CT in noise slice",
-    )
-    axhline(
-        y=avg_avg_error,
-        linestyle="--",
-        color="brown",
-        label="averaged propagated error\nfrom all inactive CTs",
-    )
+    #for i in range(len(s_int_lst)):
+    #    axhline(
+    #        y=avg_error_lst[i],
+    #        linestyle=":",
+    #        color=colors[i],
+    #        label="averaged %s" % error_pathway[i],
+    #    )
+    #axhline(
+    #    y=avg_active_error,
+    #    linestyle="--",
+    #    label="averaged propagated error\nfrom active CT in noise slice",
+    #)
+    #axhline(
+    #    y=avg_avg_error,
+    #    linestyle="--",
+    #    color="brown",
+    #    label="averaged propagated error\nfrom all inactive CTs",
+    #)
     # {{{ Calculating the std dev -- error associated with the integrals
     s_integral.run(np.std, "nScans")
     # }}}
-    axhline(
-        y=s_integral.data,
-        c="k",
-        linestyle="-",
-        label="std dev of integrals",
-    )
+    #axhline(
+    #    y=s_integral.data,
+    #    c="k",
+    #    linestyle="-",
+    #    label="std dev of integrals",
+    #)
     # }}}
     plt.axis("tight")
     ax = plt.gca()
