@@ -170,47 +170,41 @@ for thisfile, exp_type, nodename in [
 
     # {{{ Plotting Errors
     fl.next("comparison of std", legend=True)
-    #for i in range(len(s_int_lst)):
-    #    fl.plot(
-    #        error_lst[i],
-    #        "o",
-    #        color=colors[i],
-    #        label="on excluded path of %s" % error_pathway[i],
-    #    )
-    #fl.plot(active_error, "x", label="propagated error from active CT\nin noise slice")
-    fl.plot(
-        averaged_inactive,#_error,
-        "o", capsize = 6,
+    for i in range(len(s_int_lst)):
+        fl.plot(
+            error_lst[i],
+            "o",
+            color=colors[i],
+            label="on excluded path of %s" % error_pathway[i],
+        )
+    fl.plot(active_error, "x", label="propagated error from active CT\nin noise slice")
+    for i in range(len(s_int_lst)):
+        axhline(
+            y=avg_error_lst[i],
+            linestyle=":",
+            color=colors[i],
+            label="averaged %s" % error_pathway[i],
+        )
+    axhline(
+        y=avg_active_error,
+        linestyle="--",
+        label="averaged propagated error\nfrom active CT in noise slice",
+    )
+    axhline(
+        y=avg_avg_error,
+        linestyle="--",
         color="brown",
         label="averaged propagated error\nfrom all inactive CTs",
     )
-    #for i in range(len(s_int_lst)):
-    #    axhline(
-    #        y=avg_error_lst[i],
-    #        linestyle=":",
-    #        color=colors[i],
-    #        label="averaged %s" % error_pathway[i],
-    #    )
-    #axhline(
-    #    y=avg_active_error,
-    #    linestyle="--",
-    #    label="averaged propagated error\nfrom active CT in noise slice",
-    #)
-    #axhline(
-    #    y=avg_avg_error,
-    #    linestyle="--",
-    #    color="brown",
-    #    label="averaged propagated error\nfrom all inactive CTs",
-    #)
     # {{{ Calculating the std dev -- error associated with the integrals
     s_integral.run(np.std, "nScans")
     # }}}
-    #axhline(
-    #    y=s_integral.data,
-    #    c="k",
-    #    linestyle="-",
-    #    label="std dev of integrals",
-    #)
+    axhline(
+        y=s_integral.data,
+        c="k",
+        linestyle="-",
+        label="std dev of integrals",
+    )
     # }}}
     plt.axis("tight")
     ax = plt.gca()
