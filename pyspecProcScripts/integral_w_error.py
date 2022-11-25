@@ -89,7 +89,7 @@ def integral_w_errors(
             direct
         )
         s_forerror *= df ** 2  # Δf
-        s_forerror *= N2
+        s_forerror *= N2 ** 2
         avg_error.append(s_forerror)
     avg_error = sum(avg_error) / len(avg_error)
     # {{{ variance calculation for debug

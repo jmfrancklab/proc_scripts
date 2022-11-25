@@ -169,7 +169,7 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{ Plotting Errors
-    fl.next("comparison of std", legend=True)
+    fl.next("comparison of std using N", legend=True)
     for i in range(len(s_int_lst)):
         fl.plot(
             error_lst[i],
