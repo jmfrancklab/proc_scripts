@@ -84,14 +84,18 @@ def integral_w_errors(
             N2 = psp.ndshape(s_forerror)[direct]
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
-        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
+        # 1. x - avg_x
+        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct) 
+        #2. sum((x - avg_x)^2 / 2) / N
         s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
             direct
         )
-        s_forerror *= df ** 2  # Δf
+        #3. sum((x - avg_x)^2 / 2)
         s_forerror *= N2
+        s_forerror *= df ** 2  # Δf
         avg_error.append(s_forerror)
-    avg_error = sum(avg_error) / len(avg_error)
+    #avg_error = sum(avg_error) / len(avg_error)
+    s_forerror = sum(avg_error)
     # {{{ variance calculation for debug
     # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
     # print("automatically calculated integral error:",sqrt(collected_variance.data))

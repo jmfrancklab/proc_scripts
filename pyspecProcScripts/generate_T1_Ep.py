@@ -482,7 +482,7 @@ def generate_T1_Ep(filename,
         d.ft('t2')
         if Ep_extra_zero:
             d.ift('t2')
-            d /= zeroth_order_ph(select_pathway(d['t2',0],Ep_signal_pathway))
+            d /= zeroth_order_ph(select_pathway(d['t2':0],Ep_signal_pathway))
             d.ft('t2')
         if fl is not None:
             fl.next('E(p) FID slice after alignment')
@@ -494,7 +494,7 @@ def generate_T1_Ep(filename,
                 - set(excluded_pathways)
                 -set([(Ep_signal_pathway['ph1'])]))
         error_pathway = [{'ph1':j} for j in error_pathway]
-        s_int,frq_slice = integral_w_errors(d,Ep_signal_pathway,error_pathway,
+        s_int,frq_slice = integral_w_errors(d.C,Ep_signal_pathway,error_pathway,
                 cutoff=Ep_cutoff,
                 indirect=powername,return_frq_slice=True)
         if fl is not None:
