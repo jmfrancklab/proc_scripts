@@ -40,9 +40,8 @@ result = 0
 n_repeats = 100 
 all_manual_results = ndshape(clean_data) + (n_repeats, "repeats")
 all_manual_results.pop("t2").pop("ph1").pop("ph2")
-all_manual_results = all_manual_results.alloc().setaxis("repeats",r_[0:n_repeats])
+all_manual_results = all_manual_results.alloc().setaxis("repeats",r_[0:n_repeats]).set_error(0)
 all_autointegrate_results = all_manual_results.C
-all_autointegrate_results.set_error(0)
 print("shape of all results", ndshape(all_manual_results))
 for j in range(n_repeats):
     data = clean_data.C
@@ -69,48 +68,27 @@ for j in range(n_repeats):
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
     manual_bounds.integrate("t2")
     # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
+    print("#%d"%j)
+    std_off_pathway = (
+        data["ph1", 0]["ph2", 0]["t2":bounds]
+        .C.run(lambda x: abs(x)**2/2) # sqrt2 so variance is variance of real
+        .mean_all_but(["t2"])
+        .mean("t2")
+        .run(sqrt)
+    )
+    propagated_variance_from_inactive = N * df ** 2 * std_off_pathway ** 2
+    manual_bounds.set_error(array([sqrt(propagated_variance_from_inactive.data)]))
     all_manual_results["repeats", j] = manual_bounds
     all_autointegrate_results["repeats", j] = s_int
-    print("#%d"%j)
-fl.next("all autointegrate")
-fl.plot(all_autointegrate_results,'o')
-thisavg = all_autointegrate_results.data.mean()
-thisstd = std(all_autointegrate_results.data.real)
-axhline(thisavg, color='k', ls=':', alpha=0.5)
-axhline(thisavg-thisstd, color='k', alpha=0.5)
-axhline(thisavg+thisstd, color='k', alpha=0.5)
-#std_off_pathway = (
-#    data["ph1", 0]["ph2", 0]["t2":bounds]
-#    .C.run(lambda x: abs(x)**2/2) # sqrt2 so variance is variance of real
-#    .mean_all_but(["t2"])
-#    .mean("t2")
-#    .run(sqrt)
-#)
-#print(
-#    "off-pathway std", std_off_pathway, "programmed std", fake_data_noise_std
-#)
-#propagated_variance_from_inactive = N * df ** 2 * std_off_pathway ** 2
-## removed factor of 2 in following, which shouldn't have been there
-#propagated_variance = N * df**2 * fake_data_noise_std**2
-#fl.next("different types of error")
-#s_int.data = s_int.data.reshape((1,))
-#s_int.set_error(s_int.get_error().reshape((1,)))
-#print(s_int)
-#fl.plot(s_int,".",capsize=6,label = 'std from int w err',alpha=0.5)
-#manual_bounds.set_error(sqrt(propagated_variance))
-#fl.plot(
-#    manual_bounds,
-#    ".",
-#    capsize=6,
-#    label=r"propagated from programmed variance",
-#    alpha=0.5,
-#)
-#all_manual_results.run(real).mean("repeats", std=True)
-## by itself, that would give error bars, but the data would be averaged -- better to put the data in the same position
-#manual_bounds.set_error(all_manual_results.get_error())
-## the fact that this matches the previous shows that my sample size is
-## large enough to give good statistics
-#fl.plot(manual_bounds, ".", capsize=6, label=r"std from repeats", alpha=0.5)
-#manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data))
-#fl.plot(manual_bounds, ".", capsize=6, label=r"propagated from inactive std", alpha=0.5)
+for thislabel, thisdata in [
+        ("all autointegrate",all_autointegrate_results),
+        ("all manual",all_manual_results),
+        ]:
+    fl.next(thislabel)
+    fl.plot(thisdata,'o')
+    thisavg = thisdata.data.mean()
+    thisstd = std(thisdata.data.real)
+    axhline(thisavg, color='k', ls=':', alpha=0.5)
+    axhline(thisavg-thisstd, color='k', alpha=0.5)
+    axhline(thisavg+thisstd, color='k', alpha=0.5)
 fl.show()
