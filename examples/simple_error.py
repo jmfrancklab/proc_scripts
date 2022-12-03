@@ -1,17 +1,8 @@
-"""Check integral error calculation
-================================
+"""Check integral error calculation -- simple version
+======================================================
 
-Generate a fake dataset of an inversion recovery with multiple repeats (φ
-× t2 × vd × repeats) w/ normally distributed random noise.
-Check that the following match:
-
-- integral w/ error (the canned routine :func:`~pyspecProcScripts.integral_w_errors`)
-- propagate error based off the programmed σ of the normal distribution
-- set the error bars based on the standard deviation (along the repeats
-  dimension) of the *real* part of the integral
-- propagate error based off the variance of the noise in the inactive
-  coherence channels (do this manually inside this script -- should mimic
-  what :func:`~pyspecProcScripts.integral_w_errors` does)
+This is a simpler version of the check integral error calculation.
+Rather than generating 100 fake inversion recovery curves, it generates only 100 fake scans that are identical.
 """
 from pylab import *
 from pyspecdata import *
