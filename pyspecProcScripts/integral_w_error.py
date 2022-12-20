@@ -10,6 +10,7 @@ def integral_w_errors(
     sig_path,
     error_path,
     cutoff = 0.1,
+    frq_slice = None,
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
@@ -41,6 +42,8 @@ def integral_w_errors(
                 Indirect axis.
     direct:     str
                 Direct axis.
+    frq_slice:  tuple
+                predetermined frq_slice 
 
     Returns
     =======
@@ -53,9 +56,12 @@ def integral_w_errors(
         kwargs = {"convolve_method": convolve_method}
     else:
         kwargs = {}
-    frq_slice = integrate_limits(
-        select_pathway(s, sig_path), convolve_method=convolve_method, cutoff=cutoff, fl=fl
-    )
+    if frq_slice is not None:
+        frq_slice = frq_slice 
+    else:    
+        frq_slice = integrate_limits(
+            select_pathway(s, sig_path), convolve_method=convolve_method, cutoff=cutoff, fl=fl
+        )
     logging.debug(psp.strm("frq_slice is", frq_slice))
     s = s[direct:frq_slice]
     f = s.getaxis(direct)

@@ -80,7 +80,7 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
     sig_energy = (abs(s_orig)**2).data.sum().item() / N
     if fl:
         fl.push_marker()
-        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(7,7))
+        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(15,10))
         fl.next("Correlation Diagnostics")
         fig_forlist.suptitle(" ".join(["Correlation Diagnostic"] + [j for j in [fl.basename] if j is not None]))
         fl.image(s_orig.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[0],human_units=False)
