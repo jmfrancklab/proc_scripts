@@ -17,7 +17,10 @@ fieldaxis = "$B_0$"
 myconcs = []
 # }}}
 
-def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None, background=None, fl=None, exp_type="francklab_esr/Farhana", which_plot=None, color=None):
+def protein_QESR(file_name, label, pushout=0.5,
+        threshold=0.05, pickle_file=None, background=None,
+        fl=None, exp_type="francklab_esr/Farhana",
+        which_plot=None, calibration_name=None, color=None):
     """
     Parameters
     ==========
@@ -134,7 +137,7 @@ def protein_QESR(file_name, label, pushout=0.5, threshold=0.05, pickle_file=None
     d_abs -= polybaseline
     d_abs.integrate(fieldaxis, cumulative=True)
     fl.next("dblint ÷ denom * conversion")
-    d_abs /= QESR_scalefactor(d)
+    d_abs /= QESR_scalefactor(d, calibration_name=calibration_name)
     final_conc = (
         d_abs[fieldaxis : (generous_limits[-1], None)].mean(fieldaxis).item()
     ).real
