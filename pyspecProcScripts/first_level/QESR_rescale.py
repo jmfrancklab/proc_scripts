@@ -9,11 +9,10 @@ class calib_info (object):
         if calibration_name != self.current_calib_name:
             assert type(calibration_name) is str, "the calibration name must be specified as a string!"
             assert len(calibration_name)>0, "you MUST use a calibration name and set the values `[calibration_name] q` and `[calibration_name] conversion` in your _pyspecdata file!"
+            self.current_calib_name = calibration_name
+            # note that this will fail if you don't have "[calibration_name] conversion" and "[calibration_name] q" set in your pyspecdata file
             self.default_Q = float(pyspec_config.get_setting(f"{calibration_name} Q"))
-            # note that this will fail if you don't have "QESR Conversion" set in your pyspecdata file
             self.dint_conversion = float(pyspec_config.get_setting(f"{calibration_name} Conversion"))
-            if dint_conversion is not None:
-                dint_conversion = float(dint_conversion)
 calibcache = calib_info()
 ureg = UnitRegistry(
     system="mks", autoconvert_offset_to_baseunit=True, auto_reduce_dimensions=True
