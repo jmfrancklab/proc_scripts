@@ -3,9 +3,9 @@ from pint import UnitRegistry
 from numpy import sqrt
 class calib_info (object):
     "class for caching calibration info"
-    def __init__(self, *arg,**kwargs): #w/o arg and kwargs I get error that __init__ takes 0 arguments and I fed 1
-        self.current_calib_name = calibration_name
-    def use_calibration(calibration_name):
+    def __init__(self):
+        self.current_calib_name = None
+    def use_calibration(self, calibration_name):
         if calibration_name != self.current_calib_name:
             assert type(calibration_name) is str, "the calibration name must be specified as a string!"
             assert len(calibration_name)>0, "you MUST use a calibration name and set the values `[calibration_name] q` and `[calibration_name] conversion` in your _pyspecdata file!"
