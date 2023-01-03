@@ -3,7 +3,7 @@ from pint import UnitRegistry
 from numpy import sqrt
 class calib_info (object):
     "class for caching calibration info"
-    def __init__():
+    def __init__(self, *arg,**kwargs): #w/o arg and kwargs I get error that __init__ takes 0 arguments and I fed 1
         self.current_calib_name = calibration_name
     def use_calibration(calibration_name):
         if calibration_name != self.current_calib_name:
@@ -15,7 +15,6 @@ class calib_info (object):
             if dint_conversion is not None:
                 dint_conversion = float(dint_conversion)
 calibcache = calib_info()
-
 ureg = UnitRegistry(
     system="mks", autoconvert_offset_to_baseunit=True, auto_reduce_dimensions=True
 )
