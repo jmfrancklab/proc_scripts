@@ -19,7 +19,7 @@ class calib_info (object):
             assert type(diameter_name) is str, "the diameter name must be specified as a string!"
             assert len(diameter_name)>0, "you MUST use a diameter name and set the values `[diameter_name] q` and `[diameter_name] conversion` in your _pyspecdata file!"
             self.current_diam_name = diameter_name
-            self.d = float(pyspec_config.get_setting(diameter_name)
+            self.d = float(pyspec_config.get_setting(f"{diameter_name} diameter"))
 calibcache = calib_info()
 ureg = UnitRegistry(
     system="mks", autoconvert_offset_to_baseunit=True, auto_reduce_dimensions=True
