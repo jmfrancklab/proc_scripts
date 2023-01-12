@@ -202,7 +202,6 @@ def hermitian_function_test(
     s,
     direct="t2",
     aliasing_slop=3,  # will become a kwarg
-    amp_threshold=0.05,  # region over which we have signal
     fl=None,
     basename=None,
     show_extended=False,
@@ -213,11 +212,24 @@ def hermitian_function_test(
     Parameters
     ==========
     direct:             str
-        Axis of data (i.e., direct dimension).
-
-    .. todo::
-
-        AG fix docstring
+                        Axis of data (i.e., direct dimension).
+    aliasing_slop:      float
+                        The multiple of the dwell time of the original 
+                        signal that is sliced out due to the fact this amount of signal
+                        is aliased at the beginning and end of the time-domain signal.
+    basename:           str
+                        Basename for plotting purposes of diagnostics
+    show_extended:      bool
+                        If true will show diagnostic of the zero filled signal
+    echo_before:        float
+                        1.5 times the echo time pulled from the acquisition parameters
+    
+    Returns
+    =======
+    echo_peak:          float
+                        Time where the minimum of the cost function matches the peak of the echo
+    cost_func_return    nddata
+                        The cost function of the echo
     """
     # {{{ zero fill
     assert s.get_units(direct) is not None
@@ -341,53 +353,6 @@ def hermitian_function_test(
         fl.pop_marker()
     # }}}
     return echo_peak,cost_func_return
-
-def real_absolute(s, direct="t2", fl=None,
-        center_axis = nddata(r_[0:24e-3:1000j],'center').set_units('center','s')):
-    r"""generates cost function for real absolute
-    value
-
-    Parameters
-    ==========
-    s:                  nddata
-        Data in frequency domain.
-    direct:             str
-        Axis of data (i.e., direct dimension).
-    fl:                 figlist_var
-        Include if want to see sample plot.
-    center_axis:        nddata
-        Axis of the resulting function (as an nddata),
-        corresponds to the range of echo 'centers'
-        that are explored (see
-        hermitian_function_test).
-        
-    Returns
-    =======
-    real_abs:           nddata
-        The cost function
-    """
-    s.ft('t2')
-    # in the frequency domain
-    s_forrealabs = s.C 
-    # so that time domain has zeros at the end
-    s_forrealabs.ift('t2', pad=ndshape(s_forrealabs)['t2']*2) 
-    s_forrealabs.ft('t2')
-    # time shift backwards by center -- "center" is an ndshape with a new dimension
-    s_forrealabs *= np.exp(-1j*2*pi*center_axis*s_forrealabs.fromaxis('t2')) 
-    s_forrealabs.ift('t2')
-    # slice out the original FID length -- ones that are shifted left are now zero filled at the end
-    s_forrealabs = s_forrealabs['t2',0:ndshape(s)['t2']] 
-    ph0 = s_forrealabs['t2',0]
-    ph0 /= abs(ph0)
-    s_forrealabs /= ph0 # zeroth order phase shift so the sum of the spectrum is +1
-    s_forrealabs['t2',0] *= 0.5 # heaviside
-    s_forrealabs.ft('t2')
-    real_abs = abs(s_forrealabs).sum('t2')/(s_forrealabs.C.run(lambda x: abs(x)**2).sum('t2')) # equation 12
-    real_abs.name('cost function')
-    if fl is not None:
-        fl.next('real absolute cost function')
-        fl.plot(real_abs)
-    return real_abs
 
 def determine_sign(s, direct="t2", fl=None):
     """Given that the signal resides in `pathway`, determine the sign of the signal.
