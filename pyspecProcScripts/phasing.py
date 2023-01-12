@@ -202,22 +202,33 @@ def hermitian_function_test(
     s,
     direct="t2",
     aliasing_slop=3,  # will become a kwarg
-    amp_threshold=0.05,  # region over which we have signal
-    fl=None,
     basename=None,
     show_extended=False,
     echo_before=None,
+    fl=None
 ):
     r"""determine the center of the echo via hermitian symmetry of the time domain.
 
     Parameters
     ==========
-    direct:             str
-        Axis of data (i.e., direct dimension).
+    direct:         str
+                    Axis of data (i.e., direct dimension).
+    aliasing_slop:  int
+                    Factor of the time points that will go into the 
+                    "min_echo" parameter that is used in creating the cost function.
+    basename:       str                
+                    Basename for the diagnostics
+    show_extended:  bool                
+                    If True will show the zero filled extended data
+    echo_before:    float
+                    1.5 times the echo time of the signal in s.                
 
-    .. todo::
-
-        AG fix docstring
+    Returns
+    =======
+    echo_peak:          float
+                        The time where the echo matches with the min of the cost function
+    cost_func_return:   nddata
+                        The returned cost function
     """
     # {{{ zero fill
     assert s.get_units(direct) is not None
