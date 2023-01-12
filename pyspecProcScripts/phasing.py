@@ -201,7 +201,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 def hermitian_function_test(
     s,
     direct="t2",
-    aliasing_slop=3,  # will become a kwarg
+    aliasing_slop=3,
     fl=None,
     basename=None,
     show_extended=False,
