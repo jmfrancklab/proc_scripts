@@ -57,7 +57,7 @@ def t_integral_w_error(
                 cutoff = cutoff, fl=fl)
     logging.debug(strm("frq_slice is", frq_slice))  
     d = original.C
-    s = convolved[direct:frq_slice]
+    s = convolved[direct:frq_slice].C
     #}}}
     #{{{calculate error
     apo_fn['t2':0] *= 0.5
@@ -75,8 +75,10 @@ def t_integral_w_error(
     t_var = np.var(d.real.data[np.isfinite(d.data)],ddof=1)
     var_t = (t_var * dt * integral_apo)
     std_t = sqrt(var_t.data)
-    s = select_pathway(s,sig_pathway)
-    retval = s.integrate(direct).set_error(np.asarray(std_t))
+    #}}}
+    convolved.ift('t2')
+    t_int = select_pathway(convolved.C,sig_pathway)
+    retval = t_int.integrate(direct).set_error(np.asarray(std_t))
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
