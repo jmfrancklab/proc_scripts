@@ -66,7 +66,7 @@ def t_integral_w_error(
         fl.next('Time domain')
         fl.plot(select_pathway(d,signal_pathway,label = 'unapodized data',alpha = 0.5))
         fl.plot(apo_fn*abs(d.C).max(), label = 'apo function', alpha = 0.5)
-    dt = np.diff(d.real.C.getaxis(direct)[r_[0,1]]).item()    
+    dt = np.diff(original.real.C.getaxis(direct)[r_[0,1]]).item()    
     temp = select_pathway(d,sig_pathway)
     temp.data[:] = nan
     if fl is not None:
