@@ -116,7 +116,7 @@ def integral_w_errors(
     s = select_pathway(s, sig_path)
     if np.isscalar(s_forerror.data):
         s_forerror.data = np.array([s_forerror.data])
-    retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
+    retval = s.integrate(direct).set_error(psp.sqrt(avg_error.data))
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
