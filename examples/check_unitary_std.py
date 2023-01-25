@@ -4,9 +4,16 @@ from pyspecdata import *
 from pyspecProcScripts import *
 """Here, we want to calculate the time-domain variance to use in error propagation.
 But, to make sure we calculate only noise, we want to mask out portions of the frequency 
-domain. Therefore, we use noise-only data to verify that unitary ft transformation preserves
-Parseval's theorem and can generate a frequency-masked noise value that is the same as the 
-unmasked time-domain"""
+domain.
+We propose that if we use a unitary transform,
+Parseval's theorem
+tells us we can calculate :math:`\sigma_t^2` (time domain variance)
+directly from the frequency-domain variance, *i.e.* :math:`\sigma_\nu^2=\sigma_t^2`.
+To confirm this, we construct a "spectrum" of pure noise
+and generate a frequency-masked noise,
+and show that is the same as the 
+unmasked time-domain.
+"""
 #{{{generate data with just noise with a phase cycling dimension and repeats dimension
 N = 1024
 n_repeats = 50
