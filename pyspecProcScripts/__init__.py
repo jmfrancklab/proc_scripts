@@ -56,5 +56,7 @@ __all__ = [
         "slice_FID_from_echo",
         "t_integral_w_error",
         "zeroth_order_ph",
+        'apod_matched_filter',
+        'L2G',
         ]
 
