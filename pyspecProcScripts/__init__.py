@@ -42,6 +42,6 @@ __all__ = ['calc_baseline',
         'Vpp2power',
         'zeroth_order_ph',
         'apod_matched_filter',
-        'L2G'
+        'L2G',
         ]
 
