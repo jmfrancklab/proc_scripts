@@ -9,7 +9,7 @@ from pylab import *
 from cycler import cycler
 init_logging(level="debug")
 fl = figlist_var()
-apo_fn = 'HH'
+apo_fn = 'exp'
 default_colors = rcParams['axes.prop_cycle'].by_key()['color']
 thisls = [':', # from https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
         (0, (3, 1, 1, 1, 1, 1)),
@@ -23,11 +23,11 @@ def exp_apo(s, filter_const, direct = 't2'):
     return myfilter
 #}}}
 #{{{heaviside hat apodization fn
-def heaviside_hat(s, t_slice, direct = 't2'):
+def heav_hat(s, t_slice):
     "make a symmetric sinc fn from the ift of a heaviside hat fn. Here, t_slice defines the area that is equal to 1. The fn retains the axis of the original t2 axis"
-    hat = s.fromaxis(direct)
-    hat[direct,:] = 0
-    hat[direct:t_slice] = 1
+    hat = s.fromaxis('t2')
+    hat['t2',:] = 0
+    hat['t2':t_slice] = 1
     return hat
 #}}}
 ##{{{ generate analytical sinc fn
@@ -74,10 +74,10 @@ def f_integration(s, f_range, signal_pathway, ph_cyc = 'ph1', direct = 't2'):
     temp.data[:] = nan
     fl.next('freq noise')
     fl.image(noise)
-    noise.run(masked_var_multi,direct)
-    noise.run(masked_mean_multi,ph_cyc)
+    noise.run(masked_var_multi,'t2')
+    noise.run(masked_mean_multi,'ph1')
     justph0noise = s[ph_cyc,0].run(var,direct)/2
-    s_int = select_pathway(s,signal_pathway)[direct:(f_range)]
+    s_int = select_pathway(s,signal_pathway)['t2':(f_range)]
     dν = s_int.get_ft_prop(direct,'df')
     N = ndshape(s_int)[direct]
     s_int.integrate(direct)
@@ -88,18 +88,19 @@ def f_integration(s, f_range, signal_pathway, ph_cyc = 'ph1', direct = 't2'):
 def t_error(s, og_data, mult_fn, f_range, signal_pathway, ph_cyc = 'ph1', direct='t2'):
     "variance of original data * dt * integration of f(t)^2"
     dt = np.diff(s.real.C.getaxis(direct)[r_[0,1]]).item()
-    integral_mult_fn = mult_fn.C.run(lambda x: x**2).real.integrate(direct)
+    mult_fn['t2':0] *= 0.5
+    integral_mult_fn = abs(mult_fn).C.run(lambda x: x**2).real.integrate(direct)
     assert not og_data.get_ft_prop('t2'), "get in the t domain so I can unitarily transform!"
     og_data.set_ft_prop(direct,'unitary',None)
-    og_data.ft(direct,unitary=True)
+    og_data.ft('t2',unitary=True)
     t_var = og_data.C
     t_var[direct:f_range] = nan
     temp = select_pathway(t_var, signal_pathway)
     temp.data[:] = nan
     fl.next('masked noise for variance')
     fl.image(t_var)
-    t_var.run(masked_var_multi,direct)
-    t_var.run(masked_mean_multi,ph_cyc)
+    t_var.run(masked_var_multi,'t2')
+    t_var.run(masked_mean_multi,'ph1')
     t_var /= 4 # theres a difference of a factor of 4 when comparing the causal to the real
     t_err = t_var.real.data * dt * integral_mult_fn.data
     t_error = sqrt(t_err)
@@ -110,8 +111,7 @@ def t_error(s, og_data, mult_fn, f_range, signal_pathway, ph_cyc = 'ph1', direct
 t2, time, repeats, ph1 = s.symbols("t2 time repeats ph1")
 signal_pathway = {"ph1": 1}
 offset = 100
-f_range = tuple(r_[-300, 300] + offset)
-excluded_pathways = [(0,2,3)]
+f_range = tuple(r_[-200, 200] + offset)
 n_repeats = 1000 
 SNR = 100
 data = fake_data(expression = (
@@ -156,29 +156,27 @@ f_stop_orig = data.getaxis('t2')[-1]
 data.ift('t2')
 t_stop_orig = data.getaxis('t2')[-1]
 # }}}
-orig_causal_data = data.C #used in t error calculation
+orig_causal_data = data.C
 #{{{ zero fill and make real/symmetric
 data.ft('t2',pad = 3*1024)
 data.run(np.real)
 data.ft_clear_startpoints('t2').set_ft_prop('t2',None)
 data.ift('t2',shift = True)
-#}}}
-#{{{make apodization function and apodized data
 apo_data = data.C
 fl.next('data with apo fn')
 fl.plot(select_pathway(apo_data['repeats',0],signal_pathway))
-if apo_fn == 'HH':
-    this_apo_fn = heaviside_hat(apo_data.C,(-0.5,0.5))
-    apo_data['t2':(0.5,None)] = 0
-elif apo_fn == 'exp':    
+if apo_fn == 'exp':
     this_apo_fn = exp_apo(apo_data,0.02)
     apo_data *= this_apo_fn
+elif apo_fn == 'HH':
+    this_apo_fn = heav_hat(apo_data.C,(-0.5,0.5))
+    apo_data['t2':(0.5,None)] = 0
+fl.next('data with apo fn')
 fl.plot(this_apo_fn)
-#}}}
 apo_data.ft('t2')
 data.ft('t2')
+#}}}
 #I need to use a copy of orig_causal_data because if I don't it just gets thrown back in the loop and yells at me the second time I try to use it
-#{{{compare f and t propagated error for regular unapodized data and apodized data
 for (thisdata, apo_fn, og_data, var_has_imag,thislabel) in [
         (data, 1, orig_causal_data.C, False, 'real-symmetric data'),
         (apo_data, this_apo_fn, orig_causal_data.C, False, 'apodized data')
@@ -192,11 +190,11 @@ for (thisdata, apo_fn, og_data, var_has_imag,thislabel) in [
     #}}}
     onlynonzero_data.ft('t2')
     s_int = f_integration(onlynonzero_data.C.real, f_range, signal_pathway)
-    #{{{ calculate the average, std of integrals, and average propagated error for f domain 
+    #{{{ compare the propagated f error to actual std and avg
     thisavg = np.mean(s_int.data.real)
     thisstd = np.std(s_int.data.real, ddof=1)
     avgofpropagated = mean((s_int.get_error()))
-    s_int.setaxis('repeats',r_[0:n_repeats]) #so it matches with the t integrals
+    s_int.setaxis('repeats',r_[0:n_repeats])
     fl.next('test error propagation', legend=True)
     thisprop = next(prop_cycle)
     fl.plot(s_int,'o', color=thisprop['color'],label = 'frequency integral %s'%thislabel,
@@ -213,10 +211,11 @@ for (thisdata, apo_fn, og_data, var_has_imag,thislabel) in [
     #{{{ make analytical sinc fn and multiply
     t_lims = onlynonzero_data.C.getaxis('t2')[-1]
     t_range = (-t_lims,t_lims)
-    #make sinc function with the full zero filled data but the edges are set to 0 after t range
     mysinc = integration_sinc(withzero_data, t_slice = t_range, frq_slice = f_range)
-    #}}}
+    fl.next('mysinc')
+    fl.plot(mysinc,label = '%s'%thislabel)
     convolved_data = withzero_data.C * mysinc.C
+    #}}}
     #{{{Plot in t domain
     data1d = onlynonzero_data['repeats',0].C
     fl.next('time domain')
@@ -268,11 +267,14 @@ for (thisdata, apo_fn, og_data, var_has_imag,thislabel) in [
     #}}}
     #{{{ Calculate time domain error
     onlynonzero_data.ift('t2')
-    t_errors = t_error(onlynonzero_data, og_data = og_data, mult_fn = mysinc * apo_fn, f_range = f_range, signal_pathway=signal_pathway) #use causal data (original) to calculate the variance
+    #mysinc['t2':0] *= 0.5
+    t_errors = t_error(onlynonzero_data, og_data = og_data, 
+            mult_fn = mysinc * apo_fn, f_range = f_range, signal_pathway=signal_pathway) #use causal data (original) to calculate the variance
     t_integral.set_error(t_errors)
     t_avg_prop = mean(t_errors)
     #}}}
     #{{{ Plot t integrals and error with f integrals and error
+    s_int.setaxis('repeats',r_[0:n_repeats]) #axis is returned where the first point is at 1 instead of 0 so I reset it so everyone is on the same page
     fl.next('test error propagation')
     thisprop = next(prop_cycle)
     fl.plot(t_integral, 'o', color = thisprop['color'], label = 'Time integral %s'%thislabel)
@@ -280,8 +282,8 @@ for (thisdata, apo_fn, og_data, var_has_imag,thislabel) in [
             ls=thisprop['ls'], label='propagated error in the t domain', alpha=0.5)
     axhline(thisavg-t_avg_prop, color=thisprop['color'], ls=thisprop['ls'], alpha=0.5)
     ##}}}
-#}}}
 fl.show()    
+
 
 
 
