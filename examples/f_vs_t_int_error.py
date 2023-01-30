@@ -9,7 +9,7 @@ from pylab import *
 from cycler import cycler
 init_logging(level="debug")
 fl = figlist_var()
-apo_fn = 'exp'
+apo_fn = 'HH'
 default_colors = rcParams['axes.prop_cycle'].by_key()['color']
 thisls = [':', # from https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
         (0, (3, 1, 1, 1, 1, 1)),
@@ -168,7 +168,7 @@ apo_data = data.C
 fl.next('data with apo fn')
 fl.plot(select_pathway(apo_data['repeats',0],signal_pathway))
 if apo_fn == 'HH':
-    this_apo_fn = heaviside_hat(apo_data.C,(0,0.5))
+    this_apo_fn = heaviside_hat(apo_data.C,(-0.5,0.5))
     apo_data['t2':(0.5,None)] = 0
 elif apo_fn == 'exp':    
     this_apo_fn = exp_apo(apo_data,0.025)
