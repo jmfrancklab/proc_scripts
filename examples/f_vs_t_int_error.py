@@ -88,7 +88,7 @@ def f_integration(s, f_range, signal_pathway, ph_cyc = 'ph1', direct = 't2'):
 def t_error(s, og_data, mult_fn, f_range, signal_pathway, ph_cyc = 'ph1', direct='t2'):
     "variance of original data * dt * integration of f(t)^2"
     dt = np.diff(s.real.C.getaxis(direct)[r_[0,1]]).item()
-    integral_mult_fn = abs(mult_fn).C.run(lambda x: x**2).real.integrate(direct)
+    integral_mult_fn = mult_fn.C.run(lambda x: x**2).real.integrate(direct)
     assert not og_data.get_ft_prop('t2'), "get in the t domain so I can unitarily transform!"
     og_data.set_ft_prop(direct,'unitary',None)
     og_data.ft(direct,unitary=True)
@@ -101,7 +101,7 @@ def t_error(s, og_data, mult_fn, f_range, signal_pathway, ph_cyc = 'ph1', direct
     t_var.run(masked_var_multi,direct)
     t_var.run(masked_mean_multi,ph_cyc)
     t_var /= 4 # theres a difference of a factor of 4 when comparing the causal to the real
-    t_err = t_var.data * dt * integral_mult_fn.data
+    t_err = t_var.real.data * dt * integral_mult_fn.data
     t_error = sqrt(t_err)
     return t_error
 #}}}
@@ -171,7 +171,7 @@ if apo_fn == 'HH':
     this_apo_fn = heaviside_hat(apo_data.C,(-0.5,0.5))
     apo_data['t2':(0.5,None)] = 0
 elif apo_fn == 'exp':    
-    this_apo_fn = exp_apo(apo_data,0.025)
+    this_apo_fn = exp_apo(apo_data,0.02)
     apo_data *= this_apo_fn
 fl.plot(this_apo_fn)
 #}}}
@@ -268,7 +268,6 @@ for (thisdata, apo_fn, og_data, var_has_imag,thislabel) in [
     #}}}
     #{{{ Calculate time domain error
     onlynonzero_data.ift('t2')
-    mysinc['t2':0] *= 0.5
     t_errors = t_error(onlynonzero_data, og_data = og_data, mult_fn = mysinc * apo_fn, f_range = f_range, signal_pathway=signal_pathway) #use causal data (original) to calculate the variance
     t_integral.set_error(t_errors)
     t_avg_prop = mean(t_errors)
