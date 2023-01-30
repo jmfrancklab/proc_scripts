@@ -112,9 +112,9 @@ def t_error(s, og_data, mult_fn, f_range, signal_pathway, ph_cyc = 'ph1', direct
 t2, time, repeats, ph1 = s.symbols("t2 time repeats ph1")
 signal_pathway = {"ph1": 1}
 offset = 100
-f_range = tuple(r_[-150, 150] + offset)
+f_range = tuple(r_[-300, 300] + offset)
 excluded_pathways = [(0,2,3)]
-n_repeats = 100 
+n_repeats = 1000 
 SNR = 100
 data = fake_data(expression = (
             SNR*s.exp(+1j * 2 * s.pi * offset * (t2) - t2 * 36 * s.pi)
@@ -183,8 +183,8 @@ data.ft('t2')
 #}}}
 #I need to use a copy of orig_causal_data because if I don't it just gets thrown back in the loop and yells at me the second time I try to use it
 for (thisdata, apo_fn, og_data, var_has_imag,thislabel) in [
-        (data, 1, orig_causal_data.C, False, 'real-symmetric data'),
-        #(apo_data, this_apo_fn, orig_causal_data.C, False, 'apodized data')
+        #(data, 1, orig_causal_data.C, False, 'real-symmetric data'),
+        (apo_data, this_apo_fn, orig_causal_data.C, False, 'apodized data')
         ]:
    #{{{I am slicing the part of the signal that is nonzero to pass to the frequency-domain integration fn
     withzero_data = thisdata.C
@@ -273,6 +273,7 @@ for (thisdata, apo_fn, og_data, var_has_imag,thislabel) in [
     #}}}
     #{{{ Calculate time domain error
     onlynonzero_data.ift('t2')
+    mysinc['t2':0] *= 0.5
     t_errors = t_error(onlynonzero_data, og_data = og_data, mult_fn = mysinc * apo_fn, f_range = f_range, signal_pathway=signal_pathway) #use causal data (original) to calculate the variance
     t_integral.set_error(t_errors)
     t_avg_prop = mean(t_errors)
