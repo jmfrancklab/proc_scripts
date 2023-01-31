@@ -112,7 +112,7 @@ t2, time, repeats, ph1 = s.symbols("t2 time repeats ph1")
 signal_pathway = {"ph1": 1}
 offset = 100
 f_range = tuple(r_[-200, 200] + offset)
-n_repeats = 1000 
+n_repeats = 100 
 SNR = 100
 data = fake_data(expression = (
             SNR*s.exp(+1j * 2 * s.pi * offset * (t2) - t2 * 36 * s.pi)
@@ -166,7 +166,7 @@ apo_data = data.C
 fl.next('data with apo fn')
 fl.plot(select_pathway(apo_data['repeats',0],signal_pathway))
 if apo_fn == 'exp':
-    this_apo_fn = exp_apo(apo_data,0.02)
+    this_apo_fn = exp_apo(apo_data,0.01)
     apo_data *= this_apo_fn
 elif apo_fn == 'HH':
     this_apo_fn = heav_hat(apo_data.C,(-0.5,0.5))
