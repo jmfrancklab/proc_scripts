@@ -31,14 +31,17 @@ filenames_w_labels =  [
         ('220729_prS175.DSC', '220729 prS175'),
         ('220307_S175_KI.DSC','220307_S175_KI'),                
         ('220307_prS175_KH2PO4.DSC','220307_S175_KH2PO4'), 
-B_name = "$B_0$"
+        ]
+Bname = "$B_0$"
 
 with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     # {{{ arrange the figures in the PDF
-    fl.text(r"\par")  # each fig on new line
+    fl.par_break()  # each fig on new line
     fl.next("Raw")
-    fl.text(r"\par")  # each fig on new line
+    fl.par_break()  # each fig on new line
     fl.next("correlation", legend=True)
+    fl.par_break()
+    fl.next("aligned, autoscaled", legend=True)
     # }}}
     for j, (filename, label_str) in enumerate(filenames_w_labels):
         # {{{ load, rescale
@@ -46,7 +49,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         d /= QESR_scalefactor(d)
         if "harmonic" in d.dimlabels:
             d = d["harmonic", 0]
-        d -= d[B_name, :50].C.mean(B_name).data
+        d -= d[Bname, :50].C.mean(Bname).data
         # }}}
         # {{{ just show the raw data
         fl.next("Raw")
@@ -54,43 +57,41 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         # }}}
         if j == 0:
             # if the reference spectrum, store its range
-            B_slice = d.getaxis(B_name)[r_[0, -1]]
+            B_slice = d.getaxis(Bname)[r_[0, -1]]
         B_start, B_stop = (
             3400,
             3650,
         )  # assume this is a good range to cover any amount of Hall sensor drift
         ref_axis = r_[B_start:B_stop:4096j]
-        d = d.interp(B_name, ref_axis.copy(), kind="linear")
-        d[B_name] -= B_start
+        d = d.interp(Bname, ref_axis.copy(), kind="linear")
+        d[Bname] -= B_start
         if j == 0:
             # u_slice = (-3.41333333,3.41) # hard-coded based on smallest res
             ref_spec_Bdom = d.C
             ref_spec = d.C
-            ref_spec.ft(B_name, shift=True)
+            ref_spec.ft(Bname, shift=True)
             ref_spec.run(conj)
             scaling = 1
         else:
             normfactor = d.data.max()
-            d.ft(B_name, shift=True)
+            d.ft(Bname, shift=True)
             correlation = d * ref_spec
             correlation /= normfactor
             correlation.ft_clear_startpoints(
-                B_name, t="reset"
+                Bname, t="reset"
             )  # because I want to calculate things in terms of an offset, which can be positive or negative, and need to shift in the next step
-            correlation.ift(B_name, shift=True)
+            correlation.ift(Bname, shift=True)
             fl.next("correlation")
             fl.plot(correlation, label=label_str)
-            thisshift = correlation.real.argmax(B_name).item()
-            d *= exp(1j * 2 * pi * d.fromaxis(B_name) * thisshift)
-            d.ift(B_name)
-            d.set_units(B_name, "G")
-            scaling = (d * ref_spec_Bdom).sum(B_name) / (
+            thisshift = correlation.real.argmax(Bname).item()
+            d *= exp(1j * 2 * pi * d.fromaxis(Bname) * thisshift)
+            d.ift(Bname)
+            d.set_units(Bname, "G")
+            scaling = (d * ref_spec_Bdom).sum(Bname) / (
                 ref_spec_Bdom * ref_spec_Bdom
-            ).sum(B_name)
+            ).sum(Bname)
             scaling = scaling.real.item()
-        d[B_name] += B_start
-        d = d[B_name:B_slice]
-        fl.text(r"\par")  # each fig on new line
-        fl.next("aligned, autoscaled", legend=True)
+        d[Bname] += B_start
+        d = d[Bname:B_slice]
+        fl.next("aligned, autoscaled")
         fl.plot(d / scaling, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
-        fl.text(r"\par")  # each fig on new line
