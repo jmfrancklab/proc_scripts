@@ -52,7 +52,6 @@ all_files = OrderedDict()
 for j, (filename, label_str) in enumerate(filenames_w_labels):
     # {{{ load, rescale
     d = find_file(filename, exp_type="francklab_esr/Farhana")
-    print(d.name()); quit()
     d /= QESR_scalefactor(d)
     if "harmonic" in d.dimlabels:
         d = d["harmonic", 0]
@@ -67,6 +66,7 @@ for j, (filename, label_str) in enumerate(filenames_w_labels):
         maxB = temp if temp>maxB else maxB
         temp = diff(d.getaxis(Bname)[r_[0,1]]).item()
         dB = temp if temp<dB else dB
+    all_files[label_str] = d
     # }}}
 ref_axis = r_[minB:maxB+dB:dB]
 # }}}
@@ -80,7 +80,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     fl.par_break()
     fl.next("aligned, autoscaled", legend=True)
     # }}}
-    for label_str, d in all_files:
+    for j, (label_str, d) in enumerate(all_files.items()):
         # {{{ just show the raw data
         fl.next("Raw")
         fl.plot(d, label=label_str, alpha=0.5)
@@ -89,9 +89,8 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             # if the reference spectrum, store its range
             B_slice = d.getaxis(Bname)[r_[0, -1]]
         d = d.interp(Bname, ref_axis.copy(), kind="linear")
-        d[Bname] -= B_start
+        d[Bname] -= minB
         if j == 0:
-            # u_slice = (-3.41333333,3.41) # hard-coded based on smallest res
             ref_spec_Bdom = d.C
             ref_spec = d.C
             ref_spec.ft(Bname, shift=True)
@@ -116,7 +115,6 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
                 ref_spec_Bdom * ref_spec_Bdom
             ).sum(Bname)
             scaling = scaling.real.item()
-        d[Bname] += B_start
-        d = d[Bname:B_slice]
+        d[Bname] += minB
         fl.next("aligned, autoscaled")
         fl.plot(d / scaling, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
