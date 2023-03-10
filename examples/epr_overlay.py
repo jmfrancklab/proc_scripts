@@ -57,12 +57,18 @@ for j, (filename, label_str) in enumerate(filenames_w_labels):
     if "harmonic" in d.dimlabels:
         d = d["harmonic", 0]
     d -= d[Bname, :50].C.mean(Bname).data
+    if j == 0:
+        minB,maxB = d.getaxis(Bname)[r_[0,-1]]
+        dB = diff(d.getaxis(Bname)[r_[0,1]]).item()
+    else:
+        temp = d.getaxis(Bname)[0]
+        minB = temp if temp<minB else minB
+        temp = d.getaxis(Bname)[-1]
+        maxB = temp if temp>maxB else maxB
+        temp = diff(d.getaxis(Bname)[r_[0,1]]).item()
+        dB = temp if temp<dB else dB
     # }}}
-B_start, B_stop = (
-    3400,
-    3650,
-)  # assume this is a good range to cover any amount of Hall sensor drift
-ref_axis = r_[B_start:B_stop:4096j]
+ref_axis = r_[minB:maxB+dB:dB]
 # }}}
 
 with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
