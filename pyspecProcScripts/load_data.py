@@ -514,7 +514,7 @@ def proc_spincore_ODNP_v3(s, fl=None):
         s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
     if "indirect" in s.dimlabels:
         s.rename("indirect", "power")
-    s.set_units("t2", "s")
+    #s.set_units("t2", "s")
     s.rename("power", "time")
     s.ft("t2", shift=True)
     s.ft(["ph1"], unitary=True)
