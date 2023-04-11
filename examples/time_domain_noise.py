@@ -1,7 +1,3 @@
-import numpy as np
-from numpy import r_
-from pyspecdata import *
-from pyspecProcScripts import *
 """Here, we want to calculate the time-domain variance to use in error propagation.
 But, to make sure we calculate only noise, we want to mask out portions of the frequency 
 domain.
@@ -14,6 +10,10 @@ and generate a frequency-masked noise,
 and show that is the same as the 
 unmasked time-domain.
 """
+import numpy as np
+from numpy import r_
+from pyspecdata import *
+from pyspecProcScripts import *
 N = 1024
 n_repeats = 50
 signal_window = (-100,200) # wherever my "peak" shows up
