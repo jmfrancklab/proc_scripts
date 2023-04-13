@@ -33,7 +33,7 @@ A_list = []
 B_center_list = []
 save_figure=False
 for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
-        ("210218_1mM_TEMPOL_2",'ESR','ESR_linewidth',
+        ("210218_1mM_TEMPOL_2",'francklab_esr/alex','ESR_linewidth',
             {A:2.107721e02,
                 B_center: 2.391618e-01,
                 R: 5.076452e-01,

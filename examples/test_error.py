@@ -36,7 +36,7 @@ colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
 for thisfile, exp_type, nodename in [
     (
         "201113_TEMPOL_capillary_probe_16Scans_noModCoil",
-        "ODNP_NMR_comp/old",
+        "ODNP_NMR_comp/Echoes",
         "signal",
     )
 ]:
