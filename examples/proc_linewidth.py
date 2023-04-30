@@ -13,6 +13,7 @@ from pylab import ndarray
 from symfit import Parameter, Variable, parameters, variables, Fit, Model
 from symfit.core.minimizers import MINPACK
 from symfit.contrib.interactive_guess import InteractiveGuess
+from scipy.special import erfc as sci_erfc
 import numpy as np
 from itertools import cycle
 from scipy.optimize import nnls
@@ -113,12 +114,23 @@ for searchstr,exp_type,postproc,thisguess,interactive,concentration in [
     for k,v in thisguess.items():
         k.value = v
     # }}}
-    model_lambda = s.lambdify([B],dVoigt.subs({
+    def erfc_wrapper(x):
+        print("type is",type(x))
+        print('dtype is',x.dtype)
+        print(x)
+        return sci_erfc(x)
+    print("free symbols:",dVoigt.free_symbols)
+    print(B_center.value)
+    dVoigt_withsub = dVoigt.subs({
         B_center:B_center.value,
         R:R.value,
         A:A.value,
-        sigma:sigma.value}),
-        modules=[{'ImmutableMatrix': ndarray}, 'numpy', 'scipy'])
+        sigma:sigma.value})
+    print("free symbols:",dVoigt_withsub.free_symbols)
+    quit()
+    model_lambda = s.lambdify([B], dVoigt_withsub,
+        modules=[{'ImmutableMatrix':
+            ndarray,'erfc':erfc_wrapper}, 'numpy', 'scipy'])
     x_finer = r_[d.getaxis('$B_0$')[0]:d.getaxis('$B_0$')[-1]:500j]
     result = model_lambda(x_finer)
     guess_nddata = nddata(result, [-1], ['$B_0$']).setaxis(
