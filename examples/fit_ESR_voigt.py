@@ -76,33 +76,32 @@ with figlist_var() as fl:
         f = lmfitdata(thisdata)
         f.functional_form = myfit
         #{{{ Make lists of guesses
-        lambda_l_guess = [1.2,1.2,1.2,1.2]
-        lambda_g_guess = [1.2,1.2,1.2,1.2]
-        amp_guess = [90,90,90,90]
+        lambda_l_guess = [1.2,1.2,1.2]
+        lambda_g_guess = [1.2,1.2,1.2]
+        amp_guess = [120,120,120]
         #}}}
         #{{{ set your guesses
-        for j in range(len(Shifts)):
-            f.set_guess(
-                    lambda_l1 = dict(value = lambda_l_guess[0], min = 0.1, max = 3),
-                    lambda_l2 = dict(value = lambda_l_guess[1], min = 0.1, max = 3),
-                    lambda_l3 = dict(value = lambda_l_guess[2], min = 0.1, max = 3),
-                    lambda_g1 = dict(value = lambda_g_guess[0], min = 0.1, max = 3),
-                    lambda_g2 = dict(value = lambda_g_guess[1], min = 0.1, max = 3),
-                    lambda_g3 = dict(value = lambda_g_guess[2], min = 0.1, max = 3),
-                    amp1 = dict(value = amp_guess[0], min = 5e-6, max = 5e6),
-                    amp2 = dict(value = amp_guess[1], min = 5e-6, max = 5e6),
-                    amp3 = dict(value = amp_guess[2], min = 5e-6, max = 5e6),
-                    B1 = dict(value = centers[0], min = -30, max = 30),
-                    B2 = dict(value = centers[1], min = -30, max = 30),
-                    B3 = dict(value = centers[2], min = -30, max = 30)
-                    )
+        f.set_guess(
+                lambda_l1 = dict(value = lambda_l_guess[0], min = 0.1, max = 3),
+                lambda_l2 = dict(value = lambda_l_guess[1], min = 0.1, max = 3),
+                lambda_l3 = dict(value = lambda_l_guess[2], min = 0.1, max = 3),
+                lambda_g1 = dict(value = lambda_g_guess[0], min = 0.1, max = 3),
+                lambda_g2 = dict(value = lambda_g_guess[1], min = 0.1, max = 3),
+                lambda_g3 = dict(value = lambda_g_guess[2], min = 0.1, max = 3),
+                amp1 = dict(value = amp_guess[0], min = 5e-6, max = 5e6),
+                amp2 = dict(value = amp_guess[1], min = 5e-6, max = 5e6),
+                amp3 = dict(value = amp_guess[2], min = 5e-6, max = 5e6),
+                B1 = dict(value = centers[0], min = -30, max = 30),
+                B2 = dict(value = centers[1], min = -30, max = 30),
+                B3 = dict(value = centers[2], min = -30, max = 30)
+                )
         f.settoguess()
         guess = f.eval()
         guess.ft('u',shift = True)
         guess.set_units('u','G')
-        fl.next('Starting spectrum')
-        fl.plot(guess)
-        fl.show();quit()
+        #fl.next('Starting spectrum')
+        #fl.plot(guess)
+        #fl.show();quit()
         #}}}
         #{{{fit 
         f.fit()
