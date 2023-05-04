@@ -81,13 +81,6 @@ with figlist_var() as fl:
         amp_guess = [120,120,120]
         #}}}
         #{{{ set your guesses
-        #for j in range(3):
-        #    f.set_guess(
-        #            list_of_lambda_ls[j] = dict(lambda_l_guess[j], min=0.1, max = 3),
-        #            list_of_lambda_gs[j] = dict(lambda_g_guess[j], min = 0.1, max = 3),
-        #            list_of_amps[j] = dict(amp_guess[j], min = 5e-6, max = 5e6),
-        #            list_of_Bc[j] = dict(centers[j], min = -30, max = 30)
-        #            )
         f.set_guess(
                 lambda_l1 = dict(value = lambda_l_guess[0], min = 0.1, max = 3),
                 lambda_l2 = dict(value = lambda_l_guess[1], min = 0.1, max = 3),
