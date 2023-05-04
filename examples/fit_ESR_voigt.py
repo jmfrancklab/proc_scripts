@@ -89,8 +89,7 @@ with figlist_var() as fl:
         #            list_of_Bc[j] = dict(centers[j], min = -30, max = 30)
         #            )
         f.set_guess(
-                lambda_l1 = dict(value = lambda_l_guess[0], min = 0.1, max = 3))
-        f.set_guess(
+                lambda_l1 = dict(value = lambda_l_guess[0], min = 0.1, max = 3),
                 lambda_l2 = dict(value = lambda_l_guess[1], min = 0.1, max = 3),
                 lambda_l3 = dict(value = lambda_l_guess[2], min = 0.1, max = 3),
                 lambda_g1 = dict(value = lambda_g_guess[0], min = 0.1, max = 3),
