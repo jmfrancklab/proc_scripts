@@ -50,26 +50,26 @@ with figlist_var() as fl:
         d.rename(fieldaxis,'u')
         u = d.fromaxis('u')
         #{{{ make symbols and prep lists for symbols
-        lambda_l1, lambda_l2, lambda_l3, lambda_g1, lambda_g2, lambda_g3, u, amp1, amp2, amp3, Bc1, Bc2, Bc3 = symbols("lambda_l1 lambda_l2 lambda_l3 lambda_g1 lambda_g2 lambda_g3 u amp1 amp2 amp3 Bc1 Bc2 Bc3", real=True) 
+        list_of_lambda_ls = [symbols("lambda_l%d"%(j+1), real=True) for j in range(3)]
+        list_of_lambda_gs = [symbols("lambda_g%d"%(j+1), real=True) for j in range(3)]
+        list_of_amps = [symbols("amp%d"%(j+1),real=True) for j in range(3)]
+        list_of_Bc = [symbols("B%d"%(j+1),real=True) for j in range(3)]
+        u = symbols("u",real=True)
         deriv = -1j * 2 * pi * u
-        lambda_L_list = [lambda_l1, lambda_l2, lambda_l3]
-        lambda_G_list = [lambda_g1, lambda_g2, lambda_g3]
-        Bc_list = [Bc1, Bc2, Bc3]
-        amp_list = [amp1, amp2, amp3]
         #}}}
-        #{{{ index and make the functions using the symbols - we will have 3 lorentzians, 3 gaussians and 3 shifts
-        Lorentz_list = [0,1,2]
-        Gauss_list = [0,1,2]
-        shift_list = [0,1,2]
-        for j in range(len(Lorentz_list)):
-            Lorentz_list[j] = s_exp(-pi*lambda_L_list[j] * abs(u))
-            Gauss_list[j] = s_exp(-(pi**2*lambda_G_list[j]**2*u**2)/(4*np.log(2)))
-            shift_list[j] = s_exp(+1j*pi*2*u*Bc_list[j])
+        #{{{ index and make the functions using the symbols - we will have 3 lorentzians, 3 gaussians and 3 shifts 
+        Lorentz = [] #the list needs place holders for my loop to work
+        Gauss = []
+        Shifts = []
+        for j in range(3):
+            Lorentz.append(s_exp(-pi*list_of_lambda_ls[j] * abs(u)))
+            Gauss.append(s_exp(-(pi**2*list_of_lambda_gs[j]**2*u**2)/(4*np.log(2))))
+            Shifts.append(s_exp(+1j*pi*2*u*list_of_Bc[j]))
         #}}}    
         #{{{ make a fitting function as a sum of the 3 voigt lines using the function lists we just made
         myfit = 0
-        for j in range(len(Gauss_list)):
-            myfit += (amp_list[j] * Gauss_list[j] * Lorentz_list[j] * shift_list[j] * deriv)
+        for j in range(len(Gauss)):
+            myfit += (list_of_amps[j] * Gauss[j] * Lorentz[j] * Shifts[j] * deriv)
         #}}}
         thisdata = nddata(d.data, ['u'])
         thisdata.setaxis('u',d.getaxis('u'))
@@ -81,28 +81,20 @@ with figlist_var() as fl:
         amp_guess = [90,90,90]
         #}}}
         #{{{ set your guesses
-        for j in range(len(shift_list)):
+        for j in range(3):
             f.set_guess(
-                    lambda_l1 = dict(value = lambda_l_guess[0], min = 0.1, max = 3),
-                    lambda_l2 = dict(value = lambda_l_guess[1], min = 0.1, max = 3),
-                    lambda_l3 = dict(value = lambda_l_guess[2], min = 0.1, max = 3),
-                    lambda_g1 = dict(value = lambda_g_guess[0], min = 0.1, max = 3),
-                    lambda_g2 = dict(value = lambda_g_guess[1], min = 0.1, max = 3),
-                    lambda_g3 = dict(value = lambda_g_guess[2], min = 0.1, max = 3),
-                    amp1 = dict(value = amp_guess[0], min = 5e-6, max = 5e6),
-                    amp2 = dict(value = amp_guess[1], min = 5e-6, max = 5e6),
-                    amp3 = dict(value = amp_guess[2], min = 5e-6, max = 5e6),
-                    Bc1 = dict(value = centers[0], min = -30, max = 30),
-                    Bc2 = dict(value = centers[1], min = -30, max = 30),
-                    Bc3 = dict(value = centers[2], min = -30, max = 30)
+                    list_of_lambda_ls[j] = dict(value = lambda_l_guess[j], min = 0.1, max = 3),
+                    list_of_lambda_gs[j] = dict(value = lambda_g_guess[j], min = 0.1, max = 3),
+                    list_of_amps[j] = dict(value = amp_guess[j], min = 5e-6, max = 5e6),
+                    list_of_Bc[j] = dict(value = centers[j], min = -30, max = 30),
                     )
         f.settoguess()
         guess = f.eval()
         guess.ft('u',shift = True)
         guess.set_units('u','G')
-        #fl.next('Starting spectrum')
-        #fl.plot(guess)
-        #fl.show();quit()
+        fl.next('Starting spectrum')
+        fl.plot(guess)
+        fl.show();quit()
         #}}}
         #{{{fit 
         f.fit()
