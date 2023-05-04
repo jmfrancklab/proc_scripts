@@ -1,18 +1,13 @@
-from matplotlib.pyplot import axvline, axhline, gca
 from pint import UnitRegistry
-from collections import OrderedDict
 from pyspecdata import *
-from itertools import cycle
 from pyspecProcScripts import *
 from pyspecProcScripts import QESR_scalefactor
 from sympy import symbols, Symbol, latex
 from sympy import exp as s_exp
 import numpy as np
 logger = init_logging(level='debug')
-colors = plt.rcParams["axes.prop_cycle"]() # this is the default matplotlib cycler for line styles
 fieldaxis = '$B_0$'
 exp_type = "francklab_esr/alex"
-all_conc = []
 with figlist_var() as fl:
     for filenum, (thisfile, calibration, diameter, background) in enumerate(
             [
@@ -21,7 +16,6 @@ with figlist_var() as fl:
              ]):
         #{{{ load data in and rescale and center about 0
         d = find_file(thisfile,exp_type = exp_type)
-        d -= d[fieldaxis, -100:].data.mean()
         if "harmonic" in d.dimlabels:
             d = d['harmonic',0]
         color = d.get_plot_color()
@@ -41,23 +35,29 @@ with figlist_var() as fl:
         d.ft(fieldaxis)
         #{{{ Plot starting spectra
         d.set_units(fieldaxis,'G')
-        fl.next("Starting spectrum")
+        fl.next("B domain")
         fl.plot(d, label = 'actual data')
-        centers = [-21,-5,13] #make a list of the centers of the starting data for the fits
         d.ift(fieldaxis)
         fl.next('u domain')
         fl.plot(d,label = 'real data')
         fl.plot(d.imag,label = 'imag data')
         #}}}
+        #{{{ Make list of guesses
+        centers = [-21,-5,13] #make a list of the centers of the starting data for the fits
+        lambda_l_guess = [1.2,1.2,1.2]
+        lambda_g_guess = [1.2,1.2,1.2]
+        amp_guess = [120,120,120]
+        #}}}
+        #{{{Initiate lmfit
         d.rename(fieldaxis,'u')
         u = d.fromaxis('u')
+        f = lmfitdata(d)
         #{{{ make symbols and prep lists for symbols
         list_of_lambda_ls = [symbols("lambda_l%d"%(j+1), real=True) for j in range(3)]
         list_of_lambda_gs = [symbols("lambda_g%d"%(j+1), real=True) for j in range(3)]
         list_of_amps = [symbols("amp%d"%(j+1),real=True) for j in range(3)]
         list_of_Bc = [symbols("B%d"%(j+1),real=True) for j in range(3)]
         u = symbols("u",real=True)
-        deriv = -1j * 2 * pi * u
         #}}}
         #{{{ index and make the functions using the symbols - we will have 3 lorentzians, 3 gaussians and 3 shifts 
         Lorentz = [] #the list needs place holders for my loop to work
@@ -69,19 +69,12 @@ with figlist_var() as fl:
             Shifts.append(s_exp(+1j*pi*2*u*list_of_Bc[j]))
         #}}}    
         #{{{ make a fitting function as a sum of the 3 voigt lines using the function lists we just made
+        deriv = -1j * 2 * pi * u
         myfit = 0
         for j in range(len(Gauss)):
             myfit += (list_of_amps[j] * Gauss[j] * Lorentz[j] * Shifts[j] * deriv)
         #}}}
-        thisdata = nddata(d.data, ['u'])
-        thisdata.setaxis('u',d.getaxis('u'))
-        f = lmfitdata(thisdata)
         f.functional_form = myfit
-        #{{{ Make lists of guesses
-        lambda_l_guess = [1.2,1.2,1.2]
-        lambda_g_guess = [1.2,1.2,1.2]
-        amp_guess = [120,120,120]
-        #}}}
         #{{{ set your guesses
         all_lambda_g = {"lambda_g%d"%(j+1):{"value":lambda_g_guess[j],
             "min":0.1,
@@ -101,7 +94,7 @@ with figlist_var() as fl:
                 **all_shift,
                 **all_amp,
                 )
-        fl.next('Starting spectrum')
+        fl.next('B domain')
         f.settoguess()
         guess = f.eval()
         guess.ft('u',shift = True)
@@ -116,7 +109,7 @@ with figlist_var() as fl:
         fit.ift('u')
         fl.next('u domain')
         fl.plot(fit,label = 'fit')
-        fl.next('Starting spectrum')
+        fl.next('B domain')
         fit.ft('u')
         fit.set_units('u','G')
         fl.plot(fit, label = 'fit')
