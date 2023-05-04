@@ -1,5 +1,6 @@
 from matplotlib.pyplot import axvline, axhline, gca
 from pint import UnitRegistry
+from collections import OrderedDict
 from pyspecdata import *
 from itertools import cycle
 from pyspecProcScripts import *
@@ -7,6 +8,7 @@ from pyspecProcScripts import QESR_scalefactor
 from sympy import symbols, Symbol, latex
 from sympy import exp as s_exp
 import numpy as np
+logger = init_logging(level='debug')
 colors = plt.rcParams["axes.prop_cycle"]() # this is the default matplotlib cycler for line styles
 fieldaxis = '$B_0$'
 exp_type = "francklab_esr/alex"
@@ -85,25 +87,26 @@ with figlist_var() as fl:
             "min":0.1,
             "max":3} for j in range(3)}
         all_amp = {"amp%d"%(j+1):{"value":amp_guess[j],
-            "min":0.1,
-            "max":3} for j in range(3)}
+            "min":5e-6,
+            "max":5e6} for j in range(3)}
         all_lambda_l = {"lambda_l%d"%(j+1):{"value":lambda_l_guess[j],
             "min":0.1,
             "max":3} for j in range(3)}
         all_shift = {"B%d"%(j+1):{"value":centers[j],
-            "min":0.1,
-            "max":3} for j in range(3)}
+            "min":-30,
+            "max":30} for j in range(3)}
         f.set_guess(
                 **all_lambda_l,
                 **all_lambda_g,
                 **all_shift,
                 **all_amp,
                 )
+        fl.next('Starting spectrum')
         f.settoguess()
         guess = f.eval()
         guess.ft('u',shift = True)
         guess.set_units('u','G')
-        fl.next('Starting spectrum')
+        fl.plot(guess, label='guess')
         #}}}
         #{{{fit 
         f.fit()
