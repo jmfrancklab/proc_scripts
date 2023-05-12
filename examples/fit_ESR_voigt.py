@@ -26,36 +26,32 @@ with figlist_var() as fl:
             d = d["harmonic", 0]
         color = d.get_plot_color()
         d /= QESR_scalefactor(d, calibration_name=calibration, diameter_name=diameter)
-        center_field = d.getaxis(fieldaxis)[r_[0, -1]].mean()
+        #center_field = d.getaxis(fieldaxis)[r_[0, -1]].mean()
         d -= d[fieldaxis, -100:].data.mean()
-        d.setaxis(fieldaxis, lambda x: x - center_field)
+        #d.setaxis(fieldaxis, lambda x: x - center_field)
         background = ndshape(d).alloc()
         background.copy_axes(d)
-        background = background.interp(fieldaxis, d.getaxis(fieldaxis))
         d -= background
         # }}}
-        d.ift(fieldaxis, shift=True)
-        d *= 2
-        d[fieldaxis:0] *= 0.5
-        d.ft(fieldaxis)
         # {{{ Plot starting spectra
         d.set_units(fieldaxis, "G")
         fl.next("B domain")
         fl.plot(d, label="actual data")
-        d.ift(fieldaxis)
+        d_axis = (d[fieldaxis][:])
+        d.ift(fieldaxis,shift = True)
         fl.next("u domain")
         fl.plot(d, label="real data")
         fl.plot(d.imag, label="imag data")
         # }}}
         # {{{ Make list of guesses
         centers = [
-            -21,
-            -5,
-            13,
+            3.4894e3,
+            3.5064e3,
+            3.5235e3,
         ]  # make a list of the centers of the starting data for the fits
         lambda_l_guess = [1.2, 1.2, 1.2]
         lambda_g_guess = [1.2, 1.2, 1.2]
-        amp_guess = [120, 120, 120]
+        amp_guess = [80, 80, 80]
         # }}}
         # {{{Initiate lmfit
         d.rename(fieldaxis, "u")
@@ -63,14 +59,7 @@ with figlist_var() as fl:
         f = lmfitdata(d)
         # }}}
         # {{{ make symbols and prep lists for symbols
-        list_of_lambda_ls = [
-            symbols("lambda_l%d" % (j + 1), real=True) for j in range(3)
-        ]
-        list_of_lambda_gs = [
-            symbols("lambda_g%d" % (j + 1), real=True) for j in range(3)
-        ]
-        list_of_amps = [symbols("amp%d" % (j + 1), real=True) for j in range(3)]
-        list_of_Bc = [symbols("B%d" % (j + 1), real=True) for j in range(3)]
+        all_symb = {symbname:[symbols("%s%d"%(symbname,(j+1)),real=True) for j in range(3)] for symbname in ["lambda_l","lambda_g","amp","B"]}
         u = symbols("u", real=True)
         # }}}
         # {{{ index and make the functions using the symbols - we will have 3 lorentzians, 3 gaussians and 3 shifts
@@ -78,17 +67,17 @@ with figlist_var() as fl:
         Gauss = []
         Shifts = []
         for j in range(3):
-            Lorentz.append(s_exp(-pi * list_of_lambda_ls[j] * abs(u)))
+            Lorentz.append(s_exp(-pi * all_symb["lambda_l"][j] * abs(u)))
             Gauss.append(
-                s_exp(-(pi**2 * list_of_lambda_gs[j] ** 2 * u**2) / (4 * np.log(2)))
+                s_exp(-(pi**2 * all_symb["lambda_g"][j] ** 2 * u**2) / (4 * np.log(2)))
             )
-            Shifts.append(s_exp(+1j * pi * 2 * u * list_of_Bc[j]))
+            Shifts.append(s_exp(+1j * pi * 2 * u * all_symb["B"][j]))
         # }}}
         # {{{ make a fitting function as a sum of the 3 voigt lines using the function lists we just made
         deriv = -1j * 2 * pi * u
         myfit = 0
         for j in range(len(Gauss)):
-            myfit += list_of_amps[j] * Gauss[j] * Lorentz[j] * Shifts[j] * deriv
+            myfit += all_symb["amp"][j] * Gauss[j] * Lorentz[j] * Shifts[j] * deriv
         # }}}
         f.functional_form = myfit
         # {{{ set your guesses
@@ -105,9 +94,11 @@ with figlist_var() as fl:
             for j in range(3)
         }
         all_shift = {
-            "B%d" % (j + 1): {"value": centers[j], "min": -30, "max": 30}
+            "B%d" % (j + 1): {"value": centers[j], "min": 3.4604e3, "max": 3.5800e3}
             for j in range(3)
         }
+        # }}}
+        # {{{plot your guess
         f.set_guess(
             **all_lambda_l,
             **all_lambda_g,
@@ -116,12 +107,12 @@ with figlist_var() as fl:
         )
         f.settoguess()
         guess = f.eval()
-        # }}}
-        # {{{plot your guess
+        fl.plot(guess,label='guess')
         guess.ft("u", shift=True)
-        guess.set_units("u", "G")
         fl.next("B domain")
+        guess.set_units('u','kG')
         fl.plot(guess, label="guess")
+        fl.show();quit()
         # }}}
         # {{{fit
         f.fit()
