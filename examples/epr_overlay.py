@@ -40,7 +40,8 @@ it is better to scale the less noisy spectrum
 relative to the noisier spectrum
 (:math:`\mathbf{a}` above)
 -- *i.e.* above, we want :math:`\mathbf{b}` to be less noisy.
-Here, we assume that smaller spectra are noisier.
+Here, we simply find the largest spectrum in the group
+(assuming it is least noisy) and use it as :math:`\mathbf{b}`.
 """
 from pylab import *
 from pyspecdata import *
@@ -82,6 +83,10 @@ for j, (filename, label_str) in enumerate(filenames_w_labels):
     # }}}
 ref_axis = r_[minB:maxB+dB:dB]
 # }}}
+# {{{ identify the largest spectrum, and use it as the "reference"
+maxval = max(all_scalings.values())
+ref_spec = [k for k,v in all_scalings.items() if v == maxval][0]
+# }}}
 
 with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     # {{{ arrange the figures in the PDF
@@ -92,14 +97,14 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     fl.par_break()
     fl.next("aligned, autoscaled", legend=True)
     # }}}
-    for j, (label_str, d) in enumerate(all_files.items()):
+    # {{{ pull the reference (largest) up front
+    all_files.move_to_end(ref_spec, last=False)
+    # }}}
+    for j, (label_str, d) in enumerate((k,v) for (k,v) in all_files.items() if v != ref_spec):
         # {{{ just show the raw data
         fl.next("Raw")
         fl.plot(d, label=label_str, alpha=0.5)
         # }}}
-        if j == 0:
-            # if the reference spectrum, store its range
-            B_slice = d.getaxis(Bname)[r_[0, -1]]
         d = d.interp(Bname, ref_axis.copy(), kind="linear")
         d[Bname] -= minB
         if j == 0:
