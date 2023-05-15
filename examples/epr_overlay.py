@@ -110,23 +110,25 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         if j == 0:
             ref_spec_Bdom = d.C
             ref_spec = d.C
-            ref_spec.ft(Bname, shift=True)
+            ref_spec.ift(Bname, shift=True)
             ref_spec.run(conj)
             scaling = 1
         else:
             normfactor = d.data.max()
-            d.ft(Bname, shift=True)
+            print("for d, before",{k:v for k,v in ref_spec.other_info.items() if k.startswith('FT_start')})
+            d.ift(Bname, shift=True)
+            print("for d",{k:v for k,v in ref_spec.other_info.items() if k.startswith('FT_start')})
             correlation = d * ref_spec
             correlation /= normfactor
             correlation.ft_clear_startpoints(
-                Bname, t="reset"
+                Bname, f="reset"
             )  # because I want to calculate things in terms of an offset, which can be positive or negative, and need to shift in the next step
-            correlation.ift(Bname, shift=True)
+            correlation.ft(Bname, shift=True)
             fl.next("correlation")
             fl.plot(correlation, label=label_str)
             thisshift = correlation.real.argmax(Bname).item()
-            d *= exp(1j * 2 * pi * d.fromaxis(Bname) * thisshift)
-            d.ift(Bname)
+            d *= exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
+            d.ft(Bname)
             d.set_units(Bname, "G")
             a = d
             b = ref_spec_Bdom
@@ -137,3 +139,9 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         d[Bname] += minB
         fl.next("aligned, autoscaled")
         fl.plot(d / scaling, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
+        fl.next("u domain")
+        if d.get_ft_prop(Bname,['start','time']) is None:#  this is the same
+            d.ift(Bname, shift=True)
+        else:
+            d.ift(Bname)
+        fl.plot(d, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
