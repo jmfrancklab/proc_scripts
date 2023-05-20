@@ -49,6 +49,26 @@ from pyspecProcScripts import QESR_scalefactor
 from collections import OrderedDict
 import matplotlib as mpl
 import pickle
+import numpy as np
+def calc_phdiff(d, axis):
+    "calculate the phase difference along axis, setting the error appropriately"
+    A = d[axis,1:]
+    B = d[axis,:-1]
+    d.data = np.angle(A.data/B.data)
+    A_sigma = A.get_error()
+    A_sigma = 1 if A_sigma is None else A_sigma
+    B_sigma = B.get_error()
+    B_sigma = 1 if B_sigma is None else B_sigma
+    d.setaxis(axis, A.getaxis(axis))
+    d.set_error(
+            sqrt(
+                A_sigma**2*abs(0.5/A.data)**2
+                +
+                B_sigma**2*abs(0.5/B.data)**2
+                ) / 2 / pi
+            )
+    return d
+
 init_logging(level='debug')
 filenames_w_labels =  [
         ('220307_S175_KCl.DSC','220307_S175_KCl'),
@@ -145,10 +165,20 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         else:
             d.ift(Bname)
         fl.plot(d, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
-        fl.next("u domain -- phase")
-        phdiff = d[Bname:(0,None)][Bname,1:]/d[Bname:(0,None)][Bname,:-1]
+        fl.next("u domain -- phase, mag as error")
+        phdiff = d[Bname:(0,None)]
+        phdiff = phdiff[Bname,1:]/phdiff[Bname,:-1]
         alphaforpoints = abs(d[Bname:(0,None)][Bname,:-1])
         alphaforpoints /= alphaforpoints.max()
-        scatter(phdiff.getaxis(Bname),phdiff.angle.data, alpha=0.5*alphaforpoints.data)
+        scatter(phdiff.getaxis(Bname),phdiff.angle.data, alpha=0.5*alphaforpoints.data, s=10)
+        xlim(0,0.8)
+        fl.next("u domain -- phase, propagate error")
+        phdiff = calc_phdiff(d[Bname:(0,None)], Bname)
+        arb_scaling = 20 # the weighted sum will need to be scaled up
+        alphapoints = 1/phdiff.get_error() # to show what a weighted sum looks like
+        alphapoints[~np.isfinite(alphapoints)] = 0
+        alphapoints /= sum(alphapoints)
+        print(alphapoints)
+        scatter(phdiff.getaxis(Bname),phdiff.data, alpha=np.clip(alphapoints.ravel()*arb_scaling,0,1), s=10)
         xlim(0,0.8)
         #fl.plot(, '.', label=f"{label_str}", alpha=0.5)
