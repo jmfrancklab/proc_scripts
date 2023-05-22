@@ -124,6 +124,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     # {{{ pull the reference (largest) up front
     all_files.move_to_end(ref_spec, last=False)
     # }}}
+    all_phdiff = []
     for j, (label_str, d) in enumerate((k,v) for (k,v) in all_files.items() if v != ref_spec):
         # {{{ just show the raw data
         fl.next("Raw")
@@ -187,12 +188,15 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         determined_phdiff = phdiff.item()
         axhline(determined_phdiff, c=sc.get_facecolors()[-1], alpha=0.2)
         xlim(0,0.8)
-        fl.next('after mult phdiff')
         d *= exp(-1j*2*pi*determined_phdiff*d.fromaxis(Bname))
-        phdiff = calc_phdiff(d[Bname:(0,None)], Bname)
-        arb_scaling = 20 # the weighted sum will need to be scaled up
-        alphapoints = 1/phdiff.get_error() # to show what a weighted sum looks like
-        alphapoints[~np.isfinite(alphapoints)] = 0
-        alphapoints /= sum(alphapoints)
-        sc = scatter(phdiff.getaxis(Bname),phdiff.data, alpha=np.clip(alphapoints.ravel()*arb_scaling,0,1), s=10)
-        xlim(0,0.8)
+        fl.next('ift, indiv centered')
+        fl.plot(d)
+        all_phdiff.append(determined_phdiff)
+    avg_phdiff = mean(all_phdiff)
+    for (label_str, d) in all_files.items():
+        d *= exp(+1j*2*pi*d.fromaxis(Bname)*avg_phdiff)
+        fl.next('centered spectra -- ift')
+        fl.plot(d)
+        fl.next('centered spectra')
+        d.ft(Bname)
+        fl.plot(d)
