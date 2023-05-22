@@ -51,10 +51,14 @@ import matplotlib as mpl
 import pickle
 import numpy as np
 def calc_phdiff(d, axis):
-    "calculate the phase difference along axis, setting the error appropriately"
+    "calculate the phase gradient (cyc/Δx) along axis, setting the error appropriately"
+    if d.get_ft_prop(axis):
+        dt = d.get_ft_prop(axis,'df')
+    else:
+        dt = d.get_ft_prop(axis,'dt')
     A = d[axis,1:]
     B = d[axis,:-1]
-    d.data = np.angle(A.data/B.data)
+    d.data = np.angle(A.data/B.data)/2/pi/dt
     A_sigma = A.get_error()
     A_sigma = 1 if A_sigma is None else A_sigma
     B_sigma = B.get_error()
@@ -65,7 +69,7 @@ def calc_phdiff(d, axis):
                 A_sigma**2*abs(0.5/A.data)**2
                 +
                 B_sigma**2*abs(0.5/B.data)**2
-                ) / 2 / pi
+                ) / 2 / pi/dt
             )
     return d
 
@@ -178,7 +182,17 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         alphapoints = 1/phdiff.get_error() # to show what a weighted sum looks like
         alphapoints[~np.isfinite(alphapoints)] = 0
         alphapoints /= sum(alphapoints)
-        print(alphapoints)
-        scatter(phdiff.getaxis(Bname),phdiff.data, alpha=np.clip(alphapoints.ravel()*arb_scaling,0,1), s=10)
+        sc = scatter(phdiff.getaxis(Bname),phdiff.data, alpha=np.clip(alphapoints.ravel()*arb_scaling,0,1), s=10)
+        phdiff.mean_weighted(Bname)
+        determined_phdiff = phdiff.item()
+        axhline(determined_phdiff, c=sc.get_facecolors()[-1], alpha=0.2)
         xlim(0,0.8)
-        #fl.plot(, '.', label=f"{label_str}", alpha=0.5)
+        fl.next('after mult phdiff')
+        d *= exp(-1j*2*pi*determined_phdiff*d.fromaxis(Bname))
+        phdiff = calc_phdiff(d[Bname:(0,None)], Bname)
+        arb_scaling = 20 # the weighted sum will need to be scaled up
+        alphapoints = 1/phdiff.get_error() # to show what a weighted sum looks like
+        alphapoints[~np.isfinite(alphapoints)] = 0
+        alphapoints /= sum(alphapoints)
+        sc = scatter(phdiff.getaxis(Bname),phdiff.data, alpha=np.clip(alphapoints.ravel()*arb_scaling,0,1), s=10)
+        xlim(0,0.8)
