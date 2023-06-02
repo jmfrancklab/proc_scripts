@@ -256,6 +256,10 @@ def hermitian_function_test(
         fl.plot(abs(s_ext).mean_all_but(
             direct)[direct:orig_bounds], label="echo envelope",
             human_units=False)
+        fl.next("zoomed power terms")
+        fl.plot(abs(s_ext).mean_all_but(
+            direct)[direct:(0.1*orig_bounds)], label = "echo envelope",
+            human_units = False)
     # }}}
     # {{{ the integral of the signal power up to t=Δt
     #     (first term in the paper)
@@ -269,7 +273,11 @@ def hermitian_function_test(
     forplot = s_energy / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
+        fl.next("power terms")
         fl.plot(forplot[direct:orig_bounds], label="first energy term",
+                human_units=False)
+        fl.next("zoomed power terms")
+        fl.plot(forplot[direct:(0.1*orig_bounds)], label="first energy term",
                 human_units=False)
     # }}}
     # {{{ calculation the correlation between the echo and its hermitian
@@ -285,7 +293,11 @@ def hermitian_function_test(
     forplot = s_correl / t_dwos
     forplot.setaxis(direct, lambda x: x / 2)
     if fl is not None:
+        fl.next("power terms")
         fl.plot(forplot[direct:orig_bounds], label="correlation function",
+                human_units=False)
+        fl.next("zoomed power terms")
+        fl.plot(forplot[direct:(0.1*orig_bounds)], label="correlation function",
                 human_units=False)
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
@@ -299,8 +311,17 @@ def hermitian_function_test(
     forplot.setaxis(direct, lambda x: x / 2)
     cost_min = cost_func[direct:orig_bounds][direct:(min_echo,echo_before*2)].C.argmin(direct).item()
     if fl is not None:
+        fl.next("power terms")
         fl.plot(
             forplot[direct:orig_bounds],
+            label="cost function",
+            c="violet",
+            alpha=0.5,
+            human_units=False,
+        )
+        fl.next("zoomed power terms")
+        fl.plot(
+            forplot[direct:(0.1*orig_bounds)],
             label="cost function",
             c="violet",
             alpha=0.5,
@@ -309,6 +330,11 @@ def hermitian_function_test(
     cost_func_return = forplot
     echo_peak = cost_min / 2.0
     if fl is not None:
+        fl.next("power terms")
+        fl.plot(echo_peak, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3,
+                human_units=False)
+        axvline(x=echo_peak, linestyle=":")
+        fl.next("zoomed power terms")
         fl.plot(echo_peak, forplot[direct:echo_peak].item(), "o", c="violet", alpha=0.3,
                 human_units=False)
         axvline(x=echo_peak, linestyle=":")
