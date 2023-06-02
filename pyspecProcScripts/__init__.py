@@ -13,6 +13,7 @@ from .correlation_alignment import correl_align
 from .simple_functions import select_pathway
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
+from .t_integral import t_integral_w_error
 from .apod_matched_filter import apod_matched_filter
 from .lorentzian_to_gaussian import L2G
 from .generate_T1_Ep import generate_T1_Ep
@@ -53,6 +54,9 @@ __all__ = [
         "select_pathway",
         "show_pickle_table",
         "slice_FID_from_echo",
+        "t_integral_w_error",
         "zeroth_order_ph",
+        'apod_matched_filter',
+        'L2G',
         ]
 

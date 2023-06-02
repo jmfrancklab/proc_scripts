@@ -10,6 +10,7 @@ def integral_w_errors(
     sig_path,
     error_path,
     cutoff = 0.1,
+    frq_slice = None,
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
@@ -41,6 +42,8 @@ def integral_w_errors(
                 Indirect axis.
     direct:     str
                 Direct axis.
+    frq_slice:  tuple
+                predetermined frq_slice 
 
     Returns
     =======
@@ -53,9 +56,12 @@ def integral_w_errors(
         kwargs = {"convolve_method": convolve_method}
     else:
         kwargs = {}
-    frq_slice = integrate_limits(
-        select_pathway(s, sig_path), convolve_method=convolve_method, cutoff=cutoff, fl=fl
-    )
+    if frq_slice is not None:
+        frq_slice = frq_slice 
+    else:    
+        frq_slice = integrate_limits(
+            select_pathway(s, sig_path), convolve_method=convolve_method, cutoff=cutoff, fl=fl
+        )
     logging.debug(psp.strm("frq_slice is", frq_slice))
     s = s[direct:frq_slice]
     f = s.getaxis(direct)
@@ -69,9 +75,14 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    collected_variance = psp.ndshape(
-        [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
-    ).alloc()
+    if indirect in s.dimlabels:
+        collected_variance = psp.ndshape(
+            [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
+        ).alloc()
+    else:
+        collected_variance = psp.ndshape(
+            [len(error_path)], ["pathways"]
+        ).alloc()
     avg_error = []
     for j in range(len(error_path)):
         # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
@@ -84,24 +95,28 @@ def integral_w_errors(
             N2 = psp.ndshape(s_forerror)[direct]
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
-        # 1. x - avg_x
-        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct) 
-        #2. sum((x - avg_x)^2 / 2) / N
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
-            direct
-        )
-        #3. sum((x - avg_x)^2 / 2)
-        s_forerror *= N2
+        if indirect in s.dimlabels:
+            s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
+            s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
+                direct
+            )
+        else:
+            s_forerror -= s_forerror.C.mean_all_but([direct]).mean(direct)
+            s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct]).mean(
+                direct
+            )
         s_forerror *= df ** 2  # Δf
+        s_forerror *= N2
         avg_error.append(s_forerror)
-    #avg_error = sum(avg_error) / len(avg_error)
-    s_forerror = sum(avg_error)
+    avg_error = sum(avg_error) / len(avg_error)
     # {{{ variance calculation for debug
     # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
     # print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s, sig_path)
-    retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
+    if np.isscalar(s_forerror.data):
+        s_forerror.data = np.array([s_forerror.data])
+    retval = s.integrate(direct).set_error(psp.sqrt(avg_error.data))
     if not return_frq_slice:
         return retval
     elif return_frq_slice:

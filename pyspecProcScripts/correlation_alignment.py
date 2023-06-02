@@ -80,9 +80,10 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
     sig_energy = (abs(s_orig)**2).data.sum().item() / N
     if fl:
         fl.push_marker()
-        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(7,7))
+        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(25,10))
         fl.next("Correlation Diagnostics")
         fig_forlist.suptitle(" ".join(["Correlation Diagnostic"] + [j for j in [fl.basename] if j is not None]))
+        s_orig.reorder([direct],first = False)
         fl.image(s_orig.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[0],human_units=False)
         ax_list[0].set_title('before correlation\nsig. energy=%g'%sig_energy)
     energy_diff = 1.
@@ -129,6 +130,7 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
         if my_iter ==0:
             logging.debug(strm("holder"))
             if fl:
+                correl.reorder([direct],first = False)
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[1])
                 ax_list[1].set_title('correlation function (t), \nafter apod')
@@ -140,6 +142,7 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
         if my_iter ==0:
             logging.debug(strm("holder"))
             if fl:
+                correl.reorder([direct],first = False)
                 fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[2],human_units=False)
                 ax_list[2].set_title('correlation function (v), \nafter apod')
@@ -154,6 +157,7 @@ def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
         if my_iter == 0:
             logging.debug(strm("holder"))
             if fl:
+                s_copy.reorder([direct],first = False)
                 fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
                         ax=ax_list[3],human_units=False)
                 ax_list[3].set_title('after correlation\nbefore ph0 restore')
