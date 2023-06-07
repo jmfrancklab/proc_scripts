@@ -7,6 +7,13 @@ class calib_info (object):
         self.current_calib_name = None
         self.current_diam_name = None
     def use_calibration(self, calibration_name):
+        # currently, if calibration_name is set to None (i.e. use the default),
+        # then this block doesn't get executed.  I don't understand what the
+        # point is here, and think that AG needs some docstrings to specify
+        # what her intention was.  As it is, setting the calibration name to
+        # None generates an error later on, which is confusing and needs to be
+        # debugged.  If setting the calibration name to None is supposed to
+        # generate an error, you should check for that and raise an error here.
         if calibration_name != self.current_calib_name:
             assert type(calibration_name) is str, "the calibration name must be specified as a string!"
             assert len(calibration_name)>0, "you MUST use a calibration name and set the values `[calibration_name] q` and `[calibration_name] conversion` in your _pyspecdata file!"
