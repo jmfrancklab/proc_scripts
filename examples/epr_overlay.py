@@ -50,28 +50,28 @@ from collections import OrderedDict
 import matplotlib as mpl
 import pickle
 import numpy as np
-def calc_phdiff(d, axis):
+def calc_phdiff(self, axis):
     "calculate the phase gradient (cyc/Δx) along axis, setting the error appropriately"
-    if d.get_ft_prop(axis):
-        dt = d.get_ft_prop(axis,'df')
+    if self.get_ft_prop(axis):
+        dt = self.get_ft_prop(axis,'df')
     else:
-        dt = d.get_ft_prop(axis,'dt')
-    A = d[axis,1:]
-    B = d[axis,:-1]
-    d.data = np.angle(A.data/B.data)/2/pi/dt
+        dt = self.get_ft_prop(axis,'dt')
+    A = self[axis,1:]
+    B = self[axis,:-1]
     A_sigma = A.get_error()
     A_sigma = 1 if A_sigma is None else A_sigma
     B_sigma = B.get_error()
     B_sigma = 1 if B_sigma is None else B_sigma
-    d.setaxis(axis, A.getaxis(axis))
-    d.set_error(
+    self.data = np.angle(A.data/B.data)/2/pi/dt
+    self.setaxis(axis, A.getaxis(axis))
+    self.set_error(
             sqrt(
                 A_sigma**2*abs(0.5/A.data)**2
                 +
                 B_sigma**2*abs(0.5/B.data)**2
                 ) / 2 / pi/dt
             )
-    return d
+    return self
 
 init_logging(level='debug')
 filenames_w_labels =  [
@@ -82,9 +82,13 @@ filenames_w_labels =  [
         ]
 Bname = "$B_0$"
 all_files = OrderedDict()
-all_scalings = dict()
-# {{{ load all files first, so that we can determine
-# the axis we will want to interpolate onto
+# {{{ load all files first and do the following:
+#       -   determine ref_axis which spans all the axes with the finest
+#           resolution → ref_axis
+#       -   all_files is an ordered dict of all files
+#       -   ref_spec, which is the label/key of the largest spectrum
+all_axes_extents = []
+maxval = 0
 for j, (filename, label_str) in enumerate(filenames_w_labels):
     # {{{ load, rescale
     d = find_file(filename, exp_type="francklab_esr/Farhana")
@@ -92,24 +96,20 @@ for j, (filename, label_str) in enumerate(filenames_w_labels):
     if "harmonic" in d.dimlabels:
         d = d["harmonic", 0]
     d -= d[Bname, :50].C.mean(Bname).data
-    if j == 0:
-        minB,maxB = d.getaxis(Bname)[r_[0,-1]]
-        dB = diff(d.getaxis(Bname)[r_[0,1]]).item()
-    else:
-        temp = d.getaxis(Bname)[0]
-        minB = temp if temp<minB else minB
-        temp = d.getaxis(Bname)[-1]
-        maxB = temp if temp>maxB else maxB
-        temp = diff(d.getaxis(Bname)[r_[0,1]]).item()
-        dB = temp if temp<dB else dB
+    all_axes_extents.append( tuple(d.getaxis(Bname)[r_[0,-1]]) # min, max
+            +(diff(d.getaxis(Bname)[r_[0,1]]).item(),) # difference
+            )
     all_files[label_str] = d
-    all_scalings[label_str] = d.data.max()-d.data.min()
+    temp = d.data.max()-d.data.min()
+    if temp > maxval:
+        maxval = temp
+        ref_spec = label_str
     # }}}
+minB,maxB,dB = zip(*all_axes_extents)
+minB = min(minB)
+maxB = max(maxB)
+dB = min(dB)
 ref_axis = r_[minB:maxB+dB:dB]
-# }}}
-# {{{ identify the largest spectrum, and use it as the "reference"
-maxval = max(all_scalings.values())
-ref_spec = [k for k,v in all_scalings.items() if v == maxval][0]
 # }}}
 
 with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
@@ -124,7 +124,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     # {{{ pull the reference (largest) up front
     all_files.move_to_end(ref_spec, last=False)
     # }}}
-    all_phdiff = []
+    all_phdiff = [] # to store all the phase differences?
     for j, (label_str, d) in enumerate((k,v) for (k,v) in all_files.items() if v != ref_spec):
         # {{{ just show the raw data
         fl.next("Raw")
@@ -138,6 +138,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             ref_spec.ift(Bname, shift=True)
             ref_spec.run(conj)
             scaling = 1
+            print("for d, before",{k:v for k,v in ref_spec.other_info.items() if k.startswith('FT_start')})
         else:
             normfactor = d.data.max()
             print("for d, before",{k:v for k,v in ref_spec.other_info.items() if k.startswith('FT_start')})
@@ -199,4 +200,4 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.plot(d)
         fl.next('centered spectra')
         d.ft(Bname)
-        fl.plot(d)
+        fl.plot(d, human_units=False)
