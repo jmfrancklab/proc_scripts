@@ -82,6 +82,8 @@ filenames_w_labels =  [
         ]
 Bname = "$B_0$"
 all_files = OrderedDict()
+aligned_autoscaled = {}
+all_scaling = {}
 # {{{ load all files first and do the following:
 #       -   determine ref_axis which spans all the axes with the finest
 #           resolution → ref_axis
@@ -131,7 +133,6 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.plot(d, label=label_str, alpha=0.5)
         # }}}
         d = d.interp(Bname, ref_axis.copy(), kind="linear")
-        d[Bname] -= minB
         if j == 0:
             ref_spec_Bdom = d.C
             ref_spec = d.C
@@ -148,7 +149,9 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             correlation /= normfactor
             correlation.ft_clear_startpoints(
                 Bname, f="reset"
-            )  # because I want to calculate things in terms of an offset, which can be positive or negative, and need to shift in the next step
+            )  # I want to calculate things in terms of an offset,
+            #    which can be positive or negative, and need to shift in
+            #    the next step
             correlation.ft(Bname, shift=True)
             fl.next("correlation")
             fl.plot(correlation, label=label_str)
@@ -162,9 +165,10 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
                 b * b
             ).sum(Bname)
             scaling = scaling.real.item()
-        d[Bname] += minB
         fl.next("aligned, autoscaled")
-        fl.plot(d / scaling, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
+        aligned_autoscaled[label_str] = d/scaling
+        all_scaling[label_str] = scaling
+        fl.plot(aligned_autoscaled[label_str], label=f"{label_str}\nscaling {scaling}", alpha=0.5)
         fl.next("u domain")
         if d.get_ft_prop(Bname,['start','time']) is None:#  this is the same
             d.ift(Bname, shift=True)
