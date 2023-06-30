@@ -59,14 +59,14 @@ def zeroth_order_ph(d, fl=None):
     imvector = d.data.imag.ravel()
     R2 = np.mean(realvector**2)
     I2 = np.mean(imvector**2)
-    C = np.mean(realvector*imvector) # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution, rather than at right angles
-    inertia_matrix = np.array([[R2,-C],
-        [-C,I2]])
+    C = np.mean(realvector*imvector) # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution
+    # note that this effectively changes the relative sign of x and y, reflecting the ellipse so that it circles the elements rather than going around them, and it's note the same as just flipping the eigenvalues
+    inertia_matrix = np.array([[R2,C],
+        [C,I2]])
     eigenValues, eigenVectors = linalg.eigh(inertia_matrix)
     mean_point = d.data.ravel().mean()
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
-    eigenValues = eigenValues[::-1] # swap eigenvalues, since moment of inertia is orthogonal to direction of rotation
     idx = eigenValues.argsort()[::-1]
     eigenValues = eigenValues[idx]
     eigenVectors = eigenVectors[:, idx]
