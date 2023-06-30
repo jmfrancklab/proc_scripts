@@ -187,12 +187,17 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 
 
 def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2",
-        slice_multiplier=90,
         exclude_rising=3,
+        slice_multiplier=20,
+        peak_lower_thresh=0.1,
         show_hermitian_sign_flipped=False,
         show_shifted_residuals=False):
     # {{{ autodetermine slice range
-    freq_envelope = d.C.mean_all_but(direct).run(abs)
+    freq_envelope = d.C
+    freq_envelope.ift('t2')
+    freq_envelope = freq_envelope['t2':(0,None)] # slice out rising echo estimate according to experimental tau in order to limit oscillations
+    freq_envelope.ft('t2')
+    freq_envelope.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(freq_envelope, human_units=False, label="signal energy")
@@ -206,11 +211,20 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(freq_envelope, human_units=False, label="signal energy\nconv + baselined")
-    freq_envelope[direct:0] = 0
-    half_width_slice = freq_envelope.contiguous(
-            lambda x: x>0.5*x.data.max())[0,:]
-    frq_center = np.mean(half_width_slice).item()
-    frq_half = np.diff(half_width_slice).item()/2
+    narrow_ranges = freq_envelope.contiguous(
+            lambda x: x>0.5*x.data.max())
+    wide_ranges = freq_envelope.contiguous(
+            lambda x: x>peak_lower_thresh*x.data.max())
+    def filter_ranges(B, A):
+        """where A and B are lists of ranges (given as tuple pairs), filter B
+        to only return ranges that include ranges given in A"""
+        return [np.array(b) for b in B if
+                any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
+    peakrange = filter_ranges(wide_ranges, narrow_ranges)
+    assert len(peakrange) == 1
+    peakrange = peakrange[0]
+    frq_center = np.mean(peakrange).item()
+    frq_half = np.diff(peakrange).item()/2
     if fl is not None:
         fl.next("autoslicing!")
         axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
