@@ -246,8 +246,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         thebasename = ""
     # {{{ sign flip and average input for hermitian
     input_for_hermitian = select_pathway(d, signal_pathway).C
-    signflip = input_for_hermitian.C.ft(direct)
-    signflip = signflip[direct:reduced_slice_range]
+    signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
     idx = abs(signflip).mean_all_but(direct).data.argmax()
     signflip = signflip[direct,idx]
     ph0 = zeroth_order_ph(signflip)
@@ -272,7 +271,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         test_array = t_dw/3 * r_[-6, -3, -1, 1, 3, 6, 0]# do 0 last, so that's what it uses
     else:
         test_array = r_[0]
-    for test_offset in ( test_array):
+    for test_offset in test_array:
         test_shift = best_shift + test_offset
         d = d_save.C
         if test_offset == 0:
@@ -303,28 +302,32 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
                     and
                     d_sigcoh.getaxis(direct)[idx] ==
                     0): # should be centered about zero, but will not be if too lopsided
-                fl.next("residual after shift")
-                for_resid = abs((s_flipped -
-                            d_sigcoh[direct:(t_start,
-                                -t_start)]).mean_all_but(direct))
+                for_resid = (abs(s_flipped -
+                    d_sigcoh[direct:(t_start,
+                        -t_start)])**2)
+                N_ratio = for_resid.data.size
+                for_resid.mean_all_but(direct).run(sqrt)
+                N_ratio /= for_resid.data.size # the signal this has been plotted against is signal averaged by N_ratio
                 resi_sum = for_resid[direct, 7:-7].mean(direct).item()
-                for_resid.run(sqrt)
-                fl.plot(for_resid, human_units=False, label="best shift%+e, mean of residual" % test_offset)
-                fl.plot(
-                    d_sigcoh.C.mean_all_but(direct).run(abs),
-                    alpha=0.8,
-                    human_units=False,
-                    label="best shift%+e, abs of mean" % test_offset,
-                )
-                fl.plot(
-                    s_flipped.C.mean_all_but(direct).run(abs),
-                    alpha=0.5,
-                    human_units=False,
-                    label="best shift%+e, abs of flipped mean" % test_offset,
-                )
-                ax = plt.gca()
-                yl = ax.get_ylim()
-                ax.set_ylim((0,yl[-1]))
+                fl.next("residual after shift")
+                fl.plot(for_resid/sqrt(N_ratio), human_units=False, label="best shift%+e, mean of residual" % test_offset)
+                if test_offset == 0:
+                    fl.plot(
+                        d_sigcoh.C.mean_all_but(direct).run(abs),
+                        alpha=0.8,
+                        human_units=False,
+                        label="best shift%+e, abs of mean" % test_offset,
+                    )
+                    s_flipped.set_plot_color('r')
+                    fl.plot(
+                        s_flipped.C.mean_all_but(direct).run(abs),
+                        alpha=0.5,
+                        human_units=False,
+                        label="best shift%+e, abs of flipped mean" % test_offset,
+                    )
+                    ax = plt.gca()
+                    yl = ax.get_ylim()
+                    ax.set_ylim((0,yl[-1]))
     # }}}
     if add_rising:
         d_rising = d[direct:(None, 0)][direct, exclude_rising:-1]  # leave out first few points
