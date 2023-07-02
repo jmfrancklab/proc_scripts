@@ -18,6 +18,7 @@ def L2G(
     full_width=8.434,
     direct="t2",
     show_expanding_envelope=False,
+    direct_axis=None,
     fl=None,
 ):
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
@@ -109,7 +110,10 @@ def L2G(
         fl.plot(
             envelope.eval() / env_out["A"], lw=1.1, label=r"optimal envelope"
         )
-    t2 = envelope.fromaxis(direct)
+    if direct_axis is None:
+        t2 = envelope.fromaxis(direct)
+    else:
+        t2 = direct_axis
     # lsq
     lsq = np.exp(-pi * lsq_lambda * abs(t2))
     # matched:
