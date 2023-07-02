@@ -7,6 +7,7 @@ from sympy import symbols
 from scipy.special import erf
 import sympy as sp
 import numpy as np
+import logging
 
 
 def L2G(
@@ -16,6 +17,7 @@ def L2G(
     threshold=0.10,
     full_width=8.434,
     direct="t2",
+    show_expanding_envelope=False,
     fl=None,
 ):
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
@@ -40,17 +42,16 @@ def L2G(
     if fl:
         fl.push_marker()
         fl.next("envelope")
+        gca().set_prop_cycle(
+            cycler(alpha=[0.1, 1] + [0.5] * 5)
+            + cycler(color=["g", "k", "k", "k", "r", "g", "b"])
+            + cycler(ls=["-", "-", "--", ":", "-", "-", "-"])
+        )
         fl.plot(orig_guess / new_guess["A"], label="guess")
         fl.plot(
             envelope / new_guess["A"],
-            "k",
-            alpha=1,
             lw=1,
             label="signal envelope",
-        )
-        gca().set_prop_cycle(
-            cycler(alpha=[0.5]) * cycler(color=["k", "k", "r", "g", "b"])
-            + cycler(ls=["--", ":", "-", "-", "-"])
         )
         fl.plot(
             envelope.eval() / new_guess["A"], lw=1.1, label="least squares fit"
@@ -58,34 +59,37 @@ def L2G(
     lsq_lambda = new_guess["lambda_L"]
     lw_range = r_[min_l : new_guess["lambda_L"] : 50j]
     amount_over = np.zeros_like(lw_range)
-    # where does exp(-π λ t) decay to 0.01 of original?
-    # at -ln(0.01)/π λ
-    # = ln(100) / π λ
-    t_at_exp_end = np.log(100)/pi/lsq_lambda
+    # where does A exp(-π λ t) decay to 2σ?
+    # at -ln(A/2σ)/π λ
+    # = ln(2σ/A) / π λ
+    t_at_exp_end = (
+        np.log(new_guess["A"] / 2 / new_guess["sigma"]) / pi / lsq_lambda
+    )
     for j, newL in enumerate(lw_range):
         new_guess.update(lambda_L=newL)
         envelope.set_guess(new_guess)
         envelope.settoguess()
-        points_over = envelope[direct:(0,t_at_exp_end)] - envelope.eval()[direct:(0,t_at_exp_end)]
+        points_over = (
+            envelope[direct:(0, t_at_exp_end)]
+            - envelope.eval()[direct:(0, t_at_exp_end)]
+        )
         points_over[lambda x: x < 0] = 0
         points_over.run(lambda x: np.sqrt(abs(x) ** 2)).mean()
         amount_over[j] = points_over.item()
     # }}}
-    if fl:
-        # fl.plot(s_noise/new_guess['A'], 'k', alpha=0.1, lw=1, label="noise (inactive $\\Delta p$)")
-        fl.next("expanding envelope", figsize=r_[1, 0.3] * full_width)
     l = "$\\lambda_L$"
     env_expansion = psp.nddata(amount_over / amount_over.max(), [-1], [l])
     env_expansion.setaxis(l, lw_range).set_units(l, "Hz")
     env_expansion.name("norm of points\noutside envelope")
-    if fl:
+    if fl and show_expanding_envelope:
+        fl.next("expanding envelope", figsize=r_[1, 0.3] * full_width)
         fl.plot(env_expansion)
     norm_max = env_expansion.max().item().real
     norm_min = env_expansion.min().item().real
     opt_lambda = env_expansion.invinterp(
         l, norm_min * (1 - threshold) + norm_max * threshold, kind="linear"
     )
-    print(
+    logging.debug(
         "opt_lambda",
         opt_lambda,
         "at",
@@ -93,7 +97,7 @@ def L2G(
         "out of",
         lw_range,
     )
-    if fl:
+    if fl and show_expanding_envelope:
         fl.plot(opt_lambda, "o")
     new_guess.update(lambda_L=opt_lambda.getaxis(l).item().real)
     envelope.set_guess(new_guess)
