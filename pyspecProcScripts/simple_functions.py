@@ -50,14 +50,20 @@ def determine_sign(s, direct="t2", fl=None):
     if fl is not None:
         fl.push_marker()
         fl.next('selected pathway')
-        fl.image(s.C.setaxis(
-'vd','#').set_units('vd','scan #'))
+        if 'vd' in s.dimlabels:
+            fl.image(s.C.setaxis(
+                'vd','#').set_units('vd','scan #'))
+        else:
+            fl.image(s)
     data_sgn = s.C.sum(direct)
     data_sgn /= data_sgn.max().item()
     data_sgn.run(np.real).run(lambda x: np.sign(x))
     if fl is not None:
         fl.next('check sign')
-        fl.image((s.C.setaxis(
-'vd','#').set_units('vd','scan #'))*data_sgn)
+        if 'vd' in s.dimlabels:
+            fl.image(s.C.setaxis(
+                'vd','#').set_units('vd','scan #')*data_sgn)
+        else:
+            fl.image(s*data_sgn)
         fl.pop_marker()
     return data_sgn
