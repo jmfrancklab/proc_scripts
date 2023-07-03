@@ -10,15 +10,13 @@ import numpy as np
 import logging
 
 
-def L2G(
+def fit_envelope(
     s,
-    criterion="energy",
     min_l=10,
     threshold=0.10,
     full_width=8.434,
     direct="t2",
     show_expanding_envelope=False,
-    direct_axis=None,
     fl=None,
 ):
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
@@ -110,28 +108,31 @@ def L2G(
         fl.plot(
             envelope.eval() / env_out["A"], lw=1.1, label=r"optimal envelope"
         )
-    if direct_axis is None:
-        t2 = envelope.fromaxis(direct)
-    else:
-        t2 = direct_axis
+    t2 = envelope.fromaxis(direct)
     # lsq
     lsq = np.exp(-pi * lsq_lambda * abs(t2))
-    # matched:
-    matched = np.exp(-pi * env_out["lambda_L"] * abs(t2))
+    if fl:
+        fl.plot(
+            L2G(env_out["lambda_L"], criterion="energy")(s.fromaxis(direct))
+        )
+        fl.pop_marker()
+    return env_out["lambda_L"]
+
+
+def L2G(
+    lambda_L,
+    criterion="energy",
+):
+    assert np.isscalar(lambda_L)
     if criterion == "energy":
         # equal energy:
-        L2G = np.exp(
-            -0.5 * pi**3 * env_out["lambda_L"] ** 2 * t2**2
-            + pi * env_out["lambda_L"] * abs(t2)
+        return lambda t2: np.exp(
+            -0.5 * pi**3 * lambda_L**2 * t2**2 + pi * lambda_L * abs(t2)
         )
     elif criterion == "width":
         # equal linewidth
-        L2G = np.exp(
+        return lambda t2: np.exp(
             pi
-            * env_out["lambda_L"]
-            * (-pi * env_out["lambda_L"] * t2**2 / 4 / np.log(2) + abs(t2))
+            * lambda_L
+            * (-pi * lambda_L * t2**2 / 4 / np.log(2) + abs(t2))
         )
-    if fl:
-        fl.plot(L2G)
-        fl.pop_marker()
-    return L2G

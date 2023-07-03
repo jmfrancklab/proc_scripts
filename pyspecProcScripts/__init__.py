@@ -15,7 +15,7 @@ from .simple_functions import select_pathway
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
-from .lorentzian_to_gaussian import L2G
+from .envelope import L2G, fit_envelope
 __all__ = [
         'DCCT',
         'L2G',
@@ -29,6 +29,7 @@ __all__ = [
         'decay',
         'determine_sign',
         'draw_limits',
+        'fit_envelope',
         'expand_limits',
         'fake_data',
         'fid_from_echo',
