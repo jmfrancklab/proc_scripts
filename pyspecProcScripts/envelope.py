@@ -16,6 +16,7 @@ def fit_envelope(
     threshold=0.10,
     full_width=8.434,
     direct="t2",
+    plot_name="envelope",
     show_expanding_envelope=False,
     fl=None,
 ):
@@ -40,7 +41,7 @@ def fit_envelope(
     new_guess = envelope.output()
     if fl:
         fl.push_marker()
-        fl.next("envelope")
+        fl.next(plot_name)
         gca().set_prop_cycle(
             cycler(alpha=[0.1, 1] + [0.5] * 5)
             + cycler(color=["g", "k", "k", "k", "r", "g", "b"])
@@ -102,7 +103,7 @@ def fit_envelope(
     envelope.set_guess(new_guess)
     envelope.settoguess()
     if fl:
-        fl.next("envelope")
+        fl.next(plot_name)
     env_out = envelope.output()
     if fl:
         fl.plot(
