@@ -1,8 +1,4 @@
-If you're uncertain, start with examples!
-
-.. toctree::
-
-    auto_examples/index
+If you're uncertain, start with :ref:`examples! <sphx_glr_auto_examples>`.
 
 The processing is structured into multiple levels.
 

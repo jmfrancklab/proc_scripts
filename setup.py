@@ -11,4 +11,8 @@ setup(
     #package_data={'pyDiffTools':['diff-doc.js','xml2xlsx.vbs']},
     #entry_points=dict(
     #    console_scripts=["pydifft = pydifftools.command_line:main",])
+    install_requires=[
+        "pyspecdata",
+        "pint",
+        ]
 )
