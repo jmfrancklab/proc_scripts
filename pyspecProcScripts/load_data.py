@@ -350,7 +350,7 @@ def proc_nutation(s, fl=None):
     orig_t = s.getaxis("t")
     s.set_units("p_90", "s")
     s.reorder("t", first=True)
-    s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
+    s.chunk("t", ["ph1", "ph2", "t2"], [2, 2, -1])
     s.setaxis("ph2", r_[0.0, 2.0] / 4)
     s.setaxis("ph1", r_[0.0, 2.0] / 4)
     s.reorder("t2", first=False)
@@ -388,12 +388,12 @@ def proc_nutation_amp(s, fl=None):
 
 def proc_nutation_chunked(s, fl=None):
     logging.info("loading pre-processing for nutation")
-    s.reorder(["ph1", "ph2"])
+    s.reorder(["ph1"])
     s.set_units("t2", "s")
     #s.set_units("p_90", "s")
     # s.reorder('t2',first=True)
-    s.ft(["ph1", "ph2"], unitary=True)
-    s.reorder(["ph1", "ph2", "indirect"])
+    s.ft(["ph1"], unitary=True)
+    s.reorder(["ph1", "indirect"])
     if fl is not None:
         fl.next("Raw Data - Time Domain")
         fl.image(s.C.human_units())
@@ -411,19 +411,41 @@ def proc_var_tau(s, fl=None):
         s.setaxis("ph2", r_[0, 2] / 4)
         s.setaxis("ph1", r_[0:4] / 4)
     s.set_units("t2", "s")  # this should already be set -- why not?
-    s *= 2e-6 / 1.11e4  # convert from SpinCore to V (amp)
-    s.set_units("V")
+    if 'tau' in s.dimlabels:
+        s.setaxis('tau',s.get_prop('acq_params')['tau_us'])
+    else:
+        s.rename('indirect','tau')
+        s.setaxis('tau',s.get_prop('acq_params')['tau_us'])
     if fl is not None:
         fl.next("raw signal!")
     s.ft("t2", shift=True).ft(["ph1", "ph2"], unitary=True)
     s.reorder(["ph1", "ph2", "tau"])
     if fl is not None:
-        fl.plot(abs(s).smoosh(["ph2", "ph1", "tau"], "transients"), alpha=0.2)
+        fl.plot(abs(s.C).smoosh(["ph2", "ph1", "tau"], "transients"), alpha=0.2)
         fl.next("raw signal")
         fl.image(s)
     return s
 
 
+def proc_var_tau_v2(s, fl=None):
+    s.get_prop("SW")
+    if "ph1" not in s.dimlabels:
+        s.chunk("t", ["ph1", "t2"], [4, -1])
+        s.setaxis("ph1", r_[0:4] / 4)
+    s.set_units("t2", "s")  # this should already be set -- why not?
+    if 'indirect' in s.dimlabels:
+        s.rename('indirect','tau')
+        s.setaxis('tau',s.get_prop('acq_params')['tau_us'])    
+    s.set_units("V")
+    if fl is not None:
+        fl.next("raw signal!")
+    s.ft("t2", shift=True).ft(["ph1"], unitary=True)
+    s.reorder(["ph1", "tau"])
+    if fl is not None:
+        fl.plot(abs(s).smoosh(["ph1", "tau"], "transients"), alpha=0.2)
+        fl.next("raw signal")
+        fl.image(s)
+    return s
 def proc_spincore_echo_v1(s, fl=None):
     "old-fashioned (not properly shaped before storage) echo data"
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
@@ -679,6 +701,7 @@ lookup_table = {
     "spincore_ODNP_v4": proc_spincore_ODNP_v4,  # for 4 x 4 phase cycle no meter powers
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
+    "spincore_var_tau_v2": proc_var_tau_v2,
     "square_wave_capture_v1": proc_capture,
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,

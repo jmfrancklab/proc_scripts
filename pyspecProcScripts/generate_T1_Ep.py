@@ -8,7 +8,7 @@ import matplotlib.transforms as transforms
 from pyspecdata import *
 from pyspecProcScripts import *
 from pyspecProcScripts import lookup_table
-from Instruments.logobj import logobj
+#from Instruments.logobj import logobj
 from itertools import cycle
 import re
 hack_IR_re = re.compile('FIR_([0-9]+)(d[bB]m){0,1}(_[0-9]+){0,1}')
