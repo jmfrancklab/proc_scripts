@@ -1,13 +1,14 @@
 """Fitting ODNP Datasets for Ksigma
 ===================================
-The T1(p) and E(p) integrals are pulled from an H5 file and are fit to extract the cross relaxivity of the sample. The R1(p) is first interpolated by fitting the self relaxivity to a polynomial. This fit is then used to fit the linear regime of the enhancement data. The cross relaxivity is then calculated using the output of these fits as well as the sample parameters that are fed to it (e.g., ppt value, and concentration).
+The T1(p) and E(p) integrals are pulled from an H5 file and are fit to extract the cross relaxivity of the sample. The R1(p) is first interpolated by fitting the self relaxivity to a polynomial. This fit is then used as a parameter for fitting the linear regime of the enhancement data that is extrapolated to the highest power. The cross relaxivity is then calculated using the output of these fits as well as the sample parameters that are fed to it (e.g., ppt value, and concentration).
 """
 from pyspecdata import *
 from sympy import symbols, Symbol, latex
+from scipy.io import loadmat
 
 target_directory = os.path.normpath(getDATADIR("AG_processed_data"))
 h5_folder = "ras.h5"
-filename = "220616_E37"
+nodename = "220616_E37"
 # {{{Dataset Parameters
 SL_conc_M = 455.2223e-6
 ppt = 1.5167e-3
@@ -28,8 +29,8 @@ def list_symbs(f):
 # }}}
 with figlist_var() as fl:
     # {{{ load data
-    Ep = nddata_hdf5(f"{h5_folder}/{filename}/Ep", directory=target_directory)
-    T1p = nddata_hdf5(f"{h5_folder}/{filename}/T1p", directory=target_directory)
+    Ep = nddata_hdf5(f"{h5_folder}/{nodename}/Ep", directory=target_directory)
+    T1p = nddata_hdf5(f"{h5_folder}/{nodename}/T1p", directory=target_directory)
     # }}}
     # {{{Plot Ep
     fl.next("E(p)")
@@ -43,12 +44,14 @@ with figlist_var() as fl:
     fl.plot(R1p, "o", label="Experimental Data")
     # }}}
     # {{{Fit R1p
-    T100 = 3.71
-    dT10 = 0.2
-    a, b, c, power = symbols("a b c power", real=True)  # symbols
+    # {{{load in T100 dataset
+    T10_p = loadmat('T10_DI_water_230412')['a'][0,:]
+    T100 = T10_p[0]
+    dT10 = T10_p[1]
+    a, b, c, p = symbols("a b c power", real=True)  # symbols
     f = lmfitdata(R1p)  # initiate lmfit
-    f.functional_form = (1 / (T100 + dT10 * power)) + (
-        SL_conc_M / (a + b * power + c * power**2)
+    f.functional_form = (1 / (T100 + dT10 * p)) + (
+        SL_conc_M / (a + b * p + c * p**2)
     )  # declare fitting function
     f.set_guess(
         a=dict(value=1.12e-4, min=1e-5, max=5e-3),
@@ -64,15 +67,15 @@ with figlist_var() as fl:
     # }}}
     # {{{ Fit E(p)
     fl.next("E(p)")
-    M0, A, phalf, power = symbols("M0 A phalf power", real=True)
-    sp = power / (power + phalf)
-    R1p = (1 / (T100 + dT10 * power)) + (
-        SL_conc_M / (f.output("a") + f.output("b") * power + f.output("c") * power**2)
+    M0, A, phalf, p = symbols("M0 A phalf power", real=True)
+    sp = p / (p + phalf)
+    R1p = (1 / (T100 + dT10 * p)) + (
+        SL_conc_M / (f.output("a") + f.output("b") * p + f.output("c") * p**2)
     )
     Ep_fit = lmfitdata(Ep["power", :-3])
     Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p)
     Ep_fit.set_guess(
-        M0=dict(value=8e4, min=6.4e4, max=11e4),
+        M0=dict(value=Ep['power',0].real.data, min=6.4e4, max=11e4),
         A=dict(value=3, min=0.5, max=17),
         phalf=dict(value=0.2, min=0.1, max=0.4),
     )
