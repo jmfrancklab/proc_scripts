@@ -43,24 +43,23 @@ with figlist_var() as fl:
     fl.next(r"$R_{1}(p)$")
     fl.plot(R1p, "o", label="Experimental Data")
     # }}}
-    # {{{Fit R1p
     # {{{load in T100 dataset
-    T10_p = loadmat('T10_DI_water_230412')['a'][0,:]
-    T100 = T10_p[0]
-    dT10 = T10_p[1]
-    a, b, c, p = symbols("a b c power", real=True)  # symbols
-    f = lmfitdata(R1p)  # initiate lmfit
-    f.functional_form = (1 / (T100 + dT10 * p)) + (
-        SL_conc_M / (a + b * p + c * p**2)
-    )  # declare fitting function
-    f.set_guess(
-        a=dict(value=1.12e-4, min=1e-5, max=5e-3),
-        b=dict(value=7.5e-5, min=-0.001, max=0.001),
-        c=dict(value=-1.5e-5, min=-0.001, max=0.001),
-    )
-    f.settoguess()
-    f.fit()
-    R1p_fit = f.eval(Ep_pts)
+    R10_p = loadmat('T10_DI_water_230412')['a'][0,:]
+    R100 = R10_p[0]
+    dR10 = R10_p[1]
+    #{{{constants for Ep fit
+    T100 = R100
+    dT10 = dR10
+    #}}}
+    R10 = R100-dR10
+    #}}}
+    #{{{ fit krho and R1p
+    R10_p = nddata((R100-dR10*R1p.getaxis('power')),'power') #power axis for krho fit
+    R10_p.setaxis('power',R1p.getaxis('power'))
+    krho_inv = SL_conc_M/(R1p - R10_p)
+    krho_inv_fit = krho_inv.polyfit('power',order=2)
+    krho_inv_fine = nddata(R1p.C.getaxis('power'),'power').eval_poly(krho_inv_fit,'power')
+    R1p_fit = (R10_p + SL_conc_M/krho_inv_fine)
     fl.plot(R1p_fit, ls=":", color="k", label="Fit", alpha=0.5)
     plt.ylabel(r"$R_{1} / s^{-1}$")
     plt.xlabel("Power / W")
@@ -69,17 +68,19 @@ with figlist_var() as fl:
     fl.next("E(p)")
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     sp = p / (p + phalf)
-    R1p = (1 / (T100 + dT10 * p)) + (
-        SL_conc_M / (f.output("a") + f.output("b") * p + f.output("c") * p**2)
-    )
+    R1p = (1 / (R100 +dR10 * p)) + (
+        SL_conc_M / (krho_inv_fit[0] + krho_inv_fit[1] * p + krho_inv_fit[2] * p**2))
     Ep_fit = lmfitdata(Ep["power", :-3])
     Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p)
     Ep_fit.set_guess(
-        M0=dict(value=Ep['power',0].real.data, min=6.4e4, max=11e4),
-        A=dict(value=3, min=0.5, max=17),
+        M0=dict(value=Ep['power',0].real.data, min=1e4, max=11e4),
+        A=dict(value=13, min=0.5, max=17),
         phalf=dict(value=0.2, min=0.1, max=0.4),
     )
     Ep_fit.settoguess()
+    guess = Ep_fit.eval(100)
+    fl.plot(guess)
+    fl.show();quit()
     Ep_fit.fit()
     thisfit = Ep_fit.eval(100)
     fl.plot(thisfit, ls=":", color="k", label="Fit", alpha=0.5)
