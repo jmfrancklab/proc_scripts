@@ -51,7 +51,7 @@ with figlist_var() as fl:
     #{{{ fit krho and R1p
     krho_inv = SL_conc_M/(R1p - R10_p)
     krho_inv_fit = krho_inv.polyfit('power',order=2)
-    krho_inv_fine = nddata(R1p.C.getaxis('power'),'power').eval_poly(krho_inv_fit,'power')
+    krho_inv_fine = R1p.fromaxis('power').eval_poly(krho_inv_fit,'power')
     R1p_fit = (R10_p + SL_conc_M/krho_inv_fine)
     fl.plot(R1p_fit, ls=":", color="k", label="Fit", alpha=0.5)
     plt.ylabel(r"$R_{1} / s^{-1}$")
