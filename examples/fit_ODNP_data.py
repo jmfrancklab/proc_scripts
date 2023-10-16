@@ -17,7 +17,7 @@ Ep_pts = 18
 # {{{ plotting fn
 def list_symbs(f):
     # {{{ this is just to show all the parameters
-    list_symbs = [f"${latex(Symbol(j))} = {k:0.5g}$" for j,k in f.output().items()]
+    list_symbs = [f"${latex(Symbol(j))} = {k:0.5g}$" for j, k in f.output().items()]
     list_symbs = "\n".join(list_symbs)
     # }}}
     return list_symbs
@@ -31,8 +31,24 @@ with figlist_var() as fl:
     # }}}
     # {{{Plot Ep
     fl.next("E(p)")
-    fl.plot(Ep["power", :-3], "o", label="Experimental Data", capsize=6, alpha=0.5)
-    fl.plot(Ep["power", -3:], "rx", label="Returning Power Check", capsize=6, alpha=0.5)
+    # {{{Find the index where the return powers start up
+    thisdiff = Ep.fromaxis("power").diff("power")
+    for idx in range(len(Ep.getaxis("power"))):
+        if thisdiff["power", idx].data < 0:
+            flip_idx = idx
+            break
+    flip_idx += 1
+    # }}}
+    fl.plot(
+        Ep["power", :flip_idx], "o", label="Returning Power Check", capsize=6, alpha=0.5
+    )
+    fl.plot(
+        Ep["power", flip_idx:],
+        "rx",
+        label="Returning Power Check",
+        capsize=6,
+        alpha=0.5,
+    )
     plt.ylabel("E(p)")
     # }}}
     # {{{ plot T1p data
@@ -41,15 +57,22 @@ with figlist_var() as fl:
     fl.plot(R1p, "o", label="Experimental Data")
     # }}}
     # {{{load in T100 dataset
-    T10_p = loadmat('T10_DI_water_230412')['a'][0,:]
-    R10_p = nddata((T10_p[0]+T10_p[1]*R1p.getaxis('power'))**-1,'power')
-    R10_p.setaxis('power',R1p.getaxis('power'))
-    #}}}
-    #{{{ fit krho and R1p
-    krho_inv = SL_conc_M/(R1p - R10_p)
-    krho_inv_fit = krho_inv.polyfit('power',order=2)
-    krho_inv_fine = R1p.fromaxis('power').eval_poly(krho_inv_fit,'power')
-    R1p_fit = (R10_p + SL_conc_M/krho_inv_fine)
+    T10_p = loadmat("T10_DI_water_230412")["a"][0, :]
+    R10_p = nddata((T10_p[0] + T10_p[1] * R1p.getaxis("power")) ** -1, "power")
+    R10_p.setaxis("power", R1p.getaxis("power"))
+    # }}}
+    # {{{ fit krho and R1p
+    krho_inv = SL_conc_M / (R1p - R10_p)
+    krho_inv_fit = krho_inv.polyfit("power", order=2)
+    krho_inv_fine = R1p.fromaxis("power").eval_poly(krho_inv_fit, "power")
+    R1p_fit = (T10_p[0] + T10_p[1] * R1p.fromaxis("power")) ** -1 + (
+        SL_conc_M
+        / (
+            krho_inv_fit[0]
+            + krho_inv_fit[1] * R1p.fromaxis("power")
+            + krho_inv_fit[2] * R1p.fromaxis("power") ** 2
+        )
+    )
     fl.plot(R1p_fit, ls=":", color="k", label="Fit", alpha=0.5)
     plt.ylabel(r"$R_{1} / s^{-1}$")
     plt.xlabel("Power / W")
@@ -58,12 +81,13 @@ with figlist_var() as fl:
     fl.next("E(p)")
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     sp = p / (p + phalf)
-    R1p = ((T10_p[0]+T10_p[1]*p)**-1 + (
-        SL_conc_M / (krho_inv_fit[0] + krho_inv_fit[1] * p + krho_inv_fit[2] * p**2)))
-    Ep_fit = lmfitdata(Ep["power", :-3])
+    R1p = (T10_p[0] + T10_p[1] * p) ** -1 + (
+        SL_conc_M / (krho_inv_fit[0] + krho_inv_fit[1] * p + krho_inv_fit[2] * p**2)
+    )
+    Ep_fit = lmfitdata(Ep["power", :flip_idx])
     Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p)
     Ep_fit.set_guess(
-        M0=dict(value=Ep['power',0].real.data, min=1e4, max=11e4),
+        M0=dict(value=Ep["power", 0].real.data, min=1e4, max=11e4),
         A=dict(value=13, min=0.5, max=17),
         phalf=dict(value=0.2, min=0.1, max=0.4),
     )
