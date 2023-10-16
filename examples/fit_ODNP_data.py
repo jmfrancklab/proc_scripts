@@ -7,7 +7,7 @@ from sympy import symbols, Symbol, latex
 from scipy.io import loadmat
 
 target_directory = os.path.normpath(getDATADIR("AG_processed_data"))
-h5_folder = "ras.h5"
+h5_file = "ras.h5"
 nodename = "220616_E37"
 # {{{Dataset Parameters
 SL_conc_M = 455.2223e-6
@@ -17,10 +17,7 @@ Ep_pts = 18
 # {{{ plotting fn
 def list_symbs(f):
     # {{{ this is just to show all the parameters
-    list_symbs = []
-    for j, k in f.output().items():
-        s_repr = latex(Symbol(j))
-        list_symbs.append(f"${s_repr} = {k:0.5g}$")
+    list_symbs = [f"${latex(Symbol(j))} = {k:0.5g}$" for j,k in f.output().items()]
     list_symbs = "\n".join(list_symbs)
     # }}}
     return list_symbs
@@ -29,8 +26,8 @@ def list_symbs(f):
 # }}}
 with figlist_var() as fl:
     # {{{ load data
-    Ep = nddata_hdf5(f"{h5_folder}/{nodename}/Ep", directory=target_directory)
-    T1p = nddata_hdf5(f"{h5_folder}/{nodename}/T1p", directory=target_directory)
+    Ep = nddata_hdf5(f"{h5_file}/{nodename}/Ep", directory=target_directory)
+    T1p = nddata_hdf5(f"{h5_file}/{nodename}/T1p", directory=target_directory)
     # }}}
     # {{{Plot Ep
     fl.next("E(p)")
