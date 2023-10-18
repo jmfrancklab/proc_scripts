@@ -9,11 +9,6 @@ from scipy.io import loadmat
 target_directory = os.path.normpath(getDATADIR("AG_processed_data"))
 h5_file = "ras.h5"
 nodename = "230706_M67_a_low_power_unnorm_wrong_1"
-# {{{Dataset Parameters
-SL_conc_M = 116.6e-6#455.2223e-6
-ppt = 1.5167e-3
-Ep_pts = 16
-# }}}
 # {{{ plotting fn
 def list_symbs(f):
     # {{{ this is just to show all the parameters
@@ -28,6 +23,12 @@ with figlist_var() as fl:
     # {{{ load data
     Ep = nddata_hdf5(f"{h5_file}/{nodename}/Ep", directory=target_directory)
     T1p = nddata_hdf5(f"{h5_file}/{nodename}/T1p", directory=target_directory)
+    # }}}
+    #SL_conc_M =116e-6
+    # {{{Dataset Parameters
+    SL_conc_M = Ep.get_prop('acq_params')['concentration']
+    ppt = Ep.get_prop('acq_params')['guessed_MHz_to_GHz']*1e-3
+    Ep_pts = Ep.getaxis('power')
     # }}}
     # {{{Plot Ep
     fl.next("E(p)")
