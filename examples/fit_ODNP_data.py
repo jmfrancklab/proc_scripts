@@ -19,7 +19,7 @@ def list_symbs(f):
 # }}}
 # {{{ load data
 Ep = nddata_hdf5(f"{h5_file}/{nodename}/Ep", directory=target_directory)
-T1p = nddata_hdf5(f"{h5_file}/{nodename}/T1p", directory=target_directory)
+R1p = nddata_hdf5(f"{h5_file}/{nodename}/R1p", directory=target_directory)
 # }}}
 # {{{Dataset Parameters
 SL_conc_M = Ep.get_prop("acq_params")["concentration"]
@@ -53,9 +53,6 @@ with figlist_var() as fl:
     )
     # }}}
     # {{{ plot R1p data
-    R1p = (
-        1 / T1p
-    )  # The script that generates the table of integrals currently only saves the T1p data, however, in the future we should change it to save the R1p instead to make this line obsolete
     fl.next(r"$R_{1}(p)$")
     fl.plot(R1p, "o", label="Experimental Data")
     # }}}
