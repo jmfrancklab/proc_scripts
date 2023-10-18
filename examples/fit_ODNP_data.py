@@ -8,11 +8,11 @@ from scipy.io import loadmat
 
 target_directory = os.path.normpath(getDATADIR("AG_processed_data"))
 h5_file = "ras.h5"
-nodename = "220616_E37"
+nodename = "230706_M67_a_low_power_unnorm_wrong_1"
 # {{{Dataset Parameters
-SL_conc_M = 455.2223e-6
+SL_conc_M = 116.6e-6#455.2223e-6
 ppt = 1.5167e-3
-Ep_pts = 18
+Ep_pts = 16
 # }}}
 # {{{ plotting fn
 def list_symbs(f):
