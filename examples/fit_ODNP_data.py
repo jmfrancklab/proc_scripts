@@ -1,6 +1,6 @@
 """Fitting ODNP Datasets for Ksigma
 ===================================
-The T1(p) and E(p) integrals are pulled from an H5 file and are fit to extract the cross relaxivity of the sample. The R1(p) is first interpolated by fitting the self relaxivity to a polynomial. This fit is then used as a parameter for fitting the linear regime of the enhancement data that is extrapolated to the highest power. The cross relaxivity is then calculated using the output of these fits as well as the sample parameters that are fed to it (e.g., ppt value, and concentration).
+The T1(p) and E(p) integrals are stored in previous post processing pulled from an H5 file. The inverse of the T1(p) data is taken to produce the R1(p) data which is fit using the polyfit of the inverse of krho with two degrees of freedom. The R1(p) fit is then fed into the fitting routine for the enhancement data prior to normalization. The cross relaxivity is then calculated using the output of these fits as well as the sample parameters that are fed to it (e.g., ppt value, and concentration).
 """
 from pyspecdata import *
 from sympy import symbols, Symbol, latex
@@ -8,40 +8,41 @@ from scipy.io import loadmat
 
 target_directory = os.path.normpath(getDATADIR("AG_processed_data"))
 h5_file = "ras.h5"
-nodename = "230706_M67_a_low_power_unnorm_wrong_1"
-# {{{ plotting fn
+nodename = "230706_M67_a"
+# {{{ plotting fn - for labels on final plot
 def list_symbs(f):
-    # {{{ this is just to show all the parameters
     list_symbs = [f"${latex(Symbol(j))} = {k:0.5g}$" for j, k in f.output().items()]
     list_symbs = "\n".join(list_symbs)
-    # }}}
     return list_symbs
 
 
 # }}}
+# {{{ load data
+Ep = nddata_hdf5(f"{h5_file}/{nodename}/Ep", directory=target_directory)
+T1p = nddata_hdf5(f"{h5_file}/{nodename}/T1p", directory=target_directory)
+# }}}
+# {{{Dataset Parameters
+SL_conc_M = Ep.get_prop("acq_params")["concentration"]
+ppt = Ep.get_prop("acq_params")["guessed_MHz_to_GHz"] * 1e-3
+Ep_pts = Ep.getaxis("power")
+# {{{Find the index where the return powers begin
+thisdiff = Ep.fromaxis("power").diff("power")
+for idx in range(len(Ep.getaxis("power"))):
+    if thisdiff["power", idx].data < 0:
+        flip_idx = idx
+        break
+flip_idx += 1
+# }}}
+# }}}
 with figlist_var() as fl:
-    # {{{ load data
-    Ep = nddata_hdf5(f"{h5_file}/{nodename}/Ep", directory=target_directory)
-    T1p = nddata_hdf5(f"{h5_file}/{nodename}/T1p", directory=target_directory)
-    # }}}
-    #SL_conc_M =116e-6
-    # {{{Dataset Parameters
-    SL_conc_M = Ep.get_prop('acq_params')['concentration']
-    ppt = Ep.get_prop('acq_params')['guessed_MHz_to_GHz']*1e-3
-    Ep_pts = Ep.getaxis('power')
-    # }}}
     # {{{Plot Ep
-    fl.next("E(p)")
-    # {{{Find the index where the return powers start up
-    thisdiff = Ep.fromaxis("power").diff("power")
-    for idx in range(len(Ep.getaxis("power"))):
-        if thisdiff["power", idx].data < 0:
-            flip_idx = idx
-            break
-    flip_idx += 1
-    # }}}
+    fl.next("Integrated Enhancement")
     fl.plot(
-        Ep["power", :flip_idx], "o", label="Returning Power Check", capsize=6, alpha=0.5
+        Ep["power", :flip_idx],
+        "o",
+        label="Data for increasing power",
+        capsize=6,
+        alpha=0.5,
     )
     fl.plot(
         Ep["power", flip_idx:],
@@ -50,10 +51,11 @@ with figlist_var() as fl:
         capsize=6,
         alpha=0.5,
     )
-    plt.ylabel("E(p)")
     # }}}
-    # {{{ plot T1p data
-    R1p = 1 / T1p
+    # {{{ plot R1p data
+    R1p = (
+        1 / T1p
+    )  # The script that generates the table of integrals currently only saves the T1p data, however, in the future we should change it to save the R1p instead to make this line obsolete
     fl.next(r"$R_{1}(p)$")
     fl.plot(R1p, "o", label="Experimental Data")
     # }}}
@@ -62,7 +64,7 @@ with figlist_var() as fl:
     R10_p = nddata((T10_p[0] + T10_p[1] * R1p.getaxis("power")) ** -1, "power")
     R10_p.setaxis("power", R1p.getaxis("power"))
     # }}}
-    # {{{ fit krho and R1p
+    # {{{ fit krho inverse with two degrees of freedom and then apply to fit R1p
     krho_inv = SL_conc_M / (R1p - R10_p)
     krho_inv_fit = krho_inv.polyfit("power", order=2)
     krho_inv_fine = R1p.fromaxis("power").eval_poly(krho_inv_fit, "power")
@@ -79,12 +81,12 @@ with figlist_var() as fl:
     plt.xlabel("Power / W")
     # }}}
     # {{{ Fit E(p)
-    fl.next("E(p)")
+    fl.next("Integrated Enhancement")
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     sp = p / (p + phalf)
     R1p = (T10_p[0] + T10_p[1] * p) ** -1 + (
         SL_conc_M / (krho_inv_fit[0] + krho_inv_fit[1] * p + krho_inv_fit[2] * p**2)
-    )
+    )  # Symbolic expression for R1p that is used in the symbolic function for the fitting of E(p)
     Ep_fit = lmfitdata(Ep["power", :flip_idx])
     Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p)
     Ep_fit.set_guess(
@@ -96,7 +98,6 @@ with figlist_var() as fl:
     Ep_fit.fit()
     thisfit = Ep_fit.eval(100)
     fl.plot(thisfit, ls=":", color="k", label="Fit", alpha=0.5)
-    Ep_fit_text = r"M0 - $\frac{M0*A*s(p)}{R_{1}(p)}$"
     ksig = (Ep_fit.output("A") * ppt) / SL_conc_M
     ax = plt.gca()
     text(
@@ -117,5 +118,5 @@ with figlist_var() as fl:
         transform=ax.transAxes,
     )
     plt.xlabel("Power / W")
-    plt.ylabel("E(p)")
+    plt.ylabel(r"$M_{0}E(p)$")
     # }}}
