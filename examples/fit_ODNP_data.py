@@ -4,8 +4,7 @@ The T1(p) and E(p) integrals are stored in previous post processing pulled from 
 """
 from pyspecdata import *
 from sympy import symbols, Symbol, latex
-import scipy.io as sio
-from os.path import dirname, join as pjoin
+from scipy.io import loadmat
 
 target_directory = os.path.normpath(getDATADIR("AG_processed_data"))
 h5_file = "ras.h5"
@@ -48,12 +47,7 @@ with figlist_var() as fl:
     fl.plot(R1p, "o", label="Experimental Data")
     # }}}
     # {{{load in T100 dataset
-    data_dir = pjoin(
-        dirname(os.path.normpath(getDATADIR("AG_processed_data"))),
-        "AG_processed_data",
-        "T10_DI_water_230412",
-    )
-    T10_p = sio.loadmat(data_dir)["a"][0, :]
+    T10_p = loadmat(target_directory + '\T10_DI_water_230412')["a"][0, :]
     R10_p = R1p.fromaxis("power").eval_poly(T10_p, "power") ** -1
     # }}}
     # {{{ fit krho inverse with two degrees of freedom and then apply to fit R1p
