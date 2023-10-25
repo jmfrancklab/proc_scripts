@@ -47,7 +47,11 @@ with figlist_var() as fl:
     fl.plot(R1p, "o", label="Experimental Data")
     # }}}
     # {{{load in T100 dataset
-    T10_p = loadmat(search_filename('T10_DI_water_230412',exp_type = 'AG_processed_data',unique = True))["a"][0, :]
+    T10_p = loadmat(
+        search_filename(
+            "T10_DI_water_230412", exp_type="AG_processed_data", unique=True
+        )
+    )["a"][0, :]
     R10_p = R1p.fromaxis("power").eval_poly(T10_p, "power") ** -1
     # }}}
     # {{{ fit krho inverse with two degrees of freedom and then apply to fit R1p
