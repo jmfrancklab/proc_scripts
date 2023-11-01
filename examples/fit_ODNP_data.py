@@ -59,7 +59,7 @@ with figlist_var() as fl:
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     sp = p / (p + phalf)
     Ep_fit = lmfitdata(Ep["power", :flip_idx])
-    # Symbolic expression for R1p that is used in the symbolic function for the fitting of E(p)
+    # Symbolic expression for Ep that is used in the symbolic function for the fitting of E(p)
     Ep_fit.functional_form = M0 - ((M0 * A * sp) / (T10_p[0] + T10_p[1] * p) ** -1 + (
         Ep.get_prop("acq_params")["concentration"]
         / (krho_inv_fit[0] + krho_inv_fit[1] * p)))
