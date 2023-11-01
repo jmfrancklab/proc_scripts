@@ -58,12 +58,11 @@ with figlist_var() as fl:
     fl.next("Integrated Enhancement")
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     sp = p / (p + phalf)
-    R1p = (T10_p[0] + T10_p[1] * p) ** -1 + (
-        Ep.get_prop("acq_params")["concentration"]
-        / (krho_inv_fit[0] + krho_inv_fit[1] * p)
-    )  # Symbolic expression for R1p that is used in the symbolic function for the fitting of E(p)
     Ep_fit = lmfitdata(Ep["power", :flip_idx])
-    Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p)
+    # Symbolic expression for R1p that is used in the symbolic function for the fitting of E(p)
+    Ep_fit.functional_form = M0 - ((M0 * A * sp) / (T10_p[0] + T10_p[1] * p) ** -1 + (
+        Ep.get_prop("acq_params")["concentration"]
+        / (krho_inv_fit[0] + krho_inv_fit[1] * p)))
     A_guess = 1 - (Ep["power", flip_idx].data / Ep["power", 0].data).real
     Ep_fit.set_guess(
         M0=dict(value=Ep["power", 0].real.item(), min=1e4, max=11e4),
