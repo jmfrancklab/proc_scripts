@@ -54,6 +54,12 @@ with figlist_var() as fl:
     krho_inv = Ep.get_prop("acq_params")["concentration"] / (R1p - R10_p)
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     krho_inv_fine = R1p.fromaxis("power").eval_poly(krho_inv_coeff, "power")
+    M0, A, phalf, p = symbols("M0 A phalf power", real=True)
+    R1p_expression = (T10_p[0] + T10_p[1] * p) ** -1 + (Ep.get_prop("acq_params")["concentration"]
+        / (krho_inv_coeff[0] + krho_inv_coeff[1] * p))
+    R1p_fit = R1p.fromaxis('power').run(lambda p:R1p_expression)
+    print(R1p_fit)
+    quit()
     R1p_fit = R10_p + Ep.get_prop("acq_params")["concentration"] / krho_inv_fine
     fl.plot(R1p_fit, ls=":", color="k", label="Fit", alpha=0.5)
     plt.ylabel(r"$R_{1} / s^{-1}$")
@@ -61,13 +67,10 @@ with figlist_var() as fl:
     # }}}
     # {{{ Fit E(p)
     fl.next("Integrated Enhancement")
-    M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     sp = p / (p + phalf)
     Ep_fit = lmfitdata(Ep["power", :flip_idx])
     # Symbolic expression for Ep that is used in the symbolic function for the fitting of E(p)
-    Ep_fit.functional_form = M0 - ((M0 * A * sp) / ((T10_p[0] + T10_p[1] * p) ** -1 + (
-        Ep.get_prop("acq_params")["concentration"]
-        / (krho_inv_coeff[0] + krho_inv_coeff[1] * p))))
+    Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression)
     A_guess = 1 - (Ep["power", flip_idx].data / Ep["power", 0].data).real
     Ep_fit.set_guess(
         M0=dict(value=Ep["power", 0].real.item(), min=1e4, max=11e4),
