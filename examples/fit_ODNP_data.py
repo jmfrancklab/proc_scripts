@@ -1,13 +1,16 @@
 """Fitting ODNP Datasets for Ksigma
 ===================================
-The T1(p) and E(p) integrals are stored in previous post 
-processing pulled from an H5 file. The inverse of the T1(p) data 
-is taken to produce the R1(p) data which is fit using the polyfit 
-of the inverse of krho with two degrees of freedom. The R1(p) fit 
-is then fed into the fitting routine for the enhancement data 
-prior to normalization. The cross relaxivity is then calculated 
-using the output of these fits as well as the sample parameters 
-that are fed to it (e.g., ppt value, and concentration).
+The T1(p) and E(p) integrals are stored in
+previous post processing pulled from an H5 file.
+The inverse of the T1(p) data processing is taken
+to produce the R1(p) data which is fit using the
+polyfit of the inverse of krho with two degrees of
+freedom. The R1(p) fit is then fed into the
+fitting routine for the enhancement data prior to
+normalization. The cross relaxivity is then
+calculated using the output of these fits as well
+as the sample parameters that are fed to in (e.g.,
+ppt value, and concentration).
 """
 from pyspecdata import *
 from sympy import symbols, Symbol, latex,lambdify
