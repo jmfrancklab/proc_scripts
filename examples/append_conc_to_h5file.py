@@ -10,9 +10,9 @@ simply replace the current concentration with the value of
 """
 from pyspecdata import *
 import h5py,os
-data_dict = {"filename":'220126_Ras_M67R1a_capProbe.h5',
-        "file_location":"ODNP_NMR_comp/ODNP",
-        "actual_conc": 72e-6} #M
+data_dict = {"filename":'220126_Ras_M67R1a_capProbe.h5', #file that is being edited
+        "file_location":"ODNP_NMR_comp/ODNP", #location of file
+        "actual_conc": 72e-6} #concentration of the dataset in M
 h5 = search_filename(data_dict['filename'] , exp_type = data_dict['file_location'],unique=True)
 with h5py.File(os.path.normpath(h5),'r+') as thisfile:
     acq_params = thisfile['enhancement']['other_info']['acq_params']
