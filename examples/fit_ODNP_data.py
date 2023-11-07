@@ -20,18 +20,6 @@ h5_file = "ras.h5"
 nodename = "230706_M67_a"
 
 
-# {{{R1p expression
-def R1p_expression(
-    p,
-):  # symbolic expression for R1p used in both fitting the R1p data as well as the symbolic expression for E(p)
-    expression = (T10_p[0] + T10_p[1] * p) ** -1 + (
-        Ep.get_prop("acq_params")["concentration"]
-        / (krho_inv_coeff[0] + krho_inv_coeff[1] * p)
-    )
-    return expression
-
-
-# }}}
 # {{{ load data
 Ep = find_file(f"{h5_file}", exp_type="AG_processed_data", expno=f"{nodename}/Ep")
 # Some older h5 files save the T1p rather than the R1p. If there isn't an R1p expno then it will load the T1p integrals and convert to R1p by taking the inverse
