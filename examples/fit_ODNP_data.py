@@ -8,6 +8,12 @@ from scipy.io import loadmat
 
 h5_file = "ras.h5"
 nodename = "230706_M67_a"
+#{{{R1p expression
+def R1p_expression(p):#symbolic expression for R1p used in both fitting the R1p data as well as the symbolic expression for E(p)
+    expression = (T10_p[0] + T10_p[1] * p) ** -1 + (Ep.get_prop("acq_params")["concentration"]
+    / (krho_inv_coeff[0] + krho_inv_coeff[1] * p))
+    return expression
+#}}}
 # {{{ load data
 Ep = find_file(f"{h5_file}", exp_type="AG_processed_data", expno=f"{nodename}/Ep")
 #Some older h5 files save the T1p rather than the R1p. If there isn't an R1p expno then it will load the T1p integrals and convert to R1p by taking the inverse
@@ -54,12 +60,7 @@ with figlist_var() as fl:
     krho_inv = Ep.get_prop("acq_params")["concentration"] / (R1p - R10_p)
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     krho_inv_fine = R1p.fromaxis("power").eval_poly(krho_inv_coeff, "power")
-    M0, A, phalf, p = symbols("M0 A phalf power", real=True)
-    R1p_expression = (T10_p[0] + T10_p[1] * p) ** -1 + (Ep.get_prop("acq_params")["concentration"]
-        / (krho_inv_coeff[0] + krho_inv_coeff[1] * p))
-    R1p_fit = R1p.fromaxis('power').run(lambda p:R1p_expression)
-    print(R1p_fit)
-    quit()
+    R1p_fit = R1p.fromaxis('power').run(lambda p:R1p_expression(p))
     R1p_fit = R10_p + Ep.get_prop("acq_params")["concentration"] / krho_inv_fine
     fl.plot(R1p_fit, ls=":", color="k", label="Fit", alpha=0.5)
     plt.ylabel(r"$R_{1} / s^{-1}$")
@@ -67,10 +68,11 @@ with figlist_var() as fl:
     # }}}
     # {{{ Fit E(p)
     fl.next("Integrated Enhancement")
+    M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     sp = p / (p + phalf)
     Ep_fit = lmfitdata(Ep["power", :flip_idx])
     # Symbolic expression for Ep that is used in the symbolic function for the fitting of E(p)
-    Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression)
+    Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression(p))
     A_guess = 1 - (Ep["power", flip_idx].data / Ep["power", 0].data).real
     Ep_fit.set_guess(
         M0=dict(value=Ep["power", 0].real.item(), min=1e4, max=11e4),
