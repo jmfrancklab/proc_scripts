@@ -1,5 +1,5 @@
 """Fitting ODNP Datasets for Ksigma
-===================================
+=================================== 
 The T1(p) and E(p) integrals are stored in
 previous post processing pulled from an H5 file.
 The inverse of the T1(p) data processing is taken
@@ -16,17 +16,18 @@ from pyspecdata import *
 from sympy import symbols, Symbol, latex,lambdify
 from scipy.io import loadmat
 
-h5_file = "ras.h5"
-nodename = "230706_M67_a"
-
+data_sets = dict({"data_dir":'AG_processed_data', #directory of the dataset of table of integrals
+    "integrals_filename":"ras.h5", #h5 file that contains a series of integrals for different samples
+    "T100_filename": "T10_DI_water_230412", #mat file with polyfit water relaxation
+    "nodename":"230706_M67_a"}) #specific nodename of the dataset of interest
 
 # {{{ load data
-Ep = find_file(f"{h5_file}", exp_type="AG_processed_data", expno=f"{nodename}/Ep")
+Ep = find_file(data_sets['integrals_filename'], exp_type=data_sets['data_dir'], expno=f"{data_sets['nodename']}/Ep")
 # Some older h5 files save the T1p rather than the R1p. If there isn't an R1p expno then it will load the T1p integrals and convert to R1p by taking the inverse
 try:
-    R1p = find_file(f"{h5_file}", exp_type="AG_processed_data", expno=f"{nodename}/R1p")
+    R1p = find_file(data_sets['integrals_filename'], exp_type=data_sets["data_dir"], expno=f"{data_sets['nodename']}/R1p")
 except:
-    T1p = find_file(f"{h5_file}", exp_type="AG_processed_data", expno=f"{nodename}/T1p")
+    T1p = find_file(data_sets['integrals_filename'], exp_type=data_sets['data_dir'], expno=f"{data_sets['nodename']}/T1p")
     R1p = T1p**-1
 # }}}
 # {{{Find the index where the return powers begin
@@ -54,15 +55,15 @@ with figlist_var() as fl:
     fl.next(r"$R_{1}(p)$")
     fl.plot(R1p, "o", label="Experimental Data")
     # }}}
+    # {{{ fit krho inverse with two degrees of freedom and then apply to fit R1p
     # {{{load in T100 dataset
     T10_p = loadmat(
         search_filename(
-            "T10_DI_water_230412", exp_type="AG_processed_data", unique=True
+            data_sets['T100_filename'], exp_type=data_sets['data_dir'], unique=True
         )
     )["a"][0, :]
     R10_p = R1p.fromaxis("power").eval_poly(T10_p, "power") ** -1
     # }}}
-    # {{{ fit krho inverse with two degrees of freedom and then apply to fit R1p
     krho_inv = Ep.get_prop("acq_params")["concentration"] / (R1p - R10_p)
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     krho_inv_fine = R1p.fromaxis("power").eval_poly(krho_inv_coeff, "power")
@@ -82,6 +83,7 @@ with figlist_var() as fl:
     Ep_fit = lmfitdata(Ep["power", :flip_idx])
     # Symbolic expression for Ep that is used in the symbolic function for the fitting of E(p)
     Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression)
+    #generate a guess for the A parameter of the fit based on the normalized enhancement weighted by the relaxation rate. The bounds for the fit are then set to center around this value.
     A_guess = (
         1
         - (
@@ -116,7 +118,7 @@ with figlist_var() as fl:
     text(
         0.5,
         0.75,
-        r"$k_{\sigma}$ = %0.6f $M^{-1}s^{-1}$" % (ksig),
+        r"$k_{\sigma} = %0.6f M^{-1}s^{-1}$" % (ksig),
         ha="center",
         va="center",
         transform=ax.transAxes,
