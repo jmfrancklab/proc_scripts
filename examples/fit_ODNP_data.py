@@ -1,9 +1,16 @@
 """Fitting ODNP Datasets for Ksigma
 ===================================
-The T1(p) and E(p) integrals are stored in previous post processing pulled from an H5 file. The inverse of the T1(p) data is taken to produce the R1(p) data which is fit using the polyfit of the inverse of krho with two degrees of freedom. The R1(p) fit is then fed into the fitting routine for the enhancement data prior to normalization. The cross relaxivity is then calculated using the output of these fits as well as the sample parameters that are fed to it (e.g., ppt value, and concentration).
+The T1(p) and E(p) integrals are stored in previous post 
+processing pulled from an H5 file. The inverse of the T1(p) data 
+is taken to produce the R1(p) data which is fit using the polyfit 
+of the inverse of krho with two degrees of freedom. The R1(p) fit 
+is then fed into the fitting routine for the enhancement data 
+prior to normalization. The cross relaxivity is then calculated 
+using the output of these fits as well as the sample parameters 
+that are fed to it (e.g., ppt value, and concentration).
 """
 from pyspecdata import *
-from sympy import symbols, Symbol, latex
+from sympy import symbols, Symbol, latex,lambdify
 from scipy.io import loadmat
 
 h5_file = "ras.h5"
@@ -68,19 +75,22 @@ with figlist_var() as fl:
     krho_inv = Ep.get_prop("acq_params")["concentration"] / (R1p - R10_p)
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     krho_inv_fine = R1p.fromaxis("power").eval_poly(krho_inv_coeff, "power")
-    R1p_fit = R1p.fromaxis("power").run(lambda p: R1p_expression(p))
-    R1p_fit = R10_p + Ep.get_prop("acq_params")["concentration"] / krho_inv_fine
-    fl.plot(R1p_fit, ls=":", color="k", label="Fit", alpha=0.5)
+    M0, A, phalf, p = symbols("M0 A phalf power", real=True)
+    R1p_expression = (T10_p[0] + T10_p[1] * p) ** -1 + (
+        Ep.get_prop("acq_params")["concentration"]
+        / (krho_inv_coeff[0] + krho_inv_coeff[1] * p)
+    )
+    R1p_fit = lambdify(p,R1p_expression)
+    fl.plot(R1p_fit(R1p.fromaxis('power')), ls=":", color="k", label="Fit", alpha=0.5)
     plt.ylabel(r"$R_{1} / s^{-1}$")
     plt.xlabel("Power / W")
     # }}}
     # {{{ Fit E(p)
     fl.next("Integrated Enhancement")
-    M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     sp = p / (p + phalf)
     Ep_fit = lmfitdata(Ep["power", :flip_idx])
     # Symbolic expression for Ep that is used in the symbolic function for the fitting of E(p)
-    Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression(p))
+    Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression)
     A_guess = (
         1
         - (
