@@ -19,14 +19,13 @@ from pyspecdata import *
 from sympy import symbols, Symbol, latex,lambdify
 from scipy.io import loadmat
 
-data_info = dict({
-    "filename":"ras.h5", #h5 file containing table of integrals for different datasets
-    "data_dir":"AG_processed_data", #directory of the dataset of table of integrals
-    "nodename": "230706_M67_a"}) #specific nodename of the dataset of interest
-T100_info = dict({
-    "filename":"T10_DI_water_230412",
-    "data_dir":"AG_processed_data", 
-    "nodename":None})
+data_info = dict(
+    filename = "ras.h5", #h5 file containing table of integrals for different datasets
+    data_dir = "AG_processed_data", #directory of the dataset of table of integrals
+    nodename = "230706_M67_a") #specific nodename of the dataset of interest
+T100_info = dict(
+    filename = "T10_DI_water_230412",
+    data_dir = "AG_processed_data")
 
 # {{{ load data
 Ep = find_file(data_info['filename'], exp_type=data_info['data_dir'], expno=f"{data_info['nodename']}/Ep")
@@ -100,7 +99,7 @@ with figlist_var() as fl:
     Ep_fit.set_guess(
         M0=dict(value=Ep["power", 0].real.item(), min=1e4, max=11e4),
         A=dict(value=A_guess, min=0.5 * A_guess, max=3 * A_guess),
-        phalf=dict(value=0.2, min=0.1, max=0.4),
+        phalf=dict(value=0.2, min=0.05, max=1.0),
     )
     Ep_fit.settoguess()
     Ep_fit.fit()
