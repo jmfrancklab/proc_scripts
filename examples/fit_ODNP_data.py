@@ -29,12 +29,12 @@ T100_info = dict({
     "nodename":None})
 
 # {{{ load data
-Ep = find_file(data_info['integrals_filename'], exp_type=data_info['data_dir'], expno=f"{data_info['nodename']}/Ep")
+Ep = find_file(data_info['filename'], exp_type=data_info['data_dir'], expno=f"{data_info['nodename']}/Ep")
 # Some older h5 files save the T1p rather than the R1p. If there isn't an R1p expno then it will load the T1p integrals and convert to R1p by taking the inverse
 try:
-    R1p = find_file(data_info['integrals_filename'], exp_type=data_info["data_dir"], expno=f"{data_info['nodename']}/R1p")
+    R1p = find_file(data_info['filename'], exp_type=data_info["data_dir"], expno=f"{data_info['nodename']}/R1p")
 except:
-    T1p = find_file(data_info['integrals_filename'], exp_type=data_info['data_dir'], expno=f"{data_info['nodename']}/T1p")
+    T1p = find_file(data_info['filename'], exp_type=data_info['data_dir'], expno=f"{data_info['nodename']}/T1p")
     R1p = T1p**-1
 # }}}
 # {{{Find the index where the return powers begin
@@ -66,7 +66,7 @@ with figlist_var() as fl:
     # {{{load in T100 dataset
     T10_p = loadmat(
         search_filename(
-            data_sets['T100_filename'], exp_type=data_sets['data_dir'], unique=True
+            T100_info['filename'], exp_type=T100_info['data_dir'], unique=True
         )
     )["a"][0, :]
     R10_p = R1p.fromaxis("power").eval_poly(T10_p, "power") ** -1
