@@ -69,14 +69,9 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    if indirect in s.dimlabels:
-        collected_variance = psp.ndshape(
-            [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
-        ).alloc()
-    else:
-        collected_variance = psp.ndshape(
-            [len(error_path)], ["pathways"]
-        ).alloc()
+    collected_variance = psp.ndshape(
+        [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
+    ).alloc()
     avg_error = []
     for j in range(len(error_path)):
         # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
@@ -89,12 +84,8 @@ def integral_w_errors(
             N2 = psp.ndshape(s_forerror)[direct]
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
-        if indirect in s.dimlabels:
-            not_mean_axes = [indirect,direct]
-        else:
-            not_mean_axes = [direct]
-        s_forerror -= s_forerror.C.mean_all_but(not_mean_axes).mean(direct)
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but(not_mean_axes).mean(
+        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
+        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
             direct
         )
         s_forerror *= df ** 2  # Δf
@@ -106,8 +97,6 @@ def integral_w_errors(
     # print("automatically calculated integral error:",sqrt(collected_variance.data))
     # }}}
     s = select_pathway(s, sig_path)
-    if np.isscalar(s_forerror.data):
-        s_forerror.data = np.array([s_forerror.data])
     retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
     if not return_frq_slice:
         return retval
