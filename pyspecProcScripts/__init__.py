@@ -1,5 +1,4 @@
 from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs,determine_sign
-from .first_level.fake_data import fake_data
 from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits,draw_limits,fl_mod
@@ -29,7 +28,6 @@ __all__ = ['calc_baseline',
         'decay',
         'draw_limits',
         'expand_limits',
-        'fake_data',
         'generate_integrals',
         'fl_mod',
         'hermitian_function_test',
