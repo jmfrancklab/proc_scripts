@@ -1,9 +1,9 @@
 import numpy as np
-from numpy import sqrt, r_
+from numpy import r_
 import os
-from matplotlib.pyplot import axvline, axhline, gca
+from matplotlib.pyplot import axvline, gca
 import matplotlib.pyplot as plt
-from pyspecdata import find_file, gammabar_e, strm, ndshape
+from pyspecdata import find_file, gammabar_e, ndshape
 from scipy.interpolate import UnivariateSpline
 from ..first_level.QESR_rescale import QESR_scalefactor
 import pickle
@@ -13,35 +13,37 @@ colors = plt.rcParams[
     "axes.prop_cycle"
 ]()  # this is the default matplotlib cycler for line styles
 fieldaxis = "$B_0$"
-#pushout = 1
-myconcs = []
 # }}}
 
 def protein_QESR(file_name, label, pushout=0.5,
         threshold=0.05, pickle_file=None, background=None,
-        fl=None, exp_type="francklab_esr/Farhana",
+        exp_type="francklab_esr/Farhana",
         which_plot=None, calibration_name=None,
-        diameter_name=None, color=None):
+        diameter_name=None, color=None,fl=None):
     """
     Parameters
     ==========
-    fl: figure list
-        required!
-    background: nddata
-        the background spectrum (loaded data)
     pushout: float
-        really shouldn't need adjustment, but adjusts the "generous limits"
+        really shouldn't need adjustment, but adjusts the "generous limits", 
+        that is added to the area where the peaks are  
     threshold: float
       peak defined as anything that rises above threshold*max
     pickle_file: str
         name of pickle file you want to append the concentration to
-    background: HDF5 file that has been opened. 
-        Will be used as the background that is subtracted 
-        from the dataset.
+    background: nddata
+        the background spectrum (loaded data)
     exp_type: str
         where the file of interest is
     which_plot: str
         name that will be used in titles of plots
+    calibration_name:  str
+        name of the value in your pyspecdata config file that points to
+        the proportionality constant
+    diameter_name:  str
+        name of the value in your pyspecdata config file that points to 
+        the diameter of the capillary being used
+    fl: figure list
+        required!
     """
     if which_plot is None:
         which_plot = file_name
@@ -101,7 +103,7 @@ def protein_QESR(file_name, label, pushout=0.5,
     fl.plot(forplot, alpha=0.5, label=label)
     fl.next(f"{which_plot} absorption, bg. no bl.")
     # show the same thing on the main plot as a faint line
-    fl.plot(forplot, alpha=0.2, label=label)
+    fl.plot(forplot, alpha=0.2, label="%s - no background subtracted"%label)
     d -= background # subtract background in derivative mode
     d_abs = d.C.integrate(fieldaxis, cumulative=True)
     fl.plot(d_abs, alpha=0.5, label=label)

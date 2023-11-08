@@ -7,13 +7,15 @@ class calib_info (object):
         self.current_calib_name = None
         self.current_diam_name = None
     def use_calibration(self, calibration_name):
+        print(calibration_name)
+        print(type(calibration_name))
         if calibration_name != self.current_calib_name:
             assert type(calibration_name) is str, "the calibration name must be specified as a string!"
             assert len(calibration_name)>0, "you MUST use a calibration name and set the values `[calibration_name] q` and `[calibration_name] propFactor` in your _pyspecdata file!"
             self.current_calib_name = calibration_name
             # note that this will fail if you don't have "[calibration_name] propFactor" and "[calibration_name] q" set in your pyspecdata file
             self.default_Q = float(pyspec_config.get_setting(f"{calibration_name} Q"))
-            self.dint_propFactor = float(pyspec_config.get_setting(f"{calibration_name} Proportionality factor"))
+            self.dint_propFactor = float(pyspec_config.get_setting(f"{calibration_name} propFactor"))
     def use_diameter(self, diameter_name):
         if diameter_name != self.current_diam_name:
             assert type(diameter_name) is str, "the diameter name must be specified as a string!"
