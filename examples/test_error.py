@@ -36,7 +36,7 @@ colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
 for thisfile, exp_type, nodename in [
     (
         "201113_TEMPOL_capillary_probe_16Scans_noModCoil",
-        "ODNP_NMR_comp/old",
+        "ODNP_NMR_comp/Echoes",
         "signal",
     )
 ]:
@@ -58,15 +58,10 @@ for thisfile, exp_type, nodename in [
     s.ft(["ph1", "ph2"])
     # }}}
     s.ft("t2")
-    fl.next('raw freq')
-    fl.image(s)
     s = s["t2":f_range]
     # {{{Phase corrections
     s.ift("t2")
-    best_shift,_ = hermitian_function_test(select_pathway(s, signal_pathway),
-            echo_before = s.get_prop('acq_params')['tau_us']*1e-6*1.5,
-            fl=fl)
-    print(best_shift)
+    best_shift = hermitian_function_test(select_pathway(s.C.mean('nScans'), signal_pathway))
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
     s /= zeroth_order_ph(select_pathway(s.C.mean('nScans'),signal_pathway))
     fl.next("Phase corrected freq. domain")
@@ -96,7 +91,7 @@ for thisfile, exp_type, nodename in [
     # s.ift('t2')
     ##}}}
     fl.next("FID sliced")
-    s = s["t2" : (0,None)]
+    s = s["t2" : t_range]
     s["t2":0] *= 0.5
     s.ft("t2")
     fl.image(s)
@@ -104,8 +99,8 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{Normalization
-    frq_slice = integrate_limits(select_pathway(s.C.mean('nScans'), signal_pathway))
-    print(frq_slice)
+    frq_slice = integrate_limits(select_pathway(s, signal_pathway),
+            convolve_method='Lorentzian')
     s_integral = s["t2":frq_slice].C # the "official" copy of the integral
     s_integral = select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
@@ -133,16 +128,11 @@ for thisfile, exp_type, nodename in [
             s,
             signal_pathway,
             [thispathway],
-            cutoff = 0.2,
+            cutoff = 0.15,
             indirect="nScans",
             return_frq_slice=True,
-            fl=fl
         )
         assert all(frq_slice_check == frq_slice)
-        fl.next('Integration with error frequency slice')
-        fl.plot(select_pathway(s,signal_pathway))
-        plt.axvline(x = frq_slice [0])
-        plt.axvline(x = frq_slice[-1])
         error = s_thisint.get_error()
         avg_error = error.mean().item()
         s_int_lst.append(s_thisint)
@@ -156,6 +146,7 @@ for thisfile, exp_type, nodename in [
         s,
         signal_pathway,
         error_pathway,
+        cutoff = 0.15,
         indirect="nScans",
         return_frq_slice=True,
     )
@@ -169,7 +160,7 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{ Plotting Errors
-    fl.next("comparison of std using N", legend=True)
+    fl.next("comparison of std", legend=True)
     for i in range(len(s_int_lst)):
         fl.plot(
             error_lst[i],
@@ -178,6 +169,12 @@ for thisfile, exp_type, nodename in [
             label="on excluded path of %s" % error_pathway[i],
         )
     fl.plot(active_error, "x", label="propagated error from active CT\nin noise slice")
+    fl.plot(
+        averaged_inactive_error,
+        "o",
+        color="brown",
+        label="averaged propagated error\nfrom all inactive CTs",
+    )
     for i in range(len(s_int_lst)):
         axhline(
             y=avg_error_lst[i],
