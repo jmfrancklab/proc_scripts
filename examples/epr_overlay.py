@@ -50,6 +50,11 @@ from collections import OrderedDict
 import matplotlib as mpl
 import pickle
 import numpy as np
+mpl.rcParams.update({
+    "figure.facecolor":  (1.0, 1.0, 1.0, 0.0),  # clear
+    "axes.facecolor":    (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+})
 def calc_phdiff(self, axis):
     "calculate the phase gradient (cyc/Δx) along axis, setting the error appropriately"
     if self.get_ft_prop(axis):
@@ -94,6 +99,7 @@ maxval = 0
 for j, (filename, label_str) in enumerate(filenames_w_labels):
     # {{{ load, rescale
     d = find_file(filename, exp_type="francklab_esr/Farhana")
+    d.setaxis(Bname, lambda x: x/1e4).set_units(Bname,'T')
     d /= QESR_scalefactor(d)
     if "harmonic" in d.dimlabels:
         d = d["harmonic", 0]
@@ -121,7 +127,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     fl.par_break()  # each fig on new line
     fl.next("correlation", legend=True)
     fl.par_break()
-    fl.next("aligned, autoscaled", legend=True)
+    fl.next("aligned, autoscaled", figsize=(3*1.618,3), legend=None)
     # }}}
     # {{{ pull the reference (largest) up front
     all_files.move_to_end(ref_spec, last=False)
@@ -158,7 +164,6 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             thisshift = correlation.real.argmax(Bname).item()
             d *= exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
             d.ft(Bname)
-            d.set_units(Bname, "G")
             a = d
             b = ref_spec_Bdom
             scaling = (a * b).sum(Bname) / (
@@ -181,7 +186,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         alphaforpoints = abs(d[Bname:(0,None)][Bname,:-1])
         alphaforpoints /= alphaforpoints.max()
         scatter(phdiff.getaxis(Bname),phdiff.angle.data, alpha=0.5*alphaforpoints.data, s=10)
-        xlim(0,0.8)
+        xlim(0,0.8e4)
         fl.next("u domain -- phase, propagate error")
         phdiff = calc_phdiff(d[Bname:(0,None)], Bname)
         arb_scaling = 20 # the weighted sum will need to be scaled up
@@ -192,7 +197,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         phdiff.mean_weighted(Bname)
         determined_phdiff = phdiff.item()
         axhline(determined_phdiff, c=sc.get_facecolors()[-1], alpha=0.2)
-        xlim(0,0.8)
+        xlim(0,0.8e4)
         d *= exp(-1j*2*pi*determined_phdiff*d.fromaxis(Bname))
         fl.next('ift, indiv centered')
         fl.plot(d)
@@ -205,3 +210,14 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.next('centered spectra')
         d.ft(Bname)
         fl.plot(d, human_units=False)
+    fl.next('aligned, autoscaled')
+    xlim(346,358)
+    mpl.pyplot.legend("", frameon=False)
+    #gca().get_legend().remove()
+    fl.autolegend_list[fl.current] = False
+    fl.adjust_spines('bottom')
+    savefig('single_mutant_overlay.pdf')
+    title('')
+    xlabel('$B_0$ / mT')
+    ylabel('')
+    gca().set_yticks([])
