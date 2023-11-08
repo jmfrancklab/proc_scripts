@@ -90,23 +90,17 @@ def integral_w_errors(
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
         if indirect in s.dimlabels:
-            s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
-            s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
-                direct
-            )
+            not_mean_axes = [indirect,direct]
         else:
-            s_forerror -= s_forerror.C.mean_all_but([direct]).mean(direct)
-            s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct]).mean(
-                direct
-            )
+            not_mean_axes = [direct]
+        s_forerror -= s_forerror.C.mean_all_but(not_mean_axes).mean(direct)
+        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but(not_mean_axes).mean(
+            direct
+        )
         s_forerror *= df ** 2  # Δf
         s_forerror *= N2
         avg_error.append(s_forerror)
     avg_error = sum(avg_error) / len(avg_error)
-    # {{{ variance calculation for debug
-    # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
-    # print("automatically calculated integral error:",sqrt(collected_variance.data))
-    # }}}
     s = select_pathway(s, sig_path)
     if np.isscalar(s_forerror.data):
         s_forerror.data = np.array([s_forerror.data])
