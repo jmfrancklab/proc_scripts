@@ -35,12 +35,12 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     power = Q_(*d.get_prop("Power"))
     B_m = Q_(*d.get_prop("ModAmp"))
     Q = Q_(calibcache.default_Q, "dimensionless")  # hard set Q value
-    d = Q_(calibcache.d, "mm")  # hard set Q value
+    d = Q_(calibcache.d, "mm")  # hard set diameter
     n_B = Q_(1, "dimensionless")  # calculate this
     S = Q_(0.5, "dimensionless")
     c = Q_(
         1, "dimensionless"
-    )  # the first fraction on pg 2-17 -- essentially the proportionality factor
+    )  # the first fraction on eq 2-17 -- in bruker E500 manual
     signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q * d**2
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s") * Q_("m")**2)
     # }}}
