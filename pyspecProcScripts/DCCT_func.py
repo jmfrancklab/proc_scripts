@@ -217,7 +217,7 @@ def DCCT(
             ax_list[j].yaxis.set_minor_locator(minorLocator())
             ax_list[j].yaxis.set_ticks_position("both")
         for tick in ax_list[j].get_yticklabels():
-            tick.set_rotation(0)
+            tick.set_rotation(90)
             tick.set_va("center")
     # }}}
     # }}}
@@ -310,7 +310,7 @@ def DCCT(
                 x_textdisp = [
                     j.get_window_extent().bounds for j in ax1.get_yticklabels()
                 ][0][0]
-            x_textdisp -= 10.3 * text_height - arrow_width_px
+            x_textdisp -= 3.7 * text_height - arrow_width_px
             y_textdisp = -25.0
             if diagnostic:
                 a = Circle(
@@ -527,7 +527,7 @@ def DCCT(
         check_for_label_num=False,
         allow_for_text=-50,
     )
-    #plt.title(plot_title)
+    plt.title(plot_title)
     if just_2D:
         return LHS_pad + LHS_labels, axes_bottom[0], width, axes_bottom[-1] - top_pad
     else:
