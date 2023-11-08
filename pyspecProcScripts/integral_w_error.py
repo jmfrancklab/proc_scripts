@@ -101,6 +101,10 @@ def integral_w_errors(
         s_forerror *= N2
         avg_error.append(s_forerror)
     avg_error = sum(avg_error) / len(avg_error)
+    # {{{ variance calculation for debug
+    # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
+    # print("automatically calculated integral error:",sqrt(collected_variance.data))
+    # }}}
     s = select_pathway(s, sig_path)
     if np.isscalar(s_forerror.data):
         s_forerror.data = np.array([s_forerror.data])
