@@ -1,6 +1,9 @@
 """Fitting ODNP Datasets for Ksigma
 =================================== 
-The T1(p) and E(p) integrals are stored in
+The T1(p) and E(p) integrals are generated
+using the example, generate_integrals.py
+(as of 11/823 the generate_integrals is not
+updated), and stored in
 previous post processing pulled from an H5 file.
 The inverse of the T1(p) data processing is taken
 to produce the R1(p) data which is fit using the
@@ -16,18 +19,22 @@ from pyspecdata import *
 from sympy import symbols, Symbol, latex,lambdify
 from scipy.io import loadmat
 
-data_sets = dict({"data_dir":'AG_processed_data', #directory of the dataset of table of integrals
-    "integrals_filename":"ras.h5", #h5 file that contains a series of integrals for different samples
-    "T100_filename": "T10_DI_water_230412", #mat file with polyfit water relaxation
-    "nodename":"230706_M67_a"}) #specific nodename of the dataset of interest
+data_info = dict({
+    "filename":"ras.h5", #h5 file containing table of integrals for different datasets
+    "data_dir":"AG_processed_data", #directory of the dataset of table of integrals
+    "nodename": "230706_M67_a"}) #specific nodename of the dataset of interest
+T100_info = dict({
+    "filename":"T10_DI_water_230412",
+    "data_dir":"AG_processed_data", 
+    "nodename":None})
 
 # {{{ load data
-Ep = find_file(data_sets['integrals_filename'], exp_type=data_sets['data_dir'], expno=f"{data_sets['nodename']}/Ep")
+Ep = find_file(data_info['integrals_filename'], exp_type=data_info['data_dir'], expno=f"{data_info['nodename']}/Ep")
 # Some older h5 files save the T1p rather than the R1p. If there isn't an R1p expno then it will load the T1p integrals and convert to R1p by taking the inverse
 try:
-    R1p = find_file(data_sets['integrals_filename'], exp_type=data_sets["data_dir"], expno=f"{data_sets['nodename']}/R1p")
+    R1p = find_file(data_info['integrals_filename'], exp_type=data_info["data_dir"], expno=f"{data_info['nodename']}/R1p")
 except:
-    T1p = find_file(data_sets['integrals_filename'], exp_type=data_sets['data_dir'], expno=f"{data_sets['nodename']}/T1p")
+    T1p = find_file(data_info['integrals_filename'], exp_type=data_info['data_dir'], expno=f"{data_info['nodename']}/T1p")
     R1p = T1p**-1
 # }}}
 # {{{Find the index where the return powers begin
