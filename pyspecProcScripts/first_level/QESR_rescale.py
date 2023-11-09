@@ -1,3 +1,14 @@
+"""Rescaling the ESR spectra using data parameters
+================================================== 
+Here, we calculate the denominator of equation 2-17 in the E500 
+manual which the double integral divides by in order to calculate the
+final concentration of spins. The diameter, Q, and proportionality 
+constants are all pulled from the pyspecdata config file. Finally
+to convert to micromolar the denominator is multiplied by 1e-6. Note
+the double integral of the ESR spectra is DIVIDED by this output - thus
+multiplied by 1e-6 to yield micromolar.
+"""
+
 from pyspecdata.datadir import pyspec_config # piggyback on _pyspecdata
 from pint import UnitRegistry
 from numpy import sqrt
@@ -28,7 +39,22 @@ ureg = UnitRegistry(
 )
 Q_ = ureg.Quantity
 def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
-    "determine the scaling factor for QESR"
+    """
+    Parameters
+    ==========
+    calibration_name:   str
+                        The key corresponding to the appropriate proportionality constant
+                        in your pyspecdata config file.
+                        Typically this is one value that doesn't need changing
+    diameter_name:      str
+                        The key corresponding to the diameter of the capillary tube
+                        used in the ESR experiment. This enables us to calculate a 
+                        reliable concentration regardless of which capillary was used.
+    Returns
+    =======
+    Denominatory of equation 2-17 divided by the proportionality constant. Also includes a 
+    factor of 1e-6 to convert Molar to micromolar.
+    """
     calibcache.use_calibration(calibration_name)
     calibcache.use_diameter(diameter_name)
     # {{{ determine the signal denominator from the parameters of interest

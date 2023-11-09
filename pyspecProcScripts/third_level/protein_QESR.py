@@ -15,6 +15,18 @@ colors = plt.rcParams[
 fieldaxis = "$B_0$"
 # }}}
 
+"""Process an ESR spectra
+=========================
+Converts a raw ESR spectra to the double integral and calculates
+the appropriate concentration of spins present. If a background
+spectra is provided background subtraction is applied to the loaded
+ESR spectra. The double integral is finally rescaled and multiplied
+by a proportionality constant associated with the matching value in
+your pyspecdata config file.
+The resulting plot shows the double integral with the calculated concentration
+in micromolar in the legend.
+"""
+
 def protein_QESR(file_name, label, pushout=0.5,
         threshold=0.05, pickle_file=None, background=None,
         exp_type="francklab_esr/Farhana",
@@ -145,7 +157,6 @@ def protein_QESR(file_name, label, pushout=0.5,
     final_conc = (
         d_abs[fieldaxis : (generous_limits[-1], None)].mean(fieldaxis).item()
     ).real
-    #print("AVerage concentration:", final_conc)
     d_abs.name("conc").set_units("μM")
     fl.plot(d_abs, alpha=0.5, label=f"{label}, %0.4f μM" % final_conc)
     fl.grid()
