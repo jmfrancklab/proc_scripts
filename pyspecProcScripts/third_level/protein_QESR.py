@@ -96,7 +96,7 @@ def protein_QESR(file_name, label, pushout=0.5,
     #     can easily control placement in the PDF
     fl.text(r"\textbf{\texttt{%s}}\par"%file_name)
     fl.next(f"{which_plot} show background subtraction in abs mode")
-    gca().set_title("abs mode:\nspectrum and background")
+    gca().set_title("abs mode:\nspectrum and background spectrum")
     fl.text(r'\par')
     fl.next(f"{which_plot} absorption, bg. no bl.")
     gca().set_title("abs mode:\nbackground subtracted, show baseline")
@@ -115,7 +115,7 @@ def protein_QESR(file_name, label, pushout=0.5,
     fl.plot(forplot, alpha=0.5, label=label)
     fl.next(f"{which_plot} absorption, bg. no bl.")
     # show the same thing on the main plot as a faint line
-    fl.plot(forplot, alpha=0.2, label="%s - no background subtracted"%label)
+    fl.plot(forplot, alpha=0.2, label="%s - no background spec. subtracted"%label)
     d -= background # subtract background in derivative mode
     d_abs = d.C.integrate(fieldaxis, cumulative=True)
     fl.plot(d_abs, alpha=0.5, label=label)
@@ -127,7 +127,6 @@ def protein_QESR(file_name, label, pushout=0.5,
     )
     # pull the furthest left and furthest right boundaries of any peaks that we find
     specrange = (peaklist.ravel().min(), peaklist.ravel().max())
-    fl.next(f"{which_plot} absorption, bg. no bl.")
     generous_limits = specrange + np.diff(specrange).item() * r_[-pushout, +pushout]
     for j in r_[np.array(specrange)]:
         # show where the peaks were identified
@@ -148,7 +147,7 @@ def protein_QESR(file_name, label, pushout=0.5,
     # }}}
     fl.plot(polybaseline, alpha=0.5, human_units=False)
     fl.next(f"{which_plot} absorption, bg. no bl.")
-    fl.plot(polybaseline, alpha=0.5)
+    fl.plot(polybaseline, alpha=0.5, label="spline/poly baseline\n(integrate between this and other curve)", lw=1)
     d_abs -= polybaseline
     d_abs.integrate(fieldaxis, cumulative=True)
     fl.next("dblint ÷ denom * conversion")

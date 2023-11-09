@@ -25,14 +25,20 @@ class calib_info (object):
             assert len(calibration_name)>0, "you MUST use a calibration name and set the values `[calibration_name] q` and `[calibration_name] propFactor` in your _pyspecdata file!"
             self.current_calib_name = calibration_name
             # note that this will fail if you don't have "[calibration_name] propFactor" and "[calibration_name] q" set in your pyspecdata file
-            self.default_Q = float(pyspec_config.get_setting(f"{calibration_name} Q"))
-            self.dint_propFactor = float(pyspec_config.get_setting(f"{calibration_name} propFactor"))
+            try:
+                self.default_Q = float(pyspec_config.get_setting(f"{calibration_name} Q"))
+                self.dint_propFactor = float(pyspec_config.get_setting(f"{calibration_name} propFactor"))
+            except:
+                raise RuntimeError(f"I expect a line in the [General] block of your pyspecdata config file (in your home directory) that sets the value of the following variables:\n{calibration_name} q\n{calibration_name} propFactor\n\n(I can't run without these)")
     def use_diameter(self, diameter_name):
         if diameter_name != self.current_diam_name:
             assert type(diameter_name) is str, "the diameter name must be specified as a string!"
             assert len(diameter_name)>0, "you MUST use a diameter name and set the values `[diameter_name] q` and `[diameter_name] propFactor` in your _pyspecdata file!"
             self.current_diam_name = diameter_name
-            self.d = float(pyspec_config.get_setting(f"{diameter_name} diameter"))
+            try:
+                self.d = float(pyspec_config.get_setting(f"{diameter_name} diameter"))
+            except:
+                raise RuntimeError(f"(note this the second in a similar pair of errors) I expect a line in the [General] block of your pyspecdata config file (in your home directory) that sets the value of the following variables:\n{diameter_name} diameter")
 calibcache = calib_info()
 ureg = UnitRegistry(
     system="mks", autoconvert_offset_to_baseunit=True, auto_reduce_dimensions=True
