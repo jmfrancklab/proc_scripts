@@ -151,6 +151,7 @@ with figlist_var() as fl:
         * Ep.get_prop("acq_params")["guessed_MHz_to_GHz"]
         * 1e-3  # guessed_MHz_to_GHz is the actual acquired ppt but the config
         # file currently does not have a key for actual ppt value
+        # PR COMMENT: from what you were telling me, it just overwrites this value? if so, say so here.
     ) / Ep.get_prop("acq_params")["concentration"]
     ax = plt.gca()
     text(
