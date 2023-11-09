@@ -91,13 +91,10 @@ with figlist_var() as fl:
     )["a"][0, :]
     R10_p = 1 / (R1p.fromaxis("power").eval_poly(T10_p, "power"))
     powers_fine = nddata(
-        r_[0 : R1p.getaxis("power") : 300j], "p"
-    )  # PR COMMENT: related to my comments below
+        r_[0 : R1p.getaxis("power")[-1] : 300j], "p"
+    )  
     krho_inv = Ep.get_prop("acq_params")["concentration"] / (R1p - R10_p)
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
-    krho_inv_fine = R1p.fromaxis("power").eval_poly(
-        krho_inv_coeff, "power"
-    )  # PR COMMENT: why is this called "fine" it's only evaluated at the powers present in the R1p data, which is not that many
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     R1p_expression = (T10_p[0] + T10_p[1] * p) ** -1 + (
         Ep.get_prop("acq_params")["concentration"]
@@ -106,7 +103,6 @@ with figlist_var() as fl:
     R1p_fit = lambdify(p, R1p_expression)
     fl.plot(
         R1p_fit(R1p.fromaxis("power")),
-        ls=":",  # PR COMMENT: again, why are you plotting this as :, since it's only evaluated at the powers of interest -- maybe you want to construct a new axis?  Why not just plot as a solid line, anyways?
         color="k",
         label="Fit",
         alpha=0.5,
@@ -123,7 +119,6 @@ with figlist_var() as fl:
     # generate a guess for the A parameter of the fit based on the normalized
     # enhancement weighted by the relaxation rate. The bounds for the fit are
     # then set to center around this value.
-    # PR COMMENT: edit the following as appropriate.
     # Since
     # E(pₘₐₓ) = 1 - A s(pₘₐₓ)/R₁(pₘₐₓ)
     # and the max s(p) is about 1,
@@ -136,7 +131,8 @@ with figlist_var() as fl:
             R1p["power", 0].real.item()
             * (
                 Ep["power", flip_idx].real.item()
-            )  # PR COMMENT: you were dividing by 1?
+                /Ep["power",0].real.item()
+            )
         ).real
     )
     Ep_fit.set_guess(
@@ -151,9 +147,9 @@ with figlist_var() as fl:
     ksig = (
         Ep_fit.output("A")
         * Ep.get_prop("acq_params")["guessed_MHz_to_GHz"]
-        * 1e-3  # guessed_MHz_to_GHz is the actual acquired ppt but the config
-        # file currently does not have a key for actual ppt value
-        # PR COMMENT: from what you were telling me, it just overwrites this value? if so, say so here.
+        * 1e-3  # the actual ppt overwrites the guess for our
+        # final ODNP experiment. Though the key is labeled
+        #guessed it is the actual
     ) / Ep.get_prop("acq_params")["concentration"]
     ax = plt.gca()
     text(
