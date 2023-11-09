@@ -106,7 +106,8 @@ with figlist_var() as fl:
     thisfit = Ep_fit.eval(100)
     fl.plot(thisfit, ls=":", color="k", label="Fit", alpha=0.5)
     ksig = (
-        Ep_fit.output("A") * Ep.get_prop("acq_params")["guessed_MHz_to_GHz"] * 1e-3
+        Ep_fit.output("A") * Ep.get_prop("acq_params")["guessed_MHz_to_GHz"] * 1e-3 #guessed_MHz_to_GHz is the actual acquired ppt but the config
+        #file currently does not have a key for actual ppt value
     ) / Ep.get_prop("acq_params")["concentration"]
     ax = plt.gca()
     text(
