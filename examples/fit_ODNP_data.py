@@ -123,11 +123,13 @@ with figlist_var() as fl:
     # generate a guess for the A parameter of the fit based on the normalized
     # enhancement weighted by the relaxation rate. The bounds for the fit are
     # then set to center around this value.
-    # PR COMMENT: what's wrong with this reasoning?
+    # PR COMMENT: edit the following as appropriate.
     # Since
     # E(pₘₐₓ) = 1 - A s(pₘₐₓ)/R₁(pₘₐₓ)
     # and the max s(p) is about 1,
     # 1-E(pₘₐₓ)R₁(pₘₐₓ) ≈ A
+    # because R₁(0) is typically larger and also easier to access than
+    # R₁(pₘₐₓ), we just use it instead.
     A_guess = (
         1
         - (
