@@ -9,8 +9,8 @@ The inverse of the :math:`T_1(p)` data processing is taken
 to produce the :math:`R_1(p)` data which is fit using the
 polyfit of the inverse of krho with two degrees of
 freedom. The :math:`R_1(p)` fit is then fed into the
-fitting routine for the enhancement data prior to
-normalization. The cross relaxivity is then
+fitting routine for the integrals as a function of power
+data prior to normalization. The cross relaxivity is then
 calculated using the output of these fits as well
 as the sample parameters that are fed to in (*e.g.*,
 ppt value, and concentration).
@@ -33,7 +33,7 @@ T100_info = dict(
 # }}}
 
 # {{{ load data
-Ep = find_file(
+integral_vs_p = find_file(
     data_info["filename"],
     exp_type=data_info["data_dir"],
     expno=f"{data_info['nodename']}/Ep",
@@ -58,20 +58,20 @@ except:
 # }}}
 # {{{ The powers go up, and then go back down in order to check for
 # reproducibility.  Figure out where this flip
-flip_idx = np.where(np.diff(Ep.fromaxis("power").data) < 0)[0][0] + 1
+flip_idx = np.where(np.diff(integral_vs_p.fromaxis("power").data) < 0)[0][0] + 1
 # }}}
 with figlist_var() as fl:
-    # {{{Plot Ep
-    fl.next("Integrated Enhancement")
+    # {{{Plot integrals as a function of power
+    fl.next("Integrals vs power ")
     fl.plot(
-        Ep["power", :flip_idx],
+        integral_vs_p["power", :flip_idx],
         "o",
         label="Progressive Saturation Data",
         capsize=6,
         alpha=0.5,
     )
     fl.plot(
-        Ep["power", flip_idx:],
+        integral_vs_p["power", flip_idx:],
         "rx",
         label="Returning Power Check",
         capsize=6,
@@ -93,11 +93,11 @@ with figlist_var() as fl:
     powers_fine = nddata(
         r_[0 : R1p.getaxis("power")[-1] : 300j], "p"
     )  
-    krho_inv = Ep.get_prop("acq_params")["concentration"] / (R1p - R10_p)
+    krho_inv = integral_vs_p.get_prop("acq_params")["concentration"] / (R1p - R10_p)
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     R1p_expression = (T10_p[0] + T10_p[1] * p) ** -1 + (
-        Ep.get_prop("acq_params")["concentration"]
+        integral_vs_p.get_prop("acq_params")["concentration"]
         / (krho_inv_coeff[0] + krho_inv_coeff[1] * p)
     )
     R1p_fit = lambdify(p, R1p_expression)
@@ -111,11 +111,12 @@ with figlist_var() as fl:
     plt.xlabel("Power / W")
     # }}}
     # {{{ Fit E(p)
-    fl.next("Integrated Enhancement")
+    fl.next("Integrals vs power")
     sp = p / (p + phalf)
-    Ep_fit = lmfitdata(Ep["power", :flip_idx])
-    # Symbolic expression for Ep that is used in the symbolic function for the fitting of E(p)
-    Ep_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression)
+    integral_vs_p_fit = lmfitdata(integral_vs_p["power", :flip_idx])
+    # Symbolic expression for integrals as a function of power that is used 
+    # in the symbolic function for the fitting of the integrals as a function of power
+    integral_vs_p_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression)
     # generate a guess for the A parameter of the fit based on the normalized
     # enhancement weighted by the relaxation rate. The bounds for the fit are
     # then set to center around this value.
@@ -130,27 +131,27 @@ with figlist_var() as fl:
         - (
             R1p["power", 0].real.item()
             * (
-                Ep["power", flip_idx].real.item()
-                /Ep["power",0].real.item()
+                integral_vs_p["power", flip_idx].real.item()
+                /integral_vs_p["power",0].real.item()
             )
         ).real
     )
-    Ep_fit.set_guess(
-        M0=dict(value=Ep["power", 0].real.item(), min=1e4, max=11e4),
+    integral_vs_p_fit.set_guess(
+        M0=dict(value=integral_vs_p["power", 0].real.item(), min=1e4, max=11e4),
         A=dict(value=A_guess, min=0.2 * A_guess, max=3 * A_guess),
         phalf=dict(value=0.2, min=0.05, max=1.0),
     )
-    Ep_fit.settoguess()
-    Ep_fit.fit()
-    thisfit = Ep_fit.eval(100)
+    integral_vs_p_fit.settoguess()
+    integral_vs_p_fit.fit()
+    thisfit = integral_vs_p_fit.eval(100)
     fl.plot(thisfit, ls=":", color="k", label="Fit", alpha=0.5)
     ksig = (
-        Ep_fit.output("A")
-        * Ep.get_prop("acq_params")["guessed_MHz_to_GHz"]
+        integral_vs_p_fit.output("A")
+        * integral_vs_p.get_prop("acq_params")["guessed_MHz_to_GHz"]
         * 1e-3  # the actual ppt overwrites the guess for our
         # final ODNP experiment. Though the key is labeled
         #guessed it is the actual
-    ) / Ep.get_prop("acq_params")["concentration"]
+    ) / integral_vs_p.get_prop("acq_params")["concentration"]
     ax = plt.gca()
     text(
         0.5,
@@ -159,7 +160,7 @@ with figlist_var() as fl:
         + "\n".join(
             [
                 f"${latex(Symbol(j))} = {k:0.5g}$"
-                for j, k in Ep_fit.output().items()
+                for j, k in integral_vs_p_fit.output().items()
             ]
             + [r"$k_{\sigma} = %0.6f M^{-1}s^{-1}$" % (ksig)]
         ),
