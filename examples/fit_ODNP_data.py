@@ -62,7 +62,7 @@ flip_idx = np.where(np.diff(integral_vs_p.fromaxis("power").data) < 0)[0][0] + 1
 # }}}
 with figlist_var() as fl:
     # {{{Plot integrals as a function of power
-    fl.next("Integrals vs power ")
+    fl.next("Integrals vs power")
     fl.plot(
         integral_vs_p["power", :flip_idx],
         "o",
@@ -102,7 +102,7 @@ with figlist_var() as fl:
     )
     R1p_fit = lambdify(p, R1p_expression)
     fl.plot(
-        R1p_fit(R1p.fromaxis("power")),
+        R1p_fit(powers_fine),
         color="k",
         label="Fit",
         alpha=0.5,
