@@ -12,14 +12,14 @@ multiplied by 1e-6 to yield micromolar.
 from pyspecdata.datadir import pyspec_config # piggyback on _pyspecdata
 from pint import UnitRegistry
 from numpy import sqrt
+from pyspecdata import init_logging
+logger = init_logging(level="debug")
 class calib_info (object):
     "class for caching calibration info"
     def __init__(self):
         self.current_calib_name = None
         self.current_diam_name = None
     def use_calibration(self, calibration_name):
-        print(calibration_name)
-        print(type(calibration_name))
         if calibration_name != self.current_calib_name:
             assert type(calibration_name) is str, "the calibration name must be specified as a string!"
             assert len(calibration_name)>0, "you MUST use a calibration name and set the values `[calibration_name] q` and `[calibration_name] propFactor` in your _pyspecdata file!"
@@ -78,7 +78,7 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q * d**2
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s") * Q_("m")**2)
     # }}}
-    print(
+    logger.info(
             f"$G_R={G_R:~L}$\n",
             f"$C_t={C_t:~L}$\n",
             f"$power={power:~L}$\n",

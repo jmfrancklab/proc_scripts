@@ -42,22 +42,11 @@ with figlist_var() as fl:
             ),
         ]
     ):
-        d = find_file(thisfile, exp_type=that_exp_type)
-        d -= d[fieldaxis, -100:].data.mean()
-        if "harmonic" in d.dimlabels:
-            d = d["harmonic", 0]
-        color = d.get_plot_color()
-        fl.next("Raw QESR")
-        fl.plot(d, color=color, label=thislabel, alpha=0.5)
-        fl.next("Rescaled using the proportionality constant")
-        d /= QESR_scalefactor(d, calibration_name=calibration, diameter_name=diameter)
-        fl.plot(d, color=color, label=thislabel)
         c = protein_QESR(
             thisfile,
             label=thislabel,
             pushout=pushout,
             exp_type=that_exp_type,
-            color=color,
             calibration_name=calibration,
             diameter_name=diameter,
             background=background,
