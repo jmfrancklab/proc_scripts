@@ -17,7 +17,7 @@ from .phasing import zeroth_order_ph,hermitian_function_test,ph1_real_Abs,determ
 from .plotting import expand_limits,draw_limits,fl_mod
 from .simple_functions import select_pathway
 from .slice_FID_from_echo import slice_FID_from_echo
-from .third_level.protein_QESR import protein_QESR
+from .third_level.QESR import QESR
 __all__ = ['DCCT',
         'L2G',
         'QESR_scalefactor',
@@ -41,7 +41,7 @@ __all__ = ['DCCT',
         'lookup_table',
         'ph1_real_Abs',
         'power2dBm',
-        'protein_QESR',
+        'QESR',
         'recovery',
         'select_pathway',
         'show_pickle_table',

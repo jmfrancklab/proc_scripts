@@ -1,5 +1,5 @@
 """Useful function when comparing multiple data sets and
-takes advantage of the capability of protein_QESR to output
+takes advantage of the capability of QESR function to output
 pickle files. A latex table is generated pulling from the
 pickle file called.
 """

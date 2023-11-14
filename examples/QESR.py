@@ -42,7 +42,7 @@ with figlist_var() as fl:
             ),
         ]
     ):
-        c = protein_QESR(
+        c = QESR(
             thisfile,
             label=thislabel,
             pushout=pushout,

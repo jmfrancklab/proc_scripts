@@ -27,7 +27,7 @@ The resulting plot shows the double integral with the calculated concentration
 in micromolar in the legend.
 """
 
-def protein_QESR(file_name, label, pushout=0.5,
+def QESR(file_name, label, pushout=0.5,
         threshold=0.05, pickle_file=None, background=None,
         exp_type="francklab_esr/Farhana",
         which_plot=None, calibration_name=None,
