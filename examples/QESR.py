@@ -17,6 +17,8 @@ from pyspecdata import *
 from pyspecProcScripts import *
 from pyspecProcScripts import QESR_scalefactor
 
+# sphinx_gallery_thumbnail_number = 2
+
 fieldaxis = "$B_0$"
 with figlist_var() as fl:
     for filenum, (
