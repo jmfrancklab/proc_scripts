@@ -79,17 +79,17 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s") * Q_("m")**2)
     # }}}
     logger.info(
-            f"$G_R={G_R:~L}$\n",
-            f"$C_t={C_t:~L}$\n",
-            f"$power={power:~L}$\n",
-            f"$B_m={B_m:~L}$\n",
-            f"$Q={Q:~L} $\n",
-            f"$n_B={n_B:~L} $\n",
-            f"$S={S:~L} $\n",
-            f"$c={c:~L} $\n",
-            f"$d={d:~L} $\n",
-            f"signal denom$={signal_denom:~L}$",
-            f"doubleint propFactor$={calibcache.dint_propFactor}$",
+            f"$G_R={G_R:~L}$\n"+
+            f"$C_t={C_t:~L}$\n"+
+            f"$power={power:~L}$\n"+
+            f"$B_m={B_m:~L}$\n"+
+            f"$Q={Q:~L} $\n"+
+            f"$n_B={n_B:~L} $\n"+
+            f"$S={S:~L} $\n"+
+            f"$c={c:~L} $\n"+
+            f"$d={d:~L} $\n"+
+            f"signal denom$={signal_denom:~L}$"+
+            f"doubleint propFactor$={calibcache.dint_propFactor}$"
             )
     # normally, we divide by signal_denom.magnitude and multiply by calibcache.dint_propFactor and divide by 1e-6
     return signal_denom.magnitude/calibcache.dint_propFactor*1e-6

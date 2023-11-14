@@ -29,7 +29,7 @@ in micromolar in the legend.
 
 def QESR(file_name, label, pushout=0.5,
         threshold=0.05, pickle_file=None, background=None,
-        exp_type="francklab_esr/Farhana",
+        exp_type=None,
         which_plot=None, calibration_name=None,
         diameter_name=None, color=None,fl=None):
     """
@@ -57,6 +57,8 @@ def QESR(file_name, label, pushout=0.5,
     fl: figure list
         required!
     """
+    if exp_type is None:
+        raise ValueError("You must specify the location of the file with exp_type!")
     if which_plot is None:
         which_plot = file_name
     if fl is None:
@@ -141,7 +143,7 @@ def QESR(file_name, label, pushout=0.5,
     fl.next(f"{which_plot} baseline diagnostic")
     fl.plot(d_baseline, ".", alpha=0.3, label=label, human_units=False)
     # {{{ we don't have a spline in pyspecdata yet, so just hack it
-    spl = UnivariateSpline(d_baseline.getaxis(fieldaxis), d_baseline.data)
+    spl = UnivariateSpline(d_baseline.getaxis(fieldaxis), d_baseline.data.real)
     polybaseline = d.copy(data=False)
     polybaseline.data = spl(d.getaxis(fieldaxis))
     # }}}
