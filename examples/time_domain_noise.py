@@ -1,4 +1,8 @@
-"""Here, we want to calculate the time-domain variance to use in error propagation.
+"""
+Calculate Time-Domain σ from Frq-Domain σ
+=========================================
+
+Here, we want to calculate the time-domain variance to use in error propagation.
 But, to make sure we calculate only noise, we want to mask out portions of the frequency 
 domain.
 We propose that if we use a unitary transform,
@@ -14,6 +18,7 @@ import numpy as np
 from numpy import r_
 from pyspecdata import *
 from pyspecProcScripts import *
+rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 N = 1024
 n_repeats = 50
 signal_window = (-100,200) # wherever my "peak" shows up

@@ -14,7 +14,7 @@ import logging
 import re
 import numpy as np
 import logging
-import pylab as psp
+import pyspecdata as psp
 
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
