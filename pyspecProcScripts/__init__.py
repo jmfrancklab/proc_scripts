@@ -27,6 +27,7 @@ from .third_level.QESR import QESR
 __all__ = [
     "DCCT",
     "L2G",
+    "QESR",
     "QESR_scalefactor",
     "Vpp2power",
     "active_propagation",
@@ -48,7 +49,6 @@ __all__ = [
     "lookup_table",
     "ph1_real_Abs",
     "power2dBm",
-    "QESR",
     "recovery",
     "select_pathway",
     "show_pickle_table",
