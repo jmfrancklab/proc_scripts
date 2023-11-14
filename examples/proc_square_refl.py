@@ -17,7 +17,7 @@ with fl_mod() as fl:
     for filename, expno, dataset_name in [("210125_sqwv_cap_probe_1", "capture1", "hairpin probe"),
             ('210111_sqwv_sol_probe_1', 'capture1', 'solenoid probe')]:
         logger.info(strm("processing dataset",dataset_name))
-        d = find_file(filename,exp_type='ODNP_NMR_comp/test_equip',expno=expno)
+        d = find_file(filename,exp_type='ODNP_NMR_comp/test_equipment',expno=expno)
         d.set_units('t','s').name('Amplitude').set_units('V')
         d.setaxis("ch", r_[1, 2])
         d.set_units("t", "s")
