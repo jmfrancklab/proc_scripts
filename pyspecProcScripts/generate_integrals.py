@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, latex, Symbol
 from pyspecProcScripts import *
-from .simple_functions import select_pathway
+from .phasing import hermitian_function_test, zeroth_order_ph
+from .simple_functions import select_pathway, determine_sign
 from .correlation_alignment import correl_align
 from .integral_w_error import integral_w_errors
 from .DCCT_func import DCCT
