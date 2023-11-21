@@ -3,8 +3,7 @@
 The T1(p) and E(p) integrals are generated
 using the example, `generate_integrals.py`
 (as of 11/8/23 the `generate_integrals` is not
-updated), and stored in
-previous post processing pulled from an H5 file.
+updated), and stored in an H5 file.
 The inverse of the :math:`T_1(p)` data processing is taken
 to produce the :math:`R_1(p)` data which is fit using the
 polyfit of the inverse of krho with two degrees of
@@ -25,8 +24,8 @@ from scipy.io import loadmat
 data_info = dict(
     filename="ras.h5",  # h5 file containing table of integrals for different datasets
     data_dir="AG_processed_data",  # directory of the dataset of table of integrals
-    nodename="230706_M67_a",
-)  # specific nodename of the dataset of interest
+    nodename="230706_M67_a",# specific nodename of the dataset of interest
+)  
 T100_info = dict(
     filename="T10_DI_water_230412",
     data_dir="AG_processed_data",
@@ -58,7 +57,7 @@ except:
 # }}}
 # }}}
 # {{{ The powers go up, and then go back down in order to check for
-# reproducibility.  Figure out where this flip occurs
+# reproducibility. Figure out where this flip occurs
 flip_idx = np.where(np.diff(integral_vs_p.fromaxis("power").data) < 0)[0][0] + 1
 # }}}
 with figlist_var() as fl:
@@ -109,7 +108,7 @@ with figlist_var() as fl:
     plt.ylabel(r"$R_{1} / s^{-1}$")
     plt.xlabel("Power / W")
     # }}}
-    # {{{ Fit E(p)
+    # {{{ Fit NMR integrals as function of power
     fl.next("Integrals vs power")
     sp = p / (p + phalf)
     integral_vs_p_fit = lmfitdata(integral_vs_p["power", :flip_idx])
@@ -168,5 +167,5 @@ with figlist_var() as fl:
         transform=ax.transAxes,
     )
     plt.xlabel("Power / W")
-    plt.ylabel(r"$M_{0}E(p)$")
+    plt.ylabel(r"$M_{0}I(p)$")
     # }}}
