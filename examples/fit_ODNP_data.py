@@ -6,11 +6,11 @@ using the example, `generate_integrals.py`
 updated), and stored in an H5 file.
 The inverse of the :math:`T_1(p)` data processing is taken
 to produce the :math:`R_1(p)` data which is fit using the
-polyfit of the inverse of krho with two degrees of
-freedom (*e.g.*, :math:`R_{100}(p) + \frac{C}{k_{\rho}^{-1}}`. 
+polyfit of the inverse of krho so that 
+:math:`R_1(p) = R_{1,0}(p) + \frac{C}{k_{\rho}^{-1}(p)}`. 
 The :math:`R_1(p)` fit is then fed into the
-fitting routine for the integrals as a function of power
-prior to normalization. The cross relaxivity is then
+fitting routine for the integrals as a function of power. 
+The cross relaxivity is then
 calculated using the output of these fits as well
 as the sample parameters that are fed to in (*e.g.*,
 ppt value, and concentration).
@@ -26,7 +26,7 @@ data_info = dict(
     data_dir="AG_processed_data",  # directory of the dataset of table of integrals
     nodename="230706_M67_a",# specific nodename of the dataset of interest
 )  
-T100_info = dict(
+T10_info = dict(
     filename="T10_DI_water_230412",
     data_dir="AG_processed_data",
 )
@@ -58,14 +58,14 @@ except:
 # }}}
 # {{{ The powers go up, and then go back down in order to check for
 # reproducibility. Figure out where this flip occurs
-flip_idx = np.where(np.diff(integral_vs_p.fromaxis("power").data) < 0)[0][0] + 1
+flip_idx = np.where(np.diff(integral_vs_p.getaxis("power")) < 0)[0][0] + 1
 # }}}
 with figlist_var() as fl:
     # {{{Plot integrals as a function of power
     fl.next("Integrals vs power")
     fl.plot(
         integral_vs_p["power", :flip_idx],
-        "o",
+        "ko",
         label="Progressive Saturation Data",
         capsize=6,
         alpha=0.5,
@@ -86,7 +86,7 @@ with figlist_var() as fl:
     # apply to fit R1p
     T10_p = loadmat(
         search_filename(
-            T100_info["filename"], exp_type=T100_info["data_dir"], unique=True
+            T10_info["filename"], exp_type=T10_info["data_dir"], unique=True
         )
     )["a"][0, :]
     R10_p = 1 / (R1p.fromaxis("power").eval_poly(T10_p, "power"))
@@ -98,9 +98,9 @@ with figlist_var() as fl:
         integral_vs_p.get_prop("acq_params")["concentration"]
         / (krho_inv_coeff[0] + krho_inv_coeff[1] * p)
     )
-    R1p_fit = lambdify(p, R1p_expression)
+    R1p_fit = lambdify(p, R1p_expression)(powers_fine)
     fl.plot(
-        R1p_fit(powers_fine),
+        R1p_fit,
         color="k",
         label="Fit",
         alpha=0.5,
@@ -110,11 +110,11 @@ with figlist_var() as fl:
     # }}}
     # {{{ Fit NMR integrals as function of power
     fl.next("Integrals vs power")
-    sp = p / (p + phalf)
+    sp_expression = p / (p + phalf)
     integral_vs_p_fit = lmfitdata(integral_vs_p["power", :flip_idx])
     # Symbolic expression for integrals as a function of power that is used
     # in the symbolic function for the fitting of the integrals as a function of power
-    integral_vs_p_fit.functional_form = M0 - ((M0 * A * sp) / R1p_expression)
+    integral_vs_p_fit.functional_form = M0 - ((M0 * A * sp_expression) / R1p_expression)
     # generate a guess for the A parameter of the fit based on the normalized
     # enhancement weighted by the relaxation rate. The bounds for the fit are
     # then set to center around this value.
