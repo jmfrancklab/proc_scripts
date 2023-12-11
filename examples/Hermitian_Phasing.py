@@ -73,8 +73,9 @@ with figlist_var() as fl:
         fl.image(data, ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Zeroth Order \n Phase Corrected")
         fl.basename = "(%s)"%label
-        best_shift = hermitian_function_test(
-            select_pathway(data.C.mean(indirect), signal_pathway), 
+        best_shift,_ = hermitian_function_test(
+            select_pathway(data.C.mean(indirect), signal_pathway),
+            echo_before = echo_time *1.5,
             fl=fl
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})

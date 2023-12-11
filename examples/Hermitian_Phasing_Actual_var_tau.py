@@ -32,7 +32,7 @@ with figlist_var() as fl:
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,
                 postproc=postproc,lookup=lookup_table)
-        data = data['tau',:-7]
+        data = data['tau',:6]
         tau_list = list(data.getaxis('tau'))
         data.reorder(['ph1','ph2','tau','t2'])
         data = data['t2':f_range]
@@ -40,16 +40,20 @@ with figlist_var() as fl:
         mytable.append(['programmed tau / ms','estimated tau / ms','difference / ms'])
         for j in range(len(tau_list)):
             tablerow = []
-            alias_slop=3
+            if j < 6:
+                alias_slop = 15
+            else:    
+                alias_slop=30
             programmed_tau = tau_list[j]
             tablerow.append(programmed_tau/1e-3)
             logger.info(strm("programmed tau:",programmed_tau))
             this_data = data['tau',j]
             this_data.ift("t2")
-            fl.basename = '%0.1f ms'%(programmed_tau/1e-3)
-            best_shift = hermitian_function_test(
+            best_shift,_ = hermitian_function_test(
                 select_pathway(this_data, signal_pathway),
                 aliasing_slop=alias_slop,
+                echo_before = programmed_tau*1.5,
+                basename = "programmed tau = %f"%programmed_tau,
                 fl=fl)
             logger.info(strm("best shift is:",best_shift))
             tablerow.append(best_shift/1e-3)

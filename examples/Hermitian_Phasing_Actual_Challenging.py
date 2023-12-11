@@ -33,7 +33,7 @@ with figlist_var() as fl:
         ('tau_3500','ODNP_NMR_comp/Echoes','spincore_echo_v1',
             'tau is 3.5 ms',3),
         ('tau_11135','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 11.135 ms',3),
+            'tau is 11.135 ms',10),
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,
                 postproc=postproc,lookup=lookup_table)
@@ -47,9 +47,11 @@ with figlist_var() as fl:
         data = data['t2':f_range]
         data.ift("t2")
         fl.basename = "(%s)"%label
-        best_shift = hermitian_function_test(
+        best_shift,_ = hermitian_function_test(
             select_pathway(data.C.mean("nScans"), signal_pathway),
+            echo_before = data.get_prop('acq_params')['tau_us']*1e-6*1.5,
             aliasing_slop=alias_slop,
+            basename = label,
             fl=fl
         )
         logging.info(strm("best shift is:",best_shift))

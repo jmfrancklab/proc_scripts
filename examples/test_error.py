@@ -61,7 +61,8 @@ for thisfile, exp_type, nodename in [
     s = s["t2":f_range]
     # {{{Phase corrections
     s.ift("t2")
-    best_shift = hermitian_function_test(select_pathway(s.C.mean('nScans'), signal_pathway))
+    best_shift,_ = hermitian_function_test(select_pathway(s.C.mean('nScans'), signal_pathway),
+            echo_before = s.get_prop('acq_params')['tau_us']*1e-6*1.5)
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
     s /= zeroth_order_ph(select_pathway(s.C.mean('nScans'),signal_pathway))
     fl.next("Phase corrected freq. domain")

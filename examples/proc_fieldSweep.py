@@ -52,7 +52,9 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     #{{{frequency filtering and phase correct
     s = s['t2':(-1e3,1e3)]
     s.ift('t2')
-    best_shift = hermitian_function_test(select_pathway(s,signal_pathway))
+    s.set_units('t2','s')
+    best_shift,_ = hermitian_function_test(select_pathway(s,signal_pathway),
+            echo_before = s.get_prop('acq_params')['tau_us']*1e-6*1.5)
     s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
@@ -69,7 +71,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     # the end.
     all_offsets = zeros(len(s.getaxis('indirect')))
     for z in range(len(s.getaxis('indirect'))):
-        fl.plot(s['indirect',z],ax=ax_list[1])
+        fl.plot(s['indirect',z],ax=ax_list[1],human_units = False)
         if z == 0:
             ax_list[1].axvline(color='k',x = freq_slice[0])
             ax_list[1].axvline(color='k',x=freq_slice[-1])
@@ -89,7 +91,7 @@ for thisfile,exp_type,nodename,postproc,label_str,freq_slice in [
     s *= exp(-1j*2*pi*nddata(all_offsets, [-1], ['indirect'])*s.fromaxis('t2'))
     s.ft('t2')
     # }}}
-    fl.plot(s.C.mean('nScans'), ax = ax_list[2])
+    fl.plot(s.C.mean('nScans'), ax = ax_list[2],human_units = False)
     s = s['t2':freq_slice].mean('nScans').integrate('t2')
     #}}}
     #{{{convert x axis to ppt = v_NMR/v_ESR

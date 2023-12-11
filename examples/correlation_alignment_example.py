@@ -69,8 +69,9 @@ with figlist_var() as fl:
         data /= zeroth_order_ph(select_pathway(data, signal_pathway))
         # }}}
         # {{{ Applying the phase corrections
-        best_shift = hermitian_function_test(
-            select_pathway(data.C.mean(indirect), signal_pathway)
+        best_shift,_ = hermitian_function_test(
+            select_pathway(data.C.mean(indirect), signal_pathway),
+            echo_before = echo_time*1.5
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")

@@ -59,6 +59,7 @@ with figlist_var() as fl:
             f_range=f_range,
             indirect=indirect,
             alias_slop=2,
+            echo_time = s.get_prop('acq_params')['tau_us']*1e-6*1.5,
             clock_correction=clock_correction,
             fl=fl,
         )

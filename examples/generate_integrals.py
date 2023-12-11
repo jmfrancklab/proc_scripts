@@ -83,5 +83,6 @@ with figlist_var() as fl:
             f_range=f_range,
             indirect=indirect,
             clock_correction=clock_correction,
+            echo_time = echo_time*1e6,
             fl=fl,
         )

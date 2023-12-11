@@ -25,6 +25,7 @@ def generate_integrals(
     direct="t2",
     indirect="indirect",
     alias_slop=3,
+    echo_time=None,
     clock_correction=True,
     error_bars=True,
     correlate=True,
@@ -86,8 +87,11 @@ def generate_integrals(
     raw_s = s.C  # will be used for imaging raw data with proper scaling
     s.ft(list(signal_pathway))
     s.ift(direct)
-    best_shift = hermitian_function_test(
-        select_pathway(s, signal_pathway), aliasing_slop=alias_slop
+    assert echo_time is not None, "You need to tell us what your echo time is!"
+    best_shift,_ = hermitian_function_test(
+        select_pathway(s, signal_pathway), 
+        echo_before = echo_time,
+        aliasing_slop=alias_slop
     )
     logger.info(strm("best shift is", best_shift))
     s.setaxis(direct, lambda x: x - best_shift).register_axis({direct: 0})
