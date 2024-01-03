@@ -4,8 +4,7 @@ The T1(p) and E(p) integrals are generated
 using the example, `generate_integrals.py`
 (as of 11/8/23 the `generate_integrals` is not
 updated), and stored in an H5 file.
-The inverse of the :math:`T_1(p)` data processing is taken
-to produce the :math:`R_1(p)` data which is fit using the
+The :math:`R_1(p)` data is fit using a
 polyfit of the inverse of krho so that 
 :math:`R_1(p) = R_{1,0}(p) + \frac{C}{k_{\rho}^{-1}(p)}`. 
 The :math:`R_1(p)` fit is then fed into the
@@ -72,7 +71,7 @@ with figlist_var() as fl:
     )
     fl.plot(
         integral_vs_p["power", flip_idx:],
-        "rx",
+        "ro",
         label="Returning Power Check",
         capsize=6,
         alpha=0.5,
@@ -145,9 +144,9 @@ with figlist_var() as fl:
     ksig = (
         integral_vs_p_fit.output("A")
         * integral_vs_p.get_prop("acq_params")["guessed_MHz_to_GHz"]
-        * 1e-3  # the actual ppt overwrites the guess for our
+        * 1e-3  # the experimental ppt overwrites the guess for our
         # final ODNP experiment. Though the key is labeled
-        # guessed it is the actual
+        # guessed, it is the ppt returned with a field sweep
     ) / integral_vs_p.get_prop("acq_params")["concentration"]
     ax = plt.gca()
     text(
