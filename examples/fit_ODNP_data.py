@@ -6,7 +6,7 @@ using the example, `generate_integrals.py`
 updated), and stored in an H5 file.
 The :math:`R_1(p)` data is fit using a
 polyfit of the inverse of krho so that 
-:math:`R_1(p) = R_{1,0}(p) + \frac{C}{k_{\rho}^{-1}(p)}`. 
+:math:`R_1(p) = R_{1,0}(p) + \\frac{C}{k_{\\rho}^{-1}(p)}`. 
 The :math:`R_1(p)` fit is then fed into the
 fitting routine for the integrals as a function of power. 
 The cross relaxivity is then
