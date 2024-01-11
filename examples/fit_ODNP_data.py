@@ -4,15 +4,10 @@ The T1(p) and E(p) integrals are generated
 using the example, `generate_integrals.py`
 (as of 11/8/23 the `generate_integrals` is not
 updated), and stored in an H5 file.
-The :math:`R_1(p)` data is fit using a
-polyfit of the inverse of krho so that 
-:math:`R_1(p) = R_{1,0}(p) + \\frac{C}{k_{\\rho}^{-1}(p)}`. 
-The :math:`R_1(p)` fit is then fed into the
-fitting routine for the integrals as a function of power. 
-The cross relaxivity is then
-calculated using the output of these fits as well
-as the sample parameters that are fed to in (*e.g.*,
-ppt value, and concentration).
+The polynomial coefficients of the inverse of
+krho are used in fitting the :math:`R_1(p)` data
+which is then subsequently fed as a parameter to
+fit for the cross relaxivity and enhancement data.
 """
 from pyspecdata import *
 from sympy import symbols, Symbol, latex, lambdify
