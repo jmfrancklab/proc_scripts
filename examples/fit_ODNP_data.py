@@ -99,11 +99,11 @@ with figlist_var() as fl:
     krho_inv = integral_vs_p.get_prop("acq_params")["concentration"] / (R1p - R10_p)
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
-    R1p_expression = (T10_p[0] + T10_p[1] * p) ** -1 + (
+    R1p_expr = (T10_p[0] + T10_p[1] * p) ** -1 + (
         integral_vs_p.get_prop("acq_params")["concentration"]
         / (krho_inv_coeff[0] + krho_inv_coeff[1] * p)
     )
-    R1p_fit = lambdify(p, R1p_expression)(powers_fine)
+    R1p_fit = lambdify(p, R1p_expr)(powers_fine)
     fl.plot(
         R1p_fit,
         color="k",
@@ -115,11 +115,11 @@ with figlist_var() as fl:
     # }}}
     # {{{ Fit NMR integrals as function of power
     fl.next("Integrals vs power")
-    sp_expression = p / (p + phalf)
+    sp_expr = p / (p + phalf)
     integral_vs_p_fit = lmfitdata(integral_vs_p["power", :flip_idx])
     # Symbolic expression for integrals as a function of power that is used
     # in the symbolic function for the fitting of the integrals as a function of power
-    integral_vs_p_fit.functional_form = M0 - ((M0 * A * sp_expression) / R1p_expression)
+    integral_vs_p_fit.functional_form = M0 - ((M0 * A * sp_expr) / R1p_expr)
     # generate a guess for the A parameter of the fit based on the normalized
     # enhancement weighted by the relaxation rate. The bounds for the fit are
     # then set to center around this value.
