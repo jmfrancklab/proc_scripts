@@ -1,14 +1,24 @@
-"""Fitting ODNP Datasets for Ksigma
+r"""Fitting ODNP Datasets for Ksigma
 =================================== 
 The T1(p) and E(p) integrals are generated
 using the example, `generate_integrals.py`
 (as of 11/8/23 the `generate_integrals` is not
-updated), and stored in an H5 file.
-The polynomial coefficients of the inverse of
-krho are used in fitting the :math:`R_1(p)` data
-which is then subsequently fed along with the
-integrals as a function of power as parameters to
-calculate the cross relaxivity.
+updated), and stored in an HDF5 file.
+We then calculate
+:math:`(k_\rho(p) + R_{1,HH}/C_{SL})^{-1}  =
+\frac{(\Delta T_{1,w} p + T_{1,w}(0))C_{SL}}{
+\left(\Delta T_{1,w} p + T_{1,w}(0)\right) R_1(p) - C_{SL} 
+}`
+(where
+:math:`R^{-1}_{1,HH}/C_{SL}`
+is assumed to be small or constant),
+and fit it to a line.
+The linear fit coefficients are used
+for two purposes:
+
+*   directly, to directly calculate the fit value of :math:`R_1(p)`
+*   they are plugged in, as raw numbers, as part of the nonlinear expression
+    that is used to fit the :math:`M_0 E(p)` (*i.e.* the raw integral) values.
 """
 from pyspecdata import *
 from sympy import symbols, Symbol, latex, lambdify
@@ -162,5 +172,5 @@ with figlist_var() as fl:
         transform=ax.transAxes,
     )
     plt.xlabel("Power / W")
-    plt.ylabel(r"$M_{0}I(p)$")
+    plt.ylabel(r"$M_{0}E(p)$")
     # }}}
