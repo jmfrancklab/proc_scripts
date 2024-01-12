@@ -6,8 +6,9 @@ using the example, `generate_integrals.py`
 updated), and stored in an H5 file.
 The polynomial coefficients of the inverse of
 krho are used in fitting the :math:`R_1(p)` data
-which is then subsequently fed as a parameter to
-fit for the cross relaxivity and enhancement data.
+which is then subsequently fed along with the
+integrals as a function of power as parameters to
+calculate the cross relaxivity.
 """
 from pyspecdata import *
 from sympy import symbols, Symbol, latex, lambdify
@@ -20,7 +21,7 @@ data_info = dict(
     data_dir="AG_processed_data",  # directory of the dataset of table of integrals
     nodename="230706_M67_a",# specific nodename of the dataset of interest
 )  
-T10_info = dict(
+water_relax_info = dict(
     filename="T10_DI_water_230412",
     data_dir="AG_processed_data",
 )
@@ -80,7 +81,7 @@ with figlist_var() as fl:
     # apply to fit R1p
     T10_p = loadmat(
         search_filename(
-            T10_info["filename"], exp_type=T10_info["data_dir"], unique=True
+            water_relax_info["filename"], exp_type=water_relax_info["data_dir"], unique=True
         )
     )["a"][0, :]
     R10_p = 1 / (R1p.fromaxis("power").eval_poly(T10_p, "power"))
