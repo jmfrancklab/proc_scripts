@@ -21,7 +21,7 @@ data_info = dict(
     data_dir="AG_processed_data",  # directory of the dataset of table of integrals
     nodename="230706_M67_a",# specific nodename of the dataset of interest
 )  
-water_relax_info = dict(
+T_1w_info = dict(
     filename="T10_DI_water_230412",
     data_dir="AG_processed_data",
 )
@@ -81,7 +81,7 @@ with figlist_var() as fl:
     # apply to fit R1p
     T10_p = loadmat(
         search_filename(
-            water_relax_info["filename"], exp_type=water_relax_info["data_dir"], unique=True
+            T_1w_info["filename"], exp_type=T_1w_info["data_dir"], unique=True
         )
     )["a"][0, :]
     R10_p = 1 / (R1p.fromaxis("power").eval_poly(T10_p, "power"))
