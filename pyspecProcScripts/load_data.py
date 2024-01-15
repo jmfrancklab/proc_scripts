@@ -10,23 +10,27 @@ Returns
 =======
 nddata that has been FTed and in coherence domain
 """
+from pyspecdata import *
+from .Utility import dBm2power
+import os
+from sympy import symbols
 import logging
-import re
 import numpy as np
 import logging
-import pyspecdata as psp
+from pylab import *
+from .DCCT_func import DCCT
 
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
-    logging.info(psp.strm("this is the 90 time"))
+    logging.info(strm("this is the 90 time"))
     if fl is not None:
         fl.next("raw data")
         fl.image(s.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
     s.chunk(
         "indirect", ["ph2", "ph1", "indirect"], [4, 2, -1]
     )  # expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
-    s.setaxis("ph1", np.r_[0:2.0] / 4)  # setting values of axis ph1 to line up
-    s.setaxis("ph2", np.r_[0:4.0] / 4)  # setting values of axis ph1 to line up
+    s.setaxis("ph1", r_[0:2.0] / 4)  # setting values of axis ph1 to line up
+    s.setaxis("ph2", r_[0:4.0] / 4)  # setting values of axis ph1 to line up
     s.setaxis("indirect", s.get_prop("vd"))
     s.ft("t2", shift=True)  # fourier transform
     if fl is not None:
@@ -50,7 +54,7 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
 
 
 def proc_bruker_deut_IR_mancyc(s, fl=None):
-    logging.info(psp.strm("this is the d1", s.get_prop("acq")["D"][1]))
+    logging.info(strm("this is the d1", s.get_prop("acq")["D"][1]))
     if fl is not None:
         fl.next("raw data")
         fl.image(s)
@@ -61,8 +65,8 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     # is the one on the farthest right. Brackets with numbers are the number
     # of phase cycle steps in each one. the number of steps is unknown in
     #'indirect' and is therefore -1.
-    s.setaxis("ph1", np.r_[0:2.0] / 4)  # setting values of axis ph1 to line up
-    s.setaxis("ph2", np.r_[0:4.0] / 4)  # setting values of axis ph1 to line up
+    s.setaxis("ph1", r_[0:2.0] / 4)  # setting values of axis ph1 to line up
+    s.setaxis("ph2", r_[0:4.0] / 4)  # setting values of axis ph1 to line up
     s.setaxis("indirect", s.get_prop("vd"))
     # titling to coherence domain
     s.ft("t2", shift=True)  # fourier transform
@@ -113,15 +117,15 @@ def proc_spincore_CPMG_v1(s, fl=None):
         + marker_s
     )
     t2_axis = np.linspace(0, acq_time_s, nPoints)
-    tE_axis = np.r_[1 : nEchoes + 1] * twice_tau
-    s.setaxis("nScans", np.r_[0:nScans])
+    tE_axis = r_[1 : nEchoes + 1] * twice_tau
+    s.setaxis("nScans", r_[0:nScans])
     s.chunk("t", ["ph1", "tE", "t2"], [nPhaseSteps, nEchoes, -1])
     # OK, so I made some changes and then realized that we need to assume that
     # the pulse sequence correctly balances the evolution between 2*p90_s/pi
     # (cavanagh chpt 3 this is the evolution during the 90 -- I'm not positive
     # if my expression is correct or not -- please do check/change, and leave
     # this comment in some form) and the center of the 180 pulse appropriately
-    s.setaxis("ph1", np.r_[0.0, 2.0] / 4)
+    s.setaxis("ph1", r_[0.0, 2.0] / 4)
     s.setaxis("tE", tE_axis)
     s.setaxis("t2", t2_axis)
     s.reorder(["ph1", "tE", "nScans", "t2"])
@@ -141,7 +145,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     assert s.get_prop("acq")["L"][21] == 2, "phase cycle isn't correct!"
     assert s.get_prop("acq")["L"][22] == 4, "phase cycle isn't correct!"
     s.chunk("indirect", ["indirect", "ph1", "ph2"], [-1, 2, 4])
-    s.setaxis("ph1", np.r_[0, 2] / 4).setaxis("ph2", np.r_[0:4] / 4)
+    s.setaxis("ph1", r_[0, 2] / 4).setaxis("ph2", r_[0:4] / 4)
     s.ft(["ph1", "ph2"], unitary=True)
     s.reorder(["ph1", "ph2", "indirect"])
     if fl is not None:
@@ -169,10 +173,10 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     )  # JF: check that this is based on the manual's definition of anavpt
     bruker_final_t2_value = np.double(s.getaxis("t2")[-1].item())
     s.setaxis(
-        "t2", 1.0 / actual_SW * np.r_[0 : psp.ndshape(s)["t2"]]
+        "t2", 1.0 / actual_SW * r_[0 : ndshape(s)["t2"]]
     )  # reset t2 axis to true values based on anavpt
     logging.debug(
-        psp.strm(
+        strm(
             "the final t2 value according to the Bruker SW_h was",
             bruker_final_t2_value,
             "but I determine it to be",
@@ -187,7 +191,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     d12 = s.get_prop("acq")["D"][12]
     d11 = s.get_prop("acq")["D"][11]
     p90_s = s.get_prop("acq")["P"][1] * 1e-6
-    quad_pts = psp.ndshape(s)["t2"]  # note tha twe have not yet chunked t2
+    quad_pts = ndshape(s)["t2"]  # note tha twe have not yet chunked t2
     nPoints = quad_pts / nEchoes
     acq_time = dwdel2 * nPoints * 2
     # {{{ these are hard-coded for the pulse sequence
@@ -200,7 +204,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     # twice_tau should be the period from one 180 to another
     # }}}
     s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
-    s.setaxis("tE", (1 + np.r_[0:nEchoes]) * twice_tau)
+    s.setaxis("tE", (1 + r_[0:nEchoes]) * twice_tau)
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     s.reorder(["ph1", "ph2", "indirect"])
@@ -217,8 +221,8 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
 
 def proc_bruker_CPMG_v1(s, fl=None):
     s.chunk("indirect", ["ph1", "ph2", "indirect"], [4, 2, -1])
-    s.setaxis("ph1", np.r_[0:4] / 4.0)
-    s.setaxis("ph2", np.r_[0:2] / 2.0)
+    s.setaxis("ph1", r_[0:4] / 4.0)
+    s.setaxis("ph2", r_[0:2] / 2.0)
     if fl is not None:
         fl.next("raw data before")
         fl.image(s)
@@ -237,10 +241,10 @@ def proc_bruker_CPMG_v1(s, fl=None):
     )  # JF: check that this is based on the manual's definition of anavpt
     bruker_final_t2_value = np.double(s.getaxis("t2")[-1].item())
     s.setaxis(
-        "t2", 1.0 / actual_SW * np.r_[0 : psp.ndshape(s)["t2"]]
+        "t2", 1.0 / actual_SW * r_[0 : ndshape(s)["t2"]]
     )  # reset t2 axis to true values based on anavpt
     logging.debug(
-        psp.strm(
+        strm(
             "the final t2 value according to the Bruker SW_h was",
             bruker_final_t2_value,
             "but I determine it to be",
@@ -255,7 +259,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
     d12 = 20e-6
     d11 = s.get_prop("acq")["D"][11]
     p90_s = s.get_prop("acq")["P"][1] * 1e-6
-    quad_pts = psp.ndshape(s)["t2"]  # note tha twe have not yet chunked t2
+    quad_pts = ndshape(s)["t2"]  # note tha twe have not yet chunked t2
     nPoints = quad_pts / nEchoes
     acq_time = dwdel2 * nPoints * 2
     # {{{ these are hard-coded for the pulse sequence
@@ -269,7 +273,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
     # }}}
     s.set_units("t2", "us")
     s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
-    s.setaxis("tE", (1 + np.r_[0:nEchoes]) * twice_tau)
+    s.setaxis("tE", (1 + r_[0:nEchoes]) * twice_tau)
     s.ft("t2", shift=True)
     s.reorder(["ph1", "ph2", "indirect"])
     if fl is not None:
@@ -292,9 +296,9 @@ def proc_Hahn_echoph(s, fl=None):
     nScans = s.get_prop("acq_params")["nScans"]
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
-    s.labels({"ph2": np.r_[0.0, 2.0] / 4, "ph1": np.r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
     s.reorder(["ph2", "ph1"])
-    s.setaxis("nScans", np.r_[0:nScans])
+    s.setaxis("nScans", r_[0:nScans])
     s.reorder("t2", first=False)
     s.ft("t2", shift=True)
     if fl is not None:
@@ -311,8 +315,8 @@ def proc_spincore_IR(s, fl=None):
     vd_axis = s.getaxis("vd")
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
-    s.setaxis("ph1", np.r_[0, 2.0] / 4)
-    s.setaxis("ph2", np.r_[0, 2.0] / 4)
+    s.setaxis("ph1", r_[0, 2.0] / 4)
+    s.setaxis("ph2", r_[0, 2.0] / 4)
     s.reorder(["ph2", "ph1"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
@@ -334,8 +338,8 @@ def proc_spincore_IR_v2(s, fl=None):
     vd_axis = s.getaxis("vd")
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
-    s.setaxis("ph1", np.r_[0, 1, 2, 3.0] / 4)
-    s.setaxis("ph2", np.r_[0, 1, 2, 3.0] / 4)
+    s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
+    s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
     s.reorder(["ph2", "ph1"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
@@ -359,8 +363,8 @@ def proc_nutation(s, fl=None):
     s.set_units("p_90", "s")
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
-    s.setaxis("ph2", np.r_[0.0, 2.0] / 4)
-    s.setaxis("ph1", np.r_[0.0, 2.0] / 4)
+    s.setaxis("ph2", r_[0.0, 2.0] / 4)
+    s.setaxis("ph1", r_[0.0, 2.0] / 4)
     s.reorder("t2", first=False)
     s.ft(["ph2", "ph1"], unitary=True)
     if fl is not None:
@@ -387,7 +391,7 @@ def proc_nutation_amp(s, fl=None):
             interpolation="bilinear",
         )
     s.reorder(["ph1", "ph2"])
-    s.setaxis("ph2", np.r_[0:2] / 4).setaxis("ph1", np.r_[0:4] / 4)
+    s.setaxis("ph2", r_[0:2] / 4).setaxis("ph1", r_[0:4] / 4)
     if "p_90" in s.dimlabels:
         s.set_units("p_90", "s")
     s.ft(["ph1", "ph2"], unitary=True)
@@ -416,8 +420,8 @@ def proc_var_tau(s, fl=None):
     s.get_prop("SW")
     if "ph1" not in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
-        s.setaxis("ph2", np.r_[0, 2] / 4)
-        s.setaxis("ph1", np.r_[0:4] / 4)
+        s.setaxis("ph2", r_[0, 2] / 4)
+        s.setaxis("ph1", r_[0:4] / 4)
     s.set_units("t2", "s")  # this should already be set -- why not?
     s *= 2e-6 / 1.11e4  # convert from SpinCore to V (amp)
     s.set_units("V")
@@ -435,7 +439,7 @@ def proc_var_tau(s, fl=None):
 def proc_spincore_echo_v1(s, fl=None):
     "old-fashioned (not properly shaped before storage) echo data"
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
-    s.labels({"ph2": np.r_[0.0, 2.0] / 4, "ph1": np.r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
     s.set_units("t2", "s")
     s.reorder("t2", first=False)
     if "nScans" in s.dimlabels:
@@ -448,12 +452,12 @@ def proc_spincore_echo_v1(s, fl=None):
 def proc_spincore_ODNP_v1(s, fl=None):
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis("power").copy()
-    logging.info(psp.strm("programmed powers", prog_power))
-    s.setaxis("power", np.r_[0 : len(s.getaxis("power"))])
-    logging.info(psp.strm("meter powers", s.get_prop("meter_powers")))
-    logging.info(psp.strm("actual powers", s.getaxis("power")))
+    logging.info(strm("programmed powers", prog_power))
+    s.setaxis("power", r_[0 : len(s.getaxis("power"))])
+    logging.info(strm("meter powers", s.get_prop("meter_powers")))
+    logging.info(strm("actual powers", s.getaxis("power")))
     logging.info(
-        psp.strm("ratio of actual to programmed power", s.getaxis("power") / prog_power)
+        strm("ratio of actual to programmed power", s.getaxis("power") / prog_power)
     )
     nPoints = s.get_prop("acq_params")["nPoints"]
     SW_kHz = s.get_prop("acq_params")["SW_kHz"]
@@ -461,7 +465,7 @@ def proc_spincore_ODNP_v1(s, fl=None):
     nPhaseSteps = s.get_prop("acq_params")["nPhaseSteps"]
     s.chunk("t", ["ph1", "t2"], [4, -1])
     s.set_units("t2", "s")
-    s.labels({"ph1": np.r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.labels({"ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
     s.ft("t2", shift=True)
     s.ft(["ph1"], unitary=True)  # Fourier Transforms coherence channels
     s.reorder(["ph1", "power"])
@@ -471,10 +475,10 @@ def proc_spincore_ODNP_v1(s, fl=None):
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
     # {{{ since the power axis was saved with settings and not meter powers, fix that here
     p_axis = s.getaxis("power")
-    power_axis_dBm = np.array(s.get_prop("meter_powers"))
-    power_axis_W = np.zeros_like(power_axis_dBm)
+    power_axis_dBm = array(s.get_prop("meter_powers"))
+    power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
-    power_axis_W = np.r_[0, power_axis_W]
+    power_axis_W = r_[0, power_axis_W]
     s.setaxis("power", power_axis_W)
     # }}}
     return s
@@ -483,12 +487,12 @@ def proc_spincore_ODNP_v1(s, fl=None):
 def proc_spincore_ODNP_v2(s, fl=None):
     logging.info("loading pre-processing for ODNP")
     prog_power = s.getaxis("power").copy()
-    logging.info(psp.strm("programmed powers", prog_power))
-    s.setaxis("power", np.r_[0 : len(s.getaxis("power"))])
-    logging.info(psp.strm("meter powers", s.get_prop("meter_powers")))
-    logging.info(psp.strm("actual powers", s.getaxis("power")))
+    logging.info(strm("programmed powers", prog_power))
+    s.setaxis("power", r_[0 : len(s.getaxis("power"))])
+    logging.info(strm("meter powers", s.get_prop("meter_powers")))
+    logging.info(strm("actual powers", s.getaxis("power")))
     logging.info(
-        psp.strm("ratio of actual to programmed power", s.getaxis("power") / prog_power)
+        strm("ratio of actual to programmed power", s.getaxis("power") / prog_power)
     )
     nPoints = s.get_prop("acq_params")["nPoints"]
     SW_kHz = s.get_prop("acq_params")["SW_kHz"]
@@ -496,8 +500,8 @@ def proc_spincore_ODNP_v2(s, fl=None):
     nPhaseSteps = s.get_prop("acq_params")["nPhaseSteps"]
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.set_units("t2", "s")
-    s.setaxis("ph2", np.r_[0.0, 2.0] / 4)
-    s.setaxis("ph1", np.r_[0:4.0] / 4)
+    s.setaxis("ph2", r_[0.0, 2.0] / 4)
+    s.setaxis("ph1", r_[0:4.0] / 4)
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)  # Fourier Transforms coherence channels
     s.C.setaxis("power", "#").set_units("power", "scan #")
@@ -507,10 +511,10 @@ def proc_spincore_ODNP_v2(s, fl=None):
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
     # {{{ since the power axis was saved with settings and not meter powers, fix that here
     p_axis = s.getaxis("power")
-    power_axis_dBm = np.array(s.get_prop("meter_powers"))
-    power_axis_W = np.zeros_like(power_axis_dBm)
+    power_axis_dBm = array(s.get_prop("meter_powers"))
+    power_axis_W = zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
-    power_axis_W = np.r_[0, power_axis_W]
+    power_axis_W = r_[0, power_axis_W]
     s.setaxis("power", power_axis_W)
     # }}}
     return s
@@ -518,8 +522,8 @@ def proc_spincore_ODNP_v2(s, fl=None):
 
 def proc_spincore_ODNP_v3(s, fl=None):
     if "t" in s.dimlabels:
-        s.chunk("t", ["ph1", "t2"], [4, -1])
-        s.setaxis("ph1", np.r_[0.0, 1.0, 2.0, 3.0] / 4)
+        t.chunk("t", ["ph1", "t2"], [4, -1])
+        s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
     if "indirect" in s.dimlabels:
         s.rename("indirect", "power")
     s.set_units("t2", "s")
@@ -538,11 +542,11 @@ def proc_spincore_ODNP_v3(s, fl=None):
 
 def proc_spincore_ODNP_v4(s, fl=None):
     if "t" in s.dimlabels:
-        s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
+        t.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
         s.set_units("t2", "s")
     s.rename("power", "time")
-    s.setaxis("ph1", np.r_[0, 1, 2, 3.0] / 4)
-    s.setaxis("ph2", np.r_[0, 1, 2, 3.0] / 4)
+    s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
+    s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     s.reorder(["ph1", "ph2", "time"])
@@ -562,7 +566,7 @@ def proc_capture(s):
     return s
 
 
-def proc_DOSY_CPMG(s, fl=None):
+def proc_DOSY_CPMG(s):
     logging.info("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
     l22 = int(s.get_prop("acq")["L"][22])  # b/c the l are integers by definition
@@ -573,10 +577,10 @@ def proc_DOSY_CPMG(s, fl=None):
     ppg = s.get_prop("pulprog")
     # {{{ these are explanatory -- maybe comment them out?
     m = re.search((".*dwdel1=.*"), ppg, flags=re.IGNORECASE)
-    logging.info(psp.strm(m.groups()))  # show the line that sets dwdel1
+    logging.info(strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.info(
-        psp.strm(
+        strm(
             [
                 (j, s.get_prop("acq")[j])
                 for j in s.get_prop("acq").keys()
@@ -587,7 +591,7 @@ def proc_DOSY_CPMG(s, fl=None):
     # I actually can't find depa
     # }}}
     m = re.search("\ndefine list<grad_scalar> gl1 = {(.*)}", ppg)
-    grad_list = np.array(
+    grad_list = array(
         [float(j.group()) for j in re.finditer("([0-9.]+)", m.groups()[0])]
     )
     m = re.search("([0-9.]+) G/mm", s.get_prop("gradient_calib"))
@@ -621,16 +625,15 @@ def proc_DOSY_CPMG(s, fl=None):
     # }}}
     s.chunk("indirect", ["indirect", "phcyc"], [l22, -1])
     s.chunk("phcyc", ["ph8", "ph4", "m", "n"], [2, 2, 2, 2])
-    s.setaxis("ph8", np.r_[0.0, 2.0] / 4)
-    s.setaxis("ph4", np.r_[0.0, 2.0] / 4)
-    s.setaxis("m", np.r_[0, 2.0] / 4)
-    s.setaxis("n", np.r_[0, 2.0] / 4)
+    s.setaxis("ph8", r_[0.0, 2.0] / 4)
+    s.setaxis("ph4", r_[0.0, 2.0] / 4)
+    s.setaxis("m", r_[0, 2.0] / 4)
+    s.setaxis("n", r_[0, 2.0] / 4)
     s.ft(["ph8", "ph4", "m", "n"], unitary=True)
     s.reorder(["m", "n", "ph4", "ph8", "indirect", "t2"])
     s.setaxis("indirect", grad_list)
-    if fl is not None:
-        fl.next("abs raw data")
-        fl.image(abs(s))
+    fl.next("abs raw data")
+    fl.image(abs(s))
     s.chunk("t2", ["echo", "t2"], [l25, -1])
     s.reorder(["m", "n", "ph4", "ph8", "indirect", "echo", "t2"])
     s.ft("t2", shift=True).ift(
@@ -644,7 +647,7 @@ def proc_ESR(s):
     logging.info("loading preprocessing for ESR linewidth calculation")
     s -= s["$B_0$", :50].C.mean("$B_0$")
     s_integral = s.C.run_nopop(np.cumsum, "$B_0$")
-    x1, x2 = s_integral.getaxis("$B_0$")[np.r_[5, -5]]
+    x1, x2 = s_integral.getaxis("$B_0$")[r_[5, -5]]
     y1 = s_integral.data[:5].mean()
     y2 = s_integral.data[-5:].mean()
     straight_baseline = (s.fromaxis("$B_0$") - x1) * (y2 - y1) / (x2 - x1)
@@ -653,7 +656,7 @@ def proc_ESR(s):
     center_field = (s_integral * s.fromaxis("$B_0$")).mean("$B_0$").item()
     s.setaxis("$B_0$", lambda x: x - center_field)
     s_integral = s.C.run_nopop(np.cumsum, "$B_0$")
-    logging.info(psp.strm(s_integral))
+    logging.info(strm(s_integral))
     return s
 
 
@@ -664,7 +667,7 @@ def proc_field_sweep_v1(s):
     logging.info("loading preprocessing for fieldsweep")
     s.reorder("t", first=True)
     s.chunk("t", ["ph1", "t2"], [4, -1])
-    s.setaxis("ph1", np.r_[0.0, 1.0, 2.0, 3.0] / 4)
+    s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
     s.reorder("t2", first=False)
     s.ft("t2", shift=True)
     s.ft("ph1", unitary=True)
