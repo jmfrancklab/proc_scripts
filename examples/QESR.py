@@ -20,39 +20,18 @@ from pyspecProcScripts import QESR_scalefactor
 # sphinx_gallery_thumbnail_number = 2
 
 fieldaxis = "$B_0$"
+background_file = find_file("220804_water.DSC", exp_type="francklab_esr/Farhana")["harmonic", 0]
+
 with figlist_var() as fl:
-    for filenum, (
-        thisfile,
-        that_exp_type,
-        thislabel,
-        pushout,
-        calibration,
-        diameter,
-        background,
-    ) in enumerate(
-        [
-            (
-                "220804_rasI36_MTSL.DSC",
-                "francklab_esr/Farhana",
-                "kRas I36",
-                0.4,
-                "220720",
-                "QESR caps",
-                find_file("220804_water.DSC", exp_type="francklab_esr/Farhana")[
-                    "harmonic", 0
-                ],
-            ),
-        ]
-    ):
-        c = QESR(
-            thisfile,
-            label=thislabel,
-            pushout=pushout,
-            exp_type=that_exp_type,
-            calibration_name=calibration,
-            diameter_name=diameter,
-            background=background,
-            which_plot="compare",
-            pickle_file="TEMPOL_rerun_conc.pickle",
-            fl=fl,
-        )
+    c = QESR(
+        "220804_rasI36_MTSL.DSC",
+        label="kRas I36",
+        pushout=0.4,
+        exp_type="francklab_esr/Farhana",
+        calibration_name="220720",
+        diameter_name="QESR caps",
+        background=background_file,
+        which_plot="compare",
+        pickle_file="TEMPOL_rerun_conc.pickle",
+        fl=fl,
+    )
