@@ -17,43 +17,55 @@ fieldaxis = "$B_0$"
 
 """Process an ESR spectra
 =========================
-Converts a raw ESR spectra to the double integral and calculates
-the appropriate concentration of spins present. If a background
-spectra is provided background subtraction is applied to the loaded
-ESR spectra. The double integral is finally rescaled and multiplied
-by a proportionality constant associated with the matching value in
-your pyspecdata config file.
-The resulting plot shows the double integral with the calculated concentration
-in micromolar in the legend.
+Converts a raw ESR spectra to the double integral and calculates the
+appropriate concentration of spins present. 
+
+If a background spectra is provided, background subtraction is applied to
+the loaded ESR spectra. The double integral is finally rescaled and
+multiplied by a proportionality constant associated with the matching value
+in your pyspecdata config file.  The resulting plot shows the double
+integral with the calculated concentration in micromolar in the legend.
 """
 
-def QESR(file_name, label, pushout=0.5,
-        threshold=0.05, pickle_file=None, background=None,
+def QESR(file_name, 
+        label, 
+        pushout=0.5,
+        threshold=0.05, 
+        pickle_file=None, 
+        background=None,
         exp_type=None,
-        which_plot=None, calibration_name=None,
-        diameter_name=None, color=None,fl=None):
+        which_plot=None, 
+        calibration_name=None,
+        diameter_name=None, 
+        color=None,
+        fl=None):
     """
     Parameters
     ==========
     pushout: float
-        really shouldn't need adjustment, but adjusts the "generous limits", 
-        that is added to the area where the peaks are  
+        Adjusts the "generous limits" factor which is added
+        to the integration area surrounding the peaks
     threshold: float
-      peak defined as anything that rises above threshold*max
+        Used in defining the integration limits (threshold*max)
     pickle_file: str
-        name of pickle file you want to append the concentration to
+        Name of pickle file you want to append the concentration to
     background: nddata
-        the background spectrum (loaded data)
+        The background spectrum that should already be loaded
     exp_type: str
-        where the file of interest is
+        Where the file of interest is
     which_plot: str
-        name that will be used in titles of plots
+        Name that will be used in titles of plots. This is useful when you
+        are plotting more than 1 dataset
     calibration_name:  str
-        name of the value in your pyspecdata config file that points to
+        Name of the value in your pyspecdata config file that points to
         the proportionality constant
     diameter_name:  str
-        name of the value in your pyspecdata config file that points to 
+        Name of the value in your pyspecdata config file that points to 
         the diameter of the capillary being used
+    color:  str
+            String of the desired color for the plot. This is especially
+            useful when trying to coordinate color matching with other
+            plots
     fl: figure list
         required!
     """
@@ -64,7 +76,7 @@ def QESR(file_name, label, pushout=0.5,
     if fl is None:
         raise ValueError("for now, you just have to pass a figure list")
     if pickle_file is not None:
-        # {{{ make a pickle file, all_concs.pickle that has a
+        # {{{ make a pickle file, that contains a
         #     dictionary of the concentrations of all samples
         #     that we are looking at
         #     the label should have the batch date and
@@ -150,7 +162,7 @@ def QESR(file_name, label, pushout=0.5,
     fl.plot(polybaseline, alpha=0.5, human_units=False)
     fl.next(f"{which_plot} absorption, bg. no bl.")
     fl.plot(polybaseline, alpha=0.5, label="spline/poly baseline\n(integrate between this and other curve)", lw=1)
-    d_abs -= polybaseline
+    d_abs -= polybaseline #background subtraction
     d_abs.integrate(fieldaxis, cumulative=True)
     fl.next("dblint ÷ denom * conversion")
     d_abs /= QESR_scalefactor(d, calibration_name=calibration_name,
