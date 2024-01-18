@@ -4,7 +4,8 @@ Here, we calculate
 :math:`d^{2} \\times {G_{R} \\times C_{t}} \\times {\\sqrt{P} \\times B_{m}
 \\times Q \\times n_{B} \\times S \\times (S + 1)}
 (the denominator of equation 2-17 in the E500 
-manual). 
+manual then divided by the diameter squared to get the concentration
+rather than the number of spins). 
 
 The double integral divides by this in order to calculate the
 final concentration of spins. The diameter, Q, and proportionality 
