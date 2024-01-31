@@ -15,17 +15,6 @@ colors = plt.rcParams[
 fieldaxis = "$B_0$"
 # }}}
 
-"""Process an ESR spectra
-=========================
-Converts a raw ESR spectra to the double integral and calculates the
-appropriate concentration of spins present. 
-
-If a background spectra is provided, background subtraction is applied to
-the loaded ESR spectra. The double integral is finally rescaled and
-multiplied by a proportionality constant associated with the matching value
-in your pyspecdata config file.  The resulting plot shows the double
-integral with the calculated concentration in micromolar in the legend.
-"""
 
 def QESR(file_name, 
         label, 
@@ -39,7 +28,15 @@ def QESR(file_name,
         diameter_name=None, 
         color=None,
         fl=None):
-    """
+    """Converts a raw ESR spectra to the double integral and calculates the
+    appropriate concentration of spins present. 
+
+    If a background spectra is provided, background subtraction is applied to
+    the loaded ESR spectra. The double integral is finally rescaled and
+    multiplied by a proportionality constant associated with the matching value
+    in your pyspecdata config file.  The resulting plot shows the double
+    integral with the calculated concentration in micromolar in the legend.
+
     Parameters
     ==========
     pushout: float
