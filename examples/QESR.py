@@ -13,6 +13,9 @@ is defined in your pyspecdata config file.
 
 In order to properly run this example, your config file
 should have the following values under General:
+
+::
+
     220720 propfactor = 8.637e-5
     220720 q = 4600
     qesr caps diameter = 0.704

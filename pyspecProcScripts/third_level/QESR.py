@@ -105,12 +105,18 @@ def QESR(file_name,
     background = background.interp(fieldaxis, d.getaxis(fieldaxis))
     # {{{ configure all the plots -- I like to do this in one place so I
     #     can easily control placement in the PDF
+    thisfig = plt.figure()
+    gs = plt.GridSpec(4,1, figure=thisfig)
     fl.text(r"\textbf{\texttt{%s}}\par"%file_name)
-    fl.next(f"{which_plot} absorption, bg. no bl.")
-    gca().set_title("abs mode:\nbackground subtracted, show baseline")
+    ax = thisfig.add_subplot(gs[:3,0])
+    fl.next(f"{which_plot} absorption, bg. no bl.", ax=ax, fig=thisfig)
+    ax.set_title("abs mode:\nbackground subtracted, show baseline")
     fl.text(r'\par')
     fl.next(f"{which_plot} baseline diagnostic")
     gca().set_title("zoomed-in baseline diagnostic\nshowing only baseline\n(data and fit)")
+    ax = thisfig.add_subplot(gs[3,0])
+    fl.next("dblint", ax=ax, fig=thisfig)
+    ax.set_title(r"$\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow %s)$"%calibration_name)
     # }}}
     if color is None:
         color = next(colors)["color"]
@@ -153,7 +159,7 @@ def QESR(file_name,
     fl.plot(polybaseline, alpha=0.5, label="spline/poly baseline\n(integrate between this and other curve)", lw=1)
     d_abs -= polybaseline #background subtraction
     d_abs.integrate(fieldaxis, cumulative=True)
-    fl.next("dblint ÷ denom * conversion")
+    fl.next("dblint")
     d_abs /= QESR_scalefactor(d, calibration_name=calibration_name,
             diameter_name=diameter_name)
     final_conc = (
