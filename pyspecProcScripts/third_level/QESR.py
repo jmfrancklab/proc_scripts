@@ -106,9 +106,6 @@ def QESR(file_name,
     # {{{ configure all the plots -- I like to do this in one place so I
     #     can easily control placement in the PDF
     fl.text(r"\textbf{\texttt{%s}}\par"%file_name)
-    fl.next(f"{which_plot} show background subtraction in abs mode")
-    gca().set_title("abs mode:\nspectrum and background spectrum")
-    fl.text(r'\par')
     fl.next(f"{which_plot} absorption, bg. no bl.")
     gca().set_title("abs mode:\nbackground subtracted, show baseline")
     fl.text(r'\par')
@@ -118,13 +115,8 @@ def QESR(file_name,
     if color is None:
         color = next(colors)["color"]
     d.set_plot_color(color)
-    fl.next(f"{which_plot} show background subtraction in abs mode")
-    forplot = background.C.integrate(fieldaxis, cumulative=True)
-    forplot.set_plot_color(d.get_plot_color())
-    fl.plot(forplot, alpha=0.2)
-    forplot = d.C.integrate(fieldaxis, cumulative=True)
-    fl.plot(forplot, alpha=0.5, label=label)
     fl.next(f"{which_plot} absorption, bg. no bl.")
+    forplot = d.C.integrate(fieldaxis, cumulative=True)
     # show the same thing on the main plot as a faint line
     fl.plot(forplot, alpha=0.2, label="%s - no background spec. subtracted"%label)
     d -= background # subtract background in derivative mode
