@@ -24,19 +24,26 @@ should have the following values under General:
 from pyspecdata import *
 from pyspecProcScripts import *
 from pyspecProcScripts import QESR_scalefactor
+import pickle
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 1
 
-background_file = find_file("220804_water.DSC", exp_type="francklab_esr/Farhana")["harmonic", 0]
-
+pickle_file = "TEMPOL_rerun_conc.pickle" # when complete, the concentration is stored here
 with figlist_var() as fl:
     c = QESR(
-        "220804_rasI36_MTSL.DSC", #filename
-        label="kRas I36", #label for legends
-        exp_type="francklab_esr/Farhana", #location of file
-        calibration_name="220720", 
-        diameter_name="QESR caps", 
-        background=background_file, #background used for background subtraction - loaded above
-        pickle_file="TEMPOL_rerun_conc.pickle",
-        fl=fl
+        "220804_rasI36_MTSL.DSC",  # filename
+        label="kRas I36",  # label for legends
+        exp_type="francklab_esr/Farhana",  # location of file
+        calibration_name="220720",
+        diameter_name="QESR caps",
+        background=find_file(
+            "220804_water.DSC", exp_type="francklab_esr/Farhana"
+        )[
+            "harmonic", 0
+        ],  # background used for background subtraction - loaded above
+        pickle_file=pickle_file,
+        fl=fl,
     )
+    with open(pickle_file, "rb") as fp:
+        pickle_vars = pickle.load(fp)
+    print("the stored concentration is",pickle_vars["kRas I36"])

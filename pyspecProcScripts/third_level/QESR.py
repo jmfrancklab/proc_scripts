@@ -45,7 +45,8 @@ def QESR(file_name,
     threshold: float
         Used in defining the integration limits (threshold*max)
     pickle_file: str
-        Name of pickle file you want to append the concentration to
+        Name of pickle file you want to append the concentration to.
+        (Concentration is stored in μM)
     background: nddata
         The background spectrum that should already be loaded
     exp_type: str
