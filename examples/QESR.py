@@ -19,6 +19,8 @@ should have the following values under General:
     220720 propfactor = 8.637e-5
     220720 q = 4600
     qesr caps diameter = 0.704
+
+Note that the diameter is given in units of mm.
 """
 
 from pyspecdata import *

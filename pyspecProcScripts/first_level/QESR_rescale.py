@@ -1,19 +1,3 @@
-"""Rescaling the ESR spectra using data parameters
-================================================== 
-Here, we calculate 
-:math:`d^{2} \\times {G_{R} \\times C_{t}} \\times {\\sqrt{P} \\times B_{m} \\times Q \\times n_{B} \\times S \\times (S + 1)}`
-(the denominator of equation 2-17 in the E500 
-manual then divided by the diameter squared to get the concentration
-rather than the number of spins). 
-
-The double integral divides by this in order to calculate the
-final concentration of spins. The diameter, Q, and proportionality 
-constants are all pulled from the pyspecdata config file. Finally
-to convert to micromolar the denominator is multiplied by 1e-6. Note
-the double integral of the ESR spectra is DIVIDED by this output - thus
-multiplied by 1e-6 to yield micromolar.
-"""
-
 from pyspecdata.datadir import pyspec_config # piggyback on _pyspecdata
 from pint import UnitRegistry
 from numpy import sqrt
@@ -50,7 +34,27 @@ ureg = UnitRegistry(
 )
 Q_ = ureg.Quantity
 def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
-    """
+    """Divide the ESR spectrum by this number so that the double integral should be equal to concentration in μM.
+
+    We specifically calculate 
+    :math:`d^{2} G_{R}  C_{t}  \\sqrt{P}  B_{m}  Q  n_{B}  S  (S + 1) / c_{propfactor}`
+    (the denominator of equation 2-17 in the E500 
+    manual with :math:`d^2` (diameter squared) added in,
+    so that after dividing by this term,
+    we get a concentration of spins
+    rather than the total number of spins). 
+
+    All of these except :math:`c` are parameters that we might change during
+    an experiment that would change the double integral.
+    By dividing the double integral by this,
+    we get a number that is proportionate to the concentration of spins.
+    The diameter, Q, and proportionality 
+    constants are all pulled from the pyspecdata config file.
+
+    The constant :math:`c_{propfactor}` is determined by the calibration name.
+    Note that a larger :math:`c_{propfactor}` corresponds to a higher concentration
+    for the same recorded spectrum.
+
     Parameters
     ==========
     calibration_name:   str
