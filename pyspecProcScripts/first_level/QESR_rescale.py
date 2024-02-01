@@ -1,8 +1,7 @@
 """Rescaling the ESR spectra using data parameters
 ================================================== 
 Here, we calculate 
-:math:`d^{2} \\times {G_{R} \\times C_{t}} \\times {\\sqrt{P} \\times B_{m}
-\\times Q \\times n_{B} \\times S \\times (S + 1)}
+:math:`d^{2} \\times {G_{R} \\times C_{t}} \\times {\\sqrt{P} \\times B_{m} \\times Q \\times n_{B} \\times S \\times (S + 1)}`
 (the denominator of equation 2-17 in the E500 
 manual then divided by the diameter squared to get the concentration
 rather than the number of spins). 
