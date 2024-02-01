@@ -2,7 +2,9 @@ from pyspecdata.datadir import pyspec_config # piggyback on _pyspecdata
 from pint import UnitRegistry
 from numpy import sqrt
 from pyspecdata import init_logging
-logger = init_logging(level="debug")
+import logging
+logger = logging.getLogger('pySpecProcScripts.first_level.QESR_rescale')
+
 class calib_info (object):
     "class for caching calibration info"
     def __init__(self):
