@@ -14,22 +14,22 @@ class calib_info (object):
         if calibration_name != self.current_calib_name:
             assert type(calibration_name) is str, "the calibration name must be specified as a string!"
             assert len(calibration_name)>0, "you MUST use a calibration name and set the values `[calibration_name] q` and `[calibration_name] propFactor` in your _pyspecdata file!"
-            self.current_calib_name = calibration_name
             # note that this will fail if you don't have "[calibration_name] propFactor" and "[calibration_name] q" set in your pyspecdata file
             try:
                 self.default_Q = float(pyspec_config.get_setting(f"{calibration_name} Q"))
                 self.dint_propFactor = float(pyspec_config.get_setting(f"{calibration_name} propFactor"))
             except:
                 raise RuntimeError(f"I expect a line in the [General] block of your pyspecdata config file (in your home directory) that sets the value of the following variables:\n{calibration_name} q\n{calibration_name} propFactor\n\n(I can't run without these)")
+            self.current_calib_name = calibration_name
     def use_diameter(self, diameter_name):
         if diameter_name != self.current_diam_name:
             assert type(diameter_name) is str, "the diameter name must be specified as a string!"
             assert len(diameter_name)>0, "you MUST use a diameter name and set the values `[diameter_name] q` and `[diameter_name] propFactor` in your _pyspecdata file!"
-            self.current_diam_name = diameter_name
             try:
                 self.d = float(pyspec_config.get_setting(f"{diameter_name} diameter"))
             except:
                 raise RuntimeError(f"(note this the second in a similar pair of errors) I expect a line in the [General] block of your pyspecdata config file (in your home directory) that sets the value of the following variables:\n{diameter_name} diameter")
+            self.current_diam_name = diameter_name
 calibcache = calib_info()
 ureg = UnitRegistry(
     system="mks", autoconvert_offset_to_baseunit=True, auto_reduce_dimensions=True
@@ -89,7 +89,7 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q * d**2
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s") * Q_("m")**2)
     # }}}
-    logger.info(
+    logger.debug(
             f"$G_R={G_R:~L}$\n"+
             f"$C_t={C_t:~L}$\n"+
             f"$power={power:~L}$\n"+
