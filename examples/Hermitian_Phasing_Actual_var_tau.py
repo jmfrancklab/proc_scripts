@@ -43,7 +43,6 @@ with figlist_var() as fl:
             alias_slop=3
             programmed_tau = tau_list[j]
             tablerow.append(programmed_tau/1e-3)
-            logger.info(strm("programmed tau:",programmed_tau))
             this_data = data['tau',j]
             this_data.ift("t2")
             fl.basename = '%0.1f ms'%(programmed_tau/1e-3)
@@ -51,7 +50,6 @@ with figlist_var() as fl:
                 select_pathway(this_data, signal_pathway),
                 aliasing_slop=alias_slop,
                 fl=fl)
-            logger.info(strm("best shift is:",best_shift))
             tablerow.append(best_shift/1e-3)
             diff = abs(best_shift - programmed_tau)
             tablerow.append(diff/1e-3)
