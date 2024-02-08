@@ -133,16 +133,10 @@ for thisfile, exp_type, nodename in [
             s,
             signal_pathway,
             [thispathway],
-            cutoff = 0.2,
             indirect="nScans",
             return_frq_slice=True,
-            fl=fl
         )
         assert all(frq_slice_check == frq_slice)
-        fl.next('Integration with error frequency slice')
-        fl.plot(select_pathway(s,signal_pathway))
-        plt.axvline(x = frq_slice [0])
-        plt.axvline(x = frq_slice[-1])
         error = s_thisint.get_error()
         avg_error = error.mean().item()
         s_int_lst.append(s_thisint)
@@ -169,7 +163,7 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{ Plotting Errors
-    fl.next("comparison of std using N", legend=True)
+    fl.next("comparison of std", legend=True)
     for i in range(len(s_int_lst)):
         fl.plot(
             error_lst[i],
