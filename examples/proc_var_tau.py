@@ -14,14 +14,14 @@ rcParams["image.aspect"] = "auto"
 
 with figlist_var() as fl:
     for filename, expno, exp_type, postproc, frequency, f_range in [
-            ("201209_Ni_sol_probe_var_tau",'var_tau','var_tau','spincore_var_tau_v1',
+            ("201209_Ni_sol_probe_var_tau_",'var_tau','test_equipment/var_tau','spincore_var_tau_v1',
                 14.89e6,(-13.5e3,0))
             ]:
         fl.basename = filename
         logger.info(strm("analyzing",filename))
         # {{{ JF wanted to see what dataset is called
         fullname = search_filename(filename,
-                exp_type='var_tau',
+                exp_type=exp_type,
                 unique=True)
         with h5.File(fullname,'r') as fp:
             logger.info(strm(fp.keys()))

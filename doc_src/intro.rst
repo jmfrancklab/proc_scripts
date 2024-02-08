@@ -1,9 +1,3 @@
-If you're uncertain, start with examples!
-
-.. toctree::
-
-    auto_examples/index
-
 The processing is structured into multiple levels.
 
 Lowest level

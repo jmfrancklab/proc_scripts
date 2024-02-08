@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convert 2D Real Data into Integrals with Errors &mdash; pyspecProcScripts 0.9 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-binder.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-dataframe.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-rendered-html.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gallery_custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Echoes with varied tau lengths" href="proc_var_tau.html" />
+    <link rel="prev" title="Process a square wave reflection" href="proc_square_refl.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> pyspecProcScripts
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Convert 2D  Real Data into Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_Challenging.html">Phasing and Timing Correction with Real Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyspecProcScripts</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">ProcScripts Example Gallery</a></li>
+      <li class="breadcrumb-item active">Convert 2D  Real Data into Integrals with Errors</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/auto_examples/generate_integrals_RealData.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-generate-integrals-realdata-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="convert-2d-real-data-into-integrals-with-errors">
+<span id="sphx-glr-auto-examples-generate-integrals-realdata-py"></span><h1>Convert 2D  Real Data into Integrals with Errors<a class="headerlink" href="#convert-2d-real-data-into-integrals-with-errors" title="Permalink to this heading">¶</a></h1>
+<p>Take a 2D dataset and convert it to a table of integrals with errors, utilizing
+all the bells and whistles (frequency and time selection, alignment, etc.)</p>
+<p>Demonstrate on a fake dataset of an inversion recovery with multiple repeats (φ
+× t2 × vd × repeats) w/ normally distributed random noise, and with fluctuating field
+(normally distributed field variation).</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_generate_integrals_RealData_001.png" srcset="../_images/sphx_glr_generate_integrals_RealData_001.png" alt="Raw Data   for M67 Ras mutation, Phased Data  for M67 Ras mutation, Aligned Data  for M67 Ras mutation, FID  for M67 Ras mutation" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_generate_integrals_RealData_002.png" srcset="../_images/sphx_glr_generate_integrals_RealData_002.png" alt="(M67 Ras mutation) Real Integrated Data with Bounds" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_generate_integrals_RealData_003.png" srcset="../_images/sphx_glr_generate_integrals_RealData_003.png" alt="(M67 Ras mutation) Integrated Data" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>C:\Users\jmfranck\pyspecdata.0.log appears to be locked or otherwise inaccessible: I&#39;m going to explore other options for fileno
+----------  logging output to C:\Users\jmfranck\pyspecdata.1.log  ----------
+--&gt; load_data.py(453):root proc_spincore_ODNP_v1 2023-05-13 16:25:39,453
+INFO: loading pre-processing for ODNP
+--&gt; load_data.py(455):root proc_spincore_ODNP_v1 2023-05-13 16:25:39,453
+INFO: programmed powers [0.         0.17782794 0.35481339 0.56234133 0.70794578 0.89125094
+ 1.12201845 1.25892541 1.41253754 1.58489319 1.77827941 1.99526231
+ 2.23872114 2.51188643 2.81838293 3.16227766 3.54813389 3.98107171
+ 3.16227766 1.99526231 0.89125094]
+--&gt; load_data.py(457):root proc_spincore_ODNP_v1 2023-05-13 16:25:39,454
+INFO: meter powers [0.0776, 2.8103, 4.8812, 5.62, 6.6702, 7.7522, 8.354, 8.8325, 9.1063, 9.5967, 10.173, 10.664, 11.285, 11.787, 12.383, 12.884, 13.64, 12.437, 10.243, 6.7685]
+--&gt; load_data.py(458):root proc_spincore_ODNP_v1 2023-05-13 16:25:39,455
+INFO: actual powers [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+c:\users\jmfranck\git_repos\proc_scripts\pyspecProcScripts\load_data.py:460: RuntimeWarning: invalid value encountered in divide
+  strm(&quot;ratio of actual to programmed power&quot;, s.getaxis(&quot;power&quot;) / prog_power)
+--&gt; load_data.py(459):root proc_spincore_ODNP_v1 2023-05-13 16:25:39,456
+INFO: ratio of actual to programmed power [        nan  5.62341325  5.63676586  5.33483823  5.65015018  5.61009227
+  5.34750563  5.56029764  5.66356628  5.6786161   5.62341325  5.51305957
+  5.36020311  5.17539322  4.96738745  4.74341649  4.50941269  4.27020693
+  5.69209979  9.52255744 22.44036909]
+--&gt; generate_integrals.py(92):pyspecdata.core   generate_integrals 2023-05-13 16:25:40,389
+INFO: best shift is 0.0033173406336152104
+c:\users\jmfranck\git_repos\pyspecdata\pyspecdata\core.py:1804: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;o&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
+  return ax.errorbar(*tebargs[:-1],**tebkwargs)
+c:\users\jmfranck\git_repos\pyspecdata\pyspecdata\figlist.py:492: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  plt.gcf().tight_layout()
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">s</span>
+
+<span class="n">init_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
+
+<span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;image.aspect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>  <span class="c1"># needed for sphinx gallery</span>
+<span class="c1"># sphinx_gallery_thumbnail_number = 3</span>
+
+<span class="n">fl</span> <span class="o">=</span> <span class="n">fl_mod</span><span class="p">()</span>
+<span class="n">signal_pathway</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ph1&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+<span class="n">t_max</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+<span class="k">with</span> <span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="k">for</span> <span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">exp_type</span><span class="p">,</span>
+        <span class="n">nodename</span><span class="p">,</span>
+        <span class="n">postproc</span><span class="p">,</span>
+        <span class="n">indirect</span><span class="p">,</span>
+        <span class="n">clock_correction</span><span class="p">,</span>
+        <span class="n">label</span><span class="p">,</span>
+        <span class="n">f_range</span><span class="p">,</span>
+    <span class="p">)</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;211223_Ras_M67R1a_capProbe&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ODNP_NMR_comp/ODNP&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;enhancement&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;spincore_ODNP_v1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;power&quot;</span><span class="p">,</span>
+            <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;M67 Ras mutation&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="o">-</span><span class="mf">0.5e3</span><span class="p">,</span> <span class="mf">0.5e3</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">]:</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">basename</span> <span class="o">=</span> <span class="s2">&quot;(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="n">label</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span>
+            <span class="n">filename</span><span class="p">,</span>
+            <span class="n">exp_type</span><span class="o">=</span><span class="n">exp_type</span><span class="p">,</span>
+            <span class="n">expno</span><span class="o">=</span><span class="n">nodename</span><span class="p">,</span>
+            <span class="n">postproc</span><span class="o">=</span><span class="n">postproc</span><span class="p">,</span>
+            <span class="n">lookup</span><span class="o">=</span><span class="n">lookup_table</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">s_int</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">generate_integrals</span><span class="p">(</span>
+            <span class="n">s</span><span class="p">,</span>
+            <span class="n">signal_pathway</span><span class="o">=</span><span class="n">signal_pathway</span><span class="p">,</span>
+            <span class="n">searchstr</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+            <span class="n">f_range</span><span class="o">=</span><span class="n">f_range</span><span class="p">,</span>
+            <span class="n">indirect</span><span class="o">=</span><span class="n">indirect</span><span class="p">,</span>
+            <span class="n">alias_slop</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">clock_correction</span><span class="o">=</span><span class="n">clock_correction</span><span class="p">,</span>
+            <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">,</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  9.226 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-generate-integrals-realdata-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/770d6ed9d93a91fd85fee5bd70ed7ef9/generate_integrals_RealData.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">generate_integrals_RealData.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/8ba65fd6c8ab282da4cb3f7afb31c35d/generate_integrals_RealData.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">generate_integrals_RealData.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="proc_square_refl.html" class="btn btn-neutral float-left" title="Process a square wave reflection" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="proc_var_tau.html" class="btn btn-neutral float-right" title="Echoes with varied tau lengths" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, John M. Franck group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
