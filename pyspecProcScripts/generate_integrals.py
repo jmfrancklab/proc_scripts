@@ -24,7 +24,7 @@ def generate_integrals(
     f_range=(None, None),
     direct="t2",
     indirect="indirect",
-    alias_slop=3,
+    slice_mult=2,
     clock_correction=True,
     error_bars=True,
     correlate=True,
@@ -47,11 +47,12 @@ def generate_integrals(
                     Frequency range over which the signal resides.
     direct:         str
                     Direct dimension of the signal
+    slice_multiplier:   int
+                        in determining the autoslice this is a multiplier where the higher
+                        the value the wider the slice
     indirect:       str
                     Indirect dimension of the signal. Usually 'power' or 'nScans'
                     for example.
-    alias_slop:     int
-                    Aliasing_slop used in the hermitian function.
     clock_correction:   bool
                         If true, will apply a clock correction. Is needed for IR
                         but not enhancement data.
@@ -80,29 +81,14 @@ def generate_integrals(
     s.ft(direct)
     s.ft(list(signal_pathway))
     # }}}
-    # {{{phase correction
-    s = s[direct:f_range]
-    s.ift(list(signal_pathway))
-    raw_s = s.C  # will be used for imaging raw data with proper scaling
-    s.ft(list(signal_pathway))
-    s.ift(direct)
-    best_shift = hermitian_function_test(
-        select_pathway(s, signal_pathway), aliasing_slop=alias_slop
-    )
-    logger.info(strm("best shift is", best_shift))
-    s.setaxis(direct, lambda x: x - best_shift).register_axis({direct: 0})
-    s.ft(direct)
-    if "nScans" in s.dimlabels:
-        s_mean = s.C.mean("nScans")
-    else:
-        s_mean = s
-    mysgn = determine_sign(select_pathway(s_mean, signal_pathway))  # must be
-    # determined after hermitian phasing, or else you can actually get a
-    # sign flip when the signal drifts far enough in frequency space
-    s /= zeroth_order_ph(select_pathway(s, signal_pathway))
-    ph_corr_s = s.C  # will be used for imaging phased data with proper scaling later
-    s.ift(direct)
-    # }}}
+    s = fid_from_echo(s,signal_pathway,slice_multiplier = slice_mult, fl = fl)
+    fl.next('FID f domain')
+    fl.image(s)
+    s.ift('t2')
+    fl.next('FID t domain')
+    fl.image(s)
+    s.ft('t2')
+    fl.show();quit()
     # {{{Correlate
     if correlate:
         s.ft(direct)

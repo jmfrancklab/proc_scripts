@@ -186,12 +186,44 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
-def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2",
+def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
         exclude_rising=3,
         slice_multiplier=20,
         peak_lower_thresh=0.1,
         show_hermitian_sign_flipped=False,
         show_shifted_residuals=False):
+    """
+    Parameters
+    ==========
+    signal_pathway: dict
+                    coherence transfer pathways that correspond to the signal
+    fl:             figlist or None (default)
+                    If you want the diagnostic plots (showing the
+                    distribution of the data in the complex plane),
+                    set this to your figlist object.
+    add_rising:     boolean
+                    when true the script will add a rising edge to the echo
+    direct:         string
+                    Name of the direct dimension
+    exclude_rising: int
+                    if add_rising is True this is the number of points left out of the 
+                    start echo
+    slice_multiplier:   int
+                        in determining the autoslice this is a multiplier where the higher
+                        the value the wider the slice
+    peak_lower_thresh:  float
+                        multiplier in deciding the wider range of the signal, the lower
+                        the value the wider the range
+    show_hermitian_sign_flipped:    boolean
+                                    diagnostic in checking the sign of the signal prior
+                                    to the hermitian phase correction
+    show_shifted_residuals: boolean
+                            diagnostic in analyzing the residuals after the hermitian 
+                            phase correction.
+    Returns                                 
+    =======
+    d: FID of properly sliced and phased signal
+    """
     # {{{ autodetermine slice range
     freq_envelope = d.C
     freq_envelope.ift('t2')
