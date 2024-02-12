@@ -37,11 +37,11 @@ def fit_envelope(
                 direct dimension
     show_expanding_envelope:    boolean
                                 whether the diagnostics are shown
-
-                
-                
-            
-
+    Returns
+    =======
+    env_out['lambda_l']:    float
+                            Full width half max value of the fitted
+                            echo envelope
     """        
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
     envelope = abs(s[direct:(0, None)]).mean_all_but(direct)
@@ -112,14 +112,14 @@ def fit_envelope(
     opt_lambda = env_expansion.invinterp(
         l, norm_min * (1 - threshold) + norm_max * threshold, kind="linear"
     )
-    logging.debug(
-        "opt_lambda",
-        opt_lambda,
-        "at",
-        norm_min * (1 - threshold) + norm_max * threshold,
-        "out of",
-        lw_range,
-    )
+    #logging.debug(
+    #    "opt_lambda",
+    #    opt_lambda,
+    #    "at",
+    #    norm_min * (1 - threshold) + norm_max * threshold,
+    #    "out of",
+    #    lw_range,
+    #)
     if fl and show_expanding_envelope:
         fl.plot(opt_lambda, "o")
     new_guess.update(lambda_L=opt_lambda.getaxis(l).item().real)
@@ -137,11 +137,9 @@ def fit_envelope(
     lsq = np.exp(-pi * lsq_lambda * abs(t2))
     if fl:
         fl.plot(
-            L2G(env_out["lambda_L"], criterion="energy")(s.fromaxis(direct))
-        )
+            L2G(env_out["lambda_L"], criterion="energy")(s.fromaxis(direct)),
+            label = 'apodization function')
         fl.pop_marker()
-    print(type(env_out['lambda_L']))
-    print(env_out['lambda_L'])
     return env_out["lambda_L"]
 
 
@@ -149,6 +147,20 @@ def L2G(
     lambda_L,
     criterion="energy",
 ):
+    """
+    Parameters
+    ==========
+    lambda_L:   float
+                Full width half max of the signal envelope
+    criterion:  str
+                the final function will be made in order to 
+                generate signal either with equal energy or
+                with equal linewidth
+    Returns
+    =======
+    Apodization function
+    """
+
     assert np.isscalar(lambda_L)
     if criterion == "energy":
         # equal energy:

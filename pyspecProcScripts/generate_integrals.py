@@ -6,12 +6,11 @@ from pyspecProcScripts import *
 from .simple_functions import select_pathway
 from .correlation_alignment import correl_align
 from .integral_w_error import integral_w_errors
-from .envelope import fit_envelope
+from .envelope import fit_envelope,L2G
 from .DCCT_func import DCCT
 import matplotlib.patches as patches
 
 this_figsize = (6, 12)
-t2 = symbols("t2")
 
 
 def generate_integrals(
@@ -85,8 +84,34 @@ def generate_integrals(
     s.ift('t2')
     fl.next('FID t domain')
     fl.image(s)
-    lambda_L = fit_envelope(select_pathway(s,signal_pathway)['t2',1:],
+    # {{{ extract the alignment correction using an apodized copy
+    # When apodized the error is not propagated properly until we
+    # implement integrating and propagating in the time domain
+    s_align = s.C
+    lambda_L = fit_envelope(select_pathway(s_align,signal_pathway)['t2',1:],
             fl=fl)
+    s_align *= L2G(lambda_L, "energy")(s_align.fromaxis('t2'))
+    fl.next('apodized')
+    fl.image(s_align)
+    s_align.ft('t2',pad=2**11)
+    fl.next('apodized f dom')
+    fl.image(s_align)
+    mysgn = determine_sign(s_align)
+    center_frq = (s_align*mysgn).real.mean_all_but('t2').argmax('t2').item()
+    frq_atmax = (
+            select_pathway(s_align,signal_pathway).real['t2':(center_frq-800,center_frq+800)].argmax('t2'))
+    s_align.ift('t2')
+    t2 = s_align.fromaxis('t2')
+    s.ft('t2',pad=2**11)
+    s.ift('t2')
+    s_align *= exp(-1j*2*pi*frq_atmax*t2)
+    s *= exp(-1j*2*pi*frq_atmax*t2)
+    s.ft('t2')
+    s_align.ft('t2')
+    fl.next('saligned')
+    fl.image(s_align)
+    fl.next('aligned')
+    fl.image(s)
     fl.show();quit()
     # {{{Correlate
     if correlate:
