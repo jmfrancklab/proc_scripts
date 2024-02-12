@@ -56,9 +56,9 @@ with figlist_var() as fl:
             s,
             signal_pathway=signal_pathway,
             searchstr=label,
-            f_range=f_range,
+            #f_range=f_range,
             indirect=indirect,
-            alias_slop=2,
+            #alias_slop=2,
             clock_correction=clock_correction,
             fl=fl,
         )

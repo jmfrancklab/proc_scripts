@@ -10,6 +10,7 @@ This example provides a relatively routine example.
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
+from pyspecProcScripts.phasing import fid_from_echo
 from pyspecProcScripts.load_data import lookup_table
 
 init_logging(level="info")

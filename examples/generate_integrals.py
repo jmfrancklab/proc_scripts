@@ -15,13 +15,13 @@ from numpy.random import seed
 import sympy as s
 from collections import OrderedDict
 
-init_logging(level="debug")
+#init_logging(level="debug")
 
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 3
 
-fl = fl_mod()
+fl = figlist_var()#fl_mod()
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 with figlist_var() as fl:
@@ -48,7 +48,7 @@ with figlist_var() as fl:
             ],
             {"ph1": 0, "ph2": 1},
             "vd",
-            True,
+            False,
             "IR",
             (-400, 400),
         ),
