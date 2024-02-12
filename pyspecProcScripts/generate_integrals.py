@@ -1,14 +1,12 @@
 from pylab import *
 from pyspecdata import *
-from scipy.optimize import minimize, leastsq
-from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
-from sympy import symbols, latex, Symbol
 from pyspecProcScripts import *
 from .simple_functions import select_pathway
 from .correlation_alignment import correl_align
 from .integral_w_error import integral_w_errors
+from .envelope import fit_envelope
 from .DCCT_func import DCCT
 import matplotlib.patches as patches
 
@@ -87,7 +85,8 @@ def generate_integrals(
     s.ift('t2')
     fl.next('FID t domain')
     fl.image(s)
-    s.ft('t2')
+    lambda_L = fit_envelope(select_pathway(s,signal_pathway)['t2',1:],
+            fl=fl)
     fl.show();quit()
     # {{{Correlate
     if correlate:
