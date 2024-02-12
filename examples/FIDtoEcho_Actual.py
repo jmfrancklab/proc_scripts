@@ -4,7 +4,6 @@ FID from Echo after Phasing and Timing Correction
 
 Demonstrate how we can automatically find the zeroth order phase and the
 center of the echo and then slice, in order to get a properly phased FID.
-Here we see this 
 
 This example provides a relatively routine example.
 """
