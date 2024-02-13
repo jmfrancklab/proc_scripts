@@ -186,15 +186,48 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
-def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2",
+def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
         exclude_rising=3,
         slice_multiplier=20,
         peak_lower_thresh=0.1,
         show_hermitian_sign_flipped=False,
         show_shifted_residuals=False):
+    """
+    Parameters
+    ==========
+    signal_pathway: dict
+                    coherence transfer pathways that correspond to the signal
+    fl:             figlist or None (default)
+                    If you want the diagnostic plots (showing the
+                    distribution of the data in the complex plane),
+                    set this to your figlist object.
+    add_rising:     boolean
+                    when true the script will add a rising edge to the echo
+    direct:         string
+                    Name of the direct dimension
+    exclude_rising: int
+                    if add_rising is True this is the number of points left out of the 
+                    start echo
+    slice_multiplier:   int
+                        in determining the autoslice this is a multiplier where the higher
+                        the value the wider the slice
+    peak_lower_thresh:  float
+                        multiplier in deciding the wider range of the signal, the lower
+                        the value the wider the range
+    show_hermitian_sign_flipped:    boolean
+                                    diagnostic in checking the sign of the signal prior
+                                    to the hermitian phase correction
+    show_shifted_residuals: boolean
+                            diagnostic in analyzing the residuals after the hermitian 
+                            phase correction.
+    Returns                                 
+    =======
+    d: FID of properly sliced and phased signal
+    """
     # {{{ autodetermine slice range
     freq_envelope = d.C
     freq_envelope.ift('t2')
+    orig_d = freq_envelope
     freq_envelope = freq_envelope['t2':(0,None)] # slice out rising echo estimate according to experimental tau in order to limit oscillations
     freq_envelope.ft('t2')
     freq_envelope.mean_all_but(direct).run(abs)
@@ -221,7 +254,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         return [np.array(b) for b in B if
                 any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
-    assert len(peakrange) == 1
+    assert (len(peakrange) == 1),"""Your wide range is too small try decreasing the peak_lower_thresh"""
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item()/2
@@ -265,6 +298,9 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
             input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
     )
+    if best_shift < 0.8*d.get_prop('acq_params')['tau_us']*1e3 or best_shift > 1.2*d.get_prop('acq_params')['tau_us']*1e3:
+        print("warning!! best shift does not make sense so I am setting the shift to the tau value used in the pulse program: %d"%(d.get_prop('acq_params')['tau_us']))
+        best_shift = d.get_prop('acq_params')['tau_us']
     d_save = d.C
     t_dw = d_save.get_ft_prop(direct,'dt')
     if show_shifted_residuals:
@@ -339,6 +375,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
             d[direct, 1 : N_rising + 1]
             + d_rising[direct, ::-1]
         ) / 2
+    d *= 2    
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
