@@ -254,7 +254,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
         return [np.array(b) for b in B if
                 any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
-    assert len(peakrange) == 1
+    assert (len(peakrange) == 1),"""Your wide range is too small try decreasing the peak_lower_thresh"""
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item()/2
@@ -295,9 +295,12 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
     input_for_hermitian.mean_all_but(direct)
     # }}}
     best_shift = hermitian_function_test(
-            orig_d, basename=' '.join([
+            input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
     )
+    if best_shift < 0.8*d.get_prop('acq_params')['tau_us']*1e3 or best_shift > 1.2*d.get_prop('acq_params')['tau_us']*1e3:
+        print("warning!! best shift does not make sense so I am setting the shift to the tau value used in the pulse program: %d"%(d.get_prop('acq_params')['tau_us']))
+        best_shift = d.get_prop('acq_params')['tau_us']
     d_save = d.C
     t_dw = d_save.get_ft_prop(direct,'dt')
     if show_shifted_residuals:
@@ -372,6 +375,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
             d[direct, 1 : N_rising + 1]
             + d_rising[direct, ::-1]
         ) / 2
+    d *= 2    
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
