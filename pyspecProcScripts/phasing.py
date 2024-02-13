@@ -227,7 +227,6 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
     # {{{ autodetermine slice range
     freq_envelope = d.C
     freq_envelope.ift('t2')
-    orig_d = freq_envelope
     freq_envelope = freq_envelope['t2':(0,None)] # slice out rising echo estimate according to experimental tau in order to limit oscillations
     freq_envelope.ft('t2')
     freq_envelope.mean_all_but(direct).run(abs)
