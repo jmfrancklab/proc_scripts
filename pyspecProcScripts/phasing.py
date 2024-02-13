@@ -297,9 +297,6 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
             input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
     )
-    if best_shift < 0.8*d.get_prop('acq_params')['tau_us']*1e3 or best_shift > 1.2*d.get_prop('acq_params')['tau_us']*1e3:
-        print("warning!! best shift does not make sense so I am setting the shift to the tau value used in the pulse program: %d"%(d.get_prop('acq_params')['tau_us']))
-        best_shift = d.get_prop('acq_params')['tau_us']
     d_save = d.C
     t_dw = d_save.get_ft_prop(direct,'dt')
     if show_shifted_residuals:
