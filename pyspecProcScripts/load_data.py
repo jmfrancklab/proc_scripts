@@ -460,10 +460,11 @@ def proc_var_tau_v2(s, fl=None):
         s.chunk("t", ["ph1", "t2"], [4, -1])
         s.setaxis("ph1", r_[0:4] / 4)
     s.set_units("t2", "s")  # this should already be set -- why not?
+    s.setaxis('nScans',r_[0:s.get_prop('acq_params')['nScans']])
     if 'indirect' in s.dimlabels:
         s.rename('indirect','tau')
-        s.setaxis('tau',s.get_prop('acq_params')['tau_us'])    
-    s.set_units("V")
+        #s.setaxis('tau',s.get_prop('acq_params')['tau_us'])    
+    #s.set_units("V")
     if fl is not None:
         fl.next("raw signal!")
     s.ft("t2", shift=True).ft(["ph1"], unitary=True)
