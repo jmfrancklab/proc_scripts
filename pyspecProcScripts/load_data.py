@@ -455,6 +455,7 @@ def proc_var_tau(s, fl=None):
 
 
 def proc_var_tau_v2(s, fl=None):
+    print("I went into the load data")
     s.get_prop("SW")
     if "ph1" not in s.dimlabels:
         s.chunk("t", ["ph1", "t2"], [4, -1])
