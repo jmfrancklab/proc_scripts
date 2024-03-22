@@ -424,11 +424,11 @@ def proc_nutation_v2(s, fl=None):
     s.reorder(["ph1","indirect"])
     if fl is not None:
         fl.next("Raw Data - Time Domain")
-        fl.image(s.C.human_units())
+        fl.image(s.C.mean('nScans').human_units())
     s.ft('t2',shift = True)
     if fl is not None:
         fl.next("Raw Data- Frequency Domain")
-        fl.image(s)
+        fl.image(s.C.mean('nScans'))
     return s
 
 def proc_var_tau(s, fl=None):

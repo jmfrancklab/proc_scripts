@@ -294,6 +294,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
         fl.image(input_for_hermitian)
     input_for_hermitian.mean_all_but(direct)
     # }}}
+    input_for_hermitian.set_units(direct,'s')
     best_shift = hermitian_function_test(
             input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
