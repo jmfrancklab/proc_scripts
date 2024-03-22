@@ -13,11 +13,6 @@ with figlist_var() as fl:
     ]:
         s = find_file(filename + ".h5", exp_type="ODNP_NMR_comp/echoes", expno=nodename)
         s = s.C.mean("nScans")
-        nPoints = s.get_prop("acq_params")["nPoints"]
-        nEchoes = s.get_prop("acq_params")["nEchoes"]
-        nPhaseSteps = s.get_prop("acq_params")["nPhaseSteps"]
-        SW_kHz = s.get_prop("acq_params")["SW_kHz"]
-        nScans = s.get_prop("acq_params")["nScans"]
         tau = s.get_prop("acq_params")["tau_us"] - 10.0
         if "t2" not in s.dimlabels:
             s.set_units("t", "s")
