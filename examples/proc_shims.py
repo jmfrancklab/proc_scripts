@@ -8,12 +8,6 @@ from pyspecdata import figlist_var, find_file
 
 with figlist_var() as fl:
     for filename, nodename, color_tuple, label_str in [
-        # ('220705_NiSO4_shims','y_shims_1',('black','red'),
-        #    ('no shims (run 1)','opt y (run 1)')),
-        # ('220705_NiSO4_shims','z1_shims_3',('green','blue'),
-        #    ('opt y (run 2)','opt y + opt z1 (run 2)')),
-        # ('220705_NiSO4_shims','z2_shims_2',('orange','purple'),
-        #    ('opt y (run 3)','opt y + opt z2 (run 3)')),
         ("221213_ShimOn3", "shims_addr5_Z_yOpt", ("teal", "pink"), 
             ("opt y (run 4)", "opt y + opt z1 (run 4)")),
     ]:
