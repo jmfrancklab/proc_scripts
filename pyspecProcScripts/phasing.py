@@ -202,18 +202,28 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
                     distribution of the data in the complex plane),
                     set this to your figlist object.
     add_rising:     boolean
-                    when true the script will add a rising edge to the echo
+                    Take the first part of the echo (that which rises to the
+                    maximum) and add the decaying (FID like) part. This increases
+                    the SNR of the early points of the signal.
     direct:         string
                     Name of the direct dimension
     exclude_rising: int
-                    if add_rising is True this is the number of points left out of the 
-                    start echo
+                    In general it is assumed that the first few points of signal
+                    might be messed up due to dead time or other issues. This option
+                    allows us to add a rising edge to the echo and exclude the first
+                    few points of the signal. Note, to use this, add_rising must be
+                    True. 
     slice_multiplier:   int
-                        in determining the autoslice this is a multiplier where the higher
-                        the value the wider the slice
+                        The calculated frequency slice is calculated by taking the
+                        center frequency and extending out to values that are included
+                        in the peak times this multiplier. Therefore the larger this 
+                        value the larger the frequency slice.
     peak_lower_thresh:  float
-                        multiplier in deciding the wider range of the signal, the lower
-                        the value the wider the range
+                        fraction of the signal intensity used in calculating the 
+                        frequency slice. The smaller the value, the larger 
+                        wider the slice. This is especially useful for noisy data
+                        where this value may need to be decreases in order to include
+                        the full signal.
     show_hermitian_sign_flipped:    boolean
                                     diagnostic in checking the sign of the signal prior
                                     to the hermitian phase correction
