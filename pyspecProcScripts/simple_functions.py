@@ -1,4 +1,4 @@
-import numpy as np
+from numpy import dtype,empty,real,sign
 class logobj(object):
     def __init__(self,
             array_len = 1000 # just the size of the buffer
@@ -102,7 +102,7 @@ def determine_sign(s, direct="t2", fl=None):
 'vd','#').set_units('vd','scan #'))
     data_sgn = s.C.sum(direct)
     data_sgn /= data_sgn.max().item()
-    data_sgn.run(np.real).run(lambda x: np.sign(x))
+    data_sgn.run(real).run(lambda x: sign(x))
     if fl is not None:
         fl.next('check sign')
         fl.image((s.C.setaxis(
