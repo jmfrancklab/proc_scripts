@@ -1,8 +1,3 @@
-# In[1]:
-
-get_ipython().magic(u'load_ext pyspecdata.ipy')
-from IPython.display import display, Markdown, Latex
-import IPython.display as id
 from pyspecdata import *
 from pyspecProcScripts.simple_functions import select_pathway
 from pyspecProcScripts import *
