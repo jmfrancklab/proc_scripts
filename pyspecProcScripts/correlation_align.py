@@ -1,0 +1,181 @@
+from pylab import*
+from pyspecdata import *
+from scipy.optimize import leastsq, minimize, basinhopping
+import numpy as np
+from matplotlib.ticker import FuncFormatter
+import logging
+@FuncFormatter
+def to_percent(y, position):
+    s = '%.2g'%(100 * y)
+    if rcParams['text.usetex'] is True:
+        return s + r'$\%$'
+    else:
+        return s + '%'
+def correl_align(s_orig, align_phases=False,tol=1e-4,indirect_dim='indirect',
+        fig_title='correlation alignment',signal_pathway = {'ph1':0,'ph2':1}, 
+        shift_bounds=False, max_shift = 100., sigma=20.,direct='t2',fl=None):
+    """
+    Align transients collected with chunked phase cycling dimensions along an indirect
+    dimension based on maximizing the correlation across all the transients and repeat
+    alignment until the calculated signal energy remains constant to within a given 
+    tolerance level.
+
+    Parameters
+    ==========
+    s_orig:  nddata
+        A nddata object which contains phase cycle dimensions and an
+        indirect dimension.
+    align_phases:   boolean
+    tol:            float
+                    Sets the tolerance limit for the alignment procedure.
+    indirect_dim:   str
+                    Name of the indirect dimension along which you seek to align
+                    the transients.
+    fig_title:      str
+                    Title for the figures generated.
+    signal_pathway: dict
+                    Dictionary containing the signal pathway.
+    shift_bounds:   boolean
+                    Keeps f_shift to be within a specified
+                    limit (upper and lower bounds given by max_shift)
+                    which should be around the location of the expected
+                    signal.
+    max_shift:      float
+                    Specifies the upper and lower bounds to the range over
+                    which f_shift will be taken from the correlation function.
+                    Shift_bounds must be True.
+    sigma:          int
+                    Sigma value for the Gaussian mask. Related to the line width
+                    of the given data.
+    fl:             boolean 
+                    fl=fl to show the plots and figures produced by this function
+                    otherwise, fl=None.
+                    
+    Returns
+    =======
+    f_shift:    array
+                The optimized frequency shifts for each transient which will 
+                maximize their correlation amongst each other, thereby aligning
+                them.
+    sigma:      float
+                The width of the Gaussian function used to frequency filter
+                the data in the calculation of the correlation function.
+    """
+
+    logging.debug(strm("Applying the correlation routine"))
+    for j in signal_pathway.keys():
+        assert not s_orig.get_ft_prop(j), str(j)+" must not be in the coherence domain"
+    signal_keys = list(signal_pathway)
+    signal_values = list(signal_pathway.values())
+    ph_len = {j:ndshape(s_orig)[j] for j in signal_pathway.keys()}
+    N = ndshape(s_orig)[indirect_dim]
+    sig_energy = (abs(s_orig)**2).data.sum().item() / N
+    if fl:
+        fl.push_marker()
+        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(7,7))
+        fl.next("Correlation Diagnostics")
+        fig_forlist.suptitle(" ".join(["Correlation Diagnostic"] + [j for j in [fl.basename] if j is not None]))
+        s_orig.reorder([direct],first = False)
+        fl.image(s_orig.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[0],human_units=False)
+        ax_list[0].set_title('before correlation\nsig. energy=%g'%sig_energy)
+    energy_vals = []
+    # Energy values before correlation for calculating the amount of improvement
+    this_E = (abs(s_orig.C.sum(indirect_dim))**2).data.sum().item() / N**2
+    energy_vals.append(this_E / sig_energy)
+    last_E = None
+    # {{{ isolate the data from each coherence pathway to find the center
+    #     frequency - "signal averaged correlation function"
+    for_nu_center = s_orig.C
+    for_nu_center.ft(list(signal_pathway))
+    for x in range(len(signal_keys)):
+        for_nu_center = for_nu_center[signal_keys[x],signal_values[x]]
+    # }}}
+    # {{{ find maximum of the real part of equation 22 
+    nu_center = for_nu_center.real.mean(indirect_dim).C.argmax(direct)
+    logging.debug(strm("Center frequency", nu_center))
+    # }}}
+    i = 0
+    # paper suggests 3-10 iterations so that $\Delta\nu_{j} \rightarrow \Delta\nu_{m}$
+    # here we do 100 to accommodate extremely noisy or low SNR data
+    for my_iter in range(100):
+        i += 1
+        logging.debug(strm("*** *** ***"))
+        logging.debug(strm("CORRELATION ALIGNMENT ITERATION NO. ",i))
+        logging.debug(strm("*** *** ***"))
+        s_copy = s_orig.C
+        s_copy2 = s_orig.C
+        # {{{ make mask that is nonzero along f axis over a bandwidth similar
+        #     to the linewidth - this allows the signal to decay to zero on
+        #     both sides 
+        this_mask = exp(-(s_copy.fromaxis(direct)-nu_center)**2/(2*sigma**2))
+        s_copy *= this_mask #eq 28 in manuscript
+        s_copy.ift(direct)
+        for k,v in ph_len.items():
+            ph = ones(v)
+            s_copy *= nddata(ph,'Delta'+k.capitalize())
+            s_copy.setaxis('Delta'+k.capitalize(),'#')
+        correl = s_copy * 0 
+        for k,v in ph_len.items():
+            for ph_index in range(v):
+                s_copy['Delta%s'%k.capitalize(),ph_index] = s_copy['Delta%s'%k.capitalize(),
+                        ph_index].run(lambda x, axis=None: roll(x, ph_index, axis=axis), k)
+        for j in range(1,N):
+            correl += s_copy2 * s_copy.C.run(lambda x, axis=None: roll(x,j,axis=axis),
+                indirect_dim).run(conj)
+        correl.reorder([indirect_dim,direct],first=False)
+        if my_iter ==0:
+            logging.debug(strm("holder"))
+            if fl:
+                correl.reorder([direct],first = False)
+                fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
+                        ax=ax_list[1])
+                ax_list[1].set_title('correlation function (t), \nafter apod')
+        correl.ft_clear_startpoints(direct)
+        correl.ft(direct, shift=True, pad=2**14)
+        for k,v in signal_pathway.items():
+            correl.ft(['Delta%s'%k.capitalize()])
+            correl = correl['Delta'+k.capitalize(),v]+correl['Delta'+k.capitalize(),0]
+        if my_iter ==0:
+            logging.debug(strm("holder"))
+            if fl:
+                correl.reorder([direct],first = False)
+                fl.image(correl.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
+                        ax=ax_list[2],human_units=False)
+                ax_list[2].set_title('correlation function (v), \nafter apod')
+        if shift_bounds:
+            f_shift = correl[direct:(-max_shift,max_shift)].run(real).argmax(direct)
+        else:
+            f_shift = correl.run(real).argmax(direct)
+        s_copy = s_orig.C
+        s_copy *= exp(-1j*2*pi*f_shift*s_copy.fromaxis(direct))
+        s_orig.ft(direct)
+        s_copy.ft(direct)
+        if my_iter == 0:
+            logging.debug(strm("holder"))
+            if fl:
+                s_copy.reorder([direct],first = False)
+                fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),
+                        ax=ax_list[3],human_units=False)
+                ax_list[3].set_title('after correlation\nbefore ph0 restore')
+        logging.debug(strm('signal energy per transient (recalc to check that it stays the same):',(abs(s_copy**2).data.sum().item() / N)))
+
+        this_E = (abs(s_copy.C.sum(indirect_dim))**2).data.sum().item() / N**2
+        energy_vals.append(this_E / sig_energy)
+        logging.debug(strm('averaged signal energy (per transient):', this_E))
+        if last_E is not None:
+            energy_diff = (this_E - last_E)/sig_energy
+            logging.debug(strm(energy_diff))
+            if abs(energy_diff) < tol and my_iter > 4:
+                break
+        last_E = this_E
+    if fl is not None: 
+        fl.next('correlation convergence')
+        fl.plot(array(energy_vals),'x')
+        gca().yaxis.set_major_formatter(to_percent)
+    if fl is not None:
+        fl.image(s_copy.C.setaxis(indirect_dim,'#').set_units(indirect_dim,'scan #'),ax=ax_list[4])
+        ax_list[4].set_title('after correlation\nph0 restored \nsig. energy=%g'%sig_energy)
+        fl.pop_marker()
+    return f_shift, sigma, this_mask    
+
+
