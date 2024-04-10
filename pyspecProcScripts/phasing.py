@@ -217,7 +217,8 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
                         The calculated frequency slice is calculated by taking the
                         center frequency and extending out to values that are included
                         in the peak times this multiplier. Therefore the larger this 
-                        value the larger the frequency slice.
+                        value the larger the frequency slice. Increasing this value 
+                        might serve useful in the case of noisy spectra.
     peak_lower_thresh:  float
                         fraction of the signal intensity used in calculating the 
                         frequency slice. The smaller the value, the larger 
