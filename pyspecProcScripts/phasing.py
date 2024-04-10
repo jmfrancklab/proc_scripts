@@ -208,11 +208,11 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
     direct:         string
                     Name of the direct dimension
     exclude_rising: int
-                    In general it is assumed that the first few points of signal
-                    might be messed up due to dead time or other issues. This option
-                    allows us to add a rising edge to the echo and exclude the first
-                    few points of the signal. Note, to use this, add_rising must be
-                    True. 
+                    In general it is assumed that the first few points of
+                    signal might be messed up due to dead time or other issues
+                    (assuming a tau of 0).  This option allows us to add a
+                    rising edge to the echo and exclude the first few points of
+                    the signal. Note, to use this, add_rising must be True. 
     slice_multiplier:   int
                         The calculated frequency slice is calculated by taking the
                         center frequency and extending out to values that are included
@@ -222,9 +222,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
     peak_lower_thresh:  float
                         fraction of the signal intensity used in calculating the 
                         frequency slice. The smaller the value, the larger 
-                        wider the slice. This is especially useful for noisy data
-                        where this value may need to be decreases in order to include
-                        the full signal.
+                        wider the slice. 
     show_hermitian_sign_flipped:    boolean
                                     diagnostic in checking the sign of the signal prior
                                     to the hermitian phase correction
@@ -264,7 +262,8 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
         return [np.array(b) for b in B if
                 any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
-    assert (len(peakrange) == 1),"""Your wide range is too small try decreasing the peak_lower_thresh"""
+    assert (len(peakrange) == 1),"""Your wide range is finding two peaks at the following
+    frequencies: %f"""%peakrange
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item()/2
