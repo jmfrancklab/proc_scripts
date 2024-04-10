@@ -17,3 +17,7 @@ doc_src/auto_api/
 doc_src/auto_examples/
 auto_figures/
 enhancement.png
+examples/data_files.csv
+examples/single_mutant_overlay.pdf
+pyspecProcScripts.egg-info/
+pyspecProcScripts/__init__.py.orig
