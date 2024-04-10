@@ -2,7 +2,7 @@ from numpy import r_, pi
 from matplotlib.pyplot import gca, cycler
 import pyspecdata as psp
 from scipy.optimize import leastsq, minimize, basinhopping
-from hermitian_function_test import hermitian_function_test, zeroth_order_ph
+from .phasing import hermitian_function_test, zeroth_order_ph
 from sympy import symbols
 from scipy.special import erf
 import sympy as sp
