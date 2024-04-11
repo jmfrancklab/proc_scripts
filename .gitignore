@@ -21,3 +21,4 @@ examples/data_files.csv
 examples/single_mutant_overlay.pdf
 pyspecProcScripts.egg-info/
 pyspecProcScripts/__init__.py.orig
+data_files.csv
