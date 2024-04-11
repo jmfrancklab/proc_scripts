@@ -27,7 +27,7 @@ with figlist_var() as fl:
         fl.basename = nodename
         s = s['vd',0]
         # autoslice, phase and take FID slice
-        s = fid_from_echo(s,signal_pathway)#,peak_lower_thresh = 0.01)
+        s = fid_from_echo(s,signal_pathway,fl=fl)#,peak_lower_thresh = 0.01)
         s = select_pathway(s,signal_pathway)
         fl.next('phased and FID sliced')
         fl.plot(s)

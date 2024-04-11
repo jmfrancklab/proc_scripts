@@ -262,8 +262,12 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
         return [np.array(b) for b in B if
                 any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
-    assert (len(peakrange) == 1),("""Your wide range is finding two peaks at the following
-    frequencies: """,peakrange)
+    if len(peakrange) > 1:
+        fl.next("debug filter ranges")
+        fl.plot(freq_envelope, human_units=False)
+        for thisrange in peakrange:
+            fl.plot(freq_envelope[direct:thisrange], human_units=False)
+        raise ValueError("finding more than one peak!")
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item()/2
