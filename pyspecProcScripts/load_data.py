@@ -300,6 +300,8 @@ def proc_Hahn_echoph(s, fl=None):
     s.reorder(["ph2", "ph1"])
     s.setaxis("nScans", r_[0:nScans])
     s.reorder("t2", first=False)
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     if fl is not None:
         fl.next("raw data, chunked")
@@ -318,6 +320,8 @@ def proc_spincore_IR(s, fl=None):
     s.setaxis("ph1", r_[0, 2.0] / 4)
     s.setaxis("ph2", r_[0, 2.0] / 4)
     s.reorder(["ph1", "ph2"]).set_units("t2", "s")
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     if fl is not None:
@@ -341,6 +345,8 @@ def proc_spincore_IR_v2(s, fl=None):
     s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
     s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
     s.reorder(["ph1", "ph2"]).set_units("t2", "s")
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     if fl is not None:
@@ -444,6 +450,8 @@ def proc_spincore_echo_v1(s, fl=None):
     s.reorder("t2", first=False)
     if "nScans" in s.dimlabels:
         s.setaxis("nScans", "#")
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     return s
@@ -504,6 +512,8 @@ def proc_spincore_ODNP_v2(s, fl=None):
     s.set_units("t2", "s")
     s.setaxis("ph2", r_[0.0, 2.0] / 4)
     s.setaxis("ph1", r_[0:4.0] / 4)
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)  # Fourier Transforms coherence channels
     s.C.setaxis("power", "#").set_units("power", "scan #")
@@ -530,6 +540,8 @@ def proc_spincore_ODNP_v3(s, fl=None):
         s.rename("indirect", "power")
     s.set_units("t2", "s")
     s.rename("power", "time")
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft(["ph1"], unitary=True)
     if fl is not None:
@@ -549,6 +561,8 @@ def proc_spincore_ODNP_v4(s, fl=None):
     s.rename("power", "time")
     s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
     s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     s.reorder(["ph1", "ph2", "time"])
@@ -671,12 +685,16 @@ def proc_field_sweep_v1(s):
     s.chunk("t", ["ph1", "t2"], [4, -1])
     s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
     s.reorder("t2", first=False)
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft("ph1", unitary=True)
     return s
 
 
 def proc_field_sweep_v2(s):
+    s.setaxis("t2", lambda x:
+            x-s.get_prop("acq_params")["tau_us"]*1e-6)
     s.ft("t2", shift=True)
     s.ft("ph1", unitary=True)
     return s
