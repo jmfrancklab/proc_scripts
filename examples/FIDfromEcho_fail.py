@@ -4,7 +4,7 @@ from pyspecProcScripts import fid_from_echo, lookup_table
 
 init_logging(level="debug")
 
-signal_pathway = {"ph1": 1, "ph2": -2}
+signal_pathway = {"ph1": 0, "ph2": 1} # this is inversion recovery!
 with figlist_var() as fl:
     s = find_file(
         "240227_E37_6-MSL_A1_Rasbatch240220_ODNP_1",
@@ -15,7 +15,10 @@ with figlist_var() as fl:
     s.mean("nScans")
     fl.next("raw")
     fl.image(s)
-    fl.basename = "failed data"
+    fl.next("raw time domain")
+    s.ift('t2')
+    fl.image(s['t2':(None,80e-3)])
+    s.ft('t2')
     # autoslice, phase and take FID slice
     s = fid_from_echo(s, signal_pathway, fl=fl) 
     s = select_pathway(s, signal_pathway)

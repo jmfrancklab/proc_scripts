@@ -190,7 +190,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
         exclude_rising=3,
         slice_multiplier=20,
         peak_lower_thresh=0.1,
-        show_hermitian_sign_flipped=False,
+        show_hermitian_sign_flipped=True,
         show_shifted_residuals=False):
     """
     Parameters
@@ -295,7 +295,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
     d.ift(direct)
     # {{{ apply phasing, and check the residual
     d[direct] -= d.getaxis(direct)[0]
-    if fl is not None:
+    if fl.basename is not None:
         thebasename = fl.basename
     else:
         thebasename = ""
