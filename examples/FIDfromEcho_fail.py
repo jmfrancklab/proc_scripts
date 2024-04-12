@@ -16,9 +16,8 @@ with figlist_var() as fl:
     fl.next("raw")
     fl.image(s)
     fl.basename = "failed data"
-    s = s["vd", 0]
     # autoslice, phase and take FID slice
     s = fid_from_echo(s, signal_pathway, fl=fl) 
     s = select_pathway(s, signal_pathway)
     fl.next("phased and FID sliced")
-    fl.plot(s)
+    fl.image(s)
