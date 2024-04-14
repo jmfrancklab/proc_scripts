@@ -300,6 +300,7 @@ def proc_Hahn_echoph(s, fl=None):
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder(["ph2", "ph1"])
@@ -324,6 +325,7 @@ def proc_spincore_IR(s, fl=None):
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
     s.setaxis("ph1", r_[0, 2.0] / 4)
     s.setaxis("ph2", r_[0, 2.0] / 4)
+    s.set_prop('coherence_pathway',{'ph1':0,'ph2':-1})
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder(["ph1", "ph2", "vd", "t2"]).set_units("t2", "s")
@@ -351,6 +353,7 @@ def proc_spincore_IR_v2(s, fl=None):
         s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
     s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
     s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
+    s.set_prop('coherence_pathway',{'ph1':0,'ph2':-1})
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder(["ph1", "ph2"]).set_units("t2", "s")
@@ -380,6 +383,7 @@ def proc_nutation(s, fl=None):
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
     s.setaxis("ph2", r_[0.0, 2.0] / 4)
     s.setaxis("ph1", r_[0.0, 2.0] / 4)
+    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder("t2", first=False)
@@ -410,6 +414,7 @@ def proc_nutation_amp(s, fl=None):
         )
     s.reorder(["ph1", "ph2"])
     s.setaxis("ph2", r_[0:2] / 4).setaxis("ph1", r_[0:4] / 4)
+    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
     if "p_90" in s.dimlabels:
         s.set_units("p_90", "s")
     s.ft(["ph1", "ph2"], unitary=True)
@@ -424,6 +429,7 @@ def proc_nutation_chunked(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.ft(["ph1", "ph2"], unitary=True)
+    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
     s.reorder(["ph1", "ph2", "p_90"])
     if fl is not None:
         fl.next("Raw Data - Time Domain")
@@ -442,6 +448,7 @@ def proc_var_tau(s, fl=None):
         s.setaxis("ph2", r_[0, 2] / 4)
         s.setaxis("ph1", r_[0:4] / 4)
     s.set_units("t2", "s")  # this should already be set -- why not?
+    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
     s *= s.shape["nScans"]
     s.squeeze()
     s *= 2e-6 / 1.11e4  # convert from SpinCore to V (amp)
@@ -462,6 +469,7 @@ def proc_spincore_echo_v1(s, fl=None):
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
     s.set_units("t2", "s")
+    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
     s.reorder("t2", first=False)
     s *= s.shape["nScans"]
     s.squeeze()
@@ -490,6 +498,7 @@ def proc_spincore_ODNP_v1(s, fl=None):
     s.chunk("t", ["ph1", "t2"], [4, -1])
     s.set_units("t2", "s")
     s.labels({"ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.set_prop('coherence_pathway',{'ph1':1})
     s.setaxis("t2", lambda x: x - s.get_prop("acq_params")["tau_us"] * 1e-6)
     s *= s.shape["nScans"]
     s.squeeze()
@@ -529,6 +538,7 @@ def proc_spincore_ODNP_v2(s, fl=None):
     s.set_units("t2", "s")
     s.setaxis("ph2", r_[0.0, 2.0] / 4)
     s.setaxis("ph1", r_[0:4.0] / 4)
+    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
     s.setaxis("t2", lambda x: x - s.get_prop("acq_params")["tau_us"] * 1e-6)
     s *= s.shape["nScans"]
     s.squeeze()
@@ -556,6 +566,7 @@ def proc_spincore_ODNP_v3(s, fl=None):
         s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
     if "indirect" in s.dimlabels:
         s.rename("indirect", "power")
+    s.set_prop('coherence_pathway',{'ph1':1})
     s.set_units("t2", "s")
     s.rename("power", "time")
     s.setaxis("t2", lambda x: x - s.get_prop("acq_params")["tau_us"] * 1e-6)
@@ -580,6 +591,7 @@ def proc_spincore_ODNP_v4(s, fl=None):
     s.rename("power", "time")
     s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
     s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
+    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
     s.setaxis("t2", lambda x: x - s.get_prop("acq_params")["tau_us"] * 1e-6)
     s *= s.shape["nScans"]
     s.set_units("t2", "s")
@@ -705,6 +717,7 @@ def proc_field_sweep_v1(s):
     s.reorder("t", first=True)
     s.chunk("t", ["ph1", "t2"], [4, -1])
     s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
+    s.set_prop('coherence_pathway',{'ph1':1})
     s.reorder("t2", first=False)
     s.setaxis("t2", lambda x: x - s.get_prop("acq_params")["tau_us"] * 1e-6)
     s *= s.shape["nScans"]
@@ -717,6 +730,7 @@ def proc_field_sweep_v1(s):
 
 def proc_field_sweep_v2(s):
     s.set_units("t2", "s")
+    s.set_prop('coherence_pathway',{'ph1':1})
     s.setaxis("t2", lambda x: x - s.get_prop("acq_params")["tau_us"] * 1e-6)
     s *= s.shape["nScans"]
     s.squeeze()

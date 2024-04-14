@@ -1,10 +1,11 @@
+# In[1]:
+
 from pyspecdata import init_logging, find_file,figlist_var
 from pyspecProcScripts.simple_functions import select_pathway
 from pyspecProcScripts import fid_from_echo, lookup_table
 
 init_logging(level="debug")
 
-signal_pathway = {"ph1": 0, "ph2": 1} # this is inversion recovery!
 with figlist_var() as fl:
     s = find_file(
         "240227_E37_6-MSL_A1_Rasbatch240220_ODNP_1",
@@ -20,7 +21,11 @@ with figlist_var() as fl:
     fl.image(s['t2':(None,80e-3)])
     s.ft('t2')
     # autoslice, phase and take FID slice
-    s = fid_from_echo(s, signal_pathway, fl=fl) 
-    s = select_pathway(s, signal_pathway)
+    s = fid_from_echo(s, signal_pathway = s.get_prop('coherence_pathway'), fl=fl) 
+    s = select_pathway(s, s.get_prop('coherence_pathway'))
     fl.next("phased and FID sliced")
     fl.image(s)
+
+# In[2]:
+
+
