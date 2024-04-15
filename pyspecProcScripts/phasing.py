@@ -303,8 +303,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     if signal_pathway is not None:
         input_for_hermitian = select_pathway(d, signal_pathway).C
     else:
-        logger.info(strm("You are telling me that you did not apply phase
-        cycling, so I am not selecting a coherence pathway"))
+        logger.info(strm("You are telling me that you did not apply phase cycling, so I am not selecting a coherence pathway"))
         input_for_hermitian = d.C
     signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
     idx = abs(signflip).mean_all_but(direct).data.argmax()
