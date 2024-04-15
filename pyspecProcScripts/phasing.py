@@ -196,7 +196,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     Parameters
     ==========
     signal_pathway: dict
-                    coherence transfer pathways that correspond to the signal
+                    coherence transfer pathway that correspond to the signal
     fl:             figlist or None (default)
                     If you want the diagnostic plots (showing the
                     distribution of the data in the complex plane),
@@ -300,7 +300,12 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     else:
         thebasename = ""
     # {{{ sign flip and average input for hermitian
-    input_for_hermitian = select_pathway(d, signal_pathway).C
+    if signal_pathway is not None:
+        input_for_hermitian = select_pathway(d, signal_pathway).C
+    else:
+        logger.info(strm("You are telling me that you did not apply phase
+        cycling, so I am not selecting a coherence pathway"))
+        input_for_hermitian = d.C
     signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
     idx = abs(signflip).mean_all_but(direct).data.argmax()
     signflip = signflip[direct,idx]
@@ -338,14 +343,21 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         if show_shifted_residuals:
             d.set_plot_color(thiscolor)
         d.setaxis(direct, lambda x: x - test_shift).register_axis({direct: 0})
-        ph0 = zeroth_order_ph(select_pathway(d,
-            signal_pathway)[direct:0.0],
-            fl=zeroth_fl)
+        if signal_pathway is not None:
+            ph0 = zeroth_order_ph(select_pathway(d,
+                signal_pathway)[direct:0.0],
+                fl=zeroth_fl)
+        else:
+            ph0 = zeroth_order_ph(d[direct:0.0],fl = zeroth_fl)
         d /= ph0
         if fl is not None:
             t_start = d.getaxis(direct)[0]
-            d_sigcoh = select_pathway(d, signal_pathway)[direct : (t_start, -2 * t_start)]
-            d_sigcoh = select_pathway(d, signal_pathway).squeeze()
+            if signal_pathway is not None:
+                d_sigcoh = select_pathway(d, signal_pathway)[direct : (t_start, -2 * t_start)]
+                d_sigcoh = select_pathway(d, signal_pathway).squeeze()
+            else:
+                d_sigcoh = d[direct : (t_start, -2 * t_start)]
+                d_sigcoh = d.squeeze()
             s_flipped = d_sigcoh[direct:(t_start, -t_start)][direct,::-1].C
             idx = (ndshape(s_flipped)[direct])//2 
             ph0 = zeroth_order_ph(d_sigcoh[direct,idx])
