@@ -448,7 +448,7 @@ def proc_var_tau(s, fl=None):
     s.ft("t2", shift=True).ft(["ph1", "ph2"], unitary=True)
     s.reorder(["ph1", "ph2", "tau"])
     if fl is not None:
-        fl.plot(abs(s.C).smoosh(["ph2", "ph1", "tau"], "transients"), alpha=0.2)
+        fl.plot(abs(s).smoosh(["ph2", "ph1", "tau"], "transients"), alpha=0.2)
         fl.next("raw signal")
         fl.image(s)
     return s

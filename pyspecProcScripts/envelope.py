@@ -21,7 +21,7 @@ def fit_envelope(
 ):
     """
     Fit the envelope of the signal using a folded normal
-    distribution to determine the lorentzian L that is 
+    distribution to determine the lorentzian L that is
     later fed to the L2G function for apodization
     Parameters
     ==========
@@ -42,7 +42,7 @@ def fit_envelope(
     env_out['lambda_l']:    float
                             Full width half max value of the fitted
                             echo envelope
-    """        
+    """
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
     envelope = abs(s[direct:(0, None)]).mean_all_but(direct)
     envelope = psp.lmfitdata(envelope)
@@ -112,14 +112,14 @@ def fit_envelope(
     opt_lambda = env_expansion.invinterp(
         l, norm_min * (1 - threshold) + norm_max * threshold, kind="linear"
     )
-    #logging.debug(
-    #    "opt_lambda",
-    #    opt_lambda,
-    #    "at",
-    #    norm_min * (1 - threshold) + norm_max * threshold,
-    #    "out of",
-    #    lw_range,
-    #)
+    logging.debug(
+        "opt_lambda",
+        opt_lambda,
+        "at",
+        norm_min * (1 - threshold) + norm_max * threshold,
+        "out of",
+        lw_range,
+    )
     if fl and show_expanding_envelope:
         fl.plot(opt_lambda, "o")
     new_guess.update(lambda_L=opt_lambda.getaxis(l).item().real)
@@ -138,7 +138,8 @@ def fit_envelope(
     if fl:
         fl.plot(
             L2G(env_out["lambda_L"], criterion="energy")(s.fromaxis(direct)),
-            label = 'apodization function')
+            label="apodization function",
+        )
         fl.pop_marker()
     return env_out["lambda_L"]
 
@@ -153,7 +154,7 @@ def L2G(
     lambda_L:   float
                 Full width half max of the signal envelope
     criterion:  str
-                the final function will be made in order to 
+                the final function will be made in order to
                 generate signal either with equal energy or
                 with equal linewidth
     Returns
