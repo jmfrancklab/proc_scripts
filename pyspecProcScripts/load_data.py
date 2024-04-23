@@ -417,11 +417,13 @@ def proc_nutation_chunked(s, fl=None):
 
 def proc_nutation_v2(s, fl=None):
     logging.info("loading pre-processing for nutation")
-    s.reorder(["ph1"])
+    s.reorder(["ph1", "nScans", "indirect"])
     s.set_units("indirect", "s")
+    s.set_units("t2", "s")
+    s['t2'] -= s.get_prop('acq_params')['tau_us']*1e-6
+    s.rename("indirect", "p_90")
     # s.reorder('t2',first=True)
     s.ft(["ph1"], unitary=True)
-    s.reorder(["ph1","indirect"])
     if fl is not None:
         fl.next("Raw Data - Time Domain")
         fl.image(s.C.mean('nScans').human_units())
