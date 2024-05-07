@@ -380,7 +380,7 @@ def proc_nutation(s, fl=None):
     orig_t = s.getaxis("t")
     s.set_units("p_90", "s")
     s.reorder("t", first=True)
-    s.chunk("t", ["ph1", "ph2", "t2"], [2, 2, -1])
+    s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
     s.setaxis("ph2", r_[0.0, 2.0] / 4)
     s.setaxis("ph1", r_[0.0, 2.0] / 4)
     s *= s.shape["nScans"]
@@ -442,21 +442,6 @@ def proc_nutation_chunked(s, fl=None):
         fl.image(s)
     return s
 
-def proc_nutation_v2(s, fl=None):
-    logging.info("loading pre-processing for nutation")
-    s.reorder(["ph1"])
-    s.set_units("indirect", "s")
-    # s.reorder('t2',first=True)
-    s.ft(["ph1"], unitary=True)
-    s.reorder(["ph1","indirect"])
-    if fl is not None:
-        fl.next("Raw Data - Time Domain")
-        fl.image(s.C.mean('nScans').human_units())
-    s.ft('t2',shift = True)
-    if fl is not None:
-        fl.next("Raw Data- Frequency Domain")
-        fl.image(s.C.mean('nScans'))
-    return s
 
 def proc_var_tau(s, fl=None):
     s.get_prop("SW")
@@ -475,33 +460,12 @@ def proc_var_tau(s, fl=None):
     s.ft("t2", shift=True).ft(["ph1", "ph2"], unitary=True)
     s.reorder(["ph1", "ph2", "tau"])
     if fl is not None:
-        fl.plot(abs(s.C).smoosh(["ph2", "ph1", "tau"], "transients"), alpha=0.2)
+        fl.plot(abs(s).smoosh(["ph2", "ph1", "tau"], "transients"), alpha=0.2)
         fl.next("raw signal")
         fl.image(s)
     return s
 
 
-def proc_var_tau_v2(s, fl=None):
-    print("I went into the load data")
-    s.get_prop("SW")
-    if "ph1" not in s.dimlabels:
-        s.chunk("t", ["ph1", "t2"], [4, -1])
-        s.setaxis("ph1", r_[0:4] / 4)
-    s.set_units("t2", "s")  # this should already be set -- why not?
-    s.setaxis('nScans',r_[0:s.get_prop('acq_params')['nScans']])
-    if 'indirect' in s.dimlabels:
-        s.rename('indirect','tau')
-        #s.setaxis('tau',s.get_prop('acq_params')['tau_us'])    
-    #s.set_units("V")
-    if fl is not None:
-        fl.next("raw signal!")
-    s.ft("t2", shift=True).ft(["ph1"], unitary=True)
-    s.reorder(["ph1", "tau"])
-    if fl is not None:
-        fl.plot(abs(s).smoosh(["ph1", "tau"], "transients"), alpha=0.2)
-        fl.next("raw signal")
-        fl.image(s)
-    return s
 def proc_spincore_echo_v1(s, fl=None):
     "old-fashioned (not properly shaped before storage) echo data"
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
@@ -788,8 +752,7 @@ lookup_table = {
     "spincore_IR_v1": proc_spincore_IR,  # for 2 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
-    "spincore_nutation_v2": proc_nutation_v2,
-    "spincore_nutation_amp": proc_nutation_amp,
+    "spincore_nutation_v2": proc_nutation_amp,
     "spincore_nutation_v3": proc_nutation_chunked,
     "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
     "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
@@ -797,7 +760,6 @@ lookup_table = {
     "spincore_ODNP_v4": proc_spincore_ODNP_v4,  # for 4 x 4 phase cycle no meter powers
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
-    "spincore_var_tau_v2": proc_var_tau_v2,
     "square_wave_capture_v1": proc_capture,
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
