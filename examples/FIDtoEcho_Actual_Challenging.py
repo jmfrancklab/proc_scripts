@@ -28,20 +28,22 @@ f_range = (-0.75e3, 0.75e3) # to deal with the shorter echoes, we really just ne
 filename = '210604_50mM_4AT_AOT_w11_cap_probe_echo'
 signal_pathway = {'ph1':1,'ph2':0}
 with figlist_var() as fl:
-    for nodename,file_location,postproc,label,alias_slop in [
-        ('tau_1000','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 1 ms',1),
-        ('tau_3500','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 3.5 ms',3),
-        ('tau_11135','ODNP_NMR_comp/Echoes','spincore_echo_v1',
-            'tau is 11.135 ms',3),
+    for filename,nodename,file_location,postproc,label in [
+        ('210604_50mM_4AT_AOT_w11_cap_probe_echo','tau_1000',
+            'ODNP_NMR_comp/Echoes','spincore_echo_v1','tau is 1 ms'),
+        ('210604_50mM_4AT_AOT_w11_cap_probe_echo','tau_3500',
+            'ODNP_NMR_comp/Echoes','spincore_echo_v1','tau is 3.5 ms'),
+        ('210604_50mM_4AT_AOT_w11_cap_probe_echo','tau_11135',
+            'ODNP_NMR_comp/Echoes','spincore_echo_v1','tau is 11.135 ms'),
+        ('240227_E37_6-MSL_A1_Rasbatch240220_ODNP_1','FIR_noPower',
+            'ODNP_NMR_comp/ODNP','spincore_IR_v1','IR at no power'),
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,
                 postproc=postproc,lookup=lookup_table)
         fl.basename = "(%s)" % label
         fig, ax_list = subplots(1, 3, figsize = (7,7))
         fig.suptitle(fl.basename)
-        data.reorder(['ph1','ph2','nScans','t2'])
+        #data.reorder(['ph1','ph2','nScans','t2'])
         fl.next("Data processing", fig=fig)
         fl.image(data['t2':(-1e3,1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")

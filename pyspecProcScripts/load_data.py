@@ -20,7 +20,6 @@ import logging
 from pylab import *
 from .DCCT_func import DCCT
 
-
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     logging.debug(strm("this is the 90 time"))
@@ -328,7 +327,10 @@ def proc_spincore_IR(s, fl=None):
     s.set_prop("coherence_pathway", {"ph1": 0, "ph2": -1})
     s *= s.shape["nScans"]
     s.squeeze()
-    s.reorder(["ph1", "ph2", "vd", "t2"]).set_units("t2", "s")
+    if 'nScans' in s.dimlabels:
+        s.reorder(["ph1", "ph2", "nScans", "vd", "t2"]).set_units("t2", "s")
+    else:
+        s.reorder(["ph1", "ph2", "vd", "t2"]).set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
@@ -441,7 +443,6 @@ def proc_nutation_chunked(s, fl=None):
 
 def proc_nutation_v2(s, fl=None):
     logging.info("loading pre-processing for nutation")
-    s.reorder(["ph1"])
     s.set_units("indirect", "s")
     s.ft(["ph1"], unitary=True)
     s.set_prop("coherence_pathway", {"ph1": -1})
@@ -778,7 +779,6 @@ lookup_table = {
     "spincore_ODNP_v4": proc_spincore_ODNP_v4,  # for 4 x 4 phase cycle no meter powers
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
-    "spincore_var_tau_v2": proc_var_tau_v2,
     "square_wave_capture_v1": proc_capture,
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
