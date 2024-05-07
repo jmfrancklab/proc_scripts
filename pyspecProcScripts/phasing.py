@@ -377,6 +377,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, direct="t2",
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
+
 def hermitian_function_test(
     s,
     direct="t2",

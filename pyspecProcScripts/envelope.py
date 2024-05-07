@@ -174,3 +174,4 @@ def L2G(
             * lambda_L
             * (-pi * lambda_L * t2**2 / 4 / np.log(2) + abs(t2))
         )
+
