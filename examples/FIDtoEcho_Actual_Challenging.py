@@ -41,20 +41,23 @@ with figlist_var() as fl:
         data = find_file(filename,exp_type=file_location,expno=nodename,
                 postproc=postproc,lookup=lookup_table)
         fl.basename = "(%s)" % label
-        fig, ax_list = subplots(1, 3, figsize = (7,7))
+        fig, ax_list = subplots(1, 4, figsize = (7,7))
         fig.suptitle(fl.basename)
-        #data.reorder(['ph1','ph2','nScans','t2'])
         fl.next("Data processing", fig=fig)
         fl.image(data['t2':(-1e3,1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
+        data.ift('t2')
+        fl.image(data['t2':(None,80e-3)],ax=ax_list[1],human_units=False)
+        ax_list[1].set_title("Raw Time Domain Data")
+        data.ft('t2')
         data = data['t2':f_range]
         fl.basename = "(%s)"%label
         data = fid_from_echo(data, signal_pathway,
                 fl=fl)
-        fl.image(data['t2':(-1e3,1e3)], ax=ax_list[1],
+        fl.image(data['t2':(-1e3,1e3)], ax=ax_list[2],
                 human_units=False)
-        ax_list[1].set_title("Phased and centered (ν)")
+        ax_list[2].set_title("Phased and centered (ν)")
         data.ift("t2")
-        fl.image(data, ax=ax_list[2], human_units=False)
-        ax_list[2].set_title("Phased and Centered (t)")
+        fl.image(data, ax=ax_list[3], human_units=False)
+        ax_list[3].set_title("Phased and Centered (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
