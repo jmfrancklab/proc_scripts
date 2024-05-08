@@ -18,7 +18,6 @@ import sympy as s
 from collections import OrderedDict
 from numpy.random import normal
 from scipy.signal import tukey
-
 init_logging(level="debug")
 
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
@@ -29,7 +28,6 @@ f_range = (
     -0.75e3,
     0.75e3,
 )  # to deal with the shorter echoes, we really just need to use shorter dwell times
-filename = "210604_50mM_4AT_AOT_w11_cap_probe_echo"
 signal_pathway = {"ph1": 1, "ph2": 0}
 with figlist_var() as fl:
     for filename, nodename, file_location, postproc, label in [
