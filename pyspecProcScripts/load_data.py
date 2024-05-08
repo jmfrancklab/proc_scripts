@@ -489,13 +489,13 @@ def proc_spincore_echo_v1(s, fl=None):
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
     s.set_units("t2", "s")
-    s.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
+    #s.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
     s.reorder("t2", first=False)
-    s *= s.shape["nScans"]
-    s.squeeze()
+    #s *= s.shape["nScans"]
+    #s.squeeze()
     if "nScans" in s.dimlabels:
         s.setaxis("nScans", "#")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
+    #s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     return s
