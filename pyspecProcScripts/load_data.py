@@ -404,22 +404,24 @@ def proc_nutation_amp(s, fl=None):
     s.set_units("t2", "s")
     s *= s.shape['nScans']
     s.squeeze()
-    s.set_prop('coherence_pathway',{'ph1':1,'ph2':-2})
+    s.set_prop('coherence_pathway',{'ph1':1})
+    print(s.get_prop('acq_params')['tau_us'])
+    s['t2'] -= s.get_prop('acq_params')['tau_us']*1e-6
     s.ft("t2", shift=True)
     if fl is not None:
         fl.next("look for drift")
         fl.image(
-            s.C.smoosh(["ph2", "ph1"], "transient")
+            s.C.smoosh(["ph1"], "transient")
             .reorder("transient")
             .setaxis("transient", "#")
             .run(abs),
             interpolation="bilinear",
         )
-    s.reorder(["ph1", "ph2"])
-    s.setaxis("ph2", r_[0:2] / 4).setaxis("ph1", r_[0:4] / 4)
+    s.reorder(["ph1"])
+    s.setaxis("ph1", r_[0:4] / 4)
     if "p_90" in s.dimlabels:
         s.set_units("p_90", "s")
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1"], unitary=True)
     return s
 
 
