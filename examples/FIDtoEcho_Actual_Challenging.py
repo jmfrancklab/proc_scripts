@@ -31,27 +31,27 @@ f_range = (
 signal_pathway = {"ph1": 1, "ph2": 0}
 with figlist_var() as fl:
     for filename, nodename, file_location, postproc, label in [
-        (
-            "210604_50mM_4AT_AOT_w11_cap_probe_echo",
-            "tau_1000",
-            "ODNP_NMR_comp/Echoes",
-            "spincore_echo_v1",
-            "tau is 1 ms",
-        ),
-        (
-            "210604_50mM_4AT_AOT_w11_cap_probe_echo",
-            "tau_3500",
-            "ODNP_NMR_comp/Echoes",
-            "spincore_echo_v1",
-            "tau is 3.5 ms",
-        ),
-        (
-            "210604_50mM_4AT_AOT_w11_cap_probe_echo",
-            "tau_11135",
-            "ODNP_NMR_comp/Echoes",
-            "spincore_echo_v1",
-            "tau is 11.135 ms",
-        ),
+            (
+                "210604_50mM_4AT_AOT_w11_cap_probe_echo",
+                "tau_1000",
+                "ODNP_NMR_comp/Echoes",
+                "spincore_echo_v1",
+                "tau is 1 ms",
+            ),
+            (
+                "210604_50mM_4AT_AOT_w11_cap_probe_echo",
+                "tau_3500",
+                "ODNP_NMR_comp/Echoes",
+                "spincore_echo_v1",
+                "tau is 3.5 ms",
+            ),
+            (
+                "210604_50mM_4AT_AOT_w11_cap_probe_echo",
+                "tau_11135",
+                "ODNP_NMR_comp/Echoes",
+                "spincore_echo_v1",
+                "tau is 11.135 ms",
+            ),
         (
             "240227_E37_6-MSL_A1_Rasbatch240220_ODNP_1",
             "FIR_noPower",
@@ -79,10 +79,10 @@ with figlist_var() as fl:
         data.ft("t2")
         data = data["t2":f_range]
         fl.basename = "(%s)" % label
-        data = fid_from_echo(data, signal_pathway, fl=fl)
+        data = fid_from_echo(data, data.get_prop('coherence_pathway'), fl=fl)
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Phased and centered (ν)")
         data.ift("t2")
-        fl.image(data, ax=ax_list[3], human_units=False)
+        fl.image(data['t2':(None,100e-3)], ax=ax_list[3], human_units=False)
         ax_list[3].set_title("Phased and Centered (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])

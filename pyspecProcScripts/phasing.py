@@ -263,21 +263,21 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
                 any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
     assert len(peakrange) == 1
-   # if len(peakrange) > 1:
-   #     max_range_width = max([thisrange[1]-thisrange[0] for thisrange in peakrange])
-   #     range_gaps = [peakrange[j+1][0] - peakrange[j][1] for j in range(len(peakrange)-1)]
-   #     # {{{ if the gaps are all smaller than the max peak that was found, we
-   #     #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
-   #     if any(np.array(range_gaps) > max_range_width):
-   #         if fl is not None:
-   #             fl.next("debug filter ranges")
-   #             fl.plot(freq_envelope, human_units=False)
-   #             for thisrange in peakrange:
-   #                 fl.plot(freq_envelope[direct:thisrange], human_units=False)
-   #         raise ValueError("finding more than one peak!")
-   #     else:
-   #         peakrange = [(peakrange[0][0],peakrange[-1][1])]
-   #     # }}}
+    if len(peakrange) > 1:
+        max_range_width = max([thisrange[1]-thisrange[0] for thisrange in peakrange])
+        range_gaps = [peakrange[j+1][0] - peakrange[j][1] for j in range(len(peakrange)-1)]
+        # {{{ if the gaps are all smaller than the max peak that was found, we
+        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
+        if any(np.array(range_gaps) > max_range_width):
+            if fl is not None:
+                fl.next("debug filter ranges")
+                fl.plot(freq_envelope, human_units=False)
+                for thisrange in peakrange:
+                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
+            raise ValueError("finding more than one peak!")
+        else:
+            peakrange = [(peakrange[0][0],peakrange[-1][1])]
+        # }}}
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item()/2
@@ -306,6 +306,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     else:
         logger.info(strm("You are telling me that you did not apply phase cycling, so I am not selecting a coherence pathway"))
         input_for_hermitian = d.C
+    #input_for_hermitian[direct] -= d.get_prop('acq_params')['tau_us']*1e-6
     signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
     idx = abs(signflip).mean_all_but(direct).data.argmax()
     signflip = signflip[direct,idx]
