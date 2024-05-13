@@ -327,11 +327,11 @@ def proc_spincore_IR(s, fl=None):
     s.set_prop("coherence_pathway", {"ph1": 0, "ph2": -1})
     s *= s.shape["nScans"]
     s.squeeze()
-    if 'nScans' in s.dimlabels:
+    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
+    if "nScans" in s.dimlabels:
         s.reorder(["ph1", "ph2", "nScans", "vd", "t2"]).set_units("t2", "s")
     else:
         s.reorder(["ph1", "ph2", "vd", "t2"]).set_units("t2", "s")
-    #s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     if fl is not None:
@@ -445,18 +445,19 @@ def proc_nutation_v2(s, fl=None):
     logging.info("loading pre-processing for nutation")
     s.set_units("indirect", "s")
     s.ft(["ph1"], unitary=True)
-    s.set_prop("coherence_pathway", {"ph1": -1})
+    s.set_prop("coherence_pathway", {"ph1": 1})
     s *= s.shape["nScans"]
+    s.mean('nScans')
     s.squeeze()
+    #s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.reorder(["ph1"]).set_units("t2", "s")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     if fl is not None:
         fl.next("Raw Data - Time Domain")
-        fl.image(s.C.mean("nScans").human_units())
+        fl.image(s.human_units())
     s.ft("t2", shift=True)
     if fl is not None:
         fl.next("Raw Data- Frequency Domain")
-        fl.image(s.C.mean("nScans"))
+        fl.image(s)
     return s
 
 

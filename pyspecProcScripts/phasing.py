@@ -221,8 +221,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
                         might serve useful in the case of noisy spectra.
     peak_lower_thresh:  float
                         fraction of the signal intensity used in calculating the 
-                        frequency slice. The smaller the value, the larger 
-                        wider the slice. 
+                        frequency slice. The smaller the value, the wider the slice. 
     show_hermitian_sign_flipped:    boolean
                                     diagnostic in checking the sign of the signal prior
                                     to the hermitian phase correction
@@ -233,8 +232,16 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     =======
     d: FID of properly sliced and phased signal
     """
+    # {{{ dictate signs using determine sign that will be needed later
+    #     for data that has a sign flip - e.g. nutation and IR
+    if signal_pathway is not None:
+        mysgn = determine_sign(select_pathway(d,signal_pathway))
+    else:
+        mysgn = determine_sign(d)
+    # }}}
     # {{{ autodetermine slice range
     freq_envelope = d.C
+    orig_d = d.C
     freq_envelope.ift('t2')
     freq_envelope = freq_envelope['t2':(0,None)] # slice out rising echo estimate according to experimental tau in order to limit oscillations
     freq_envelope.ft('t2')
@@ -306,7 +313,6 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     else:
         logger.info(strm("You are telling me that you did not apply phase cycling, so I am not selecting a coherence pathway"))
         input_for_hermitian = d.C
-    #input_for_hermitian[direct] -= d.get_prop('acq_params')['tau_us']*1e-6
     signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
     idx = abs(signflip).mean_all_but(direct).data.argmax()
     signflip = signflip[direct,idx]
@@ -326,6 +332,21 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
             input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
     )
+    print(best_shift)
+    if best_shift <0.9*d.get_prop('acq_params')['tau_us']*1e-6 or best_shift >1.2*d.get_prop('acq_params')['tau_us']*1e-6:
+        print("hermitian test failed")
+        print(orig_d)
+        print(wide_ranges)
+        #orig_d = orig_d['t2':wide_ranges]
+        print("here")
+        orig_d.ift('t2')
+        print("here")
+        orig_d.mean_all_but(direct)
+        best_shift = hermitian_function_test(
+                orig_d,basename = 'repeat '.join([
+                    thebasename,"hermitian"]),fl=None
+                )
+    print(best_shift)
     d_save = d.C
     t_dw = d_save.get_ft_prop(direct,'dt')
     if show_shifted_residuals:
@@ -409,7 +430,10 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         ) / 2
     d *= 2    
     d[direct, 0] *= 0.5
+    # {{{ retain the sign change for data sets with inversion, e.g. nutation and IR
     d.ft(direct)
+    d *= mysgn
+    # }}}
     return d
 def hermitian_function_test(
     s,

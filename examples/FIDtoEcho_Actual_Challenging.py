@@ -28,7 +28,6 @@ f_range = (
     -0.75e3,
     0.75e3,
 )  # to deal with the shorter echoes, we really just need to use shorter dwell times
-signal_pathway = {"ph1": 1, "ph2": 0}
 with figlist_var() as fl:
     for filename, nodename, file_location, postproc, label in [
             (
@@ -52,13 +51,20 @@ with figlist_var() as fl:
                 "spincore_echo_v1",
                 "tau is 11.135 ms",
             ),
-        (
-            "240227_E37_6-MSL_A1_Rasbatch240220_ODNP_1",
-            "FIR_noPower",
-            "ODNP_NMR_comp/ODNP",
-            "spincore_IR_v1",
-            "IR at no power",
-        ),
+            (
+                "240318_27mM_TEMPOL_nutation_2",
+                "nutation",
+                "ODNP_NMR_comp/nutation",
+                "spincore_nutation_v2",
+                "nutation",
+            ),
+            (
+                "240227_E37_6-MSL_A1_Rasbatch240220_ODNP_1",
+                "FIR_noPower",
+                "ODNP_NMR_comp/ODNP",
+                "spincore_IR_v1",
+                "IR at no power",
+            ),
     ]:
         data = find_file(
             filename,
@@ -83,6 +89,6 @@ with figlist_var() as fl:
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Phased and centered (ν)")
         data.ift("t2")
-        fl.image(data['t2':(None,100e-3)], ax=ax_list[3], human_units=False)
+        fl.image(data["t2":(None, 100e-3)], ax=ax_list[3], human_units=False)
         ax_list[3].set_title("Phased and Centered (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
