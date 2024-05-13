@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProcScripts Example Gallery &mdash; pyspecProcScripts 0.9 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-binder.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-dataframe.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-rendered-html.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gallery_custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Process a square wave reflection" href="proc_square_refl.html" />
+    <link rel="prev" title="Alignment" href="../first_level/align.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> pyspecProcScripts
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ProcScripts Example Gallery</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_Challenging.html">Phasing and Timing Correction with Real Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyspecProcScripts</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">ProcScripts Example Gallery</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/auto_examples/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="procscripts-example-gallery">
+<h1>ProcScripts Example Gallery<a class="headerlink" href="#procscripts-example-gallery" title="Permalink to this heading">¶</a></h1>
+<p>Below is a gallery of examples using our
+various functions.</p>
+<div class="sphx-glr-thumbnails"><div class="sphx-glr-thumbcontainer" tooltip="Processes a square wave reflection in order to calculate the  Q of a NMR probe. Optional to sho..."><img alt="" src="../_images/sphx_glr_proc_square_refl_thumb.png" />
+<p><a class="reference internal" href="proc_square_refl.html#sphx-glr-auto-examples-proc-square-refl-py"><span class="std std-ref">Process a square wave reflection</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Process a square wave reflection</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Take a 2D dataset and convert it to a table of integrals with errors, utilizing all the bells a..."><img alt="" src="../_images/sphx_glr_generate_integrals_RealData_thumb.png" />
+<p><a class="reference internal" href="generate_integrals_RealData.html#sphx-glr-auto-examples-generate-integrals-realdata-py"><span class="std std-ref">Convert 2D  Real Data into Integrals with Errors</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Convert 2D  Real Data into Integrals with Errors</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Processes data which has varying lengths of tau.  Demonstrates how to load a h5 file. "><img alt="" src="../_images/sphx_glr_proc_var_tau_thumb.png" />
+<p><a class="reference internal" href="proc_var_tau.html#sphx-glr-auto-examples-proc-var-tau-py"><span class="std std-ref">Echoes with varied tau lengths</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Echoes with varied tau lengths</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Demonstrates the Lorentzian to Gaussian transformation."><img alt="" src="../_images/sphx_glr_L2G_thumb.png" />
+<p><a class="reference internal" href="L2G.html#sphx-glr-auto-examples-l2g-py"><span class="std std-ref">Lorentzian to Gaussian Transformation</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Lorentzian to Gaussian Transformation</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Here we load in low SNR Hahn echo data and demonstrate that we can find reasonable and accurate..."><img alt="" src="../_images/sphx_glr_integrate_limits_realData_thumb.png" />
+<p><a class="reference internal" href="integrate_limits_realData.html#sphx-glr-auto-examples-integrate-limits-realdata-py"><span class="std std-ref">Demonstrate Integrate Limits on Experimental Data</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Demonstrate Integrate Limits on Experimental Data</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Take real data with varying echo times,  and demonstrate how we can automatically find the zero..."><img alt="" src="../_images/sphx_glr_Hermitian_Phasing_Actual_var_tau_thumb.png" />
+<p><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html#sphx-glr-auto-examples-hermitian-phasing-actual-var-tau-py"><span class="std std-ref">Phasing and Timing Correction Using a Varied Tau Experiment</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Phasing and Timing Correction Using a Varied Tau Experiment</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="For this demonstration, we generate inversion recovery data for a single peak, with a relativel..."><img alt="" src="../_images/sphx_glr_integrate_limits_thumb.png" />
+<p><a class="reference internal" href="integrate_limits.html#sphx-glr-auto-examples-integrate-limits-py"><span class="std std-ref">Demonstrate Integrate Limits</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Demonstrate Integrate Limits</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Take real data with varying echo times,  and demonstrate how we can automatically find the zero..."><img alt="" src="../_images/sphx_glr_Hermitian_Phasing_Actual_Challenging_thumb.png" />
+<p><a class="reference internal" href="Hermitian_Phasing_Actual_Challenging.html#sphx-glr-auto-examples-hermitian-phasing-actual-challenging-py"><span class="std std-ref">Phasing and Timing Correction with Real Data</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Phasing and Timing Correction with Real Data</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Take a 2D dataset and convert it to a table of integrals with errors, utilizing all the bells a..."><img alt="" src="../_images/sphx_glr_generate_integrals_thumb.png" />
+<p><a class="reference internal" href="generate_integrals.html#sphx-glr-auto-examples-generate-integrals-py"><span class="std std-ref">Convert 2D to Integrals with Errors</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Convert 2D to Integrals with Errors</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Processes and visualizes the nutation pulse program that has been  captured on a oscilloscope. ..."><img alt="" src="../_images/sphx_glr_proc_capture_nutation_thumb.png" />
+<p><a class="reference internal" href="proc_capture_nutation.html#sphx-glr-auto-examples-proc-capture-nutation-py"><span class="std std-ref">Captured Nutation</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Captured Nutation</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Take fake data with a relatively symmetric echo  (T_2^*=1/50\pi, echo time of 10 ms), and demon..."><img alt="" src="../_images/sphx_glr_Hermitian_Phasing_thumb.png" />
+<p><a class="reference internal" href="Hermitian_Phasing.html#sphx-glr-auto-examples-hermitian-phasing-py"><span class="std std-ref">Phasing and Timing Correction With Fake Data</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Phasing and Timing Correction With Fake Data</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Generate a fake dataset of an inversion recovery with multiple repeats (φ × t2 × vd × repeats) ..."><img alt="" src="../_images/sphx_glr_check_integration_error_thumb.png" />
+<p><a class="reference internal" href="check_integration_error.html#sphx-glr-auto-examples-check-integration-error-py"><span class="std std-ref">Check integral error calculation</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Check integral error calculation</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Takes a 2D data set and applies proper phasing corrections followed by  aligning the data throu..."><img alt="" src="../_images/sphx_glr_correlation_alignment_example_thumb.png" />
+<p><a class="reference internal" href="correlation_alignment_example.html#sphx-glr-auto-examples-correlation-alignment-example-py"><span class="std std-ref">Align data with significant frequency drift</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Align data with significant frequency drift</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Here, we want to calculate the time-domain variance to use in error propagation."><img alt="" src="../_images/sphx_glr_time_domain_noise_thumb.png" />
+<p><span class="xref std std-ref">sphx_glr_auto_examples_time_domain_noise.py</span></p>
+  <div class="sphx-glr-thumbnail-title">Here, we want to calculate the time-domain variance to use in error propagation.</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Analyzes field sweep data.  Determines the resonance frequency from the carrier frequency and t..."><img alt="" src="../_images/sphx_glr_proc_fieldSweep_thumb.png" />
+<p><a class="reference internal" href="proc_fieldSweep.html#sphx-glr-auto-examples-proc-fieldsweep-py"><span class="std std-ref">Check NMR/ESR resonance ratio using a field sweep</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Check NMR/ESR resonance ratio using a field sweep</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Makes sure that automatically chosen integral bounds perform similar to or better than what you..."><img alt="" src="../_images/sphx_glr_integration_with_error_thumb.png" />
+<p><a class="reference internal" href="integration_with_error.html#sphx-glr-auto-examples-integration-with-error-py"><span class="std std-ref">Check Integration</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Check Integration</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Estimates the error of the integral of an actual data set of a standard echo experiment. Three ..."><img alt="" src="../_images/sphx_glr_test_error_thumb.png" />
+<p><a class="reference internal" href="test_error.html#sphx-glr-auto-examples-test-error-py"><span class="std std-ref">Validate Inactive CT Error</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Validate Inactive CT Error</div>
+</div></div><div class="toctree-wrapper compound">
+</div>
+<div class="sphx-glr-footer sphx-glr-footer-gallery docutils container">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/07fcc19ba03226cd3d83d4e40ec44385/auto_examples_python.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">auto_examples_python.zip</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/6f1e7a639e0699d6164445b55e6c116d/auto_examples_jupyter.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Jupyter</span> <span class="pre">notebooks:</span> <span class="pre">auto_examples_jupyter.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../first_level/align.html" class="btn btn-neutral float-left" title="Alignment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="proc_square_refl.html" class="btn btn-neutral float-right" title="Process a square wave reflection" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, John M. Franck group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

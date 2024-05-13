@@ -8,6 +8,12 @@ PySpecData ProcScripts
 
     intro
 
+.. toctree::
+    :maxdepth: 2
+    :caption: Example Gallery
+
+    auto_examples/index
+
 This is the documentation for a set of processing scripts based on the
 `pyspecdata <https://jmfrancklab.github.io/pyspecdata>`_ module.
 

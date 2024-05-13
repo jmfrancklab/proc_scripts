@@ -27,7 +27,7 @@ filename = '201113_TEMPOL_capillary_probe_var_tau_1'
 signal_pathway = {'ph1':1,'ph2':0}
 with figlist_var() as fl:
     for nodename,file_location,postproc,label in [
-        ('var_tau','ODNP_NMR_comp/var_tau','spincore_var_tau_v1',
+        ('var_tau','ODNP_NMR_comp/test_equipment/var_tau','spincore_var_tau_v1',
             'tau is 1 ms'),
             ]:
         data = find_file(filename,exp_type=file_location,expno=nodename,

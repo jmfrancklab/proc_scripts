@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Validate Inactive CT Error &mdash; pyspecProcScripts 0.9 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-binder.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-dataframe.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-rendered-html.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gallery_custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Check Integration" href="integration_with_error.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> pyspecProcScripts
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_Challenging.html">Phasing and Timing Correction with Real Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Validate Inactive CT Error</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyspecProcScripts</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">ProcScripts Example Gallery</a></li>
+      <li class="breadcrumb-item active">Validate Inactive CT Error</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/auto_examples/test_error.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-test-error-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="validate-inactive-ct-error">
+<span id="sphx-glr-auto-examples-test-error-py"></span><h1>Validate Inactive CT Error<a class="headerlink" href="#validate-inactive-ct-error" title="Permalink to this heading">¶</a></h1>
+<p>Estimates the error of the integral of an actual data set of a standard echo
+experiment. Three methods of acquiring the error associated with the data are
+compared:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Taking an area along the active coherence transfer (CT) pathway outside of the bandwidth of the signal
+signal and propagating that error to estimate the error associated with the integral.
+(The traditional method of acquiring the error associated with a data set.)</p></li>
+<li><p>Taking the integral in the inactive CT pathways and propagating to get the error
+associated with the integral in the active CT.</p></li>
+<li><p>Taking the standard deviation of many integrals determined by
+integrating over the signal bandwidth of the active CT pathway.
+(Best method when many scans are available)</p></li>
+</ul>
+</div></blockquote>
+<p>Demonstrates that by propagating the error of the integral in the inactive CTs we still
+get a reasonable error within the limits of traditional methods.</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_test_error_001.png" srcset="../_images/sphx_glr_test_error_001.png" alt="raw data time domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_test_error_002.png" srcset="../_images/sphx_glr_test_error_002.png" alt="Phase corrected freq. domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_test_error_003.png" srcset="../_images/sphx_glr_test_error_003.png" alt="FID sliced" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_test_error_004.png" srcset="../_images/sphx_glr_test_error_004.png" alt="comparison of std" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>c:\users\jmfranck\git_repos\pyspecdata\pyspecdata\core.py:1959: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;o&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
+  retval = myplotfunc(*plotargs,**kwargs)
+c:\users\jmfranck\git_repos\pyspecdata\pyspecdata\figlist.py:492: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  plt.gcf().tight_layout()
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts.correlation_alignment</span> <span class="kn">import</span> <span class="n">correl_align</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;image.aspect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span> <span class="c1"># needed for sphinx gallery</span>
+
+<span class="c1"># sphinx_gallery_thumbnail_number = 4</span>
+
+<span class="n">fl</span> <span class="o">=</span> <span class="n">figlist_var</span><span class="p">()</span>
+<span class="n">signal_pathway</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ph1&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;ph2&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="n">t_range</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span> <span class="c1"># must start at 0 for an FID</span>
+<span class="n">f_range</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">)</span>
+<span class="n">excluded_pathways</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;darkorange&quot;</span><span class="p">,</span> <span class="s2">&quot;gold&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="s2">&quot;lightcoral&quot;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">thisfile</span><span class="p">,</span> <span class="n">exp_type</span><span class="p">,</span> <span class="n">nodename</span> <span class="ow">in</span> <span class="p">[</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;201113_TEMPOL_capillary_probe_16Scans_noModCoil&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ODNP_NMR_comp/Echoes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;signal&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">]:</span>
+    <span class="c1"># {{{processing data</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span>
+        <span class="n">thisfile</span><span class="p">,</span>
+        <span class="n">exp_type</span><span class="o">=</span><span class="n">exp_type</span><span class="p">,</span>
+        <span class="n">expno</span><span class="o">=</span><span class="n">nodename</span><span class="p">,</span>
+        <span class="n">postproc</span><span class="o">=</span><span class="s2">&quot;spincore_echo_v1&quot;</span><span class="p">,</span>
+        <span class="n">lookup</span><span class="o">=</span><span class="n">lookup_table</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;raw data time domain&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="c1"># {{{DC offset correction</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">ift</span><span class="p">([</span><span class="s2">&quot;ph1&quot;</span><span class="p">,</span> <span class="s2">&quot;ph2&quot;</span><span class="p">])</span>
+    <span class="n">t_rx</span> <span class="o">=</span> <span class="p">(</span><span class="n">t_range</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span>
+    <span class="n">s</span> <span class="o">-=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;t2&quot;</span><span class="p">:(</span><span class="n">t_rx</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">ft</span><span class="p">([</span><span class="s2">&quot;ph1&quot;</span><span class="p">,</span> <span class="s2">&quot;ph2&quot;</span><span class="p">])</span>
+    <span class="c1"># }}}</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;t2&quot;</span><span class="p">:</span><span class="n">f_range</span><span class="p">]</span>
+    <span class="c1"># {{{Phase corrections</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
+    <span class="n">best_shift</span> <span class="o">=</span> <span class="n">hermitian_function_test</span><span class="p">(</span><span class="n">select_pathway</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;nScans&#39;</span><span class="p">),</span> <span class="n">signal_pathway</span><span class="p">))</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">-</span> <span class="n">best_shift</span><span class="p">)</span><span class="o">.</span><span class="n">register_axis</span><span class="p">({</span><span class="s2">&quot;t2&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+    <span class="n">s</span> <span class="o">/=</span> <span class="n">zeroth_order_ph</span><span class="p">(</span><span class="n">select_pathway</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;nScans&#39;</span><span class="p">),</span><span class="n">signal_pathway</span><span class="p">))</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Phase corrected freq. domain&quot;</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
+    <span class="c1"># {{{alignment</span>
+    <span class="c1"># s.ift([&#39;ph1&#39;,&#39;ph2&#39;])</span>
+    <span class="c1"># s.ft(&#39;t2&#39;)</span>
+    <span class="c1"># opt_shift,sigma = correl_align(s,indirect_dim=&#39;nScans&#39;,</span>
+    <span class="c1">#        ph1_selection = signal_pathway[&#39;ph1&#39;],</span>
+    <span class="c1">#        ph2_selection = signal_pathway[&#39;ph2&#39;],sigma=50)</span>
+    <span class="c1"># s.ift(&#39;t2&#39;)</span>
+    <span class="c1"># s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis(&#39;t2&#39;))</span>
+    <span class="c1"># s.ft(&#39;t2&#39;)</span>
+    <span class="c1"># fl.basename=None</span>
+    <span class="c1"># fl.next(r&#39;after correlation, $\varphi$ domain&#39;)</span>
+    <span class="c1"># fl.image(s)</span>
+    <span class="c1"># s.ift(&#39;t2&#39;)</span>
+    <span class="c1"># s.ft([&#39;ph1&#39;,&#39;ph2&#39;])</span>
+    <span class="c1"># fl.next(&#39;after correl - time domain&#39;)</span>
+    <span class="c1"># fl.image(s)</span>
+    <span class="c1"># s.ft(&#39;t2&#39;)</span>
+    <span class="c1"># fl.next(&#39;after correl - freq domain&#39;)</span>
+    <span class="c1"># fl.image(s)</span>
+    <span class="c1"># s.ift(&#39;t2&#39;)</span>
+    <span class="c1">##}}}</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;FID sliced&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;t2&quot;</span> <span class="p">:</span> <span class="n">t_range</span><span class="p">]</span>
+    <span class="n">s</span><span class="p">[</span><span class="s2">&quot;t2&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">0.5</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">reorder</span><span class="p">([</span><span class="s2">&quot;ph1&quot;</span><span class="p">,</span> <span class="s2">&quot;ph2&quot;</span><span class="p">,</span> <span class="s2">&quot;nScans&quot;</span><span class="p">,</span> <span class="s2">&quot;t2&quot;</span><span class="p">])</span>
+    <span class="c1"># }}}</span>
+
+    <span class="c1"># {{{Normalization</span>
+    <span class="n">frq_slice</span> <span class="o">=</span> <span class="n">integrate_limits</span><span class="p">(</span><span class="n">select_pathway</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">signal_pathway</span><span class="p">),</span>
+            <span class="n">convolve_method</span><span class="o">=</span><span class="s1">&#39;Lorentzian&#39;</span><span class="p">)</span>
+    <span class="n">s_integral</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;t2&quot;</span><span class="p">:</span><span class="n">frq_slice</span><span class="p">]</span><span class="o">.</span><span class="n">C</span> <span class="c1"># the &quot;official&quot; copy of the integral</span>
+    <span class="n">s_integral</span> <span class="o">=</span> <span class="n">select_pathway</span><span class="p">(</span><span class="n">s_integral</span><span class="p">,</span> <span class="n">signal_pathway</span><span class="p">)</span>
+    <span class="n">s_integral</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
+    <span class="n">avg_d</span> <span class="o">=</span> <span class="n">s_integral</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">s_integral</span> <span class="o">/=</span> <span class="n">avg_d</span>
+    <span class="n">s</span> <span class="o">/=</span> <span class="n">avg_d</span>
+    <span class="c1"># }}}</span>
+
+    <span class="c1"># {{{integral w errors</span>
+    <span class="n">error_pathway</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">set</span><span class="p">(</span>
+            <span class="p">((</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndshape</span><span class="p">(</span><span class="n">s</span><span class="p">)[</span><span class="s2">&quot;ph1&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndshape</span><span class="p">(</span><span class="n">s</span><span class="p">)[</span><span class="s2">&quot;ph2&quot;</span><span class="p">]))</span>
+        <span class="p">)</span>
+        <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">excluded_pathways</span><span class="p">)</span>
+        <span class="o">-</span> <span class="nb">set</span><span class="p">([(</span><span class="n">signal_pathway</span><span class="p">[</span><span class="s2">&quot;ph1&quot;</span><span class="p">],</span> <span class="n">signal_pathway</span><span class="p">[</span><span class="s2">&quot;ph2&quot;</span><span class="p">])])</span>
+    <span class="p">)</span>
+    <span class="n">error_pathway</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;ph1&quot;</span><span class="p">:</span> <span class="n">j</span><span class="p">,</span> <span class="s2">&quot;ph2&quot;</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span> <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">error_pathway</span><span class="p">]</span>
+    <span class="c1"># {{{Making lists for all individual inactive pathways to get error</span>
+    <span class="c1"># associated with each one</span>
+    <span class="n">s_int_lst</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">error_lst</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">avg_error_lst</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">thispathway</span> <span class="ow">in</span> <span class="n">error_pathway</span><span class="p">:</span>
+        <span class="n">s_thisint</span><span class="p">,</span> <span class="n">frq_slice_check</span> <span class="o">=</span> <span class="n">integral_w_errors</span><span class="p">(</span>
+            <span class="n">s</span><span class="p">,</span>
+            <span class="n">signal_pathway</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">thispathway</span><span class="p">],</span>
+            <span class="n">cutoff</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span>
+            <span class="n">indirect</span><span class="o">=</span><span class="s2">&quot;nScans&quot;</span><span class="p">,</span>
+            <span class="n">return_frq_slice</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">frq_slice_check</span> <span class="o">==</span> <span class="n">frq_slice</span><span class="p">)</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">s_thisint</span><span class="o">.</span><span class="n">get_error</span><span class="p">()</span>
+        <span class="n">avg_error</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">s_int_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s_thisint</span><span class="p">)</span>
+        <span class="n">error_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+        <span class="n">avg_error_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">avg_error</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+
+    <span class="c1"># {{{ Calculating propagated error averaged over all inactive CTs (as the</span>
+    <span class="c1">#     function is meant to be called)</span>
+    <span class="n">averaged_inactive</span><span class="p">,</span> <span class="n">frq_slice</span> <span class="o">=</span> <span class="n">integral_w_errors</span><span class="p">(</span>
+        <span class="n">s</span><span class="p">,</span>
+        <span class="n">signal_pathway</span><span class="p">,</span>
+        <span class="n">error_pathway</span><span class="p">,</span>
+        <span class="n">cutoff</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span>
+        <span class="n">indirect</span><span class="o">=</span><span class="s2">&quot;nScans&quot;</span><span class="p">,</span>
+        <span class="n">return_frq_slice</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">averaged_inactive_error</span> <span class="o">=</span> <span class="n">averaged_inactive</span><span class="o">.</span><span class="n">get_error</span><span class="p">()</span>
+    <span class="n">avg_avg_error</span> <span class="o">=</span> <span class="n">averaged_inactive_error</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="c1"># }}}</span>
+
+    <span class="c1"># {{{ Calculating propagated error along active CT on noise slice</span>
+    <span class="n">active_error</span> <span class="o">=</span> <span class="n">active_propagation</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">signal_pathway</span><span class="p">,</span> <span class="n">indirect</span><span class="o">=</span><span class="s2">&quot;nScans&quot;</span><span class="p">)</span>
+    <span class="n">avg_active_error</span> <span class="o">=</span> <span class="n">active_error</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s2">&quot;nScans&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="c1"># }}}</span>
+
+    <span class="c1"># {{{ Plotting Errors</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;comparison of std&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s_int_lst</span><span class="p">)):</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">error_lst</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="s2">&quot;o&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;on excluded path of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">error_pathway</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">active_error</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;propagated error from active CT</span><span class="se">\n</span><span class="s2">in noise slice&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">averaged_inactive_error</span><span class="p">,</span>
+        <span class="s2">&quot;o&quot;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;brown&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;averaged propagated error</span><span class="se">\n</span><span class="s2">from all inactive CTs&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s_int_lst</span><span class="p">)):</span>
+        <span class="n">axhline</span><span class="p">(</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">avg_error_lst</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;averaged </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">error_pathway</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="n">axhline</span><span class="p">(</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">avg_active_error</span><span class="p">,</span>
+        <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;averaged propagated error</span><span class="se">\n</span><span class="s2">from active CT in noise slice&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">axhline</span><span class="p">(</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">avg_avg_error</span><span class="p">,</span>
+        <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;brown&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;averaged propagated error</span><span class="se">\n</span><span class="s2">from all inactive CTs&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># {{{ Calculating the std dev -- error associated with the integrals</span>
+    <span class="n">s_integral</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">,</span> <span class="s2">&quot;nScans&quot;</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="n">axhline</span><span class="p">(</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">s_integral</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+        <span class="n">c</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
+        <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;std dev of integrals&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">lims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">())</span>
+    <span class="n">lims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">lims</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  2.717 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-test-error-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/773c2b45671dd1ec56ab2ef591bb213c/test_error.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">test_error.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/8259f1e60b389d566d2eda1c5775fa43/test_error.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">test_error.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="integration_with_error.html" class="btn btn-neutral float-left" title="Check Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, John M. Franck group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
