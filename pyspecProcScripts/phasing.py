@@ -295,7 +295,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     d.ift(direct)
     # {{{ apply phasing, and check the residual
     d[direct] -= d.getaxis(direct)[0]
-    if fl.basename is not None:
+    if fl is not None:
         thebasename = fl.basename
     else:
         thebasename = ""
