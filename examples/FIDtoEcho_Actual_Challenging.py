@@ -89,7 +89,7 @@ with figlist_var() as fl:
         data = data["t2":f_range]
         fl.basename = "(%s)" % label
         data = fid_from_echo(data, data.get_prop('coherence_pathway'), show_hermitian_sign_flipped=True,
-                fl=fl)
+                add_rising = True,fl=fl)
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Phased and centered (ν)")
         data.ift("t2")

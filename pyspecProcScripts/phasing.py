@@ -336,27 +336,6 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
             input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
     )
-    #print(best_shift)
-    if best_shift <0.9*d.get_prop('acq_params')['tau_us']*1e-6 or best_shift >1.2*d.get_prop('acq_params')['tau_us']*1e-6:
-        print("hermitian test failed")
-        print(orig_d)
-        print(wide_ranges)
-        #orig_d = orig_d['t2':wide_ranges]
-        print("here")
-        orig_d.ift('t2')
-        orig_d /= signflip
-        if fl is not None:
-            fl.next('original flipped')
-            orig_d.ft('t2')
-            fl.image(orig_d)
-            orig_d.ift('t2')
-        print("here")
-        orig_d.mean_all_but(direct)
-        best_shift = hermitian_function_test(
-                orig_d,basename = 'repeat '.join([
-                    thebasename,"hermitian"]),fl=None
-                )
-    print(best_shift)
     d_save = d.C
     t_dw = d_save.get_ft_prop(direct,'dt')
     if show_shifted_residuals:
@@ -442,7 +421,13 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     d[direct, 0] *= 0.5
     # {{{ retain the sign change for data sets with inversion, e.g. nutation and IR
     d.ft(direct)
-    #d *= mysgn
+    if determine_sign(select_pathway(d,signal_pathway)).data == determine_sign(select_pathway(orig_d,signal_pathway)).data:
+        pass
+    else:
+        print(determine_sign(select_pathway(d,signal_pathway)).data)
+        print(determine_sign(select_pathway(orig_d,signal_pathway)))
+        print("you lost your inversion!!")
+        d *= -determine_sign(select_pathway(orig_d,signal_pathway))
     # }}}
     return d
 def hermitian_function_test(
