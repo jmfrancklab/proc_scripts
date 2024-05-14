@@ -447,7 +447,7 @@ def proc_nutation_v2(s, fl=None):
     s.ft(["ph1"], unitary=True)
     s.set_prop("coherence_pathway", {"ph1": 1})
     s *= s.shape["nScans"]
-    s.mean('nScans')
+    #s.mean('nScans')
     s.squeeze()
     #s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.reorder(["ph1"]).set_units("t2", "s")

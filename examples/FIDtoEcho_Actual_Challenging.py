@@ -30,27 +30,27 @@ f_range = (
 )  # to deal with the shorter echoes, we really just need to use shorter dwell times
 with figlist_var() as fl:
     for filename, nodename, file_location, postproc, label in [
-            (
-                "210604_50mM_4AT_AOT_w11_cap_probe_echo",
-                "tau_1000",
-                "ODNP_NMR_comp/Echoes",
-                "spincore_echo_v1",
-                "tau is 1 ms",
-            ),
-            (
-                "210604_50mM_4AT_AOT_w11_cap_probe_echo",
-                "tau_3500",
-                "ODNP_NMR_comp/Echoes",
-                "spincore_echo_v1",
-                "tau is 3.5 ms",
-            ),
-            (
-                "210604_50mM_4AT_AOT_w11_cap_probe_echo",
-                "tau_11135",
-                "ODNP_NMR_comp/Echoes",
-                "spincore_echo_v1",
-                "tau is 11.135 ms",
-            ),
+            #(
+            #    "210604_50mM_4AT_AOT_w11_cap_probe_echo",
+            #    "tau_1000",
+            #    "ODNP_NMR_comp/Echoes",
+            #    "spincore_echo_v1",
+            #    "tau is 1 ms",
+            #),
+            #(
+            #    "210604_50mM_4AT_AOT_w11_cap_probe_echo",
+            #    "tau_3500",
+            #    "ODNP_NMR_comp/Echoes",
+            #    "spincore_echo_v1",
+            #    "tau is 3.5 ms",
+            #),
+            #(
+            #    "210604_50mM_4AT_AOT_w11_cap_probe_echo",
+            #    "tau_11135",
+            #    "ODNP_NMR_comp/Echoes",
+            #    "spincore_echo_v1",
+            #    "tau is 11.135 ms",
+            #),
             (
                 "240318_27mM_TEMPOL_nutation_2",
                 "nutation",
@@ -73,9 +73,12 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
+        print(data.get_prop('coherence_pathway'))
         fl.basename = "(%s)" % label
         fig, ax_list = subplots(1, 4, figsize=(10, 7))
         fig.suptitle(fl.basename)
+        if 'nScans' in data.dimlabels:
+            data.reorder('nScans',first = True)
         fl.next("Data processing", fig=fig)
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
@@ -85,7 +88,8 @@ with figlist_var() as fl:
         data.ft("t2")
         data = data["t2":f_range]
         fl.basename = "(%s)" % label
-        data = fid_from_echo(data, data.get_prop('coherence_pathway'), fl=fl)
+        data = fid_from_echo(data, data.get_prop('coherence_pathway'), show_hermitian_sign_flipped=True,
+                fl=fl)
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Phased and centered (ν)")
         data.ift("t2")

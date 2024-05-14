@@ -234,10 +234,10 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     """
     # {{{ dictate signs using determine sign that will be needed later
     #     for data that has a sign flip - e.g. nutation and IR
-    if signal_pathway is not None:
-        mysgn = determine_sign(select_pathway(d,signal_pathway))
-    else:
-        mysgn = determine_sign(d)
+    #if signal_pathway is not None:
+    #    mysgn = determine_sign(select_pathway(d,signal_pathway))
+    #else:
+    #    mysgn = determine_sign(d)
     # }}}
     # {{{ autodetermine slice range
     freq_envelope = d.C
@@ -323,16 +323,20 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     input_for_hermitian /= signflip
     if fl is not None and show_hermitian_sign_flipped:
         fl.next('sign flipped for hermitian')
+        if 'nScans' in input_for_hermitian.dimlabels:
+            input_for_hermitian.reorder('nScans',first = True)
         input_for_hermitian.reorder(direct,
                 first=False)
+        input_for_hermitian.ft('t2')
         fl.image(input_for_hermitian)
+        input_for_hermitian.ift('t2')
     input_for_hermitian.mean_all_but(direct)
     # }}}
     best_shift = hermitian_function_test(
             input_for_hermitian, basename=' '.join([
             thebasename,"hermitian"]), fl=fl
     )
-    print(best_shift)
+    #print(best_shift)
     if best_shift <0.9*d.get_prop('acq_params')['tau_us']*1e-6 or best_shift >1.2*d.get_prop('acq_params')['tau_us']*1e-6:
         print("hermitian test failed")
         print(orig_d)
@@ -340,6 +344,12 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         #orig_d = orig_d['t2':wide_ranges]
         print("here")
         orig_d.ift('t2')
+        orig_d /= signflip
+        if fl is not None:
+            fl.next('original flipped')
+            orig_d.ft('t2')
+            fl.image(orig_d)
+            orig_d.ift('t2')
         print("here")
         orig_d.mean_all_but(direct)
         best_shift = hermitian_function_test(
@@ -432,7 +442,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     d[direct, 0] *= 0.5
     # {{{ retain the sign change for data sets with inversion, e.g. nutation and IR
     d.ft(direct)
-    d *= mysgn
+    #d *= mysgn
     # }}}
     return d
 def hermitian_function_test(
