@@ -232,16 +232,8 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     =======
     d: FID of properly sliced and phased signal
     """
-    # {{{ dictate signs using determine sign that will be needed later
-    #     for data that has a sign flip - e.g. nutation and IR
-    #if signal_pathway is not None:
-    #    mysgn = determine_sign(select_pathway(d,signal_pathway))
-    #else:
-    #    mysgn = determine_sign(d)
-    # }}}
     # {{{ autodetermine slice range
     freq_envelope = d.C
-    orig_d = d.C
     freq_envelope.ift('t2')
     freq_envelope = freq_envelope['t2':(0,None)] # slice out rising echo estimate according to experimental tau in order to limit oscillations
     freq_envelope.ft('t2')
@@ -323,13 +315,9 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     input_for_hermitian /= signflip
     if fl is not None and show_hermitian_sign_flipped:
         fl.next('sign flipped for hermitian')
-        if 'nScans' in input_for_hermitian.dimlabels:
-            input_for_hermitian.reorder('nScans',first = True)
         input_for_hermitian.reorder(direct,
                 first=False)
-        input_for_hermitian.ft('t2')
         fl.image(input_for_hermitian)
-        input_for_hermitian.ift('t2')
     input_for_hermitian.mean_all_but(direct)
     # }}}
     best_shift = hermitian_function_test(
@@ -419,16 +407,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         ) / 2
     d *= 2    
     d[direct, 0] *= 0.5
-    # {{{ retain the sign change for data sets with inversion, e.g. nutation and IR
     d.ft(direct)
-    if determine_sign(select_pathway(d,signal_pathway)).data == determine_sign(select_pathway(orig_d,signal_pathway)).data:
-        pass
-    else:
-        print(determine_sign(select_pathway(d,signal_pathway)).data)
-        print(determine_sign(select_pathway(orig_d,signal_pathway)))
-        print("you lost your inversion!!")
-        d *= -determine_sign(select_pathway(orig_d,signal_pathway))
-    # }}}
     return d
 def hermitian_function_test(
     s,
