@@ -69,8 +69,6 @@ with figlist_var() as fl:
         fl.basename = "(%s)" % label
         fig, ax_list = subplots(1, 4, figsize=(10, 7))
         fig.suptitle(fl.basename)
-        if 'nScans' in data.dimlabels:
-            data.reorder('nScans',first = True)
         fl.next("Data processing", fig=fig)
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
