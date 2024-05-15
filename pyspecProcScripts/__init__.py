@@ -17,13 +17,12 @@ from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
-from .simple_functions import select_pathway
+from .simple_functions import select_pathway, logobj
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
 from .lorentzian_to_gaussian import L2G
 from .third_level.QESR import QESR
-
 __all__ = [
     "active_propagation",
     "apod_matched_filter",
