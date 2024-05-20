@@ -4,9 +4,8 @@ FID from Echo after Phasing and Timing Correction -- Challenging Actual Data
 
 Take real data with varying echo times, 
 and demonstrate how we can automatically find the zeroth order phase and the
-center of the echo and then slice, in order to get a properly phased FID.
-
-Here we see this 
+center of the echo and then slice using the fid_from_echo function, 
+in order to get a properly phased FID.
 
 This example provides a challenging test case, with low SNR data (from AOT RMs),
 one of which has a very short echo time.
