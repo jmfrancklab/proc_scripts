@@ -1,18 +1,36 @@
 """This module includes routines for phasing NMR spectra."""
 from pyspecdata import *
+import time
 from matplotlib.patches import Ellipse
 from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
-from pylab import xlim, subplots, axvline, ylim, sca
+from pylab import xlim, subplots, axvline, axhline, ylim, sca, rand, legend
 import numpy as np
 from numpy import r_, c_
 from scipy import linalg
+import scipy.signal.windows as sci_win
 import logging
 import matplotlib.pyplot as plt
+from .simple_functions import select_pathway
+from itertools import cycle
 
+default_matplotlib_cycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
+
+def det_devisor(fl):
+    if fl.units[fl.current] == "s":
+        divisor = 1
+    elif fl.units[fl.current] == "ms":
+        divisor = 1e-3
+    elif fl.units[fl.current] == "\\mu s":
+        divisor = 1e-6
+    else:
+        raise ValueError(
+            f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs"
+        )
+    return divisor
 
 def zeroth_order_ph(d, fl=None):
-    r"""determine the covariance of the datapoints
+    r"""determine the moment of inertial of the datapoints
     in complex plane, and use to phase the
     zeroth-order even if the data is both negative
     and positive.
@@ -37,49 +55,25 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     """
-    cov_mat = np.cov(
-        c_[d.data.real.ravel(), d.data.imag.ravel()].T,
-        aweights=abs(d.data).ravel() ** 2  # when running proc_square_refl, having
-        # this line dramatically reduces the size of the imaginary component
-        # during the "blips," and the magnitude squared seems to perform
-        # slightly better than the magnitude -- this should be both a robust
-        # test and a resolution for issue #23
-    )
-    eigenValues, eigenVectors = linalg.eigh(cov_mat)
+    realvector = d.data.real.ravel()
+    imvector = d.data.imag.ravel()
+    R2 = np.mean(realvector**2)
+    I2 = np.mean(imvector**2)
+    C = np.mean(realvector*imvector) # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution
+    # note that this effectively changes the relative sign of x and y, reflecting the ellipse so that it circles the elements rather than going around them, and it's note the same as just flipping the eigenvalues
+    inertia_matrix = np.array([[R2,C],
+        [C,I2]])
+    eigenValues, eigenVectors = linalg.eigh(inertia_matrix)
     mean_point = d.data.ravel().mean()
-    mean_vec = r_[mean_point.real, mean_point.imag]
     # next 3 lines from stackexchange -- sort by
     # eigenvalue
     idx = eigenValues.argsort()[::-1]
     eigenValues = eigenValues[idx]
-    eigenVectors = eigenVectors[:, idx]  # first dimension x,y second evec #
-    # determine the phase angle from direction of the
-    # largest principle axis plus the mean
-    # the vector in the direction of the largest
-    # principle axis would have a norm equal to the
-    # sqrt (std not variance) of the eigenvalue, except
-    # that we only want to rotate when the distribution
-    # is assymetric, so include only the excess of the
-    # larger eval over the smaller
-    assymetry_mag = float(sqrt(eigenValues[0]) - sqrt(eigenValues[1]))
-    try:
-        assym_ineq = (assymetry_mag * eigenVectors[:, 0] * mean_vec).sum()
-    except:
-        raise ValueError(
-            strm(
-                "check the sizes of the following:",
-                size(assymetry_mag),
-                size(eigenVectors),
-                size(mean_vec),
-            )
-        )
-    if assym_ineq > 0:
-        # we want the eigenvector on the far side of the ellipse
-        rotation_vector = mean_vec + assymetry_mag * eigenVectors[:, 0]
-    else:
-        rotation_vector = mean_vec - assymetry_mag * eigenVectors[:, 0]
+    eigenVectors = eigenVectors[:, idx]
+    rotation_vector = eigenVectors[:,0]
     ph0 = np.arctan2(rotation_vector[1], rotation_vector[0])
     if fl is not None:
+        fl.push_marker()
         d_forplot = d.C
         fl.next("check covariance test")
         fl.plot(
@@ -89,6 +83,8 @@ def zeroth_order_ph(d, fl=None):
             alpha=0.25,
             label="before",
         )
+        plt.xlabel('real')
+        plt.ylabel('imag')
         d_forplot /= np.exp(1j * ph0)
         fl.plot(
             d_forplot.data.ravel().real,
@@ -98,26 +94,18 @@ def zeroth_order_ph(d, fl=None):
             label="after",
         )
         fl.plot(0, 0, "ko", alpha=0.5)
-        fl.plot(mean_vec[0], mean_vec[1], "kx", label="mean", alpha=0.5)
         evec_forplot = (
-            sqrt(eigenValues.reshape(1, 2)) * np.ones((2, 1)) * eigenVectors
+            2 * sqrt(eigenValues.reshape(1, 2)) * np.ones((2, 1)) * eigenVectors
         )  # scale by the std, not the variance!
-        evec_forplot += mean_vec.reshape((-1, 1)) * np.ones((1, 2))
         fl.plot(
             evec_forplot[0, 0], evec_forplot[1, 0], "o", alpha=0.5, label="first evec"
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
-        fl.plot(
-            rotation_vector[1],
-            "o",
-            alpha=0.5,
-            label="rotation vector",
-        )
         norms = sqrt((evec_forplot ** 2).sum(axis=0))
         ell = Ellipse(
-            xy=mean_vec,
-            width=2 * sqrt(eigenValues[0]),
-            height=2 * sqrt(eigenValues[1]),
+            xy=[0,0],
+            width=4 * sqrt(eigenValues[0]),
+            height=4 * sqrt(eigenValues[1]),
             angle=180 / pi * np.arctan2(eigenVectors[1, 0], eigenVectors[0, 0]),
             color="k",
             fill=False,
@@ -125,7 +113,8 @@ def zeroth_order_ph(d, fl=None):
         ax = plt.gca()
         ax.set_aspect("equal", adjustable="box")
         ax.add_patch(ell)
-    return np.exp(1j * ph0)
+        fl.pop_marker()
+    return np.exp(1j * ph0) * np.sign((mean_point / np.exp(1j * ph0)).real)
 
 
 def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
@@ -197,232 +186,417 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
+def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2",
+        exclude_rising=3,
+        slice_multiplier=20,
+        peak_lower_thresh=0.1,
+        show_hermitian_sign_flipped=False,
+        show_shifted_residuals=False):
+    # {{{ autodetermine slice range
+    freq_envelope = d.C
+    freq_envelope.ift('t2')
+    freq_envelope = freq_envelope['t2':(0,None)] # slice out rising echo estimate according to experimental tau in order to limit oscillations
+    freq_envelope.ft('t2')
+    freq_envelope.mean_all_but(direct).run(abs)
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False, label="signal energy")
+    freq_envelope.convolve(direct,
+            freq_envelope.get_ft_prop(direct,'df')*5,
+            enforce_causality=False)
+    freq_envelope -= (
+            freq_envelope[direct,-1].item()
+            +
+            freq_envelope[direct,0].item())/2
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False, label="signal energy\nconv + baselined")
+    narrow_ranges = freq_envelope.contiguous(
+            lambda x: x>0.5*x.data.max())
+    wide_ranges = freq_envelope.contiguous(
+            lambda x: x>peak_lower_thresh*x.data.max())
+    def filter_ranges(B, A):
+        """where A and B are lists of ranges (given as tuple pairs), filter B
+        to only return ranges that include ranges given in A"""
+        return [np.array(b) for b in B if
+                any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
+    peakrange = filter_ranges(wide_ranges, narrow_ranges)
+    assert len(peakrange) == 1
+    peakrange = peakrange[0]
+    frq_center = np.mean(peakrange).item()
+    frq_half = np.diff(peakrange).item()/2
+    if fl is not None:
+        fl.next("autoslicing!")
+        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
+        axvline(x=frq_center - frq_half, color="k", ls=':', alpha=0.25, label="half width")
+        axvline(x=frq_center - slice_multiplier*frq_half, color="k", ls='--', alpha=0.5, label='final slice')
+        axvline(x=frq_center + frq_half, color="k", ls=':', alpha=0.25)
+        axvline(x=frq_center + slice_multiplier*frq_half, color="k", ls='--', alpha=0.5, label='final slice')
+        legend()
+    slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
+    reduced_slice_range = r_[-1, 1] * 2 * frq_half + frq_center
+    # }}}
+    d = d[direct:slice_range]
+    d.ift(direct)
+    # {{{ apply phasing, and check the residual
+    d[direct] -= d.getaxis(direct)[0]
+    if fl is not None:
+        thebasename = fl.basename
+    else:
+        thebasename = ""
+    # {{{ sign flip and average input for hermitian
+    input_for_hermitian = select_pathway(d, signal_pathway).C
+    signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
+    idx = abs(signflip).mean_all_but(direct).data.argmax()
+    signflip = signflip[direct,idx]
+    ph0 = zeroth_order_ph(signflip)
+    signflip /= ph0
+    signflip.run(np.real)
+    signflip /= abs(signflip)
+    input_for_hermitian /= signflip
+    if fl is not None and show_hermitian_sign_flipped:
+        fl.next('sign flipped for hermitian')
+        input_for_hermitian.reorder(direct,
+                first=False)
+        fl.image(input_for_hermitian)
+    input_for_hermitian.mean_all_but(direct)
+    # }}}
+    best_shift = hermitian_function_test(
+            input_for_hermitian, basename=' '.join([
+            thebasename,"hermitian"]), fl=fl
+    )
+    d_save = d.C
+    t_dw = d_save.get_ft_prop(direct,'dt')
+    if show_shifted_residuals:
+        test_array = t_dw/3 * r_[-6, -3, -1, 1, 3, 6, 0]# do 0 last, so that's what it uses
+    else:
+        test_array = r_[0]
+    for test_offset in test_array:
+        test_shift = best_shift + test_offset
+        d = d_save.C
+        if test_offset == 0:
+            thiscolor = "k"
+            zeroth_fl = fl
+        else:
+            thiscolor = next(default_matplotlib_cycle)
+            zeroth_fl = None
+        if show_shifted_residuals:
+            d.set_plot_color(thiscolor)
+        d.setaxis(direct, lambda x: x - test_shift).register_axis({direct: 0})
+        ph0 = zeroth_order_ph(select_pathway(d,
+            signal_pathway)[direct:0.0],
+            fl=zeroth_fl)
+        d /= ph0
+        if fl is not None:
+            t_start = d.getaxis(direct)[0]
+            d_sigcoh = select_pathway(d, signal_pathway)[direct : (t_start, -2 * t_start)]
+            d_sigcoh = select_pathway(d, signal_pathway).squeeze()
+            s_flipped = d_sigcoh[direct:(t_start, -t_start)][direct,::-1].C
+            idx = (ndshape(s_flipped)[direct])//2 
+            ph0 = zeroth_order_ph(d_sigcoh[direct,idx])
+            d_sigcoh /= ph0
+            s_flipped /= ph0
+            s_flipped.run(np.conj)
+            s_flipped[direct] = s_flipped[direct][::-1]
+            if (s_flipped.getaxis(direct)[idx] == 0
+                    and
+                    d_sigcoh.getaxis(direct)[idx] ==
+                    0): # should be centered about zero, but will not be if too lopsided
+                for_resid = (abs(s_flipped -
+                    d_sigcoh[direct:(t_start,
+                        -t_start)])**2)
+                N_ratio = for_resid.data.size
+                for_resid.mean_all_but(direct).run(sqrt)
+                N_ratio /= for_resid.data.size # the signal this has been plotted against is signal averaged by N_ratio
+                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
+                fl.next("residual after shift")
+                fl.plot(for_resid/sqrt(N_ratio), human_units=False, label="best shift%+e, mean of residual" % test_offset)
+                if test_offset == 0:
+                    fl.plot(
+                        d_sigcoh.C.mean_all_but(direct).run(abs),
+                        alpha=0.8,
+                        human_units=False,
+                        label="best shift%+e, abs of mean" % test_offset,
+                    )
+                    s_flipped.set_plot_color('r')
+                    fl.plot(
+                        s_flipped.C.mean_all_but(direct).run(abs),
+                        alpha=0.5,
+                        human_units=False,
+                        label="best shift%+e, abs of flipped mean" % test_offset,
+                    )
+                    ax = plt.gca()
+                    yl = ax.get_ylim()
+                    ax.set_ylim((0,yl[-1]))
+    # }}}
+    if add_rising:
+        d_rising = d[direct:(None, 0)][direct, exclude_rising:-1]  # leave out first few points
+        d_rising.run(np.conj)
+        N_rising = ndshape(d_rising)[direct]
+    d = d[direct:(0, None)]
+    if add_rising:
+        d[direct, 1 : N_rising + 1] = (
+            d[direct, 1 : N_rising + 1]
+            + d_rising[direct, ::-1]
+        ) / 2
+    d[direct, 0] *= 0.5
+    d.ft(direct)
+    return d
 def hermitian_function_test(
     s,
     direct="t2",
-    aliasing_slop=3,
-    band_mask=False,
-    amp_threshold=0.5,
+    aliasing_slop=3,  # will become a kwarg
+    amp_threshold=0.05,  # region over which we have signal
     fl=None,
+    basename=None,
+    show_extended=False,
+    upsampling=40,
+    energy_threshold=0.98,
+    energy_threshold_lower=0.1,
+    enable_refinement=False,
 ):
-    r"""determine the center of the echo via hermitian symmetry of the time domain.
+    r"""Determine the center of the echo via hermitian symmetry of the time domain.
+
+    Note the following issues/feature:
+
+    -   Data *must* start at t=0 (due to the way that we calculate the energy
+        term in the expression)
+    -   Data typically has a rising edge, which can lead to ringing.
+        Therefore, we apply a Tukey filter to the data.  Because this
+        suppresses the edges in frequency space, you will likely want to slice
+        a slightly wider bandwidth than you are interested in.
+    -   If you have an initial portion of signal that has very low SNR (i.e. if
+        your echo time is long relative to :math:`T_2^*`), that will affect the
+        SNR of the cost function.  Trailing noise will not affect the SNR of
+        the cost function, only lead to slightly longer calculation times.
 
     Parameters
     ==========
     direct:             str
         Axis of data (i.e., direct dimension).
-    aliasing_slop:          int
-        Because we sinc interpolate here, we need to allow for the fact that
-        the very beginning and ending of the time-domain signal are
-        interpolated to match.
-        This value is the multiple of the dwell time of the original signal
-        that is sliced out due to the fact this amount of signal is aliased
-        at the beginning and end of the time-domain signal.
-    band_mask:          boolean
-        determines the type of mask used on the 2D
+    energy_threshold:   float
+        To avoid picking a minimum that's based off of very little data, only
+        recognize the cost function over an interval where the normalized
+        energy function is equal to `energy_threshold` of its max value.
+    aliasing_slop: int (default 3)
+        The signal typically has an initial rising
+        portion where -- even due to FIR or
+        instrumental filters in the raw data,
+        the signal has some kind of Gibbs ringing in the
+        transition between signal an zero.
+        This portion of the signal will not mirror the
+        signal on the other side of the echo, and
+        should not even be included in the cost
+        function!
+        We believe the most consistent way to specify
+        the amount of signal that should be excluded as
+        an number of datapoints, hence why we ask for
+        an integer here.
+    enable_refinement: boolean
+        Do not use -- an attempt to correct for cases where we don't get
+        the lowest residual out of the Fourier technique.
+        The idea was that this was based on the fact that the correlation
+        function is calculated between the two upsampled (sinc
+        interpolated) functions, and so we should explicitly calculate
+        the residual in the original resolution.
+        But, there appears to be an error that would need to be debugged
+        -- fails some of the basic tests, and the residual does not
+        always appear to be the lowest.
 
+    .. todo::
 
-    Parameters
-    ==========
-    direct:             str
-        Axis of data (i.e., direct dimension).
-    aliasing_slop:          int
-        Because we sinc interpolate here, we need to allow for the fact that
-        the very beginning and ending of the time-domain signal are
-        interpolated to match.
-        This value is the multiple of the dwell time of the original signal
-        that is sliced out due to the fact this amount of signal is aliased
-        at the beginning and end of the time-domain signal.
-    band_mask:          boolean
-        determines the type of mask used on the 2D
-        residual for accurate calculation of cost
-        function. The mask is used to circumvent
-        aliasing of the cost function.
-        When True, applies rectangular mask to the
-        2D residual.
-        When False, applies triangular mask to the
-        2D residual.
-    band_mask_no:       int
-        determines number of points for rectangular mask
-    final_range:        tuple
-        range that will slice out everything but the very first few points
-        which gives an artificial minimum and messes with the
-        cost function.
+        AG fix docstring + cite coherence paper
     """
-    s = s.C  # work on a copy, so that we're not messing w/ anything
-    orig_dt = s.get_ft_prop(direct, "dt")
-    if not s.get_ft_prop(direct):
-        s.ft(direct)
-    s.ift(direct, pad=ndshape(s)[direct] * 50)
-    new_dt = s.get_ft_prop(direct, "dt")
-    non_aliased_range = r_[aliasing_slop, -aliasing_slop] * int(orig_dt / new_dt)
-    if aliasing_slop > 0:
-        s = s[direct, non_aliased_range[0] : non_aliased_range[1]]
-    s_envelope = s.C.mean_all_but(direct).run(abs)
+    # {{{ zero fill and upsample
+    # {{{ get in time domain and grab dwell time
+    assert s.get_units(direct) is not None
+    if s.get_ft_prop(direct):
+        s_timedom = s.C.ift(direct)
+    else:
+        s_timedom = s.C
+    s_ext = s_timedom.C
+    assert (
+        s_timedom.getaxis(direct)[0] == 0.0
+    ), """In order to
+    calculate the signal energy term correctly, the
+    signal must start at t=0  so set the start of the
+    acquisition in the *non-aliased* time domain to 0 (something like
+    data['t2'] -= acqstart) to avoid confusion"""
+    t_dw = s_timedom.get_ft_prop(direct, "dt")
+    orig_bounds = s_timedom.getaxis(direct)[r_[0, -1]]
+    plot_bounds = orig_bounds # allow this to be set to ± inf if I want to see all
+    # }}}
+    # {{{ force the axis to *start* at 0
+    #     since we're doing FT here, also extend to
+    #     twice the length!
+    logging.debug(strm("initial size", ndshape(s_ext), "direct is", direct))
+    s_ext.ft(
+        direct, pad=2 ** int(np.ceil(np.log(ndshape(s_ext)[direct]) / np.log(2)) + 1)
+    )
+    assert (
+        s_ext.get_ft_prop(direct, "start_time") == 0
+    ), "FT start point should also be equal to zero -- doing otherwise doesn't make sense"
+    # }}}
+    # {{{ move into over-sampled time domain -- do this
+    # *after* previous to avoid aliasing glitch
+    tukeyfilter = s_ext.fromaxis(direct).run(lambda x: sci_win.tukey(len(x)))
+    s_ext *= tukeyfilter
+    s_ext.ift(direct, pad=2 ** int(np.ceil(np.log(ndshape(s_timedom)[direct] * upsampling) / np.log(2))))
+    s_ext[direct:(orig_bounds[-1],None)] = 0 # explicitly zero, in case there are aliased negative times!
+    # }}}
+    # {{{ now I need to throw out the initial, aliased
+    #     portion of the signal -- do this manually by
+    #     index -- this is more lines than needed in
+    #     order to be explanatory.  Note that I
+    #     plot the signal before I actually throw stuff
+    #     out
+    t_dwos = s_ext.get_ft_prop(direct, "dt") # oversampled dwell
+    min_echo = aliasing_slop * t_dw
+    min_echo_idx = int(min_echo/t_dwos + 0.5)
+    min_echo = min_echo_idx * t_dwos
     if fl is not None:
         fl.push_marker()
-        fig_forlist, ax_list = plt.subplots(2, 2, figsize=(15, 15))
-        fl.next("Hermitian Function Test Diagnostics")
-        fig_forlist.suptitle(
-            " ".join(
-                ["Hermitian Diagnostic"] + [j for j in [fl.basename] if j is not None]
-            )
-        )
-        fl.plot(s_envelope, ax=ax_list[0, 0], human_units=False)
-        ax_list[0, 0].set_title("Data with Padding")
-    peak_triple = s_envelope.contiguous(lambda x: x > amp_threshold * x.data.max())[
-        0, :
-    ]
-    # {{{ the peak triple gives the left and right thresholds, with the
-    #     peak max in the middle
-    #     we move the left point as needed to make sure that peak is in
-    #     the first half of the resulting slice
-    peak_triple = r_[
-        peak_triple[0],
-        s[direct:peak_triple].mean_all_but(direct).run(abs).argmax().item(),
-        peak_triple[1],
-    ]
-    if fl is not None:
-        for j in range(3):
-            ax_list[0, 0].axvline(
-                x=peak_triple[j], ls=":", color="k", alpha=0.5, linewidth=2
-            )
-    # {{{ make sure we don't test for center too close to either edge
-    if peak_triple[0] < s.getaxis(direct)[0] + orig_dt:
-        peak_triple[0] = s.getaxis(direct)[0] + orig_dt
-    if peak_triple[2] > s.getaxis(direct)[-1] - orig_dt:
-        peak_triple[2] = s.getaxis(direct)[-1] - orig_dt
-    # }}}
-    # {{{ we don't want *all* of the blue line, only part
-    logging.debug("about to slice the data used for hermitian")
-    outermost = peak_triple[r_[0, -1]]  # the orange edges
-    logging.debug(strm("start with", outermost))
-    blue_edges = s.getaxis(direct)[r_[0, -1]]
-    outermost += (
-        outermost - blue_edges[::-1]
-    )  # the most it can require to calculate the cost is from the orange edge to the opposite blue edge
-    logging.debug(strm("expand to", outermost))
-    mask = r_[-1, 1] * (outermost - s.getaxis(direct)[r_[0, -1]]) > 0
-    logging.debug(strm("beyond range?", mask))
-    outermost[mask] = blue_edges[mask]
-    logging.debug(strm("cropped", outermost))
-    s = s[direct : tuple(outermost)]
-    # }}}
-    slice_start, slice_stop = s.get_range(direct, *peak_triple[r_[0, -1]])
-    # }}}
-    if fl is not None:
-        ax_list[0, 0].axvspan(0, orig_dt, color="k", alpha=0.1)
-        for j in range(2):
-            ax_list[0, 0].axvline(
-                x=outermost[j], ls="--", color="k", alpha=1, linewidth=1
-            )
-        for j in range(3):
-            ax_list[0, 0].axvline(x=peak_triple[j], color="k", alpha=0.5, linewidth=2)
+        if basename is None:
+            basename = f"randombasename{int(rand()*1e5):d}"
+        fl.basename = basename
+        if show_extended:
+            fl.next("data extended")
+            if len(s_ext.dimlabels) > 1:
+                fl.image(s_ext)
+            else:
+                fl.plot(s_ext)
+        s_ext /= (
+            abs(s_ext).mean_all_but(direct).data.max()
+        )  # normalize by the average echo peak (for plotting purposes)
+        fl.next("power terms")
+        forplot = abs(s_ext).mean_all_but(direct)[direct:plot_bounds]
+        forplot[direct] -= min_echo # so zero is the
+        #                             first part of the
+        #                             echo after the
+        #                             aliasing slop, as
+        #                             indicated below
         fl.plot(
-            abs(s)[direct, slice(slice_start, slice_stop)],
-            ":",
-            ax=ax_list[0, 0],
-            linewidth=4,
-            human_units=False,
+            forplot, label="echo envelope",
         )
-    N = ndshape(s)[direct]
-    direct_startpoint = s.getaxis(direct)[0]
-    center_startpoint = s.getaxis(direct)[slice_start]
+    s_ext[direct, :-min_echo_idx] = s_ext[direct, min_echo_idx:]
     if fl is not None:
-        title_str = "triangular mask"
-        fl.next("cost function %s - freq filter" % title_str)
-        s.name("absolute value")
+        fl.next("power terms")
+        forplot = abs(s_ext).mean_all_but(direct)[direct:plot_bounds]
         fl.plot(
-            abs(s)
-            .mean_all_but(direct)
-            .rename(direct, "center")
-            .set_units("center", "s"),
-            color="k",
+            forplot, label="echo envelope",
+        )
+    # }}}
+    # }}}
+    # {{{ the integral of the signal power up to t=Δt
+    #     (first term in the paper)
+    s_energy = s_ext.C
+    s_energy.run(lambda x: abs(x) ** 2)
+    s_energy.integrate(direct, cumulative=True)
+    s_energy.mean_all_but(direct)
+    t_dwos = s_energy.get_ft_prop(direct, "dt")
+    normalization_term = 2 * t_dwos / (s_energy.fromaxis(direct) + t_dwos)
+    s_energy *= normalization_term
+    # }}}
+    # {{{ calculation the correlation between the echo and its hermitian
+    #     conjugate
+    #     → by definition, at the center of the echo, this should be
+    #     equal to the previous (integral of the power) term
+    s_correl = s_ext.C
+    s_correl.ft(direct)
+    s_correl.run(lambda x: x ** 2)
+    s_correl.ift(direct)
+    s_correl.mean_all_but(direct).run(abs)
+    s_correl *= normalization_term
+    # }}}
+    # {{{ calculate the cost function and determine where the center of the echo is!
+    cost_func = abs(s_energy - s_correl) # b/c this should not be less than 0, so penalize for numerical error when it's not!
+    reasonable_energy_range = s_energy.contiguous(lambda x: abs(x) > energy_threshold*abs(x.data).max())[0,:]
+    _,reasonable_energy_range[1] = s_energy.contiguous(lambda x: abs(x) >
+            energy_threshold*energy_threshold_lower*abs(x.data).max())[0,:]
+    cost_func = cost_func[direct:reasonable_energy_range]
+    cost_func.run(lambda x: x/sqrt(abs(x)))  # based on what we'd seen
+    #             previously (empirically), I take the
+    #             square root for a well-defined
+    #             minimum -- it could be better to do
+    #             this before averaging in the future
+    cost_min = cost_func.C.argmin(direct).item()
+    if fl is not None:
+        forplot = s_energy / t_dwos
+        forplot.mean_all_but(direct)
+        forplot.setaxis(direct, lambda x: x / 2)
+        fl.plot(forplot[direct:plot_bounds], label="first energy term")
+        forplot = s_correl / t_dwos
+        forplot.mean_all_but(direct)
+        forplot.setaxis(direct, lambda x: x / 2)
+        fl.plot(forplot[direct:plot_bounds], label="correlation function")
+        forplot = cost_func / sqrt(t_dwos)
+        forplot.setaxis(direct, lambda x: x / 2)
+        fl.plot(
+            forplot,
+            label="cost function",
+            c="violet",
             alpha=0.5,
+        )
+    echo_peak = cost_min / 2.0
+    if fl is not None:
+        fl.plot(
+            echo_peak / det_devisor(fl),
+            forplot[direct:echo_peak].item(),
+            "o",
+            c="violet",
+            alpha=0.3,
             human_units=False,
         )
-    # {{{ put test_center at the start/bottom of the data
-    test_center = nddata(s.getaxis(direct)[slice_start:slice_stop], "center")
-    s.rename(direct, "offset")
-    s.setaxis("offset", lambda x: x - direct_startpoint)  # so it starts at 0 now
-    s.ft("offset")
-    # the following confused me a little -- I wanted to take the difference between test_center and the start of the axis,
-    # but pyspecdata handles issues about the start of the axis,
-    # so we just shift so that test_center moves to zero
-    s *= np.exp(1j * 2 * pi * test_center * s.fromaxis("offset"))
-    s.ift("offset")
-    phcorr = s["offset", 0]
-    phcorr /= abs(phcorr)
-    s /= phcorr
+        axvline(x=echo_peak / det_devisor(fl), linestyle=":")
     # }}}
-    if fl is not None:
-        fl.image(s, ax=ax_list[0, 1])
-        ax_list[0, 1].set_title("shifted and phased")
-    # {{{ calculate the mask
-    center_idx = r_[
-        slice_start:slice_stop
-    ]  # test these points to see if they are the center
-    # Now, excluding the center point, determine how many points our "mask"
-    rms_size = (
-        N - center_idx - 1
-    )  # number of points between (not including) the center and the end of the data
-    rms_size[rms_size > center_idx] = center_idx[
-        rms_size > center_idx
-    ]  # if there are fewer points on the other side, we are limited by those
-    mymask = nddata(r_[1:N], "offset") <= nddata(rms_size, "center")
-    # }}}
-    if band_mask:
-        raise ValueError("band mask no longer supported -- use an earlier version")
-    s = abs(s["offset", 1:] - s["offset", :0:-1].runcopy(np.conj)).mean_all_but(
-        ["center", "offset"]
-    )
-    if fl is not None:
-        fl.image(s, ax=ax_list[1, 0])
-        ax_list[1, 0].set_title("Residual 2D")
-    s *= mymask
-    s /= nddata(rms_size, "center") ** 2  # it's an L1 difference, but this is
-    #                                   squared - this is just what worked
-    #                                   well -- we could use a rationale for
-    #                                   the squared, actually
-    #                                   → maybe once for normalization, once for probability?
-    if fl is not None:
-        fl.image(s.C.cropped_log(), ax=ax_list[1, 1])
-        ax_list[1, 1].set_title("cropped log of Masked Residual")
-    s.mean_all_but(["center"])
-    best_shift = s.C.argmin("center").item()
-    # slices first few points out as usually the artifacts give a minimum
-    if fl is not None:
-        fl.next("cost function %s - freq filter" % title_str)
-        fl.twinx(orig=False, color="red")
-        s.name("cost function")
-        fl.plot(s, color="r", alpha=0.5, human_units=False)
-        cost_scale = (
-            s["center" : (-4 * orig_dt + best_shift, 4 * orig_dt + best_shift)]
-            .max()
-            .item()
-        )
-        ylim((0, cost_scale))
-        axvline(x=best_shift, c="r", linestyle="--")
-        ax = plt.gca()
-        trans = blended_transform_factory(
-            x_transform=ax.transData, y_transform=ax.transAxes
-        )
-        text(
-            x=best_shift + 0.0005,
-            y=0.8,
-            s="best shift is: %f" % best_shift,
-            fontsize=16,
-            color="red",
-            transform=trans,
-        )
-        for dwell_int in r_[-5:5]:
-            axvline(
-                x=best_shift - (orig_dt * dwell_int), alpha=0.4, c="r", linestyle=":"
-            )
-        fl.pop_marker()
-    return best_shift
-
-
+    echo_idx = int((echo_peak + min_echo)/t_dw+0.5)
+    shift_range = 4
+    if enable_refinement and echo_idx-aliasing_slop > shift_range+1:
+        s_foropt = s_timedom
+        shifts = nddata(
+                t_dw*r_[-shift_range:shift_range:300j],'echo shift')
+        s_foropt.ft(direct)
+        # positive pushes time domain to left --
+        # should represent that echo occurred later
+        # than expected, and so should be added to the echo_idx*t_dw
+        # estimate of the echo time
+        s_foropt *= np.exp(1j*2*np.pi*shifts*s_foropt.fromaxis(direct))
+        s_foropt.ift(direct)
+        s_foropt = s_foropt[direct,
+                aliasing_slop:aliasing_slop+2*(echo_idx-aliasing_slop)+1]
+        # the center is now at echo_idx-aliasing_slop
+        # {{{ phasing must be done independently for each echo shift
+        ph0 = s_foropt[direct, echo_idx-aliasing_slop]
+        ph0 /= abs(ph0)
+        # }}}
+        s_foropt /= ph0
+        s_foropt = s_foropt[direct,shift_range:-shift_range]
+        s_foropt -= s_foropt.C[direct,::-1].run(np.conj)
+        s_foropt.run(lambda x: abs(x)**2)
+        s_foropt.mean_all_but('echo shift')
+        s_foropt.run(sqrt)
+        if fl is not None:
+            fl.next('refinement')
+            fl.plot(s_foropt, human_units=False)
+        s_foropt = s_foropt.argmin('echo shift').item()
+        if fl is not None:
+            fl.next('refinement')
+            axvline(x=s_foropt)
+            axvline(x=(echo_peak+min_echo)-t_dw*echo_idx,
+                    ls=':',
+                    alpha=0.25)
+            fl.next("power terms")
+            axvline(x=(t_dw*echo_idx+s_foropt - min_echo)/det_devisor(fl),
+                    ls='-',
+                    alpha=0.25)
+            fl.pop_marker()
+        return t_dw*echo_idx + s_foropt
+    else:
+        if enable_refinement:
+            logging.info("warning: can't do hermitian phasing refinement -- not enough points")
+        if fl is not None:
+            fl.pop_marker()
+        return echo_peak + min_echo
 def determine_sign(s, direct="t2", fl=None):
     """Given that the signal resides in `pathway`, determine the sign of the signal.
     The sign can be used, e.g. so that all data in an inversion-recover or
@@ -448,6 +622,9 @@ def determine_sign(s, direct="t2", fl=None):
     ), "this only works on data that has been FT'd along the direct dimension"
     if fl is not None:
         fl.push_marker()
+        if basename is None:
+            basename = f"randombasename{int(rand()*1e5):d}"
+        fl.basename = basename
         fl.next("selected pathway")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
     data_sgn = s.C.sum(direct)
