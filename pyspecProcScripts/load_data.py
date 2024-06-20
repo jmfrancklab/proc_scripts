@@ -287,10 +287,12 @@ def proc_bruker_CPMG_v1(s, fl=None):
     return s
 
 
+def proc_spincore_SE_v1(s, fl=None):
+    s.ft("ph1", unitary=True)
+    s.ft("t2", shift=True)
+    return s
 def proc_Hahn_echoph(s, fl=None):
     logging.info("loading pre-processing for Hahn_echoph")
-    nPoints = s.get_prop("acq_params")["nPoints"]
-    nEchoes = s.get_prop("acq_params")["nEchoes"]
     nPhaseSteps = 8
     SW_kHz = s.get_prop("acq_params")["SW_kHz"]
     nScans = s.get_prop("acq_params")["nScans"]
@@ -687,7 +689,8 @@ lookup_table = {
     "ag_T1CPMG_2h": proc_bruker_T1CPMG_v1,
     "chirp": proc_capture,
     "spincore_CPMG_v1": proc_spincore_CPMG_v1,
-    "spincore_Hahn_echoph_v1": proc_Hahn_echoph,
+    "spincore_SE_v1": proc_spincore_SE_v1,
+    "proc_Hahn_echoph": proc_Hahn_echoph,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
