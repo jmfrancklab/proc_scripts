@@ -5,6 +5,15 @@ Show data with postproc
 
 Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
 This script plots the result, as well as signal that's averaged along the `nScans` dimension.
+
+Tested with:
+
+``py proc_raw.py echo_6 240620_200uM_TEMPOL_pm_echo.h5 ODNP_NMR_comp/Echoes``
+
+``py proc_raw.py echo_8 240620_200uM_TEMPOL_pm_generic_echo.h5 ODNP_NMR_comp/Echoes``
+
+``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
+
 """
 from pyspecProcScripts.load_data import lookup_table
 from pyspecProcScripts import select_pathway
