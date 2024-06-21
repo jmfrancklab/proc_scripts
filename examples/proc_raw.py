@@ -20,19 +20,43 @@ from pyspecProcScripts import select_pathway
 from pyspecdata import *
 import sys
 import os
+from itertools import cycle
+
+colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+colorcyc = cycle(colorcyc_list)
 
 assert len(sys.argv) == 4
-d = find_file(sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table)
+d = find_file(
+    sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table
+)
 with figlist_var() as fl:
     d.squeeze()
     fl.next("raw data")
 
     def image_or_plot(d):
-        if len(d.dimlabels) > 2:
-            fl.image(d)
+        if len(d.dimlabels) == 1:
+            fl.plot(d)
+        elif len(d.dimlabels) == 2:
+            iterdim = d.shape.min()
+            untfy_axis = d.unitify_axis(iterdim)
+            for idx in range(d.shape[iterdim]):
+                c = next(colorcyc)
+                fl.plot(
+                    d[iterdim, idx],
+                    label=f"{untfy_axis}={d[iterdim][idx]}",
+                    c=c,
+                    alpha=0.5,
+                    human_units=False,
+                )
+                fl.plot(
+                    d[iterdim, idx].imag,
+                    label=f"{untfy_axis}={d[iterdim][idx]}",
+                    c=c,
+                    alpha=0.1,
+                    human_units=False,
+                )
         else:
-            fl.plot(d, alpha=0.5)
-            fl.plot(d.imag, alpha=0.1)
+            fl.image(d)
 
     image_or_plot(d)
     if "nScans" in d.dimlabels:
