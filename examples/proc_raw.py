@@ -39,6 +39,9 @@ with figlist_var() as fl:
             fl.plot(d)
         elif len(d.dimlabels) == 2:
             iterdim = d.shape.min()
+            if d.shape[iterdim] > 5:
+                d.pcolor()
+                return
             untfy_axis = d.unitify_axis(iterdim)
             for idx in range(d.shape[iterdim]):
                 c = next(colorcyc)
@@ -68,11 +71,12 @@ with figlist_var() as fl:
         fl.next("sum of abs of all coherence pathways (for comparison)")
         forplot = abs(d)
         guess_direct = d.shape.max() # guess that the longest dimension is the direct
+        if guess_direct == 'nScans':
+            temp = d.shape
+            temp.pop('nScans')
+            guess_direct = temp.max()
         forplot.mean_all_but(list(d.get_prop("coherence_pathway").keys())+[guess_direct])
         image_or_plot(forplot)
         d = select_pathway(d, d.get_prop("coherence_pathway"))
         fl.next("with coherence pathway selected")
         image_or_plot(d)
-        if len(d.dimlabels) == 2:
-            fl.next("pcolor of selected coherence pathway")
-            d.pcolor()
