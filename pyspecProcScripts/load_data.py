@@ -20,6 +20,7 @@ import logging
 from pylab import *
 from .DCCT_func import DCCT
 
+
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     logging.info(strm("this is the 90 time"))
