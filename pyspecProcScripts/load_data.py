@@ -43,13 +43,25 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     if fl is not None:
         s_forplot = s.C
         fl.next("FT")
-        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
+        fl.image(
+            s_forplot.C.setaxis("indirect", "#").set_units(
+                "indirect", "scan #"
+            )
+        )
         fl.next("time domain (all $\\Delta p$)")
         s_forplot.ift("t2")
-        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
+        fl.image(
+            s_forplot.C.setaxis("indirect", "#").set_units(
+                "indirect", "scan #"
+            )
+        )
         fl.next("frequency domain (all $\\Delta p$)")
         s_forplot.ft("t2", pad=4096)
-        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
+        fl.image(
+            s_forplot.C.setaxis("indirect", "#").set_units(
+                "indirect", "scan #"
+            )
+        )
     return s
 
 
@@ -200,7 +212,9 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     tau_extra = d12
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
+    twice_tau = (
+        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
+    )
     # twice_tau should be the period from one 180 to another
     # }}}
     s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
@@ -268,7 +282,9 @@ def proc_bruker_CPMG_v1(s, fl=None):
     tau_extra = 20e-6
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
+    twice_tau = (
+        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
+    )
     # twice_tau should be the period from one 180 to another
     # }}}
     s.set_units("t2", "us")
@@ -291,18 +307,22 @@ def proc_spincore_SE_v1(s, fl=None):
     s.ft("ph1", unitary=True)
     s.ft("t2", shift=True)
     return s
+
+
 def proc_spincore_diffph_SE_v1(s, fl=None):
     r"""this one uses a phase cycle where the overall phase and 90-180
     phase difference are cycled in a nested way -- see the DCCT paper to
     understand this!"""
-    s.ft(["ph2","ph_diff"], unitary=True)
+    s.ft(["ph2", "ph_diff"], unitary=True)
     # after the FT, these have a different meaning in terms of coherence
     # pathways -- remember that when labeling, pySpecData will change the
     # ph here to a δp
-    s.rename("ph2","ph_overall") # overall change in coherence
-    s.rename("ph_diff","ph1") # change during pulse 1
+    s.rename("ph2", "ph_overall")  # overall change in coherence
+    s.rename("ph_diff", "ph1")  # change during pulse 1
     s.ft("t2", shift=True)
     return s
+
+
 def proc_Hahn_echoph(s, fl=None):
     logging.info("loading pre-processing for Hahn_echoph")
     nPhaseSteps = 8
@@ -413,7 +433,6 @@ def proc_nutation_amp(s, fl=None):
 
 
 def proc_nutation_chunked(s, fl=None):
-    logging.info("loading pre-processing for nutation")
     s.reorder(["ph1", "ph2"])
     s.set_units("t2", "s")
     s.set_units("p_90", "s")
@@ -427,6 +446,20 @@ def proc_nutation_chunked(s, fl=None):
     if fl is not None:
         fl.next("Raw Data- Frequency Domain")
         fl.image(s)
+    return s
+
+
+def proc_nutation_v4(s, fl=None):
+    if s.shape["indirect"] > s.shape["nScans"]:
+        s.reorder(["ph1", "nScans", "indirect"])
+    else:
+        s.reorder(["ph1", "indirect", "nScans"])
+    s["indirect"] *= 1e-6  # why is it labeled in μs??
+    s.rename("indirect", "p_90")
+    s.set_units("t2", "s")
+    s.set_units("p_90", "s")
+    s.ft("ph1", unitary=True)
+    s.ft("t2", shift=True)
     return s
 
 
@@ -471,7 +504,10 @@ def proc_spincore_ODNP_v1(s, fl=None):
     logging.info(strm("meter powers", s.get_prop("meter_powers")))
     logging.info(strm("actual powers", s.getaxis("power")))
     logging.info(
-        strm("ratio of actual to programmed power", s.getaxis("power") / prog_power)
+        strm(
+            "ratio of actual to programmed power",
+            s.getaxis("power") / prog_power,
+        )
     )
     nPoints = s.get_prop("acq_params")["nPoints"]
     SW_kHz = s.get_prop("acq_params")["SW_kHz"]
@@ -506,7 +542,10 @@ def proc_spincore_ODNP_v2(s, fl=None):
     logging.info(strm("meter powers", s.get_prop("meter_powers")))
     logging.info(strm("actual powers", s.getaxis("power")))
     logging.info(
-        strm("ratio of actual to programmed power", s.getaxis("power") / prog_power)
+        strm(
+            "ratio of actual to programmed power",
+            s.getaxis("power") / prog_power,
+        )
     )
     nPoints = s.get_prop("acq_params")["nPoints"]
     SW_kHz = s.get_prop("acq_params")["SW_kHz"]
@@ -583,7 +622,9 @@ def proc_capture(s):
 def proc_DOSY_CPMG(s):
     logging.info("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
-    l22 = int(s.get_prop("acq")["L"][22])  # b/c the l are integers by definition
+    l22 = int(
+        s.get_prop("acq")["L"][22]
+    )  # b/c the l are integers by definition
     l25 = int(s.get_prop("acq")["L"][25])
     d12 = s.get_prop("acq")["D"][12]
     d11 = s.get_prop("acq")["D"][11]
@@ -610,7 +651,9 @@ def proc_DOSY_CPMG(s):
     )
     m = re.search("([0-9.]+) G/mm", s.get_prop("gradient_calib"))
     grad_list *= float(m.groups()[0]) * 0.1
-    dwdel1 = 3.5e-6  # where does this come from? DE is actually larger than this?
+    dwdel1 = (
+        3.5e-6  # where does this come from? DE is actually larger than this?
+    )
     # {{{ find anavpt without hard-setting
     m = re.search('"anavpt=([0-9]+)"', ppg)
     if m is None:
@@ -709,6 +752,7 @@ lookup_table = {
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_amp,
     "spincore_nutation_v3": proc_nutation_chunked,
+    "spincore_nutation_v4": proc_nutation_v4,
     "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
     "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
     "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no meter powers

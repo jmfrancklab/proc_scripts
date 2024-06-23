@@ -29,6 +29,7 @@ assert len(sys.argv) == 4
 d = find_file(
     sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table
 )
+print("postproc_type:",d.get_prop('postproc_type'))
 with figlist_var() as fl:
     d.squeeze()
     fl.next("raw data")
