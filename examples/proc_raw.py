@@ -73,3 +73,6 @@ with figlist_var() as fl:
         d = select_pathway(d, d.get_prop("coherence_pathway"))
         fl.next("with coherence pathway selected")
         image_or_plot(d)
+        if len(d.dimlabels) == 2:
+            fl.next("pcolor of selected coherence pathway")
+            d.pcolor()
