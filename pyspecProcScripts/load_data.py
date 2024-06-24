@@ -306,6 +306,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 def proc_spincore_SE_v1(s, fl=None):
     s.ft("ph1", unitary=True)
+    s /= sqrt(s.shape['ph1'])
     s.ft("t2", shift=True)
     return s
 
@@ -315,6 +316,7 @@ def proc_spincore_diffph_SE_v1(s, fl=None):
     phase difference are cycled in a nested way -- see the DCCT paper to
     understand this!"""
     s.ft(["ph2", "ph_diff"], unitary=True)
+    s /= sqrt(s.shape['ph2']*s.shape['ph_diff'])
     # after the FT, these have a different meaning in terms of coherence
     # pathways -- remember that when labeling, pySpecData will change the
     # ph here to a δp
