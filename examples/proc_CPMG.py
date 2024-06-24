@@ -8,7 +8,7 @@ Here we apply the postprocessing, and then do some stuff specific to a CPMG.
 
 Tested with:
 
-``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
+``py proc_CPMG.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
 
 """
 from pyspecProcScripts.load_data import lookup_table
