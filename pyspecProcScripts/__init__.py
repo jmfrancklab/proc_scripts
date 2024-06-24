@@ -15,6 +15,8 @@ from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
 from .envelope import L2G, fit_envelope
+from .third_level.protein_QESR import protein_QESR
+from .first_level.QESR_rescale import QESR_scalefactor
 __all__ = [
         'DCCT',
         'L2G',
@@ -40,6 +42,8 @@ __all__ = [
         'lookup_table',
         'ph1_real_Abs',
         'power2dBm',
+        'protein_QESR',
+        'QESR_scalefactor',
         'recovery',
         'select_pathway',
         'slice_FID_from_echo',
