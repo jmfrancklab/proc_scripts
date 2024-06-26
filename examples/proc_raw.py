@@ -29,7 +29,7 @@ assert len(sys.argv) == 4
 d = find_file(
     sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table
 )
-print("postproc_type:",d.get_prop('postproc_type'))
+print("postproc_type:", d.get_prop("postproc_type"))
 with figlist_var() as fl:
     d.squeeze()
     fl.next("raw data")
@@ -70,12 +70,16 @@ with figlist_var() as fl:
     if d.get_prop("coherence_pathway") is not None:
         fl.next("sum of abs of all coherence pathways (for comparison)")
         forplot = abs(d)
-        guess_direct = d.shape.max() # guess that the longest dimension is the direct
-        if guess_direct == 'nScans':
+        guess_direct = (
+            d.shape.max()
+        )  # guess that the longest dimension is the direct
+        if guess_direct == "indirect":
             temp = d.shape
-            temp.pop('nScans')
+            temp.pop("indirect")
             guess_direct = temp.max()
-        forplot.mean_all_but(list(d.get_prop("coherence_pathway").keys())+[guess_direct])
+        forplot.mean_all_but(
+            list(d.get_prop("coherence_pathway").keys()) + [guess_direct]
+        )
         image_or_plot(forplot)
         d = select_pathway(d, d.get_prop("coherence_pathway"))
         fl.next("with coherence pathway selected")
