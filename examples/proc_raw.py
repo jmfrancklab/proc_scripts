@@ -18,6 +18,7 @@ Tested with:
 from pyspecProcScripts.load_data import lookup_table
 from pyspecProcScripts import select_pathway
 from pyspecdata import *
+import numpy as np
 import sys
 import os
 from itertools import cycle
@@ -60,7 +61,11 @@ with figlist_var() as fl:
                     human_units=False,
                 )
         else:
-            fl.image(d)
+            rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
+            if rows < 500:
+                fl.image(d)
+            else:
+                fl.image(d, interpolation="bilinear")
 
     image_or_plot(d)
     if "nScans" in d.dimlabels:

@@ -331,6 +331,7 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
     s.rename("ph_diff", "ph1")  # change during pulse 1
     # }}}
     s.ft("t2", shift=True)
+    s.reorder(["ph1","ph_overall"])
     return s
 
 
