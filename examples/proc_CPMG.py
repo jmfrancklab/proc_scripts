@@ -15,6 +15,7 @@ from pyspecProcScripts.load_data import lookup_table
 from pyspecProcScripts import select_pathway
 import pyspecdata as psd
 import sys
+import numpy as np
 from itertools import cycle
 import matplotlib.pylab as plt
 
@@ -29,7 +30,11 @@ d = psd.find_file(
 with psd.figlist_var() as fl:
     d.squeeze()
     fl.next("raw data")
-    fl.image(d)
+    rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
+    if rows < 500:
+        fl.image(d)
+    else:
+        fl.image(d, interpolation="bilinear")
     # {{{ allows us to see how filtering affects things
     #     -- relevant to considerations about
     #     integration, etc

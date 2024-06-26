@@ -311,16 +311,27 @@ def proc_spincore_SE_v1(s, fl=None):
 
 
 def proc_spincore_diffph_SE_v1(s, fl=None):
+    s = proc_spincore_diffph_SE_v2(s, fl=fl)
+    s *= s.get_prop("acq_params")["nScans"]
+    return s
+
+
+def proc_spincore_diffph_SE_v2(s, fl=None):
     r"""this one uses a phase cycle where the overall phase and 90-180
     phase difference are cycled in a nested way -- see the DCCT paper to
     understand this!"""
-    s.ft(["ph2", "ph_diff"])
-    ## after the FT, these have a different meaning in terms of coherence
-    ## pathways -- remember that when labeling, pySpecData will change the
-    ## ph here to a δp
+    s.ft(["ph2", "ph_diff"])  # if we have used cycles for the axis
+    #                          coordinates, signal in the coherence
+    #                          dimension will match the amplitude of signal
+    #                          in a single transient if we do this
+    # {{{ after the FT, these have a different meaning in terms of coherence
+    #     pathways -- remember that when labeling, pySpecData will change
+    #     the ph here to a δp
     s.rename("ph2", "ph_overall")  # overall change in coherence
     s.rename("ph_diff", "ph1")  # change during pulse 1
+    # }}}
     s.ft("t2", shift=True)
+    s.reorder(["ph1","ph_overall"])
     return s
 
 
@@ -747,6 +758,7 @@ lookup_table = {
     "spincore_CPMG_v1": proc_spincore_CPMG_v1,
     "spincore_SE_v1": proc_spincore_SE_v1,
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
+    "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
     "proc_Hahn_echoph": proc_Hahn_echoph,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
