@@ -17,7 +17,7 @@ from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
-from .simple_functions import select_pathway
+from .simple_functions import select_pathway, logobj
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
@@ -38,16 +38,17 @@ __all__ = [
     "decay",
     "determine_sign",
     "draw_limits",
-    "fit_envelope",
     "expand_limits",
     "fake_data",
     "fid_from_echo",
+    "fit_envelope",
     "fl_mod",
     "fwhm_calculator",
     "generate_integrals",
     "hermitian_function_test",
     "integral_w_errors",
     "integrate_limits",
+    "logobj",
     "lookup_table",
     "ph1_real_Abs",
     "power2dBm",
