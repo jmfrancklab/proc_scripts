@@ -304,10 +304,28 @@ def proc_bruker_CPMG_v1(s, fl=None):
     return s
 
 
+def proc_spincore_SE_v1(s, fl=None):
+    s.ft("ph1")
+    s.ft("t2", shift=True)
+    return s
+
+
+def proc_spincore_diffph_SE_v1(s, fl=None):
+    r"""this one uses a phase cycle where the overall phase and 90-180
+    phase difference are cycled in a nested way -- see the DCCT paper to
+    understand this!"""
+    s.ft(["ph2", "ph_diff"])
+    ## after the FT, these have a different meaning in terms of coherence
+    ## pathways -- remember that when labeling, pySpecData will change the
+    ## ph here to a δp
+    s.rename("ph2", "ph_overall")  # overall change in coherence
+    s.rename("ph_diff", "ph1")  # change during pulse 1
+    s.ft("t2", shift=True)
+    return s
+
+
 def proc_Hahn_echoph(s, fl=None):
     logging.info("loading pre-processing for Hahn_echoph")
-    nPoints = s.get_prop("acq_params")["nPoints"]
-    nEchoes = s.get_prop("acq_params")["nEchoes"]
     nPhaseSteps = 8
     SW_kHz = s.get_prop("acq_params")["SW_kHz"]
     nScans = s.get_prop("acq_params")["nScans"]
@@ -416,7 +434,6 @@ def proc_nutation_amp(s, fl=None):
 
 
 def proc_nutation_chunked(s, fl=None):
-    logging.info("loading pre-processing for nutation")
     s.reorder(["ph1", "ph2"])
     s.set_units("t2", "s")
     s.set_units("p_90", "s")
@@ -430,6 +447,20 @@ def proc_nutation_chunked(s, fl=None):
     if fl is not None:
         fl.next("Raw Data- Frequency Domain")
         fl.image(s)
+    return s
+
+
+def proc_nutation_v4(s, fl=None):
+    if s.shape["indirect"] > s.shape["nScans"]:
+        s.reorder(["ph1", "nScans", "indirect"])
+    else:
+        s.reorder(["ph1", "indirect", "nScans"])
+    s["indirect"] *= 1e-6  # why is it labeled in μs??
+    s.rename("indirect", "p_90")
+    s.set_units("t2", "s")
+    s.set_units("p_90", "s")
+    s.ft("ph1", unitary=True)
+    s.ft("t2", shift=True)
     return s
 
 
@@ -714,12 +745,15 @@ lookup_table = {
     "ag_T1CPMG_2h": proc_bruker_T1CPMG_v1,
     "chirp": proc_capture,
     "spincore_CPMG_v1": proc_spincore_CPMG_v1,
-    "spincore_Hahn_echoph_v1": proc_Hahn_echoph,
+    "spincore_SE_v1": proc_spincore_SE_v1,
+    "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
+    "proc_Hahn_echoph": proc_Hahn_echoph,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_amp,
     "spincore_nutation_v3": proc_nutation_chunked,
+    "spincore_nutation_v4": proc_nutation_v4,
     "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
     "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
     "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no meter powers
