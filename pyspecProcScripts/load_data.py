@@ -23,7 +23,7 @@ from .DCCT_func import DCCT
 
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
-    logging.info(strm("this is the 90 time"))
+    logging.debug(strm("this is the 90 time"))
     if fl is not None:
         fl.next("raw data")
         fl.image(s.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
@@ -44,30 +44,18 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     if fl is not None:
         s_forplot = s.C
         fl.next("FT")
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
         fl.next("time domain (all $\\Delta p$)")
         s_forplot.ift("t2")
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
         fl.next("frequency domain (all $\\Delta p$)")
         s_forplot.ft("t2", pad=4096)
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
     return s
 
 
 def proc_bruker_deut_IR_mancyc(s, fl=None):
-    logging.info(strm("this is the d1", s.get_prop("acq")["D"][1]))
+    logging.debug(strm("this is the d1", s.get_prop("acq")["D"][1]))
     if fl is not None:
         fl.next("raw data")
         fl.image(s)
@@ -104,7 +92,7 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
 
 
 def proc_spincore_CPMG_v1(s, fl=None):
-    logging.info("loading pre-processing for CPMG preprocessing")
+    logging.debug("loading pre-processing for CPMG preprocessing")
     SW_kHz = s.get_prop("acq_params")["SW_kHz"]
     nPoints = s.get_prop("acq_params")["nPoints"]
     nEchoes = s.get_prop("acq_params")["nEchoes"]
@@ -213,9 +201,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     tau_extra = d12
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = (
-        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    )
+    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
     s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
@@ -283,9 +269,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
     tau_extra = 20e-6
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = (
-        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    )
+    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
     s.set_units("t2", "us")
@@ -336,7 +320,7 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
 
 
 def proc_Hahn_echoph(s, fl=None):
-    logging.info("loading pre-processing for Hahn_echoph")
+    logging.debug("loading pre-processing for Hahn_echoph")
     nPhaseSteps = 8
     SW_kHz = s.get_prop("acq_params")["SW_kHz"]
     nScans = s.get_prop("acq_params")["nScans"]
@@ -363,7 +347,7 @@ def proc_spincore_IR(s, fl=None):
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
     s.setaxis("ph1", r_[0, 2.0] / 4)
     s.setaxis("ph2", r_[0, 2.0] / 4)
-    s.reorder(["ph2", "ph1"]).set_units("t2", "s")
+    s.reorder(["ph1", "ph2"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     if fl is not None:
@@ -386,7 +370,7 @@ def proc_spincore_IR_v2(s, fl=None):
         s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
     s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
     s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
-    s.reorder(["ph2", "ph1"]).set_units("t2", "s")
+    s.reorder(["ph1", "ph2"]).set_units("t2", "s")
     s.ft("t2", shift=True)
     s.ft(["ph1", "ph2"], unitary=True)
     if fl is not None:
@@ -404,7 +388,7 @@ def proc_spincore_IR_v2(s, fl=None):
 
 
 def proc_nutation(s, fl=None):
-    logging.info("loading pre-processing for nutation")
+    logging.debug("loading pre-processing for nutation")
     orig_t = s.getaxis("t")
     s.set_units("p_90", "s")
     s.reorder("t", first=True)
@@ -424,7 +408,7 @@ def proc_nutation(s, fl=None):
 
 
 def proc_nutation_amp(s, fl=None):
-    logging.info("loading pre-processing for nutation")
+    logging.debug("loading pre-processing for nutation")
     s.set_units("t2", "s")
     s.ft("t2", shift=True)
     if fl is not None:
@@ -445,6 +429,7 @@ def proc_nutation_amp(s, fl=None):
 
 
 def proc_nutation_chunked(s, fl=None):
+    logging.debug("loading pre-processing for nutation")
     s.reorder(["ph1", "ph2"])
     s.set_units("t2", "s")
     s.set_units("p_90", "s")
@@ -509,13 +494,13 @@ def proc_spincore_echo_v1(s, fl=None):
 
 
 def proc_spincore_ODNP_v1(s, fl=None):
-    logging.info("loading pre-processing for ODNP")
+    logging.debug("loading pre-processing for ODNP")
     prog_power = s.getaxis("power").copy()
-    logging.info(strm("programmed powers", prog_power))
+    logging.debug(strm("programmed powers", prog_power))
     s.setaxis("power", r_[0 : len(s.getaxis("power"))])
-    logging.info(strm("meter powers", s.get_prop("meter_powers")))
-    logging.info(strm("actual powers", s.getaxis("power")))
-    logging.info(
+    logging.debug(strm("meter powers", s.get_prop("meter_powers")))
+    logging.debug(strm("actual powers", s.getaxis("power")))
+    logging.debug(
         strm(
             "ratio of actual to programmed power",
             s.getaxis("power") / prog_power,
@@ -528,6 +513,7 @@ def proc_spincore_ODNP_v1(s, fl=None):
     s.chunk("t", ["ph1", "t2"], [4, -1])
     s.set_units("t2", "s")
     s.labels({"ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
+    s.setaxis("t2", lambda x: x - s.get_prop("acq_params")["tau_us"] * 1e-6)
     s.ft("t2", shift=True)
     s.ft(["ph1"], unitary=True)  # Fourier Transforms coherence channels
     s.reorder(["ph1", "power"])
@@ -547,13 +533,13 @@ def proc_spincore_ODNP_v1(s, fl=None):
 
 
 def proc_spincore_ODNP_v2(s, fl=None):
-    logging.info("loading pre-processing for ODNP")
+    logging.debug("loading pre-processing for ODNP")
     prog_power = s.getaxis("power").copy()
-    logging.info(strm("programmed powers", prog_power))
+    logging.debug(strm("programmed powers", prog_power))
     s.setaxis("power", r_[0 : len(s.getaxis("power"))])
-    logging.info(strm("meter powers", s.get_prop("meter_powers")))
-    logging.info(strm("actual powers", s.getaxis("power")))
-    logging.info(
+    logging.debug(strm("meter powers", s.get_prop("meter_powers")))
+    logging.debug(strm("actual powers", s.getaxis("power")))
+    logging.debug(
         strm(
             "ratio of actual to programmed power",
             s.getaxis("power") / prog_power,
@@ -626,17 +612,15 @@ def proc_spincore_ODNP_v4(s, fl=None):
 
 
 def proc_capture(s):
-    logging.info("loading pre-processing for square wave capture")
+    logging.debug("loading pre-processing for square wave capture")
     s.set_units("t", "s").name("Amplitude").set_units("V")
     return s
 
 
 def proc_DOSY_CPMG(s):
-    logging.info("loading pre-processing for DOSY-CPMG")
+    logging.debug("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
-    l22 = int(
-        s.get_prop("acq")["L"][22]
-    )  # b/c the l are integers by definition
+    l22 = int(s.get_prop("acq")["L"][22])  # b/c the l are integers by definition
     l25 = int(s.get_prop("acq")["L"][25])
     d12 = s.get_prop("acq")["D"][12]
     d11 = s.get_prop("acq")["D"][11]
@@ -644,9 +628,9 @@ def proc_DOSY_CPMG(s):
     ppg = s.get_prop("pulprog")
     # {{{ these are explanatory -- maybe comment them out?
     m = re.search((".*dwdel1=.*"), ppg, flags=re.IGNORECASE)
-    logging.info(strm(m.groups()))  # show the line that sets dwdel1
+    logging.debug(strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
-    logging.info(
+    logging.debug(
         strm(
             [
                 (j, s.get_prop("acq")[j])
@@ -663,9 +647,7 @@ def proc_DOSY_CPMG(s):
     )
     m = re.search("([0-9.]+) G/mm", s.get_prop("gradient_calib"))
     grad_list *= float(m.groups()[0]) * 0.1
-    dwdel1 = (
-        3.5e-6  # where does this come from? DE is actually larger than this?
-    )
+    dwdel1 = 3.5e-6  # where does this come from? DE is actually larger than this?
     # {{{ find anavpt without hard-setting
     m = re.search('"anavpt=([0-9]+)"', ppg)
     if m is None:
@@ -713,7 +695,7 @@ def proc_DOSY_CPMG(s):
 
 
 def proc_ESR(s):
-    logging.info("loading preprocessing for ESR linewidth calculation")
+    logging.debug("loading preprocessing for ESR linewidth calculation")
     s -= s["$B_0$", :50].C.mean("$B_0$")
     s_integral = s.C.run_nopop(np.cumsum, "$B_0$")
     x1, x2 = s_integral.getaxis("$B_0$")[r_[5, -5]]
@@ -725,15 +707,15 @@ def proc_ESR(s):
     center_field = (s_integral * s.fromaxis("$B_0$")).mean("$B_0$").item()
     s.setaxis("$B_0$", lambda x: x - center_field)
     s_integral = s.C.run_nopop(np.cumsum, "$B_0$")
-    logging.info(strm(s_integral))
+    logging.debug(strm(s_integral))
     return s
 
 
 def proc_field_sweep_v1(s):
-    logging.info(
+    logging.debug(
         "WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!"
     )
-    logging.info("loading preprocessing for fieldsweep")
+    logging.debug("loading preprocessing for fieldsweep")
     s.reorder("t", first=True)
     s.chunk("t", ["ph1", "t2"], [4, -1])
     s.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
