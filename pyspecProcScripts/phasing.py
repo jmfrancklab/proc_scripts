@@ -186,17 +186,56 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
-def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnoise=0.1, direct="t2",
+def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2",
         exclude_rising=3,
         slice_multiplier=20,
         peak_lower_thresh=0.1,
         show_hermitian_sign_flipped=False,
         show_shifted_residuals=False):
+    """
+
+    Parameters
+    ==========
+    signal_pathway: dict
+        coherence transfer pathway that correspond to the signal
+    fl: figlist or None (default)
+        If you want the diagnostic plots (showing the distribution of the
+        data in the complex plane), set this to your figlist object.
+    add_rising: boolean
+        Take the first part of the echo (that which rises to the maximum)
+        and add the decaying (FID like) part. This increases the SNR of
+        the early points of the signal.
+    direct: string
+        Name of the direct dimension
+    exclude_rising: int
+        In general it is assumed that the first few points of signal
+        might be messed up due to dead time or other issues (assuming a
+        tau of 0).  This option allows us to add a rising edge to the
+        echo and exclude the first few points of the signal. Note, to use
+        this, add_rising must be True. 
+    slice_multiplier: int
+        The calculated frequency slice is calculated by taking the center
+        frequency and extending out to values that are included in the
+        peak times this multiplier. Therefore the larger this value the
+        larger the frequency slice. Increasing this value might serve
+        useful in the case of noisy spectra.
+    peak_lower_thresh: float
+        Fraction of the signal intensity used in calculating the
+        frequency slice. The smaller the value, the wider the slice. 
+    show_hermitian_sign_flipped: boolean
+        Diagnostic in checking the sign of the signal prior to the
+        hermitian phase correction
+    show_shifted_residuals: boolean
+        Diagnostic in analyzing the residuals after the hermitian phase
+        correction.
+
+    Returns                                 
+    =======
+    d: nddata
+        FID of properly sliced and phased signal
+    """
     # {{{ autodetermine slice range
     freq_envelope = d.C
-    freq_envelope.ift('t2')
-    freq_envelope = freq_envelope['t2':(0,None)] # slice out rising echo estimate according to experimental tau in order to limit oscillations
-    freq_envelope.ft('t2')
     freq_envelope.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.next("autoslicing!")
@@ -221,7 +260,22 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
         return [np.array(b) for b in B if
                 any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
+    if len(peakrange) > 1:
+        max_range_width = max([thisrange[1]-thisrange[0] for thisrange in peakrange])
+        range_gaps = [peakrange[j+1][0] - peakrange[j][1] for j in range(len(peakrange)-1)]
+        # {{{ if the gaps are all smaller than the max peak that was found, we
+        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
+        if any(np.array(range_gaps) > max_range_width):
+            if fl is not None:
+                fl.next("debug filter ranges")
+                fl.plot(freq_envelope, human_units=False)
+                for thisrange in peakrange:
+                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
+            raise ValueError("finding more than one peak!")
+        else:
+            peakrange = [(peakrange[0][0],peakrange[-1][1])]
     assert len(peakrange) == 1
+        # }}}
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item()/2
@@ -245,6 +299,9 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
     else:
         thebasename = ""
     # {{{ sign flip and average input for hermitian
+    if signal_pathway is not None:
+        assert d.get_prop('coherence_pathway') is not None, "you need to set the coherence_pathway property so I know what coherence pathway to select!"
+        signal_pathway = d.get_prop('coherence_pathway')
     input_for_hermitian = select_pathway(d, signal_pathway).C
     signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
     idx = abs(signflip).mean_all_but(direct).data.argmax()
@@ -339,6 +396,7 @@ def fid_from_echo(d, signal_pathway, fl=None, add_rising=False, fraction_nonnois
             d[direct, 1 : N_rising + 1]
             + d_rising[direct, ::-1]
         ) / 2
+    d *= 2    
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
