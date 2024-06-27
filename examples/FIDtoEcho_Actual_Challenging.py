@@ -77,6 +77,6 @@ with figlist_var() as fl:
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Phased and centered (ν)")
         data.ift("t2")
-        fl.image(data["t2":(None, 100e-3)], ax=ax_list[2], human_units=False)
+        fl.image(data, ax=ax_list[2], human_units=False)
         ax_list[2].set_title("Phased and Centered (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
