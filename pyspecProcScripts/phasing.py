@@ -16,6 +16,7 @@ from itertools import cycle
 
 default_matplotlib_cycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
 
+
 def det_devisor(fl):
     if fl.units[fl.current] == "s":
         divisor = 1
@@ -28,6 +29,7 @@ def det_devisor(fl):
             f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs"
         )
     return divisor
+
 
 def zeroth_order_ph(d, fl=None):
     r"""determine the moment of inertial of the datapoints
@@ -59,10 +61,11 @@ def zeroth_order_ph(d, fl=None):
     imvector = d.data.imag.ravel()
     R2 = np.mean(realvector**2)
     I2 = np.mean(imvector**2)
-    C = np.mean(realvector*imvector) # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution
+    C = np.mean(
+        realvector * imvector
+    )  # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution
     # note that this effectively changes the relative sign of x and y, reflecting the ellipse so that it circles the elements rather than going around them, and it's note the same as just flipping the eigenvalues
-    inertia_matrix = np.array([[R2,C],
-        [C,I2]])
+    inertia_matrix = np.array([[R2, C], [C, I2]])
     eigenValues, eigenVectors = linalg.eigh(inertia_matrix)
     mean_point = d.data.ravel().mean()
     # next 3 lines from stackexchange -- sort by
@@ -70,7 +73,7 @@ def zeroth_order_ph(d, fl=None):
     idx = eigenValues.argsort()[::-1]
     eigenValues = eigenValues[idx]
     eigenVectors = eigenVectors[:, idx]
-    rotation_vector = eigenVectors[:,0]
+    rotation_vector = eigenVectors[:, 0]
     ph0 = np.arctan2(rotation_vector[1], rotation_vector[0])
     if fl is not None:
         fl.push_marker()
@@ -83,8 +86,8 @@ def zeroth_order_ph(d, fl=None):
             alpha=0.25,
             label="before",
         )
-        plt.xlabel('real')
-        plt.ylabel('imag')
+        plt.xlabel("real")
+        plt.ylabel("imag")
         d_forplot /= np.exp(1j * ph0)
         fl.plot(
             d_forplot.data.ravel().real,
@@ -101,9 +104,9 @@ def zeroth_order_ph(d, fl=None):
             evec_forplot[0, 0], evec_forplot[1, 0], "o", alpha=0.5, label="first evec"
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
-        norms = sqrt((evec_forplot ** 2).sum(axis=0))
+        norms = sqrt((evec_forplot**2).sum(axis=0))
         ell = Ellipse(
-            xy=[0,0],
+            xy=[0, 0],
             width=4 * sqrt(eigenValues[0]),
             height=4 * sqrt(eigenValues[1]),
             angle=180 / pi * np.arctan2(eigenVectors[1, 0], eigenVectors[0, 0]),
@@ -160,6 +163,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     ph1_opt = np.asarray(s_cost.argmin("transients").item())
     logging.debug(strm("THIS IS PH1_OPT", ph1_opt))
     logging.debug(strm("optimal phase correction", repr(ph1_opt)))
+
     # }}}
     # {{{ apply the phase corrections
     def applyphase(arg, ph1):
@@ -186,12 +190,18 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
-def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2",
-        exclude_rising=3,
-        slice_multiplier=20,
-        peak_lower_thresh=0.1,
-        show_hermitian_sign_flipped=False,
-        show_shifted_residuals=False):
+def fid_from_echo(
+    d,
+    signal_pathway=None,
+    fl=None,
+    add_rising=False,
+    direct="t2",
+    exclude_rising=3,
+    slice_multiplier=20,
+    peak_lower_thresh=0.1,
+    show_hermitian_sign_flipped=False,
+    show_shifted_residuals=False,
+):
     """
 
     Parameters
@@ -212,7 +222,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         might be messed up due to dead time or other issues (assuming a
         tau of 0).  This option allows us to add a rising edge to the
         echo and exclude the first few points of the signal. Note, to use
-        this, add_rising must be True. 
+        this, add_rising must be True.
     slice_multiplier: int
         The calculated frequency slice is calculated by taking the center
         frequency and extending out to values that are included in the
@@ -221,7 +231,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         useful in the case of noisy spectra.
     peak_lower_thresh: float
         Fraction of the signal intensity used in calculating the
-        frequency slice. The smaller the value, the wider the slice. 
+        frequency slice. The smaller the value, the wider the slice.
     show_hermitian_sign_flipped: boolean
         Diagnostic in checking the sign of the signal prior to the
         hermitian phase correction
@@ -229,7 +239,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         Diagnostic in analyzing the residuals after the hermitian phase
         correction.
 
-    Returns                                 
+    Returns
     =======
     d: nddata
         FID of properly sliced and phased signal
@@ -240,29 +250,33 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(freq_envelope, human_units=False, label="signal energy")
-    freq_envelope.convolve(direct,
-            freq_envelope.get_ft_prop(direct,'df')*5,
-            enforce_causality=False)
+    freq_envelope.convolve(
+        direct, freq_envelope.get_ft_prop(direct, "df") * 5, enforce_causality=False
+    )
     freq_envelope -= (
-            freq_envelope[direct,-1].item()
-            +
-            freq_envelope[direct,0].item())/2
+        freq_envelope[direct, -1].item() + freq_envelope[direct, 0].item()
+    ) / 2
     if fl is not None:
         fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False, label="signal energy\nconv + baselined")
-    narrow_ranges = freq_envelope.contiguous(
-            lambda x: x>0.5*x.data.max())
+        fl.plot(
+            freq_envelope, human_units=False, label="signal energy\nconv + baselined"
+        )
+    narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
     wide_ranges = freq_envelope.contiguous(
-            lambda x: x>peak_lower_thresh*x.data.max())
+        lambda x: x > peak_lower_thresh * x.data.max()
+    )
+
     def filter_ranges(B, A):
         """where A and B are lists of ranges (given as tuple pairs), filter B
         to only return ranges that include ranges given in A"""
-        return [np.array(b) for b in B if
-                any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
+        return [np.array(b) for b in B if any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
+
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
     if len(peakrange) > 1:
-        max_range_width = max([thisrange[1]-thisrange[0] for thisrange in peakrange])
-        range_gaps = [peakrange[j+1][0] - peakrange[j][1] for j in range(len(peakrange)-1)]
+        max_range_width = max([thisrange[1] - thisrange[0] for thisrange in peakrange])
+        range_gaps = [
+            peakrange[j + 1][0] - peakrange[j][1] for j in range(len(peakrange) - 1)
+        ]
         # {{{ if the gaps are all smaller than the max peak that was found, we
         #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
         if any(np.array(range_gaps) > max_range_width):
@@ -273,19 +287,33 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
                     fl.plot(freq_envelope[direct:thisrange], human_units=False)
             raise ValueError("finding more than one peak!")
         else:
-            peakrange = [(peakrange[0][0],peakrange[-1][1])]
+            peakrange = [(peakrange[0][0], peakrange[-1][1])]
     assert len(peakrange) == 1
-        # }}}
+    # }}}
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
-    frq_half = np.diff(peakrange).item()/2
+    frq_half = np.diff(peakrange).item() / 2
     if fl is not None:
         fl.next("autoslicing!")
         axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
-        axvline(x=frq_center - frq_half, color="k", ls=':', alpha=0.25, label="half width")
-        axvline(x=frq_center - slice_multiplier*frq_half, color="k", ls='--', alpha=0.5, label='final slice')
-        axvline(x=frq_center + frq_half, color="k", ls=':', alpha=0.25)
-        axvline(x=frq_center + slice_multiplier*frq_half, color="k", ls='--', alpha=0.5, label='final slice')
+        axvline(
+            x=frq_center - frq_half, color="k", ls=":", alpha=0.25, label="half width"
+        )
+        axvline(
+            x=frq_center - slice_multiplier * frq_half,
+            color="k",
+            ls="--",
+            alpha=0.5,
+            label="final slice",
+        )
+        axvline(x=frq_center + frq_half, color="k", ls=":", alpha=0.25)
+        axvline(
+            x=frq_center + slice_multiplier * frq_half,
+            color="k",
+            ls="--",
+            alpha=0.5,
+            label="final slice",
+        )
         legend()
     slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
     reduced_slice_range = r_[-1, 1] * 2 * frq_half + frq_center
@@ -300,32 +328,34 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         thebasename = ""
     # {{{ sign flip and average input for hermitian
     if signal_pathway is not None:
-        assert d.get_prop('coherence_pathway') is not None, "you need to set the coherence_pathway property so I know what coherence pathway to select!"
-        signal_pathway = d.get_prop('coherence_pathway')
+        assert (
+            d.get_prop("coherence_pathway") is not None
+        ), "you need to set the coherence_pathway property so I know what coherence pathway to select!"
+        signal_pathway = d.get_prop("coherence_pathway")
     input_for_hermitian = select_pathway(d, signal_pathway).C
     signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
     idx = abs(signflip).mean_all_but(direct).data.argmax()
-    signflip = signflip[direct,idx]
+    signflip = signflip[direct, idx]
     ph0 = zeroth_order_ph(signflip)
     signflip /= ph0
     signflip.run(np.real)
     signflip /= abs(signflip)
     input_for_hermitian /= signflip
     if fl is not None and show_hermitian_sign_flipped:
-        fl.next('sign flipped for hermitian')
-        input_for_hermitian.reorder(direct,
-                first=False)
+        fl.next("sign flipped for hermitian")
+        input_for_hermitian.reorder(direct, first=False)
         fl.image(input_for_hermitian)
     input_for_hermitian.mean_all_but(direct)
     # }}}
     best_shift = hermitian_function_test(
-            input_for_hermitian, basename=' '.join([
-            thebasename,"hermitian"]), fl=fl
+        input_for_hermitian, basename=" ".join([thebasename, "hermitian"]), fl=fl
     )
     d_save = d.C
-    t_dw = d_save.get_ft_prop(direct,'dt')
+    t_dw = d_save.get_ft_prop(direct, "dt")
     if show_shifted_residuals:
-        test_array = t_dw/3 * r_[-6, -3, -1, 1, 3, 6, 0]# do 0 last, so that's what it uses
+        test_array = (
+            t_dw / 3 * r_[-6, -3, -1, 1, 3, 6, 0]
+        )  # do 0 last, so that's what it uses
     else:
         test_array = r_[0]
     for test_offset in test_array:
@@ -340,34 +370,40 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
         if show_shifted_residuals:
             d.set_plot_color(thiscolor)
         d.setaxis(direct, lambda x: x - test_shift).register_axis({direct: 0})
-        ph0 = zeroth_order_ph(select_pathway(d,
-            signal_pathway)[direct:0.0],
-            fl=zeroth_fl)
+        ph0 = zeroth_order_ph(
+            select_pathway(d, signal_pathway)[direct:0.0], fl=zeroth_fl
+        )
         d /= ph0
         if fl is not None:
             t_start = d.getaxis(direct)[0]
-            d_sigcoh = select_pathway(d, signal_pathway)[direct : (t_start, -2 * t_start)]
+            d_sigcoh = select_pathway(d, signal_pathway)[
+                direct : (t_start, -2 * t_start)
+            ]
             d_sigcoh = select_pathway(d, signal_pathway).squeeze()
-            s_flipped = d_sigcoh[direct:(t_start, -t_start)][direct,::-1].C
-            idx = (ndshape(s_flipped)[direct])//2 
-            ph0 = zeroth_order_ph(d_sigcoh[direct,idx])
+            s_flipped = d_sigcoh[direct:(t_start, -t_start)][direct, ::-1].C
+            idx = (ndshape(s_flipped)[direct]) // 2
+            ph0 = zeroth_order_ph(d_sigcoh[direct, idx])
             d_sigcoh /= ph0
             s_flipped /= ph0
             s_flipped.run(np.conj)
             s_flipped[direct] = s_flipped[direct][::-1]
-            if (s_flipped.getaxis(direct)[idx] == 0
-                    and
-                    d_sigcoh.getaxis(direct)[idx] ==
-                    0): # should be centered about zero, but will not be if too lopsided
-                for_resid = (abs(s_flipped -
-                    d_sigcoh[direct:(t_start,
-                        -t_start)])**2)
+            if (
+                s_flipped.getaxis(direct)[idx] == 0
+                and d_sigcoh.getaxis(direct)[idx] == 0
+            ):  # should be centered about zero, but will not be if too lopsided
+                for_resid = abs(s_flipped - d_sigcoh[direct:(t_start, -t_start)]) ** 2
                 N_ratio = for_resid.data.size
                 for_resid.mean_all_but(direct).run(sqrt)
-                N_ratio /= for_resid.data.size # the signal this has been plotted against is signal averaged by N_ratio
+                N_ratio /= (
+                    for_resid.data.size
+                )  # the signal this has been plotted against is signal averaged by N_ratio
                 resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 fl.next("residual after shift")
-                fl.plot(for_resid/sqrt(N_ratio), human_units=False, label="best shift%+e, mean of residual" % test_offset)
+                fl.plot(
+                    for_resid / sqrt(N_ratio),
+                    human_units=False,
+                    label="best shift%+e, mean of residual" % test_offset,
+                )
                 if test_offset == 0:
                     fl.plot(
                         d_sigcoh.C.mean_all_but(direct).run(abs),
@@ -375,7 +411,7 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
                         human_units=False,
                         label="best shift%+e, abs of mean" % test_offset,
                     )
-                    s_flipped.set_plot_color('r')
+                    s_flipped.set_plot_color("r")
                     fl.plot(
                         s_flipped.C.mean_all_but(direct).run(abs),
                         alpha=0.5,
@@ -384,22 +420,25 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2"
                     )
                     ax = plt.gca()
                     yl = ax.get_ylim()
-                    ax.set_ylim((0,yl[-1]))
+                    ax.set_ylim((0, yl[-1]))
     # }}}
     if add_rising:
-        d_rising = d[direct:(None, 0)][direct, exclude_rising:-1]  # leave out first few points
+        d_rising = d[direct:(None, 0)][
+            direct, exclude_rising:-1
+        ]  # leave out first few points
         d_rising.run(np.conj)
         N_rising = ndshape(d_rising)[direct]
     d = d[direct:(0, None)]
     if add_rising:
         d[direct, 1 : N_rising + 1] = (
-            d[direct, 1 : N_rising + 1]
-            + d_rising[direct, ::-1]
+            d[direct, 1 : N_rising + 1] + d_rising[direct, ::-1]
         ) / 2
-    d *= 2    
+    d *= 2
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
+
+
 def hermitian_function_test(
     s,
     direct="t2",
@@ -482,7 +521,7 @@ def hermitian_function_test(
     data['t2'] -= acqstart) to avoid confusion"""
     t_dw = s_timedom.get_ft_prop(direct, "dt")
     orig_bounds = s_timedom.getaxis(direct)[r_[0, -1]]
-    plot_bounds = orig_bounds # allow this to be set to ± inf if I want to see all
+    plot_bounds = orig_bounds  # allow this to be set to ± inf if I want to see all
     # }}}
     # {{{ force the axis to *start* at 0
     #     since we're doing FT here, also extend to
@@ -499,8 +538,14 @@ def hermitian_function_test(
     # *after* previous to avoid aliasing glitch
     tukeyfilter = s_ext.fromaxis(direct).run(lambda x: sci_win.tukey(len(x)))
     s_ext *= tukeyfilter
-    s_ext.ift(direct, pad=2 ** int(np.ceil(np.log(ndshape(s_timedom)[direct] * upsampling) / np.log(2))))
-    s_ext[direct:(orig_bounds[-1],None)] = 0 # explicitly zero, in case there are aliased negative times!
+    s_ext.ift(
+        direct,
+        pad=2
+        ** int(np.ceil(np.log(ndshape(s_timedom)[direct] * upsampling) / np.log(2))),
+    )
+    s_ext[
+        direct : (orig_bounds[-1], None)
+    ] = 0  # explicitly zero, in case there are aliased negative times!
     # }}}
     # {{{ now I need to throw out the initial, aliased
     #     portion of the signal -- do this manually by
@@ -508,9 +553,9 @@ def hermitian_function_test(
     #     order to be explanatory.  Note that I
     #     plot the signal before I actually throw stuff
     #     out
-    t_dwos = s_ext.get_ft_prop(direct, "dt") # oversampled dwell
+    t_dwos = s_ext.get_ft_prop(direct, "dt")  # oversampled dwell
     min_echo = aliasing_slop * t_dw
-    min_echo_idx = int(min_echo/t_dwos + 0.5)
+    min_echo_idx = int(min_echo / t_dwos + 0.5)
     min_echo = min_echo_idx * t_dwos
     if fl is not None:
         fl.push_marker()
@@ -528,20 +573,22 @@ def hermitian_function_test(
         )  # normalize by the average echo peak (for plotting purposes)
         fl.next("power terms")
         forplot = abs(s_ext).mean_all_but(direct)[direct:plot_bounds]
-        forplot[direct] -= min_echo # so zero is the
+        forplot[direct] -= min_echo  # so zero is the
         #                             first part of the
         #                             echo after the
         #                             aliasing slop, as
         #                             indicated below
         fl.plot(
-            forplot, label="echo envelope",
+            forplot,
+            label="echo envelope",
         )
     s_ext[direct, :-min_echo_idx] = s_ext[direct, min_echo_idx:]
     if fl is not None:
         fl.next("power terms")
         forplot = abs(s_ext).mean_all_but(direct)[direct:plot_bounds]
         fl.plot(
-            forplot, label="echo envelope",
+            forplot,
+            label="echo envelope",
         )
     # }}}
     # }}}
@@ -561,18 +608,23 @@ def hermitian_function_test(
     #     equal to the previous (integral of the power) term
     s_correl = s_ext.C
     s_correl.ft(direct)
-    s_correl.run(lambda x: x ** 2)
+    s_correl.run(lambda x: x**2)
     s_correl.ift(direct)
     s_correl.mean_all_but(direct).run(abs)
     s_correl *= normalization_term
     # }}}
     # {{{ calculate the cost function and determine where the center of the echo is!
-    cost_func = abs(s_energy - s_correl) # b/c this should not be less than 0, so penalize for numerical error when it's not!
-    reasonable_energy_range = s_energy.contiguous(lambda x: abs(x) > energy_threshold*abs(x.data).max())[0,:]
-    _,reasonable_energy_range[1] = s_energy.contiguous(lambda x: abs(x) >
-            energy_threshold*energy_threshold_lower*abs(x.data).max())[0,:]
+    cost_func = abs(
+        s_energy - s_correl
+    )  # b/c this should not be less than 0, so penalize for numerical error when it's not!
+    reasonable_energy_range = s_energy.contiguous(
+        lambda x: abs(x) > energy_threshold * abs(x.data).max()
+    )[0, :]
+    _, reasonable_energy_range[1] = s_energy.contiguous(
+        lambda x: abs(x) > energy_threshold * energy_threshold_lower * abs(x.data).max()
+    )[0, :]
     cost_func = cost_func[direct:reasonable_energy_range]
-    cost_func.run(lambda x: x/sqrt(abs(x)))  # based on what we'd seen
+    cost_func.run(lambda x: x / sqrt(abs(x)))  # based on what we'd seen
     #             previously (empirically), I take the
     #             square root for a well-defined
     #             minimum -- it could be better to do
@@ -607,54 +659,58 @@ def hermitian_function_test(
         )
         axvline(x=echo_peak / det_devisor(fl), linestyle=":")
     # }}}
-    echo_idx = int((echo_peak + min_echo)/t_dw+0.5)
+    echo_idx = int((echo_peak + min_echo) / t_dw + 0.5)
     shift_range = 4
-    if enable_refinement and echo_idx-aliasing_slop > shift_range+1:
+    if enable_refinement and echo_idx - aliasing_slop > shift_range + 1:
         s_foropt = s_timedom
-        shifts = nddata(
-                t_dw*r_[-shift_range:shift_range:300j],'echo shift')
+        shifts = nddata(t_dw * r_[-shift_range:shift_range:300j], "echo shift")
         s_foropt.ft(direct)
         # positive pushes time domain to left --
         # should represent that echo occurred later
         # than expected, and so should be added to the echo_idx*t_dw
         # estimate of the echo time
-        s_foropt *= np.exp(1j*2*np.pi*shifts*s_foropt.fromaxis(direct))
+        s_foropt *= np.exp(1j * 2 * np.pi * shifts * s_foropt.fromaxis(direct))
         s_foropt.ift(direct)
-        s_foropt = s_foropt[direct,
-                aliasing_slop:aliasing_slop+2*(echo_idx-aliasing_slop)+1]
+        s_foropt = s_foropt[
+            direct, aliasing_slop : aliasing_slop + 2 * (echo_idx - aliasing_slop) + 1
+        ]
         # the center is now at echo_idx-aliasing_slop
         # {{{ phasing must be done independently for each echo shift
-        ph0 = s_foropt[direct, echo_idx-aliasing_slop]
+        ph0 = s_foropt[direct, echo_idx - aliasing_slop]
         ph0 /= abs(ph0)
         # }}}
         s_foropt /= ph0
-        s_foropt = s_foropt[direct,shift_range:-shift_range]
-        s_foropt -= s_foropt.C[direct,::-1].run(np.conj)
-        s_foropt.run(lambda x: abs(x)**2)
-        s_foropt.mean_all_but('echo shift')
+        s_foropt = s_foropt[direct, shift_range:-shift_range]
+        s_foropt -= s_foropt.C[direct, ::-1].run(np.conj)
+        s_foropt.run(lambda x: abs(x) ** 2)
+        s_foropt.mean_all_but("echo shift")
         s_foropt.run(sqrt)
         if fl is not None:
-            fl.next('refinement')
+            fl.next("refinement")
             fl.plot(s_foropt, human_units=False)
-        s_foropt = s_foropt.argmin('echo shift').item()
+        s_foropt = s_foropt.argmin("echo shift").item()
         if fl is not None:
-            fl.next('refinement')
+            fl.next("refinement")
             axvline(x=s_foropt)
-            axvline(x=(echo_peak+min_echo)-t_dw*echo_idx,
-                    ls=':',
-                    alpha=0.25)
+            axvline(x=(echo_peak + min_echo) - t_dw * echo_idx, ls=":", alpha=0.25)
             fl.next("power terms")
-            axvline(x=(t_dw*echo_idx+s_foropt - min_echo)/det_devisor(fl),
-                    ls='-',
-                    alpha=0.25)
+            axvline(
+                x=(t_dw * echo_idx + s_foropt - min_echo) / det_devisor(fl),
+                ls="-",
+                alpha=0.25,
+            )
             fl.pop_marker()
-        return t_dw*echo_idx + s_foropt
+        return t_dw * echo_idx + s_foropt
     else:
         if enable_refinement:
-            logging.info("warning: can't do hermitian phasing refinement -- not enough points")
+            logging.info(
+                "warning: can't do hermitian phasing refinement -- not enough points"
+            )
         if fl is not None:
             fl.pop_marker()
         return echo_peak + min_echo
+
+
 def determine_sign(s, direct="t2", fl=None):
     """Given that the signal resides in `pathway`, determine the sign of the signal.
     The sign can be used, e.g. so that all data in an inversion-recover or
