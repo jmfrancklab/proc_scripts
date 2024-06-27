@@ -172,6 +172,11 @@ def analyze_square_refl(d, label='', fl=None,
     decay_timescale = 3./f.output('R')
     end_blip = ((54. / f.output('R') * 2 * pi * frq)*1e-9)
     phases = secon_blip['t':(150e-9,end_blip)]
+    # should actually determine error from noise std
+    # -- the following is just an estimate
+    phases.set_error(0.01)
+    # should use new phdiff function in pySpecData to calculate the
+    # following
     phase_diff = phases['t',1:] / phases['t',:-1]
     dt = np.diff(phases.getaxis('t')[:2]).item()
     phase_diff.mean('t') # favors points with a greater magnitude
@@ -192,9 +197,8 @@ def analyze_square_refl(d, label='', fl=None,
             alpha=0.3,
             label="reflected angle " + label,
             )
-        fl.plot(frq_line_plot.angle/2/pi, color=colors[-1],
+        fl.plot(frq_line_plot.angle.set_error(None)/2/pi, color=colors[-1],
                 linewidth=1)
-    if fl is not None:
         ax2 = fl.twinx(orig=False)
         fl.plot(
                 phases.angle/2/pi,
@@ -204,7 +208,7 @@ def analyze_square_refl(d, label='', fl=None,
             alpha=0.3,
             label="reflected angle " + label,
             )
-        fl.plot(frq_line_plot.angle/2/pi, color=colors[-1],
+        fl.plot(frq_line_plot.angle.set_error(None)/2/pi, color=colors[-1],
                 linewidth=1)
         x = plb.mean(phases.getaxis('t'))/1e-9
         y = np.angle(plb.mean(phases.data))/2/pi
@@ -236,8 +240,7 @@ def analyze_square_refl(d, label='', fl=None,
                 transform=ax.transData,
                 color=color,
                 )
-    if fl is not None: fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8)#, label='fit, Q=%0.1f'%Q)
-    if fl is not None:
+        fl.plot(f.eval(100).set_units('t','s'),'k--', alpha=0.8)#, label='fit, Q=%0.1f'%Q)
         fl.twinx(orig=True)
         fl.plot(f.eval(100).set_units('t','s'),'k--',
                 alpha=0.8)
