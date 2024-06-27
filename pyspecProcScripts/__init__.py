@@ -22,10 +22,12 @@ from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
 from .envelope import L2G, fit_envelope
+from .first_level.QESR_rescale import QESR_scalefactor
 
 __all__ = [
     "DCCT",
     "L2G",
+    "QESR_scalefactor",
     "Vpp2power",
     "active_propagation",
     "apod_matched_filter",
