@@ -466,7 +466,6 @@ def proc_nutation_v4(s, fl=None):
         s.reorder(["ph1", "nScans", "indirect"])
     else:
         s.reorder(["ph1", "indirect", "nScans"])
-    s["indirect"] *= 1e-6  # why is it labeled in μs??
     s.rename("indirect", "p_90")
     s.set_units("t2", "s")
     s.set_units("p_90", "s")
