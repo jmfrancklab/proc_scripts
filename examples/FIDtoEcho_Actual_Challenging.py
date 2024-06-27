@@ -31,27 +31,24 @@ f_range = (
 filename = "210604_50mM_4AT_AOT_w11_cap_probe_echo"
 signal_pathway = {"ph1": 1, "ph2": 0}
 with figlist_var() as fl:
-    for nodename, file_location, postproc, label, tau_subtraction in [
-        # (
-        #    "tau_1000",
-        #    "ODNP_NMR_comp/Echoes",
-        #    "spincore_echo_v1",
-        #    "tau is 1 ms",
-        #    0.1,
-        # ),
+    for nodename, file_location, postproc, label, in [
+        (
+            "tau_1000",
+            "ODNP_NMR_comp/Echoes",
+            "spincore_echo_v1",
+            "tau is 1 ms",
+        ),
         (
             "tau_3500",
             "ODNP_NMR_comp/Echoes",
             "spincore_echo_v1",
             "tau is 3.5 ms",
-            True,
         ),
         (
             "tau_11135",
             "ODNP_NMR_comp/Echoes",
             "spincore_echo_v1",
             "tau is 11.135 ms",
-            False,
         ),
     ]:
         data = find_file(
@@ -70,16 +67,11 @@ with figlist_var() as fl:
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
-        fl.next("1")
-        fl.plot(
-            select_pathway(data.C.mean("nScans"), data.get_prop("coherence_pathway"))
-        )
         fl.next("Data processing", fig=fig)
         fl.basename = "(%s)" % label
         data = fid_from_echo(
             data,
             data.get_prop("coherence_pathway"),
-            rough_tau_set=tau_subtraction,
             fl=fl,
         )
         fl.image(data["t2":(-1e3, 1e3)], ax=ax_list[1], human_units=False)

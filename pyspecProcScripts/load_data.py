@@ -309,6 +309,10 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 def proc_spincore_SE_v1(s, fl=None):
     s.ft("ph1")
+    s.set_units('t2','s')
+    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
+    s *= s.shape["nScans"]
+    s.squeeze()
     s.ft("t2", shift=True)
     return s
 
@@ -333,6 +337,10 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
     s.rename("ph2", "ph_overall")  # overall change in coherence
     s.rename("ph_diff", "ph1")  # change during pulse 1
     # }}}
+    s.set_units('t2','s')
+    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
+    s *= s.shape["nScans"]
+    s.squeeze()
     s.ft("t2", shift=True)
     s.reorder(["ph1", "ph_overall"])
     return s

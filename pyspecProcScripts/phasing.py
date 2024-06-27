@@ -186,8 +186,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
-def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, rough_tau_set = True,
-        direct="t2",
+def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, direct="t2",
         exclude_rising=3,
         slice_multiplier=20,
         peak_lower_thresh=0.1,
@@ -206,9 +205,6 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, rough_tau_s
         Take the first part of the echo (that which rises to the maximum)
         and add the decaying (FID like) part. This increases the SNR of
         the early points of the signal.
-    rough_tau_set: boolean
-        Subtract the tau that was programmed in the acquisition parameters
-        before phasing giving the Hermitian a better starting point
     direct: string
         Name of the direct dimension
     exclude_rising: int
@@ -241,15 +237,12 @@ def fid_from_echo(d, signal_pathway=None, fl=None, add_rising=False, rough_tau_s
     # {{{ autodetermine slice range
     freq_envelope = d.C
     freq_envelope.ift('t2')
-    if rough_tau_set:    
-        freq_envelope['t2'] -= d.get_prop('acq_params')['tau_us']*1e-6    
     freq_envelope = freq_envelope['t2':(0,None)] # slice out rising echo estimate according to experimental tau in order to limit oscillations
     freq_envelope.ft('t2')
     freq_envelope.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(freq_envelope, human_units=False, label="signal energy")
-    print(freq_envelope.get_ft_prop(direct,'df'))    
     freq_envelope.convolve(direct,
             freq_envelope.get_ft_prop(direct,'df')*5,
             enforce_causality=False)
