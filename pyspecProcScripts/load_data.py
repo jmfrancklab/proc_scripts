@@ -462,6 +462,12 @@ def proc_nutation_chunked(s, fl=None):
 
 
 def proc_nutation_v4(s, fl=None):
+    """nutation curve
+
+    note that v4 are assumed to have an indirect axis labeled in SI units.
+    Note that data acquired on 6/25 or before might have really messed up axis
+    coordinates (some are multiplied by 1e12!)
+    """
     if s.shape["indirect"] > s.shape["nScans"]:
         s.reorder(["ph1", "nScans", "indirect"])
     else:
