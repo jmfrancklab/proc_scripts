@@ -39,7 +39,8 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
         fl.image(s.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
     s.ft(
         ["ph1", "ph2"]
-    )  # fourier transforming from phase cycle dim to coherence dimension
+    )  # not doing a unitary FT in order to match the
+    #    coherence domain signal to its size in each transient
     logging.info(
         strm(
             "I didn't know what to set the coherence pathway to so you need to manually do this by setting s.set_prop('coherence_pathway') = {'ph1':x, 'ph2':y}"
@@ -303,8 +304,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 
 def proc_spincore_SE_v1(s, fl=None):
-    s.ft("ph1")  # not doing a unitary FT in order to match the
-    # coherence domain signal to its size in each transient
+    s.ft("ph1")  
     s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
