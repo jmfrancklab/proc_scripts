@@ -339,7 +339,6 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
     # }}}
     s.set_units('t2','s')
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
     s.reorder(["ph1", "ph_overall"])
@@ -572,7 +571,7 @@ def proc_spincore_echo_v1(s, fl=None):
     s.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
     s *= s.shape["nScans"]
     s.squeeze()
-    #s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
+    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     if "nScans" in s.dimlabels:
         s.setaxis("nScans", "#")
     s.ft("t2", shift=True)
