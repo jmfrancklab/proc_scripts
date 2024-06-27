@@ -38,31 +38,19 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
         fl.next("IR prior to FTing ph")
         fl.image(s.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
     s.ft(
-        ["ph1", "ph2"], unitary=True
+        ["ph1", "ph2"]
     )  # fourier transforming from phase cycle dim to coherence dimension
     s.reorder(["indirect", "t2"], first=False)
     if fl is not None:
         s_forplot = s.C
         fl.next("FT")
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
         fl.next("time domain (all $\\Delta p$)")
         s_forplot.ift("t2")
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
         fl.next("frequency domain (all $\\Delta p$)")
         s_forplot.ft("t2", pad=4096)
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
     return s
 
 
@@ -84,7 +72,7 @@ def proc_bruker_deut_IR_mancyc(s, fl=None):
     # titling to coherence domain
     s.ft("t2", shift=True)  # fourier transform
     s.ft(
-        ["ph1", "ph2"], unitary=True
+        ["ph1", "ph2"]
     )  # fourier transforming from phase cycle dim to coherence dimension
     s.reorder(["indirect", "t2"], first=False)
     if fl is not None:
@@ -145,7 +133,7 @@ def proc_spincore_CPMG_v1(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder(["ph1", "tE", "nScans", "t2"])
-    s.ft(["ph1"], unitary=True)
+    s.ft(["ph1"])
     s.reorder("nScans", first=True)
     if fl is not None:
         fl.next("time domain")
@@ -162,13 +150,13 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     assert s.get_prop("acq")["L"][22] == 4, "phase cycle isn't correct!"
     s.chunk("indirect", ["indirect", "ph1", "ph2"], [-1, 2, 4])
     s.setaxis("ph1", r_[0, 2] / 4).setaxis("ph2", r_[0:4] / 4)
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     s.reorder(["ph1", "ph2", "indirect"])
     if fl is not None:
         fl.next("raw data(t2,coh)")
         fl.image(s)
     # {{{removes CP aspect
-    s.ift(["ph1", "ph2"], unitary=True)
+    s.ift(["ph1", "ph2"])
     s = s["ph2", [1, 3]]
     # }}}
     s.setaxis("indirect", s.get_prop("vd"))
@@ -216,15 +204,13 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     tau_extra = d12
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = (
-        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    )
+    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
     s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
     s.setaxis("tE", (1 + r_[0:nEchoes]) * twice_tau)
     s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     s.reorder(["ph1", "ph2", "indirect"])
     if fl is not None:
         fl.next("freq domain coh domain")
@@ -244,7 +230,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
     if fl is not None:
         fl.next("raw data before")
         fl.image(s)
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     s.reorder(["ph1", "ph2", "indirect", "t2"])
     anavpt_info = [
         j for j in s.get_prop("pulprog").split("\n") if "anavpt" in j.lower()
@@ -286,9 +272,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
     tau_extra = 20e-6
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = (
-        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    )
+    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
     s.set_units("t2", "us")
@@ -309,7 +293,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 def proc_spincore_SE_v1(s, fl=None):
     s.ft("ph1")
-    s.set_units('t2','s')
+    s.set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
     s.squeeze()
@@ -337,7 +321,7 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
     s.rename("ph2", "ph_overall")  # overall change in coherence
     s.rename("ph_diff", "ph1")  # change during pulse 1
     # }}}
-    s.set_units('t2','s')
+    s.set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.squeeze()
     s.ft("t2", shift=True)
@@ -365,7 +349,7 @@ def proc_Hahn_echoph(s, fl=None):
     if fl is not None:
         fl.next("raw data, chunked")
         fl.image(abs(s))
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     if fl is not None:
         fl.next("coherence")
         fl.image(abs(s))
@@ -378,16 +362,13 @@ def proc_spincore_IR(s, fl=None):
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
     s.setaxis("ph1", r_[0, 2.0] / 4)
     s.setaxis("ph2", r_[0, 2.0] / 4)
+    s.reorder(["ph1", "ph2"]).set_units("t2", "s")
     s.set_prop("coherence_pathway", {"ph1": 0, "ph2": -1})
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
     s.squeeze()
-    if "nScans" in s.dimlabels:
-        s.reorder(["ph1", "ph2", "nScans", "vd", "t2"]).set_units("t2", "s")
-    else:
-        s.reorder(["ph1", "ph2", "vd", "t2"]).set_units("t2", "s")
     s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     if fl is not None:
         fl.next("raw data -- coherence channels")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
@@ -408,14 +389,14 @@ def proc_spincore_IR_v2(s, fl=None):
         s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
     s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
     s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
-    s.set_units('t2','s')
+    s.set_units("t2", "s")
     s.set_prop("coherence_pathway", {"ph1": 0, "ph2": -1})
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder(["ph1", "ph2"]).set_units("t2", "s")
     s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     if fl is not None:
         fl.next("raw data -- coherence channels")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
@@ -444,7 +425,7 @@ def proc_nutation(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder("t2", first=False)
-    s.ft(["ph2", "ph1"], unitary=True)
+    s.ft(["ph2", "ph1"])
     if fl is not None:
         fl.next("after phase cycle FT")
         fl.image(s["ph1", 1]["ph2", 0].C.human_units())
@@ -475,7 +456,7 @@ def proc_nutation_amp(s, fl=None):
     s.squeeze()
     if "p_90" in s.dimlabels:
         s.set_units("p_90", "s")
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     return s
 
 
@@ -488,7 +469,7 @@ def proc_nutation_chunked(s, fl=None):
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
     s.squeeze()
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     s.reorder(["ph1", "ph2", "p_90"])
     if fl is not None:
         fl.next("Raw Data - Time Domain")
@@ -501,10 +482,10 @@ def proc_nutation_chunked(s, fl=None):
 
 
 def proc_nutation_v2(s, fl=None):
-    logging.info("loading pre-processing for nutation")
+    logging.debug("loading pre-processing for nutation")
     s.set_units("indirect", "s")
-    s.ft(["ph1"], unitary=True)
-    s.set_units('t2','s')
+    s.ft(["ph1"])
+    s.set_units("t2", "s")
     s.set_prop("coherence_pathway", {"ph1": 1})
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
@@ -533,7 +514,7 @@ def proc_nutation_v4(s, fl=None):
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
     s.squeeze()
-    s.ft("ph1", unitary=True)
+    s.ft("ph1")
     s.ft("t2", shift=True)
     return s
 
@@ -553,7 +534,7 @@ def proc_var_tau(s, fl=None):
     s.set_units("V")
     if fl is not None:
         fl.next("raw signal!")
-    s.ft("t2", shift=True).ft(["ph1", "ph2"], unitary=True)
+    s.ft("t2", shift=True).ft(["ph1", "ph2"])
     s.reorder(["ph1", "ph2", "tau"])
     if fl is not None:
         fl.plot(abs(s).smoosh(["ph2", "ph1", "tau"], "transients"), alpha=0.2)
@@ -575,7 +556,7 @@ def proc_spincore_echo_v1(s, fl=None):
     if "nScans" in s.dimlabels:
         s.setaxis("nScans", "#")
     s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     return s
 
 
@@ -604,7 +585,7 @@ def proc_spincore_ODNP_v1(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
-    s.ft(["ph1"], unitary=True)  # Fourier Transforms coherence channels
+    s.ft(["ph1"])  # Fourier Transforms coherence channels
     s.reorder(["ph1", "power"])
     s.C.setaxis("power", "#").set_units("power", "scan #")
     if fl is not None:
@@ -647,7 +628,7 @@ def proc_spincore_ODNP_v2(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"], unitary=True)  # Fourier Transforms coherence channels
+    s.ft(["ph1", "ph2"])  # Fourier Transforms coherence channels
     s.C.setaxis("power", "#").set_units("power", "scan #")
     s.reorder(["ph1", "ph2", "power"])
     if fl is not None:
@@ -677,7 +658,7 @@ def proc_spincore_ODNP_v3(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
-    s.ft(["ph1"], unitary=True)
+    s.ft(["ph1"])
     if fl is not None:
         fl.next("Raw Data \n Frequency Domain")
         fl.image(s)
@@ -701,7 +682,7 @@ def proc_spincore_ODNP_v4(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"], unitary=True)
+    s.ft(["ph1", "ph2"])
     s.reorder(["ph1", "ph2", "time"])
     if fl is not None:
         fl.next("Raw Data \n Frequency Domain")
@@ -722,9 +703,7 @@ def proc_capture(s):
 def proc_DOSY_CPMG(s):
     logging.debug("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
-    l22 = int(
-        s.get_prop("acq")["L"][22]
-    )  # b/c the l are integers by definition
+    l22 = int(s.get_prop("acq")["L"][22])  # b/c the l are integers by definition
     l25 = int(s.get_prop("acq")["L"][25])
     d12 = s.get_prop("acq")["D"][12]
     d11 = s.get_prop("acq")["D"][11]
@@ -751,9 +730,7 @@ def proc_DOSY_CPMG(s):
     )
     m = re.search("([0-9.]+) G/mm", s.get_prop("gradient_calib"))
     grad_list *= float(m.groups()[0]) * 0.1
-    dwdel1 = (
-        3.5e-6  # where does this come from? DE is actually larger than this?
-    )
+    dwdel1 = 3.5e-6  # where does this come from? DE is actually larger than this?
     # {{{ find anavpt without hard-setting
     m = re.search('"anavpt=([0-9]+)"', ppg)
     if m is None:
@@ -786,7 +763,7 @@ def proc_DOSY_CPMG(s):
     s.setaxis("ph4", r_[0.0, 2.0] / 4)
     s.setaxis("m", r_[0, 2.0] / 4)
     s.setaxis("n", r_[0, 2.0] / 4)
-    s.ft(["ph8", "ph4", "m", "n"], unitary=True)
+    s.ft(["ph8", "ph4", "m", "n"])
     s.reorder(["m", "n", "ph4", "ph8", "indirect", "t2"])
     s.setaxis("indirect", grad_list)
     fl.next("abs raw data")
@@ -832,7 +809,7 @@ def proc_field_sweep_v1(s):
     s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
-    s.ft("ph1", unitary=True)
+    s.ft("ph1")
     return s
 
 
@@ -843,7 +820,7 @@ def proc_field_sweep_v2(s):
     s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
-    s.ft("ph1", unitary=True)
+    s.ft("ph1")
     return s
 
 
