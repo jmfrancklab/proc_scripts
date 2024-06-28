@@ -50,7 +50,11 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     if fl is not None:
         s_forplot = s.C
         fl.next("FT")
-        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
+        fl.image(
+            s_forplot.C.setaxis("indirect", "#").set_units(
+                "indirect", "scan #"
+            )
+        )
         fl.next("time domain (all $\\Delta p$)")
         s_forplot.ift("t2")
         fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
