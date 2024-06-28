@@ -33,7 +33,11 @@ d = find_file(
 print("postproc_type:", d.get_prop("postproc_type"))
 with figlist_var() as fl:
     d.squeeze()
+    print('='*13 + 'ACQ PARAMS' + '='*13)
+    for k,v in d.get_prop('acq_params').items():
+        print(f'{k:>25s} : {v}')
     fl.next("raw data")
+    print('='*36)
 
     def image_or_plot(d):
         if len(d.dimlabels) == 1:
