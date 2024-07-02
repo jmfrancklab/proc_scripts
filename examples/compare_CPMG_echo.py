@@ -4,26 +4,40 @@ from pyspecProcScripts import lookup_table, select_pathway
 
 with figlist_var() as fl:
     for thisfile, exp_type, nodename, complex_cpmg, thislabel in [
-        (
-            "240702_13p5mM_TEMPOL_CPMG.h5",
-            "ODNP_NMR_comp/CPMG",
-            "CPMG_13",
-            False,
-            "CPMG simple cyc",
-        ),
+        #(
+        #    "240702_13p5mM_TEMPOL_CPMG.h5",
+        #    "ODNP_NMR_comp/CPMG",
+        #    "CPMG_13",
+        #    False,
+        #    "CPMG simple cyc",
+        #),
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
             "CPMG_17",
             True,
-            "CPMG large cyc",
+            "CPMG large cyc SW = 2.0",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_18",
+            True,
+            "CPMG large cyc SW = 10",
         ),
         (
             "240702_13p5mM_TEMPOL_echo.h5",
             "ODNP_NMR_comp/Echoes",
             "echo_10",
             False,
-            "echo large cyc",
+            "echo large cyc SW = 2.0",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_11",
+            False,
+            "echo large cyc SW = 10.0",
         ),
     ]:
         thisd = find_file(
@@ -52,4 +66,4 @@ with figlist_var() as fl:
             thisd["t2"] = (thisd["t2"]["nEcho"]) * echo_time + thisd["t2"]["t2"]
         if 'nScans' in thisd.dimlabels:
             thisd.mean('nScans')
-        fl.plot(abs(thisd), label=thislabel)
+        fl.plot(abs(thisd), 'o',label=thislabel)
