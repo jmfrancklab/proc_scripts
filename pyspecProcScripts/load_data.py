@@ -609,7 +609,7 @@ def proc_spincore_ODNP_v4(s, fl=None):
 def proc_spincore_generalproc_v1(s, fl=None):
     s.ft("t2", shift=True)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
-        s.ft([j], unitary=True)
+        s.ft([j])
     return s
 
 
