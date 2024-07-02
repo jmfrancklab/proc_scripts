@@ -11,13 +11,13 @@ with figlist_var() as fl:
         #    False,
         #    "CPMG simple cyc",
         #),
-        (
-            "240702_13p5mM_TEMPOL_CPMG.h5",
-            "ODNP_NMR_comp/CPMG",
-            "CPMG_17",
-            True,
-            "CPMG large cyc SW = 2.0",
-        ),
+        #(
+        #    "240702_13p5mM_TEMPOL_CPMG.h5",
+        #    "ODNP_NMR_comp/CPMG",
+        #    "CPMG_17",
+        #    True,
+        #    "CPMG large cyc SW = 2.0",
+        #),
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
@@ -25,13 +25,13 @@ with figlist_var() as fl:
             True,
             "CPMG large cyc SW = 10",
         ),
-        (
-            "240702_13p5mM_TEMPOL_echo.h5",
-            "ODNP_NMR_comp/Echoes",
-            "echo_10",
-            False,
-            "echo large cyc SW = 2.0",
-        ),
+        #(
+        #    "240702_13p5mM_TEMPOL_echo.h5",
+        #    "ODNP_NMR_comp/Echoes",
+        #    "echo_10",
+        #    False,
+        #    "echo large cyc SW = 2.0",
+        #),
         (
             "240702_13p5mM_TEMPOL_echo.h5",
             "ODNP_NMR_comp/Echoes",
