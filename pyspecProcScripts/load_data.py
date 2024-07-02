@@ -320,13 +320,15 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
     r"""this one uses a phase cycle where the overall phase and 90-180
     phase difference are cycled in a nested way -- see the DCCT paper to
     understand this!"""
-    s.ft(["ph2", "ph_diff"])  # if we have used cycles for the axis
+    #s.ft(["ph2", "ph_diff"])  # if we have used cycles for the axis
     #                          coordinates, signal in the coherence
     #                          dimension will match the amplitude of signal
     #                          in a single transient if we do this
     # {{{ after the FT, these have a different meaning in terms of coherence
     #     pathways -- remember that when labeling, pySpecData will change
     #     the ph here to a δp
+    s.ft(['ph2'])
+    s.ft(['ph_diff'])
     s.rename("ph2", "ph_overall")  # overall change in coherence
     s.rename("ph_diff", "ph1")  # change during pulse 1
     # }}}
@@ -630,8 +632,10 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return s
 
 def proc_spincore_generalproc_v1(s, fl=None):
+    s.ft('t2',shift=True)
     for j in [k for k in s.dimlabels if k.startswith('ph')]:
-        s.ft(j)
+        s.ft([j],unitary=True)
+    return s    
 
 def proc_capture(s):
     logging.info("loading pre-processing for square wave capture")
