@@ -1,5 +1,5 @@
 import numpy as np
-from pyspecdata import find_file, figlist_var,ndshape
+from pyspecdata import find_file, figlist_var
 from pyspecProcScripts import lookup_table, select_pathway
 
 with figlist_var() as fl:
