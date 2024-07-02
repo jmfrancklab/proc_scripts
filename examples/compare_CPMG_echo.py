@@ -1,25 +1,28 @@
 import numpy as np
-from pyspecdata import find_file, figlist_var
+from pyspecdata import find_file, figlist_var,ndshape
 from pyspecProcScripts import lookup_table, select_pathway
 
 with figlist_var() as fl:
-    for thisfile, exp_type, nodename, thislabel in [
+    for thisfile, exp_type, nodename, complex_cpmg, thislabel in [
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
             "CPMG_13",
+            False,
             "CPMG simple cyc",
         ),
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
             "CPMG_16",
+            True,
             "CPMG large cyc",
         ),
         (
             "240702_13p5mM_TEMPOL_echo.h5",
             "ODNP_NMR_comp/Echoes",
             "echo_7",
+            False,
             "echo large cyc",
         ),
     ]:
@@ -35,7 +38,13 @@ with figlist_var() as fl:
             fl.image(thisd, interpolation="bilinear")
         thisd.ift("t2")
         fl.next("abs(t domain) comparison")
-        thisd = select_pathway(thisd, thisd.get_prop("coherence_pathway"))
+        if complex_cpmg:
+            odd = select_pathway(thisd,thisd.get_prop('coherence_pathway'))
+            even_pw = {'ph1':-1,'ph2':-2,'ph_overall':-1}
+            even = select_pathway(thisd.C,even_pw)
+            thisd = odd + even
+        else:
+            thisd = select_pathway(thisd, thisd.get_prop("coherence_pathway"))
         if "nEcho" in thisd.dimlabels:
             thisd.smoosh(["nEcho", "t2"], "t2")
             acq = thisd.get_prop("acq_params")
