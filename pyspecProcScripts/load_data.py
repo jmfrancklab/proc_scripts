@@ -605,11 +605,13 @@ def proc_spincore_ODNP_v4(s, fl=None):
         s.ft("t2")
     return s
 
+
 def proc_spincore_generalproc_v1(s, fl=None):
-    s.ft('t2',shift=True)
-    for j in [k for k in s.dimlabels if k.startswith('ph')]:
-        s.ft([j],unitary=True)
-    return s    
+    s.ft("t2", shift=True)
+    for j in [k for k in s.dimlabels if k.startswith("ph")]:
+        s.ft([j], unitary=True)
+    return s
+
 
 def proc_capture(s):
     logging.info("loading pre-processing for square wave capture")
