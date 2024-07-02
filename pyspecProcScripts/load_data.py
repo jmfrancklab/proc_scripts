@@ -606,6 +606,13 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return s
 
 
+def proc_spincore_generalproc_v1(s, fl=None):
+    s.ft("t2", shift=True)
+    for j in [k for k in s.dimlabels if k.startswith("ph")]:
+        s.ft([j], unitary=True)
+    return s
+
+
 def proc_capture(s):
     logging.info("loading pre-processing for square wave capture")
     s.set_units("t", "s").name("Amplitude").set_units("V")
@@ -743,6 +750,7 @@ lookup_table = {
     "spincore_ODNP_v4": proc_spincore_ODNP_v4,  # for 4 x 4 phase cycle no meter powers
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
+    "spincore_generalproc_v1": proc_spincore_generalproc_v1,
     "square_wave_capture_v1": proc_capture,
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
