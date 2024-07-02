@@ -21,7 +21,7 @@ with figlist_var() as fl:
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
-            "CPMG_18",
+            "CPMG_19",
             True,
             "CPMG large cyc SW = 10",
         ),
@@ -35,7 +35,7 @@ with figlist_var() as fl:
         (
             "240702_13p5mM_TEMPOL_echo.h5",
             "ODNP_NMR_comp/Echoes",
-            "echo_11",
+            "echo_12",
             False,
             "echo large cyc SW = 10.0",
         ),
