@@ -7,14 +7,14 @@ with figlist_var() as fl:
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
-            "CPMG_14",
-            "CPMG large cyc",
+            "CPMG_13",
+            "CPMG simple cyc",
         ),
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
             "CPMG_16",
-            "CPMG large cyc fix bug",
+            "CPMG large cyc",
         ),
         (
             "240702_13p5mM_TEMPOL_echo.h5",
