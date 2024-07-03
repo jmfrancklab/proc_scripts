@@ -143,7 +143,10 @@ with figlist_var() as fl:
         fl.next("raw data for %s" % thislabel)
         fl.image(thisd, interpolation='auto')
         fl.next("raw data for %s, slice overall and signal average" % thislabel)
-        fl.image(thisd['ph_overall',-1].sum('nScans').ift('t2'), interpolation='auto')
+        forplot = thisd['ph_overall',-1].sum('nScans').ift('t2')
+        if 'nEcho' in forplot.dimlabels:
+            forplot.reorder('nEcho', first=False)
+        fl.image(forplot)
         thisd.ift("t2")
         fl.next("abs(t domain) comparison")
         if complex_cpmg:
