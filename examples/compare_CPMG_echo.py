@@ -12,36 +12,35 @@ def echo_interleave(d, phcycdim):
     retval["nEcho", 1::2] = d["ph1", -1]["nEcho", 1::2]
     retval.copy_axes(d).copy_props(d)
     return retval
-
+    
 with psd.figlist_var() as fl:
-    for thisfile, exp_type, nodename, this_basename, manystep_cpmg, thislabel in [
+    for thisfile, exp_type, nodename, manystep_cpmg, thislabel, thisbasename in [
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
             "CPMG_13",
-            True,
             False,
             "CPMG simple cyc SW = 16",
+            "no power",
         ),
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
             "CPMG_19",
             True,
-            True,
             "CPMG large cyc SW = 10.0",
+            "no power",
         ),
         (
             "240702_13p5mM_TEMPOL_echo.h5",
             "ODNP_NMR_comp/Echoes",
             "echo_12",
-            True,
             False,
             "echo large cyc SW = 10.0",
+            "no power",
         ),
     ]:
-        fl.this_basename = no_power
-
+        fl.basename = thisbasename
         thisd = psd.find_file(
             thisfile, exp_type=exp_type, expno=nodename, lookup=lookup_table
         )
