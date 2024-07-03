@@ -602,7 +602,7 @@ def proc_spincore_ODNP_v4(s, fl=None):
 
 
 def proc_spincore_generalproc_v1(s, fl=None):
-    s.ft("t2", shift=True) # if we have used cycles for the axis
+    s.ft("t2", shift=True)  # if we have used cycles for the axis
     #                        coordinates, signal in the coherence dimension
     #                        will match the amplitude of signal in a single
     #                        transient if we do this
@@ -610,6 +610,10 @@ def proc_spincore_generalproc_v1(s, fl=None):
         s.ft([j])
     # always put the phase cycling dimensions on the outside
     s.reorder([j for j in s.dimlabels if j.startswith("ph")])
+    # {{{ put ph_overall outside, if it exists, since there should be nothing outside that
+    if "ph_overall" in s.dimlabels:
+        s.reorder("ph_overall")
+    # }}}
     # apply the receiver response
     s /= s.fromaxis("t2").run(
         lambda x: np.sinc(x / (s.get_prop("acq_params")["SW_kHz"] * 1e3))

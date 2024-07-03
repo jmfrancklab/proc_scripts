@@ -141,18 +141,21 @@ with figlist_var() as fl:
         )
         thisd.squeeze()
         fl.next("raw data for %s" % thislabel)
-        rows = np.prod([thisd.shape[j] for j in thisd.dimlabels[:-1]])
-        if rows < 500:
-            fl.image(thisd)
-        else:
-            fl.image(thisd, interpolation="bilinear")
+        fl.image(thisd, interpolation='auto')
+        fl.next("raw data for %s, slice overall and signal average" % thislabel)
+        fl.image(thisd['ph_overall',-1].sum('nScans').ift('t2'), interpolation='auto')
         thisd.ift("t2")
         fl.next("abs(t domain) comparison")
         if complex_cpmg:
-            odd = select_pathway(thisd,thisd.get_prop('coherence_pathway'))
-            even_pw = {'ph1':-1,'ph2':-2,'ph_overall':-1}
+            odd_pw = {'ph1':1,'ph2':-2,'ph_overall':-1}
+            odd = select_pathway(thisd,odd_pw)
+            even_pw = {'ph1':-1,'ph2':+2,'ph_overall':-1}
             even = select_pathway(thisd.C,even_pw)
-            thisd = odd + even
+            # {{{ interleave the echoes
+            thisd = odd
+            # "even" starts w/ 1 b/c that's the second echo
+            thisd['nEcho',1::2] = even['nEcho',1::2]
+            # }}}
         else:
             thisd = select_pathway(thisd, thisd.get_prop("coherence_pathway"))
         if "nEcho" in thisd.dimlabels:
