@@ -1,8 +1,19 @@
 import numpy as np
-from pyspecdata import find_file, figlist_var
+import pyspecdata as psd
 from pyspecProcScripts import lookup_table, select_pathway
 
-with figlist_var() as fl:
+def echo_interleave(d, phcycdim):
+    "interleave even an odd echoes coming from phcycdim"
+    assert d.get_ft_prop(phcycdim)
+    retval = d.shape
+    retval.pop(phcycdim)
+    retval = retval.alloc(dtype=np.complex128, format=None)
+    retval["nEcho", 0::2] = d["ph1", +1]["nEcho", 0::2]
+    retval["nEcho", 1::2] = d["ph1", -1]["nEcho", 1::2]
+    retval.copy_axes(d).copy_props(d)
+    return retval
+
+with psd.figlist_var() as fl:
     for thisfile, exp_type, nodename, complex_cpmg, thislabel in [
         #(
         #    "240702_13p5mM_TEMPOL_CPMG.h5",
@@ -136,31 +147,23 @@ with figlist_var() as fl:
             "pm cpmg2 30 dB large cyc SW = 10.0",
         ),
   ]:
-        thisd = find_file(
+        thisd = psd.find_file(
             thisfile, exp_type=exp_type, expno=nodename, lookup=lookup_table
         )
         thisd.squeeze()
         fl.next("raw data for %s" % thislabel)
-        fl.image(thisd, interpolation='auto')
+        fl.image(thisd, interpolation="auto")
         fl.next("abs of raw data for %s, signal average" % thislabel)
-        forplot = thisd.C.sum('nScans').ift('t2').run(abs)
-        if 'nEcho' in forplot.dimlabels:
-            forplot.smoosh(['nEcho','t2'],r'nEcho $\otimes$ t2')
-        fl.image(forplot, interpolation='auto')
+        forplot = thisd.C.sum("nScans").ift("t2").run(abs)
+        if "nEcho" in forplot.dimlabels:
+            forplot.smoosh(["nEcho", "t2"], r"nEcho $\otimes$ t2")
+        fl.image(forplot, interpolation="auto")
         thisd.ift("t2")
         fl.next("abs(t domain) comparison")
         if complex_cpmg:
-            odd_pw = {'ph1':1,'ph2':-2,'ph_overall':-1}
-            odd = select_pathway(thisd,odd_pw)
-            even_pw = {'ph1':-1,'ph2':+2,'ph_overall':-1}
-            even = select_pathway(thisd.C,even_pw)
-            # {{{ interleave the echoes
-            thisd = odd
-            # "even" starts w/ 1 b/c that's the second echo
-            thisd['nEcho',1::2] = even['nEcho',1::2]
-            # }}}
-        else:
-            thisd = select_pathway(thisd, thisd.get_prop("coherence_pathway"))
+            thisd = echo_interleave(thisd, "ph1")
+            thisd.set_prop("coherence_pathway", {"ph2": -2, "ph_overall": -1})
+        thisd = select_pathway(thisd, thisd.get_prop("coherence_pathway"))
         if "nEcho" in thisd.dimlabels:
             thisd.smoosh(["nEcho", "t2"], "t2")
             acq = thisd.get_prop("acq_params")
