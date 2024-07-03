@@ -612,7 +612,7 @@ def proc_spincore_generalproc_v1(s, fl=None):
     s.reorder([j for j in s.dimlabels if j.startswith("ph")])
     # apply the receiver response
     s /= s.fromaxis("t2").run(
-        lambda x: np.sinc(x / (s.get_prop("SW_kHz") * 1e3))
+        lambda x: np.sinc(x / (s.get_prop("acq_params")["SW_kHz"] * 1e3))
     )
     return s
 
