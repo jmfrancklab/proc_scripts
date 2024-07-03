@@ -4,15 +4,18 @@ import matplotlib.pylab as plt
 from itertools import cycle
 from pyspecProcScripts import lookup_table, select_pathway
 
-def size_of_coherences(thisd,fl):
+
+def size_of_coherences(thisd, fl):
     forplot = thisd.C
     if "nEcho" in forplot.dimlabels:
         forplot.smoosh(["nEcho", "t2"], r"nEcho $\otimes$ t2")
         if "nScans" in forplot.dimlabels:
-            lastph = [j for j in forplot.dimlabels if j.startswith('ph')][-1]
-            forplot.smoosh([lastph,'nScans'],fr"last $\Delta p$ $\otimes$ nScans")
+            lastph = [j for j in forplot.dimlabels if j.startswith("ph")][-1]
+            forplot.smoosh([lastph, "nScans"], r"last $\Delta p$ $\otimes$ nScans")
         forplot.reorder([r"nEcho $\otimes$ t2"], first=False)
     fl.image(forplot)
+
+
 def echo_interleave(d, phcycdim):
     "interleave even and odd echoes coming from phcycdim"
     assert d.get_ft_prop(phcycdim)
@@ -23,14 +26,15 @@ def echo_interleave(d, phcycdim):
     retval["nEcho", 1::2] = d["ph1", -1]["nEcho", 1::2]
     retval.copy_axes(d).copy_props(d)
     return retval
+
+
 def smoosh_direct_domain(thisd):
     thisd.smoosh(["nEcho", "t2"], "t2")
     acq = thisd.get_prop("acq_params")
     echo_time = 1e-6 * 2 * (acq["tau_us"] + acq["p90_us"])
-    thisd["t2"] = (thisd["t2"]["nEcho"]) * echo_time + thisd["t2"][
-        "t2"
-    ]
+    thisd["t2"] = (thisd["t2"]["nEcho"]) * echo_time + thisd["t2"]["t2"]
     return thisd
+
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 plt.rcParams.update(
@@ -41,12 +45,9 @@ plt.rcParams.update(
         "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
         "savefig.bbox": "tight",
         "savefig.dpi": 300,
-        # "figure.figsize": (3*(1+np.sqrt(5))/2,3),
     }
 )
 colorcyc = cycle(colorcyc_list)
-
-
 
 
 with psd.figlist_var() as fl:
@@ -65,7 +66,7 @@ with psd.figlist_var() as fl:
             True,
             "cpmg19 no power large cyc SW = 10.0",
             "no power",
-        ),    
+        ),
         (
             "240702_13p5mM_TEMPOL_pm_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
@@ -92,28 +93,28 @@ with psd.figlist_var() as fl:
         fl.image(thisd, interpolation="auto")
         fl.next("abs of raw data for %s, signal average" % thislabel)
         thisd.ift("t2")
-        size_of_coherences(thisd,fl)
+        size_of_coherences(thisd, fl)
         if manystep_cpmg:
-            proposed_cycle = thisd.C.ift(['ph1','ph2','ph_overall'])
-            proposed_cycle = proposed_cycle['ph_overall',0::2]['ph2',0::2]
-            proposed_cycle.ft(['ph1','ph2','ph_overall'])
-            fl.next('signal from proposed cycle')
-            size_of_coherences(proposed_cycle,fl)
-            fl.next('reduced phcyc with interleave')
-            temp = echo_interleave(proposed_cycle,"ph1")
+            proposed_cycle = thisd.C.ift(["ph1", "ph2", "ph_overall"])
+            proposed_cycle = proposed_cycle["ph_overall", 0::2]["ph2", 0::2]
+            proposed_cycle.ft(["ph1", "ph2", "ph_overall"])
+            fl.next("signal from proposed cycle")
+            size_of_coherences(proposed_cycle, fl)
+            fl.next("reduced phcyc with interleave")
+            temp = echo_interleave(proposed_cycle, "ph1")
             temp = smoosh_direct_domain(temp)
-            fl.plot(abs(temp['ph2',-2]['ph_overall',-1]),'o')
-            fl.next('signal from CPMG-only')
-            proposed_cycle = proposed_cycle['ph1',1]-proposed_cycle['ph1',-1]
+            fl.plot(abs(temp["ph2", -2]["ph_overall", -1]), "o")
+            fl.next("signal from CPMG-only")
+            proposed_cycle = proposed_cycle["ph1", 1] - proposed_cycle["ph1", -1]
             proposed_cycle = smoosh_direct_domain(proposed_cycle)
-            fl.plot(abs(proposed_cycle['ph2',-2]['ph_overall',-1]),'o')
+            fl.plot(abs(proposed_cycle["ph2", -2]["ph_overall", -1]), "o")
             thisd = echo_interleave(thisd, "ph1")
             thisd.set_prop("coherence_pathway", {"ph2": -2, "ph_overall": -1})
         thisd = select_pathway(thisd, thisd.get_prop("coherence_pathway"))
         if "nEcho" in thisd.dimlabels:
             thisd = smoosh_direct_domain(thisd)
         fl.next("plot each scan separately")
-        #c = next(colorcyc)
+        # c = next(colorcyc)
         kwargs = {}
         for j in range(thisd.shape["nScans"]):
             fl.plot(abs(thisd["nScans", j]), "o", label=f"{thislabel} scan {j}")
