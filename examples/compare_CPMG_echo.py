@@ -36,7 +36,7 @@ with psd.figlist_var() as fl:
             False,
             "echo large cyc SW = 10.0",
         ),
-  ]:
+    ]:
         thisd = psd.find_file(
             thisfile, exp_type=exp_type, expno=nodename, lookup=lookup_table
         )
