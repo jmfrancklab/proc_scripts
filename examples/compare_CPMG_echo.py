@@ -17,15 +17,33 @@ def echo_interleave(d, phcycdim):
 
 with psd.figlist_var() as fl:
     for thisfile, exp_type, nodename, manystep_cpmg, thislabel, thisbasename in [
-        # {{{ No power
+        # {{{ Tested Controls
         (
-            "240702_13p5mM_TEMPOL_CPMG.h5",
+            "240704_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
-            "CPMG_13",
-            False,
-            "CPMG no power simple cyc SW = 16.0",
-            "no power",
+            "CPMG_1",
+            True,
+            "CPMG no power large cyc SW = 10.0",
+            "control",
         ),
+        (
+            "240704_13p5mM_TEMPOL_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_1",
+            False,
+            "echo no power large cyc SW = 10.0",
+            "control",
+        ),
+        (
+            "240704_13p5mM_TEMPOL_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_2",
+            False,
+            "CPMG no power simple cyc SW = 10.0",
+            "control",
+        ),
+        # }}}
+        # {{{ No power
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
