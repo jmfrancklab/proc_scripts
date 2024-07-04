@@ -15,12 +15,13 @@ def echo_interleave(d, phcycdim):
     
 with psd.figlist_var() as fl:
     for thisfile, exp_type, nodename, manystep_cpmg, thislabel, thisbasename in [
+        #{{{ No power
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
             "CPMG_13",
             False,
-            "CPMG simple cyc SW = 16",
+            "CPMG no power simple cyc SW = 16.0",
             "no power",
         ),
         (
@@ -28,7 +29,7 @@ with psd.figlist_var() as fl:
             "ODNP_NMR_comp/CPMG",
             "CPMG_19",
             True,
-            "CPMG large cyc SW = 10.0",
+            "CPMG no power large cyc SW = 10.0",
             "no power",
         ),
         (
@@ -36,9 +37,110 @@ with psd.figlist_var() as fl:
             "ODNP_NMR_comp/Echoes",
             "echo_12",
             False,
-            "echo large cyc SW = 10.0",
+            "echo no power large cyc SW = 10.0",
             "no power",
         ),
+        (
+            "240702_13p5mM_TEMPOL_pm_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_1",
+            True,
+            "CPMG no power simple cyc SW = 10.0",
+            "no power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_2",
+            True,
+            "CPMG no power large cyc SW = 10.0",
+            "no power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_2",
+            False,
+            "echo no power large cyc SW = 10.0",
+            "no power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_3",
+            False,
+            "echo no power large cyc SW = 10.0",
+            "no power",
+        ),
+        #}}}
+        #{{{ 30 dBm
+        (
+            "240702_13p5mM_TEMPOL_pm_30dB_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_1",
+            True,
+            "CPMG 30dBm large cyc SW = 10.0",
+            "30 dBm uw power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_30dB_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_1",
+            False,
+            "echo 30dBm large cyc SW = 10.0",
+            "30 dBm uw power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_30dB_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_2",
+            True,
+            "CPMG 30dBm large cyc SW = 10.0",
+            "30 dBm uw power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_30dB_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_2",
+            False,
+            "echo 30dBm large cyc SW = 10.0",
+            "30 dBm uw power",
+        ),
+        #}}}
+        #{{{ 34 dBm
+        (
+            "240702_13p5mM_TEMPOL_pm_34dB_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_1",
+            True,
+            "CPMG 34dBm large cyc SW = 10.0",
+            "34 dBm uw power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_34dB_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_1",
+            False,
+            "echo 34 dBm large cyc SW = 10.0",
+            "34 dBm uw power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_34dB_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_2",
+            True,
+            "CPMG 34 dBm large cyc SW = 10.0",
+            "34 dBm uw power",
+        ),
+        (
+            "240702_13p5mM_TEMPOL_pm_34dB_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_2",
+            False,
+            "echo 34 dBm large cyc SW = 10.0",
+            "34 dBm uw power",
+        ),
+        #}}}
     ]:
         fl.basename = thisbasename
         thisd = psd.find_file(
