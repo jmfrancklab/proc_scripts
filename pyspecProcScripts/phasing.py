@@ -63,7 +63,9 @@ def zeroth_order_ph(d, fl=None):
         realvector * imvector
     )  # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution
     # note that this effectively changes the relative sign of x and y, reflecting the ellipse so that it circles the elements rather than going around them, and it's note the same as just flipping the eigenvalues
-    inertia_matrix = np.array([[R2, C], [C, I2]])
+    inertia_matrix = np.array(
+        [[R2, C], [C, I2]]
+    )  # moment of inertia, with C inverted -- see comment below
     eigenValues, eigenVectors = linalg.eigh(inertia_matrix)
     mean_point = d.data.ravel().mean()
     # next 3 lines from stackexchange -- sort by
@@ -71,6 +73,7 @@ def zeroth_order_ph(d, fl=None):
     idx = eigenValues.argsort()[::-1]
     eigenValues = eigenValues[idx]
     eigenVectors = eigenVectors[:, idx]
+    # eigenVectors[1,:] *= -1 # leave this line -- uncommenting this and negating the C above yields the same result!
     rotation_vector = eigenVectors[:, 0]
     ph0 = np.arctan2(rotation_vector[1], rotation_vector[0])
     if fl is not None:
@@ -243,6 +246,11 @@ def fid_from_echo(
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
+    freq_envelope.ift("t2")
+    freq_envelope = freq_envelope[
+        "t2":(0, None)
+    ]  # slice out rising echo estimate according to experimental tau in order to limit oscillations
+    freq_envelope.ft("t2")
     freq_envelope.mean_all_but(direct).run(abs)
     if fl is not None:
         fl.next("autoslicing!")
@@ -394,6 +402,7 @@ def fid_from_echo(
                 N_ratio /= (
                     for_resid.data.size
                 )  # the signal this has been plotted against is signal averaged by N_ratio
+                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),

@@ -44,25 +44,13 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     if fl is not None:
         s_forplot = s.C
         fl.next("FT")
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
         fl.next("time domain (all $\\Delta p$)")
         s_forplot.ift("t2")
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
         fl.next("frequency domain (all $\\Delta p$)")
         s_forplot.ft("t2", pad=4096)
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
     return s
 
 
@@ -213,9 +201,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     tau_extra = d12
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = (
-        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    )
+    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
     s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
@@ -283,9 +269,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
     tau_extra = 20e-6
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = (
-        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    )
+    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
     s.set_units("t2", "us")
@@ -636,9 +620,7 @@ def proc_capture(s):
 def proc_DOSY_CPMG(s):
     logging.debug("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
-    l22 = int(
-        s.get_prop("acq")["L"][22]
-    )  # b/c the l are integers by definition
+    l22 = int(s.get_prop("acq")["L"][22])  # b/c the l are integers by definition
     l25 = int(s.get_prop("acq")["L"][25])
     d12 = s.get_prop("acq")["D"][12]
     d11 = s.get_prop("acq")["D"][11]
@@ -665,9 +647,7 @@ def proc_DOSY_CPMG(s):
     )
     m = re.search("([0-9.]+) G/mm", s.get_prop("gradient_calib"))
     grad_list *= float(m.groups()[0]) * 0.1
-    dwdel1 = (
-        3.5e-6  # where does this come from? DE is actually larger than this?
-    )
+    dwdel1 = 3.5e-6  # where does this come from? DE is actually larger than this?
     # {{{ find anavpt without hard-setting
     m = re.search('"anavpt=([0-9]+)"', ppg)
     if m is None:
