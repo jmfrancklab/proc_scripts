@@ -311,18 +311,13 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
     r"""this one uses a phase cycle where the overall phase and 90-180
     phase difference are cycled in a nested way -- see the DCCT paper to
     understand this!"""
-    s.ft(["ph2", "ph_diff"])  # if we have used cycles for the axis
-    #                          coordinates, signal in the coherence
-    #                          dimension will match the amplitude of signal
-    #                          in a single transient if we do this
+    s = proc_spincore_generalproc_v1(s, fl=fl)
     # {{{ after the FT, these have a different meaning in terms of coherence
     #     pathways -- remember that when labeling, pySpecData will change
     #     the ph here to a δp
     s.rename("ph2", "ph_overall")  # overall change in coherence
     s.rename("ph_diff", "ph1")  # change during pulse 1
     # }}}
-    s.ft("t2", shift=True)
-    s.reorder(["ph1", "ph_overall"])
     return s
 
 
@@ -607,9 +602,22 @@ def proc_spincore_ODNP_v4(s, fl=None):
 
 
 def proc_spincore_generalproc_v1(s, fl=None):
-    s.ft("t2", shift=True)
+    s.ft("t2", shift=True)  # if we have used cycles for the axis
+    #                        coordinates, signal in the coherence dimension
+    #                        will match the amplitude of signal in a single
+    #                        transient if we do this
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
-        s.ft([j], unitary=True)
+        s.ft([j])
+    # always put the phase cycling dimensions on the outside
+    s.reorder([j for j in s.dimlabels if j.startswith("ph")])
+    # {{{ put ph_overall outside, if it exists, since there should be nothing outside that
+    if "ph_overall" in s.dimlabels:
+        s.reorder("ph_overall")
+    # }}}
+    # apply the receiver response
+    s /= s.fromaxis("t2").run(
+        lambda x: np.sinc(x / (s.get_prop("acq_params")["SW_kHz"] * 1e3))
+    )
     return s
 
 
