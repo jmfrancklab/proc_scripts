@@ -332,11 +332,6 @@ def fid_from_echo(
     else:
         thebasename = ""
     # {{{ sign flip and average input for hermitian
-    if signal_pathway is not None:
-        assert (
-            d.get_prop("coherence_pathway") is not None
-        ), "you need to set the coherence_pathway property so I know what coherence pathway to select!"
-        signal_pathway = d.get_prop("coherence_pathway")
     input_for_hermitian = select_pathway(d, signal_pathway).C
     signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
     idx = abs(signflip).mean_all_but(direct).data.argmax()
