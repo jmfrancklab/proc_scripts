@@ -2,6 +2,7 @@ import numpy as np
 import pyspecdata as psd
 from pyspecProcScripts import lookup_table, select_pathway
 
+
 def echo_interleave(d, phcycdim):
     "interleave even and odd echoes coming from phcycdim"
     assert d.get_ft_prop(phcycdim)
@@ -12,10 +13,11 @@ def echo_interleave(d, phcycdim):
     retval["nEcho", 1::2] = d["ph1", -1]["nEcho", 1::2]
     retval.copy_axes(d).copy_props(d)
     return retval
-    
+
+
 with psd.figlist_var() as fl:
     for thisfile, exp_type, nodename, manystep_cpmg, thislabel, thisbasename in [
-        #{{{ No power
+        # {{{ No power
         (
             "240702_13p5mM_TEMPOL_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
@@ -72,8 +74,8 @@ with psd.figlist_var() as fl:
             "echo no power large cyc SW = 10.0",
             "no power",
         ),
-        #}}}
-        #{{{ 30 dBm
+        # }}}
+        # {{{ 30 dBm
         (
             "240702_13p5mM_TEMPOL_pm_30dB_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
@@ -106,8 +108,8 @@ with psd.figlist_var() as fl:
             "echo 30dBm large cyc SW = 10.0",
             "30 dBm uw power",
         ),
-        #}}}
-        #{{{ 34 dBm
+        # }}}
+        # {{{ 34 dBm
         (
             "240702_13p5mM_TEMPOL_pm_34dB_CPMG.h5",
             "ODNP_NMR_comp/CPMG",
@@ -140,7 +142,7 @@ with psd.figlist_var() as fl:
             "echo 34 dBm large cyc SW = 10.0",
             "34 dBm uw power",
         ),
-        #}}}
+        # }}}
     ]:
         fl.basename = thisbasename
         thisd = psd.find_file(
@@ -165,6 +167,6 @@ with psd.figlist_var() as fl:
             acq = thisd.get_prop("acq_params")
             echo_time = 1e-6 * 2 * (acq["tau_us"] + acq["p90_us"])
             thisd["t2"] = (thisd["t2"]["nEcho"]) * echo_time + thisd["t2"]["t2"]
-        if 'nScans' in thisd.dimlabels:
-            thisd.mean('nScans')
-        fl.plot(abs(thisd), 'o',label=thislabel)
+        if "nScans" in thisd.dimlabels:
+            thisd.mean("nScans")
+        fl.plot(abs(thisd), "o", label=thislabel)
