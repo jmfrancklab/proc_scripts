@@ -166,11 +166,11 @@ with psd.figlist_var() as fl:
         thisd = psd.find_file(
             thisfile, exp_type=exp_type, expno=nodename, lookup=lookup_table
         )
-        forplot = thisd.C.sum("nScans").ift("t2").run(abs)
         thisd.squeeze()
         fl.next("raw data for %s" % thislabel)
         fl.image(thisd, interpolation="auto")
         fl.next("abs of raw data for %s, signal average" % thislabel)
+        forplot = thisd.C.sum("nScans").ift("t2").run(abs)
         if "nEcho" in forplot.dimlabels:
             forplot.smoosh(["nEcho", "t2"], r"nEcho $\otimes$ t2")
         fl.image(forplot, interpolation="auto")
