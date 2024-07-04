@@ -1,12 +1,10 @@
 """This module includes routines for phasing NMR spectra."""
-from pyspecdata import *
-import time
+from pyspecdata import nddata, ndshape
 from matplotlib.patches import Ellipse
-from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
-from pylab import xlim, subplots, axvline, axhline, ylim, sca, rand, legend
+from pylab import axvline, rand, legend
 import numpy as np
-from numpy import r_, c_
+from numpy import r_, sqrt, pi 
 from scipy import linalg
 import scipy.signal.windows as sci_win
 import logging
@@ -104,7 +102,6 @@ def zeroth_order_ph(d, fl=None):
             evec_forplot[0, 0], evec_forplot[1, 0], "o", alpha=0.5, label="first evec"
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
-        norms = sqrt((evec_forplot**2).sum(axis=0))
         ell = Ellipse(
             xy=[0, 0],
             width=4 * sqrt(eigenValues[0]),
@@ -397,7 +394,6 @@ def fid_from_echo(
                 N_ratio /= (
                     for_resid.data.size
                 )  # the signal this has been plotted against is signal averaged by N_ratio
-                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
