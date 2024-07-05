@@ -22,8 +22,8 @@ from .DCCT_func import DCCT
 
 
 def proc_spincore_SE_v1(s, fl=None):
-    s.ft("ph1") # In order to match the amplitude of the 
-    #             coherence domain signal to its size in 
+    s.ft("ph1")  # In order to match the amplitude of the
+    #             coherence domain signal to its size in
     #             each transient we do not use unitary FT
     s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_units("t2", "s")
