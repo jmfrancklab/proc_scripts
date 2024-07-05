@@ -192,7 +192,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 
 def fid_from_echo(
     d,
-    signal_pathway=None,
+    signal_pathway,
     fl=None,
     add_rising=False,
     direct="t2",
