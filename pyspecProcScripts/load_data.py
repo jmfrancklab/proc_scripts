@@ -21,156 +21,10 @@ from pylab import *
 from .DCCT_func import DCCT
 
 
-
-
-def proc_bruker_T1CPMG_v1(s, fl=None):
-    assert s.get_prop("acq")["L"][21] == 2, "phase cycle isn't correct!"
-    assert s.get_prop("acq")["L"][22] == 4, "phase cycle isn't correct!"
-    s.chunk("indirect", ["indirect", "ph1", "ph2"], [-1, 2, 4])
-    s.setaxis("ph1", r_[0, 2] / 4).setaxis("ph2", r_[0:4] / 4)
-    s.ft(["ph1", "ph2"])
-    s.reorder(["ph1", "ph2", "indirect"])
-    if fl is not None:
-        fl.next("raw data(t2,coh)")
-        fl.image(s)
-    # {{{removes CP aspect
-    s.ift(["ph1", "ph2"])
-    s = s["ph2", [1, 3]]
-    # }}}
-    s.setaxis("indirect", s.get_prop("vd"))
-    s.reorder(["ph1", "ph2", "indirect", "t2"])
-    if fl is not None:
-        fl.next("raw data with indirect set")
-        fl.image(s.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
-    anavpt_info = [
-        j for j in s.get_prop("pulprog").split("\n") if "anavpt" in j.lower()
-    ]
-    anavpt_re = re.compile(r".*\banavpt *= *([0-9]+)")
-    anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
-    for m in anavpt_matches:
-        if m is not None:
-            anavpt = int(m.groups()[0])
-    actual_SW = (
-        20e6 / anavpt
-    )  # JF: check that this is based on the manual's definition of anavpt
-    bruker_final_t2_value = np.double(s.getaxis("t2")[-1].item())
-    s.setaxis(
-        "t2", 1.0 / actual_SW * r_[0 : ndshape(s)["t2"]]
-    )  # reset t2 axis to true values based on anavpt
-    logging.debug(
-        strm(
-            "the final t2 value according to the Bruker SW_h was",
-            bruker_final_t2_value,
-            "but I determine it to be",
-            np.double(s.getaxis("t2")[-1].item()),
-            "with anavpt",
-        )
-    )
-    nEchoes = s.get_prop("acq")["L"][25]
-    dwdel1 = s.get_prop("acq")["DE"] * 1e-6
-    dwdel2 = (anavpt * 0.05e-6) / 2
-    # d12 is read as 0 if taken from parameters bc its too small
-    d12 = s.get_prop("acq")["D"][12]
-    d11 = s.get_prop("acq")["D"][11]
-    p90_s = s.get_prop("acq")["P"][1] * 1e-6
-    quad_pts = ndshape(s)["t2"]  # note tha twe have not yet chunked t2
-    nPoints = quad_pts / nEchoes
-    acq_time = dwdel2 * nPoints * 2
-    # {{{ these are hard-coded for the pulse sequence
-    #     if we need to, we could pull these from the pulse sequence, as we do
-    #     for anavpt above
-    tau_extra = d12
-    tau_pad_start = tau_extra - dwdel1 - 6e-6
-    tau_pad_end = tau_extra - 6e-6
-    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    # twice_tau should be the period from one 180 to another
-    # }}}
-    s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
-    s.setaxis("tE", (1 + r_[0:nEchoes]) * twice_tau)
-    s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"])
-    s.reorder(["ph1", "ph2", "indirect"])
-    if fl is not None:
-        fl.next("freq domain coh domain")
-        fl.image(s.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
-    s.ift("t2")
-    if fl is not None:
-        fl.next("t2 chunked", figsize=(5, 20))
-        fl.image(s.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
-    s.ft("t2")
-    return s
-
-
-def proc_bruker_CPMG_v1(s, fl=None):
-    s.chunk("indirect", ["ph1", "ph2", "indirect"], [4, 2, -1])
-    s.setaxis("ph1", r_[0:4] / 4.0)
-    s.setaxis("ph2", r_[0:2] / 2.0)
-    if fl is not None:
-        fl.next("raw data before")
-        fl.image(s)
-    s.ft(["ph1", "ph2"])
-    s.reorder(["ph1", "ph2", "indirect", "t2"])
-    anavpt_info = [
-        j for j in s.get_prop("pulprog").split("\n") if "anavpt" in j.lower()
-    ]
-    anavpt_re = re.compile(r".*\banavpt *= *([0-9]+)")
-    anavpt_matches = (anavpt_re.match(j) for j in anavpt_info)
-    for m in anavpt_matches:
-        if m is not None:
-            anavpt = int(m.groups()[0])
-    actual_SW = (
-        20e6 / anavpt
-    )  # JF: check that this is based on the manual's definition of anavpt
-    bruker_final_t2_value = np.double(s.getaxis("t2")[-1].item())
-    s.setaxis(
-        "t2", 1.0 / actual_SW * r_[0 : ndshape(s)["t2"]]
-    )  # reset t2 axis to true values based on anavpt
-    logging.debug(
-        strm(
-            "the final t2 value according to the Bruker SW_h was",
-            bruker_final_t2_value,
-            "but I determine it to be",
-            np.double(s.getaxis("t2")[-1].item()),
-            "with anavpt",
-        )
-    )
-    nEchoes = s.get_prop("acq")["L"][25]
-    dwdel1 = s.get_prop("acq")["DE"] * 1e-6
-    dwdel2 = (anavpt * 0.05e-6) / 2
-    # d12 is read as 0 if taken from parameters bc its too small
-    d12 = 20e-6
-    d11 = s.get_prop("acq")["D"][11]
-    p90_s = s.get_prop("acq")["P"][1] * 1e-6
-    quad_pts = ndshape(s)["t2"]  # note tha twe have not yet chunked t2
-    nPoints = quad_pts / nEchoes
-    acq_time = dwdel2 * nPoints * 2
-    # {{{ these are hard-coded for the pulse sequence
-    #     if we need to, we could pull these from the pulse sequence, as we do
-    #     for anavpt above
-    tau_extra = 20e-6
-    tau_pad_start = tau_extra - dwdel1 - 6e-6
-    tau_pad_end = tau_extra - 6e-6
-    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    # twice_tau should be the period from one 180 to another
-    # }}}
-    s.set_units("t2", "us")
-    s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
-    s.setaxis("tE", (1 + r_[0:nEchoes]) * twice_tau)
-    s.ft("t2", shift=True)
-    s.reorder(["ph1", "ph2", "indirect"])
-    if fl is not None:
-        fl.next("freq domain coh domain")
-        fl.image(s)
-    s.ift("t2")
-    if fl is not None:
-        fl.next("t2 chunked", figsize=(5, 20))
-        fl.image(s)
-    s.ft("t2")
-    return s
-
-
 def proc_spincore_SE_v1(s, fl=None):
-    s.ft("ph1")
+    s.ft("ph1") # In order to match the amplitude of the 
+    #             coherence domain signal to its size in 
+    #             each transient we do not use unitary FT
     s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
@@ -243,7 +97,7 @@ def proc_spincore_IR(s, fl=None):
     s.setaxis("ph1", r_[0, 2.0] / 4)
     s.setaxis("ph2", r_[0, 2.0] / 4)
     s.reorder(["ph1", "ph2"]).set_units("t2", "s")
-    s.set_prop("coherence_pathway", {"ph1": 0, "ph2": -1})
+    s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
     s.set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
@@ -707,8 +561,6 @@ def proc_field_sweep_v2(s):
 
 
 lookup_table = {
-    "ag_CPMG_strob": proc_bruker_CPMG_v1,
-    "ag_T1CPMG_2h": proc_bruker_T1CPMG_v1,
     "chirp": proc_capture,
     "spincore_SE_v1": proc_spincore_SE_v1,
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
