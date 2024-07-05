@@ -161,6 +161,24 @@ with psd.figlist_var() as fl:
             "34 dBm uw power",
         ),
         # }}}
+        #{{{ New Probe vs Old
+        (
+            "240705_13p5mM_TEMPOL_balancedprobe_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_11",
+            False,
+            "echo balanced probe 40W",
+            "compare_probes",
+        ),
+        (
+            "240705_13p5mM_TEMPOL_VTUprobe_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_14",
+            False,
+            "echo VTU probe 40W",
+            "compare_probes",
+        ),
+        #}}}
     ]:
         fl.basename = thisbasename
         thisd = psd.find_file(
