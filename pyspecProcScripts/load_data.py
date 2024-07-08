@@ -439,7 +439,9 @@ def proc_capture(s):
 def proc_DOSY_CPMG(s):
     logging.debug("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
-    l22 = int(s.get_prop("acq")["L"][22])  # b/c the l are integers by definition
+    l22 = int(
+        s.get_prop("acq")["L"][22]
+    )  # b/c the l are integers by definition
     l25 = int(s.get_prop("acq")["L"][25])
     d12 = s.get_prop("acq")["D"][12]
     d11 = s.get_prop("acq")["D"][11]
@@ -466,7 +468,9 @@ def proc_DOSY_CPMG(s):
     )
     m = re.search("([0-9.]+) G/mm", s.get_prop("gradient_calib"))
     grad_list *= float(m.groups()[0]) * 0.1
-    dwdel1 = 3.5e-6  # where does this come from? DE is actually larger than this?
+    dwdel1 = (
+        3.5e-6  # where does this come from? DE is actually larger than this?
+    )
     # {{{ find anavpt without hard-setting
     m = re.search('"anavpt=([0-9]+)"', ppg)
     if m is None:
