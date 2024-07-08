@@ -14,7 +14,9 @@ import matplotlib.pyplot as plt
 from .simple_functions import select_pathway
 from itertools import cycle
 
-default_matplotlib_cycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
+default_matplotlib_cycle = cycle(
+    plt.rcParams["axes.prop_cycle"].by_key()["color"]
+)
 
 
 def det_devisor(fl):
@@ -101,10 +103,17 @@ def zeroth_order_ph(d, fl=None):
         )
         fl.plot(0, 0, "ko", alpha=0.5)
         evec_forplot = (
-            2 * sqrt(eigenValues.reshape(1, 2)) * np.ones((2, 1)) * eigenVectors
+            2
+            * sqrt(eigenValues.reshape(1, 2))
+            * np.ones((2, 1))
+            * eigenVectors
         )  # scale by the std, not the variance!
         fl.plot(
-            evec_forplot[0, 0], evec_forplot[1, 0], "o", alpha=0.5, label="first evec"
+            evec_forplot[0, 0],
+            evec_forplot[1, 0],
+            "o",
+            alpha=0.5,
+            label="first evec",
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
         norms = sqrt((evec_forplot**2).sum(axis=0))
@@ -112,7 +121,9 @@ def zeroth_order_ph(d, fl=None):
             xy=[0, 0],
             width=4 * sqrt(eigenValues[0]),
             height=4 * sqrt(eigenValues[1]),
-            angle=180 / pi * np.arctan2(eigenVectors[1, 0], eigenVectors[0, 0]),
+            angle=180
+            / pi
+            * np.arctan2(eigenVectors[1, 0], eigenVectors[0, 0]),
             color="k",
             fill=False,
         )
@@ -166,6 +177,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     ph1_opt = np.asarray(s_cost.argmin("transients").item())
     logging.debug(strm("THIS IS PH1_OPT", ph1_opt))
     logging.debug(strm("optimal phase correction", repr(ph1_opt)))
+
     # }}}
     # {{{ apply the phase corrections
     def applyphase(arg, ph1):
@@ -217,7 +229,9 @@ def fid_from_echo(
         fl.next("autoslicing!")
         fl.plot(freq_envelope, human_units=False, label="signal energy")
     freq_envelope.convolve(
-        direct, freq_envelope.get_ft_prop(direct, "df") * 5, enforce_causality=False
+        direct,
+        freq_envelope.get_ft_prop(direct, "df") * 5,
+        enforce_causality=False,
     )
     freq_envelope -= (
         freq_envelope[direct, -1].item() + freq_envelope[direct, 0].item()
@@ -225,7 +239,9 @@ def fid_from_echo(
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(
-            freq_envelope, human_units=False, label="signal energy\nconv + baselined"
+            freq_envelope,
+            human_units=False,
+            label="signal energy\nconv + baselined",
         )
     narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
     wide_ranges = freq_envelope.contiguous(
@@ -235,7 +251,11 @@ def fid_from_echo(
     def filter_ranges(B, A):
         """where A and B are lists of ranges (given as tuple pairs), filter B
         to only return ranges that include ranges given in A"""
-        return [np.array(b) for b in B if any(b[0] <= a[0] and b[1] >= a[1] for a in A)]
+        return [
+            np.array(b)
+            for b in B
+            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
+        ]
 
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
     assert len(peakrange) == 1
@@ -246,7 +266,11 @@ def fid_from_echo(
         fl.next("autoslicing!")
         axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
         axvline(
-            x=frq_center - frq_half, color="k", ls=":", alpha=0.25, label="half width"
+            x=frq_center - frq_half,
+            color="k",
+            ls=":",
+            alpha=0.25,
+            label="half width",
         )
         axvline(
             x=frq_center - slice_multiplier * frq_half,
@@ -292,7 +316,9 @@ def fid_from_echo(
     input_for_hermitian.mean_all_but(direct)
     # }}}
     best_shift = hermitian_function_test(
-        input_for_hermitian, basename=" ".join([thebasename, "hermitian"]), fl=fl
+        input_for_hermitian,
+        basename=" ".join([thebasename, "hermitian"]),
+        fl=fl,
     )
     d_save = d.C
     t_dw = d_save.get_ft_prop(direct, "dt")
@@ -335,7 +361,9 @@ def fid_from_echo(
                 s_flipped.getaxis(direct)[idx] == 0
                 and d_sigcoh.getaxis(direct)[idx] == 0
             ):  # should be centered about zero, but will not be if too lopsided
-                for_resid = abs(s_flipped - d_sigcoh[direct:(t_start, -t_start)]) ** 2
+                for_resid = (
+                    abs(s_flipped - d_sigcoh[direct:(t_start, -t_start)]) ** 2
+                )
                 N_ratio = for_resid.data.size
                 for_resid.mean_all_but(direct).run(sqrt)
                 N_ratio /= (
@@ -360,7 +388,8 @@ def fid_from_echo(
                         s_flipped.C.mean_all_but(direct).run(abs),
                         alpha=0.5,
                         human_units=False,
-                        label="best shift%+e, abs of flipped mean" % test_offset,
+                        label="best shift%+e, abs of flipped mean"
+                        % test_offset,
                     )
                     ax = plt.gca()
                     yl = ax.get_ylim()
@@ -464,14 +493,17 @@ def hermitian_function_test(
     data['t2'] -= acqstart) to avoid confusion"""
     t_dw = s_timedom.get_ft_prop(direct, "dt")
     orig_bounds = s_timedom.getaxis(direct)[r_[0, -1]]
-    plot_bounds = orig_bounds  # allow this to be set to ± inf if I want to see all
+    plot_bounds = (
+        orig_bounds  # allow this to be set to ± inf if I want to see all
+    )
     # }}}
     # {{{ force the axis to *start* at 0
     #     since we're doing FT here, also extend to
     #     twice the length!
     logging.debug(strm("initial size", ndshape(s_ext), "direct is", direct))
     s_ext.ft(
-        direct, pad=2 ** int(np.ceil(np.log(ndshape(s_ext)[direct]) / np.log(2)) + 1)
+        direct,
+        pad=2 ** int(np.ceil(np.log(ndshape(s_ext)[direct]) / np.log(2)) + 1),
     )
     assert (
         s_ext.get_ft_prop(direct, "start_time") == 0
@@ -484,7 +516,11 @@ def hermitian_function_test(
     s_ext.ift(
         direct,
         pad=2
-        ** int(np.ceil(np.log(ndshape(s_timedom)[direct] * upsampling) / np.log(2))),
+        ** int(
+            np.ceil(
+                np.log(ndshape(s_timedom)[direct] * upsampling) / np.log(2)
+            )
+        ),
     )
     s_ext[
         direct : (orig_bounds[-1], None)
@@ -564,7 +600,8 @@ def hermitian_function_test(
         lambda x: abs(x) > energy_threshold * abs(x.data).max()
     )[0, :]
     _, reasonable_energy_range[1] = s_energy.contiguous(
-        lambda x: abs(x) > energy_threshold * energy_threshold_lower * abs(x.data).max()
+        lambda x: abs(x)
+        > energy_threshold * energy_threshold_lower * abs(x.data).max()
     )[0, :]
     cost_func = cost_func[direct:reasonable_energy_range]
     cost_func.run(lambda x: x / sqrt(abs(x)))  # based on what we'd seen
@@ -615,7 +652,8 @@ def hermitian_function_test(
         s_foropt *= np.exp(1j * 2 * np.pi * shifts * s_foropt.fromaxis(direct))
         s_foropt.ift(direct)
         s_foropt = s_foropt[
-            direct, aliasing_slop : aliasing_slop + 2 * (echo_idx - aliasing_slop) + 1
+            direct,
+            aliasing_slop : aliasing_slop + 2 * (echo_idx - aliasing_slop) + 1,
         ]
         # the center is now at echo_idx-aliasing_slop
         # {{{ phasing must be done independently for each echo shift
@@ -635,7 +673,9 @@ def hermitian_function_test(
         if fl is not None:
             fl.next("refinement")
             axvline(x=s_foropt)
-            axvline(x=(echo_peak + min_echo) - t_dw * echo_idx, ls=":", alpha=0.25)
+            axvline(
+                x=(echo_peak + min_echo) - t_dw * echo_idx, ls=":", alpha=0.25
+            )
             fl.next("power terms")
             axvline(
                 x=(t_dw * echo_idx + s_foropt - min_echo) / det_devisor(fl),
