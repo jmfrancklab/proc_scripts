@@ -1,12 +1,10 @@
 """This module includes routines for phasing NMR spectra."""
-from pyspecdata import *
-import time
+from pyspecdata import nddata, ndshape, strm
 from matplotlib.patches import Ellipse
-from matplotlib.transforms import blended_transform_factory
 from scipy.optimize import minimize
-from pylab import xlim, subplots, axvline, axhline, ylim, sca, rand, legend
+from pylab import axvline, rand, legend
 import numpy as np
-from numpy import r_, c_
+from numpy import r_, sqrt, pi 
 from scipy import linalg
 import scipy.signal.windows as sci_win
 import logging
@@ -116,7 +114,6 @@ def zeroth_order_ph(d, fl=None):
             label="first evec",
         )
         fl.plot(evec_forplot[0, 1], evec_forplot[1, 1], "o", alpha=0.5)
-        norms = sqrt((evec_forplot**2).sum(axis=0))
         ell = Ellipse(
             xy=[0, 0],
             width=4 * sqrt(eigenValues[0]),
@@ -209,7 +206,6 @@ def fid_from_echo(
     signal_pathway,
     fl=None,
     add_rising=False,
-    fraction_nonnoise=0.1,
     direct="t2",
     exclude_rising=3,
     slice_multiplier=20,
@@ -217,6 +213,48 @@ def fid_from_echo(
     show_hermitian_sign_flipped=False,
     show_shifted_residuals=False,
 ):
+    """
+
+    Parameters
+    ==========
+    signal_pathway: dict
+        coherence transfer pathway that correspond to the signal
+    fl: figlist or None (default)
+        If you want the diagnostic plots (showing the distribution of the
+        data in the complex plane), set this to your figlist object.
+    add_rising: boolean
+        Take the first part of the echo (that which rises to the maximum)
+        and add the decaying (FID like) part. This increases the SNR of
+        the early points of the signal.
+    direct: string
+        Name of the direct dimension
+    exclude_rising: int
+        In general it is assumed that the first few points of signal
+        might be messed up due to dead time or other issues (assuming a
+        tau of 0).  This option allows us to add a rising edge to the
+        echo and exclude the first few points of the signal. Note, to use
+        this, add_rising must be True.
+    slice_multiplier: int
+        The calculated frequency slice is calculated by taking the center
+        frequency and extending out to values that are included in the
+        peak times this multiplier. Therefore the larger this value the
+        larger the frequency slice. Increasing this value might serve
+        useful in the case of noisy spectra.
+    peak_lower_thresh: float
+        Fraction of the signal intensity used in calculating the
+        frequency slice. The smaller the value, the wider the slice.
+    show_hermitian_sign_flipped: boolean
+        Diagnostic in checking the sign of the signal prior to the
+        hermitian phase correction
+    show_shifted_residuals: boolean
+        Diagnostic in analyzing the residuals after the hermitian phase
+        correction.
+
+    Returns
+    =======
+    d: nddata
+        FID of properly sliced and phased signal
+    """
     # {{{ autodetermine slice range
     freq_envelope = d.C
     freq_envelope.ift("t2")
@@ -258,7 +296,24 @@ def fid_from_echo(
         ]
 
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
+    if len(peakrange) > 1:
+        max_range_width = max([thisrange[1] - thisrange[0] for thisrange in peakrange])
+        range_gaps = [
+            peakrange[j + 1][0] - peakrange[j][1] for j in range(len(peakrange) - 1)
+        ]
+        # {{{ if the gaps are all smaller than the max peak that was found, we
+        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
+        if any(np.array(range_gaps) > max_range_width):
+            if fl is not None:
+                fl.next("debug filter ranges")
+                fl.plot(freq_envelope, human_units=False)
+                for thisrange in peakrange:
+                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
+            raise ValueError("finding more than one peak!")
+        else:
+            peakrange = [(peakrange[0][0], peakrange[-1][1])]
     assert len(peakrange) == 1
+    # }}}
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item() / 2
@@ -406,6 +461,7 @@ def fid_from_echo(
         d[direct, 1 : N_rising + 1] = (
             d[direct, 1 : N_rising + 1] + d_rising[direct, ::-1]
         ) / 2
+    d *= 2
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
