@@ -1,5 +1,5 @@
 """This module includes routines for phasing NMR spectra."""
-from pyspecdata import nddata, ndshape
+from pyspecdata import nddata, ndshape, strm
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
 from pylab import axvline, rand, legend
