@@ -12,7 +12,7 @@ Tested with:
 
 """
 from pyspecProcScripts.load_data import lookup_table
-from pyspecProcScripts import select_pathway, determine_sign
+from pyspecProcScripts import select_pathway, determine_sign, fid_from_echo, zeroth_order_ph
 from pyspecdata import *
 import numpy as np
 import sys
@@ -26,70 +26,46 @@ assert len(sys.argv) == 4
 d = find_file(
     sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table
 )
-print("postproc_type:", d.get_prop("postproc_type"))
 if d.get_prop("postproc_type") == "spincore_SE_v1":
     d.rename("indirect", "p_90")
     d["p_90"] *= 1e-9
 with figlist_var() as fl:
     d.squeeze()
+    d.ift('t2')
+    d['t2'] -= 2e-3 # eyeball correction
+    d.ft('t2')
     fl.next("raw data")
-
-    def image_or_plot(d):
-        if len(d.dimlabels) == 1:
-            fl.plot(d)
-        elif len(d.dimlabels) == 2:
-            iterdim = d.shape.min()
-            if d.shape[iterdim] > 5:
-                d.pcolor()
-                return
-            untfy_axis = d.unitify_axis(iterdim)
-            for idx in range(d.shape[iterdim]):
-                c = next(colorcyc)
-                fl.plot(
-                    d[iterdim, idx],
-                    label=f"{untfy_axis}={d[iterdim][idx]}",
-                    c=c,
-                    alpha=0.5,
-                    human_units=False,
-                )
-                fl.plot(
-                    d[iterdim, idx].imag,
-                    label=f"{untfy_axis}={d[iterdim][idx]}",
-                    c=c,
-                    alpha=0.1,
-                    human_units=False,
-                )
-        else:
-            rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
-            if rows < 500:
-                fl.image(d)
-            else:
-                fl.image(d, interpolation="bilinear")
-
-    image_or_plot(d)
-    if "nScans" in d.dimlabels:
-        d.mean("nScans")
-        fl.next("signal averaged along nScans")
-        image_or_plot(d)
-        fl.next("time domain")
-        d.ift("t2")
-        image_or_plot(d["t2":(None, 20e-3)])
-        d.ft("t2")
-        # {{{ correct for evolution during pulse
-        #     I do this, but if I plot it, I do find that it's not significant
-        d *= np.exp(
-            -1j * 2 * pi * (2 * d.fromaxis("p_90") / pi) * d.fromaxis("t2")
-        )
-        # }}}
-        my_signs = determine_sign(select_pathway(d)["t2":(-250, 250)])
-        d *= my_signs
-        fl.next("frequency domain -- after correct and sign flip")
-        image_or_plot(d["t2":(-250, 250)])
-        fl.next("time domain -- after correct and sign flip")
-        d.ift("t2")
-        image_or_plot(d["t2":(None, 20e-3)])
-        d.ft("t2")
+    fl.image(d, interpolation="auto")
+    fl.next("time domain")
+    d.ift("t2")
+    fl.image(d["t2":(None, 20e-3)], interpolation="auto")
+    d_manualslice = d.C['t2':(0,None)]
+    d.ft('t2')
+    d_manualslice['t2',0] *= 0.5
+    d_manualslice.ft("t2")
+    d_manualslice /= zeroth_order_ph(select_pathway(d_manualslice)["t2":(-250, 250)].mean('nScans'))
+    my_signs = determine_sign(select_pathway(d_manualslice)["t2":(-250, 250)].mean('nScans'))
+    fl.next("manual fid slice")
+    fl.image(select_pathway(d_manualslice)["t2":(-250, 250)], interpolation='auto')
+    fl.next("manual fid slice, with sign flip")
+    fl.image(select_pathway(d_manualslice)["t2":(-250, 250)]*my_signs, interpolation='auto')
+    ## {{{ correct for evolution during pulse
+    ##     I do this, but if I plot it, I do find that it's not significant
+    #d *= np.exp(
+    #    -1j * 2 * pi * (2 * d.fromaxis("p_90") / pi) * d.fromaxis("t2")
+    #)
+    ## }}}
+    # {{{ do it the "correct" way
+    fl.next("fid_from_echo result")
+    d = fid_from_echo(d)
+    d /= zeroth_order_ph(select_pathway(d)["t2":(-250, 250)].mean('nScans'))
+    fl.image(select_pathway(d)["t2":(-250, 250)], interpolation="auto")
+    fl.next("fid_from_echo result, with sign flip")
+    my_signs = determine_sign(select_pathway(d)["t2":(-250, 250)].mean('nScans'))
+    fl.image(select_pathway(d)["t2":(-250, 250)]*my_signs, interpolation="auto")
+    # }}}
     if d.get_prop("coherence_pathway") is not None:
+        d.mean('nScans')
         fl.next("sum of abs of all coherence pathways (for comparison)")
         forplot = abs(d)
         guess_direct = (
@@ -102,7 +78,7 @@ with figlist_var() as fl:
         forplot.mean_all_but(
             list(d.get_prop("coherence_pathway").keys()) + [guess_direct]
         )
-        image_or_plot(forplot)
+        fl.plot(forplot)
         d = select_pathway(d)
         fl.next("with coherence pathway selected")
-        image_or_plot(d)
+        d['t2':(-300,300)].pcolor()

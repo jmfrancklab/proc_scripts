@@ -452,8 +452,8 @@ def proc_nutation_v4(s, fl=None):
     """
     s = proc_spincore_generalproc_v1(s, fl=fl)
     s.rename("indirect", "p_90")
-    s.set_units("t2", "s")
     s.set_units("p_90", "s")
+    s.set_units("t2", "Hz")
     return s
 
 
