@@ -318,7 +318,6 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
     s.rename("ph2", "ph_overall")  # overall change in coherence
     s.rename("ph_diff", "ph1")  # change during pulse 1
     # }}}
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     return s
 
 
@@ -502,7 +501,6 @@ def proc_nutation_v4(s, fl=None):
     s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_units("t2", "s")
     s.set_units("p_90", "s")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
     return s
 
