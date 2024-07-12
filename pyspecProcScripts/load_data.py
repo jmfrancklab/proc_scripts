@@ -296,31 +296,8 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 
 def proc_spincore_SE_v1(s, fl=None):
-<<<<<<< Updated upstream
     s = proc_spincore_generalproc_v1(s, fl=fl)
-    s *= s.get_prop("acq_params")["nScans"]
-||||||| Stash base
-    s.ft("ph1")  # In order to match the amplitude of the
-    #             coherence domain signal to its size in
-    #             each transient we do not use unitary FT
-    s.set_prop("coherence_pathway", {"ph1": 1})
-    s.set_units("t2", "s")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s *= s.shape["nScans"]
-    s.squeeze()
-    s.ft("t2", shift=True)
-=======
-    s.ft("ph1")  # In order to match the amplitude of the
-    #             coherence domain signal to its size in
-    #             each transient we do not use unitary FT
-    s.set_prop("coherence_pathway", {"ph1": 1})
-    s.set_units("t2", "s")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
-    s.squeeze()
-    s.ft("t2", shift=True)
-    s /= np.sinc(s.fromaxis("t2")*s.get_prop("acq_params")["SW_kHz"]*1e3)
->>>>>>> Stashed changes
     return s
 
 
@@ -555,7 +532,7 @@ def proc_var_tau(s, fl=None):
 
 
 def proc_spincore_echo_v1(s, fl=None):
-    "old-fashioned (not properly shaped before storage) echo data"
+    """old-fashioned (not properly shaped before storage) echo data"""
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
     s.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
