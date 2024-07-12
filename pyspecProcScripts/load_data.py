@@ -599,6 +599,8 @@ def proc_spincore_ODNP_v4(s, fl=None):
 
 
 def proc_spincore_generalproc_v1(s, fl=None):
+    if "tau_us" in s.get_prop("acq_params").keys():
+        s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.ft("t2", shift=True)  # if we have used cycles for the axis
     #                        coordinates, signal in the coherence dimension
     #                        will match the amplitude of signal in a single
