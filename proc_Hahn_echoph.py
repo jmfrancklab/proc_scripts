@@ -6,11 +6,6 @@ from sympy import symbols
 fl = fl_mod()
 t2 = symbols('t2')
 logger = init_logging('info')
-def select_pathway(s,pathway):
-    retval = s
-    for k, v in pathway.items():
-        retval = retval[k,v]
-    return retval
 signal_pathway = {'ph1':1,'ph2':0}
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
         ('200302_alex_probe_water', 'test_equip', 'signal', 

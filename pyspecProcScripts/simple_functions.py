@@ -82,6 +82,9 @@ def select_pathway(*args, **kwargs):
     elif len(args) == 1 and len(kwargs) > 0 and len(kwargs) % 2 == 0:
         s = args[0]
         pathway = kwargs
+    elif len(args) == 1:
+        s = args[0]
+        pathway = s.get_prop("coherence_pathway")
     else:
         raise ValueError("your arguments don't make any sense!!")
     retval = s
