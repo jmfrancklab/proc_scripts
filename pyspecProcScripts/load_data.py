@@ -297,13 +297,13 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 def proc_spincore_SE_v1(s, fl=None):
     s = proc_spincore_generalproc_v1(s, fl=fl)
-    s *= s.get_prop("acq_params")["nScans"]
+    s *= s.shape["nScans"]
     return s
 
 
 def proc_spincore_diffph_SE_v1(s, fl=None):
     s = proc_spincore_diffph_SE_v2(s, fl=fl)
-    s *= s.get_prop("acq_params")["nScans"]
+    s *= s.shape["nScans"]
     return s
 
 
@@ -323,7 +323,7 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
 
 def proc_Hahn_echoph(s, fl=None):
     logging.info("loading pre-processing for Hahn_echoph")
-    nScans = s.get_prop("acq_params")["nScans"]
+    nScans = s.shape["nScans"]
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
@@ -599,27 +599,31 @@ def proc_spincore_ODNP_v4(s, fl=None):
 def proc_spincore_generalproc_v1(s, fl=None):
     if "tau_us" in s.get_prop("acq_params").keys():
         s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s.ft("t2", shift=True)  # if we have used cycles for the axis
-    #                        coordinates, signal in the coherence dimension
-    #                        will match the amplitude of signal in a single
-    #                        transient if we do this
+    s.ft("t2", shift=True)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
-        s.ft([j])
-    # always put the phase cycling dimensions on the outside
+        s.ft([j])  # if we have used cycles for the axis
+        #            coordinates, signal in the coherence dimension will match
+        #            the amplitude of signal in a single transient if we do
+        #            this
+    # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
+    # }}}
+    # {{{ reorder the rest based on size
     nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
     if len(nonphdims) > 1:
         sizeidx = np.argsort([s.shape[j] for j in nonphdims])
         neworder += [nonphdims[j] for j in sizeidx]
+    # }}}
     s.reorder(neworder)
     # {{{ put ph_overall outside, if it exists, since there should be nothing outside that
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
     # }}}
-    # apply the receiver response
+    # {{{ apply the receiver response
     s /= s.fromaxis("t2").run(
         lambda x: np.sinc(x / (s.get_prop("acq_params")["SW_kHz"] * 1e3))
     )
+    # }}}
     return s
 
 
