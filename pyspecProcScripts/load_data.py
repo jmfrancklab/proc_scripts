@@ -449,7 +449,7 @@ def proc_nutation_v4(s, fl=None):
     Note that data acquired on 6/25 or before might have really messed up axis
     coordinates (some are multiplied by 1e12!)
     """
-    s = proc_spincore_generalproc_v1(s,fl=fl)
+    s = proc_spincore_generalproc_v1(s, fl=fl)
     s.rename("indirect", "p_90")
     s.set_units("t2", "s")
     s.set_units("p_90", "s")
@@ -607,7 +607,7 @@ def proc_spincore_generalproc_v1(s, fl=None):
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
     nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
     if len(nonphdims) > 1:
-        sizeidx  = np.argsort([s.shape[j] for j in nonphdims])
+        sizeidx = np.argsort([s.shape[j] for j in nonphdims])
         neworder += [nonphdims[j] for j in sizeidx]
     s.reorder(neworder)
     # {{{ put ph_overall outside, if it exists, since there should be nothing outside that
