@@ -296,8 +296,8 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 
 def proc_spincore_SE_v1(s, fl=None):
-    s.ft("ph1")
-    s.ft("t2", shift=True)
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    s *= s.get_prop("acq_params")["nScans"]
     return s
 
 
@@ -449,15 +449,10 @@ def proc_nutation_v4(s, fl=None):
     Note that data acquired on 6/25 or before might have really messed up axis
     coordinates (some are multiplied by 1e12!)
     """
-    if s.shape["indirect"] > s.shape["nScans"]:
-        s.reorder(["ph1", "nScans", "indirect"])
-    else:
-        s.reorder(["ph1", "indirect", "nScans"])
+    s = proc_spincore_generalproc_v1(s,fl=fl)
     s.rename("indirect", "p_90")
     s.set_units("t2", "s")
     s.set_units("p_90", "s")
-    s.ft("ph1", unitary=True)
-    s.ft("t2", shift=True)
     return s
 
 
@@ -609,7 +604,12 @@ def proc_spincore_generalproc_v1(s, fl=None):
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         s.ft([j])
     # always put the phase cycling dimensions on the outside
-    s.reorder([j for j in s.dimlabels if j.startswith("ph")])
+    neworder = [j for j in s.dimlabels if j.startswith("ph")]
+    nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
+    if len(nonphdims) > 1:
+        sizeidx  = np.argsort([s.shape[j] for j in nonphdims])
+        neworder += [nonphdims[j] for j in sizeidx]
+    s.reorder(neworder)
     # {{{ put ph_overall outside, if it exists, since there should be nothing outside that
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
