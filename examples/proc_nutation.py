@@ -36,6 +36,8 @@ with figlist_var() as fl:
     d.ft('t2')
     fl.next("raw data")
     fl.image(d, interpolation="auto")
+    fl.next("raw data, abs")
+    select_pathway(d).C.mean('nScans').run(abs).pcolor()
     fl.next("time domain")
     d.ift("t2")
     fl.image(d["t2":(None, 20e-3)], interpolation="auto")
