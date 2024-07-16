@@ -458,6 +458,13 @@ def proc_nutation_v4(s, fl=None):
     s.set_units("t2", "Hz")
     return s
 
+def proc_nutation_v5(s, fl=None):
+    """nutation curve"""
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    s.set_units("t2", "s")
+    s.set_units("p_90", "s")
+    return s
+
 
 def proc_var_tau(s, fl=None):
     s.get_prop("SW")
@@ -758,6 +765,7 @@ lookup_table = {
     "spincore_nutation_v2": proc_nutation_amp,
     "spincore_nutation_v3": proc_nutation_chunked,
     "spincore_nutation_v4": proc_nutation_v4,
+    "spincore_nutation_v5": proc_nutation_v5,
     "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
     "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
     "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no meter powers
