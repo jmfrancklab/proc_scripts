@@ -1,0 +1,189 @@
+import numpy as np
+import pyspecdata as psd
+import matplotlib.pylab as plt
+from itertools import cycle
+from pyspecProcScripts import lookup_table, select_pathway
+from numpy import r_
+
+def size_of_coherences(thisd,fl):
+    forplot = thisd.C
+    if "nEcho" in forplot.dimlabels:
+        forplot.smoosh(["nEcho", "t2"], r"nEcho $\otimes$ t2")
+        if "nScans" in forplot.dimlabels:
+            lastph = [j for j in forplot.dimlabels if j.startswith('ph')][-1]
+            forplot.smoosh([lastph,'nScans'],fr"last $\Delta p$ $\otimes$ nScans")
+        forplot.reorder([r"nEcho $\otimes$ t2"], first=False)
+    fl.image(forplot)
+def echo_interleave(d, phcycdim):
+    "interleave even and odd echoes coming from phcycdim"
+    assert d.get_ft_prop(phcycdim)
+    retval = d.shape
+    retval.pop(phcycdim)
+    retval = retval.alloc(dtype=np.complex128, format=None)
+    retval["nEcho", 0::2] = d["ph1", +1]["nEcho", 0::2]
+    retval["nEcho", 1::2] = d["ph1", -1]["nEcho", 1::2]
+    retval.copy_axes(d).copy_props(d)
+    return retval
+def smoosh_direct_domain(thisd):
+    thisd.smoosh(["nEcho", "t2"], "t2")
+    acq = thisd.get_prop("acq_params")
+    echo_time = 1e-6 * 2 * (acq["tau_us"] + acq["p90_us"])
+    thisd["t2"] = (thisd["t2"]["nEcho"]) * echo_time + thisd["t2"][
+        "t2"
+    ]
+    return thisd
+
+# following grabs the default color list
+colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+# following can be called multiple times if you need multiple independent cycles (this is unusual -- not true for this example)
+colorcyc = cycle(colorcyc_list)
+# ONLY do the following to grab a new color -- e.g. when switching between types of experiments
+# use the color like this:
+
+plt.rcParams.update(
+    {
+        "errorbar.capsize": 2,
+        "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+        "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "savefig.bbox": "tight",
+        "savefig.dpi": 300,
+        # "figure.figsize": (3*(1+np.sqrt(5))/2,3),
+    }
+)
+this_expt = ['cpmg','cpmg extracyc','se']
+color_by_exptype = {}
+thiscolor = next(colorcyc)
+
+print(thiscolor)
+
+with psd.figlist_var() as fl:
+    for (
+        thisfile,
+        exp_type,
+        nodename,
+        manystep_cpmg,
+        thislabel,
+        this_expt,
+        thisbasename,
+        ) in [ 
+         (
+            "240704_13p5mM_TEMPOL_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_1",
+            True,
+            "cpmg1 no power large cyc SW = 10.0",
+            "cpmg extracyc",
+            "no power",
+        ),
+        (
+            "240704_13p5mM_TEMPOL_echo.h5",
+            "ODNP_NMR_comp/Echoes",
+            "echo_1",
+            False,
+            "echo no power simple cyc SW = 10.0",
+            "se",
+            "no power",
+        ),
+        (
+            "240704_13p5mM_TEMPOL_CPMG.h5",
+            "ODNP_NMR_comp/CPMG",
+            "CPMG_2",
+            False,
+            "cpmg2 no power large cyc SW = 10.0",
+            "cpmg",
+            "no power",
+        ),
+        #(
+        #    "240704_13p5mM_TEMPOL_echo.h5",
+        #    "ODNP_NMR_comp/Echoes",
+        #    "echo_2",
+        #    True,
+        #    "echo no power simple cyc SW = 10.0",
+        #    "no power",
+        #),    
+        #(
+        #    "240702_13p5mM_TEMPOL_echo.h5",
+        #    "ODNP_NMR_comp/Echoes",
+        #    "echo_12",
+        #    False,
+        #    "generic echo no power simple cyc SW = 10.0",
+        #    "no power",
+        #),
+        #(
+        #    "240702_13p5mM_TEMPOL_pm_echo.h5",
+        #    "ODNP_NMR_comp/Echoes",
+        #    "Echo_2",
+        #    False,
+        #    "pm generic echo no power large cyc SW = 10.0",
+        #    "no power",
+        #),
+        #(
+        #    "240702_13p5mM_TEMPOL_pm_echo.h5",
+        #    "ODNP_NMR_comp/Echoes",
+        #    "Echo_3",
+        #    False,
+        #    "pm generic echo no power large cyc SW = 10.0",
+        #    "no power",
+        #)            
+            ]:
+        for k in this_expt:
+            color_by_exptype[k] = next(colorcyc) 
+        fl.basename = thisbasename
+        thisd = psd.find_file(
+            thisfile, exp_type=exp_type, expno=nodename, lookup=lookup_table
+        )
+        thisd.squeeze()
+        fl.next("raw data for %s" % thislabel)
+        fl.image(thisd, interpolation="auto")
+        fl.next("abs of raw data for %s, signal average" % thislabel)
+        thisd.ift("t2")
+        size_of_coherences(thisd,fl)
+        if manystep_cpmg:
+            proposed_cycle = thisd.C.ift(['ph1','ph2','ph_overall'])
+            # based on ppg, the following gives 1 and 3 difference
+            # between first and rest of pulses, and no difference between
+            # first 180 and rest of pulses
+            throw_out_CP = proposed_cycle['ph1',r_[1,3]]['ph2',0]
+            throw_out_CP.ft(['ph1','ph_overall'])
+            # {{{ calculate the shift in the coherence domain needed to bring
+            #     the signal of interest to Δp=0
+            Deltap_shift = thisd.shape
+            Deltap_shift.pop('t2').pop('nScans')
+            Deltap_shift = Deltap_shift.alloc(format=0)
+            Deltap_shift['ph_overall',-1,'ph2',-2,'ph1',1] = 1
+            Deltap_shift['ph_overall',-1,'ph2',-2,'ph1',-1] = -1
+            Deltap_shift.copy_props(thisd).copy_axes(thisd)
+            Deltap_shift.ift(['ph1','ph2','ph_overall'])
+            # }}}
+            fl.next('raw phase cycles')
+            size_of_coherences(proposed_cycle*Deltap_shift,fl)
+            proposed_cycle = proposed_cycle['ph_overall',0::2]['ph2',0::2]
+            proposed_cycle.ft(['ph1','ph2','ph_overall'])
+            fl.next('signal from proposed cycle')
+            size_of_coherences(proposed_cycle,fl)
+            fl.next('reduced phcyc with interleave')
+            temp = echo_interleave(proposed_cycle,"ph1")
+            temp = smoosh_direct_domain(temp)
+            fl.plot(abs(temp['ph2',-2]['ph_overall',-1]),'o',color=thiscolor)
+            fl.next('reduce to standard CP-less CPMG')
+            throw_out_CP = smoosh_direct_domain(throw_out_CP)
+            fl.plot(abs(throw_out_CP['ph_overall',-1]['ph1',-1]),'o',color=thiscolor)
+            fl.next('signal from throwing out CP')
+            proposed_cycle = proposed_cycle['ph1',1]-proposed_cycle['ph1',-1]
+            proposed_cycle = smoosh_direct_domain(proposed_cycle)
+            fl.plot(abs(proposed_cycle['ph2',-2]['ph_overall',-1]),'o',color=thiscolor)
+            thisd = echo_interleave(thisd, "ph1")
+            thisd.set_prop("coherence_pathway", {"ph2": -2, "ph_overall": -1})
+        thisd = select_pathway(thisd, thisd.get_prop("coherence_pathway"))
+        if "nEcho" in thisd.dimlabels:
+            thisd = smoosh_direct_domain(thisd)
+        fl.next("plot each scan separately")
+        kwargs = {}
+        for j in range(thisd.shape["nScans"]):
+            fl.plot(abs(thisd["nScans", j]), "o", label=f"{thislabel} scan {j}", color=color_by_exptype[k])
+        fl.next("abs(t domain) comparison")
+        if "nScans" in thisd.dimlabels:
+            thisd.mean("nScans")
+        fl.plot(abs(thisd), "o", label=thislabel,color=color_by_exptype[k])
+
