@@ -29,12 +29,15 @@ d = find_file(
 if d.get_prop("postproc_type") == "spincore_SE_v1":
     d.rename("indirect", "p_90")
     d["p_90"] *= 1e-9
+elif "indirect" in d.dimlabels:
+    d.rename("indirect","p_90")
 with figlist_var() as fl:
+    # {{{ Manual processing
     d.squeeze()
     d.ift('t2')
     d['t2'] -= 2e-3 # eyeball correction
     d.ft('t2')
-    fl.next("raw data")
+    fl.next("Raw Data")
     fl.image(d, interpolation="auto")
     fl.next("raw data, phase")
     ph0 = select_pathway(d)['t2':(-100,0)]['p_90',:5].sum('t2').sum('p_90')
@@ -55,6 +58,7 @@ with figlist_var() as fl:
     fl.image(select_pathway(d_manualslice)["t2":(-250, 250)], interpolation='auto')
     fl.next("manual fid slice, with sign flip")
     fl.image(select_pathway(d_manualslice)["t2":(-250, 250)]*my_signs, interpolation='auto')
+    # }}}
     ## {{{ correct for evolution during pulse
     ##     I do this, but if I plot it, I do find that it's not significant
     #d *= np.exp(
