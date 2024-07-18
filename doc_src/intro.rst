@@ -1,3 +1,5 @@
+If you're uncertain, start with :ref:`examples! <sphx_glr_auto_examples>`.
+
 The processing is structured into multiple levels.
 
 Lowest level
