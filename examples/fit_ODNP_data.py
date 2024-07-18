@@ -20,17 +20,20 @@ for two purposes:
 *   they are plugged in, as raw numbers, as part of the nonlinear expression
     that is used to fit the :math:`M_0 E(p)` (*i.e.* the raw integral) values.
 """
-from pyspecdata import *
+import pyspecdata as psd
 from sympy import symbols, Symbol, latex, lambdify
 from scipy.io import loadmat
+import matplotlib.pylab as plt
+import numpy as np
+from numpy import r_
 
 # {{{ This block changes when the data changes -- everything else should be
 # left alone for most circumstances
 data_info = dict(
     filename="ras.h5",  # h5 file containing table of integrals for different datasets
     data_dir="AG_processed_data",  # directory of the dataset of table of integrals
-    nodename="230706_M67_a",# specific nodename of the dataset of interest
-)  
+    nodename="230706_M67_a",  # specific nodename of the dataset of interest
+)
 T_1w_info = dict(
     filename="T10_DI_water_230412",
     data_dir="AG_processed_data",
@@ -38,7 +41,7 @@ T_1w_info = dict(
 # }}}
 
 # {{{ load data
-integral_vs_p = find_file(
+integral_vs_p = psd.find_file(
     data_info["filename"],
     exp_type=data_info["data_dir"],
     expno=f"{data_info['nodename']}/Ep",
@@ -47,13 +50,13 @@ integral_vs_p = find_file(
 # R1p expno then it will load the T1p integrals and convert to R1p by taking
 # the inverse
 try:
-    R1p = find_file(
+    R1p = psd.find_file(
         data_info["filename"],
         exp_type=data_info["data_dir"],
         expno=f"{data_info['nodename']}/R1p",
     )
-except:
-    T1p = find_file(
+except Exception:
+    T1p = psd.find_file(
         data_info["filename"],
         exp_type=data_info["data_dir"],
         expno=f"{data_info['nodename']}/T1p",
@@ -65,7 +68,7 @@ except:
 # reproducibility. Figure out where this flip occurs
 flip_idx = np.where(np.diff(integral_vs_p.getaxis("power")) < 0)[0][0] + 1
 # }}}
-with figlist_var() as fl:
+with psd.figlist_var() as fl:
     # {{{Plot integrals as a function of power
     fl.next("Integrals vs power")
     fl.plot(
@@ -90,13 +93,15 @@ with figlist_var() as fl:
     # {{{ fit kᵨ⁻¹ with two degrees of freedom (to a straight line) and then
     # apply to fit R1p
     T10_p = loadmat(
-        search_filename(
+        psd.search_filename(
             T_1w_info["filename"], exp_type=T_1w_info["data_dir"], unique=True
         )
     )["a"][0, :]
     R10_p = 1 / (R1p.fromaxis("power").eval_poly(T10_p, "power"))
-    powers_fine = nddata(r_[0 : R1p.getaxis("power")[-1] : 300j], "p")
-    krho_inv = integral_vs_p.get_prop("acq_params")["concentration"] / (R1p - R10_p)
+    powers_fine = psd.nddata(r_[0 : R1p.getaxis("power")[-1] : 300j], "p")
+    krho_inv = integral_vs_p.get_prop("acq_params")["concentration"] / (
+        R1p - R10_p
+    )
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     R1p_expr = (T10_p[0] + T10_p[1] * p) ** -1 + (
@@ -116,7 +121,7 @@ with figlist_var() as fl:
     # {{{ Fit NMR integrals as function of power
     fl.next("Integrals vs power")
     sp_expr = p / (p + phalf)
-    integral_vs_p_fit = lmfitdata(integral_vs_p["power", :flip_idx])
+    integral_vs_p_fit = psd.lmfitdata(integral_vs_p["power", :flip_idx])
     # Symbolic expression for integrals as a function of power that is used
     # in the symbolic function for the fitting of the integrals as a function of power
     integral_vs_p_fit.functional_form = M0 - ((M0 * A * sp_expr) / R1p_expr)
@@ -140,7 +145,9 @@ with figlist_var() as fl:
         ).real
     )
     integral_vs_p_fit.set_guess(
-        M0=dict(value=integral_vs_p["power", 0].real.item(), min=1e4, max=11e4),
+        M0=dict(
+            value=integral_vs_p["power", 0].real.item(), min=1e4, max=11e4
+        ),
         A=dict(value=A_guess, min=0.2 * A_guess, max=3 * A_guess),
         phalf=dict(value=0.2, min=0.05, max=1.0),
     )
@@ -155,7 +162,7 @@ with figlist_var() as fl:
         # guessed, it is the ppt returned with a field sweep
     ) / integral_vs_p.get_prop("acq_params")["concentration"]
     ax = plt.gca()
-    text(
+    plt.text(
         0.5,
         0.7,
         (3 * "\n")
