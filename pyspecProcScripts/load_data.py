@@ -497,9 +497,12 @@ def proc_nutation_v4(s, fl=None):
     coordinates (some are multiplied by 1e12!)
     """
     s = proc_spincore_generalproc_v1(s, fl=fl)
-    s.rename("indirect", "p_90")
-    s.set_prop("coherence_pathway", {"ph1": 1})
-    s.set_units("t2", "s")
+    if "indirect" in s.dimlabels:
+        s.rename("indirect", "p_90")
+    if s.get_prop("coherence_pathway") is None:
+        s.set_prop("coherence_pathway", {"ph1": 1})
+    if s.get_units("t2") is None:
+        raise ValueError("the units for t2 are none, but have been set for spincore_nutation_v4 since 6/25.  If your units are not set, you probably acquired with a very messed up version of the ppg!!!!!")
     s.set_units("p_90", "s")
     s *= s.shape["nScans"]
     return s
