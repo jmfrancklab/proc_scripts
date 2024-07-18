@@ -823,7 +823,12 @@ def proc_field_sweep_v2(s):
 
 
 lookup_table = {
+    "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,
+    "ab_ir2h": proc_bruker_deut_IR_mancyc,
+    "ag_CPMG_strob": proc_bruker_CPMG_v1,
+    "ag_T1CPMG_2h": proc_bruker_T1CPMG_v1,
     "chirp": proc_capture,
+    "spincore_CPMG_v1": proc_spincore_CPMG_v1,
     "spincore_SE_v1": proc_spincore_SE_v1,
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
     "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
