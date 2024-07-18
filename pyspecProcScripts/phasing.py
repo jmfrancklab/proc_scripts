@@ -788,18 +788,6 @@ def determine_sign(s, direct="t2", fl=None):
     data_sgn = s.C.sum(direct)
     data_sgn /= zeroth_order_ph(data_sgn)
     data_sgn.run(np.real).run(lambda x: np.sign(x))
-    current_sum = (data_sgn * s).data.sum()
-    prev_sum = current_sum
-    sign_for_flip = data_sgn.data.ravel()
-    for j in range(len(sign_for_flip)):
-        sign_for_flip[j] *= -1
-        current_sum = (data_sgn * s).data.sum()
-        if current_sum > prev_sum:
-            # success, keep flip
-            prev_sum = current_sum
-        else:
-            # flip back
-            sign_for_flip[j] *= -1
     if fl is not None:
         fl.next("check sign")
         fl.image((s.C.setaxis("vd", "#").set_units("vd", "scan #")) * data_sgn)
