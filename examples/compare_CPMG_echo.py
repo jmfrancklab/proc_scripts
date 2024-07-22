@@ -16,7 +16,14 @@ def echo_interleave(d, phcycdim):
 
 
 with psd.figlist_var() as fl:
-    for thisfile, exp_type, nodename, manystep_cpmg, thislabel, thisbasename in [
+    for (
+        thisfile,
+        exp_type,
+        nodename,
+        manystep_cpmg,
+        thislabel,
+        thisbasename,
+    ) in [
         # {{{ Tested Controls
         (
             "240704_13p5mM_TEMPOL_CPMG.h5",
@@ -184,7 +191,9 @@ with psd.figlist_var() as fl:
             thisd.smoosh(["nEcho", "t2"], "t2")
             acq = thisd.get_prop("acq_params")
             echo_time = 1e-6 * 2 * (acq["tau_us"] + acq["p90_us"])
-            thisd["t2"] = (thisd["t2"]["nEcho"]) * echo_time + thisd["t2"]["t2"]
+            thisd["t2"] = (thisd["t2"]["nEcho"]) * echo_time + thisd["t2"][
+                "t2"
+            ]
         if "nScans" in thisd.dimlabels:
             thisd.mean("nScans")
         fl.plot(abs(thisd), "o", label=thislabel)

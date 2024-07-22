@@ -29,7 +29,9 @@ with figlist_var() as fl:
     ax_power.set_ylabel("power / W")
     ax_power.set_xlabel("Time / ms")
     ax_power.plot(
-        time_axis, 10 ** (thislog.total_log["power"] / 10 + 3 + coupler_atten / 10), "."
+        time_axis,
+        10 ** (thislog.total_log["power"] / 10 + 3 + coupler_atten / 10),
+        ".",
     )
     # }}}
     # {{{ Add a vertical line at the time the data acquisition for the

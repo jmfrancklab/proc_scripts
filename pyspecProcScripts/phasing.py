@@ -4,7 +4,7 @@ from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
 from pylab import axvline, rand, legend
 import numpy as np
-from numpy import r_, sqrt, pi 
+from numpy import r_, sqrt, pi
 from scipy import linalg
 import scipy.signal.windows as sci_win
 import logging
@@ -297,9 +297,12 @@ def fid_from_echo(
 
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
     if len(peakrange) > 1:
-        max_range_width = max([thisrange[1] - thisrange[0] for thisrange in peakrange])
+        max_range_width = max(
+            [thisrange[1] - thisrange[0] for thisrange in peakrange]
+        )
         range_gaps = [
-            peakrange[j + 1][0] - peakrange[j][1] for j in range(len(peakrange) - 1)
+            peakrange[j + 1][0] - peakrange[j][1]
+            for j in range(len(peakrange) - 1)
         ]
         # {{{ if the gaps are all smaller than the max peak that was found, we
         #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
