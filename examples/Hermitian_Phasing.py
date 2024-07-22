@@ -10,17 +10,17 @@ domain.
 """
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-from pylab import subplots, rcParams
-import sympy as s
+import matplotlib.pyplot as plt
+import sympy as sp
 from collections import OrderedDict
-from numpy import r_, sqrt
-from numpy.random import seed
+from numpy import r_
+import numpy as np
 
-seed(2021)
-rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
+np.random.seed(2021)
+plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 1
-t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
+t2, td, vd, power, ph1, ph2 = sp.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
 with psd.figlist_var() as fl:
@@ -28,8 +28,8 @@ with psd.figlist_var() as fl:
         (
             (
                 23
-                * (1 - 2 * s.exp(-vd / 0.2))
-                * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
+                * (1 - 2 * sp.exp(-vd / 0.2))
+                * sp.exp(+1j * 2 * sp.pi * 100 * t2 - abs(t2) * 50 * sp.pi)
             ),
             [
                 ("vd", psd.nddata(r_[0:1:40j], "vd")),
@@ -45,7 +45,7 @@ with psd.figlist_var() as fl:
             (
                 23
                 * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
-                * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
+                * sp.exp(+1j * 2 * sp.pi * 100 * t2 - abs(t2) * 50 * sp.pi)
             ),
             [
                 ("power", psd.nddata(r_[0:4:25j], "power")),
@@ -58,13 +58,13 @@ with psd.figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig, ax_list = subplots(1, 4, figsize=(7, 7))
+        fig, ax_list = plt.subplots(1, 4, figsize=(7, 7))
         fig.suptitle(fl.basename)
         fl.next("Data processing", fig=fig)
         data = psd.fake_data(expression, OrderedDict(orderedDict), signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
-        data /= sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
+        data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
         fl.image(data, ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
