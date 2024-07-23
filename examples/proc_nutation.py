@@ -11,15 +11,11 @@ Tested with:
 ``py proc_nutation.py nutation_2 240710_27mM_TEMPOL_chokes_T_atprobe_nutation.h5 ODNP_NMR_comp/nutation``
 
 """
-import pyspecProcScripts as prscr
 import pyspecdata as psd
+import pyspecProcScripts as prscr
+import numpy as np
 import matplotlib.pyplot as plt
 import sys
-from numpy import pi
-from itertools import cycle
-
-colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-colorcyc = cycle(colorcyc_list)
 
 assert len(sys.argv) == 4
 d = psd.find_file(
@@ -33,81 +29,78 @@ if d.get_prop("postproc_type") == "spincore_SE_v1":
     d["p_90"] *= 1e-9
 elif "indirect" in d.dimlabels:
     d.rename("indirect", "p_90")
+signal_range = (-100, 100)
+disprange = (-500, 500)
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
 with psd.figlist_var() as fl:
-    # {{{ Manual processing
-    d.squeeze()
-    d.ift("t2")
-    d["t2"] -= 2e-3  # eyeball correction
-    d.ft("t2")
-    fl.next("Raw Data")
-    fl.image(d, interpolation="auto")
-    fl.next("raw data, phase")
-    ph0 = (
-        prscr.select_pathway(d)["t2":(-100, 0)]["p_90", :5]
-        .sum("t2")
-        .sum("p_90")
-    )
-    ph0 /= abs(ph0)
-    fl.image(
-        prscr.select_pathway(d / ph0).angle * 180 / pi, interpolation="auto"
-    )
-    fl.next("raw data, abs")
-    prscr.select_pathway(d).C.mean("nScans").run(abs).pcolor()
-    fl.next("time domain")
-    d.ift("t2")
-    fl.image(d["t2":(None, 20e-3)], interpolation="auto")
-    d_manualslice = d.C["t2":(0, None)]
-    d.ft("t2")
-    d_manualslice["t2", 0] *= 0.5
-    d_manualslice.ft("t2")
-    d_manualslice /= prscr.zeroth_order_ph(
-        prscr.select_pathway(d_manualslice)["t2":(-250, 250)].mean("nScans")
-    )
-    my_signs = prscr.determine_sign(
-        prscr.select_pathway(d_manualslice)["t2":(-250, 250)].mean("nScans")
-    )
-    fl.next("manual fid slice")
-    fl.image(
-        prscr.select_pathway(d_manualslice)["t2":(-250, 250)],
-        interpolation="auto",
-    )
-    fl.next("manual fid slice, with sign flip")
-    fl.image(
-        prscr.select_pathway(d_manualslice)["t2":(-250, 250)] * my_signs,
-        interpolation="auto",
-    )
+    # {{{ set up subplots
+    fl.next("Raw Data with averaged scans", fig=fig)
+    fig.suptitle("Nutation %s" % sys.argv[2])
     # }}}
-    # {{{ do it the "correct" way
-    fl.next("prscr.fid_from_echo result")
-    d = prscr.fid_from_echo(d)
-    d /= prscr.zeroth_order_ph(
-        prscr.select_pathway(d)["t2":(-250, 250)].mean("nScans")
-    )
-    fl.image(prscr.select_pathway(d)["t2":(-250, 250)], interpolation="auto")
-    fl.next("prscr.fid_from_echo result, with sign flip")
-    my_signs = prscr.determine_sign(
-        prscr.select_pathway(d)["t2":(-250, 250)].mean("nScans")
-    )
-    fl.image(
-        prscr.select_pathway(d)["t2":(-250, 250)] * my_signs,
-        interpolation="auto",
-    )
-    # }}}
-    if d.get_prop("coherence_pathway") is not None:
+    # {{{ average scans and show raw
+    if "nScans" in d.dimlabels:
         d.mean("nScans")
-        fl.next("sum of abs of all coherence pathways (for comparison)")
-        forplot = abs(d)
-        guess_direct = (
-            d.shape.max()
-        )  # guess that the longest dimension is the direct
-        if guess_direct == "indirect":
-            temp = d.shape
-            temp.pop("indirect")
-            guess_direct = temp.max()
-        forplot.mean_all_but(
-            list(d.get_prop("coherence_pathway").keys()) + [guess_direct]
+    d = d["t2":disprange]
+    og_signs = prscr.determine_sign(prscr.select_pathway(d["t2":signal_range]))
+    d.reorder("t2", first=False)
+    fl.image(d.C["t2":disprange], interpolation="auto", ax=ax1)
+    ax1.set_title("Raw Data")
+    # }}}
+    # {{{ apply clock correction
+    total_corr = 0
+    for j in range(5):
+        corr = prscr.clock_correction(
+            prscr.select_pathway(d, d.get_prop("coherence_pathway"))
+            * og_signs
+            * np.exp(-1j * 2 * np.pi * total_corr * d.fromaxis("p_90")),
+            "p_90",
         )
-        fl.plot(forplot)
-        d = prscr.select_pathway(d)
-        fl.next("with coherence pathway selected")
-        d["t2":(-300, 300)].pcolor()
+        total_corr += corr
+    d *= np.exp(-1j * 2 * np.pi * total_corr * d.fromaxis("p_90"))
+    # }}}
+    # {{{ apply zeroth order correction for final sign assignment
+    for j in range(len(d.getaxis("p_90"))):
+        ph0 = prscr.zeroth_order_ph(
+            prscr.select_pathway(d["p_90", j]["t2":signal_range])
+        )
+        d["p_90", j] /= ph0
+    my_signs = prscr.determine_sign(prscr.select_pathway(d["t2":signal_range]))
+    # }}}
+    d = prscr.fid_from_echo(d, d.get_prop("coherence_pathway"))
+    align_option = input("Do you want to apply the correlation alignment?")
+    if align_option.lower().startswith("n"):
+        pass
+    elif align_option.lower().startswith("y"):
+        d.ift("t2")
+        lambda_L = prscr.fit_envelope(d)
+        d.ft("t2")
+        align_sign = prscr.determine_sign(
+            prscr.select_pathway(d, d.get_prop("coherence_pathway"))
+        )
+        matched = (prscr.select_pathway(d) * align_sign).ift("t2")
+        matched *= np.exp(-np.pi * lambda_L * matched.fromaxis("t2"))
+        matched.ft("t2")
+        frq_atmax = matched.real.argmax("t2")
+        d.ift("t2")
+        d *= np.exp(-1j * 2 * np.pi * frq_atmax * d.fromaxis("t2"))
+        d.ft("t2")
+        d.ift(list(d.get_prop("coherence_pathways")))
+        opt_shift, sigm, mask = prscr.correl_align(
+            d,
+            indirect_dim="p_90",
+            sigma=lambda_L,
+            signal_pathway=d.get_prop("coherence_pathway"),
+        )
+        d.ift("t2")
+        d *= np.exp(-1j * 2 * np.pi * opt_shift * d.fromaxis("t2"))
+        d.ft(list(d.get_prop("coherence_pathway")))
+        d = d["t2":(0, None)]
+        d *= 2
+        d["t2":0] *= 0.5
+        d.ft("t2")
+    fl.image(d, interpolation="auto", ax=ax2)
+    ax2.set_title("Phased and FID sliced")
+    d *= og_signs
+    d.set_units("p_90", "s")
+    fl.image(d, interpolation="auto", ax=ax3)
+    ax3.set_title("Flip sign back")

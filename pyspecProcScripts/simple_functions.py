@@ -1,5 +1,6 @@
 "First order functions for very simple (a few lines) data manipulation"
 import numpy as np
+import pyspecdata as psd
 
 
 class logobj(object):
@@ -33,9 +34,7 @@ class logobj(object):
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
-            return np.concatenate(
-                self.log_list + [self.log_array[: self.log_pos]]
-            )
+            return np.concatenate(self.log_list + [self.log_array[: self.log_pos]])
 
     @total_log.setter
     def total_log(self, result):
@@ -44,9 +43,7 @@ class logobj(object):
     def __setstate__(self, inputdict):
         in_hdf = False
         if "dictkeys" in inputdict.keys():
-            self.log_dict = dict(
-                zip(inputdict["dictkeys"], inputdict["dictvalues"])
-            )
+            self.log_dict = dict(zip(inputdict["dictkeys"], inputdict["dictvalues"]))
         elif "dictkeys" in inputdict.attrs.keys():
             # allows setstate from hdf5 node
             self.log_dict = dict(
@@ -130,10 +127,42 @@ def determine_sign(s, direct="t2", fl=None):
     if fl is not None:
         fl.next("check sign")
         if "vd" in s.dimlabels:
-            fl.image(
-                s.C.setaxis("vd", "#").set_units("vd", "scan #") * data_sgn
-            )
+            fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #") * data_sgn)
         else:
             fl.image(s * data_sgn)
         fl.pop_marker()
     return data_sgn
+
+
+def clock_correction(s, axis_along, direct="t2", max_cyc=0.5):
+    """
+    Parameters
+    ==========
+    s: nddata
+       data to be corrected
+    axis_along: str
+                indirect axis to apply the clock
+                correction to
+    direct: str
+            direct axis
+    max_cyc: float
+             maximum expected cycles per s of the dataset
+    Return
+    ======
+    final_corr: float
+                clock corrected shift
+    """
+    for_correct = s.C
+    Delta = np.diff(s[axis_along][np.r_[0, -1]]).item()
+    correction_axis = psd.nddata(np.r_[-0.5:0.5:300j] * max_cyc / Delta, "correction")
+    for_correct = for_correct * np.exp(
+        -1j * 2 * np.pi * correction_axis * for_correct.fromaxis(axis_along)
+    )
+    # {{{ determine the best sign flip for each correction
+    for j in range(for_correct.shape["correction"]):
+        thesign = determine_sign(for_correct["correction", j])
+        for_correct["correction", j] *= thesign
+    # }}}
+    for_correct.sum(direct)
+    final_corr = for_correct.sum(axis_along).run(abs).argmax("correction").item()
+    return final_corr
