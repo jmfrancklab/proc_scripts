@@ -1,23 +1,28 @@
-from pyspecdata import figlist_var, find_file, init_logging, strm, ndshape
-from pyspecProcScripts import (
-    hermitian_function_test,
-    select_pathway,
-    zeroth_order_ph,
-    slice_FID_from_echo,
-)
+from pyspecdata import *
+from scipy.optimize import leastsq, minimize, basinhopping
+from pyspecProcScripts import *
 from pyspecProcScripts.load_data import lookup_table
 from sympy import symbols
 
-fl = figlist_var()
+fl = fl_mod()
 t2 = symbols("t2")
 logger = init_logging("info")
+
+
+def select_pathway(s, pathway):
+    retval = s
+    for k, v in pathway.items():
+        retval = retval[k, v]
+    return retval
+
+
 signal_pathway = {"ph1": 1, "ph2": 0}
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     (
         "200302_alex_probe_water",
-        "ODNP/old/2020",
+        "test_equip",
         "signal",
-        "spincore_echo_v1",
+        "spincore_Hahn_echoph_v1",
         "microwaves off",
         (-2.5e3, 2.5e3),
     ),
@@ -31,20 +36,24 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
         lookup=lookup_table,
         fl=fl,
     )
+    s.mean("nScans")
     # }}}
     # {{{rough centering of sliced data
     s = s["t2":slice_f]
     s.ift("t2")
-    rough_center = abs(s).convolve("t2", 0.01).mean_all_but("t2").argmax("t2").item()
+    rough_center = (
+        abs(s).convolve("t2", 0.01).mean_all_but("t2").argmax("t2").item()
+    )
     s.setaxis(t2 - rough_center)
     logger.debug(strm(ndshape(s)))
     # }}}
     # {{{ apply phase corrections
-    s["t2"] -= s.getaxis("t2")[0]
     best_shift = hermitian_function_test(select_pathway(s, signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s_uncorrected = s.C.ft("t2")
-    s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0}, nearest=False)
+    s.setaxis("t2", lambda x: x - best_shift).register_axis(
+        {"t2": 0}, nearest=False
+    )
     ph0 = s["t2":0]["ph2", 0]["ph1", 1]
     logger.info(strm(ndshape(ph0)))
     if len(ph0.dimlabels) > 0:
@@ -55,7 +64,9 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
         logger.info(strm("phasing dimension as one"))
     else:
         logger.info(
-            strm("there is only one dimension left -- standard 1D zeroth order phasing")
+            strm(
+                "there is only one dimension left -- standard 1D zeroth order phasing"
+            )
         )
         ph0 = ph0 / abs(ph0)
     s /= ph0
