@@ -40,25 +40,13 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     if fl is not None:
         s_forplot = s.C
         fl.next("FT")
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
         fl.next("time domain (all $\\Delta p$)")
         s_forplot.ift("t2")
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
         fl.next("frequency domain (all $\\Delta p$)")
         s_forplot.ft("t2", pad=4096)
-        fl.image(
-            s_forplot.C.setaxis("indirect", "#").set_units(
-                "indirect", "scan #"
-            )
-        )
+        fl.image(s_forplot.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
     return s
 
 
@@ -206,9 +194,7 @@ def proc_bruker_T1CPMG_v1(s, fl=None):
     tau_extra = d12
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = (
-        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    )
+    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
     s.chunk("t2", ["tE", "t2"], [nEchoes, -1])
@@ -274,9 +260,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
     tau_extra = 20e-6
     tau_pad_start = tau_extra - dwdel1 - 6e-6
     tau_pad_end = tau_extra - 6e-6
-    twice_tau = (
-        2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
-    )
+    twice_tau = 2 * p90_s + 5e-6 + tau_pad_start + 1e-6 + acq_time + tau_pad_end + 1e-6
     # twice_tau should be the period from one 180 to another
     # }}}
     s.set_units("t2", "us")
@@ -343,6 +327,11 @@ def proc_Hahn_echoph(s, fl=None):
     if fl is not None:
         fl.next("coherence")
         fl.image(abs(s))
+    return s
+
+
+def proc_spincore_FID_nutation_v1(s, fl=None):
+    s = proc_spincore_generalproc_v1(s, fl=fl)
     return s
 
 
@@ -719,9 +708,7 @@ def proc_DOSY_CPMG(s, fl=None):
         raise ValueError("you must pass kwarg fl or edit the source")
     logging.debug("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
-    l22 = int(
-        s.get_prop("acq")["L"][22]
-    )  # b/c the l are integers by definition
+    l22 = int(s.get_prop("acq")["L"][22])  # b/c the l are integers by definition
     l25 = int(s.get_prop("acq")["L"][25])
     ppg = s.get_prop("pulprog")
     # {{{ these are explanatory -- maybe comment them out?
@@ -843,6 +830,7 @@ lookup_table = {
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
     "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
     "proc_Hahn_echoph": proc_Hahn_echoph,
+    "spincore_FID_nutation_v1": proc_spincore_FID_nutation_v1,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
