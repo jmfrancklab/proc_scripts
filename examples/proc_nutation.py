@@ -13,15 +13,16 @@ Tested with:
 """
 import pyspecProcScripts as prscr
 import pyspecdata as psd
+import matplotlib.pyplot as plt
 import sys
-import os
+from numpy import pi
 from itertools import cycle
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 colorcyc = cycle(colorcyc_list)
 
 assert len(sys.argv) == 4
-d = find_file(
+d = psd.find_file(
     sys.argv[2],
     exp_type=sys.argv[3],
     expno=sys.argv[1],
@@ -76,12 +77,6 @@ with psd.figlist_var() as fl:
         interpolation="auto",
     )
     # }}}
-    ## {{{ correct for evolution during pulse
-    ##     I do this, but if I plot it, I do find that it's not significant
-    # d *= np.exp(
-    #    -1j * 2 * pi * (2 * d.fromaxis("p_90") / pi) * d.fromaxis("t2")
-    # )
-    ## }}}
     # {{{ do it the "correct" way
     fl.next("prscr.fid_from_echo result")
     d = prscr.fid_from_echo(d)
