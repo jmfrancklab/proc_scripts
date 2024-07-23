@@ -1,4 +1,6 @@
-from pyspecdata.datadir import pyspec_config # piggyback on _pyspecdata
+from pyspecdata.datadir import pyspec_config  # piggyback on _pyspecdata
+from pyspecdata.general_functions import strm
+import logging
 from pint import UnitRegistry
 from numpy import sqrt
 from pyspecdata import init_logging
@@ -32,7 +34,9 @@ class calib_info (object):
             self.current_diam_name = diameter_name
 calibcache = calib_info()
 ureg = UnitRegistry(
-    system="mks", autoconvert_offset_to_baseunit=True, auto_reduce_dimensions=True
+    system="mks",
+    autoconvert_offset_to_baseunit=True,
+    auto_reduce_dimensions=True,
 )
 Q_ = ureg.Quantity
 def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
@@ -89,7 +93,7 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q * d**2
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s") * Q_("m")**2)
     # }}}
-    logger.debug(
+    logger.debug(strm(
             f"$G_R={G_R:~L}$\n"+
             f"$C_t={C_t:~L}$\n"+
             f"$power={power:~L}$\n"+
@@ -101,6 +105,6 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
             f"$d={d:~L} $\n"+
             f"signal denom$={signal_denom:~L}$"+
             f"doubleint propFactor$={calibcache.dint_propFactor}$"
-            )
+            ))
     # normally, we divide by signal_denom.magnitude and multiply by calibcache.dint_propFactor and divide by 1e-6
     return signal_denom.magnitude/calibcache.dint_propFactor*1e-6

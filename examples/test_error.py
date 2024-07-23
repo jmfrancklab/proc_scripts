@@ -23,13 +23,14 @@ from matplotlib import *
 from pyspecProcScripts import *
 from pyspecProcScripts.correlation_alignment import correl_align
 import numpy as np
-rcParams['image.aspect'] = 'auto' # needed for sphinx gallery
+
+rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 4
 
 fl = figlist_var()
 signal_pathway = {"ph1": 1, "ph2": 0}
-t_range = (0, 0.05) # must start at 0 for an FID
+t_range = (0, 0.05)  # must start at 0 for an FID
 f_range = (-1e3, 1e3)
 excluded_pathways = [(0, 0), (0, 3)]
 colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
@@ -61,9 +62,11 @@ for thisfile, exp_type, nodename in [
     s = s["t2":f_range]
     # {{{Phase corrections
     s.ift("t2")
-    best_shift = hermitian_function_test(select_pathway(s.C.mean('nScans'), signal_pathway))
+    best_shift = hermitian_function_test(
+        select_pathway(s.C.mean("nScans"), signal_pathway)
+    )
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-    s /= zeroth_order_ph(select_pathway(s.C.mean('nScans'),signal_pathway))
+    s /= zeroth_order_ph(select_pathway(s.C.mean("nScans"), signal_pathway))
     fl.next("Phase corrected freq. domain")
     s.ft("t2")
     fl.image(s)
@@ -91,7 +94,7 @@ for thisfile, exp_type, nodename in [
     # s.ift('t2')
     ##}}}
     fl.next("FID sliced")
-    s = s["t2" : t_range]
+    s = s["t2":t_range]
     s["t2":0] *= 0.5
     s.ft("t2")
     fl.image(s)
@@ -99,9 +102,10 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{Normalization
-    frq_slice = integrate_limits(select_pathway(s, signal_pathway),
-            convolve_method='Lorentzian')
-    s_integral = s["t2":frq_slice].C # the "official" copy of the integral
+    frq_slice = integrate_limits(
+        select_pathway(s, signal_pathway), convolve_method="Lorentzian"
+    )
+    s_integral = s["t2":frq_slice].C  # the "official" copy of the integral
     s_integral = select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
     avg_d = s_integral.C.mean().real.item()
@@ -112,7 +116,11 @@ for thisfile, exp_type, nodename in [
     # {{{integral w errors
     error_pathway = (
         set(
-            ((j, k) for j in range(ndshape(s)["ph1"]) for k in range(ndshape(s)["ph2"]))
+            (
+                (j, k)
+                for j in range(ndshape(s)["ph1"])
+                for k in range(ndshape(s)["ph2"])
+            )
         )
         - set(excluded_pathways)
         - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
@@ -128,7 +136,7 @@ for thisfile, exp_type, nodename in [
             s,
             signal_pathway,
             [thispathway],
-            cutoff = 0.15,
+            cutoff=0.15,
             indirect="nScans",
             return_frq_slice=True,
         )
@@ -146,7 +154,7 @@ for thisfile, exp_type, nodename in [
         s,
         signal_pathway,
         error_pathway,
-        cutoff = 0.15,
+        cutoff=0.15,
         indirect="nScans",
         return_frq_slice=True,
     )
@@ -168,7 +176,11 @@ for thisfile, exp_type, nodename in [
             color=colors[i],
             label="on excluded path of %s" % error_pathway[i],
         )
-    fl.plot(active_error, "x", label="propagated error from active CT\nin noise slice")
+    fl.plot(
+        active_error,
+        "x",
+        label="propagated error from active CT\nin noise slice",
+    )
     fl.plot(
         averaged_inactive_error,
         "o",
