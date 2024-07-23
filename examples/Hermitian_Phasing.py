@@ -3,7 +3,7 @@ Phasing and Timing Correction With Fake Data
 ============================================
 
 Take fake data with a relatively symmetric echo 
-(:math:r```T_2^*=1/50\pi```, echo time of 10 ms),
+(:math:r"T_2^*=1/50\pi", echo time of 10 ms),
 and demonstrate how we can automatically find the zeroth order phase and the
 center of the echo in order to get data that's purely real in the frequency
 domain.
