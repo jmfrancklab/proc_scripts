@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 from .apod_matched_filter import apod_matched_filter
 
 
-def integrate_limits(s, axis="t2", convolve_method="gaussian", cutoff=0.25, fl=None):
+def integrate_limits(
+    s, axis="t2", convolve_method="gaussian", cutoff=0.25, fl=None
+):
     r"""This function takes data in the frequency
     domain and finds the corresponding frequency
     limits of the signal for integration.
@@ -44,7 +46,9 @@ def integrate_limits(s, axis="t2", convolve_method="gaussian", cutoff=0.25, fl=N
         order not to see any diagnostic plots
 
     """
-    assert s.get_ft_prop(axis), "data must be in the frequency domain along %s!!" % axis
+    assert s.get_ft_prop(axis), (
+        "data must be in the frequency domain along %s!!" % axis
+    )
     temp = s.C.mean_all_but(axis).real
     # {{{ taking real in the frequency domain enforces symmetry in the
     # time domain.  Without the following, the negative time components
@@ -64,14 +68,18 @@ def integrate_limits(s, axis="t2", convolve_method="gaussian", cutoff=0.25, fl=N
         fl.push_marker()
         forplot = temp
         fl.next("integration diagnostic")
-        fl.plot(forplot / forplot.data.max(), alpha=0.6, label="before convolve")
+        fl.plot(
+            forplot / forplot.data.max(), alpha=0.6, label="before convolve"
+        )
     temp.ift("t2")
     temp = apod_matched_filter(temp, convolve_method=convolve_method, fl=fl)
     temp.ft("t2")
     if fl is not None:
         fl.next("integration diagnostic")
         fl.plot(temp / temp.max(), alpha=0.6, label="after convolve")
-    freq_limits = temp.contiguous(lambda x: x.real > cutoff * x.real.data.max())[0]
+    freq_limits = temp.contiguous(
+        lambda x: x.real > cutoff * x.real.data.max()
+    )[0]
     if fl is not None:
         fl.next("integration diagnostic")
         plt.axvline(x=freq_limits[0], c="k", alpha=0.75)

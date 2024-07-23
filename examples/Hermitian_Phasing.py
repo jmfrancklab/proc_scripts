@@ -13,10 +13,12 @@ import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
 import sympy as sp
 from collections import OrderedDict
-from numpy import r_
-import numpy as np
+from numpy.random import seed
+from numpy import r_,sqrt
 
-np.random.seed(2021)
+init_logging(level="debug")
+
+random.seed(2021)
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 1
@@ -58,13 +60,13 @@ with psd.figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig, ax_list = plt.subplots(1, 4, figsize=(7, 7))
+        fig, ax_list = subplots(1, 4, figsize=(7, 7))
         fig.suptitle(fl.basename)
         fl.next("Data processing", fig=fig)
         data = psd.fake_data(expression, OrderedDict(orderedDict), signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
-        data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
+        data /= sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
         fl.image(data, ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]

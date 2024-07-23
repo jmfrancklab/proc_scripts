@@ -100,7 +100,9 @@ def generate_integrals(
     # determined after hermitian phasing, or else you can actually get a
     # sign flip when the signal drifts far enough in frequency space
     s /= zeroth_order_ph(select_pathway(s, signal_pathway))
-    ph_corr_s = s.C  # will be used for imaging phased data with proper scaling later
+    ph_corr_s = (
+        s.C
+    )  # will be used for imaging phased data with proper scaling later
     s.ift(direct)
     # }}}
     # {{{Correlate

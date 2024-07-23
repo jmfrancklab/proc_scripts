@@ -489,6 +489,7 @@ def proc_nutation_v2(s, fl=None):
         fl.image(s)
     return s
 
+
 def proc_nutation_v4(s, fl=None):
     """nutation curve
 
@@ -502,7 +503,9 @@ def proc_nutation_v4(s, fl=None):
     if s.get_prop("coherence_pathway") is None:
         s.set_prop("coherence_pathway", {"ph1": 1})
     if s.get_units("t2") is None:
-        raise ValueError("the units for t2 are none, but have been set for spincore_nutation_v4 since 6/25.  If your units are not set, you probably acquired with a very messed up version of the ppg!!!!!")
+        raise ValueError(
+            "the units for t2 are none, but have been set for spincore_nutation_v4 since 6/25.  If your units are not set, you probably acquired with a very messed up version of the ppg!!!!!"
+        )
     s.set_units("p_90", "s")
     s *= s.shape["nScans"]
     return s

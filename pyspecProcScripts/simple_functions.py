@@ -1,6 +1,7 @@
 "First order functions for very simple (a few lines) data manipulation"
 import numpy as np
 
+
 class logobj(object):
     def __init__(self, array_len=1000):  # just the size of the buffer
         self.log_list = []
