@@ -34,7 +34,9 @@ class logobj(object):
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
-            return np.concatenate(self.log_list + [self.log_array[: self.log_pos]])
+            return np.concatenate(
+                self.log_list + [self.log_array[: self.log_pos]]
+            )
 
     @total_log.setter
     def total_log(self, result):
@@ -43,7 +45,9 @@ class logobj(object):
     def __setstate__(self, inputdict):
         in_hdf = False
         if "dictkeys" in inputdict.keys():
-            self.log_dict = dict(zip(inputdict["dictkeys"], inputdict["dictvalues"]))
+            self.log_dict = dict(
+                zip(inputdict["dictkeys"], inputdict["dictvalues"])
+            )
         elif "dictkeys" in inputdict.attrs.keys():
             # allows setstate from hdf5 node
             self.log_dict = dict(
@@ -127,7 +131,9 @@ def determine_sign(s, direct="t2", fl=None):
     if fl is not None:
         fl.next("check sign")
         if "vd" in s.dimlabels:
-            fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #") * data_sgn)
+            fl.image(
+                s.C.setaxis("vd", "#").set_units("vd", "scan #") * data_sgn
+            )
         else:
             fl.image(s * data_sgn)
         fl.pop_marker()
@@ -154,7 +160,9 @@ def clock_correction(s, axis_along, direct="t2", max_cyc=0.5):
     """
     for_correct = s.C
     Delta = np.diff(s[axis_along][np.r_[0, -1]]).item()
-    correction_axis = psd.nddata(np.r_[-0.5:0.5:300j] * max_cyc / Delta, "correction")
+    correction_axis = psd.nddata(
+        np.r_[-0.5:0.5:300j] * max_cyc / Delta, "correction"
+    )
     for_correct = for_correct * np.exp(
         -1j * 2 * np.pi * correction_axis * for_correct.fromaxis(axis_along)
     )
@@ -164,5 +172,7 @@ def clock_correction(s, axis_along, direct="t2", max_cyc=0.5):
         for_correct["correction", j] *= thesign
     # }}}
     for_correct.sum(direct)
-    final_corr = for_correct.sum(axis_along).run(abs).argmax("correction").item()
+    final_corr = (
+        for_correct.sum(axis_along).run(abs).argmax("correction").item()
+    )
     return final_corr
