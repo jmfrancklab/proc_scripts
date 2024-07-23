@@ -84,7 +84,7 @@ with psd.figlist_var() as fl:
         d.ift("t2")
         d *= np.exp(-1j * 2 * np.pi * frq_atmax * d.fromaxis("t2"))
         d.ft("t2")
-        d.ift(list(d.get_prop("coherence_pathways")))
+        d.ift(list(d.get_prop("coherence_pathway")))
         opt_shift, sigm, mask = prscr.correl_align(
             d,
             indirect_dim="p_90",
