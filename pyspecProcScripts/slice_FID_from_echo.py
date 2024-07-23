@@ -1,5 +1,5 @@
-from pyspecdata import *
-from sympy import symbols
+from pyspecdata import ndshape, logger, strm
+from .phasing import hermitian_function_test, zeroth_order_ph
 from .simple_functions import select_pathway
 
 
@@ -25,6 +25,7 @@ def slice_FID_from_echo(
     =======
     s:      phase corrected and sliced data
     """
+    s["t2"] -= s.getaxis("t2")[0]
     best_shift = hermitian_function_test(select_pathway(s, signal_pathway))
     s.setaxis("t2", lambda x: x - best_shift)
     s.register_axis({"t2": 0}, nearest=False)

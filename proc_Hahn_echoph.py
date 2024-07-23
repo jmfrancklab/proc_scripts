@@ -1,19 +1,18 @@
-from pyspecdata import *
-from scipy.optimize import leastsq, minimize, basinhopping
-from pyspecProcScripts import *
+from pyspecdata import figlist_var, find_file, init_logging, strm, ndshape
+from pyspecProcScripts import hermitian_function_test, select_pathway, zeroth_order_ph, slice_FID_from_echo
 from pyspecProcScripts.load_data import lookup_table
 from sympy import symbols
 
-fl = fl_mod()
+fl = figlist_var()
 t2 = symbols('t2')
 logger = init_logging('info')
 signal_pathway = {'ph1':1,'ph2':0}
 for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     (
         "200302_alex_probe_water",
-        "test_equip",
+        "ODNP/old/2020",
         "signal",
-        "spincore_Hahn_echoph_v1",
+        "spincore_echo_v1",
         "microwaves off",
         (-2.5e3, 2.5e3),
     ),
@@ -27,7 +26,6 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
         lookup=lookup_table,
         fl=fl,
     )
-    s.mean("nScans")
     # }}}
     # {{{rough centering of sliced data
     s = s["t2":slice_f]
@@ -39,6 +37,7 @@ for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
     logger.debug(strm(ndshape(s)))
     # }}}
     # {{{ apply phase corrections
+    s["t2"] -= s.getaxis("t2")[0]
     best_shift = hermitian_function_test(select_pathway(s, signal_pathway))
     logger.info(strm("best shift is", best_shift))
     s_uncorrected = s.C.ft("t2")
