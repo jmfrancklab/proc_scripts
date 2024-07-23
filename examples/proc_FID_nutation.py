@@ -59,8 +59,6 @@ with psd.figlist_var() as fl:
         prscr.select_pathway(s["t2":signal_range], s.get_prop("coherence_pathway"))
     )
     s *= my_signs
-    fl.next("same")
-    fl.image(s)
     s = prscr.fid_from_echo(s, s.get_prop("coherence_pathway"))
     fl.image(s, ax=ax2)
     ax2.set_title("Phased and FID sliced")
@@ -72,5 +70,5 @@ with psd.figlist_var() as fl:
     ax3.set_title("Sign Flipped Back")
     s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
     s = s.real.integrate("t2")
-    fl.next("integrated")
+    fl.next("Integrated")
     fl.plot(s, "o")
