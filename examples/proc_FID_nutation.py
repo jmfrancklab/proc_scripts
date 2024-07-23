@@ -30,7 +30,6 @@ with psd.figlist_var() as fl:
         expno="FID_nutation_1",
         lookup=prscr.lookup_table,
     )
-    print(s.get_prop("coherence_pathway"))
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
     fl.next("Raw data", fig=fig)
     fig.suptitle("Single Pulse nutation")
