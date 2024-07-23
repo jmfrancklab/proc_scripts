@@ -432,7 +432,6 @@ def fid_from_echo(
                 N_ratio /= (
                     for_resid.data.size
                 )  # the signal this has been plotted against is signal averaged by N_ratio
-                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
@@ -783,7 +782,7 @@ def determine_sign(s, direct="t2", fl=None):
     ), "this only works on data that has been FT'd along the direct dimension"
     if fl is not None:
         fl.push_marker()
-        if basename is None:
+        if fl.basename is None:
             basename = f"randombasename{int(rand()*1e5):d}"
         fl.basename = basename
         fl.next("selected pathway")

@@ -33,7 +33,7 @@ class logobj(object):
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
-            return concatenate(
+            return np.concatenate(
                 self.log_list + [self.log_array[: self.log_pos]]
             )
 
