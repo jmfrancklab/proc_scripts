@@ -3,7 +3,7 @@ Phasing and Timing Correction With Fake Data
 ============================================
 
 Take fake data with a relatively symmetric echo 
-(:math:`T_2^*=1/50 pi`, echo time of 10 ms),
+(:math:r`T_2^*=1/50 pi`, echo time of 10 ms),
 and demonstrate how we can automatically find the zeroth order phase and the
 center of the echo in order to get data that's purely real in the frequency
 domain.
@@ -13,10 +13,8 @@ import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
 import sympy as sp
 from collections import OrderedDict
-from numpy.random import seed
+from numpy import random 
 from numpy import r_,sqrt
-
-init_logging(level="debug")
 
 random.seed(2021)
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
@@ -60,7 +58,7 @@ with psd.figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig, ax_list = subplots(1, 4, figsize=(7, 7))
+        fig, ax_list = plt.subplots(1, 4, figsize=(7, 7))
         fig.suptitle(fl.basename)
         fl.next("Data processing", fig=fig)
         data = psd.fake_data(expression, OrderedDict(orderedDict), signal_pathway)
