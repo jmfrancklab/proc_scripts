@@ -1,10 +1,10 @@
-"""
+r"""
 Calculate actual beta as a function of pulse length
 ===================================================
 Assuming the data is the capture of the pulse sequence as seen on the GDS
 oscilloscope, here the data is converted to analytic power, frequency filtered
-and the absolute is taken prior to integrating to return the beta value (us
-sqrt(W)). 
+and the absolute is taken prior to integrating to return the beta where
+:math:`\beta = \int \sqrt{P(t)} dt` 
 """
 import pyspecdata as psd
 import matplotlib.pyplot as plt
@@ -20,8 +20,8 @@ with psd.figlist_var() as fl:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
-        beta = psd.ndshape(d).pop("t").alloc().rename("p_90", "prog_beta")
-        beta.setaxis("prog_beta", d.get_prop("desired_betas"))
+        beta = psd.ndshape(d).pop("t").alloc().rename("p_90", "desired_beta")
+        beta.setaxis("desired_beta", d.get_prop("desired_betas"))
         t_v_beta = psd.ndshape(d).pop("t").alloc().rename("p_90", "At_p")
         t_v_beta.setaxis(
             "At_p",
@@ -67,7 +67,7 @@ with psd.figlist_var() as fl:
                 # }}}
             beta90_int = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
             beta1 = abs(s["t":beta90_int]).integrate("t").data.item() * 1e6
-            beta["prog_beta", j] = beta1
+            beta["desired_beta", j] = beta1
             t_v_beta["At_p", j] = beta1
             if show_all:
                 plt.ylabel(r"$\sqrt{P_{pulse}}$")
