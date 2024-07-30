@@ -10,14 +10,14 @@ import pyspecdata as psd
 import matplotlib.pyplot as plt
 from numpy import sqrt, array
 
-show_all = False
+show_all = True
 with psd.figlist_var() as fl:
     for filename, nodename, beta90_range, beta180_range in [
         (
-            "240729_test_p90_pulse_calib.h5",
-            "pulse_calib_2",
-            (None, 34e-6),
-            (34e-6, None),
+            "240730_test_amp1_calib_pulse_calib.h5",
+            "pulse_calib_1",
+            (None, 118e-6),
+            (118e-6, None),
         ),
     ]:
         d = psd.nddata_hdf5(
@@ -27,6 +27,9 @@ with psd.figlist_var() as fl:
         beta_1 = []
         beta_2 = []
         for j in range(len(d["p_90"])):
+            print("******************")
+            print(d.get_prop('set_p90s')[j])
+            #j = 49
             s = d["p_90", j].C
             s.set_units("t", "s")
             s *= 101.35  # attenutation ratio
@@ -34,7 +37,7 @@ with psd.figlist_var() as fl:
             s /= sqrt(50)  # V/sqrt(R) = sqrt(P)
             if show_all:
                 fl.basename = r"programmed $\beta$ = %s" % str(
-                    s.get_prop("set_beta")[j]
+                    s.get_prop("set_betas")[j]
                 )
                 fig, ax_list = plt.subplots(1, 2, figsize=(10, 4))
                 fig.suptitle(fl.basename)
@@ -43,6 +46,8 @@ with psd.figlist_var() as fl:
                 ax_list[0].set_ylabel(r"$\sqrt{P_{pulse}}$")
                 ax_list[1].set_title("180 Pulse")
                 fl.next("Pulse Calibration")
+             #   fl.plot(s)
+             #   fl.show();quit()
                 fl.plot(s["t":beta90_range], alpha=0.2, color="blue", ax=ax_list[0])
                 fl.plot(s["t":beta180_range], alpha=0.2, color="blue", ax=ax_list[1])
                 # }}}
@@ -100,21 +105,24 @@ with psd.figlist_var() as fl:
                 ax_list[1].axvline(beta180_int[0] * 1e6, ls=":", alpha=0.2)
                 ax_list[1].axvline(beta180_int[1] * 1e6, ls=":", alpha=0.2)
                 # }}}
+            print(beta1)
+            print(beta2)
+            print("******************")
         # {{{ make nddata for beta of 90 pulse and 180 pulse
         if show_all:
             fl.basename = None
         fig2, axs = plt.subplots(1, 2, figsize=(10, 4))
         fig2.suptitle(r"Measured $\beta$ vs $t_{pulse}$")
         fl.next(r"Measured $\beta$ vs $t_{pulse}$")
-        beta_a = psd.nddata(array(beta_1), ["prog_p90"])
-        beta_a.setaxis("prog_p90", d.get_prop("set_p90s"))
+        beta_a = psd.nddata(array(beta_1), ["desired_beta"])
+        beta_a.setaxis("desired_beta", d.get_prop("desired_betas"))
         beta_b = psd.nddata(array(beta_2), ["prog_p90"])
-        beta_b.setaxis("prog_p90", d.get_prop("set_p180s"))
+        beta_b.setaxis("prog_p90", list(2*d.get_prop("desired_betas")[j] for j in range(len(d['p_90']))))
         fl.plot(beta_a, "o", ax=axs[0])
         axs[0].set_ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        axs[0].set_xlabel(r"programmed $t_{pulse}$ / $\mathrm{\mu s}$")
+        axs[0].set_xlabel(r"desired $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         axs[0].set_title("First Pulse")
         fl.plot(beta_b, "o", ax=axs[1])
         axs[1].set_ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        axs[1].set_xlabel(r"programmed $t_{pulse}$ / $\mathrm{\mu s}$")
+        axs[1].set_xlabel(r"desired $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         axs[1].set_title("Second Pulse")
