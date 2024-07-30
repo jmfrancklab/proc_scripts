@@ -12,12 +12,16 @@ from numpy import sqrt, array
 
 show_all = True
 with psd.figlist_var() as fl:
-    for filename, nodename, beta90_range, beta180_range in [
+    for filename, nodename, label in [
         (
-            "240730_test_amp1_calib_pulse_calib.h5",
+            "240730_test_amp1_fin_pulse_calib.h5",
             "pulse_calib_1",
-            (None, 118e-6),
-            (118e-6, None),
+            "amplitude = 1"
+        ),
+        (
+            "240730_test_amp0p1_fin_pulse_calib.h5",
+            "pulse_calib_1",
+            "amplitude = 0.1"
         ),
     ]:
         d = psd.nddata_hdf5(
@@ -27,9 +31,6 @@ with psd.figlist_var() as fl:
         beta_1 = []
         beta_2 = []
         for j in range(len(d["p_90"])):
-            print("******************")
-            print(d.get_prop('set_p90s')[j])
-            #j = 49
             s = d["p_90", j].C
             s.set_units("t", "s")
             s *= 101.35  # attenutation ratio
@@ -39,17 +40,9 @@ with psd.figlist_var() as fl:
                 fl.basename = r"programmed $\beta$ = %s" % str(
                     s.get_prop("set_betas")[j]
                 )
-                fig, ax_list = plt.subplots(1, 2, figsize=(10, 4))
-                fig.suptitle(fl.basename)
+                fl.next(fl.basename)
                 # {{{ Plot raw capture
-                ax_list[1].set_ylabel(r"$\sqrt{P_{pulse}}$")
-                ax_list[0].set_ylabel(r"$\sqrt{P_{pulse}}$")
-                ax_list[1].set_title("180 Pulse")
-                fl.next("Pulse Calibration")
-             #   fl.plot(s)
-             #   fl.show();quit()
-                fl.plot(s["t":beta90_range], alpha=0.2, color="blue", ax=ax_list[0])
-                fl.plot(s["t":beta180_range], alpha=0.2, color="blue", ax=ax_list[1])
+                fl.plot(s, alpha=0.2, color="blue")
                 # }}}
             # {{{ make analytic
             s.ft("t", shift=True)
@@ -60,8 +53,7 @@ with psd.figlist_var() as fl:
             if show_all:
                 s.ift("t")
                 # {{{ Plot analytic
-                fl.plot(abs(s["t":beta90_range]), color="orange", ax=ax_list[0])
-                fl.plot(abs(s["t":beta180_range]), color="orange", ax=ax_list[1])
+                fl.plot(abs(s), color="orange")
                 s.ft("t")
                 # }}}
             # {{{ frequency filter
@@ -71,58 +63,26 @@ with psd.figlist_var() as fl:
             s.ift("t")
             if show_all:
                 # {{{ plot and integrate 90 pulse
-                fl.plot(abs(s["t":beta90_range]), ax=ax_list[0], color="red")
-                fl.plot(abs(s["t":beta180_range]), ax=ax_list[1], color="red")
+                fl.plot(abs(s), ax=ax_list[0], color="red")
                 # }}}
             beta90_int = abs(s["t":beta90_range]).contiguous(
                 lambda x: x > 0.01 * s["t":beta90_range].max()
             )[0]
-            beta180_int = abs(s["t":beta180_range]).contiguous(
-                lambda x: x > 0.01 * s["t":beta180_range].max()
-            )[0]
             beta1 = abs(s["t":beta90_int]).integrate("t").data.item() * 1e6
             beta_1.append(beta1)
-            beta2 = abs(s["t":beta180_int]).integrate("t").data.item() * 1e6
-            beta_2.append(beta2)
             if show_all:
-                ax_list[0].set_ylabel(r"$\sqrt{P_{pulse}}$")
-                ax_list[0].set_title("90 Pulse")
-                ax_list[0].text(
+                plt.ylabel(r"$\sqrt{P_{pulse}}$")
+                plt.text(
                     beta90_int[0] * 1e6 - 1,
                     -1,
                     r"$t_{90} \sqrt{P_{tx}} = %f s \sqrt{W}$" % beta1,
                 )
-                ax_list[0].axvline(beta90_int[0] * 1e6, ls=":", alpha=0.2)
-                ax_list[0].axvline(beta90_int[1] * 1e6, ls=":", alpha=0.2)
-                # }}}
-                ax_list[1].set_ylabel(None)
-                ax_list[1].set_title("180 Pulse")
-                ax_list[1].text(
-                    beta180_range[0] * 1e6,
-                    -1,
-                    r"$t_{180} \sqrt{P_{tx}} = %f s \sqrt{W}$" % beta2,
-                )
-                ax_list[1].axvline(beta180_int[0] * 1e6, ls=":", alpha=0.2)
-                ax_list[1].axvline(beta180_int[1] * 1e6, ls=":", alpha=0.2)
-                # }}}
-            print(beta1)
-            print(beta2)
-            print("******************")
+                plt.axvline(beta90_int[0] * 1e6, ls=":", alpha=0.2)
+                plt.axvline(beta90_int[1] * 1e6, ls=":", alpha=0.2)
         # {{{ make nddata for beta of 90 pulse and 180 pulse
-        if show_all:
-            fl.basename = None
-        fig2, axs = plt.subplots(1, 2, figsize=(10, 4))
-        fig2.suptitle(r"Measured $\beta$ vs programmed $\beta$")
         fl.next(r"Measured $\beta$ vs programmed $\beta$")
         beta_a = psd.nddata(array(beta_1), ["desired_beta"])
         beta_a.setaxis("desired_beta", d.get_prop("desired_betas"))
-        beta_b = psd.nddata(array(beta_2), ["prog_p90"])
-        beta_b.setaxis("prog_p90", list(2*d.get_prop("desired_betas")[j] for j in range(len(d['p_90']))))
-        fl.plot(beta_a, "o", ax=axs[0])
-        axs[0].set_ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        axs[0].set_xlabel(r"programmed $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        axs[0].set_title("First Pulse")
-        fl.plot(beta_b, "o", ax=axs[1])
-        axs[1].set_ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        axs[1].set_xlabel(r"programmed $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        axs[1].set_title("Second Pulse")
+        fl.plot(beta_a, "o")
+        plt.ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+        plt.xlabel(r"programmed $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
