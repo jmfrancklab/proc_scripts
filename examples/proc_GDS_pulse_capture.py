@@ -24,9 +24,10 @@ with psd.figlist_var() as fl:
             "amplitude = 0.1"
         ),
     ]:
-        d = psd.nddata_hdf5(
-            filename + f"/{nodename}",
-            directory=psd.getDATADIR(exp_type="ODNP_NMR_comp/test_equipment"),
+        d = psd.find_file(
+            filename,
+            expno = nodename,
+            exp_type="ODNP_NMR_comp/test_equipment"
         )
         beta_1 = []
         beta_2 = []
@@ -63,10 +64,10 @@ with psd.figlist_var() as fl:
             s.ift("t")
             if show_all:
                 # {{{ plot and integrate 90 pulse
-                fl.plot(abs(s), ax=ax_list[0], color="red")
+                fl.plot(abs(s), color="red")
                 # }}}
-            beta90_int = abs(s["t":beta90_range]).contiguous(
-                lambda x: x > 0.01 * s["t":beta90_range].max()
+            beta90_int = abs(s).contiguous(
+                lambda x: x > 0.01 * s.max()
             )[0]
             beta1 = abs(s["t":beta90_int]).integrate("t").data.item() * 1e6
             beta_1.append(beta1)
