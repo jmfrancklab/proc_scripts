@@ -29,8 +29,11 @@ with psd.figlist_var() as fl:
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         # {{{ fix messed up axis
-        d.rename('p_90','t_pulse')
-        d["t_pulse"] = np.float64( d["t_pulse"])
+        d.rename("p_90", "t_pulse")
+        d["t_pulse"] = np.float64(d["t_pulse"])
+        d["t_pulse"] = d.get_prop(
+            "set_p90s"
+        )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
         # }}}
         d.set_units("t", "s")  # why isn't this done already??
         d *= atten_ratio
@@ -94,7 +97,7 @@ with psd.figlist_var() as fl:
             beta["t_pulse", j] = (
                 abs(s["t":int_range]).integrate("t").data.item() * 1e6
             )
-            beta["t_pulse",j] /= np.sqrt(2)  # Vrms
+            beta["t_pulse", j] /= np.sqrt(2)  # Vrms
             # PR COMMENT: JF only read to here -- a bunch of stuff above were comments that weren't incorporated or obvious clean code stuff.  Please review from here to the end again
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
@@ -119,16 +122,16 @@ with psd.figlist_var() as fl:
         fl.plot(beta, "o", color=thiscolor, label=thislabel)
         beta.rename("$A t_{pulse}$", "t_pulse")
         beta["t_pulse"] /= amplitude
-        t_v_beta = beta.shape.alloc(dtype = np.float64).rename("t_pulse", "beta")
+        t_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
         t_v_beta.setaxis("beta", beta.data)
-        t_v_beta.data[:] = beta['t_pulse'].copy()
+        t_v_beta.data[:] = beta["t_pulse"].copy()
         if amplitude > 1:
-            linear_regime = (7,None)
+            linear_regime = (7, None)
         else:
-            linear_regime = (2,None)
-        c_nonlinear = t_v_beta.polyfit("beta", order = 10)
+            linear_regime = (2, None)
+        c_nonlinear = t_v_beta.polyfit("beta", order=10)
         print(c_nonlinear)
         fl.next(r"$t_{pulse}$ vs $\beta$")
-        fl.plot(t_v_beta, 'o')
-        t_v_beta.eval_poly(c_nonlinear,'beta')
+        fl.plot(t_v_beta, "o")
+        t_v_beta.eval_poly(c_nonlinear, "beta")
         fl.plot(t_v_beta)
