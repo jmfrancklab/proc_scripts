@@ -28,13 +28,8 @@ with psd.figlist_var() as fl:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
-        # {{{ fix messed up axis
-        d.rename("p_90", "t_pulse")
-        d["t_pulse"] = np.float64(d["t_pulse"])
-        d["t_pulse"] = d.get_prop(
-            "set_p90s"
-        )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
-        # }}}
+        d["t_pulse"] = np.float64(
+                d["t_pulse"])
         d.set_units("t", "s")  # why isn't this done already??
         d *= atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
@@ -65,22 +60,17 @@ with psd.figlist_var() as fl:
         d["t":0] *= 0.5
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
-        d["t":(0, 11e6)] *= 0
-        d["t":(24e6, None)] *= 0
-        # PR COMMENT: AG had the following, which doesn't make sense
-        # if amplitude >0.5:
-        #     d["t":(0, 11e6)] *= 0
-        #     d["t":(24e6, None)] *= 0
-        # else:
-        #     d["t":(0, 9.5e6)] *= 0
-        #     d["t":(11.5e6, None)] *= 0
+        #fl.next('test')
+        #fl.plot(d)
+        #fl.show();quit()
+        if amplitude >0.5:
+            d["t":(0, 11e6)] *= 0
+            d["t":(24e6, None)] *= 0
+        else:
+            d["t":(0, 9.5e6)] *= 0
+            d["t":(11.5e6, None)] *= 0
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
-        fl.next("collect filtered analytic")
-        for j in range(d.shape["t_pulse"]):
-            s = d["t_pulse", j].C
-            s["t"] -= abs(s).contiguous(lambda x: x > 0.01 * s.max())[0][0]
-            fl.plot(abs(s), alpha=0.3)
         # }}}
         thislabel = "amplitude = %f" % amplitude
         thiscolor = next(color_cycle)
