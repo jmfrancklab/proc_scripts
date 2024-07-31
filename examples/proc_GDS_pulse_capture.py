@@ -113,8 +113,7 @@ with psd.figlist_var() as fl:
                     r"$t_{90} \sqrt{P_{tx}} = %f s \sqrt{W}$"
                     % beta["t_pulse", j].item(),
                 )
-        # {{{ make nddata for beta of 90 pulse and 180 pulse
-        # {{{ beta vs t
+        # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
         beta["t_pulse"] *= amplitude
@@ -122,16 +121,30 @@ with psd.figlist_var() as fl:
         fl.plot(beta, "o", color=thiscolor, label=thislabel)
         beta.rename("$A t_{pulse}$", "t_pulse")
         beta["t_pulse"] /= amplitude
+        # }}}
         t_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
         t_v_beta.setaxis("beta", beta.data)
         t_v_beta.data[:] = beta["t_pulse"].copy()
-        if amplitude > 1:
-            linear_regime = (7, None)
-        else:
-            linear_regime = (2, None)
         c_nonlinear = t_v_beta.polyfit("beta", order=10)
+        if amplitude == 1.0:
+            linear_threshold = 40
+        plt.axvline(
+            x=linear_threshold, label=f"linear threshold for amp={amplitude}"
+        )
+        c_linear = t_v_beta["beta":(linear_threshold, None)].polyfit(
+            "beta", order=1
+        )
         print(c_nonlinear)
-        fl.next(r"$t_{pulse}$ vs $\beta$")
+        print(c_linear)
+        fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
         fl.plot(t_v_beta, "o")
-        t_v_beta.eval_poly(c_nonlinear, "beta")
-        fl.plot(t_v_beta)
+        # {{{ we extrapolate past the edges of the data to show how the
+        #     nonlinear is poorly behaved for large beta values
+        for_extrap = psd.nddata(
+            np.linspace(5, t_v_beta["beta"].max() + 10, 500), "beta"
+        )
+        fl.plot(
+            for_extrap.eval_poly(c_nonlinear, "beta"), ":", label="nonlinear"
+        )
+        fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
+        # }}}
