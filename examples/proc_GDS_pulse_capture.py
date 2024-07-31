@@ -18,10 +18,10 @@ color_cycle = cycle(
 )  # this can be done more than once to spin up multiple lists
 
 atten_ratio = 101.52  # attenutation ratio
-skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
+skip_plots = 1  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename, amplitude in [
-            #("240730_test_amp1_fin_pulse_calib.h5", "pulse_calib_1", 1.0),
+        ("240731_amp1_calib_fin_pulse_calib.h5", "pulse_calib_1", 1.0),
         ("240731_amp0p1_calib_fin_pulse_calib.h5", "pulse_calib_1", 0.1),
     ]:
         fl.basename = f"amplitude = {amplitude}"
@@ -80,7 +80,7 @@ with psd.figlist_var() as fl:
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
-            int_range = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
+            int_range = abs(s).contiguous(lambda x: x > 0.1 * s.max())[0]
             # slightly expand int range to include rising edges
             int_range[0] -= 1e-6
             int_range[-1] += 1e-6
@@ -110,20 +110,18 @@ with psd.figlist_var() as fl:
         beta["t_pulse"] *= amplitude
         beta.rename("t_pulse", "$A t_{pulse}$")
         fl.plot(beta, "o", color=thiscolor, label=thislabel)
+        print(beta)
         t_v_beta = beta.shape.alloc(dtype = np.float64).rename("$A t_{pulse}$", "beta")
         t_v_beta.setaxis("beta", beta.data)
         t_v_beta.data[:] = beta.getaxis("$A t_{pulse}$")
-        t_v_beta.sort("beta")
         codehasbeenreviewed = True
         if codehasbeenreviewed:
             if amplitude > 1:
                 linear_regime = (7,None)
             else:
                 linear_regime = (2,None)
-            c_nonlinear = beta.polyfit("$A t_{pulse}$", order = 10)
-            c_linear = beta["$A t_{pulse}$":linear_regime].polyfit("$A t_{pulse}$", order = 1)
-            print(c_nonlinear)
-            print(c_linear)
+            c_nonlinear = beta.C.polyfit("$A t_{pulse}$", order = 10)
+            c_linear = beta["$A t_{pulse}$":linear_regime].C.polyfit("$A t_{pulse}$", order = 1)
             fit_beta_v_t = np.polyval(c_nonlinear[::-1], beta.getaxis("$A t_{pulse}$"))
             fit = psd.nddata(fit_beta_v_t, "$A t_{pulse}$").setaxis(
                 "$A t_{pulse}$", beta.getaxis("$A t_{pulse}$")
@@ -141,10 +139,8 @@ with psd.figlist_var() as fl:
             else:
                 linear_regime = (35,None)
             c_nonlinear = t_v_beta.polyfit("beta", order = 10)
-            print(linear_regime)
-            t_v_beta.sort("beta")
+            #t_v_beta.data.sort()
             print("This is the data I am trying to fit",t_v_beta)
-
             c_linear = t_v_beta["beta":linear_regime].polyfit("beta", order = 1)
             print(c_nonlinear)
             print(c_linear)
