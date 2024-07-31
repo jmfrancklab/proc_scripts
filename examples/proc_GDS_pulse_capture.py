@@ -60,8 +60,8 @@ with psd.figlist_var() as fl:
         d["t":0] *= 0.5
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
-        d["t":(0, 9.5e6)] *= 0
-        d["t":(11.5e6, None)] *= 0
+        d["t":(0, 11.5e6)] *= 0
+        d["t":(24e6, None)] *= 0
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
         fl.next("collect filtered analytic")
@@ -75,10 +75,11 @@ with psd.figlist_var() as fl:
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
         beta.set_units(r"μs√W")
+        fl.show();quit()
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
-            int_range = abs(s).contiguous(lambda x: x > 0.1 * s.max())[0]
+            int_range = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
             # slightly expand int range to include rising edges
             int_range[0] -= 1e-6
             int_range[-1] += 1e-6
@@ -109,9 +110,11 @@ with psd.figlist_var() as fl:
         fl.plot(beta, "o", color=thiscolor, label=thislabel)
         beta.rename("$A t_{pulse}$", "t_pulse")
         beta["t_pulse"] /= amplitude
+        print(beta)
         t_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
         t_v_beta.setaxis("beta", beta.data)
         t_v_beta.data[:] = beta["t_pulse"].copy()
+        print(t_v_beta)
         if amplitude > 1:
             linear_regime = (7, None)
         else:
