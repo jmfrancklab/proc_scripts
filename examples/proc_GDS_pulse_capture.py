@@ -71,6 +71,11 @@ with psd.figlist_var() as fl:
             d["t":(11.5e6, None)] *= 0
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
+        fl.next("collect filtered analytic")
+        for j in range(d.shape["t_pulse"]):
+            s = d["t_pulse", j].C
+            s["t"] -= abs(s).contiguous(lambda x: x > 0.01 * s.max())[0][0]
+            fl.plot(abs(s), alpha=0.3)
         # }}}
         thislabel = "amplitude = %f" % amplitude
         thiscolor = next(color_cycle)
