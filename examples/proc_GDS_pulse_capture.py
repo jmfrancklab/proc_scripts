@@ -83,21 +83,21 @@ with psd.figlist_var() as fl:
                 # {{{ plot and integrate 90 pulse
                 fl.plot(abs(s), color="red")
                 # }}}
-            beta90_int = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
+            int_range = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
             # slightly expand int range to include rising edges
-            beta90_int[0] -= 0.5e-6
-            beta90_int[-1] += 0.5e-6
-            beta1 = abs(s["t":beta90_int]).integrate("t").data.item() * 1e6
+            int_range[0] -= 0.5e-6
+            int_range[-1] += 0.5e-6
+            beta1 = abs(s["t":int_range]).integrate("t").data.item() * 1e6
             beta_v_t["At_p", j] = beta1
             if show_all:
                 plt.ylabel(r"$\sqrt{P_{pulse}}$")
                 plt.text(
-                    beta90_int[0] * 1e6 - 1,
+                    int_range[0] * 1e6 - 1,
                     -1,
                     r"$t_{90} \sqrt{P_{tx}} = %f s \sqrt{W}$" % beta1,
                 )
-                plt.axvline(beta90_int[0] * 1e6, ls=":", alpha=0.2)
-                plt.axvline(beta90_int[1] * 1e6, ls=":", alpha=0.2)
+                plt.axvline(int_range[0] * 1e6, ls=":", alpha=0.2)
+                plt.axvline(int_range[1] * 1e6, ls=":", alpha=0.2)
         # {{{ make nddata for beta of 90 pulse and 180 pulse
         # {{{ beta vs t
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
