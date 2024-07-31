@@ -8,7 +8,23 @@ and the absolute is taken prior to integrating to return the beta where
 """
 import pyspecdata as psd
 import matplotlib.pyplot as plt
-from numpy import sqrt
+import numpy as np
+from itertools import cycle
+
+color_cycle = cycle(
+    [
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf",
+    ]
+)
 
 atten_ratio = 101.35  # attenutation ratio
 show_all = False
@@ -20,10 +36,11 @@ with psd.figlist_var() as fl:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
-        beta = psd.ndshape(d).pop("t").alloc().rename("p_90", "desired_beta")
-        beta.setaxis("desired_beta", d.get_prop("desired_betas"))
-        t_v_beta = psd.ndshape(d).pop("t").alloc().rename("p_90", "At_p")
-        t_v_beta.setaxis(
+        thiscolor = next(color_cycle)
+        t_v_beta = d.shape.pop("t").alloc().rename("p_90", "desired_beta")
+        t_v_beta.setaxis("desired_beta", d.get_prop("desired_betas"))
+        beta_v_t = d.shape.pop("t").alloc().rename("p_90", "At_p")
+        beta_v_t.setaxis(
             "At_p",
             list(
                 d.get_prop("acq_params")["amplitude"] * d.get_prop("set_p90s")[j]
@@ -34,8 +51,8 @@ with psd.figlist_var() as fl:
             s = d["p_90", j].C
             s.set_units("t", "s")
             s *= atten_ratio
-            s /= sqrt(2)  # Vrms
-            s /= sqrt(50)  # V/sqrt(R) = sqrt(P)
+            s /= np.sqrt(2)  # Vrms
+            s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
             if show_all:
                 fl.basename = r"programmed $\beta$ = %s" % str(
                     s.get_prop("set_betas")[j]
@@ -67,8 +84,7 @@ with psd.figlist_var() as fl:
                 # }}}
             beta90_int = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
             beta1 = abs(s["t":beta90_int]).integrate("t").data.item() * 1e6
-            beta["desired_beta", j] = beta1
-            t_v_beta["At_p", j] = beta1
+            beta_v_t["At_p", j] = beta1
             if show_all:
                 plt.ylabel(r"$\sqrt{P_{pulse}}$")
                 plt.text(
@@ -79,13 +95,50 @@ with psd.figlist_var() as fl:
                 plt.axvline(beta90_int[0] * 1e6, ls=":", alpha=0.2)
                 plt.axvline(beta90_int[1] * 1e6, ls=":", alpha=0.2)
         # {{{ make nddata for beta of 90 pulse and 180 pulse
-        fl.next(r"Measured $\beta$ vs programmed $\beta$")
-        fl.plot(beta, "o", label=label)
+        # {{{ beta vs t
+        fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
+        fl.plot(beta_v_t, "o", color=thiscolor, label=label)
+        if beta_v_t < 6:
+            mask = np.ones_like(beta_v_t.data, dtype=bool)
+        else:
+            mask = beta_v_t > 6.5
+        calibration_data = psd.nddata(beta_v_t.data[mask], [-1], ["At_p"]).setaxis(
+            "At_p", beta_v_t.getaxis("At_p")[mask]
+        )
+        calibration_data.sort("At_p")
+        if beta_v_t < 6:
+            c = calibration_data.polyfit("At_p", order=10)
+        else:
+            c = calibration_data.polyfit("At_p", order=1)
+        fit_beta_v_t = np.polyval(c[::-1], beta_v_t.getaxis("At_p"))
+        fit = psd.nddata(fit_beta_v_t, "At_p").setaxis("At_p", beta_v_t.getaxis("At_p"))
+        fl.plot(fit, color=thiscolor, ls=":", alpha=0.5)
         psd.gridandtick(plt.gca())
-        plt.ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        plt.xlabel(r"programmed $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        fl.next(r"Measured $\beta$ vs Amplitude*$t_{plse}$")
-        fl.plot(t_v_beta, "o", label=label)
         plt.ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         plt.xlabel(r"programmed amplitude*$t_{pulse}$ / $\mu$s")
+        # }}}
+        # {{{ t vs beta
+        t_v_beta = beta_v_t.shape.alloc().rename("At_p", "beta")
+        t_v_beta.setaxis("beta", beta_v_t.data)
+        t_v_beta.data[:] = beta_v_t.getaxis("At_p")
+        fl.next(r"Amplitude*$t_{pulse}$ vs Measured $\beta$")
+        fl.plot(t_v_beta, "o", color=thiscolor, label=label)
+        if t_v_beta < 40:
+            mask = np.ones_like(t_v_beta.data, dtype=bool)
+        else:
+            mask = t_v_beta > 45
+        calibration_data = psd.nddata(t_v_beta.data[mask], [-1], ["beta"]).setaxis(
+            "beta", t_v_beta.getaxis("beta")[mask]
+        )
+        calibration_data.sort("beta")
+        if t_v_beta < 40:
+            c = calibration_data.polyfit("beta", order=10)
+        else:
+            c = calibration_data.polyfit("beta", order=1)
+        fit_t_v_beta = np.polyval(c[::-1], t_v_beta.getaxis("beta"))
+        fit = psd.nddata(fit_t_v_beta, "beta").setaxis("beta", t_v_beta.getaxis("beta"))
+        fl.plot(fit, color=thiscolor, ls=":", alpha=0.5)
+        plt.xlabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+        plt.ylabel(r"programmed amplitude*$t_{pulse}$ / $\mu$s")
         psd.gridandtick(plt.gca())
+        # }}}
