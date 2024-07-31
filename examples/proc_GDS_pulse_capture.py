@@ -79,17 +79,16 @@ with psd.figlist_var() as fl:
             s["t":(24e6, None)] *= 0
             # }}}
             s.ift("t")
-            if show_all:
-                # {{{ plot and integrate 90 pulse
-                fl.plot(abs(s), color="red")
-                # }}}
             int_range = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
             # slightly expand int range to include rising edges
-            int_range[0] -= 0.5e-6
-            int_range[-1] += 0.5e-6
+            int_range[0] -= 1e-6
+            int_range[-1] += 1e-6
             beta1 = abs(s["t":int_range]).integrate("t").data.item() * 1e6
             beta_v_t["At_p", j] = beta1
             if show_all:
+                # {{{ plot and integrate 90 pulse
+                fl.plot(abs(s["t":int_range]), color="red")
+                # }}}
                 plt.ylabel(r"$\sqrt{P_{pulse}}$")
                 plt.text(
                     int_range[0] * 1e6 - 1,
