@@ -28,8 +28,13 @@ with psd.figlist_var() as fl:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
-        d["t_pulse"] = np.float64(
-                d["t_pulse"])
+        # {{{ fix messed up axis
+        d.rename("p_90", "t_pulse")
+        d["t_pulse"] = np.float64(d["t_pulse"])
+        d["t_pulse"] = d.get_prop(
+            "set_p90s"
+        )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
+        # }}}
         d.set_units("t", "s")  # why isn't this done already??
         d *= atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
@@ -60,17 +65,22 @@ with psd.figlist_var() as fl:
         d["t":0] *= 0.5
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
-        #fl.next('test')
-        #fl.plot(d)
-        #fl.show();quit()
-        if amplitude >0.5:
-            d["t":(0, 11e6)] *= 0
-            d["t":(24e6, None)] *= 0
-        else:
-            d["t":(0, 9.5e6)] *= 0
-            d["t":(11.5e6, None)] *= 0
+        d["t":(0, 11e6)] *= 0
+        d["t":(24e6, None)] *= 0
+        # PR COMMENT: AG had the following, which doesn't make sense
+        # if amplitude >0.5:
+        #     d["t":(0, 11e6)] *= 0
+        #     d["t":(24e6, None)] *= 0
+        # else:
+        #     d["t":(0, 9.5e6)] *= 0
+        #     d["t":(11.5e6, None)] *= 0
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
+        fl.next("collect filtered analytic")
+        for j in range(d.shape["t_pulse"]):
+            s = d["t_pulse", j].C
+            s["t"] -= abs(s).contiguous(lambda x: x > 0.01 * s.max())[0][0]
+            fl.plot(abs(s), alpha=0.3)
         # }}}
         thislabel = "amplitude = %f" % amplitude
         thiscolor = next(color_cycle)
@@ -87,7 +97,7 @@ with psd.figlist_var() as fl:
             beta["t_pulse", j] = (
                 abs(s["t":int_range]).integrate("t").data.item() * 1e6
             )
-            beta["t_pulse",j] /= np.sqrt(2)  # Vrms
+            beta["t_pulse", j] /= np.sqrt(2)  # Vrms
             # PR COMMENT: JF only read to here -- a bunch of stuff above were comments that weren't incorporated or obvious clean code stuff.  Please review from here to the end again
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
@@ -110,46 +120,44 @@ with psd.figlist_var() as fl:
         beta["t_pulse"] *= amplitude
         beta.rename("t_pulse", "$A t_{pulse}$")
         fl.plot(beta, "o", color=thiscolor, label=thislabel)
-        print(beta)
-        t_v_beta = beta.shape.alloc(dtype = np.float64).rename("$A t_{pulse}$", "beta")
+        beta.rename("$A t_{pulse}$", "t_pulse")
+        beta["t_pulse"] /= amplitude
+        t_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
         t_v_beta.setaxis("beta", beta.data)
-        t_v_beta.data[:] = beta.getaxis("$A t_{pulse}$")
-        codehasbeenreviewed = True
-        if codehasbeenreviewed:
-            if amplitude > 1:
-                linear_regime = (7,None)
-            else:
-                linear_regime = (2,None)
-            c_nonlinear = beta.C.polyfit("$A t_{pulse}$", order = 10)
-            c_linear = beta["$A t_{pulse}$":linear_regime].C.polyfit("$A t_{pulse}$", order = 1)
-            fit_beta_v_t = np.polyval(c_nonlinear[::-1], beta.getaxis("$A t_{pulse}$"))
-            fit = psd.nddata(fit_beta_v_t, "$A t_{pulse}$").setaxis(
-                "$A t_{pulse}$", beta.getaxis("$A t_{pulse}$")
-            )
-            fl.plot(fit, color=thiscolor, ls=":", alpha=0.5)
-            psd.gridandtick(plt.gca())
-            plt.ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-            plt.xlabel(r"Amplitude*$t_{pulse}$ / $\mu$s")
-            # }}}
-            # {{{ t vs beta
-            fl.next(r"Amplitude*$t_{pulse}$ vs Measured $\beta$")
-            fl.plot(t_v_beta, "o", color=thiscolor, label=thislabel)
-            if amplitude > 1:
-                linear_regime = (30,None)
-            else:
-                linear_regime = (35,None)
-            c_nonlinear = t_v_beta.polyfit("beta", order = 10)
-            #t_v_beta.data.sort()
-            print("This is the data I am trying to fit",t_v_beta)
-            c_linear = t_v_beta["beta":linear_regime].polyfit("beta", order = 1)
-            print(c_nonlinear)
-            print(c_linear)
-            fit_t_v_beta = np.polyval(c_nonlinear[::-1], t_v_beta.getaxis("beta"))
-            fit = psd.nddata(fit_t_v_beta, "beta").setaxis(
-                "beta", t_v_beta.getaxis("beta")
-            )
-            fl.plot(fit, color=thiscolor, ls=":", alpha=0.5)
-            plt.xlabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-            plt.ylabel(r"Amplitude*$t_{pulse}$ / $\mu$s")
-            psd.gridandtick(plt.gca())
-            # }}}
+        t_v_beta.data[:] = beta["t_pulse"].copy()
+        if amplitude > 1:
+            linear_regime = (7, None)
+        else:
+            linear_regime = (2, None)
+        c_nonlinear = t_v_beta.polyfit("beta", order=10)
+        print(c_nonlinear)
+        fl.next(r"$t_{pulse}$ vs $\beta$")
+        fl.plot(t_v_beta, "o", color = thiscolor , label = label)
+        t_v_beta.eval_poly(c_nonlinear, "beta")
+        fl.plot(t_v_beta, color=thiscolor, ls=":", alpha=0.5)
+        psd.gridandtick(plt.gca())
+        plt.ylabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+        plt.xlabel(r"Amplitude*$t_{pulse}$ / $\mu$s")
+        # }}}
+        # {{{ t vs beta
+        fl.next(r"Amplitude*$t_{pulse}$ vs Measured $\beta$")
+        fl.plot(t_v_beta, "o", color=thiscolor, label=thislabel)
+        if amplitude > 1:
+            linear_regime = (30,None)
+        else:
+            linear_regime = (35,None)
+        c_nonlinear = t_v_beta.polyfit("beta", order = 10)
+        #t_v_beta.data.sort()
+        print("This is the data I am trying to fit",t_v_beta)
+        c_linear = t_v_beta["beta":linear_regime].polyfit("beta", order = 1)
+        print(c_nonlinear)
+        print(c_linear)
+        fit_t_v_beta = np.polyval(c_nonlinear[::-1], t_v_beta.getaxis("beta"))
+        fit = psd.nddata(fit_t_v_beta, "beta").setaxis(
+            "beta", t_v_beta.getaxis("beta")
+        )
+        fl.plot(fit, color=thiscolor, ls=":", alpha=0.5)
+        plt.xlabel(r"measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+        plt.ylabel(r"Amplitude*$t_{pulse}$ / $\mu$s")
+        psd.gridandtick(plt.gca())
+        # }}}
