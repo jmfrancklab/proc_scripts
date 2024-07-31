@@ -2,7 +2,8 @@ r"""
 Calculate actual beta as a function of pulse length
 ===================================================
 Assuming the data is the capture of the pulse sequence as seen on the GDS
-oscilloscope, here the data is converted to analytic power, frequency filtered
+oscilloscope (acquired using FLInst/examples/calib_pulses.py), 
+here the data is converted to analytic power, frequency filtered
 and the absolute is taken prior to integrating to return the beta where
 :math:`\beta = \int \sqrt{P(t)} dt` 
 """
@@ -27,7 +28,7 @@ color_cycle = cycle(
 )
 
 atten_ratio = 101.35  # attenutation ratio
-show_all = False
+show_all = False  # diagnostic
 with psd.figlist_var() as fl:
     for filename, nodename, label in [
         ("240730_test_amp1_fin_pulse_calib.h5", "pulse_calib_1", "amplitude = 1"),
@@ -37,6 +38,7 @@ with psd.figlist_var() as fl:
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         thiscolor = next(color_cycle)
+        # {{{ allocate shapes for the final t_v_beta and beta_v_t plots
         t_v_beta = d.shape.pop("t").alloc().rename("p_90", "desired_beta")
         t_v_beta.setaxis("desired_beta", d.get_prop("desired_betas"))
         beta_v_t = d.shape.pop("t").alloc().rename("p_90", "At_p")
@@ -47,6 +49,7 @@ with psd.figlist_var() as fl:
                 for j in range(len(d["p_90"]))
             ),
         )
+        # }}}
         for j in range(len(d["p_90"])):
             s = d["p_90", j].C
             s.set_units("t", "s")
@@ -54,9 +57,7 @@ with psd.figlist_var() as fl:
             s /= np.sqrt(2)  # Vrms
             s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
             if show_all:
-                fl.basename = r"programmed $\beta$ = %s" % str(
-                    s.get_prop("set_betas")[j]
-                )
+                fl.basename = r"pulse length = %s" % str(s.get_prop("set_p90s")[j])
                 fl.next(fl.basename)
                 # {{{ Plot raw capture
                 fl.plot(s, alpha=0.2, color="blue")
@@ -83,6 +84,9 @@ with psd.figlist_var() as fl:
                 fl.plot(abs(s), color="red")
                 # }}}
             beta90_int = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
+            # slightly expand int range to include rising edges
+            beta90_int[0] -= 0.5e-6
+            beta90_int[-1] += 0.5e-6
             beta1 = abs(s["t":beta90_int]).integrate("t").data.item() * 1e6
             beta_v_t["At_p", j] = beta1
             if show_all:
