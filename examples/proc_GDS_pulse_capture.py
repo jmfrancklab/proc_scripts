@@ -10,6 +10,7 @@ and the absolute is taken prior to integrating to return the beta where
 import pyspecdata as psd
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy import r_
 from itertools import cycle
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -21,19 +22,21 @@ atten_ratio = 101.52  # attenutation ratio
 skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename, amplitude in [
-        ("240730_test_amp1_fin_pulse_calib.h5", "pulse_calib_1", 1.0),
-        # PR COMMENT: the other set of data was too zoomed out along the x axis, and was being aliased
+        ("240731_amp1_calib_fin_pulse_calib.h5", "pulse_calib_1", 1.0),
+        # PR COMMENT: as noted previously, the second dataset has a bad time axis -- too far zoomed out!
     ]:
         fl.basename = f"amplitude = {amplitude}"
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         # {{{ fix messed up axis
-        d.rename("p_90", "t_pulse")
-        d["t_pulse"] = np.float64(d["t_pulse"])
-        d["t_pulse"] = d.get_prop(
-            "set_p90s"
-        )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
+        if 'p_90' in d.dimlabels:
+            print("correcting axis, which was",d['p_90'])
+            d.rename("p_90", "t_pulse")
+            d["t_pulse"] = np.float64(d["t_pulse"])
+            d["t_pulse"] = d.get_prop(
+                "set_p90s"
+            )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
         # }}}
         d.set_units("t", "s")  # why isn't this done already??
         d *= atten_ratio
@@ -79,7 +82,7 @@ with psd.figlist_var() as fl:
         fl.next("collect filtered analytic")
         for j in range(d.shape["t_pulse"]):
             s = d["t_pulse", j].C
-            s["t"] -= abs(s).contiguous(lambda x: x > 0.01 * s.max())[0][0]
+            s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
             fl.plot(abs(s), alpha=0.3)
         # }}}
         thislabel = "amplitude = %f" % amplitude
@@ -90,10 +93,10 @@ with psd.figlist_var() as fl:
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
-            int_range = abs(s).contiguous(lambda x: x > 0.01 * s.max())[0]
+            int_range = abs(s).contiguous(lambda x: x > 0.03 * s.max())[0]
             # slightly expand int range to include rising edges
-            int_range[0] -= 1e-6
-            int_range[-1] += 1e-6
+            int_range[0] -= 2e-6
+            int_range[-1] += 2e-6
             beta["t_pulse", j] = (
                 abs(s["t":int_range]).integrate("t").data.item() * 1e6
             )
@@ -122,29 +125,25 @@ with psd.figlist_var() as fl:
         beta.rename("$A t_{pulse}$", "t_pulse")
         beta["t_pulse"] /= amplitude
         # }}}
+        decreasing_idx = np.nonzero(~(np.diff(beta.data)>0))[0]
+        if len(decreasing_idx) > 0: # beta doesn't always increase with increasing pulse length
+            fl.plot(beta['t_pulse',:decreasing_idx[-1]+1], "x", color='r', label="can't use these")
+            beta = beta['t_pulse',decreasing_idx[-1]+1:]
         t_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
         t_v_beta.setaxis("beta", beta.data)
         t_v_beta.data[:] = beta["t_pulse"].copy()
         c_nonlinear = t_v_beta.polyfit("beta", order=10)
         if amplitude == 1.0:
             linear_threshold = 40
-        plt.axvline(
-            x=linear_threshold, label=f"linear threshold for amp={amplitude}"
-        )
-        c_linear = t_v_beta["beta":(linear_threshold, None)].polyfit(
-            "beta", order=1
-        )
+        plt.axvline(x=linear_threshold, label=f"linear threshold for amp={amplitude}")
+        c_linear = t_v_beta["beta":(linear_threshold, None)].polyfit( "beta", order=1)
         print(c_nonlinear)
         print(c_linear)
         fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
         fl.plot(t_v_beta, "o")
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
-        for_extrap = psd.nddata(
-            np.linspace(5, t_v_beta["beta"].max() + 10, 500), "beta"
-        )
-        fl.plot(
-            for_extrap.eval_poly(c_nonlinear, "beta"), ":", label="nonlinear"
-        )
+        for_extrap = psd.nddata( np.linspace(5, t_v_beta["beta"].max() + 10, 500), "beta")
+        fl.plot( for_extrap.eval_poly(c_nonlinear, "beta"), ":", label="nonlinear")
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
         # }}}
