@@ -21,8 +21,8 @@ atten_ratio = 101.52  # attenutation ratio
 skip_plots = 1  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename, amplitude in [
-        ("240731_amp1_calib_fin_pulse_calib.h5", "pulse_calib_1", 1.0),
-        ("240731_amp0p1_calib_fin_pulse_calib.h5", "pulse_calib_1", 0.1),
+        ("240731_amp1_calib_fin_pulse_calib.h5", "pulse_calib_2", 1.0),
+        #("240731_amp0p1_calib_fin_pulse_calib.h5", "pulse_calib_1", 0.1),
     ]:
         fl.basename = f"amplitude = {amplitude}"
         d = psd.find_file(
@@ -101,7 +101,6 @@ with psd.figlist_var() as fl:
                     r"$t_{90} \sqrt{P_{tx}} = %f s \sqrt{W}$"
                     % beta["t_pulse", j].item(),
                 )
-        # {{{ make nddata for beta of 90 pulse and 180 pulse
         # {{{ beta vs t
         fl.basename = None
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
@@ -118,9 +117,23 @@ with psd.figlist_var() as fl:
         else:
             linear_regime = (2, None)
         c_nonlinear = t_v_beta.polyfit("beta", order=10)
-        print(c_nonlinear)
+        c_linear = t_v_beta["beta":linear_regime].polyfit("beta",order = 1)
         fl.next(r"$t_{pulse}$ vs $\beta$")
         fl.plot(t_v_beta, "o", color = thiscolor)
+        def prog_plen(desired):
+            def zonefit(desired):
+                if desired > linear_regime[0]:
+                    return np.polyval(c_linear[::-1], desired)
+                else:
+                    return np.polyval(c_nonlinear[::-1], desired)
+            ret_val = np.vectorize(zonefit)(desired)
+            if ret_val.size > 1:
+                return ret_val
+            else:
+                return ret_val.item()
+        fit = prog_plen(t_v_beta.getaxis('beta'))
+        fl.plot(t_v_beta.getaxis('beta'),fit)
+        fl.show();quit()
         t_v_beta.eval_poly(c_nonlinear, "beta")
         fl.plot(t_v_beta, color=thiscolor, ls=":", alpha=0.5)
         psd.gridandtick(plt.gca())
