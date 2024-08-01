@@ -21,8 +21,7 @@ V_atten_ratio = 101.52  # attenutation ratio
 skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename, amplitude in [
-        ("240731_amp1_calib_fin_pulse_calib.h5", "pulse_calib_11", 1.0),
-        ("240731_amp0p1_calib_fin_pulse_calib.h5", "pulse_calib_5", 0.1),
+        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_4", 1.0),
     ]:
         fl.basename = f"amplitude = {amplitude}"
         d = psd.find_file(
@@ -37,8 +36,9 @@ with psd.figlist_var() as fl:
                 "set_p90s"
             )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
         # }}}
-        assert d.get_units("t") == "s"
-        d.set_units("t", "s")  # why isn't this done already??
+        if not d.get_units("t") == "s":
+            print("************ AG still needs to finish pyspecdata PR to save units!!! ************")
+            d.set_units("t", "s")  # why isn't this done already??
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
 
@@ -68,11 +68,11 @@ with psd.figlist_var() as fl:
         d["t":(0, 11e6)] *= 0
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
-        fl.next("collect filtered analytic")
+        fl.next("collect filtered analytic", legend=True)
         for j in range(d.shape["t_pulse"]):
             s = d["t_pulse", j].C
             s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
-            fl.plot(abs(s), alpha=0.3)
+            fl.plot(abs(s), alpha=0.3, label=f"{j}")
         # }}}
         thislabel = "amplitude = %f" % amplitude
         thiscolor = next(color_cycle)
@@ -102,9 +102,8 @@ with psd.figlist_var() as fl:
                 plt.text(
                     int_range[0] * 1e6 - 1,
                     -1,
-                    r"$t_{90} \sqrt{P_{tx}} = %f \matrm{μs} \sqrt{\mathrm{W}}$"
-                    % beta["t_pulse", j].item()
-                    / 1e-6,
+                    r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
+                    % (beta["t_pulse", j].item() / 1e-6),
                 )
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None
@@ -130,9 +129,7 @@ with psd.figlist_var() as fl:
         t_v_beta.data[:] = beta["t_pulse"].copy()
         c_nonlinear = t_v_beta.polyfit("beta", order=10)
         if amplitude == 1.0:
-            linear_threshold = 8
-        else:
-            linear_threshold = 2
+            linear_threshold = 8e-6
         plt.axvline(
             x=linear_threshold,
             color=thiscolor,
