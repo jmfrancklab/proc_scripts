@@ -18,7 +18,7 @@ color_cycle = cycle(
 )  # this can be done more than once to spin up multiple lists
 
 V_atten_ratio = 101.52  # attenutation ratio
-skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
+skip_plots = 100  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename in [
         ("240801_calib_prep_pulse_calib.h5", "pulse_calib_7"),
@@ -137,10 +137,21 @@ with psd.figlist_var() as fl:
         t_us_v_beta.setaxis("beta", beta.data)
         t_us_v_beta.data[:] = beta["t_pulse"].copy() / 1e-6  # because our ppg wants μs
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
-        c_nonlinear = t_us_v_beta.polyfit("beta", order=10)
+        c_nonlinear = t_us_v_beta["beta":(None,linear_threshold)].polyfit("beta", order=10)
         c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
         print(c_nonlinear)
         print(c_linear)
+        def prog_plen(desired):
+            def zonefit(desired):
+                if desired > linear_threshold:
+                    return np.polyval(c_linear[::-1],desired)
+                else:
+                    return np.polyval(c_nonlinear[::-1],desired)
+            ret_val = np.vectorize(zonefit)(desired)
+            if ret_val.size > 1:
+                return ret_val
+            else:
+                return ret_val.item()
         fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
         fl.plot(t_us_v_beta, "o", label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
@@ -152,6 +163,8 @@ with psd.figlist_var() as fl:
             .set_units("μs")
             .set_units("beta", "s√W")
         )
-        fl.plot(for_extrap.eval_poly(c_nonlinear, "beta"), ":", label="nonlinear")
+        fl.plot(for_extrap.eval_poly(c_nonlinear, "beta")["beta":(None,linear_threshold)], ":", label="nonlinear")
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
+        full_fit = psd.nddata(prog_plen(t_us_v_beta.getaxis("beta")), "beta").setaxis("beta",t_us_v_beta.getaxis("beta")).set_units("μs").set_units("beta", "s√W")
+        fl.plot(full_fit, color = 'k')
         # }}}
