@@ -21,7 +21,7 @@ V_atten_ratio = 101.52  # attenutation ratio
 skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename, amplitude in [
-        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_4", 1.0),
+        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_6", 1.0),
     ]:
         fl.basename = f"amplitude = {amplitude}"
         d = psd.find_file(
@@ -143,7 +143,7 @@ with psd.figlist_var() as fl:
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
         for_extrap = psd.nddata(
-            np.linspace(5, t_v_beta["beta"].max() + 10, 500), "beta"
+            np.linspace(5e-6, t_v_beta["beta"].max() + 10e-6, 500), "beta"
         )
         fl.plot(for_extrap.eval_poly(c_nonlinear, "beta"), ":", label="nonlinear")
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
