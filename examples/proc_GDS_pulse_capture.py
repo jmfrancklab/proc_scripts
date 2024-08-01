@@ -10,7 +10,6 @@ and the absolute is taken prior to integrating to return the beta where
 import pyspecdata as psd
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy import r_
 from itertools import cycle
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -22,15 +21,22 @@ atten_ratio = 101.52  # attenutation ratio
 skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename, amplitude in [
-        ("240731_amp1_calib_fin_pulse_calib.h5", "pulse_calib_13", 1.0),  # 5
-        # ("240731_amp0p1_calib_fin_pulse_calib.h5", "pulse_calib_1", 0.1),
+        ("240731_amp1_calib_fin_pulse_calib.h5", "pulse_calib_11", 1.0),
+        ("240731_amp0p1_calib_fin_pulse_calib.h5", "pulse_calib_5", 0.1),
     ]:
         fl.basename = f"amplitude = {amplitude}"
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
-        d["t_pulse"] = np.float64(
-                d["t_pulse"])
+        # {{{ fix messed up axis
+        if "p_90" in d.dimlabels:
+            print("correcting axis, which was", d["p_90"])
+            d.rename("p_90", "t_pulse")
+            d["t_pulse"] = np.float64(d["t_pulse"])
+            d["t_pulse"] = d.get_prop(
+                "set_p90s"
+            )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
+        # }}}
         d.set_units("t", "s")  # why isn't this done already??
         d *= atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
@@ -61,25 +67,18 @@ with psd.figlist_var() as fl:
         d["t":0] *= 0.5
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
+        fl.next("test")
+        fl.plot(d)
         d["t":(0, 11e6)] *= 0
         d["t":(24e6, None)] *= 0
-        # PR COMMENT: AG had the following, which doesn't make sense
-        # if amplitude >0.5:
-        #     d["t":(0, 11e6)] *= 0
-        #     d["t":(24e6, None)] *= 0
-        # else:
-        #     d["t":(0, 9.5e6)] *= 0
-        #     d["t":(11.5e6, None)] *= 0
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
         fl.next("collect filtered analytic")
-        # d = d['t_pulse',:2]
         for j in range(d.shape["t_pulse"]):
             s = d["t_pulse", j].C
             s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
             fl.plot(abs(s), alpha=0.3)
         # }}}
-        # fl.show();quit()
         thislabel = "amplitude = %f" % amplitude
         thiscolor = next(color_cycle)
         beta = d.shape.pop("t").alloc(dtype=np.float64)
@@ -92,9 +91,7 @@ with psd.figlist_var() as fl:
             # slightly expand int range to include rising edges
             int_range[0] -= 2e-6
             int_range[-1] += 2e-6
-            beta["t_pulse", j] = (
-                abs(s["t":int_range]).integrate("t").data.item() * 1e6
-            )
+            beta["t_pulse", j] = abs(s["t":int_range]).integrate("t").data.item() * 1e6
             beta["t_pulse", j] /= np.sqrt(2)  # Vrms
             # PR COMMENT: JF only read to here -- a bunch of stuff above were comments that weren't incorporated or obvious clean code stuff.  Please review from here to the end again
             if skip_plots is not None and j % skip_plots == 0:
@@ -118,7 +115,6 @@ with psd.figlist_var() as fl:
         beta.rename("t_pulse", "$A t_{pulse}$")
         fl.plot(beta, "o", color=thiscolor, label=thislabel)
         beta.rename("$A t_{pulse}$", "t_pulse")
-        beta["t_pulse"] /= amplitude
         # }}}
         decreasing_idx = np.nonzero(~(np.diff(beta.data) > 0))[0]
         if (
@@ -136,24 +132,24 @@ with psd.figlist_var() as fl:
         t_v_beta.data[:] = beta["t_pulse"].copy()
         c_nonlinear = t_v_beta.polyfit("beta", order=10)
         if amplitude == 1.0:
-            linear_threshold = 40
+            linear_threshold = 8
+        else:
+            linear_threshold = 2
         plt.axvline(
-            x=linear_threshold, label=f"linear threshold for amp={amplitude}"
+            x=linear_threshold,
+            color=thiscolor,
+            label=f"linear threshold for amp={amplitude}",
         )
-        c_linear = t_v_beta["beta":(linear_threshold, None)].polyfit(
-            "beta", order=1
-        )
+        c_linear = t_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
         print(c_nonlinear)
         print(c_linear)
         fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
-        fl.plot(t_v_beta, "o")
+        fl.plot(t_v_beta, "o", label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
         for_extrap = psd.nddata(
             np.linspace(5, t_v_beta["beta"].max() + 10, 500), "beta"
         )
-        fl.plot(
-            for_extrap.eval_poly(c_nonlinear, "beta"), ":", label="nonlinear"
-        )
+        fl.plot(for_extrap.eval_poly(c_nonlinear, "beta"), ":", label="nonlinear")
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
         # }}}
