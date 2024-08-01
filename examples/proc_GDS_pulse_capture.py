@@ -114,6 +114,7 @@ with psd.figlist_var() as fl:
             (beta.C / 1e-6).set_units("μs√W"), "o", color=thiscolor, label=thislabel
         )
         beta.rename("$A t_{pulse}$", "t_pulse")
+        beta["t_pulse"] /= amplitude
         # }}}
         decreasing_idx = np.nonzero(~(np.diff(beta.data) > 0))[0]
         if (
