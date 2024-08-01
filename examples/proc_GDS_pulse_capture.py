@@ -27,7 +27,7 @@ with psd.figlist_var() as fl:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
-        amplitude = d.get_prop('acq_params')['amplitude']
+        amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         # {{{ fix messed up axis
         if "p_90" in d.dimlabels:
@@ -80,7 +80,7 @@ with psd.figlist_var() as fl:
         thiscolor = next(color_cycle)
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
-        beta.set_units(r"s√W").set_units('t_pulse','s')
+        beta.set_units(r"s√W").set_units("t_pulse", "s")
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
@@ -137,21 +137,26 @@ with psd.figlist_var() as fl:
         t_us_v_beta.setaxis("beta", beta.data)
         t_us_v_beta.data[:] = beta["t_pulse"].copy() / 1e-6  # because our ppg wants μs
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
-        c_nonlinear = t_us_v_beta["beta":(None,linear_threshold)].polyfit("beta", order=10)
+        c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].polyfit(
+            "beta", order=10
+        )
         c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
         print(c_nonlinear)
         print(c_linear)
+
         def prog_plen(desired):
             def zonefit(desired):
                 if desired > linear_threshold:
-                    return np.polyval(c_linear[::-1],desired)
+                    return np.polyval(c_linear[::-1], desired)
                 else:
-                    return np.polyval(c_nonlinear[::-1],desired)
+                    return np.polyval(c_nonlinear[::-1], desired)
+
             ret_val = np.vectorize(zonefit)(desired)
             if ret_val.size > 1:
                 return ret_val
             else:
                 return ret_val.item()
+
         fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
         fl.plot(t_us_v_beta, "o", label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
@@ -163,8 +168,17 @@ with psd.figlist_var() as fl:
             .set_units("μs")
             .set_units("beta", "s√W")
         )
-        fl.plot(for_extrap.eval_poly(c_nonlinear, "beta")["beta":(None,linear_threshold)], ":", label="nonlinear")
+        fl.plot(
+            for_extrap.eval_poly(c_nonlinear, "beta")["beta":(None, linear_threshold)],
+            ":",
+            label="nonlinear",
+        )
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
-        full_fit = psd.nddata(prog_plen(t_us_v_beta.getaxis("beta")), "beta").setaxis("beta",t_us_v_beta.getaxis("beta")).set_units("μs").set_units("beta", "s√W")
-        fl.plot(full_fit, color = 'k')
+        full_fit = (
+            psd.nddata(prog_plen(t_us_v_beta.getaxis("beta")), "beta")
+            .setaxis("beta", t_us_v_beta.getaxis("beta"))
+            .set_units("μs")
+            .set_units("beta", "s√W")
+        )
+        fl.plot(full_fit, color="k", ls="--", label="piecewise")
         # }}}
