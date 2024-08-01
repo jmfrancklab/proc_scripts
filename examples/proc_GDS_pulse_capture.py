@@ -20,13 +20,15 @@ color_cycle = cycle(
 V_atten_ratio = 101.52  # attenutation ratio
 skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
-    for filename, nodename, amplitude in [
-        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_7", 1.0),
+    for filename, nodename in [
+        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_7"),
+        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_9"),
     ]:
-        fl.basename = f"amplitude = {amplitude}"
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
+        amplitude = d.get_prop('acq_params')['amplitude']
+        fl.basename = f"amplitude = {amplitude}"
         # {{{ fix messed up axis
         if "p_90" in d.dimlabels:
             print("correcting axis, which was", d["p_90"])
@@ -65,8 +67,6 @@ with psd.figlist_var() as fl:
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
-        fl.next("test")
-        fl.plot(d)
         d["t":(0, 11e6)] *= 0
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
@@ -80,7 +80,7 @@ with psd.figlist_var() as fl:
         thiscolor = next(color_cycle)
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
-        beta.set_units(r"s√W")
+        beta.set_units(r"s√W").set_units('t_pulse','s')
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
@@ -126,8 +126,7 @@ with psd.figlist_var() as fl:
                 label="can't use these",
             )
             beta = beta["t_pulse", decreasing_idx[-1] + 1 :]
-        if amplitude == 1.0:
-            linear_threshold = 100e-6
+        linear_threshold = 100e-6
         plt.axhline(  # the linear threshold is the threshold above which beta is linear
             y=linear_threshold / 1e-6,  # as above
             color=thiscolor,
