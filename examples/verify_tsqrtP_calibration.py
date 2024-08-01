@@ -23,8 +23,8 @@ skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
 with psd.figlist_var() as fl:
     for filename, nodename in [
-        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_7"),  # high power
-        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_9"),  # low power
+        ("240801_amp1_test_pulse_calib.h5", "pulse_calib_3"),  # high power
+        ("240801_amp0p1_test_pulse_calib.h5", "pulse_calib_5"),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
@@ -38,19 +38,20 @@ with psd.figlist_var() as fl:
             d.set_units("t", "s")  # why isn't this done already??
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
+        pulse_lengths = d.get_prop("programmed_t_pulse_us")
 
         def switch_to_plot(d, j):
-            thislen = d["t_pulse"][j]
+            thislen = pulse_lengths[j]
             fl.next(f"pulse length = {thislen}")
 
         def indiv_plots(d, thislabel, thiscolor):
             if skip_plots is None:
                 return
-            for j in range(len(d["t_pulse"])):
+            for j in range(len(d["beta"])):
                 if j % skip_plots == 0:
                     switch_to_plot(d, j)
                     fl.plot(
-                        d["t_pulse", j],
+                        d["beta", j],
                         alpha=0.2,
                         color=thiscolor,
                         label=thislabel,
@@ -107,4 +108,7 @@ with psd.figlist_var() as fl:
             color=thiscolor,
             label=thislabel,
         )
+        plt.xlabel(r"Programmed $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+        plt.ylabel(r"Measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+        psd.gridandtick(plt.gca())
         # }}}
