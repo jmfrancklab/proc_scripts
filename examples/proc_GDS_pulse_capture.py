@@ -21,7 +21,7 @@ V_atten_ratio = 101.52  # attenutation ratio
 skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename, amplitude in [
-        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_6", 1.0),
+        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_7", 1.0),
     ]:
         fl.basename = f"amplitude = {amplitude}"
         d = psd.find_file(
@@ -110,7 +110,7 @@ with psd.figlist_var() as fl:
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
         beta["t_pulse"] *= amplitude
         beta.rename("t_pulse", "$A t_{pulse}$")
-        fl.plot(beta, "o", color=thiscolor, label=thislabel)
+        fl.plot((beta.C/1e-6).set_units('μs√W'), "o", color=thiscolor, label=thislabel)
         beta.rename("$A t_{pulse}$", "t_pulse")
         # }}}
         decreasing_idx = np.nonzero(~(np.diff(beta.data) > 0))[0]
@@ -124,27 +124,28 @@ with psd.figlist_var() as fl:
                 label="can't use these",
             )
             beta = beta["t_pulse", decreasing_idx[-1] + 1 :]
-        t_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
-        t_v_beta.setaxis("beta", beta.data)
-        t_v_beta.data[:] = beta["t_pulse"].copy()
-        c_nonlinear = t_v_beta.polyfit("beta", order=10)
         if amplitude == 1.0:
-            linear_threshold = 8e-6
-        plt.axvline(
-            x=linear_threshold,
+            linear_threshold = 100e-6
+        plt.axhline( # the linear threshold is the threshold above which beta is linear
+            y=linear_threshold/1e-6, # as above
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
-        c_linear = t_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
+        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
+        t_us_v_beta.setaxis("beta", beta.data)
+        t_us_v_beta.data[:] = beta["t_pulse"].copy() / 1e-6 # because our ppg wants μs
+        t_us_v_beta.set_units('μs').set_units('beta','s√W')
+        c_nonlinear = t_us_v_beta.polyfit("beta", order=10)
+        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
         print(c_nonlinear)
         print(c_linear)
         fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
-        fl.plot(t_v_beta, "o", label=thislabel)
+        fl.plot(t_us_v_beta, "o", label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
         for_extrap = psd.nddata(
-            np.linspace(5e-6, t_v_beta["beta"].max() + 10e-6, 500), "beta"
-        )
+            np.linspace(0.5e-6, t_us_v_beta["beta"].max() + 10e-6, 500), "beta"
+        ).set_units('μs').set_units('beta','s√W')
         fl.plot(for_extrap.eval_poly(c_nonlinear, "beta"), ":", label="nonlinear")
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
         # }}}
