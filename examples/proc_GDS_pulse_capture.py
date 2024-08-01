@@ -27,7 +27,7 @@ with psd.figlist_var() as fl:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
-        amplitude = d.get_prop('acq_params')['amplitude']
+        amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         # {{{ fix messed up axis
         if "p_90" in d.dimlabels:
@@ -80,7 +80,7 @@ with psd.figlist_var() as fl:
         thiscolor = next(color_cycle)
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
-        beta.set_units(r"s√W").set_units('t_pulse','s')
+        beta.set_units(r"s√W").set_units("t_pulse", "s")
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
