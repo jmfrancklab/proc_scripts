@@ -18,16 +18,17 @@ color_cycle = cycle(
 )  # this can be done more than once to spin up multiple lists
 
 V_atten_ratio = 101.52  # attenutation ratio
-skip_plots = 100  # diagnostic -- set this to None, and there will be no plots
+skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
+linear_threshold = 100e-6
 with psd.figlist_var() as fl:
     for filename, nodename in [
-        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_7"),
-        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_9"),
+        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_7"),  # high power
+        ("240801_calib_prep_pulse_calib.h5", "pulse_calib_9"),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
-        amplitude = d.get_prop('acq_params')['amplitude']
+        amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         # {{{ fix messed up axis
         if "p_90" in d.dimlabels:
@@ -80,7 +81,7 @@ with psd.figlist_var() as fl:
         thiscolor = next(color_cycle)
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
-        beta.set_units(r"s√W").set_units('t_pulse','s')
+        beta.set_units(r"s√W").set_units("t_pulse", "s")
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
@@ -88,7 +89,9 @@ with psd.figlist_var() as fl:
             # slightly expand int range to include rising edges
             int_range[0] -= 2e-6
             int_range[-1] += 2e-6
-            beta["t_pulse", j] = abs(s["t":int_range]).integrate("t").data.item()
+            beta["t_pulse", j] = (
+                abs(s["t":int_range]).integrate("t").data.item()
+            )
             beta["t_pulse", j] /= np.sqrt(2)  # Vrms
             # PR COMMENT: JF only read to here -- a bunch of stuff above were comments that weren't incorporated or obvious clean code stuff.  Please review from here to the end again
             if skip_plots is not None and j % skip_plots == 0:
@@ -111,7 +114,10 @@ with psd.figlist_var() as fl:
         beta["t_pulse"] *= amplitude
         beta.rename("t_pulse", "$A t_{pulse}$")
         fl.plot(
-            (beta.C / 1e-6).set_units("μs√W"), "o", color=thiscolor, label=thislabel
+            (beta.C / 1e-6).set_units("μs√W"),
+            "o",
+            color=thiscolor,
+            label=thislabel,
         )
         beta.rename("$A t_{pulse}$", "t_pulse")
         beta["t_pulse"] /= amplitude
@@ -127,44 +133,61 @@ with psd.figlist_var() as fl:
                 label="can't use these",
             )
             beta = beta["t_pulse", decreasing_idx[-1] + 1 :]
-        linear_threshold = 100e-6
         plt.axhline(  # the linear threshold is the threshold above which beta is linear
             y=linear_threshold / 1e-6,  # as above
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
-        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
+        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename(
+            "t_pulse", "beta"
+        )
         t_us_v_beta.setaxis("beta", beta.data)
-        t_us_v_beta.data[:] = beta["t_pulse"].copy() / 1e-6  # because our ppg wants μs
+        t_us_v_beta.data[:] = (
+            beta["t_pulse"].copy() / 1e-6
+        )  # because our ppg wants μs
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
-        c_nonlinear = t_us_v_beta["beta":(None,linear_threshold)].polyfit("beta", order=10)
-        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
+        c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].polyfit(
+            "beta", order=10
+        )
+        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit(
+            "beta", order=1
+        )
         print(c_nonlinear)
         print(c_linear)
+
         def prog_plen(desired):
             def zonefit(desired):
                 if desired > linear_threshold:
-                    return np.polyval(c_linear[::-1],desired)
+                    return np.polyval(c_linear[::-1], desired)
                 else:
-                    return np.polyval(c_nonlinear[::-1],desired)
+                    return np.polyval(c_nonlinear[::-1], desired)
+
             ret_val = np.vectorize(zonefit)(desired)
             if ret_val.size > 1:
                 return ret_val
             else:
                 return ret_val.item()
+
         fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
         fl.plot(t_us_v_beta, "o", label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
         for_extrap = (
             psd.nddata(
-                np.linspace(0.5e-6, t_us_v_beta["beta"].max() + 10e-6, 500), "beta"
+                np.linspace(0.5e-6, t_us_v_beta["beta"].max() + 10e-6, 500),
+                "beta",
             )
             .set_units("μs")
             .set_units("beta", "s√W")
         )
-        fl.plot(for_extrap.eval_poly(c_nonlinear, "beta")["beta":(None,linear_threshold)], ":", label="nonlinear")
+        fl.plot(
+            for_extrap.eval_poly(c_nonlinear, "beta")[
+                "beta":(None, linear_threshold)
+            ],
+            ":",
+            label="nonlinear",
+        )
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
-        full_fit = psd.nddata(prog_plen(t_us_v_beta.getaxis("beta")), "beta").setaxis("beta",t_us_v_beta.getaxis("beta")).set_units("μs").set_units("beta", "s√W")
-        fl.plot(full_fit, color = 'k')
+        full_fit = for_extrap.fromaxis("beta").run(prog_plen) 
+        fl.plot(full_fit, color="k")
         # }}}
