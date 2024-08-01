@@ -17,7 +17,7 @@ color_cycle = cycle(
     colorcyc_list
 )  # this can be done more than once to spin up multiple lists
 
-atten_ratio = 101.52  # attenutation ratio
+V_atten_ratio = 101.52  # attenutation ratio
 skip_plots = 10  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, nodename, amplitude in [
@@ -37,8 +37,9 @@ with psd.figlist_var() as fl:
                 "set_p90s"
             )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
         # }}}
+        assert d.get_units("t") == "s"
         d.set_units("t", "s")  # why isn't this done already??
-        d *= atten_ratio
+        d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
 
         def switch_to_plot(d, j):
@@ -59,18 +60,12 @@ with psd.figlist_var() as fl:
                     )
 
         indiv_plots(d, "raw", "blue")
-        # {{{ make analytic, then filter
-        d.ft("t", shift=True)
-        d = d["t":(0, None)]
-        d.ift("t")
-        d *= 2
-        d["t":0] *= 0.5
+        # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
         fl.next("test")
         fl.plot(d)
         d["t":(0, 11e6)] *= 0
-        d["t":(24e6, None)] *= 0
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
         fl.next("collect filtered analytic")
@@ -83,7 +78,7 @@ with psd.figlist_var() as fl:
         thiscolor = next(color_cycle)
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
-        beta.set_units(r"μs√W")
+        beta.set_units(r"s√W")
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
@@ -91,7 +86,9 @@ with psd.figlist_var() as fl:
             # slightly expand int range to include rising edges
             int_range[0] -= 2e-6
             int_range[-1] += 2e-6
-            beta["t_pulse", j] = abs(s["t":int_range]).integrate("t").data.item() * 1e6
+            beta["t_pulse", j] = (
+                abs(s["t":int_range]).integrate("t").data.item()
+            )
             beta["t_pulse", j] /= np.sqrt(2)  # Vrms
             # PR COMMENT: JF only read to here -- a bunch of stuff above were comments that weren't incorporated or obvious clean code stuff.  Please review from here to the end again
             if skip_plots is not None and j % skip_plots == 0:
@@ -105,8 +102,9 @@ with psd.figlist_var() as fl:
                 plt.text(
                     int_range[0] * 1e6 - 1,
                     -1,
-                    r"$t_{90} \sqrt{P_{tx}} = %f s \sqrt{W}$"
-                    % beta["t_pulse", j].item(),
+                    r"$t_{90} \sqrt{P_{tx}} = %f \matrm{μs} \sqrt{\mathrm{W}}$"
+                    % beta["t_pulse", j].item()
+                    / 1e-6,
                 )
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None
