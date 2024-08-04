@@ -85,7 +85,6 @@ with psd.figlist_var() as fl:
             int_range[-1] += 2e-6
             beta["beta", j] = abs(s["t":int_range]).integrate("t").data.item()
             beta["beta", j] /= np.sqrt(2)  # Vrms
-            # PR COMMENT: JF only read to here -- a bunch of stuff above were comments that weren't incorporated or obvious clean code stuff.  Please review from here to the end again
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
                 fl.plot(

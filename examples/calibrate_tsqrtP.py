@@ -38,7 +38,7 @@ with psd.figlist_var() as fl:
             d["t_pulse"] = np.float64(d["t_pulse"])
             d["t_pulse"] = d.get_prop(
                 "set_p90s"
-            )  # PR COMMENT: I'm guessing these are the actual pulse lengths you used
+            )  # actual pulse lengths sent to SC
         # }}}
         if not d.get_units("t") == "s":
             print(
@@ -94,7 +94,6 @@ with psd.figlist_var() as fl:
                 abs(s["t":int_range]).integrate("t").data.item()
             )
             beta["t_pulse", j] /= np.sqrt(2)  # Vrms
-            # PR COMMENT: JF only read to here -- a bunch of stuff above were comments that weren't incorporated or obvious clean code stuff.  Please review from here to the end again
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
                 fl.plot(
