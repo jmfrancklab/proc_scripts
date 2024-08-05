@@ -17,14 +17,15 @@ color_cycle = cycle(
     colorcyc_list
 )  # this can be done more than once to spin up multiple lists
 
-V_atten_ratio = 101.52  # attenutation ratio
+V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
 with psd.figlist_var() as fl:
     for filename, nodename in [
-        ("240802_calib_prep_amp1_pulse_calib.h5", "pulse_calib_7"),  # high power
-        ("240802_calib_prep_amp0p1_pulse_calib.h5", "pulse_calib_3"),  # low power
-        ("240802_calib_amp0p2_pulse_calib.h5", "pulse_calib_1"),  # low power
+        ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
+        ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
+        ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
+        ("240805_calib_amp0p05_pulse_calib.h5", "pulse_calib_6"),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
