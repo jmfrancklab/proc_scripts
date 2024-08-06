@@ -63,7 +63,15 @@ with psd.figlist_var() as fl:
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
-        d["t":(0, 11e6)] *= 0
+        # {{{ apply frequency filter
+        center = abs(d.C.mean("beta")).argmax().item()
+        left = center - 0.5e6
+        right = center + 0.5e6
+        d["t":(0, left)] *= 0
+        d["t":(right, None)] *= 0
+        plt.axvline(left * 1e-6)
+        plt.axvline(right * 1e-6)
+        # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
         fl.next("collect filtered analytic", legend=True)
