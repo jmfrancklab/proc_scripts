@@ -25,7 +25,7 @@ with psd.figlist_var() as fl:
         ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
         ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
         ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
-        ("240805_calib_amp0p05_pulse_calib.h5", "pulse_calib_6"),  # low power
+        ("240805_calib_amp0p05_pulse_calib.h5", "pulse_calib_5"),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
@@ -37,9 +37,7 @@ with psd.figlist_var() as fl:
             print("correcting axis, which was", d["p_90"])
             d.rename("p_90", "t_pulse")
             d["t_pulse"] = np.float64(d["t_pulse"])
-            d["t_pulse"] = d.get_prop(
-                "set_p90s"
-            )  # actual pulse lengths sent to SC
+            d["t_pulse"] = d.get_prop("set_p90s")  # actual pulse lengths sent to SC
         # }}}
         if not d.get_units("t") == "s":
             print(
@@ -70,7 +68,17 @@ with psd.figlist_var() as fl:
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
-        d["t":(0, 11e6)] *= 0
+        fl.next("f %s" % filename)
+        fl.plot(d)
+        # {{{ apply frequency filter
+        center = abs(d.C.mean("t_pulse")).argmax().item()
+        left = center - 0.5e6
+        right = center + 0.5e6
+        d["t":(0, left)] *= 0
+        d["t":(right, None)] *= 0
+        plt.axvline(left * 1e-6)
+        plt.axvline(right * 1e-6)
+        # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
         fl.next("collect filtered analytic", legend=True)
@@ -89,11 +97,9 @@ with psd.figlist_var() as fl:
             thislen = d["t_pulse"][j]
             int_range = abs(s).contiguous(lambda x: x > 0.03 * s.max())[0]
             # slightly expand int range to include rising edges
-            int_range[0] -= 2e-6
-            int_range[-1] += 2e-6
-            beta["t_pulse", j] = (
-                abs(s["t":int_range]).integrate("t").data.item()
-            )
+            int_range[0] -= 5e-6
+            int_range[-1] += 5e-6
+            beta["t_pulse", j] = abs(s["t":int_range]).integrate("t").data.item()
             beta["t_pulse", j] /= np.sqrt(2)  # Vrms
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
@@ -139,20 +145,14 @@ with psd.figlist_var() as fl:
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
-        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename(
-            "t_pulse", "beta"
-        )
+        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
         t_us_v_beta.setaxis("beta", beta.data)
-        t_us_v_beta.data[:] = (
-            beta["t_pulse"].copy() / 1e-6
-        )  # because our ppg wants μs
+        t_us_v_beta.data[:] = beta["t_pulse"].copy() / 1e-6  # because our ppg wants μs
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
         c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].polyfit(
             "beta", order=10
         )
-        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit(
-            "beta", order=1
-        )
+        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
         print(c_nonlinear)
         print(c_linear)
 
@@ -182,13 +182,11 @@ with psd.figlist_var() as fl:
             .set_units("beta", "s√W")
         )
         fl.plot(
-            for_extrap.eval_poly(c_nonlinear, "beta")[
-                "beta":(None, linear_threshold)
-            ],
+            for_extrap.eval_poly(c_nonlinear, "beta")["beta":(None, linear_threshold)],
             ":",
             label="nonlinear",
         )
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
-        full_fit = for_extrap.fromaxis("beta").run(prog_plen) 
+        full_fit = for_extrap.fromaxis("beta").run(prog_plen)
         fl.plot(full_fit, color="k")
         # }}}
