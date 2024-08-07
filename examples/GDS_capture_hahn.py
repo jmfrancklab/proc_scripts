@@ -58,15 +58,17 @@ with psd.figlist_var() as fl:
         fl.plot(s["t":p180_range].C, alpha=0.2, color="blue", ax=ax_list[1])
         fl.plot(abs(s["t":p90_range]), color="orange", ax=ax_list[0])
         fl.plot(abs(s["t":p180_range].C), color="orange", ax=ax_list[1])
+        # {{{ apply frequency filter
         dt = s["t"][1] - s["t"][0]
         SW = 1 / dt
-        carrier = 14.89e6
-        diff = carrier - SW
-        diff_v = np.exp(1j * 2 * np.pi * carrier * diff)
+        carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        if int(carrier / SW) % 2 == 0:
+            center = carrier % SW
+        else:
+            center = SW - (carrier % SW)
         s.ft("t")
-        center = carrier + diff_v
-        left = center - 11e6
-        right = center + 11e6
+        left = center - 1e6
+        right = center + 1e6
         s["t":(0, left)] *= 0
         s["t":(right, None)] *= 0
         s.ift("t")
