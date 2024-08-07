@@ -66,8 +66,8 @@ with psd.figlist_var() as fl:
         diff_v = np.exp(1j * 2 * np.pi * carrier * diff)
         s.ft("t")
         center = carrier + diff_v
-        left = center - 10e6
-        right = center + 10e6
+        left = center - 11e6
+        right = center + 11e6
         s["t":(0, left)] *= 0
         s["t":(right, None)] *= 0
         s.ift("t")
@@ -84,7 +84,7 @@ with psd.figlist_var() as fl:
         ax_list[0].text(
             p90_range[0] * 1e6,
             -1,
-            r"$t_{90} \sqrt{P_{tx}} = %f s \sqrt{W}$" % ninet.data.item(),
+            r"$t_{90} \sqrt{P_{tx}} = %f s \sqrt{W}$" % ninet,
         )
         ax_list[0].axvline(int_range[0] * 1e6, ls=":", alpha=0.2)
         ax_list[0].axvline(int_range[1] * 1e6, ls=":", alpha=0.2)
@@ -100,7 +100,7 @@ with psd.figlist_var() as fl:
         ax_list[1].text(
             p180_range[0] * 1e6,
             -1,
-            r"$t_{180} \sqrt{P_{tx}} = %f s \sqrt{W}$" % eight.data.item(),
+            r"$t_{180} \sqrt{P_{tx}} = %f s \sqrt{W}$" % eight,
         )
         ax_list[1].axvline(int_range[0] * 1e6, ls=":", alpha=0.2)
         ax_list[1].axvline(int_range[1] * 1e6, ls=":", alpha=0.2)
