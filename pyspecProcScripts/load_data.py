@@ -510,6 +510,14 @@ def proc_nutation_v4(s, fl=None):
     s *= s.shape["nScans"]
     return s
 
+def proc_nutation_v5(s, fl=None):
+    """nutation curve"""
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    if s.get_units("t2") is None:
+        raise ValueError("the units for t2 are none, but have been set for spincore_nutation_v4 since 6/25.  If your units are not set, you probably acquired with a very messed up version of the ppg!!!!!")
+    s.set_units("p_90", "s")
+    return s
+
 
 def proc_var_tau(s, fl=None):
     s.get_prop("SW")
@@ -687,6 +695,7 @@ def proc_spincore_generalproc_v1(s, fl=None):
         #            this
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
+    neworder.sort() # sort w/ ph1 on outside ...
     # }}}
     # {{{ reorder the rest based on size
     nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
@@ -850,6 +859,7 @@ lookup_table = {
     "spincore_nutation_amp": proc_nutation_amp,
     "spincore_nutation_v3": proc_nutation_chunked,
     "spincore_nutation_v4": proc_nutation_v4,
+    "spincore_nutation_v5": proc_nutation_v5,
     "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
     "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
     "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no meter powers

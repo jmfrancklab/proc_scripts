@@ -203,7 +203,7 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
 
 def fid_from_echo(
     d,
-    signal_pathway,
+    signal_pathway=None,
     fl=None,
     add_rising=False,
     direct="t2",
@@ -255,6 +255,9 @@ def fid_from_echo(
     d: nddata
         FID of properly sliced and phased signal
     """
+    assert d.get_ft_prop(direct), "I expect this to be in the frequency domain"
+    if signal_pathway is None:
+        signal_pathway = d.get_prop("coherence_pathway")
     # {{{ autodetermine slice range
     freq_envelope = d.C
     freq_envelope.ift("t2")
@@ -355,6 +358,8 @@ def fid_from_echo(
     d[direct] -= d.getaxis(direct)[0]
     if fl is not None:
         thebasename = fl.basename
+        if thebasename is None:
+            thebasename = ""
     else:
         thebasename = ""
     # {{{ sign flip and average input for hermitian
@@ -427,7 +432,6 @@ def fid_from_echo(
                 N_ratio /= (
                     for_resid.data.size
                 )  # the signal this has been plotted against is signal averaged by N_ratio
-                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
@@ -778,7 +782,7 @@ def determine_sign(s, direct="t2", fl=None):
     ), "this only works on data that has been FT'd along the direct dimension"
     if fl is not None:
         fl.push_marker()
-        if basename is None:
+        if fl.basename is None:
             basename = f"randombasename{int(rand()*1e5):d}"
         fl.basename = basename
         fl.next("selected pathway")
