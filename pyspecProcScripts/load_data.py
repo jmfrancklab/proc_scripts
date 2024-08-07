@@ -346,6 +346,11 @@ def proc_Hahn_echoph(s, fl=None):
     return s
 
 
+def proc_spincore_FID_nutation_v1(s, fl=None):
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    return s
+
+
 def proc_spincore_IR(s, fl=None):
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
@@ -843,6 +848,7 @@ lookup_table = {
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
     "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
     "proc_Hahn_echoph": proc_Hahn_echoph,
+    "spincore_FID_nutation_v1": proc_spincore_FID_nutation_v1,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
