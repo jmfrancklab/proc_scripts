@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 V_atten_ratio = 102.35  # attenutation ratio
-skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 with psd.figlist_var() as fl:
     for filename, label, p90_range, p180_range in [
         (
