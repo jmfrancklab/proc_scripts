@@ -53,11 +53,11 @@ with psd.figlist_var() as fl:
         ax_list[0].set_ylabel(r"$\sqrt{P_{pulse}}$")
         ax_list[1].set_ylabel(None)
         ax_list[1].set_title("180 Pulse")
-        fl.next("raw capture")
-        fl.plot(s["t":p90_range].C, alpha=0.2, color="blue", ax=ax_list[0])
-        fl.plot(s["t":p180_range].C, alpha=0.2, color="blue", ax=ax_list[1])
-        fl.plot(abs(s["t":p90_range]), color="orange", ax=ax_list[0])
-        fl.plot(abs(s["t":p180_range].C), color="orange", ax=ax_list[1])
+        fl.next("raw capture", fig=fig)
+        fl.plot(s["t":p90_range].C, alpha=0.2, color="blue", label = None, ax=ax_list[0])
+        fl.plot(s["t":p180_range].C, alpha=0.2, color="blue", label = None, ax=ax_list[1])
+        fl.plot(abs(s["t":p90_range]), color="orange", label = None, ax=ax_list[0])
+        fl.plot(abs(s["t":p180_range].C), color="orange", label = None, ax=ax_list[1])
         # {{{ apply frequency filter
         dt = s["t"][1] - s["t"][0]
         SW = 1 / dt
@@ -67,41 +67,68 @@ with psd.figlist_var() as fl:
         else:
             center = SW - (carrier % SW)
         s.ft("t")
-        left = center - 1e6
-        right = center + 1e6
-        s["t":(0, left)] *= 0
-        s["t":(right, None)] *= 0
-        s.ift("t")
-        s /= np.sqrt(2)
-        fl.plot(abs(s["t":p90_range]), ax=ax_list[0], color="red")
-        int_range = abs(s["t":p90_range]).contiguous(
-            lambda x: x > 0.01 * s["t":p90_range].max()
-        )[0]
-        int_range -= 1e-6
-        int_range += 1e-6
-        ninet = abs(s["t":int_range]).integrate("t").data.item() * 1e6
-        ax_list[0].set_ylabel(r"$\sqrt{P_{pulse}}$")
-        ax_list[0].set_title("90 Pulse")
-        ax_list[0].text(
-            p90_range[0] * 1e6,
-            -1,
-            r"$t_{90} \sqrt{P_{tx}} = %f s \sqrt{W}$" % ninet,
-        )
-        ax_list[0].axvline(int_range[0] * 1e6, ls=":", alpha=0.2)
-        ax_list[0].axvline(int_range[1] * 1e6, ls=":", alpha=0.2)
-        fl.plot(abs(s["t":p180_range].C), ax=ax_list[1], color="red")
-        int_range = abs(s["t":p180_range]).contiguous(
-            lambda x: x > 0.01 * s["t":p180_range].max()
-        )[0]
-        int_range -= 1e-6
-        int_range += 1e-6
-        eight = abs(s["t":int_range].C).integrate("t").data.item() * 1e6
-        ax_list[1].set_ylabel(None)
-        ax_list[1].set_title("180 Pulse")
-        ax_list[1].text(
-            p180_range[0] * 1e6,
-            -1,
-            r"$t_{180} \sqrt{P_{tx}} = %f s \sqrt{W}$" % eight,
-        )
-        ax_list[1].axvline(int_range[0] * 1e6, ls=":", alpha=0.2)
-        ax_list[1].axvline(int_range[1] * 1e6, ls=":", alpha=0.2)
+        L_s = s.C
+        x = s.getaxis('t')
+        # {{{ lorentzian filter
+        Lambda = 15.19e6-14.61e6
+        s_max = abs(L_s).data.max()
+        L = psd.nddata(s_max/(1+1j*2*(x-carrier)*(1/Lambda)),['t']).setaxis('t',x)
+        L.set_units('t',L_s.get_units('t'))
+        L_s *= L
+        L_s /= s_max
+        # }}}
+        # {{{ heaviside hat functions
+        loose_left = center - 10e6
+        loose_right = center + 10e6
+        tight_left = center - 0.05e6
+        tight_right = center + 0.05e6
+        small_HH = s.C
+        wide_HH = s.C
+        small_HH["t":(0, tight_left)] *= 0
+        small_HH["t":(tight_right, None)] *= 0
+        wide_HH["t":(0, loose_left)] *= 0
+        wide_HH["t":(loose_right, None)] *= 0
+        # }}}
+        for s, label, color, ax_place in [
+                (small_HH, "tight HH", 'magenta',2),
+                (wide_HH, "loose HH", 'lime', 1),
+                (L_s, "lorentzian", 'red',-1)
+                ]:
+            s.ift("t")
+            s /= np.sqrt(2)
+            s.ft('t')
+            fl.plot(abs(s),color = color, alpha = 0.5, label = label)
+            s.ift('t')
+            fl.next("raw capture", fig=fig)
+            fl.plot(abs(s["t":p90_range]), ax=ax_list[0], color=color, alpha = 0.5, label = label)
+            int_range = abs(s["t":p90_range]).contiguous(
+                lambda x: x > 0.01 * s["t":p90_range].max()
+            )[0]
+            int_range -= 1e-6
+            int_range += 1e-6
+            ninet = abs(s["t":int_range]).integrate("t").data.item() * 1e6
+            ax_list[0].set_ylabel(r"$\sqrt{P_{pulse}}$")
+            ax_list[0].set_title("90 Pulse")
+            ax_list[0].text(
+                p90_range[0] * 1e6,
+                ax_place,
+                r"$t_{90} \sqrt{P_{tx}}_{%s} = %f s \sqrt{W}$" %(label, ninet),
+            )
+            ax_list[0].axvline(int_range[0] * 1e6, ls=":", color = color, alpha=0.5)
+            ax_list[0].axvline(int_range[1] * 1e6, ls=":", color = color, alpha=0.5)
+            fl.plot(abs(s["t":p180_range].C), ax=ax_list[1], color=color, alpha = 0.5, label = label)
+            int_range = abs(s["t":p180_range]).contiguous(
+                lambda x: x > 0.01 * s["t":p180_range].max()
+            )[0]
+            int_range -= 1e-6
+            int_range += 1e-6
+            eight = abs(s["t":int_range].C).integrate("t").data.item() * 1e6
+            ax_list[1].set_ylabel(None)
+            ax_list[1].set_title("180 Pulse")
+            ax_list[1].text(
+                p180_range[0] * 1e6,
+                ax_place,
+                r"$t_{180} \sqrt{P_{tx}}_{%s} = %f s \sqrt{W}$" %(label,eight),
+            )
+            ax_list[1].axvline(int_range[0] * 1e6, ls=":", color = color, alpha=0.5)
+            ax_list[1].axvline(int_range[1] * 1e6, ls=":", color = color, alpha=0.5)
