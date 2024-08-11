@@ -119,7 +119,6 @@ with psd.figlist_var() as fl:
         fl.next(r"Measured $\beta$ vs programmed $\beta$")
         fl.plot(
             (beta.C / 1e-6).set_units("μs√W"),
-            "o",
             color=thiscolor,
             label=thislabel,
         )
