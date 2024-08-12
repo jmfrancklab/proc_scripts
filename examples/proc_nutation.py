@@ -1,22 +1,37 @@
+"""
+=====================
+Process nutation data
+====================
+`py proc_nutation.py NODENAME FILENAME EXP_TYPE`
+
+Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
+This script plots the result, as well as signal that's averaged along the `nScans` dimension.
+
+Tested with:
+
+``py proc_nutation.py nutation_1 240805_amp0p1_27mM_TEMPOL_nutation.h5 ODNP_NMR_comp/nutation``
+"""
 import pyspecdata as psd
 import pyspecProcScripts as prscr
 import numpy as np
-import sympy as sp
 import matplotlib.pyplot as plt
+import sympy as sp
+import sys
 
-signal_range = (-25, 250)
-signal_range = (-250, -50)
-
+signal_range = (-250, 250)
+assert len(sys.argv) == 4
+s = psd.find_file(
+    sys.argv[2],
+    exp_type=sys.argv[3],
+    expno=sys.argv[1],
+    lookup=prscr.lookup_table,
+)
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
 with psd.figlist_var() as fl:
-    s = psd.find_file(
-        "240805_amp0p1_27mM_TEMPOL_FID_nutation.h5",
-        exp_type="ODNP_NMR_comp/nutation",
-        expno="FID_nutation_1",
-        lookup=prscr.lookup_table,
-    )
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-    fl.next("Raw data", fig=fig)
-    fig.suptitle("Single Pulse nutation")
+    # {{{ set up subplots
+    fl.next("Raw Data with averaged scans", fig=fig)
+    fig.suptitle("Nutation %s" % sys.argv[2])
+    # }}}
     signal_pathway = s.get_prop("coherence_pathway")
     if "nScans" in s.dimlabels:
         s.mean("nScans")
@@ -52,21 +67,25 @@ with psd.figlist_var() as fl:
     s.set_units("t2", "s")
     s.set_error(None)
     s = prscr.fid_from_echo(s, signal_pathway)
-    s *= mysign
+    if mysign["beta", 5] < 0:
+        s *= -mysign
+    else:
+        s *= mysign
     fl.image(s, human_units=False, ax=ax3)
     ax3.set_title("Phased and FID sliced")
     s = prscr.select_pathway(s["t2":signal_range].real, signal_pathway)
     s.integrate("t2")
     s.set_error(None)
-    A, beta_ninety, beta = sp.symbols("A beta_ninety beta", real=True)
+    A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.next("Integrated")
     fl.plot(s, "o")
     f = psd.lmfitdata(s)
-    f.functional_form = A * sp.sin(beta / beta_ninety * sp.pi / 2)
+    f.functional_form = A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
     f.set_guess(
         A=dict(
             value=s.data.max() * 1.2, min=s.data.max() * 0.8, max=s.data.max() * 1.5
         ),
+        R=dict(value=3e3, min=0, max=3e4),
         beta_ninety=dict(value=2e-5, min=0, max=1),
     )
     f.fit()
