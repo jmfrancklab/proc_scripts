@@ -64,9 +64,17 @@ with psd.figlist_var() as fl:
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
         # {{{ apply frequency filter
-        center = abs(d.C.mean("beta")).argmax().item()
-        left = center - 0.5e6
-        right = center + 0.5e6
+        d.ift("t")
+        dt = d["t"][1] - d["t"][0]
+        SW = 1 / dt
+        carrier = d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        if int(carrier / SW) % 2 == 0:
+            center = carrier % SW
+        else:
+            center = SW - (carrier % SW)
+        d.ft("t")
+        left = center - 1e6
+        right = center + 1e6
         d["t":(0, left)] *= 0
         d["t":(right, None)] *= 0
         plt.axvline(left * 1e-6)
@@ -113,7 +121,6 @@ with psd.figlist_var() as fl:
         fl.next(r"Measured $\beta$ vs programmed $\beta$")
         fl.plot(
             (beta.C / 1e-6).set_units("μs√W"),
-            "o",
             color=thiscolor,
             label=thislabel,
         )

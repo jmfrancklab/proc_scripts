@@ -71,9 +71,18 @@ with psd.figlist_var() as fl:
         fl.next("f %s" % filename)
         fl.plot(d)
         # {{{ apply frequency filter
-        center = abs(d.C.mean("t_pulse")).argmax().item()
-        left = center - 0.5e6
-        right = center + 0.5e6
+        d.ift("t")
+        dt = d["t"][1] - d["t"][0]
+        SW = 1 / dt
+        carrier = d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        if int(carrier / SW) % 2 == 0:
+            center = carrier % SW
+        else:
+            center = SW - (carrier % SW)
+        plt.axvline(center * 1e-6)
+        d.ft("t")
+        left = center - 1e6
+        right = center + 1e6
         d["t":(0, left)] *= 0
         d["t":(right, None)] *= 0
         plt.axvline(left * 1e-6)
@@ -122,7 +131,6 @@ with psd.figlist_var() as fl:
         beta.rename("t_pulse", "$A t_{pulse}$")
         fl.plot(
             (beta.C / 1e-6).set_units("μs√W"),
-            "o",
             color=thiscolor,
             label=thislabel,
         )
@@ -170,7 +178,7 @@ with psd.figlist_var() as fl:
                 return ret_val.item()
 
         fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
-        fl.plot(t_us_v_beta, "o", label=thislabel)
+        fl.plot(t_us_v_beta, label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
         for_extrap = (
