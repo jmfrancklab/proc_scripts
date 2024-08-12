@@ -41,25 +41,30 @@ with psd.figlist_var() as fl:
     # {{{ apply overall zeroth order correction
     s /= prscr.zeroth_order_ph(prscr.select_pathway(s["t2":0], signal_pathway))
     d_raw = s.C
-    fl.image(prscr.select_pathway(s["t2":signal_range].C, signal_pathway), ax=ax1)
-    ax1.set_title("Raw Data")
-    d_unc = prscr.select_pathway(s["t2":signal_range].C.real, signal_pathway).integrate(
-        "t2"
+    fl.image(
+        prscr.select_pathway(s["t2":signal_range].C, signal_pathway), ax=ax1
     )
+    ax1.set_title("Raw Data")
+    d_unc = prscr.select_pathway(
+        s["t2":signal_range].C.real, signal_pathway
+    ).integrate("t2")
     # }}}
     # {{{ zeroth_order on individual betas
     for j in range(len(s.getaxis("beta"))):
         ph0 = prscr.zeroth_order_ph(
-            prscr.select_pathway(s["beta", j]["t2":signal_range], signal_pathway)
+            prscr.select_pathway(
+                s["beta", j]["t2":signal_range], signal_pathway
+            )
         )
         s["beta", j] /= ph0
-    d0 = prscr.select_pathway(s["t2":signal_range].C.real, signal_pathway).integrate(
-        "t2"
-    )
+    d0 = prscr.select_pathway(
+        s["t2":signal_range].C.real, signal_pathway
+    ).integrate("t2")
     # }}}
     # {{{ define mysgn based on phase difference between d_unc and d0
     mysign = (d0 / d_unc).angle / np.pi
     mysign = np.exp(1j * np.pi * mysign.run(np.round))
+    # }}} 
     d_raw *= mysign
     fl.image(prscr.select_pathway(d_raw, signal_pathway), ax=ax2)
     ax2.set_title("Same Sign")
@@ -80,10 +85,14 @@ with psd.figlist_var() as fl:
     fl.next("Integrated")
     fl.plot(s, "o")
     f = psd.lmfitdata(s)
-    f.functional_form = A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
+    f.functional_form = (
+        A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
+    )
     f.set_guess(
         A=dict(
-            value=s.data.max() * 1.2, min=s.data.max() * 0.8, max=s.data.max() * 1.5
+            value=s.data.max() * 1.2,
+            min=s.data.max() * 0.8,
+            max=s.data.max() * 1.5,
         ),
         R=dict(value=3e3, min=0, max=3e4),
         beta_ninety=dict(value=2e-5, min=0, max=1),
