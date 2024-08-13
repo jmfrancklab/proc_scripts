@@ -5,7 +5,7 @@ Assuming the data is the capture of the pulse sequence as seen on the GDS
 oscilloscope (acquired using FLInst/examples/calib_pulses.py), 
 here the data is converted to analytic power, frequency filtered
 and the absolute is taken prior to integrating to return the beta where
-:math:`\beta = \int \sqrt{P(t)} dt` 
+:math:`\beta = \sqrt{2} \int \sqrt{P(t)} dt` 
 """
 import pyspecdata as psd
 import matplotlib.pyplot as plt
@@ -32,13 +32,6 @@ with psd.figlist_var() as fl:
         )
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
-        # {{{ fix messed up axis
-        if "p_90" in d.dimlabels:
-            print("correcting axis, which was", d["p_90"])
-            d.rename("p_90", "t_pulse")
-            d["t_pulse"] = np.float64(d["t_pulse"])
-            d["t_pulse"] = d.get_prop("set_p90s")  # actual pulse lengths sent to SC
-        # }}}
         if not d.get_units("t") == "s":
             print(
                 "************ AG still needs to finish pyspecdata PR to save units!!! ************"
@@ -108,8 +101,10 @@ with psd.figlist_var() as fl:
             # slightly expand int range to include rising edges
             int_range[0] -= 5e-6
             int_range[-1] += 5e-6
-            beta["t_pulse", j] = abs(s["t":int_range]).integrate("t").data.item()
-            beta["t_pulse", j] /= np.sqrt(2)  # Vrms
+            beta["t_pulse", j] = (
+                abs(s["t":int_range]).integrate("t").data.item()
+            )
+            beta["t_pulse", j] /= np.sqrt(2)  # t*sqrt(Prms)
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
                 fl.plot(
@@ -129,13 +124,13 @@ with psd.figlist_var() as fl:
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
         beta["t_pulse"] *= amplitude
         beta.rename("t_pulse", "$A t_{pulse}$")
+        beta.name(r"$\beta$")
         fl.plot(
             (beta.C / 1e-6).set_units("μs√W"),
             color=thiscolor,
             label=thislabel,
         )
         beta.rename("$A t_{pulse}$", "t_pulse")
-        beta["t_pulse"] /= amplitude
         # }}}
         decreasing_idx = np.nonzero(~(np.diff(beta.data) > 0))[0]
         if (
@@ -153,16 +148,24 @@ with psd.figlist_var() as fl:
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
-        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
+        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename(
+            "t_pulse", "beta"
+        )
         t_us_v_beta.setaxis("beta", beta.data)
-        t_us_v_beta.data[:] = beta["t_pulse"].copy() / 1e-6  # because our ppg wants μs
+        t_us_v_beta.data[:] = (
+            beta["t_pulse"].copy() / 1e-6
+        )  # because our ppg wants μs
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
         c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].polyfit(
             "beta", order=10
         )
-        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
-        print(c_nonlinear)
-        print(c_linear)
+        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit(
+            "beta", order=1
+        )
+        print(
+            "Non-linear regime coefficients for %s:" % fl.basename, c_nonlinear
+        )
+        print("Linear regime coefficients for %s:" % fl.basename, c_linear)
 
         def prog_plen(desired):
             def zonefit(desired):
@@ -177,7 +180,7 @@ with psd.figlist_var() as fl:
             else:
                 return ret_val.item()
 
-        fl.next(r"$t_{pulse}$ vs $\beta$", legend=True)
+        fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
         fl.plot(t_us_v_beta, label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
@@ -190,11 +193,15 @@ with psd.figlist_var() as fl:
             .set_units("beta", "s√W")
         )
         fl.plot(
-            for_extrap.eval_poly(c_nonlinear, "beta")["beta":(None, linear_threshold)],
+            for_extrap.eval_poly(c_nonlinear, "beta")[
+                "beta":(None, linear_threshold)
+            ],
             ":",
             label="nonlinear",
         )
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
         full_fit = for_extrap.fromaxis("beta").run(prog_plen)
         fl.plot(full_fit, color="k")
+        plt.ylabel(r"$At_{pulse}$ / $\mathrm{\mu s}$")
+        plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         # }}}
