@@ -321,8 +321,7 @@ def fid_from_echo(
     peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item() / 2
-    d.set_prop(peakrange, frq_half)
-    print(peakrange)
+    d.set_prop("peakrange", peakrange)
     if fl is not None:
         fl.next("autoslicing!")
         axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
