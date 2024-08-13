@@ -23,10 +23,22 @@ skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
 with psd.figlist_var() as fl:
     for filename, nodename in [
-        ("240805_test_calib_amp0p05_pulse_calib.h5", "pulse_calib_1"),  # low power
-        ("240805_test_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_2"),  # low power
-        ("240805_test_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
-        ("240805_test_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # low power
+        (
+            "240805_test_calib_amp0p05_pulse_calib.h5",
+            "pulse_calib_1",
+        ),  # low power
+        (
+            "240805_test_calib_amp0p1_a_pulse_calib.h5",
+            "pulse_calib_2",
+        ),  # low power
+        (
+            "240805_test_calib_amp0p2_a_pulse_calib.h5",
+            "pulse_calib_1",
+        ),  # low power
+        (
+            "240805_test_calib_amp1_pulse_calib.h5",
+            "pulse_calib_1",
+        ),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
@@ -77,8 +89,6 @@ with psd.figlist_var() as fl:
         right = center + 1e6
         d["t":(0, left)] *= 0
         d["t":(right, None)] *= 0
-        plt.axvline(left * 1e-6)
-        plt.axvline(right * 1e-6)
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")

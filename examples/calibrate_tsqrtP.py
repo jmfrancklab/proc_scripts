@@ -82,8 +82,6 @@ with psd.figlist_var() as fl:
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "analytic", "orange")
         d.ft("t")
-        fl.next("f %s" % filename)
-        fl.plot(d)
         # {{{ apply frequency filter
         d.ift("t")
         dt = d["t"][1] - d["t"][0]
@@ -93,7 +91,6 @@ with psd.figlist_var() as fl:
             center = carrier % SW
         else:
             center = SW - (carrier % SW)
-        plt.axvline(center * 1e-6)
         d.ft("t")
         left = center - 1e6
         right = center + 1e6
