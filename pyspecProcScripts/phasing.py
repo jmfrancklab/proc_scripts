@@ -254,7 +254,7 @@ def fid_from_echo(
     =======
     d: nddata
         FID of properly sliced and phased signal
-        
+
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
@@ -429,7 +429,6 @@ def fid_from_echo(
                 N_ratio /= (
                     for_resid.data.size
                 )  # the signal this has been plotted against is signal averaged by N_ratio
-                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
@@ -757,7 +756,7 @@ def hermitian_function_test(
         return echo_peak + min_echo
 
 
-def determine_sign(s, direct="t2", fl=None):
+def determine_sign(s, direct="t2", basename=None, fl=None):
     """Given that the signal resides in `pathway`, determine the sign of the signal.
     The sign can be used, e.g. so that all data in an inversion-recover or
     enhancement curve can be aligned together.
