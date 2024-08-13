@@ -20,6 +20,27 @@ color_cycle = cycle(
 V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
+
+
+def prog_plen(desired):
+    """function that takes the coefficients of the linear and nonlinear
+    regions and applies the fit respectively to calculate the pulse time that
+    will return the desired beta value
+    """
+
+    def zonefit(desired):
+        if desired > linear_threshold:
+            return np.polyval(c_linear[::-1], desired)
+        else:
+            return np.polyval(c_nonlinear[::-1], desired)
+
+    ret_val = np.vectorize(zonefit)(desired)
+    if ret_val.size > 1:
+        return ret_val
+    else:
+        return ret_val.item()
+
+
 with psd.figlist_var() as fl:
     for filename, nodename in [
         ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
@@ -166,19 +187,6 @@ with psd.figlist_var() as fl:
             "Non-linear regime coefficients for %s:" % fl.basename, c_nonlinear
         )
         print("Linear regime coefficients for %s:" % fl.basename, c_linear)
-
-        def prog_plen(desired):
-            def zonefit(desired):
-                if desired > linear_threshold:
-                    return np.polyval(c_linear[::-1], desired)
-                else:
-                    return np.polyval(c_nonlinear[::-1], desired)
-
-            ret_val = np.vectorize(zonefit)(desired)
-            if ret_val.size > 1:
-                return ret_val
-            else:
-                return ret_val.item()
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
         fl.plot(t_us_v_beta, label=thislabel)
