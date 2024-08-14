@@ -65,8 +65,7 @@ with psd.figlist_var() as fl:
         d.ft("t")
         # {{{ apply frequency filter
         d.ift("t")
-        dt = d["t"][1] - d["t"][0]
-        SW = 1 / dt  # sample rate
+        SW = 1 / (d["t"][1] - d["t"][0])  # sample rate
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
@@ -76,8 +75,8 @@ with psd.figlist_var() as fl:
         fl.next("Frequency domain filtering %s" % fl.basename)
         left = center - 1e6
         right = center + 1e6
-        d["t":(0, left)] *= 0
-        d["t":(right, None)] *= 0
+        d["t":(0, left)]["t":(right,None)].data *= 0
+        #d["t":(right, None)] *= 0
 
         # }}}
         d.ift("t")

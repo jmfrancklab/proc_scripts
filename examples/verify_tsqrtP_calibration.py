@@ -77,8 +77,7 @@ with psd.figlist_var() as fl:
         d.ft("t")
         # {{{ apply frequency filter
         d.ift("t")
-        dt = d["t"][1] - d["t"][0]
-        SW = 1 / dt  # sample rate
+        SW = 1 / (d["t"][1] - d["t"][0])  # sample rate
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
