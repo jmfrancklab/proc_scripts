@@ -20,6 +20,7 @@ color_cycle = cycle(
 V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
+slicewidth = 2e6
 
 
 with psd.figlist_var() as fl:
@@ -69,14 +70,19 @@ with psd.figlist_var() as fl:
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
-        n = np.round(carrier / SW)  # closest integer multiple of sampling rate
-        center = SW - abs(SW * n - carrier)
+        # PR you were still not dealing with the SW/2 properly -- I saw the basic strategy being employed, and tried to adapt it.  I'm not sure if this is going to work, but you should be able to test these two lines in ipython with a few examples and debug as needed
+        n = np.floor(
+            (carrier + SW / 2) / SW
+        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
+        center = (
+            -SW / 2 + (carrier + SW / 2) - n * SW
+        )  # find the aliased peak -- again, measuring from the left side
         d.ft("t")
         fl.next("Frequency domain filtering %s" % fl.basename)
-        left = center - 1e6
-        right = center + 1e6
-        d["t":(0, left)]["t":(right,None)].data *= 0
-        #d["t":(right, None)] *= 0
+        d["t" : (0, center - 0.5 * slicewidth)][
+            "t" : (center + 0.5 * slicewidth, None)
+        ].data *= 0
+        # JF -- I'm just stopping here -- this PR is has too much messiness and I'm re-writing a bunch of stuff
 
         # }}}
         d.ift("t")
