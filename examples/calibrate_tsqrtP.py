@@ -5,7 +5,7 @@ Assuming the data is the capture of the pulse sequence as seen on the GDS
 oscilloscope (acquired using FLInst/examples/calib_pulses.py), 
 here the data is converted to analytic power, frequency filtered
 and the absolute is taken prior to integrating to return the beta where
-:math:`\beta = \sqrt{2} \int \sqrt{P(t)} dt` 
+:math:`\beta = \frac{1}{\sqrt{2}} \int \sqrt{P(t)} dt` 
 """
 import pyspecdata as psd
 import matplotlib.pyplot as plt
@@ -20,25 +20,6 @@ color_cycle = cycle(
 V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
-
-
-def prog_plen(desired):
-    """function that takes the coefficients of the linear and nonlinear
-    regions and applies the fit respectively to calculate the pulse time that
-    will return the desired beta value
-    """
-
-    def zonefit(desired):
-        if desired > linear_threshold:
-            return np.polyval(c_linear[::-1], desired)
-        else:
-            return np.polyval(c_nonlinear[::-1], desired)
-
-    ret_val = np.vectorize(zonefit)(desired)
-    if ret_val.size > 1:
-        return ret_val
-    else:
-        return ret_val.item()
 
 
 with psd.figlist_var() as fl:
@@ -85,19 +66,22 @@ with psd.figlist_var() as fl:
         # {{{ apply frequency filter
         d.ift("t")
         dt = d["t"][1] - d["t"][0]
-        SW = 1 / dt
-        carrier = d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
-        if int(carrier / SW) % 2 == 0:
-            center = carrier % SW
-        else:
-            center = SW - (carrier % SW)
+        SW = 1 / dt  # sample rate
+        carrier = (
+            d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        )  # signal frequency
+        n = np.round(carrier / SW)  # closest integer multiple of sampling rate
+        center = SW - abs(SW * n - carrier)
         d.ft("t")
+        fl.next("Frequency domain filtering %s" % fl.basename)
+        fl.plot(d)
         left = center - 1e6
         right = center + 1e6
         d["t":(0, left)] *= 0
         d["t":(right, None)] *= 0
         plt.axvline(left * 1e-6)
         plt.axvline(right * 1e-6)
+
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
@@ -184,6 +168,24 @@ with psd.figlist_var() as fl:
             "Non-linear regime coefficients for %s:" % fl.basename, c_nonlinear
         )
         print("Linear regime coefficients for %s:" % fl.basename, c_linear)
+
+        def prog_plen(desired):
+            """function that takes the coefficients of the linear and nonlinear
+            regions and applies the fit respectively to calculate the pulse time that
+            will return the desired beta value
+            """
+
+            def zonefit(desired):
+                if desired > linear_threshold:
+                    return np.polyval(c_linear[::-1], desired)
+                else:
+                    return np.polyval(c_nonlinear[::-1], desired)
+
+            ret_val = np.vectorize(zonefit)(desired)
+            if ret_val.size > 1:
+                return ret_val
+            else:
+                return ret_val.item()
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
         fl.plot(t_us_v_beta, label=thislabel)
