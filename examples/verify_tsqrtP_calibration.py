@@ -21,6 +21,8 @@ color_cycle = cycle(
 V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
+
+
 with psd.figlist_var() as fl:
     for filename, nodename in [
         (
@@ -43,6 +45,9 @@ with psd.figlist_var() as fl:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
+        assert (
+            d.get_prop("postproc_type") is not None
+        ), "No postproc type was set upon acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         if not d.get_units("t") == "s":
@@ -86,8 +91,9 @@ with psd.figlist_var() as fl:
         d.ft("t")
         left = center - 1e6
         right = center + 1e6
-        d["t":(0, left)] *= 0
-        d["t":(right, None)] *= 0
+        d["t" : (0, (center - 1e6))] *= 0
+        d["t" : ((center + 1e6), None)] *= 0
+
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")

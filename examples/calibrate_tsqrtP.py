@@ -32,6 +32,9 @@ with psd.figlist_var() as fl:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
+        assert (
+            d.get_prop("postproc_type") is not None
+        ), "No postproc type was set upon acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         if not d.get_units("t") == "s":
@@ -72,11 +75,10 @@ with psd.figlist_var() as fl:
         n = np.round(carrier / SW)  # closest integer multiple of sampling rate
         center = SW - abs(SW * n - carrier)
         d.ft("t")
-        fl.next("Frequency domain filtering %s" % fl.basename)
         left = center - 1e6
         right = center + 1e6
-        d["t":(0, left)]["t":(right,None)].data *= 0
-        #d["t":(right, None)] *= 0
+        d["t" : (0, (center - 1e6))] *= 0
+        d["t" : ((center + 1e6), None)] *= 0
 
         # }}}
         d.ift("t")
