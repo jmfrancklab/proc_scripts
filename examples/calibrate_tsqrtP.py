@@ -20,13 +20,14 @@ color_cycle = cycle(
 V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
+slicewidth = 2e6
 
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
-        ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
-        ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
-        ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
+            ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
+            #("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
+            #("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
         ("240805_calib_amp0p05_pulse_calib.h5", "pulse_calib_5"),  # low power
     ]:
         d = psd.find_file(
@@ -72,13 +73,21 @@ with psd.figlist_var() as fl:
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
-        n = np.round(carrier / SW)  # closest integer multiple of sampling rate
-        center = SW - abs(SW * n - carrier)
+        # PR you were still not dealing with the SW/2 properly -- I saw the basic strategy being employed, and tried to adapt it.  I'm not sure if this is going to work, but you should be able to test these two lines in ipython with a few examples and debug as needed
+        n = np.floor(
+            (carrier + SW / 2) / SW
+        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
+        center = SW - (
+            -SW / 2 + (carrier + SW / 2) - n * SW
+        )  # find the aliased peak -- again, measuring from the left side
         d.ft("t")
-        left = center - 1e6
-        right = center + 1e6
-        d["t" : (0, (center - 1e6))] *= 0
-        d["t" : ((center + 1e6), None)] *= 0
+        fl.next("Frequency domain filtering %s" % fl.basename)
+        fl.plot(d)
+        plt.axvline(center/1e6)
+        print(center)
+        fl.show();quit()
+        d["t" : (0, center - 0.5 * slicewidth)] *= 0
+        d["t" : (center + 0.5 * slicewidth, None)] *= 0
 
         # }}}
         d.ift("t")
