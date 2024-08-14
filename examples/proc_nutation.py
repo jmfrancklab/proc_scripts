@@ -40,6 +40,7 @@ with psd.figlist_var() as fl:
     ax1.set_title("Raw Data")
     # {{{ apply overall zeroth order correction
     s /= prscr.zeroth_order_ph(prscr.select_pathway(s["t2":0], signal_pathway))
+    # }}}
     s = prscr.fid_from_echo(s, signal_pathway)
     s = prscr.select_pathway(s, signal_pathway)
     fl.image(s["t2":signal_range], human_units=False, ax=ax2)
