@@ -35,25 +35,24 @@ with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
     # {{{ apply overall zeroth order correction
-    s /= prscr.zeroth_order_ph(prscr.select_pathway(s["t2":0], signal_pathway))
-    fl.image(
-        prscr.select_pathway(s["t2":signal_range], signal_pathway), ax=ax1
-    )
+    s = prscr.select_pathway(s, signal_pathway)
+    s /= prscr.zeroth_order_ph(s["t2":0])
+    fl.image(s["t2":signal_range], ax=ax1)
     ax1.set_title("Raw Data")
     # }}}
-    # {{{ FID slice
     s.ift("t2")
-    s = s["t2":(0, None)]
-    s *= 2
-    s["t2":0] *= 0.5
-    # }}}
-    s.ft("t2")
-    fl.image(
-        prscr.select_pathway(s, signal_pathway), human_units=False, ax=ax2
+    # {{{ Apply phasing
+    s["t2"] -= s.getaxis("t2")[0]
+    best_shift = prscr.hermitian_function_test(
+        s.C.mean("beta"), basename="FID"
     )
-    ax2.set_title("Phased and FID sliced")
-    s = prscr.select_pathway(s["t2":signal_range].real, signal_pathway)
-    s.integrate("t2")
+    s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
+    s /= prscr.zeroth_order_ph(s["t2":0])
+    s.ft("t2")
+    fl.image(s, ax=ax2)
+    ax2.set_title("phased")
+    # }}}
+    s = s["t2":signal_range].real.integrate("t2")
     s.set_error(None)
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.next("Integrated and fit")
@@ -74,4 +73,12 @@ with psd.figlist_var() as fl:
     f.fit()
     fit = f.eval(100)
     fl.plot(fit)
+    plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+    beta_90 = fit.argmax("beta").item() * 1e6
+    plt.axvline(beta_90)
+    plt.text(
+        beta_90 + 5,
+        5e4,
+        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % beta_90,
+    )
     psd.gridandtick(plt.gca())
