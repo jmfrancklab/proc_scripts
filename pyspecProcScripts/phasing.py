@@ -469,7 +469,6 @@ def fid_from_echo(
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
-    return peakrange
 
 
 def hermitian_function_test(
