@@ -16,6 +16,7 @@ t2 = symbols("t2")
 logger = init_logging("info")
 max_kHz = 200
 for searchstr, exp_type, nodename, postproc, freq_slice, t_slice in [
+        # PR: either choose to process all, or only one
     # ['201211_Ni_sol_probe_nutation_1','nutation','nutation',
     #    'spincore_nutation_v1',(-5000,13000)],
     # ['210302_210302_Ni_cap_probe_nutation_1','nutation','nutation',
@@ -33,13 +34,14 @@ for searchstr, exp_type, nodename, postproc, freq_slice, t_slice in [
         searchstr,
         exp_type=exp_type,
         expno=nodename,
-        postproc=postproc,
+        postproc=postproc,# PR why do you need to manually specify the postproc? that should not be needed!
         lookup=lookup_table,
         fl=fl,
     )
     s = s["t2":freq_slice]
     fl.next("data")
     fl.image(s)
+    # {{{ PR why are we doing the following -- is it needed?? If it is, comment on this, and also include a slide in your pptx
     s.ift("t2")
     rx_offset_corr = s[
         "t2":(0.75e-3, None)
@@ -49,10 +51,12 @@ for searchstr, exp_type, nodename, postproc, freq_slice, t_slice in [
     s.ft("t2")
     fl.next("After rx offset correction")
     fl.image(s)
+    # }}}
     if "amp" in s.dimlabels:
         plen = s.get_prop("acq_params")["p90_us"] * 1e-6
         logger.info(strm("pulse length is:", plen))
     s.ift("t2")
+    # {{{ PR why would you not just use the fid_from_echo here??
     # {{{ do the centering before anything else!
     # in particular -- if you don't do this before convolution, the
     # convolution doesn't work properly!
@@ -66,6 +70,7 @@ for searchstr, exp_type, nodename, postproc, freq_slice, t_slice in [
     s.ft("t2")
     fl.image(s)
     s.ift("t2")  # make sure everything is in the same domain
+    # }}}
     # }}}
     fl.next("t domain centered")
     fl.image(s)

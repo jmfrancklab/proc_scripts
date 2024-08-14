@@ -31,18 +31,18 @@ with psd.figlist_var() as fl:
     fl.next("Raw Data with averaged scans", fig=fig)
     fig.suptitle("FID Nutation %s" % sys.argv[2])
     # }}}
-    signal_pathway = s.get_prop("coherence_pathway")
     if "nScans" in s.dimlabels:
         s.mean("nScans")
     # {{{ apply overall zeroth order correction
-    s = prscr.select_pathway(s, signal_pathway)
+    s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
     s /= prscr.zeroth_order_ph(s["t2":0])
     fl.image(s["t2":signal_range], ax=ax1)
-    ax1.set_title("Raw Data")
+    ax1.set_title("Signal pathway / ph0")
     # }}}
     s.ift("t2")
     # {{{ Apply phasing
     s["t2"] -= s.getaxis("t2")[0]
+    # PR I'm stopping here -- this is for an FID!!!!
     best_shift = prscr.hermitian_function_test(
         s.C.mean("beta"), basename="FID"
     )
