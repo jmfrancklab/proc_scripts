@@ -78,12 +78,12 @@ with psd.figlist_var() as fl:
         # {{{ apply frequency filter
         d.ift("t")
         dt = d["t"][1] - d["t"][0]
-        SW = 1 / dt
-        carrier = d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
-        if int(carrier / SW) % 2 == 0:
-            center = carrier % SW
-        else:
-            center = SW - (carrier % SW)
+        SW = 1 / dt  # sample rate
+        carrier = (
+            d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        )  # signal frequency
+        n = np.round(carrier / SW)  # closest integer multiple of sampling rate
+        center = SW - abs(SW * n - carrier)
         d.ft("t")
         left = center - 1e6
         right = center + 1e6

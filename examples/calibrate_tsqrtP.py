@@ -74,13 +74,10 @@ with psd.figlist_var() as fl:
         center = SW - abs(SW * n - carrier)
         d.ft("t")
         fl.next("Frequency domain filtering %s" % fl.basename)
-        fl.plot(d)
         left = center - 1e6
         right = center + 1e6
         d["t":(0, left)] *= 0
         d["t":(right, None)] *= 0
-        plt.axvline(left * 1e-6)
-        plt.axvline(right * 1e-6)
 
         # }}}
         d.ift("t")
