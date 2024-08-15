@@ -81,8 +81,8 @@ with psd.figlist_var() as fl:
     fit = f.eval(100)
     fl.plot(fit, ax=ax3, human_units=False)
     ax3.set_title("Integrated and fit")
-    ax3.set_xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-    beta_90 = fit.argmax("beta").item() * 1e6
+    ax3.set_xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
+    beta_90 = f.output("beta_ninety") * 1e6
     ax3.axvline(beta_90)
     ax3.text(
         beta_90 + 5,
