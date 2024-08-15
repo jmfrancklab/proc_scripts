@@ -44,31 +44,31 @@ with psd.figlist_var() as fl:
     s /= prscr.zeroth_order_ph(s["t2":0])
     s.ft("t2")
     fl.image(s, ax=ax1)
-    d_raw = s.C
     ax1.set_title("Signal pathway / ph0")
     # }}}
     # {{{ Look at phase variation
-    phase_var_s = s.C
-    d_uncorrected = phase_var_s.C.real.integrate("t2")
+    d_uncorrected = s.C.real.integrate("t2")
+    # PR again, you need to rename these
     for j in range(len(s.getaxis("beta"))):
         ph0 = prscr.zeroth_order_ph(phase_var_s["beta", j])
         phase_var_s["beta", j] /= ph0
     d_ind_ph0 = phase_var_s.real.integrate("t2")
     mysign = (d_ind_ph0 / d_uncorrected).angle / np.pi
     mysign = np.exp(1j * np.pi * mysign.run(np.round))
-    d_raw *= mysign
+    s *= mysign
     fl.image(d_raw, ax=ax2)
     ax2.set_title("Check phase variation along indirect")
     # }}}
+    # {{{ generate the table of integrals and fit
     s = s.real.integrate("t2")
     s.set_error(None)
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.plot(s, "o", ax=ax3, human_units=False)
-    f = psd.lmfitdata(s)
-    f.functional_form = (
+    s = psd.lmfitdata(s)
+    s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
     )
-    f.set_guess(
+    s.set_guess(
         A=dict(
             value=s.data.max() * 1.2,
             min=s.data.max() * 0.8,
@@ -77,16 +77,17 @@ with psd.figlist_var() as fl:
         R=dict(value=3e3, min=0, max=3e4),
         beta_ninety=dict(value=2e-5, min=0, max=1),
     )
-    f.fit()
-    fit = f.eval(100)
+    s.fit()
+    fit = s.eval(100)
     fl.plot(fit, ax=ax3, human_units=False)
     ax3.set_title("Integrated and fit")
     ax3.set_xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
-    beta_90 = f.output("beta_ninety") * 1e6
+    beta_90 = s.output("beta_ninety") * 1e6
     ax3.axvline(beta_90)
     ax3.text(
         beta_90 + 5,
         5e4,
-        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % beta_90,
+        r"$\beta_{90} = %s \mathrm{\mu s \sqrt{W}}$" % beta_90,
     )
     ax3.grid()
+    # }}}
