@@ -27,7 +27,7 @@ with psd.figlist_var() as fl:
         )
         if not s.get_units("t") == "s":
             print(
-                "******** AG still needs to finish pyspecdata PR to save units!!! ********"
+                "units weren't set for the t axis or else I can't read them from the hdf5 file!"
             )
             s.set_units("t", "s")
         s *= V_atten_ratio  # attenutation ratio
