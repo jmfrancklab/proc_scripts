@@ -15,6 +15,7 @@ import pyspecdata as psd
 import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
 import sympy as sp
+import numpy as np
 import sys
 
 signal_range = (-250, 250)
@@ -25,7 +26,9 @@ s = psd.find_file(
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
 )
-fig, (ax1, ax2) = plt.subplots(1, 2)
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+fig.set_figwidth(15)
+fig.set_figheight(6)
 with psd.figlist_var() as fl:
     # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
@@ -34,29 +37,33 @@ with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
     # {{{ apply overall zeroth order correction
-    s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
-    s /= prscr.zeroth_order_ph(s["t2":0])
-    fl.image(s["t2":signal_range], ax=ax1)
-    ax1.set_title("Signal pathway / ph0")
-    # }}}
-    s.ift("t2")
-    # {{{ Apply phasing
-    s["t2"] -= s.getaxis("t2")[0]
-    # PR I'm stopping here -- this is for an FID!!!!
-    best_shift = prscr.hermitian_function_test(
-        s.C.mean("beta"), basename="FID"
+    s = prscr.select_pathway(
+        s["t2":signal_range], s.get_prop("coherence_pathway")
     )
-    s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
+    s.ift("t2")
     s /= prscr.zeroth_order_ph(s["t2":0])
     s.ft("t2")
-    fl.image(s, ax=ax2)
-    ax2.set_title("phased")
+    fl.image(s, ax=ax1)
+    d_raw = s.C
+    ax1.set_title("Signal pathway / ph0")
     # }}}
-    s = s["t2":signal_range].real.integrate("t2")
+    # {{{ Look at phase variation
+    phase_var_s = s.C
+    d_uncorrected = phase_var_s.C.real.integrate("t2")
+    for j in range(len(s.getaxis("beta"))):
+        ph0 = prscr.zeroth_order_ph(phase_var_s["beta", j])
+        phase_var_s["beta", j] /= ph0
+    d_ind_ph0 = phase_var_s.real.integrate("t2")
+    mysign = (d_ind_ph0 / d_uncorrected).angle / np.pi
+    mysign = np.exp(1j * np.pi * mysign.run(np.round))
+    d_raw *= mysign
+    fl.image(d_raw, ax=ax2)
+    ax2.set_title("Check phase variation along indirect")
+    # }}}
+    s = s.real.integrate("t2")
     s.set_error(None)
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
-    fl.next("Integrated and fit")
-    fl.plot(s, "o")
+    fl.plot(s, "o", ax=ax3, human_units=False)
     f = psd.lmfitdata(s)
     f.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
@@ -72,13 +79,14 @@ with psd.figlist_var() as fl:
     )
     f.fit()
     fit = f.eval(100)
-    fl.plot(fit)
-    plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+    fl.plot(fit, ax=ax3, human_units=False)
+    ax3.set_title("Integrated and fit")
+    ax3.set_xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
     beta_90 = fit.argmax("beta").item() * 1e6
-    plt.axvline(beta_90)
-    plt.text(
+    ax3.axvline(beta_90)
+    ax3.text(
         beta_90 + 5,
         5e4,
         r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % beta_90,
     )
-    psd.gridandtick(plt.gca())
+    ax3.grid()
