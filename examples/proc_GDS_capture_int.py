@@ -1,6 +1,10 @@
 import pyspecdata as psd
 import matplotlib.pyplot as plt
 import numpy as np
+from itertools import cycle
+
+colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+color_cycle = cycle(colorcyc_list)
 
 V_atten_ratio = 102.35  # attenutation ratio
 loose_HH_width = 5e6
@@ -29,14 +33,16 @@ with psd.figlist_var() as fl:
         s *= V_atten_ratio  # attenutation ratio
         s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
         fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
-        fl.plot(s, color="tab:blue", label="raw analytic")
-        fl.plot(abs(s), color="tab:orange", label="abs(analytic)")
+        raw_color = next(color_cycle)
+        fl.plot(s, color=raw_color, label="raw analytic")
+        abs_color = next(color_cycle)
+        fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ apply frequency filter
         carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         s.ft("t")
         fl.next("Frequency Domain")
-        fl.plot(s, color="tab:blue", label="raw analytic")
-        fl.plot(abs(s), color="tab:orange", label="abs(analytic)")
+        fl.plot(s, color=raw_color, label="raw analytic")
+        fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ lorentzian filter
         x = s.C.getaxis("t")
         for_L = s.C  # make copy for lorentzian filter
@@ -68,10 +74,11 @@ with psd.figlist_var() as fl:
         wide_HH["t" : (center + loose_HH_width, None)] *= 0
         # }}}
         # {{{ plot application of all filters
-        for filtered_data, label, color, ax_place in [
-            (wide_HH, "loose HH", "lime", 0.5),
-            (for_L, "lorentzian", "red", -0.5),
+        for filtered_data, label, ax_place in [
+            (wide_HH, "loose HH", 0.5),
+            (for_L, "lorentzian", -0.5),
         ]:
+            color = next(color_cycle)
             filtered_data.ift("t")
             fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             fl.plot(
