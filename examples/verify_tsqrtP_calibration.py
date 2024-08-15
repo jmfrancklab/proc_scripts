@@ -21,23 +21,41 @@ color_cycle = cycle(
 V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
+slicewidth = 2e6
+
+
 with psd.figlist_var() as fl:
     for filename, nodename in [
-        ("240805_test_calib_amp0p05_pulse_calib.h5", "pulse_calib_1"),  # low power
-        ("240805_test_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_2"),  # low power
-        ("240805_test_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
-        ("240805_test_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # low power
+        (
+            "240805_test_calib_amp0p05_pulse_calib.h5",
+            "pulse_calib_1",
+        ),  # low power
+        (
+            "240805_test_calib_amp0p1_a_pulse_calib.h5",
+            "pulse_calib_2",
+        ),  # low power
+        (
+            "240805_test_calib_amp0p2_a_pulse_calib.h5",
+            "pulse_calib_1",
+        ),  # low power
+        (
+            "240805_test_calib_amp1_pulse_calib.h5",
+            "pulse_calib_1",
+        ),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
+        assert (
+            d.get_prop("postproc_type") is not None
+        ), "No postproc type was set upon acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         if not d.get_units("t") == "s":
             print(
-                "************ AG still needs to finish pyspecdata PR to save units!!! ************"
+                "units weren't set for the t axis or else I can't read them from the hdf5 file!"
             )
-            d.set_units("t", "s")  # why isn't this done already??
+            d.set_units("t", "s")
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
         pulse_lengths = d.get_prop("programmed_t_pulse_us")
@@ -65,18 +83,22 @@ with psd.figlist_var() as fl:
         d.ft("t")
         # {{{ apply frequency filter
         d.ift("t")
-        dt = d["t"][1] - d["t"][0]
-        SW = 1 / dt
-        carrier = d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
-        if int(carrier / SW) % 2 == 0:
-            center = carrier % SW
-        else:
-            center = SW - (carrier % SW)
+        SW = 1 / (d["t"][1] - d["t"][0])  # sample rate
+        carrier = (
+            d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        )  # signal frequency
+        fn = SW / 2  # nyquist frequency
+        n = np.floor(
+            (carrier + fn) / SW
+        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
+        nu_a = (
+            carrier - n * SW
+        )  # find the aliased peak -- again, measuring from the left side
+        center = SW - abs(nu_a)
         d.ft("t")
-        left = center - 1e6
-        right = center + 1e6
-        d["t":(0, left)] *= 0
-        d["t":(right, None)] *= 0
+        d["t" : (0, center - 0.5 * slicewidth)] *= 0
+        d["t" : (center + 0.5 * slicewidth, None)] *= 0
+
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
