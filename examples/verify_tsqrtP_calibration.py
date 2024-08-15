@@ -87,9 +87,12 @@ with psd.figlist_var() as fl:
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
-        fn = SW / 2
-        m = np.round(carrier / SW)  # no times signal is aliased
-        nu_a = (-(1**m)) * (carrier - 2 * m * fn)  # eq 4.67 in cav
+        n = np.floor(
+            (carrier + SW / 2) / SW
+        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
+        nu_a = (
+            -SW / 2 + (carrier + SW / 2) - n * SW
+        )  # find the aliased peak -- again, measuring from the left side
         center = SW - abs(nu_a)
         d.ft("t")
         d["t" : (0, center - 0.5 * slicewidth)] *= 0

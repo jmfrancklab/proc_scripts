@@ -38,7 +38,17 @@ with psd.figlist_var() as fl:
         abs_color = next(color_cycle)
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ apply frequency filter
-        carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        SW = 1 / (s["t"][1] - s["t"][0])  # sample rate
+        carrier = (
+            s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        )  # signal frequency
+        n = np.floor(
+            (carrier + SW / 2) / SW
+        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
+        nu_a = (
+            -SW / 2 + (carrier + SW / 2) - n * SW
+        )  # find the aliased peak -- again, measuring from the left side
+        center = SW - abs(nu_a)
         s.ft("t")
         fl.next("Frequency Domain")
         fl.plot(s, color=raw_color, label="raw analytic")
@@ -61,12 +71,6 @@ with psd.figlist_var() as fl:
         # {{{ heaviside hat functions
         # {{{ determine center frequency
         s.ift("t")
-        dt = s["t"][1] - s["t"][0]
-        SW = 1 / dt
-        fn = SW / 2
-        m = np.round(carrier / SW)
-        nu_a = (-(1**m)) * (carrier - 2 * m * fn)
-        center = SW - abs(nu_a)
         # }}}
         s.ft("t")
         wide_HH = s.C

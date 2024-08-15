@@ -25,9 +25,9 @@ slicewidth = 3e6
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
-        ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
-        ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
-        ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
+        # ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
+        # ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
+        # ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
         ("240805_calib_amp0p05_pulse_calib.h5", "pulse_calib_5"),  # low power
     ]:
         d = psd.find_file(
@@ -73,12 +73,14 @@ with psd.figlist_var() as fl:
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
-        fn = SW / 2
-        m = np.round(carrier / SW)  # no times signal is aliased
-        nu_a = (-(1**m)) * (carrier - 2 * m * fn)  # eq 4.67 in cav
+        n = np.floor(
+            (carrier + SW / 2) / SW
+        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
+        nu_a = (
+            -SW / 2 + (carrier + SW / 2) - n * SW
+        )  # find the aliased peak -- again, measuring from the left side
         center = SW - abs(nu_a)
         d.ft("t")
-        plt.axvline(center/1e6)
         d["t" : (0, center - 0.5 * slicewidth)] *= 0
         d["t" : (center + 0.5 * slicewidth, None)] *= 0
         # }}}
