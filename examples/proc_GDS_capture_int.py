@@ -42,11 +42,12 @@ with psd.figlist_var() as fl:
         carrier = (
             s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
+        fn = SW / 2  # nyquist frequency
         n = np.floor(
-            (carrier + SW / 2) / SW
+            (carrier + fn) / SW
         )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
         nu_a = (
-            -SW / 2 + (carrier + SW / 2) - n * SW
+            carrier - n * SW
         )  # find the aliased peak -- again, measuring from the left side
         center = SW - abs(nu_a)
         s.ft("t")
