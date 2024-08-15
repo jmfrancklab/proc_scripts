@@ -20,14 +20,14 @@ color_cycle = cycle(
 V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
-slicewidth = 2e6
+slicewidth = 3e6
 
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
-            ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
-            #("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
-            #("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
+        ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
+        ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
+        ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
         ("240805_calib_amp0p05_pulse_calib.h5", "pulse_calib_5"),  # low power
     ]:
         d = psd.find_file(
@@ -73,29 +73,21 @@ with psd.figlist_var() as fl:
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
-        # PR you were still not dealing with the SW/2 properly -- I saw the basic strategy being employed, and tried to adapt it.  I'm not sure if this is going to work, but you should be able to test these two lines in ipython with a few examples and debug as needed
-        n = np.floor(
-            (carrier + SW / 2) / SW
-        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
-        center = SW - (
-            -SW / 2 + (carrier + SW / 2) - n * SW
-        )  # find the aliased peak -- again, measuring from the left side
+        fn = SW / 2
+        m = np.round(carrier / SW)  # no times signal is aliased
+        nu_a = (-(1**m)) * (carrier - 2 * m * fn)  # eq 4.67 in cav
+        center = SW - abs(nu_a)
         d.ft("t")
-        fl.next("Frequency domain filtering %s" % fl.basename)
-        fl.plot(d)
         plt.axvline(center/1e6)
-        print(center)
-        fl.show();quit()
         d["t" : (0, center - 0.5 * slicewidth)] *= 0
         d["t" : (center + 0.5 * slicewidth, None)] *= 0
-
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
         fl.next("collect filtered analytic", legend=True)
         for j in range(d.shape["t_pulse"]):
             s = d["t_pulse", j].C
-            s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
+            s["t"] -= abs(s).contiguous(lambda x: x > 0.05 * s.max())[0][0]
             fl.plot(abs(s), alpha=0.3, label=f"{j}")
         # }}}
         thislabel = "amplitude = %f" % amplitude
@@ -106,7 +98,7 @@ with psd.figlist_var() as fl:
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
-            int_range = abs(s).contiguous(lambda x: x > 0.03 * s.max())[0]
+            int_range = abs(s).contiguous(lambda x: x > 0.05 * s.max())[0]
             # slightly expand int range to include rising edges
             int_range[0] -= 5e-6
             int_range[-1] += 5e-6

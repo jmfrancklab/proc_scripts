@@ -4,7 +4,6 @@ import numpy as np
 
 V_atten_ratio = 102.35  # attenutation ratio
 loose_HH_width = 5e6
-tight_HH_width = 1e6
 int_slop = 1e-6
 
 with psd.figlist_var() as fl:
@@ -58,22 +57,18 @@ with psd.figlist_var() as fl:
         s.ift("t")
         dt = s["t"][1] - s["t"][0]
         SW = 1 / dt
-        if int(carrier / SW) % 2 == 0:
-            center = carrier % SW
-        else:
-            center = SW - (carrier % SW)
+        fn = SW / 2
+        m = np.round(carrier / SW)
+        nu_a = (-(1**m)) * (carrier - 2 * m * fn)
+        center = SW - abs(nu_a)
         # }}}
         s.ft("t")
-        small_HH = s.C
         wide_HH = s.C
-        small_HH["t" : (0, center - tight_HH_width)] *= 0
-        small_HH["t" : (center + tight_HH_width, None)] *= 0
         wide_HH["t" : (0, center - loose_HH_width)] *= 0
         wide_HH["t" : (center + loose_HH_width, None)] *= 0
         # }}}
         # {{{ plot application of all filters
         for filtered_data, label, color, ax_place in [
-            (small_HH, "tight HH", "magenta", 1),
             (wide_HH, "loose HH", "lime", 0.5),
             (for_L, "lorentzian", "red", -0.5),
         ]:
@@ -87,23 +82,15 @@ with psd.figlist_var() as fl:
             fl.plot(abs(filtered_data), color=color, alpha=0.5, label=label)
             filtered_data.ift("t")
             fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
-            int_range = abs(filtered_data).contiguous(
-                lambda x: x > 0.01 * filtered_data.max()
-            )[0]
-            int_range -= int_slop
-            int_range += int_slop
             beta = (
-                abs(filtered_data["t":int_range]).integrate("t").data.item()
+                abs(filtered_data).integrate("t").data.item()
                 / np.sqrt(2)
                 * 1e6
             )
             plt.text(
                 1,
                 ax_place,
-                r"$t_{90} \sqrt{P_{tx}}_{%s} = %f \mu s \sqrt{W}$"
-                % (label, beta),
+                r"$\beta_{%s} = %f \mu s \sqrt{W}$" % (label, beta),
             )
-            plt.axvline(int_range[0] * 1e6, ls=":", color=color, alpha=0.5)
-            plt.axvline(int_range[1] * 1e6, ls=":", color=color, alpha=0.5)
         plt.ylabel(r"$\sqrt{P}$ / $\mathrm{\sqrt{W}}$")
         # }}}
