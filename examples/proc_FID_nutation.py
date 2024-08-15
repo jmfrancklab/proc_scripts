@@ -87,7 +87,7 @@ with psd.figlist_var() as fl:
     ax3.text(
         beta_90 + 5,
         5e4,
-        r"$\beta_{90} = %s \mathrm{\mu s \sqrt{W}}$" % beta_90,
+        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % beta_90,
     )
     ax3.grid()
     # }}}
