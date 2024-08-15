@@ -21,6 +21,7 @@ color_cycle = cycle(
 V_atten_ratio = 102.35  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 100e-6
+slicewidth = 2e6
 
 
 with psd.figlist_var() as fl:
@@ -86,13 +87,13 @@ with psd.figlist_var() as fl:
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
-        n = np.round(carrier / SW)  # closest integer multiple of sampling rate
-        center = SW - abs(SW * n - carrier)
+        fn = SW / 2
+        m = np.round(carrier / SW)  # no times signal is aliased
+        nu_a = (-(1**m)) * (carrier - 2 * m * fn)  # eq 4.67 in cav
+        center = SW - abs(nu_a)
         d.ft("t")
-        left = center - 1e6
-        right = center + 1e6
-        d["t" : (0, (center - 1e6))] *= 0
-        d["t" : ((center + 1e6), None)] *= 0
+        d["t" : (0, center - 0.5 * slicewidth)] *= 0
+        d["t" : (center + 0.5 * slicewidth, None)] *= 0
 
         # }}}
         d.ift("t")
