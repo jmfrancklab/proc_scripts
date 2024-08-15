@@ -8,99 +8,99 @@ This script plots the result, as well as signal that's averaged along the `nScan
 
 Tested with:
 
-``py proc_nutation.py nutation_2 240710_27mM_TEMPOL_chokes_T_atprobe_nutation.h5 ODNP_NMR_comp/nutation``
-
+``py proc_nutation.py nutation_1 240805_amp0p1_27mM_TEMPOL_nutation.h5 ODNP_NMR_comp/nutation``
 """
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import numpy as np
 import matplotlib.pyplot as plt
+import sympy as sp
+import numpy as np
 import sys
 
+signal_range = (-250, 250)
 assert len(sys.argv) == 4
-d = psd.find_file(
+s = psd.find_file(
     sys.argv[2],
     exp_type=sys.argv[3],
     expno=sys.argv[1],
-    lookup=prscr.load_data.lookup_table,
+    lookup=prscr.lookup_table,
 )
-if d.get_prop("postproc_type") == "spincore_SE_v1":
-    d.rename("indirect", "p_90")
-    d["p_90"] *= 1e-9
-elif "indirect" in d.dimlabels:
-    d.rename("indirect", "p_90")
-signal_range = (-100, 100)
-disprange = (-500, 500)
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+fig, ax_list = plt.subplots(2, 2)
 with psd.figlist_var() as fl:
     # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
     fig.suptitle("Nutation %s" % sys.argv[2])
     # }}}
-    # {{{ average scans and show raw
-    if "nScans" in d.dimlabels:
-        d.mean("nScans")
-    d = d["t2":disprange]
-    og_signs = prscr.determine_sign(prscr.select_pathway(d["t2":signal_range]))
-    d.reorder("t2", first=False)
-    fl.image(d.C["t2":disprange], interpolation="auto", ax=ax1)
-    ax1.set_title("Raw Data")
+    if "nScans" in s.dimlabels:
+        s.mean("nScans")
+    # {{{ Apply overall zeroth order correction
+    s.ift("t2")
+    s /= prscr.zeroth_order_ph(
+        prscr.select_pathway(s["t2":0], s.get_prop("coherence_pathway"))
+    )
+    s.ft("t2")
+    fl.image(
+        prscr.select_pathway(
+            s["t2":signal_range], s.get_prop("coherence_pathway")
+        ),
+        ax=ax_list[0, 0],
+    )
+    d_raw = prscr.select_pathway(
+        s["t2":signal_range].C, s.get_prop("coherence_pathway")
+    )
+    ax_list[0, 0].set_title("Signal pathway / ph0")
     # }}}
-    # {{{ apply clock correction
-    total_corr = 0
-    for j in range(5):
-        corr = prscr.clock_correction(
-            prscr.select_pathway(d, d.get_prop("coherence_pathway"))
-            * og_signs
-            * np.exp(-1j * 2 * np.pi * total_corr * d.fromaxis("p_90")),
-            "p_90",
-        )
-        total_corr += corr
-    d *= np.exp(-1j * 2 * np.pi * total_corr * d.fromaxis("p_90"))
+    # {{{ look at phase variation
+    phase_var_s = prscr.select_pathway(
+        s["t2":signal_range].C, s.get_prop("coherence_pathway")
+    )
+    d_uncorrected = phase_var_s.C.real.integrate("t2")
+    for j in range(len(s.getaxis("beta"))):
+        ph0 = prscr.zeroth_order_ph(phase_var_s["beta", j])
+        phase_var_s["beta", j] /= ph0
+    d_ind_ph0 = phase_var_s.real.integrate("t2")
+    mysign = (d_ind_ph0 / d_uncorrected).angle / np.pi
+    mysign = np.exp(1j * np.pi * mysign.run(np.round))
+    d_raw *= mysign
+    fl.image(d_raw, ax=ax_list[0, 1])
+    ax_list[0, 1].set_title("check phase variation along indirect")
     # }}}
-    # {{{ apply zeroth order correction for final sign assignment
-    for j in range(len(d.getaxis("p_90"))):
-        ph0 = prscr.zeroth_order_ph(
-            prscr.select_pathway(d["p_90", j]["t2":signal_range])
-        )
-        d["p_90", j] /= ph0
-    my_signs = prscr.determine_sign(prscr.select_pathway(d["t2":signal_range]))
+    # {{{ apply phasing and FID slice
+    s *= mysign
+    s.set_error(None)
+    s = prscr.fid_from_echo(s, s.get_prop("coherence_pathway"))
+    s *= mysign
+    s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
+    fl.image(s["t2":signal_range], ax=ax_list[1, 0])
+    ax_list[1, 0].set_title("Phased and FID sliced")
     # }}}
-    d = prscr.fid_from_echo(d, d.get_prop("coherence_pathway"))
-    align_option = input("Do you want to apply the correlation alignment?")
-    if align_option.lower().startswith("n"):
-        pass
-    elif align_option.lower().startswith("y"):
-        d.ift("t2")
-        lambda_L = prscr.fit_envelope(d)
-        d.ft("t2")
-        align_sign = prscr.determine_sign(
-            prscr.select_pathway(d, d.get_prop("coherence_pathway"))
-        )
-        matched = (prscr.select_pathway(d) * align_sign).ift("t2")
-        matched *= np.exp(-np.pi * lambda_L * matched.fromaxis("t2"))
-        matched.ft("t2")
-        frq_atmax = matched.real.argmax("t2")
-        d.ift("t2")
-        d *= np.exp(-1j * 2 * np.pi * frq_atmax * d.fromaxis("t2"))
-        d.ft("t2")
-        d.ift(list(d.get_prop("coherence_pathway")))
-        opt_shift, sigm, mask = prscr.correl_align(
-            d,
-            indirect_dim="p_90",
-            sigma=lambda_L,
-            signal_pathway=d.get_prop("coherence_pathway"),
-        )
-        d.ift("t2")
-        d *= np.exp(-1j * 2 * np.pi * opt_shift * d.fromaxis("t2"))
-        d.ft(list(d.get_prop("coherence_pathway")))
-        d = d["t2":(0, None)]
-        d *= 2
-        d["t2":0] *= 0.5
-        d.ft("t2")
-    fl.image(d, interpolation="auto", ax=ax2)
-    ax2.set_title("Phased and FID sliced")
-    d *= og_signs
-    d.set_units("p_90", "s")
-    fl.image(d, interpolation="auto", ax=ax3)
-    ax3.set_title("Flip sign back")
+    s = s["t2":signal_range].real.integrate("t2")
+    s.set_error(None)
+    A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
+    fl.plot(s, "o", ax=ax_list[1, 1], human_units=False)
+    f = psd.lmfitdata(s)
+    f.functional_form = (
+        A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2) ** 3
+    )
+    f.set_guess(
+        A=dict(
+            value=s.data.max() * 1.2,
+            min=s.data.max() * 0.8,
+            max=s.data.max() * 1.5,
+        ),
+        R=dict(value=3e3, min=0, max=3e4),
+        beta_ninety=dict(value=2e-5, min=0, max=1),
+    )
+    f.fit()
+    fit = f.eval(100)
+    fl.plot(fit, ax=ax_list[1, 1], human_units=False)
+    ax_list[1, 1].set_xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
+    ax_list[1, 1].set_ylabel(None)
+    beta_90 = f.output("beta_ninety")
+    ax_list[1, 1].axvline(beta_90)
+    ax_list[1, 1].text(
+        beta_90 + 5e-6,
+        5e4,
+        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % (beta_90 * 1e6),
+    )
+    ax_list[1, 1].grid()
