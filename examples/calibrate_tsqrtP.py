@@ -193,7 +193,8 @@ with psd.figlist_var() as fl:
                 return ret_val.item()
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
-        fl.plot(t_us_v_beta, '.', label=thislabel)
+        t_us_v_beta.set_plot_color_next()
+        fl.plot(t_us_v_beta, ',', label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
         for_extrap = (
@@ -204,16 +205,18 @@ with psd.figlist_var() as fl:
             .set_units("μs")
             .set_units("beta", "s√W")
         )
-        fl.plot(
-            for_extrap.eval_poly(c_nonlinear, "beta")[
-                "beta":(None, linear_threshold)
-            ],
-            ":",
-            label="nonlinear",
-        )
+        for_extrap.copy_props(t_us_v_beta)
+        #fl.plot(
+        #    for_extrap.eval_poly(c_nonlinear, "beta")[
+        #        "beta":(None, linear_threshold)
+        #    ],
+        #    ":",
+        #    label="nonlinear",
+        #)
         fl.plot(for_extrap.eval_poly(c_linear, "beta"), ":", label="linear")
         full_fit = for_extrap.fromaxis("beta").run(prog_plen)
-        fl.plot(full_fit, color="k")
+        full_fit.copy_props(t_us_v_beta)
+        fl.plot(full_fit, alpha = 0.2, label = "overall fit")
         plt.ylabel(r"$At_{pulse}$ / $\mathrm{\mu s}$")
         plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         # }}}
