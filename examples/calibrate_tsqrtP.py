@@ -19,8 +19,9 @@ color_cycle = cycle(
 
 V_atten_ratio = 101.39  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
-linear_threshold = 100e-6
+linear_threshold = 270e-6
 slicewidth = 3e6
+typical_180 = 40e-6 # typical beta for a 180 -- it's really important to get pulses in this regime correct
 
 
 with psd.figlist_var() as fl:
@@ -160,7 +161,10 @@ with psd.figlist_var() as fl:
             beta["t_pulse"].copy() / 1e-6
         )  # because our ppg wants μs
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
-        c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].polyfit(
+        # use as temp for ultimate coeff
+        c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].C
+        c_nonlinear['beta'] -= linear_threshold 
+        c_nonlinear = c_nonlinear.polyfit(
             "beta", order=10
         )
         c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit(
@@ -181,7 +185,7 @@ with psd.figlist_var() as fl:
                 if desired > linear_threshold:
                     return np.polyval(c_linear[::-1], desired)
                 else:
-                    return np.polyval(c_nonlinear[::-1], desired)
+                    return np.polyval(c_nonlinear[::-1], desired-linear_threshold)
 
             ret_val = np.vectorize(zonefit)(desired)
             if ret_val.size > 1:
@@ -192,6 +196,8 @@ with psd.figlist_var() as fl:
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
         t_us_v_beta.set_plot_color_next()
         fl.plot(t_us_v_beta*amplitude, ".", alpha = 0.5,label="data for %s"%thislabel)
+        fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
+        fl.plot(t_us_v_beta['beta':(None,typical_180)]*amplitude, ".", alpha = 0.5,label="data for %s"%thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
         for_extrap = (
@@ -203,10 +209,20 @@ with psd.figlist_var() as fl:
             .set_units("beta", "s√W")
         )
         for_extrap.copy_props(t_us_v_beta)
+        fl.plot(for_extrap.eval_poly(c_linear, "beta")['beta':(None,typical_180)]*amplitude, "--", alpha = 0.25, label="linear")
+        fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$")
         fl.plot(for_extrap.eval_poly(c_linear, "beta")*amplitude, "--", alpha = 0.25, label="linear")
         full_fit = for_extrap.fromaxis("beta").run(prog_plen)
         fl.plot(full_fit*amplitude, alpha = 0.5, label = 'fit')
-        psd.gridandtick(plt.gca())
-        plt.ylabel(r"$At_{pulse}$ / $\mathrm{\mu s}$")
-        plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+        plt.axvline(x=linear_threshold/1e-6, # units of μs
+                alpha=0.1, color=for_extrap.get_plot_color())
+        fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
+        fl.plot(full_fit['beta':(None,typical_180)]*amplitude, alpha = 0.5, label = 'fit')
+        for j in (
+                r"Amplitude*$t_{pulse}$ vs $\beta$",
+                r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed"):
+            fl.next(j)
+            psd.gridandtick(plt.gca())
+            plt.ylabel(r"$At_{pulse}$ / $\mathrm{\mu s}$")
+            plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         # }}}
