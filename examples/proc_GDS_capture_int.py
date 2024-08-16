@@ -6,14 +6,30 @@ from itertools import cycle
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 color_cycle = cycle(colorcyc_list)
 
-V_atten_ratio = 102.35  # attenutation ratio
+V_atten_ratio = 101.45  # attenutation ratio
 loose_HH_width = 5e6
 int_slop = 1e-6
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
+        #(
+        #    "240815_amp1_opt_deblank1_pulse_capture.h5",
+        #    "pulse_capture_1",
+        #),
+        #(
+        #    "240815_amp1_opt_deblank10_pulse_capture.h5",
+        #    "pulse_capture_1",
+        #),
+        #(
+        #    "240815_amp1_opt_deblank25_pulse_capture.h5",
+        #    "pulse_capture_1",
+        #),
+        #(
+        #    "240815_amp1_opt_deblank50_pulse_capture.h5",
+        #    "pulse_capture_1",
+        #),
         (
-            "240812_amp0p1_deblank_50_pulse_capture.h5",
+            "240815_amp1_opt_deblank500_pulse_capture.h5",
             "pulse_capture_1",
         ),
     ]:
@@ -21,18 +37,21 @@ with psd.figlist_var() as fl:
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         amplitude = s.get_prop("acq_params")["amplitude"]
+        deblank = s.get_prop("acq_params")["deblank_us"]
         beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"]
         fl.basename = (
-            f"amplitude = {amplitude}, $\\beta$ = {beta_us_sqrt_W} \n"
+            #f"amplitude = {amplitude}, $\\beta$ = {beta_us_sqrt_W} \n"
+            f"amplitude = {amplitude}, deblank = {deblank} $\\mu$ s\n"
         )
         if not s.get_units("t") == "s":
             print(
                 "units weren't set for the t axis or else I can't read them from the hdf5 file!"
             )
             s.set_units("t", "s")
+            print(psd.ndshape(s))
         s *= V_atten_ratio  # attenutation ratio
         s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
-        fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
+        fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$", figsize=(6,4))
         raw_color = next(color_cycle)
         fl.plot(s, color=raw_color, label="raw analytic")
         abs_color = next(color_cycle)
@@ -80,8 +99,8 @@ with psd.figlist_var() as fl:
         # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
-            (wide_HH, "loose HH", 0.5),
-            (for_L, "lorentzian", -0.5),
+            (wide_HH, "loose HH", 5),
+            (for_L, "lorentzian", -5),
         ]:
             color = next(color_cycle)
             filtered_data.ift("t")

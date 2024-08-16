@@ -17,10 +17,10 @@ color_cycle = cycle(
     colorcyc_list
 )  # this can be done more than once to spin up multiple lists
 
-V_atten_ratio = 102.35  # attenutation ratio
-skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
-linear_threshold = 100e-6
-slicewidth = 3e6
+V_atten_ratio = 101.39  # attenutation ratio
+skip_plots = 50  # diagnostic -- set this to None, and there will be no plots
+linear_threshold = 200e-6
+slicewidth = 1e6
 
 
 with psd.figlist_var() as fl:
@@ -28,7 +28,9 @@ with psd.figlist_var() as fl:
         # ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
         # ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
         # ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
-        ("240805_calib_amp0p05_pulse_calib.h5", "pulse_calib_5"),  # low power
+        ("240816_calib_amp0p05_pulse_calib.h5", "pulse_calib_1"),  # low power
+        ("240816_calib_amp0p1_pulse_calib.h5", "pulse_calib_1"),  # low power
+        ("240816_calib_amp0p2_pulse_calib.h5", "pulse_calib_1"),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
@@ -81,6 +83,7 @@ with psd.figlist_var() as fl:
             carrier - n * SW
         )  # find the aliased peak -- again, measuring from the left side
         center = SW - abs(nu_a)
+        print(center)
         d.ft("t")
         d["t" : (0, center - 0.5 * slicewidth)] *= 0
         d["t" : (center + 0.5 * slicewidth, None)] *= 0
@@ -190,7 +193,7 @@ with psd.figlist_var() as fl:
                 return ret_val.item()
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
-        fl.plot(t_us_v_beta, label=thislabel)
+        fl.plot(t_us_v_beta, '.', label=thislabel)
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
         for_extrap = (
@@ -214,3 +217,4 @@ with psd.figlist_var() as fl:
         plt.ylabel(r"$At_{pulse}$ / $\mathrm{\mu s}$")
         plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         # }}}
+        psd.gridandtick(plt.gca())
