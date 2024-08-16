@@ -27,21 +27,21 @@ slicewidth = 2e6
 with psd.figlist_var() as fl:
     for filename, nodename in [
         (
-            "240805_test_calib_amp0p05_pulse_calib.h5",
+            "240816_amp0p1_fin_pulse_calib.h5",
             "pulse_calib_1",
         ),  # low power
-        (
-            "240805_test_calib_amp0p1_a_pulse_calib.h5",
-            "pulse_calib_2",
-        ),  # low power
-        (
-            "240805_test_calib_amp0p2_a_pulse_calib.h5",
-            "pulse_calib_1",
-        ),  # low power
-        (
-            "240805_test_calib_amp1_pulse_calib.h5",
-            "pulse_calib_1",
-        ),  # low power
+        #(
+        #    "240805_test_calib_amp0p1_a_pulse_calib.h5",
+        #    "pulse_calib_2",
+        #),  # low power
+        #(
+        #    "240805_test_calib_amp0p2_a_pulse_calib.h5",
+        #    "pulse_calib_1",
+        #),  # low power
+        #(
+        #    "240805_test_calib_amp1_pulse_calib.h5",
+        #    "pulse_calib_1",
+        #),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"

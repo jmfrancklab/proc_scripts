@@ -21,13 +21,13 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 signal_pathway = {"ph1": 1}
 for thisfile, exp_type, nodename, postproc, label_str, freq_slice in [
     (
-        "220217_5mM_TEMPOL_field_dep",
+        "240807_13p5mM_TEMPOL_newprobe_field",
         "ODNP_NMR_comp/field_dependent",
-        "Field_sweep",
-        "field_sweep_v1",  # in newer version files, we should be setting
+        "Field_1",
+        "field_sweep_v2",  # in newer version files, we should be setting
         #                  postproc_type as a top-level attribute of the
         #                  nddata, and this should not be necessary
-        "TEMPOL field sweep",
+        "13p5 mM TEMPOL field sweep",
         (-250, 250),
     ),
 ]:
