@@ -17,7 +17,7 @@ color_cycle = cycle(
     colorcyc_list
 )  # this can be done more than once to spin up multiple lists
 
-V_atten_ratio = 101.39  # attenutation ratio
+V_atten_ratio = 102.2  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 150e-6
 slicewidth = 1e6
