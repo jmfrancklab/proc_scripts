@@ -108,7 +108,7 @@ with psd.figlist_var() as fl:
             s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
             fl.plot(abs(s), alpha=0.3, label=f"{j}")
         # }}}
-        thislabel = "amplitude = %f" % amplitude
+        thislabel = "Amplitude = %f" % amplitude
         thiscolor = next(color_cycle)
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
