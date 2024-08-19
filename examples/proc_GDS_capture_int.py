@@ -13,8 +13,8 @@ int_slop = 1e-6
 with psd.figlist_var() as fl:
     for filename, nodename in [
         (
-            "240812_amp0p1_deblank_50_pulse_capture.h5",
-            "pulse_capture_1",
+            "240819_test_amp0p05_calib_pulse_capture.h5",
+            "pulse_capture_13",
         ),
     ]:
         s = psd.find_file(
@@ -23,7 +23,7 @@ with psd.figlist_var() as fl:
         amplitude = s.get_prop("acq_params")["amplitude"]
         beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"]
         fl.basename = (
-            f"amplitude = {amplitude}, $\\beta$ = {beta_us_sqrt_W} \n"
+            f"amplitude = {amplitude}, $\\beta$ = 20\n"#{beta_us_sqrt_W} \n"
         )
         if not s.get_units("t") == "s":
             print(
