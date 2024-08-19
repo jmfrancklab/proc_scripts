@@ -30,7 +30,9 @@ a = Circle(
     color="b",
 )
 fig.add_artist(a)
-majorLocator = lambda: mticker.MaxNLocator(nbins="auto", steps=[1, 2, 2.5, 5, 10])
+majorLocator = lambda: mticker.MaxNLocator(
+    nbins="auto", steps=[1, 2, 2.5, 5, 10]
+)
 minorLocator = lambda: mticker.AutoMinorLocator(n=5)
 ax.xaxis.set_major_locator(majorLocator())
 ax.xaxis.set_minor_locator(minorLocator())

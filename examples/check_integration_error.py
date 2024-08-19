@@ -30,15 +30,17 @@ excluded_pathways = [(0, 0), (0, 3)]
 # this generates fake clean_data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
 # offset of 300 Hz, FWHM 10 Hz
-clean_data = 21*(1 - 2*exp(-vd / 0.2))*exp(+1j*2*pi*100*t2 - t2*10*pi)
-clean_data *= exp(signal_pathway["ph1"]*1j*2*pi*ph1)
-clean_data *= exp(signal_pathway["ph2"]*1j*2*pi*ph2)
+clean_data = (
+    21 * (1 - 2 * exp(-vd / 0.2)) * exp(+1j * 2 * pi * 100 * t2 - t2 * 10 * pi)
+)
+clean_data *= exp(signal_pathway["ph1"] * 1j * 2 * pi * ph1)
+clean_data *= exp(signal_pathway["ph2"] * 1j * 2 * pi * ph2)
 clean_data["t2":0] *= 0.5
 fake_data_noise_std = 2.0
 clean_data.reorder(["ph1", "ph2", "vd"])
 bounds = (0, 200)  # seem reasonable to me
 result = 0
-n_repeats = 100 
+n_repeats = 100
 all_results = ndshape(clean_data) + (n_repeats, "repeats")
 all_results.pop("t2").pop("ph1").pop("ph2")
 all_results = all_results.alloc()
@@ -57,12 +59,26 @@ for j in range(n_repeats):
     data.ft("t2", shift=True)
     # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
-    error_pathway = (set(((j,k) for j in range(ndshape(data)['ph1']) for k in range(ndshape(data)['ph2'])))
-            - set(excluded_pathways)
-            - set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
-    error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice = integral_w_errors(data,signal_pathway,error_pathway,
-            indirect='vd', fl=fl,return_frq_slice=True)
+    error_pathway = (
+        set(
+            (
+                (j, k)
+                for j in range(ndshape(data)["ph1"])
+                for k in range(ndshape(data)["ph2"])
+            )
+        )
+        - set(excluded_pathways)
+        - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
+    )
+    error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
+    s_int, frq_slice = integral_w_errors(
+        data,
+        signal_pathway,
+        error_pathway,
+        indirect="vd",
+        fl=fl,
+        return_frq_slice=True,
+    )
     # }}}
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
     N = ndshape(manual_bounds)["t2"]
@@ -70,10 +86,10 @@ for j in range(n_repeats):
     manual_bounds.integrate("t2")
     # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
     all_results["repeats", j] = manual_bounds
-    print("#%d"%j)
+    print("#%d" % j)
 std_off_pathway = (
     data["ph1", 0]["ph2", 0]["t2":bounds]
-    .C.run(lambda x: abs(x)**2/2) # sqrt2 so variance is variance of real
+    .C.run(lambda x: abs(x) ** 2 / 2)  # sqrt2 so variance is variance of real
     .mean_all_but(["t2", "vd"])
     .mean("t2")
     .run(sqrt)
@@ -81,11 +97,11 @@ std_off_pathway = (
 print(
     "off-pathway std", std_off_pathway, "programmed std", fake_data_noise_std
 )
-propagated_variance_from_inactive = N * df ** 2 * std_off_pathway ** 2
+propagated_variance_from_inactive = N * df**2 * std_off_pathway**2
 # removed factor of 2 in following, which shouldn't have been there
 propagated_variance = N * df**2 * fake_data_noise_std**2
 fl.next("different types of error")
-fl.plot(s_int,".",capsize=6,label = 'std from int w err',alpha=0.5)
+fl.plot(s_int, ".", capsize=6, label="std from int w err", alpha=0.5)
 manual_bounds.set_error(sqrt(propagated_variance))
 fl.plot(
     manual_bounds,
@@ -101,5 +117,11 @@ manual_bounds.set_error(all_results.get_error())
 # large enough to give good statistics
 fl.plot(manual_bounds, ".", capsize=6, label=r"std from repeats", alpha=0.5)
 manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data))
-fl.plot(manual_bounds, ".", capsize=6, label=r"propagated from inactive std", alpha=0.5)
+fl.plot(
+    manual_bounds,
+    ".",
+    capsize=6,
+    label=r"propagated from inactive std",
+    alpha=0.5,
+)
 fl.show()

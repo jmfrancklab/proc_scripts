@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demonstrate Integrate Limits &mdash; pyspecProcScripts 0.9 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-binder.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-dataframe.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery-rendered-html.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/gallery_custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Phasing and Timing Correction with Real Data" href="Hermitian_Phasing_Actual_Challenging.html" />
+    <link rel="prev" title="Phasing and Timing Correction Using a Varied Tau Experiment" href="Hermitian_Phasing_Actual_var_tau.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> pyspecProcScripts
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_Challenging.html">Phasing and Timing Correction with Real Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyspecProcScripts</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">ProcScripts Example Gallery</a></li>
+      <li class="breadcrumb-item active">Demonstrate Integrate Limits</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/auto_examples/integrate_limits.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-integrate-limits-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="demonstrate-integrate-limits">
+<span id="sphx-glr-auto-examples-integrate-limits-py"></span><h1>Demonstrate Integrate Limits<a class="headerlink" href="#demonstrate-integrate-limits" title="Permalink to this heading">¶</a></h1>
+<p>For this demonstration, we generate inversion
+recovery data for a single peak, with a relatively
+mild frequency variation, so that no serious
+alignment is required before integration. We mimic
+the 8-step phase cycle used for echo detection in
+these experiments, and include the effect of the
+echo time on the data detected in the time domain.</p>
+<p>We use integrate_limits to detect the frequency
+limits used for peak integration, based on a
+matched Lorentzian filter on our frequency domain
+data.</p>
+<p>We illustrate the position of the frequency
+limits with vertical lines on the final plot.</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_integrate_limits_001.png" srcset="../_images/sphx_glr_integrate_limits_001.png" alt="fake data -- time domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_002.png" srcset="../_images/sphx_glr_integrate_limits_002.png" alt="FID sliced -- time domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_003.png" srcset="../_images/sphx_glr_integrate_limits_003.png" alt="fake data -- freq domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_004.png" srcset="../_images/sphx_glr_integrate_limits_004.png" alt="Lorentzian filter: integration diagnostic" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_005.png" srcset="../_images/sphx_glr_integrate_limits_005.png" alt="Lorentzian filter: matched filter diagnostic -- signal Energy" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_006.png" srcset="../_images/sphx_glr_integrate_limits_006.png" alt="Lorentzian filter: matched filter diagnostic -- time domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_007.png" srcset="../_images/sphx_glr_integrate_limits_007.png" alt="Lorentzian filter: fake data -- show freq limit selection" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_008.png" srcset="../_images/sphx_glr_integrate_limits_008.png" alt="Gaussian filter: integration diagnostic" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_009.png" srcset="../_images/sphx_glr_integrate_limits_009.png" alt="Gaussian filter: matched filter diagnostic -- signal Energy" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_010.png" srcset="../_images/sphx_glr_integrate_limits_010.png" alt="Gaussian filter: matched filter diagnostic -- time domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_integrate_limits_011.png" srcset="../_images/sphx_glr_integrate_limits_011.png" alt="Gaussian filter: fake data -- show freq limit selection" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>C:\Users\jmfranck\pyspecdata.0.log appears to be locked or otherwise inaccessible: I&#39;m going to explore other options for fileno
+----------  logging output to C:\Users\jmfranck\pyspecdata.4.log  ----------
+c:\users\jmfranck\git_repos\proc_scripts\pyspecProcScripts\first_level\fake_data.py:58: SymPyDeprecationWarning:
+
+Passing the function arguments to lambdify() as a set is deprecated. This
+leads to unpredictable results since sets are unordered. Instead, use a list
+or tuple for the function arguments.
+
+See https://docs.sympy.org/latest/explanation/active-deprecations.html#deprecated-lambdify-arguments-set
+for details.
+
+This has been deprecated since SymPy version 1.6.3. It
+will be removed in a future version of SymPy.
+
+  thefunction = lambdify(mysymbols, expression, &quot;numpy&quot;)
+c:\users\jmfranck\git_repos\pyspecdata\pyspecdata\core.py:1959: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;o&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
+  retval = myplotfunc(*plotargs,**kwargs)
+C:\ProgramData\Anaconda3\lib\site-packages\matplotlib\cbook\__init__.py:1335: ComplexWarning: Casting complex values to real discards the imaginary part
+  return np.asarray(x, float)
+Determined frequency limits via Lorentzian filter of [-12.9048583  193.57287449]
+Determined frequency limits via Gaussian filter of [  7.74291498 178.08704453]
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <span class="n">normal</span><span class="p">,</span> <span class="n">seed</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">norm</span>
+<span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">s</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="n">seed</span><span class="p">(</span><span class="mi">2021</span><span class="p">)</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;image.aspect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span> <span class="c1"># needed for sphinx gallery</span>
+<span class="c1"># sphinx_gallery_thumbnail_number = 4</span>
+<span class="n">init_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="c1"># {{{ generate the fake data</span>
+    <span class="c1"># this generates fake clean_data w/ a T1 of 0.2s</span>
+    <span class="c1"># amplitude of 21, just to pick a random amplitude</span>
+    <span class="c1"># offset of 300 Hz, FWHM 10 Hz</span>
+    <span class="n">t2</span><span class="p">,</span> <span class="n">td</span><span class="p">,</span> <span class="n">vd</span><span class="p">,</span> <span class="n">ph1</span><span class="p">,</span> <span class="n">ph2</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="s1">&#39;t2 td vd ph1 ph2&#39;</span><span class="p">)</span>
+    <span class="n">echo_time</span> <span class="o">=</span> <span class="mf">5e-3</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">fake_data</span><span class="p">(</span>
+        <span class="mi">21</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">s</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">vd</span> <span class="o">/</span> <span class="mf">0.2</span><span class="p">))</span><span class="o">*</span><span class="n">s</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">s</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">100</span><span class="o">*</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span><span class="o">*</span><span class="mi">50</span><span class="o">*</span><span class="n">s</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
+        <span class="n">OrderedDict</span><span class="p">([</span>
+            <span class="p">(</span><span class="s2">&quot;vd&quot;</span> <span class="p">,</span> <span class="n">nddata</span><span class="p">(</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mi">40</span><span class="n">j</span><span class="p">],</span> <span class="s2">&quot;vd&quot;</span><span class="p">)),</span>
+            <span class="p">(</span><span class="s2">&quot;ph1&quot;</span> <span class="p">,</span> <span class="n">nddata</span><span class="p">(</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mf">4.0</span><span class="p">,</span> <span class="s2">&quot;ph1&quot;</span><span class="p">)),</span>
+            <span class="p">(</span><span class="s2">&quot;ph2&quot;</span> <span class="p">,</span> <span class="n">nddata</span><span class="p">(</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">/</span> <span class="mf">4.0</span><span class="p">,</span> <span class="s2">&quot;ph2&quot;</span><span class="p">)),</span>
+            <span class="p">(</span><span class="s2">&quot;t2&quot;</span> <span class="p">,</span> <span class="n">nddata</span><span class="p">(</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.2</span><span class="p">:</span><span class="mi">256</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">echo_time</span><span class="p">,</span> <span class="s2">&quot;t2&quot;</span><span class="p">))]),</span>
+            <span class="p">{</span><span class="s2">&quot;ph1&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;ph2&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+            <span class="n">scale</span><span class="o">=</span><span class="mf">20.</span><span class="p">)</span>
+    <span class="c1"># {{{ just have the data phase (not testing phasing here)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s1">&#39;t2&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">-</span><span class="n">echo_time</span><span class="p">)</span><span class="o">.</span><span class="n">register_axis</span><span class="p">({</span><span class="s2">&quot;t2&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">})</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t2&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="c1"># dropping the last couple points avoids aliasing</span>
+    <span class="c1">#                        effects from the axis registration</span>
+    <span class="c1">#                        (otherwise, we get &quot;droop&quot; of the baseline)</span>
+    <span class="c1"># }}}</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">reorder</span><span class="p">([</span><span class="s2">&quot;ph1&quot;</span><span class="p">,</span> <span class="s2">&quot;ph2&quot;</span><span class="p">,</span> <span class="s2">&quot;vd&quot;</span><span class="p">])</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;fake data -- time domain&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;FID sliced -- time domain&quot;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t2&#39;</span><span class="p">:(</span><span class="mi">0</span><span class="p">,</span><span class="kc">None</span><span class="p">)]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t2&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">0.5</span>
+    <span class="n">ph0</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t2&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">ph0</span> <span class="o">/=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ph0</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">/=</span> <span class="n">ph0</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;fake data -- freq domain&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Lorentzian&#39;</span><span class="p">,</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">]:</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">basename</span> <span class="o">=</span> <span class="n">method</span> <span class="o">+</span> <span class="s2">&quot; filter:&quot;</span>
+        <span class="n">freq_lim</span> <span class="o">=</span> <span class="n">integrate_limits</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;ph1&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;ph2&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">convolve_method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;fake data -- show freq limit selection&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;ph1&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;ph2&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">freq_lim</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">freq_lim</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Determined frequency limits via&quot;</span><span class="p">,</span><span class="n">method</span><span class="p">,</span><span class="s2">&quot;filter of&quot;</span><span class="p">,</span><span class="n">freq_lim</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># }}}</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  1.727 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-integrate-limits-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/34d791e2bd3c03019f66a4f6bab95018/integrate_limits.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">integrate_limits.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/f60fe09f9dec67721b832179e199b97a/integrate_limits.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">integrate_limits.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Hermitian_Phasing_Actual_var_tau.html" class="btn btn-neutral float-left" title="Phasing and Timing Correction Using a Varied Tau Experiment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Hermitian_Phasing_Actual_Challenging.html" class="btn btn-neutral float-right" title="Phasing and Timing Correction with Real Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, John M. Franck group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

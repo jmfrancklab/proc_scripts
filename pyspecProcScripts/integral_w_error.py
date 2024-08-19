@@ -9,7 +9,7 @@ def integral_w_errors(
     s,
     sig_path,
     error_path,
-    cutoff = 0.1,
+    cutoff=0.1,
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
@@ -54,7 +54,10 @@ def integral_w_errors(
     else:
         kwargs = {}
     frq_slice = integrate_limits(
-        select_pathway(s, sig_path), convolve_method=convolve_method, cutoff=cutoff, fl=fl
+        select_pathway(s, sig_path),
+        convolve_method=convolve_method,
+        cutoff=cutoff,
+        fl=fl,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
     s = s[direct:frq_slice]
@@ -84,11 +87,13 @@ def integral_w_errors(
             N2 = psp.ndshape(s_forerror)[direct]
         # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
         # mean sums all elements (there are N₁N₂ elements)
-        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(direct)
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but([direct, indirect]).mean(
+        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(
             direct
         )
-        s_forerror *= df ** 2  # Δf
+        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but(
+            [direct, indirect]
+        ).mean(direct)
+        s_forerror *= df**2  # Δf
         s_forerror *= N2
         avg_error.append(s_forerror)
     avg_error = sum(avg_error) / len(avg_error)
@@ -150,6 +155,6 @@ def active_propagation(
     s_forerror.run(np.real).run(lambda x: abs(x) ** 2).mean_all_but(
         [direct, indirect]
     ).mean(direct)
-    s_forerror *= df ** 2
+    s_forerror *= df**2
     s_forerror *= N
     return s_forerror.run(psp.sqrt)
