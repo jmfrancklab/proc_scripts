@@ -25,9 +25,13 @@ slicewidth = 2e6
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
+        #(
+        #    "240819_test_amp0p05_calib_pulse_calib.h5",
+        #    "pulse_calib_5",
+        #),  # low power
         (
-            "240819_test_amp0p05_calib_pulse_calib.h5",
-            "pulse_calib_5",
+            "240819_amp0p1_calib_pulse_calib.h5",
+            "pulse_calib_2",
         ),  # low power
         #(
         #    "240805_test_calib_amp0p1_a_pulse_calib.h5",
@@ -58,8 +62,6 @@ with psd.figlist_var() as fl:
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
         pulse_lengths = d.get_prop("programmed_t_pulse_us")
-        d = d["t":(60e-6,None)]
-
         def switch_to_plot(d, j):
             thislen = pulse_lengths[j]
             fl.next(f"pulse length = {thislen}")
