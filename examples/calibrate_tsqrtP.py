@@ -19,8 +19,8 @@ color_cycle = cycle(
 
 V_atten_ratio = 101.39  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
-linear_threshold = 270e-6
-slicewidth = 3e6
+linear_threshold = 150e-6
+slicewidth = 1e6
 typical_180 = 40e-6  # typical beta for a 180 -- it's really important to get pulses in this regime correct
 
 
@@ -29,7 +29,7 @@ with psd.figlist_var() as fl:
         # ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
         # ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
         # ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
-        ("240819_amp0p05_calib_pulse_calib.h5", "pulse_calib_3"),  # low power
+        ("240819_test_amp0p05_calib_pulse_calib.h5", "pulse_calib_3"),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
@@ -46,7 +46,6 @@ with psd.figlist_var() as fl:
             d.set_units("t", "s")
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
-        # d = d["t_pulse":(60e-6,None)]
 
         def switch_to_plot(d, j):
             thislen = d["t_pulse"][j]
@@ -81,6 +80,7 @@ with psd.figlist_var() as fl:
             carrier - n * SW
         )  # find the aliased peak -- again, measuring from the left side
         center = SW - abs(nu_a)
+        print(center)
         d.ft("t")
         d["t" : (0, center - 0.5 * slicewidth)] *= 0
         d["t" : (center + 0.5 * slicewidth, None)] *= 0
