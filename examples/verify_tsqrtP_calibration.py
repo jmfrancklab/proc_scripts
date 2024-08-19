@@ -34,8 +34,8 @@ with psd.figlist_var() as fl:
         #    "pulse_calib_2",
         #),  # low power
         (
-            "240819_amp0p2_calib_pulse_calib.h5",
-            "pulse_calib_3",
+            "240819_amp0p2_calib_repeat_pulse_calib.h5",
+            "pulse_calib_9",
         ),  # low power
         #(
         #    "240805_test_calib_amp0p1_a_pulse_calib.h5",
