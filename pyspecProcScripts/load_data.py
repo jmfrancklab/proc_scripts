@@ -301,6 +301,11 @@ def proc_spincore_SE_v1(s, fl=None):
     return s
 
 
+def proc_spincore_SE_v2(s, fl=None):
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    return s
+
+
 def proc_spincore_diffph_SE_v1(s, fl=None):
     s = proc_spincore_diffph_SE_v2(s, fl=fl)
     s *= s.shape["nScans"]
@@ -840,6 +845,7 @@ lookup_table = {
     "chirp": proc_capture,
     "spincore_CPMG_v1": proc_spincore_CPMG_v1,
     "spincore_SE_v1": proc_spincore_SE_v1,
+    "spincore_SE_v2": proc_spincore_SE_v2,
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
     "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
     "proc_Hahn_echoph": proc_Hahn_echoph,
