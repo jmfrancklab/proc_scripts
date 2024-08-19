@@ -18,16 +18,16 @@ color_cycle = cycle(
     colorcyc_list
 )  # this can be done more than once to spin up multiple lists
 
-V_atten_ratio = 102.35  # attenutation ratio
+V_atten_ratio = 102.2  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
-linear_threshold = 100e-6
-slicewidth = 2e6
+linear_threshold = 270e-6
+slicewidth = 0.5e6
 
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
         (
-            "240816_amp0p1_fin_pulse_calib.h5",
+            "240819_test_amp0p05_calib_pulse_calib.h5",
             "pulse_calib_1",
         ),  # low power
         #(
