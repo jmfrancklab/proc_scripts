@@ -21,8 +21,8 @@ with psd.figlist_var() as fl:
         #    "pulse_capture_4",
         #),
         (
-            "240819_amp0p2_calib_pulse_capture.h5",
-            "pulse_capture_6",
+            "240819_amp0p2_calib_repeat_pulse_capture.h5",
+            "pulse_capture_7",
         ),
     ]:
         s = psd.find_file(
