@@ -20,9 +20,17 @@ with psd.figlist_var() as fl:
         #    "240819_amp0p1_calib_pulse_capture.h5",
         #    "pulse_capture_4",
         #),
+        #(
+        #    "240819_amp0p2_calib_repeat_pulse_capture.h5",
+        #    "pulse_capture_10",
+        #),
         (
-            "240819_amp0p2_calib_repeat_pulse_capture.h5",
-            "pulse_capture_10",
+            "240819_amp0p1_beta_max_pulse_capture.h5",
+            "pulse_capture_6",
+        ),
+        (
+            "240819_amp0p2_beta_max_pulse_capture.h5",
+            "pulse_capture_2",
         ),
     ]:
         s = psd.find_file(
