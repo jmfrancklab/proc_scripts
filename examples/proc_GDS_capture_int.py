@@ -7,7 +7,7 @@ colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 color_cycle = cycle(colorcyc_list)
 
 V_atten_ratio = 102.35  # attenutation ratio
-loose_HH_width = 5e6
+loose_HH_width = 1e6
 int_slop = 1e-6
 
 with psd.figlist_var() as fl:
@@ -24,10 +24,14 @@ with psd.figlist_var() as fl:
         #    "240819_amp0p2_calib_repeat_pulse_capture.h5",
         #    "pulse_capture_10",
         #),
-        (
-            "240819_amp0p1_beta_max_pulse_capture.h5",
-            "pulse_capture_6",
-        ),
+        #(
+        #    "240819_amp0p05_beta_max_pulse_capture.h5",
+        #    "pulse_capture_9",
+        #),
+        #(
+        #    "240819_amp0p1_beta_max_pulse_capture.h5",
+        #    "pulse_capture_6",
+        #),
         (
             "240819_amp0p2_beta_max_pulse_capture.h5",
             "pulse_capture_2",
@@ -39,7 +43,7 @@ with psd.figlist_var() as fl:
         amplitude = s.get_prop("acq_params")["amplitude"]
         beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"]
         fl.basename = (
-            f"amplitude = {amplitude}, $\\beta$ = 20\n"#{beta_us_sqrt_W} \n"
+            f"amplitude = {amplitude}, $\\beta$ = {beta_us_sqrt_W} \n"
         )
         if not s.get_units("t") == "s":
             print(
