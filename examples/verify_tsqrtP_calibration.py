@@ -20,7 +20,6 @@ color_cycle = cycle(
 
 V_atten_ratio = 102.2  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
-linear_threshold = 270e-6
 slicewidth = 2e6
 
 
