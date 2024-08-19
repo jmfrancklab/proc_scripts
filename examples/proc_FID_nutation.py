@@ -48,9 +48,13 @@ with psd.figlist_var() as fl:
     # }}}
     # {{{ Look at phase variation
     d_integral = s.C.real.integrate("t2")
-    phase_ind_beta = s.C
+    phase_ind_beta = (
+        s.C
+    )  # copy for applying zeroth order to individual indirect indices
     for j in range(len(s.getaxis("beta"))):
-        phase_ind_beta["beta", j] /= prscr.zeroth_order_ph(phase_ind_beta["beta", j])
+        phase_ind_beta["beta", j] /= prscr.zeroth_order_ph(
+            phase_ind_beta["beta", j]
+        )
     phase_ind_beta.real.integrate("t2")
     mysign = (phase_ind_beta / d_integral).angle / np.pi
     mysign = np.exp(1j * np.pi * mysign.run(np.round))
