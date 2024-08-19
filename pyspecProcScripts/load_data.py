@@ -1,3 +1,4 @@
+"""Used to preprocess data based on type of experiment performed. Returns all data FTed
 into the frequency domain with the phase cycles also FTed (coherence domain). Data is
 not sliced or altered in anyway.
 
