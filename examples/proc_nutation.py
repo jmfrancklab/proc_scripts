@@ -55,14 +55,14 @@ with psd.figlist_var() as fl:
     #  fid_from_echo
     # }}}
     # {{{ Look at phase variation
+    d_integral = prscr.select_pathway(s["t2":signal_range],s.get_prop("coherence_pathway")).real.integrate("t2")
     phase_ind_beta = prscr.select_pathway(
         s["t2":signal_range].C, s.get_prop("coherence_pathway")
     )
-    d_overall_zero = phase_ind_beta.C.real.integrate("t2")
     for j in range(len(s.getaxis("beta"))):
         phase_ind_beta["beta", j] /= prscr.zeroth_order_ph(phase_ind_beta["beta", j])
     phase_ind_beta = phase_ind_beta.real.integrate("t2")
-    mysign = (phase_ind_beta / d_overall_zero).angle / np.pi
+    mysign = (phase_ind_beta / d_integral).angle / np.pi
     mysign = np.exp(1j * np.pi * mysign.run(np.round))
     d_raw *= mysign
     fl.image(d_raw, ax=ax2)

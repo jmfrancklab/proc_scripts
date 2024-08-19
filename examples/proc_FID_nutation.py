@@ -47,13 +47,12 @@ with psd.figlist_var() as fl:
     ax1.set_title("Signal pathway / ph0")
     # }}}
     # {{{ Look at phase variation
-    d_overall_zero = s.C.real.integrate("t2")
+    d_integral = s.C.real.integrate("t2")
     phase_ind_beta = s.C
     for j in range(len(s.getaxis("beta"))):
-        ph0 = prscr.zeroth_order_ph(phase_ind_beta["beta", j])
-        phase_ind_beta["beta", j] /= ph0
+        phase_ind_beta["beta", j] /= prscr.zeroth_order_ph(phase_ind_beta["beta", j])
     phase_ind_beta.real.integrate("t2")
-    mysign = (phase_ind_beta / d_overall_zero).angle / np.pi
+    mysign = (phase_ind_beta / d_integral).angle / np.pi
     mysign = np.exp(1j * np.pi * mysign.run(np.round))
     s *= mysign
     fl.image(s, ax=ax2)
