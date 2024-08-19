@@ -35,8 +35,8 @@ with psd.figlist_var() as fl:
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         assert (
-            d.get_prop("postproc_type") is not None
-        ), "No postproc type was set upon acquisition"
+            d.get_prop("postproc_type") == 'GDS_capture_v1'
+        ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         if not d.get_units("t") == "s":
@@ -163,7 +163,7 @@ with psd.figlist_var() as fl:
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
         # use as temp for ultimate coeff
         c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].C
-        c_nonlinear['beta'] -= linear_threshold 
+        c_nonlinear['beta'] -= linear_threshold #Taylor expand around the linear threshold rather than 0 
         c_nonlinear = c_nonlinear.polyfit(
             "beta", order=10
         )

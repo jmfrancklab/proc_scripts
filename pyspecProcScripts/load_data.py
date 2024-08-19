@@ -1,4 +1,3 @@
-"""Used to preprocess data based on type of experiment performed. Returns all data FTed
 into the frequency domain with the phase cycles also FTed (coherence domain). Data is
 not sliced or altered in anyway.
 
@@ -838,7 +837,6 @@ lookup_table = {
     "ag_CPMG_strob": proc_bruker_CPMG_v1,
     "ag_T1CPMG_2h": proc_bruker_T1CPMG_v1,
     "chirp": proc_capture,
-    "GDS_capture_v1": proc_capture,
     "spincore_CPMG_v1": proc_spincore_CPMG_v1,
     "spincore_SE_v1": proc_spincore_SE_v1,
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
