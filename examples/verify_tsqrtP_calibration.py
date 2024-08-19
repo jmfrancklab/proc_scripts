@@ -21,14 +21,14 @@ color_cycle = cycle(
 V_atten_ratio = 102.2  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
 linear_threshold = 270e-6
-slicewidth = 0.5e6
+slicewidth = 2e6
 
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
         (
             "240819_test_amp0p05_calib_pulse_calib.h5",
-            "pulse_calib_1",
+            "pulse_calib_2",
         ),  # low power
         #(
         #    "240805_test_calib_amp0p1_a_pulse_calib.h5",
@@ -95,6 +95,7 @@ with psd.figlist_var() as fl:
             carrier - n * SW
         )  # find the aliased peak -- again, measuring from the left side
         center = SW - abs(nu_a)
+        print(center)
         d.ft("t")
         d["t" : (0, center - 0.5 * slicewidth)] *= 0
         d["t" : (center + 0.5 * slicewidth, None)] *= 0
