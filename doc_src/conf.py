@@ -18,7 +18,6 @@ import shlex
 import sphinx_rtd_theme
 import mock
 from matplotlib import rcParams
-print("datapath is",rcParams['datapath'])
  
 autodoc_mock_imports = ['numpy', 'scipy', 'scipy.interpolate', 'pylab', 'mpl_toolkits', 'get_ipython', 'pyspecdata', 'matplotlib', 'tables']
 

@@ -78,7 +78,9 @@ with figlist_var() as fl:
         ax_list[1].set_title("Phased and \n Centered")
         # }}}
         # {{{ Applying Correlation Routine to Align Data
-        mysgn = select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
+        mysgn = (
+            select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
+        )
         #    this is the sign of the signal -- note how on the next line,
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
@@ -92,7 +94,7 @@ with figlist_var() as fl:
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
             #                 accommodate the drift in signal
-            fl=fl
+            fl=fl,
         )
         # removed display of the mask (I think that's what it was)
         data.ift("t2")
