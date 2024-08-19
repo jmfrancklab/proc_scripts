@@ -12,9 +12,13 @@ int_slop = 1e-6
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
+        #(
+        #    "240819_test_amp0p05_calib_pulse_capture.h5",
+        #    "pulse_capture_13",
+        #),
         (
-            "240819_test_amp0p05_calib_pulse_capture.h5",
-            "pulse_capture_13",
+            "240819_amp0p1_calib_pulse_capture.h5",
+            "pulse_capture_4",
         ),
     ]:
         s = psd.find_file(
