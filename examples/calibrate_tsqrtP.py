@@ -24,13 +24,22 @@ typical_180 = 40e-6  # typical beta for a 180 -- it's really important to get pu
 
 
 with psd.figlist_var() as fl:
-    for filename, nodename,linear_threshold in [
-        # ("240805_calib_amp1_pulse_calib.h5", "pulse_calib_1"),  # high power
-        # ("240805_calib_amp0p1_a_pulse_calib.h5", "pulse_calib_3"),  # low power
-        # ("240805_calib_amp0p2_a_pulse_calib.h5", "pulse_calib_1"),  # low power
-        ("240819_test_amp0p05_calib_pulse_calib.h5", "pulse_calib_3",150e-6),  # low power
-        ("240819_amp0p1_calib_pulse_calib.h5", "pulse_calib_1",270e-6),  # low power
-        ("240819_amp0p2_calib_repeat_pulse_calib.h5", "pulse_calib_8",310e-6),  # low power
+    for filename, nodename, linear_threshold in [
+        (
+            "240819_test_amp0p05_calib_pulse_calib.h5",
+            "pulse_calib_3",
+            150e-6,
+        ),  # low power
+        (
+            "240819_amp0p1_calib_pulse_calib.h5",
+            "pulse_calib_1",
+            270e-6,
+        ),  # low power
+        (
+            "240819_amp0p2_calib_repeat_pulse_calib.h5",
+            "pulse_calib_8",
+            310e-6,
+        ),  # low power
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
@@ -72,7 +81,9 @@ with psd.figlist_var() as fl:
         # {{{ apply frequency filter
         d.ift("t")
         SW = 1 / (d["t"][1] - d["t"][0])  # sample rate
-        carrier = d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6  # signal frequency
+        carrier = (
+            d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+        )  # signal frequency
         fn = SW / 2  # nyquist frequency
         n = np.floor(
             (carrier + fn) / SW
@@ -81,7 +92,6 @@ with psd.figlist_var() as fl:
             carrier - n * SW
         )  # find the aliased peak -- again, measuring from the left side
         center = SW - abs(nu_a)
-        print(center)
         d.ft("t")
         d["t" : (0, center - 0.5 * slicewidth)] *= 0
         d["t" : (center + 0.5 * slicewidth, None)] *= 0
@@ -106,7 +116,9 @@ with psd.figlist_var() as fl:
             # slightly expand int range to include rising edges
             int_range[0] -= 5e-6
             int_range[-1] += 5e-6
-            beta["t_pulse", j] = abs(s["t":int_range]).integrate("t").data.item()
+            beta["t_pulse", j] = (
+                abs(s["t":int_range]).integrate("t").data.item()
+            )
             beta["t_pulse", j] /= np.sqrt(2)  # t*sqrt(Prms)
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
@@ -151,9 +163,13 @@ with psd.figlist_var() as fl:
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
-        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename("t_pulse", "beta")
+        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename(
+            "t_pulse", "beta"
+        )
         t_us_v_beta.setaxis("beta", beta.data)
-        t_us_v_beta.data[:] = beta["t_pulse"].copy() / 1e-6  # because our ppg wants μs
+        t_us_v_beta.data[:] = (
+            beta["t_pulse"].copy() / 1e-6
+        )  # because our ppg wants μs
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
         # use as temp for ultimate coeff
         c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].C
@@ -161,8 +177,12 @@ with psd.figlist_var() as fl:
             "beta"
         ] -= linear_threshold  # Taylor expand around the linear threshold rather than 0
         c_nonlinear = c_nonlinear.polyfit("beta", order=10)
-        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit("beta", order=1)
-        print("Non-linear regime coefficients for %s:" % fl.basename, c_nonlinear)
+        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit(
+            "beta", order=1
+        )
+        print(
+            "Non-linear regime coefficients for %s:" % fl.basename, c_nonlinear
+        )
         print("Linear regime coefficients for %s:" % fl.basename, c_linear)
 
         def prog_plen(desired):
@@ -175,7 +195,9 @@ with psd.figlist_var() as fl:
                 if desired > linear_threshold:
                     return np.polyval(c_linear[::-1], desired)
                 else:
-                    return np.polyval(c_nonlinear[::-1], desired - linear_threshold)
+                    return np.polyval(
+                        c_nonlinear[::-1], desired - linear_threshold
+                    )
 
             ret_val = np.vectorize(zonefit)(desired)
             if ret_val.size > 1:
