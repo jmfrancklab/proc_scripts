@@ -844,6 +844,7 @@ lookup_table = {
     "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
     "proc_Hahn_echoph": proc_Hahn_echoph,
     "spincore_FID_nutation_v1": proc_spincore_generalproc_v1,
+    "spincore_FID_nutation_v2": proc_spincore_generalproc_v1,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,

@@ -60,8 +60,7 @@ with psd.figlist_var() as fl:
     )
     d_overall_zero = phase_ind_beta.C.real.integrate("t2")
     for j in range(len(s.getaxis("beta"))):
-        ph0 = prscr.zeroth_order_ph(phase_ind_beta["beta", j])
-        phase_ind_beta["beta", j] /= ph0
+        phase_ind_beta["beta", j] /= prscr.zeroth_order_ph(phase_ind_beta["beta", j])
     phase_ind_beta = phase_ind_beta.real.integrate("t2")
     mysign = (phase_ind_beta / d_overall_zero).angle / np.pi
     mysign = np.exp(1j * np.pi * mysign.run(np.round))
