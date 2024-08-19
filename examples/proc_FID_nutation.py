@@ -36,7 +36,7 @@ with psd.figlist_var() as fl:
     # }}}
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    # {{{ apply overall zeroth order correction
+    # {{{ Apply overall zeroth order correction
     s = prscr.select_pathway(
         s["t2":signal_range], s.get_prop("coherence_pathway")
     )
@@ -47,18 +47,19 @@ with psd.figlist_var() as fl:
     ax1.set_title("Signal pathway / ph0")
     # }}}
     # {{{ Look at phase variation
-    d_uncorrected = s.C.real.integrate("t2")
-    # PR again, you need to rename these
+    d_overall_zero = s.C.real.integrate("t2")
+    phase_ind_beta = s.C
     for j in range(len(s.getaxis("beta"))):
-        ph0 = prscr.zeroth_order_ph(phase_var_s["beta", j])
-        phase_var_s["beta", j] /= ph0
-    d_ind_ph0 = phase_var_s.real.integrate("t2")
-    mysign = (d_ind_ph0 / d_uncorrected).angle / np.pi
+        ph0 = prscr.zeroth_order_ph(phase_ind_beta["beta", j])
+        phase_ind_beta["beta", j] /= ph0
+    phase_ind_beta.real.integrate("t2")
+    mysign = (phase_ind_beta / d_overall_zero).angle / np.pi
     mysign = np.exp(1j * np.pi * mysign.run(np.round))
     s *= mysign
-    fl.image(d_raw, ax=ax2)
+    fl.image(s, ax=ax2)
     ax2.set_title("Check phase variation along indirect")
     # }}}
+    s *= mysign
     # {{{ generate the table of integrals and fit
     s = s.real.integrate("t2")
     s.set_error(None)
