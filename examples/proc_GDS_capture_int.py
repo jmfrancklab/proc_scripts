@@ -7,7 +7,7 @@ colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 color_cycle = cycle(colorcyc_list)
 
 V_atten_ratio = 102.35  # attenutation ratio
-loose_HH_width = 1e6
+HH_width = 2e6
 int_slop = 1e-6
 
 with psd.figlist_var() as fl:
@@ -48,23 +48,23 @@ with psd.figlist_var() as fl:
         nu_a = (
             carrier - n * SW
         )  # find the aliased peak -- again, measuring from the left side
-        center = SW - abs(nu_a)
         s.ft("t")
         fl.next("Frequency Domain")
         fl.plot(s, color=raw_color, label="raw analytic")
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ lorentzian filter
         delta_nu = 15.19e6 - 14.61e6
-        Lorentzian_filtered = s * 1/(1+1j*2*(s.fromaxis("t")-carrier)*(1/delta_nu))
+        Lorentzian_filtered = (
+            s * 1 / (1 + 1j * 2 * (s.fromaxis("t") - carrier) * (1 / delta_nu))
+        )
         # }}}
         # {{{ heaviside hat functions
-        # {{{ determine center frequency
-        s.ift("t")
-        # }}}
-        s.ft("t")
+        assert (0 > nu_a * 0.5 * HH_width) or (
+            0 < nu_a - 0.5 * HH_width
+        ), "unfortunately the region I want to filter includes DC -- this is probably not good, and means you should pick a different timescale for your scope so this doesn't happen"
         Heaviside_filtered = s.C
-        Heaviside_filtered["t" : (0, center - loose_HH_width)] *= 0
-        Heaviside_filtered["t" : (center + loose_HH_width, None)] *= 0
+        Heaviside_filtered["t" : (0, SW - abs(nu_a) - 0.5 * HH_width)] *= 0
+        Heaviside_filtered["t" : (SW - abs(nu_a) + 0.5 * HH_width, None)] *= 0
         # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
