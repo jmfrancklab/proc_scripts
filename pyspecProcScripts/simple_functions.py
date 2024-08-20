@@ -33,7 +33,7 @@ class logobj(object):
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
-            return concatenate(
+            return np.concatenate(
                 self.log_list + [self.log_array[: self.log_pos]]
             )
 
@@ -134,3 +134,28 @@ def determine_sign(s, direct="t2", fl=None):
             fl.image(s * data_sgn)
         fl.pop_marker()
     return data_sgn
+
+
+def find_apparent_anal_freq(s):
+    carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+    dt = s["t"][1] - s["t"][0]
+    if carrier < 1 / dt:
+        print("You are in the clear and no aliasing took place!")
+        nu_a = carrier
+    else:
+        SW = 2 / dt  # SW of data before made analytic - what scope sees
+        n = np.floor(  # nearest integer multiple of sampling frequency
+            (carrier + SW / 2) / SW
+        )
+        nu_a = carrier - n * SW
+        if nu_a < 0:
+            # signal ended up in the negative with respect to the analytically filtered
+            # so we need to run the complex conjugate and repeat the process
+            # of finding the aliased aliased signal
+            SW = SW / 2
+            n = np.floor((carrier + SW / 2) / SW)
+            s.run(np.conj)
+            # abs ensures we calculate the correct nu_a whether the signal is aliased
+            # from below or above SW / 2
+            nu_a = abs(carrier - n * SW)
+    return s, nu_a

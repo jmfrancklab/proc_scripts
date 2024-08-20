@@ -2,6 +2,7 @@ import pyspecdata as psd
 import matplotlib.pyplot as plt
 import numpy as np
 from itertools import cycle
+from pyspecProcScripts import find_apparent_anal_freq
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 color_cycle = cycle(colorcyc_list)
@@ -46,31 +47,7 @@ with psd.figlist_var() as fl:
         abs_color = next(color_cycle)
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ apply frequency filter
-        carrier = (
-            s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
-        )  # signal frequency
-        dt = s["t"][1] - s["t"][0]
-        if carrier < 1 / dt:
-            print("you're in the clear and no aliasing took place")
-            nu_a = carrier  # apparent frequency is the carrier
-        else:
-            SW = 2 / (
-                s["t"][1] - s["t"][0]
-            )  # SW of the data before we take analytic - what scope sees
-            n = np.floor(
-                (carrier + SW / 2) / SW
-            )  # nearest integer multiple of sampling frequency
-            # if the signal was in the portion we cut out we would do nSW - carrier and if it was above the SW/2 of the scope then we would do carrier - nSW therefore we simply do abs
-            nu_a = carrier - n * SW  # aliasing frequency
-            if nu_a < 0:
-                # signal ends up in negative with respect to the analytically filtered so
-                # we need to run the complex conjugate and repeat the process
-                # of finding the aliased aliased signal
-                SW = SW / 2
-                n = np.floor((carrier + SW / 2) / SW)
-                s.run(np.conj)
-                # abs ensures we calculate the correct nu_a whether the signal is aliased from below or above SW/2
-                nu_a = abs(carrier - n * SW)
+        s, nu_a = find_apparent_anal_freq(s)
         s.ft("t")
         fl.next("Frequency Domain")
         fl.plot(s, color=raw_color, label="raw analytic")
@@ -78,7 +55,18 @@ with psd.figlist_var() as fl:
         # {{{ lorentzian filter
         delta_nu = 15.19e6 - 14.61e6
         Lorentzian_filtered = (
-            s * 1 / (1 + 1j * 2 * (s.fromaxis("t") - carrier) * (1 / delta_nu))
+            s
+            * 1
+            / (
+                1
+                + 1j
+                * 2
+                * (
+                    s.fromaxis("t")
+                    - s.get_prop("acq_params")["carrierFreq_MHz"]
+                )
+                * (1 / delta_nu)
+            )
         )
         # }}}
         # {{{ heaviside hat functions
