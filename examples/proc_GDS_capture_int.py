@@ -13,9 +13,13 @@ int_slop = 1e-6
 with psd.figlist_var() as fl:
     for filename, nodename in [
         (
-            "240819_amp0p1_beta_max_pulse_capture.h5",
-            "pulse_capture_6",
+            "240819_amp0p05_beta_max_pulse_capture.h5",
+            "pulse_capture_9",
         ),
+        # (
+        #    "240819_amp0p1_beta_max_pulse_capture.h5",
+        #    "pulse_capture_6",
+        # ),
     ]:
         s = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
@@ -38,16 +42,21 @@ with psd.figlist_var() as fl:
         abs_color = next(color_cycle)
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ apply frequency filter
-        SW = 1 / (s["t"][1] - s["t"][0])  # sample rate
+        SW = 1 / (s["t"][1] - s["t"][0])  # nyquists frequency
         carrier = (
             s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
         n = np.floor(
             (carrier + SW / 2) / SW
-        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
-        nu_a = (
-            carrier - n * SW
-        )  # find the aliased peak -- again, measuring from the left side
+        )  # nearest integer multiple of sampling frequency
+        nu_a = carrier - n * SW  # aliasing frequency
+        if nu_a < 0:
+            perceived_nu = abs(
+                nu_a
+            )  # We removed the negative frequencies so it's counterpart is the abs
+            s.run(np.conj)
+        else:  # otherwise subtract the difference between the signal and nyquist from nyquist's
+            perceived_nu = SW - nu_a
         s.ft("t")
         fl.next("Frequency Domain")
         fl.plot(s, color=raw_color, label="raw analytic")
@@ -59,12 +68,15 @@ with psd.figlist_var() as fl:
         )
         # }}}
         # {{{ heaviside hat functions
-        assert (0 > nu_a * 0.5 * HH_width) or (
-            0 < nu_a - 0.5 * HH_width
+        assert (0 > perceived_nu * 0.5 * HH_width) or (
+            0 < perceived_nu - 0.5 * HH_width
         ), "unfortunately the region I want to filter includes DC -- this is probably not good, and means you should pick a different timescale for your scope so this doesn't happen"
         Heaviside_filtered = s.C
-        Heaviside_filtered["t" : (0, SW - abs(nu_a) - 0.5 * HH_width)] *= 0
-        Heaviside_filtered["t" : (SW - abs(nu_a) + 0.5 * HH_width, None)] *= 0
+        fl.next("hh")
+        fl.plot(Heaviside_filtered)
+        Heaviside_filtered["t" : (None, perceived_nu - 0.5 * HH_width)] *= 0
+        Heaviside_filtered["t" : (perceived_nu + 0.5 * HH_width, None)] *= 0
+        fl.plot(Heaviside_filtered)
         # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
