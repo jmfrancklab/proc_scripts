@@ -54,6 +54,7 @@ with psd.figlist_var() as fl:
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
         pulse_lengths = d.get_prop("programmed_t_pulse_us")
+
         def switch_to_plot(d, j):
             thislen = pulse_lengths[j]
             fl.next(f"pulse length = {thislen}")
@@ -77,20 +78,24 @@ with psd.figlist_var() as fl:
         d.ft("t")
         # {{{ apply frequency filter
         d.ift("t")
-        SW = 1 / (d["t"][1] - d["t"][0])  # sample rate
+        SW = 1 / (d["t"][1] - d["t"][0])  # nyquists freq
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
         n = np.floor(
             (carrier + SW / 2) / SW
-        )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
-        nu_a = (
-            carrier - n * SW
-        )  # find the aliased peak -- again, measuring from the left side
-        center = SW - abs(nu_a)
+        )  # nearest integer multiple of sampling frequency
+        nu_a = carrier - n * SW  # find the aliasing frequency
+        if nu_a < 0:
+            perceived_nu = abs(
+                nu_a
+            )  # we removed the negative frequencies so it's counterpart is the abs
+            d.run(np.conj)
+        else:  # otherwise subtract the difference between the signal and nyquist from nyquist's
+            perceived_nu = SW - nu_a
         d.ft("t")
-        d["t" : (None, nu_a - 0.5 * slicewidth)] *= 0
-        d["t" : (nu_a + 0.5 * slicewidth, None)] *= 0
+        d["t" : (None, perceived_nu - 0.5 * slicewidth)] *= 0
+        d["t" : (perceived_nu + 0.5 * slicewidth, None)] *= 0
 
         # }}}
         d.ift("t")
