@@ -61,7 +61,16 @@ with psd.figlist_var() as fl:
                 (carrier + SW / 2) / SW
             )  # nearest integer multiple of sampling frequency
             # if the signal was in the portion we cut out we would do nSW - carrier and if it was above the SW/2 of the scope then we would do carrier - nSW therefore we simply do abs
-            nu_a = abs(carrier - n * SW)  # aliasing frequency
+            nu_a = carrier - n * SW  # aliasing frequency
+            if nu_a < 0:
+                # signal ends up in negative with respect to the analytically filtered so
+                # we need to run the complex conjugate and repeat the process
+                # of finding the aliased aliased signal
+                SW = SW / 2
+                n = np.floor((carrier + SW / 2) / SW)
+                s.run(np.conj)
+                # abs ensures we calculate the correct nu_a whether the signal is aliased from below or above SW/2
+                nu_a = abs(carrier - n * SW)
         s.ft("t")
         fl.next("Frequency Domain")
         fl.plot(s, color=raw_color, label="raw analytic")
