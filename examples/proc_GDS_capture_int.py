@@ -42,9 +42,8 @@ with psd.figlist_var() as fl:
         carrier = (
             s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
         )  # signal frequency
-        fn = SW / 2  # nyquist frequency
         n = np.floor(
-            (carrier + fn) / SW
+            (carrier + SW / 2) / SW
         )  # how far is the carrier from the left side of the spectrum (which is at SW/2), in integral multiples of SW
         nu_a = (
             carrier - n * SW
@@ -57,11 +56,11 @@ with psd.figlist_var() as fl:
         # {{{ lorentzian filter
         x = s.C.getaxis("t")
         for_L = s.C  # make copy for lorentzian filter
-        Lambda = 15.19e6 - 14.61e6
+        delta_nu = 15.19e6 - 14.61e6
         s_max = abs(for_L).data.max()
         L = (
             psd.nddata(
-                s_max / (1 + 1j * 2 * (x - carrier) * (1 / Lambda)), ["t"]
+                s_max / (1 + 1j * 2 * (x - carrier) * (1 / delat_nu)), ["t"]
             )
             .setaxis("t", x)
             .set_units("t", for_L.get_units("t"))
@@ -74,13 +73,13 @@ with psd.figlist_var() as fl:
         s.ift("t")
         # }}}
         s.ft("t")
-        wide_HH = s.C
-        wide_HH["t" : (0, center - loose_HH_width)] *= 0
-        wide_HH["t" : (center + loose_HH_width, None)] *= 0
+        Heaviside_filtered = s.C
+        Heaviside_filtered["t" : (0, center - loose_HH_width)] *= 0
+        Heaviside_filtered["t" : (center + loose_HH_width, None)] *= 0
         # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
-            (wide_HH, "loose HH", 0.5),
+            (Heaviside_filtered, "loose HH", 0.5),
             (for_L, "lorentzian", -0.5),
         ]:
             color = next(color_cycle)
