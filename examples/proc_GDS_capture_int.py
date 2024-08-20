@@ -54,19 +54,8 @@ with psd.figlist_var() as fl:
         fl.plot(s, color=raw_color, label="raw analytic")
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ lorentzian filter
-        x = s.C.getaxis("t")
-        for_L = s.C  # make copy for lorentzian filter
         delta_nu = 15.19e6 - 14.61e6
-        s_max = abs(for_L).data.max()
-        L = (
-            psd.nddata(
-                s_max / (1 + 1j * 2 * (x - carrier) * (1 / delat_nu)), ["t"]
-            )
-            .setaxis("t", x)
-            .set_units("t", for_L.get_units("t"))
-        )
-        for_L *= L
-        for_L /= s_max
+        Lorentzian_filtered = s * 1/(1+1j*2*(s.fromaxis("t")-carrier)*(1/delta_nu))
         # }}}
         # {{{ heaviside hat functions
         # {{{ determine center frequency
@@ -80,7 +69,7 @@ with psd.figlist_var() as fl:
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
             (Heaviside_filtered, "loose HH", 0.5),
-            (for_L, "lorentzian", -0.5),
+            (Lorentzian_filtered, "lorentzian", -0.5),
         ]:
             color = next(color_cycle)
             filtered_data.ift("t")
