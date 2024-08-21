@@ -1,11 +1,11 @@
 """
-=====================
 Process FID nutation data
 ====================
 `py proc_FID_nutation.py NODENAME FILENAME EXP_TYPE`
 
 Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
-This script plots the result, as well as signal that's averaged along the `nScans` dimension.
+This script plots the result as well as examines the phase variation along the indirect dimension.
+Finally the data is integrated and fit to a sin function to find the optimal beta_ninety.
 
 Tested with:
 

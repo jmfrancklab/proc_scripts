@@ -1,11 +1,11 @@
 """
-=====================
 Process nutation data
 ====================
 `py proc_nutation.py NODENAME FILENAME EXP_TYPE`
 
 Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
-This script plots the result, as well as signal that's averaged along the `nScans` dimension.
+This script plots the result as well as examines the phase variation along the indirect dimension.
+Finally, the data is integrated and fit to a sin**3 function to find the optimal beta_ninety.
 
 Tested with:
 
@@ -49,27 +49,30 @@ with psd.figlist_var() as fl:
         ax=ax1,
     )
     ax1.set_title("Signal pathway / ph0")
-    d_raw = prscr.select_pathway(
-        s["t2":signal_range].C, s.get_prop("coherence_pathway")
-    )  # for plotting purposes - s needs to have the ph dimension for
-    #  fid_from_echo
     # }}}
     # {{{ Look at phase variation
-    d_integral = prscr.select_pathway(s["t2":signal_range],s.get_prop("coherence_pathway")).real.integrate("t2")
-    phase_ind_beta = prscr.select_pathway(
-        s["t2":signal_range].C, s.get_prop("coherence_pathway")
-    )
+    d_integral = s["t2":signal_range].real.integrate("t2")
+    phase_ind_beta = s["t2":signal_range].C
     for j in range(len(s.getaxis("beta"))):
-        phase_ind_beta["beta", j] /= prscr.zeroth_order_ph(phase_ind_beta["beta", j])
+        phase_ind_beta["beta", j] /= prscr.zeroth_order_ph(
+            prscr.select_pathway(
+                phase_ind_beta["beta", j], s.get_prop("coherence_pathway")
+            )
+        )
     phase_ind_beta = phase_ind_beta.real.integrate("t2")
     mysign = (phase_ind_beta / d_integral).angle / np.pi
     mysign = np.exp(1j * np.pi * mysign.run(np.round))
-    d_raw *= mysign
-    fl.image(d_raw, ax=ax2)
+    s *= mysign
+    fl.image(
+        prscr.select_pathway(
+            s["t2":signal_range], s.get_prop("coherence_pathway")
+        ),
+        ax=ax2,
+        human_units=False,
+    )
     ax2.set_title("Check phase variation along indirect")
     # }}}
     # {{{ apply phasing and FID slice
-    s *= mysign
     s.set_error(None)
     s = prscr.fid_from_echo(s, s.get_prop("coherence_pathway"))
     s *= mysign
@@ -78,9 +81,10 @@ with psd.figlist_var() as fl:
     ax3.set_title("Phased and FID sliced")
     # }}}
     s = s["t2":signal_range].real.integrate("t2")
-    s.set_error(None)
+    s.set_error(
+        None
+    )  # error gets set again and messes up the sizing of the data
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
-    s.set_units("beta", d_raw.get_units("beta"))
     fl.next("Integrated and Fit")
     fl.plot(s, "o")
     s = psd.lmfitdata(s)
