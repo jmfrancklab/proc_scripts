@@ -9,6 +9,7 @@ This is performed with amplitude pulses driving into an attenuator and measured 
 as for the calibration.
 """
 import pyspecdata as psd
+from pyspecProcScripts import find_apparent_anal_freq
 import matplotlib.pyplot as plt
 import numpy as np
 from itertools import cycle
@@ -20,7 +21,7 @@ color_cycle = cycle(
 
 V_atten_ratio = 102.2  # attenutation ratio
 skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
-slicewidth = 2e6
+HH_width = 2e6
 
 
 with psd.figlist_var() as fl:
@@ -72,31 +73,25 @@ with psd.figlist_var() as fl:
                         label=thislabel,
                     )
 
-        indiv_plots(d, "raw", "blue")
         # {{{ data is already analytic, and downsampled to below 24 MHz
-        indiv_plots(abs(d), "analytic", "orange")
+        indiv_plots(abs(d), "abs(analytic)", "orange")
+        d, nu_a, _ = find_apparent_anal_freq(d)
         d.ft("t")
+        fl.next("Frequency Domain")
+        fl.plot(d)
+        fl.plot(abs(d))
+        plt.text(
+            x=0.5,
+            y=0.5,
+            s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
+            transform=plt.gca().transAxes,
+        )
+        assert (0 > nu_a * 0.5 * HH_width) or (
+            0 < nu_a - 0.5 * HH_width
+        ), "unfortunately the region I want to filter includes DC -- this is probablye not good, and you should pick a different timescale for your scope so this doesn't happen"
         # {{{ apply frequency filter
-        d.ift("t")
-        SW = 1 / (d["t"][1] - d["t"][0])  # nyquists freq
-        carrier = (
-            d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
-        )  # signal frequency
-        n = np.floor(
-            (carrier + SW / 2) / SW
-        )  # nearest integer multiple of sampling frequency
-        nu_a = carrier - n * SW  # find the aliasing frequency
-        if nu_a < 0:
-            perceived_nu = abs(
-                nu_a
-            )  # we removed the negative frequencies so it's counterpart is the abs
-            d.run(np.conj)
-        else:  # otherwise subtract the difference between the signal and nyquist from nyquist's
-            perceived_nu = SW - nu_a
-        d.ft("t")
-        d["t" : (None, perceived_nu - 0.5 * slicewidth)] *= 0
-        d["t" : (perceived_nu + 0.5 * slicewidth, None)] *= 0
-
+        d["t" : (None, nu_a - 0.5 * HH_width)] *= 0
+        d["t" : (nu_a + 0.5 * HH_width, None)] *= 0
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
@@ -130,7 +125,7 @@ with psd.figlist_var() as fl:
                 plt.ylabel(r"$\sqrt{P_{pulse}}$")
                 plt.text(
                     int_range[0] * 1e6 - 1,
-                    -1,
+                    0.25,
                     r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
                     % (beta["beta", j].item() / 1e-6),
                 )
