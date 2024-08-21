@@ -43,54 +43,50 @@ with psd.figlist_var() as fl:
         s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
         fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
         raw_color = next(color_cycle)
-        fl.plot(s, color=raw_color, label="raw analytic")
+        fl.plot(abs(s), color=raw_color, label="raw analytic")
         abs_color = next(color_cycle)
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ apply frequency filter
-        s, nu_a = find_apparent_anal_freq(s)
+        s, nu_a, _ = find_apparent_anal_freq(s)
         s.ft("t")
         fl.next("Frequency Domain")
         fl.plot(s, color=raw_color, label="raw analytic")
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
+        plt.text(
+            x=0.5,
+            y=0.5,
+            s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
+            transform=plt.gca().transAxes,
+        )
         # {{{ lorentzian filter
-        delta_nu = 15.19e6 - 14.61e6
-        Lorentzian_filtered = (
-            s
-            * 1
-            / (
-                1
-                + 1j
-                * 2
-                * (
-                    s.fromaxis("t")
-                    - s.get_prop("acq_params")["carrierFreq_MHz"]
-                )
-                * (1 / delta_nu)
-            )
+        Delta_nu = 15.19e6 - 14.61e6
+        Lorentzian_filtered = s / (
+            1 + 1j * 2 * (s.fromaxis("t") - nu_a) * (1 / Delta_nu)
         )
         # }}}
         # {{{ heaviside hat functions
         assert (0 > nu_a * 0.5 * HH_width) or (
             0 < nu_a - 0.5 * HH_width
         ), "unfortunately the region I want to filter includes DC -- this is probably not good, and means you should pick a different timescale for your scope so this doesn't happen"
-        Heaviside_filtered = s.C
-        Heaviside_filtered["t" : (None, nu_a - 0.5 * HH_width)] *= 0
-        Heaviside_filtered["t" : (nu_a + 0.5 * HH_width, None)] *= 0
+        s["t" : (None, nu_a - 0.5 * HH_width)] *= 0
+        s["t" : (nu_a + 0.5 * HH_width, None)] *= 0
         # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
-            (Heaviside_filtered, "loose HH", 0.5),
-            (Lorentzian_filtered, "lorentzian", -0.5),
+            (s, "Heaviside hat", 0.5),
+            (Lorentzian_filtered, "Lorentzian", -0.5),
         ]:
-            color = next(color_cycle)
+            thiscolor = next(color_cycle)
             filtered_data.ift("t")
             fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             fl.plot(
-                abs(filtered_data), color=f"{color}", label=label + " filter"
+                abs(filtered_data), color=thiscolor, label=label + " filter"
             )
             filtered_data.ft("t")
             fl.next("Frequency Domain")
-            fl.plot(abs(filtered_data), color=color, alpha=0.5, label=label)
+            fl.plot(
+                abs(filtered_data), color=thiscolor, alpha=0.5, label=label
+            )
             filtered_data.ift("t")
             fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             beta = (
@@ -102,6 +98,7 @@ with psd.figlist_var() as fl:
                 1,
                 ax_place,
                 r"$\beta_{%s} = %f \mu s \sqrt{W}$" % (label, beta),
+                color=thiscolor,
             )
         plt.ylabel(r"$\sqrt{P}$ / $\mathrm{\sqrt{W}}$")
         # }}}
