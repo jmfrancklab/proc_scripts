@@ -43,7 +43,7 @@ with psd.figlist_var() as fl:
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         assert (
-            d.get_prop("postproc_type") is "spincore_GDS_capture"
+            d.get_prop("postproc_type") is "GDS_capture_v1"
         ), "No postproc type was set upon acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
