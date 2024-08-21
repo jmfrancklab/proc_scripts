@@ -9,6 +9,7 @@ and the absolute is taken prior to integrating to return the beta where
 """
 import pyspecdata as psd
 import matplotlib.pyplot as plt
+from pyspecProcScripts import find_apparent_anal_freq
 import numpy as np
 from itertools import cycle
 
@@ -18,7 +19,7 @@ color_cycle = cycle(
 )  # this can be done more than once to spin up multiple lists
 
 V_atten_ratio = 102.2  # attenutation ratio
-skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
+skip_plots = 45  # diagnostic -- set this to None, and there will be no plots
 slicewidth = 1e6
 typical_180 = 40e-6  # typical beta for a 180 -- it's really important to get pulses in this regime correct
 
@@ -75,42 +76,44 @@ with psd.figlist_var() as fl:
                     )
 
         indiv_plots(d, "raw", "blue")
-        # {{{ data is already analytic, and downsampled to below 24 MHz
+        # {{{ find apparent frequency and apply HH
         indiv_plots(abs(d), "analytic", "orange")
+        d, nu_a, _ = find_apparent_anal_freq(d)
         d.ft("t")
+        # {{{ diagnostic for finding apparent frequency
+        fl.next("Frequency Domain")
+        fl.plot(d)
+        plt.text(
+            x=0.5,
+            y=0.5,
+            s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
+            transform=plt.gca().transAxes,
+        )
+        # }}}
+        assert (0 > nu_a + 0.5 * slicewidth) or (
+            0 < nu_a - 0.5 * slicewidth
+        ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
         # {{{ apply frequency filter
-        d.ift("t")
-        SW = 1 / (d["t"][1] - d["t"][0])  # sample rate
-        carrier = (
-            d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
-        )  # signal frequency
-        n = np.floor(
-            (carrier + SW / 2) / SW
-        )  # nearest integer multiple of sampling frequency
-        nu_a = carrier - n * SW  # aliasing frequency
-        if nu_a < 0:
-            perceived_nu = abs(nu_a)
-            # we removed the negative frequencies so it's counterpart is the abs
-            d.run(np.conj)
-        else:  # otherwise subtract the difference between the signal and nyquist from nyquist's
-            perceived_nu = SW - nu_a
-        d.ft("t")
-        d["t" : (0, perceived_nu - 0.5 * slicewidth)] *= 0
-        d["t" : (perceived_nu + 0.5 * slicewidth, None)] *= 0
+        d["t" : (0, nu_a - 0.5 * slicewidth)] *= 0
+        d["t" : (nu_a + 0.5 * slicewidth, None)] *= 0
+        # }}}
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
+        # {{{ diagnostic to look at the individual pulses all plotted together
+        # to make sure none are skipped over resulting in faulty data
         fl.next("collect filtered analytic", legend=True)
         for j in range(d.shape["t_pulse"]):
             s = d["t_pulse", j].C
             s["t"] -= abs(s).contiguous(lambda x: x > 0.05 * s.max())[0][0]
-            fl.plot(abs(s), alpha=0.3, label=f"{j}")
+            fl.plot(abs(s), alpha=0.3)
         # }}}
-        thislabel = "amplitude = %f" % amplitude
         thiscolor = next(color_cycle)
+        # {{{ set up beta shape to drop values into
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
         beta.set_units(r"s√W").set_units("t_pulse", "s")
+        # }}}
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             thislen = d["t_pulse"][j]
@@ -131,8 +134,8 @@ with psd.figlist_var() as fl:
                 )
                 plt.ylabel(r"$\sqrt{P_{pulse}}$")
                 plt.text(
-                    int_range[0] * 1e6 - 1,
-                    -1,
+                    int_range[0] * 1e6 + 5,
+                    0,
                     r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
                     % (beta["t_pulse", j].item() / 1e-6),
                 )
@@ -141,27 +144,31 @@ with psd.figlist_var() as fl:
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
         beta.rename("t_pulse", "$A t_{pulse}$")
         beta.name(r"$\beta$")
+        beta["$A t_{pulse}$"] *= amplitude
         fl.plot(
-            (beta.C / 1e-6).set_units("μs√W") * amplitude,
+            (beta.C / 1e-6).set_units("μs√W"),
             color=thiscolor,
-            label=thislabel,
+            label="amplitude = %f" % amplitude,
         )
+        beta["$A t_{pulse}$"] /= amplitude
         psd.gridandtick(plt.gca())
         beta.rename("$A t_{pulse}$", "t_pulse")
         # }}}
+        # {{{ Identify captures that don't increase in beta - don't use
         decreasing_idx = np.nonzero(~(np.diff(beta.data) > 0))[0]
         if (
             len(decreasing_idx) > 0
         ):  # beta doesn't always increase with increasing pulse length
             fl.plot(
-                beta["t_pulse", : decreasing_idx[-1] + 1] * amplitude,
+                beta["t_pulse", : decreasing_idx[-1] + 1],
                 "x",
                 color="r",
                 label="can't use these",
             )
             beta = beta["t_pulse", decreasing_idx[-1] + 1 :]
-        plt.axvline(  # the linear threshold is the threshold above which beta is linear
-            x=linear_threshold / 1e-6,  # as above
+        # }}}
+        plt.axhline(  # the linear threshold is the threshold above which beta is linear
+            y=linear_threshold / 1e-6,  # as above
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
@@ -183,9 +190,10 @@ with psd.figlist_var() as fl:
             "beta", order=1
         )
         print(
-            "Non-linear regime coefficients for %s:" % fl.basename, c_nonlinear
+            f"\n**************** Coefficients for {amplitude} ****************\n"
         )
-        print("Linear regime coefficients for %s:" % fl.basename, c_linear)
+        print("Non-linear regime coefficients:\n", c_nonlinear)
+        print("Linear regime coefficients:\n", c_linear)
 
         def prog_plen(desired):
             """function that takes the coefficients of the linear and nonlinear
@@ -213,14 +221,14 @@ with psd.figlist_var() as fl:
             t_us_v_beta * amplitude,
             ".",
             alpha=0.5,
-            label="data for %s" % thislabel,
+            label=f"data for {amplitude}",
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
         fl.plot(
             t_us_v_beta["beta":(None, typical_180)] * amplitude,
             ".",
             alpha=0.5,
-            label="data for %s" % thislabel,
+            label=f"data for {amplitude}",
         )
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
