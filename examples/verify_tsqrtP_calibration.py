@@ -29,11 +29,11 @@ with psd.figlist_var() as fl:
         (
             "240819_test_amp0p05_calib_pulse_calib.h5",
             "pulse_calib_5",
-        ),  
+        ),
         (
             "240819_amp0p1_calib_pulse_calib.h5",
             "pulse_calib_2",
-        ), 
+        ),
         (
             "240819_amp0p2_calib_repeat_pulse_calib.h5",
             "pulse_calib_9",
@@ -44,7 +44,7 @@ with psd.figlist_var() as fl:
         )
         assert (
             d.get_prop("postproc_type") is "GDS_capture_v1"
-        ), "No postproc type was set upon acquisition"
+        ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         if not d.get_units("t") == "s":
@@ -70,16 +70,16 @@ with psd.figlist_var() as fl:
                         d["beta", j],
                         alpha=0.2,
                         color=thiscolor,
-                        label=thislabel,
+                        label="Amplitude = %f" % amplitud,
                     )
 
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "abs(analytic)", "orange")
         d, nu_a, _ = find_apparent_anal_freq(d)
         d.ft("t")
+        # {{{ Diagnostic to ensure the frequency was properly identified
         fl.next("Frequency Domain")
         fl.plot(d)
-        fl.plot(abs(d))
         plt.text(
             x=0.5,
             y=0.5,
@@ -89,23 +89,27 @@ with psd.figlist_var() as fl:
         assert (0 > nu_a * 0.5 * HH_width) or (
             0 < nu_a - 0.5 * HH_width
         ), "unfortunately the region I want to filter includes DC -- this is probablye not good, and you should pick a different timescale for your scope so this doesn't happen"
+        # }}}
         # {{{ apply frequency filter
         d["t" : (None, nu_a - 0.5 * HH_width)] *= 0
         d["t" : (nu_a + 0.5 * HH_width, None)] *= 0
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
+        # {{{ Diagnostic to plot all pulses on the same plot to see none were skipped
         fl.next("collect filtered analytic", legend=True)
         for j in range(d.shape["beta"]):
             s = d["beta", j].C
             s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
             fl.plot(abs(s), alpha=0.3, label=f"{j}")
         # }}}
-        thislabel = "Amplitude = %f" % amplitude
+        # }}}
         thiscolor = next(color_cycle)
+        # {{{ set up shape of beta to drop the correct values in
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
         beta.set_units(r"s√W").set_units("beta", "s√W")
+        # }}}
         for j in range(len(d["beta"])):
             s = d["beta", j]
             thislen = d["beta"][j]
@@ -115,6 +119,8 @@ with psd.figlist_var() as fl:
             int_range[-1] += 2e-6
             beta["beta", j] = abs(s["t":int_range]).integrate("t").data.item()
             beta["beta", j] /= np.sqrt(2)  # Vrms
+            # {{{ Can't use indiv_plots because we've already indexed the beta
+            # out and we also want to plot the calculated beta on top
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
                 fl.plot(
@@ -129,13 +135,14 @@ with psd.figlist_var() as fl:
                     r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
                     % (beta["beta", j].item() / 1e-6),
                 )
+                # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
-        fl.basename = None
+        fl.basename = None  # we want to plot all amplitudes together now
         fl.next(r"Measured $\beta$ vs programmed $\beta$")
         fl.plot(
             (beta.C / 1e-6).set_units("μs√W"),
             color=thiscolor,
-            label=thislabel,
+            label="Amplitude = %f" % amplitude,
         )
         plt.xlabel(r"Programmed $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         plt.ylabel(r"Measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
