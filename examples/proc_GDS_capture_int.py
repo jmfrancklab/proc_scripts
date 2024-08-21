@@ -9,7 +9,6 @@ color_cycle = cycle(colorcyc_list)
 
 V_atten_ratio = 102.2  # attenutation ratio
 HH_width = 2e6
-int_slop = 1e-6
 Delta_nu = (
     15.19e6 - 14.61e6
 )  # width of reflection at -3dB - specific to large probe
@@ -32,11 +31,13 @@ with psd.figlist_var() as fl:
         s = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
+        # {{{ define basename
         amplitude = s.get_prop("acq_params")["amplitude"]
         beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"] * 1e6
         fl.basename = (
             f"amplitude = {amplitude}, $\\beta$ = {beta_us_sqrt_W} \n"
         )
+        # }}}
         if not s.get_units("t") == "s":
             print(
                 "units weren't set for the t axis or else I can't read them from the hdf5 file!"
@@ -45,15 +46,12 @@ with psd.figlist_var() as fl:
         s *= V_atten_ratio  # attenutation ratio
         s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
         fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
-        raw_color = next(color_cycle)
-        fl.plot(abs(s), color=raw_color, label="raw analytic")
         abs_color = next(color_cycle)
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ apply frequency filter
         s, nu_a, _ = find_apparent_anal_freq(s)
         s.ft("t")
         fl.next("Frequency Domain")
-        fl.plot(s, color=raw_color, label="raw analytic")
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         plt.text(
             x=0.5,
@@ -73,6 +71,7 @@ with psd.figlist_var() as fl:
         s["t" : (None, nu_a - 0.5 * HH_width)] *= 0
         s["t" : (nu_a + 0.5 * HH_width, None)] *= 0
         # }}}
+        # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
             (s, "Heaviside hat", 0.3),
@@ -90,12 +89,12 @@ with psd.figlist_var() as fl:
                 abs(filtered_data), color=thiscolor, alpha=0.5, label=label
             )
             filtered_data.ift("t")
-            fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             beta = (
                 abs(filtered_data).integrate("t").data.item()
                 / np.sqrt(2)
                 * 1e6
             )
+            fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             plt.text(
                 (s["t"].max() * 1e6) / 2 - 50,
                 ax_place,
