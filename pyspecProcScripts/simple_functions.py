@@ -137,12 +137,32 @@ def determine_sign(s, direct="t2", fl=None):
 
 
 def find_apparent_anal_freq(s):
+    """A function to identify the position of analytic signal as acquired on the oscilloscope.
+    Importantly this function takes into account the effects of aliasing in identifying the
+    frequency of the resulting signal.
+
+    Parameters
+    ==========
+    s: nddata
+        data with a single (dominant) peak, where you want to identify the frequency.
+
+    Returns
+    =======
+    s: nddata
+        The original data that was initially fed to the function
+    nu_a: float
+        The apparent frequency of the signal
+    isflipped: boolean
+        If aliased from a negative frequency, this notes whether the phase
+        of the final time domain signal will be flipped
+    """
     # PR you need a docstring here
     carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
     dt = s["t"][1] - s["t"][0]
     if carrier < 1 / dt:
         print("You are in the clear and no aliasing took place!")
         nu_a = carrier
+        isflipped = False
     else:
         SW = 2 / dt  # SW of data before made analytic
         #              - what scope sees

@@ -7,9 +7,12 @@ from pyspecProcScripts import find_apparent_anal_freq
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 color_cycle = cycle(colorcyc_list)
 
-V_atten_ratio = 102.35  # attenutation ratio
+V_atten_ratio = 102.2  # attenutation ratio
 HH_width = 2e6
 int_slop = 1e-6
+Delta_nu = (
+    15.19e6 - 14.61e6
+)  # width of reflection at -3dB - specific to large probe
 
 with psd.figlist_var() as fl:
     for filename, nodename in [
@@ -30,7 +33,7 @@ with psd.figlist_var() as fl:
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         amplitude = s.get_prop("acq_params")["amplitude"]
-        beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"]
+        beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"] * 1e6
         fl.basename = (
             f"amplitude = {amplitude}, $\\beta$ = {beta_us_sqrt_W} \n"
         )
@@ -59,7 +62,6 @@ with psd.figlist_var() as fl:
             transform=plt.gca().transAxes,
         )
         # {{{ lorentzian filter
-        Delta_nu = 15.19e6 - 14.61e6
         Lorentzian_filtered = s / (
             1 + 1j * 2 * (s.fromaxis("t") - nu_a) * (1 / Delta_nu)
         )
@@ -73,8 +75,8 @@ with psd.figlist_var() as fl:
         # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
-            (s, "Heaviside hat", 0.5),
-            (Lorentzian_filtered, "Lorentzian", -0.5),
+            (s, "Heaviside hat", 0.3),
+            (Lorentzian_filtered, "Lorentzian", 0),
         ]:
             thiscolor = next(color_cycle)
             filtered_data.ift("t")
@@ -95,7 +97,7 @@ with psd.figlist_var() as fl:
                 * 1e6
             )
             plt.text(
-                1,
+                (s["t"].max() * 1e6) / 2 - 50,
                 ax_place,
                 r"$\beta_{%s} = %f \mu s \sqrt{W}$" % (label, beta),
                 color=thiscolor,
