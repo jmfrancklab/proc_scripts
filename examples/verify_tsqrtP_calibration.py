@@ -43,7 +43,7 @@ with psd.figlist_var() as fl:
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         assert (
-            d.get_prop("postproc_type") is "GDS_capture_v1"
+            d.get_prop("postproc_type") == "GDS_capture_v1"
         ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
@@ -70,7 +70,7 @@ with psd.figlist_var() as fl:
                         d["beta", j],
                         alpha=0.2,
                         color=thiscolor,
-                        label="Amplitude = %f" % amplitud,
+                        label="Amplitude = %f" % amplitude,
                     )
 
         # {{{ data is already analytic, and downsampled to below 24 MHz
