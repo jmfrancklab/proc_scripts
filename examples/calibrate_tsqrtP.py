@@ -23,24 +23,24 @@ skip_plots = 45  # diagnostic -- set this to None, and there will be no plots
 slicewidth = 1e6
 typical_180 = 40e-6  # typical beta for a 180 -- it's really important to get pulses in this regime correct
 
-
+# the linear threshold seems to vary from one amplitude to the next
 with psd.figlist_var() as fl:
     for filename, nodename, linear_threshold in [
         (
             "240819_test_amp0p05_calib_pulse_calib.h5",
             "pulse_calib_3",
             150e-6,
-        ),  # low power
+        ),
         (
             "240819_amp0p1_calib_pulse_calib.h5",
             "pulse_calib_1",
             270e-6,
-        ),  # low power
+        ),
         (
             "240819_amp0p2_calib_repeat_pulse_calib.h5",
             "pulse_calib_8",
             310e-6,
-        ),  # low power
+        ),
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
@@ -116,7 +116,6 @@ with psd.figlist_var() as fl:
         # }}}
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
-            thislen = d["t_pulse"][j]
             int_range = abs(s).contiguous(lambda x: x > 0.05 * s.max())[0]
             # slightly expand int range to include rising edges
             int_range[0] -= 5e-6
@@ -125,6 +124,10 @@ with psd.figlist_var() as fl:
                 abs(s["t":int_range]).integrate("t").data.item()
             )
             beta["t_pulse", j] /= np.sqrt(2)  # t*sqrt(Prms)
+            # we've already isolated the t_pulse of interest so we
+            # can't call indiv_plots again (which applies the indexing)
+            # we additionally plot the calculated beta value on top of the
+            # plot as well
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
                 fl.plot(
@@ -140,17 +143,21 @@ with psd.figlist_var() as fl:
                     % (beta["t_pulse", j].item() / 1e-6),
                 )
         # {{{ show what we observe -- how does β vary with the programmed pulse length
-        fl.basename = None
+        fl.basename = None  # reset so all amplitudes are on same plots
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
         beta.rename("t_pulse", "$A t_{pulse}$")
         beta.name(r"$\beta$")
-        beta["$A t_{pulse}$"] *= amplitude
+        beta[
+            "$A t_{pulse}$"
+        ] *= amplitude  # we only want the x axis to be multiplied by amplitude for plotting only!
         fl.plot(
             (beta.C / 1e-6).set_units("μs√W"),
             color=thiscolor,
             label="amplitude = %f" % amplitude,
         )
-        beta["$A t_{pulse}$"] /= amplitude
+        beta[
+            "$A t_{pulse}$"
+        ] /= amplitude  # need to divide back out for the determination of the coefficients below
         psd.gridandtick(plt.gca())
         beta.rename("$A t_{pulse}$", "t_pulse")
         # }}}
@@ -172,6 +179,7 @@ with psd.figlist_var() as fl:
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
+        # {{{ flip data so beta is on x axis now and A*t_pulse is the y axis
         t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename(
             "t_pulse", "beta"
         )
@@ -181,6 +189,8 @@ with psd.figlist_var() as fl:
         )  # because our ppg wants μs
         t_us_v_beta.set_units("μs").set_units("beta", "s√W")
         # use as temp for ultimate coeff
+        # }}}
+        # {{{ Determine linear and nonliear coefficients
         c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].C
         c_nonlinear[
             "beta"
@@ -195,6 +205,7 @@ with psd.figlist_var() as fl:
         print("Non-linear regime coefficients:\n", c_nonlinear)
         print("Linear regime coefficients:\n", c_linear)
 
+        # }}}
         def prog_plen(desired):
             """function that takes the coefficients of the linear and nonlinear
             regions and applies the fit respectively to calculate the pulse time that
