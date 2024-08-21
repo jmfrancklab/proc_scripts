@@ -3,7 +3,7 @@ Verify the pulse calibration
 ============================
 Once we have the pulse-length calibration in place, we want to simply verify that we get the
 β values that we program, where
-:math:`\beta = \int \sqrt{P(t)} dt` 
+:math:`\beta = \frac{1}{\sqrt{2} \int \sqrt{P(t)} dt` 
 
 This is performed with amplitude pulses driving into an attenuator and measured by a scope,
 as for the calibration.
@@ -29,21 +29,21 @@ with psd.figlist_var() as fl:
         (
             "240819_test_amp0p05_calib_pulse_calib.h5",
             "pulse_calib_5",
-        ),  # low power
+        ),  
         (
             "240819_amp0p1_calib_pulse_calib.h5",
             "pulse_calib_2",
-        ),  # low power
+        ), 
         (
             "240819_amp0p2_calib_repeat_pulse_calib.h5",
             "pulse_calib_9",
-        ),  # low power
+        ),
     ]:
         d = psd.find_file(
             filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
         )
         assert (
-            d.get_prop("postproc_type") is not None
+            d.get_prop("postproc_type") is "spincore_GDS_capture"
         ), "No postproc type was set upon acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
