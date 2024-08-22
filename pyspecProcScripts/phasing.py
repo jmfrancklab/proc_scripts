@@ -427,7 +427,6 @@ def fid_from_echo(
                 N_ratio /= (
                     for_resid.data.size
                 )  # the signal this has been plotted against is signal averaged by N_ratio
-                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
@@ -753,41 +752,46 @@ def hermitian_function_test(
         return echo_peak + min_echo
 
 
-def determine_sign(s, direct="t2", fl=None):
-    """Given that the signal resides in `pathway`, determine the sign of the signal.
-    The sign can be used, e.g. so that all data in an inversion-recover or
-    enhancement curve can be aligned together.
+def determine_sign(s, signal_pathway, indirect, direct="t2", fl=None):
+    """Determines the sign of the signal based on the difference between the
+    signal with the zeroth order phase correction applied to the entire data set vs
+    applying the zeroth order phase correction to each individual indirect indice.
+    The sign can be used, so that when multiplied by the signal the data has a uniform
+    sign along the indirect axis.
 
     Parameters
     ==========
     s: nddata
         data with a single (dominant) peak, where you want to return the sign
         of the integral over all the data.
-        This should only contain **a single coherence pathway**.
+    signal_pathway: dict
+        dictionary containing the coherence transfer pathway where the signal
+        resides.
+    indirect: str
+        Name of the indirect axis along which the sign is being determined
     direct: str (default "t2")
-        Name of the direct dimension, along which the sum/integral is taken
+        Name of the direct dimension
 
     Returns
     =======
-    data_sgn: nddata
+    mysign: nddata
         A dataset with all +1 or -1 (giving the sign of the original signal).
         Does *not* include the `direct` dimension
     """
     assert s.get_ft_prop(
         direct
     ), "this only works on data that has been FT'd along the direct dimension"
-    if fl is not None:
-        fl.push_marker()
-        if basename is None:
-            basename = f"randombasename{int(rand()*1e5):d}"
-        fl.basename = basename
-        fl.next("selected pathway")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-    data_sgn = s.C.sum(direct)
-    data_sgn /= zeroth_order_ph(data_sgn)
-    data_sgn.run(np.real).run(lambda x: np.sign(x))
+    d = select_pathway(s, signal_pathway)
+    d_integral = d.C.real.integrate(direct)
+    ind_phase_ind = d.C
+    for j in range(len(s.getaxis(indirect))):
+        ind_phase_ind[indirect, j] /= zeroth_order_ph(
+            ind_phase_ind[indirect, j]
+        )
+    ind_phase_ind.run(np.real).integrate(direct)
+    mysign = (ind_phase_ind / d_integral).angle / np.pi
+    mysign = np.exp(1j * np.pi * mysign.run(np.round))
     if fl is not None:
         fl.next("check sign")
-        fl.image((s.C.setaxis("vd", "#").set_units("vd", "scan #")) * data_sgn)
-        fl.pop_marker()
-    return data_sgn
+        fl.image(d * mysign)
+    return mysign.data
