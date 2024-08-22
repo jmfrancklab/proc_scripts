@@ -1,6 +1,5 @@
 "First order functions for very simple (a few lines) data manipulation"
 import numpy as np
-#from .phasing import zeroth_order_ph
 
 
 class logobj(object):
@@ -34,7 +33,7 @@ class logobj(object):
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
-            return concatenate(
+            return np.concatenate(
                 self.log_list + [self.log_array[: self.log_pos]]
             )
 
