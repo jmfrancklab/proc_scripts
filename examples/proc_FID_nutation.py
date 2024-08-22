@@ -31,11 +31,11 @@ fig.set_figheight(6)
 with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    # {{{ Apply overall zeroth order correction
     # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
     fig.suptitle("FID Nutation %s" % sys.argv[2])
     # }}}
+    # {{{ Apply overall zeroth order correction
     s.ift("t2")
     s /= prscr.zeroth_order_ph(
         prscr.select_pathway(s["t2":0], s.get_prop("coherence_pathway"))
@@ -43,17 +43,23 @@ with psd.figlist_var() as fl:
     s.ft("t2")
     fl.image(
         prscr.select_pathway(
-            s["t2":signal_range].C, s.get_prop("coherence_pathway")
+            s["t2":signal_range], s.get_prop("coherence_pathway")
         ),
         ax=ax1,
         human_units=False,
     )
-    ax1.set_title("Signal / ph0")
+    ax1.set_title("Signal pathway / ph0")
     mysign = prscr.determine_sign(
         s["t2":signal_range], s.get_prop("coherence_pathway"), "beta"
     )
     s *= mysign
-    fl.image(s, ax=ax2)
+    fl.image(
+        prscr.select_pathway(
+            s["t2":signal_range], s.get_prop("coherence_pathway")
+        ),
+        ax=ax2,
+        human_units=False
+    )
     ax2.set_title("Check phase variation along indirect")
     # }}}
     s *= mysign

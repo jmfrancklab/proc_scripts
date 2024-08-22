@@ -15,7 +15,6 @@ import pyspecdata as psd
 import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
 import sympy as sp
-import numpy as np
 import sys
 
 signal_range = (-250, 250)
@@ -30,12 +29,12 @@ fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
 fig.set_figwidth(15)
 fig.set_figheight(6)
 with psd.figlist_var() as fl:
+    if "nScans" in s.dimlabels:
+        s.mean("nScans")
     # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
     fig.suptitle("Nutation %s" % sys.argv[2])
     # }}}
-    if "nScans" in s.dimlabels:
-        s.mean("nScans")
     # {{{ Apply overall zeroth order correction
     s.ift("t2")
     s /= prscr.zeroth_order_ph(
@@ -47,21 +46,13 @@ with psd.figlist_var() as fl:
             s["t2":signal_range], s.get_prop("coherence_pathway")
         ),
         ax=ax1,
+        human_units=False,
     )
     ax1.set_title("Signal pathway / ph0")
     # }}}
-    # {{{ Look at phase variation
-    d_integral = s["t2":signal_range].real.integrate("t2")
-    phase_ind_beta = s["t2":signal_range].C
-    for j in range(len(s.getaxis("beta"))):
-        phase_ind_beta["beta", j] /= prscr.zeroth_order_ph(
-            prscr.select_pathway(
-                phase_ind_beta["beta", j], s.get_prop("coherence_pathway")
-            )
-        )
-    phase_ind_beta = phase_ind_beta.real.integrate("t2")
-    mysign = (phase_ind_beta / d_integral).angle / np.pi
-    mysign = np.exp(1j * np.pi * mysign.run(np.round))
+    mysign = prscr.determine_sign(
+        s["t2":signal_range], s.get_prop("coherence_pathway"), "beta"
+    )
     s *= mysign
     fl.image(
         prscr.select_pathway(
