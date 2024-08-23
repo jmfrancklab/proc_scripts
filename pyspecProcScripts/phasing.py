@@ -752,7 +752,9 @@ def hermitian_function_test(
         return echo_peak + min_echo
 
 
-def determine_sign(s, indirect, signal_freq_range, direct="t2", signal_pathway = None, fl=None):
+def determine_sign(
+    s, indirect, signal_freq_range, direct="t2", signal_pathway=None, fl=None
+):
     """Determines the sign of the signal based on the difference between the
     signal with the zeroth order phase correction applied to the entire data set vs
     applying the zeroth order phase correction to each individual indirect index.
@@ -773,7 +775,7 @@ def determine_sign(s, indirect, signal_freq_range, direct="t2", signal_pathway =
     signal_pathway: dict (default None)
         If None, the function will go into the properties of the data looking
         for the "coherence_pathway" property. If that doesn't exist the user
-        needs to feed a dictionary containing the coherence transfer pathway 
+        needs to feed a dictionary containing the coherence transfer pathway
         where the signal resides.
 
     Returns
@@ -782,21 +784,26 @@ def determine_sign(s, indirect, signal_freq_range, direct="t2", signal_pathway =
         A dataset with all +1 or -1 (giving the sign of the original signal).
         Does *not* include the `direct` dimension
     """
-    if signal_pathway == None:
-        assert s.get_prop("coherence_pathway") is not None, "I don't know what your signal pathway is and it's not set as a property!!"
+    if signal_pathway is None:
+        assert (
+            s.get_prop("coherence_pathway") is not None
+        ), "I don't know what your signal pathway is and it's not set as a property!!"
         signal_pathway = s.get_prop("coherence_pathway")
     assert s.get_ft_prop(
         direct
     ), "this only works on data that has been FT'd along the direct dimension"
     d = select_pathway(s[direct:signal_freq_range], signal_pathway)
     d /= zeroth_order_ph(d)
-    #determine phase if data is 1D
-    ph0 = d.real.integrate(direct)
-    ph0 /= abs(ph0)
     if fl is not None:
-        d_indivphased = d/ ph0 # individually phased
-        d_indivphased /= abs(d_indivphased)  
+        d_forplot = d.C
+    d = d.real.integrate(direct)  # determine phase if data is 1D
+    d /= abs(d)
+    if fl is not None:
+        d_indivphased = d_forplot / d  # individually phased
+        d_indivphased /= abs(d_indivphased)
         fl.next("Variation in phasing")
-        fl.image(d/d_indivphased)
-    mysign = ph0.angle.run(lambda x: np.exp(1j*np.round(x/pi)*pi)).run(np.sign)
+        fl.image(d_forplot / d_indivphased)
+    mysign = d.angle.run(lambda x: np.exp(1j * np.round(x / pi) * pi)).run(
+        np.sign
+    )
     return mysign
