@@ -34,10 +34,7 @@ with psd.figlist_var() as fl:
         # {{{ define basename
         amplitude = s.get_prop("acq_params")["amplitude"]
         beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"] * 1e6
-        fl.basename = (
-            r"amplitude = %0.2f, $\beta$ = %0.3f $\mathrm{\mu s \sqrt{W}}$"
-            % (amplitude, beta_us_sqrt_W)
-        )
+        fl.basename = f"amplitude = {amplitude}, ${{\\beta}}$ = {beta_us_sqrt_W} ${{\\mathrm{{\\mu s \\sqrt{{W}}}}}}$ \n"
         # }}}
         if not s.get_units("t") == "s":
             print(
@@ -46,13 +43,13 @@ with psd.figlist_var() as fl:
             s.set_units("t", "s")
         s *= V_atten_ratio  # attenutation ratio
         s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
-        fl.next("\n $\\sqrt{P_{analytic}}$ vs $t_{pulse}$")
+        fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
         abs_color = next(color_cycle)
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ apply frequency filter
         s, nu_a, _ = find_apparent_anal_freq(s)
         s.ft("t")
-        fl.next("\n Frequency Domain")
+        fl.next("Frequency Domain")
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         plt.text(
             x=0.5,
@@ -72,7 +69,6 @@ with psd.figlist_var() as fl:
         s["t" : (None, nu_a - 0.5 * HH_width)] *= 0
         s["t" : (nu_a + 0.5 * HH_width, None)] *= 0
         # }}}
-        # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
             (s, "Heaviside hat", 0.3),
@@ -80,18 +76,18 @@ with psd.figlist_var() as fl:
         ]:
             thiscolor = next(color_cycle)
             filtered_data.ift("t")
-            fl.next("\n $\\sqrt{P_{analytic}}$ vs $t_{pulse}$")
+            fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             fl.plot(
                 abs(filtered_data), color=thiscolor, label=label + " filter"
             )
             filtered_data.ft("t")
-            fl.next("\n Frequency Domain")
+            fl.next("Frequency Domain")
             fl.plot(
                 abs(filtered_data), color=thiscolor, alpha=0.5, label=label
             )
             filtered_data.ift("t")
             beta = abs(filtered_data).integrate("t").data.item() / np.sqrt(2)
-            fl.next("\n $\\sqrt{P_{analytic}}$ vs $t_{pulse}$")
+            fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             plt.text(
                 0.5,
                 ax_place,
