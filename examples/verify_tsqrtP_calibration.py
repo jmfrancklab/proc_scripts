@@ -54,10 +54,9 @@ with psd.figlist_var() as fl:
             d.set_units("t", "s")
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
-        print(d.get_prop())
-        print(d.get_prop("programmed_t_pulse"))
-        quit()
-        pulse_lengths = d.get_prop("programmed_t_pulse_us")
+        pulse_lengths = d.get_prop("programmed_t_pulse")  # s
+
+        # {{{ functions that streamline plotting the desired number of pulses
         def switch_to_plot(d, j):
             thislen = pulse_lengths[j]
             fl.next(f"pulse length = {thislen}")
@@ -75,9 +74,11 @@ with psd.figlist_var() as fl:
                         label="Amplitude = %f" % amplitude,
                     )
 
+        # }}}
+
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "abs(analytic)", "orange")
-        d, nu_a, _ = find_apparent_anal_freq(d)
+        d, nu_a, _ = find_apparent_anal_freq(d)  # find frequency of signal
         d.ft("t")
         # {{{ Diagnostic to ensure the frequency was properly identified
         fl.next("Frequency Domain")
@@ -98,23 +99,15 @@ with psd.figlist_var() as fl:
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
-        # {{{ Diagnostic to plot all pulses on the same plot to see none were skipped
-        fl.next("collect filtered analytic", legend=True)
-        for j in range(d.shape["beta"]):
-            s = d["beta", j].C
-            s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
-            fl.plot(abs(s), alpha=0.3, label=f"{j}")
-        # }}}
         # }}}
         thiscolor = next(color_cycle)
         # {{{ set up shape of beta to drop the correct values in
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
-        beta.set_units(r"s√W").set_units("beta", "s√W")
+        beta.set_units(r"s√W")
         # }}}
         for j in range(len(d["beta"])):
             s = d["beta", j]
-            thislen = d["beta"][j]
             int_range = abs(s).contiguous(lambda x: x > 0.03 * s.max())[0]
             # slightly expand int range to include rising edges
             int_range[0] -= 2e-6
@@ -142,7 +135,7 @@ with psd.figlist_var() as fl:
         fl.basename = None  # we want to plot all amplitudes together now
         fl.next(r"Measured $\beta$ vs programmed $\beta$")
         fl.plot(
-            (beta.C / 1e-6).set_units("μs√W"),
+            (beta / 1e-6).set_units("μs√W"),
             color=thiscolor,
             label="Amplitude = %f" % amplitude,
         )
