@@ -803,9 +803,15 @@ def determine_sign(
     d /= abs(d)
     if fl is not None:
         d_forplot /= d  # individually phased
-        fl.next("Check sign")
+        fl.next("Individually phase corrected")
         fl.image(d_forplot)
     mysign = d.angle.run(lambda x: np.exp(1j * np.round(x / pi) * pi)).run(
         np.sign  # sign essentially rounds to -1 or +1
     )
+    if fl is not None:
+        fl.next(
+            "phase difference between individually rotated and overall rotated"
+        )
+        fl.plot(d.angle.set_error(None), "o", label="difference")
+        fl.plot(mysign.angle.set_error(None), "o", label="rounded")
     return mysign
