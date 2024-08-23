@@ -100,14 +100,6 @@ with psd.figlist_var() as fl:
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
-        # {{{ diagnostic to look at the individual pulses all plotted together
-        # to make sure none are skipped over resulting in faulty data
-        fl.next("collect filtered analytic", legend=True)
-        for j in range(d.shape["t_pulse"]):
-            s = d["t_pulse", j].C
-            s["t"] -= abs(s).contiguous(lambda x: x > 0.05 * s.max())[0][0]
-            fl.plot(abs(s), alpha=0.3)
-        # }}}
         thiscolor = next(color_cycle)
         # {{{ set up beta shape to drop values into
         beta = d.shape.pop("t").alloc(dtype=np.float64)
@@ -137,10 +129,11 @@ with psd.figlist_var() as fl:
                 )
                 plt.ylabel(r"$\sqrt{P_{pulse}}$")
                 plt.text(
-                    int_range[0] * 1e6 + 5,
+                    0.5,
                     0,
                     r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
                     % (beta["t_pulse", j].item() / 1e-6),
+                    transform=plt.gca().transAxes,
                 )
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None  # reset so all amplitudes are on same plots
