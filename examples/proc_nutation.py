@@ -94,12 +94,12 @@ with psd.figlist_var() as fl:
     fl.plot(fit)
     plt.xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
     plt.ylabel(None)
-    beta_90 = s.output("beta_ninety") * 1e6
+    beta_90 = s.output("beta_ninety")
     plt.axvline(beta_90)
     plt.text(
         beta_90 + 5,
         5e4,
-        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % beta_90,
+        r"$\beta_{90} = %f \mathrm{s \sqrt{W}}$" % beta_90,
     )
     psd.gridandtick(plt.gca())
     # }}}

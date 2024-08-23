@@ -95,12 +95,12 @@ with psd.figlist_var() as fl:
     fl.plot(fit, ax=ax3, human_units=False)
     ax3.set_title("Integrated and fit")
     ax3.set_xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
-    beta_90 = s.output("beta_ninety") * 1e6
+    beta_90 = s.output("beta_ninety")
     ax3.axvline(beta_90)
     ax3.text(
         beta_90 + 5,
         5e4,
-        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % beta_90,
+        r"$\beta_{90} = %f \mathrm{s \sqrt{W}}$" % beta_90,
     )
     ax3.grid()
     # }}}

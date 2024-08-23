@@ -786,12 +786,11 @@ def determine_sign(
     """
     # To handle both older data where the coherence pathway was not set as a property
     # and handle newer data where it is set I have the following if/else
-    if signal_pathway is None and s.get_prop("coherence_pathway") is None:
+    signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
+    if signal_pathway is None:
         print(
             "I don't know what your signal pathway is and it's not set as a property!! To fix this you need to tell me what the signal pathway is as a dictionary"
         )
-    else:
-        signal_pathway = s.get_prop("coherence_pathway")
     assert s.get_ft_prop(
         direct
     ), "this only works on data that has been FT'd along the direct dimension"
