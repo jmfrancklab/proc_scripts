@@ -752,10 +752,10 @@ def hermitian_function_test(
         return echo_peak + min_echo
 
 
-def determine_sign(s, signal_pathway, indirect, direct="t2", fl=None):
+def determine_sign(s, indirect, signal_freq_range, direct="t2", signal_pathway = None, fl=None):
     """Determines the sign of the signal based on the difference between the
     signal with the zeroth order phase correction applied to the entire data set vs
-    applying the zeroth order phase correction to each individual indirect indice.
+    applying the zeroth order phase correction to each individual indirect index.
     The sign can be used, so that when multiplied by the signal the data has a uniform
     sign along the indirect axis.
 
@@ -764,13 +764,17 @@ def determine_sign(s, signal_pathway, indirect, direct="t2", fl=None):
     s: nddata
         data with a single (dominant) peak, where you want to return the sign
         of the integral over all the data.
-    signal_pathway: dict
-        dictionary containing the coherence transfer pathway where the signal
-        resides.
     indirect: str
         Name of the indirect axis along which the sign is being determined
+    signal_freq_range:  tuple
+        narrow slice range where signal resides
     direct: str (default "t2")
         Name of the direct dimension
+    signal_pathway: dict (default None)
+        If None, the function will go into the properties of the data looking
+        for the "coherence_pathway" property. If that doesn't exist the user
+        needs to feed a dictionary containing the coherence transfer pathway 
+        where the signal resides.
 
     Returns
     =======
@@ -778,20 +782,21 @@ def determine_sign(s, signal_pathway, indirect, direct="t2", fl=None):
         A dataset with all +1 or -1 (giving the sign of the original signal).
         Does *not* include the `direct` dimension
     """
+    if signal_pathway == None:
+        assert s.get_prop("coherence_pathway") is not None, "I don't know what your signal pathway is and it's not set as a property!!"
+        signal_pathway = s.get_prop("coherence_pathway")
     assert s.get_ft_prop(
         direct
     ), "this only works on data that has been FT'd along the direct dimension"
-    d = select_pathway(s, signal_pathway)
-    d_integral = d.C.real.integrate(direct)
-    ind_phase_ind = d.C
-    for j in range(len(s.getaxis(indirect))):
-        ind_phase_ind[indirect, j] /= zeroth_order_ph(
-            ind_phase_ind[indirect, j]
-        )
-    ind_phase_ind.run(np.real).integrate(direct)
-    mysign = (ind_phase_ind / d_integral).angle / np.pi
-    mysign = np.exp(1j * np.pi * mysign.run(np.round))
+    d = select_pathway(s[direct:signal_freq_range], signal_pathway)
+    d /= zeroth_order_ph(d)
+    #determine phase if data is 1D
+    ph0 = d.real.integrate(direct)
+    ph0 /= abs(ph0)
     if fl is not None:
-        fl.next("check sign")
-        fl.image(d * mysign)
-    return mysign.data
+        d_indivphased = d/ ph0 # individually phased
+        d_indivphased /= abs(d_indivphased)  
+        fl.next("Variation in phasing")
+        fl.image(d/d_indivphased)
+    mysign = ph0.angle.run(lambda x: np.exp(1j*np.round(x/pi)*pi)).run(np.sign)
+    return mysign

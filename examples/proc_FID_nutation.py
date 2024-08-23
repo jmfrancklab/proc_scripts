@@ -50,8 +50,7 @@ with psd.figlist_var() as fl:
     )
     ax1.set_title("Signal pathway / ph0")
     mysign = prscr.determine_sign(
-        s["t2":signal_range], s.get_prop("coherence_pathway"), "beta"
-    )
+        s, "beta", signal_range,fl=fl)
     s *= mysign
     fl.image(
         prscr.select_pathway(
