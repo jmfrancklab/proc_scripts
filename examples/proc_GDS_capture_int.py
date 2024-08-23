@@ -35,7 +35,8 @@ with psd.figlist_var() as fl:
         amplitude = s.get_prop("acq_params")["amplitude"]
         beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"] * 1e6
         fl.basename = (
-            f"amplitude = {amplitude}, $\\beta$ = {beta_us_sqrt_W} \n"
+            r"amplitude = %0.2f, $\beta$ = %0.3f $\mathrm{\mu s \sqrt{W}}$"
+            % (amplitude, beta_us_sqrt_W)
         )
         # }}}
         if not s.get_units("t") == "s":
@@ -45,13 +46,13 @@ with psd.figlist_var() as fl:
             s.set_units("t", "s")
         s *= V_atten_ratio  # attenutation ratio
         s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
-        fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
+        fl.next("\n $\\sqrt{P_{analytic}}$ vs $t_{pulse}$")
         abs_color = next(color_cycle)
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         # {{{ apply frequency filter
         s, nu_a, _ = find_apparent_anal_freq(s)
         s.ft("t")
-        fl.next("Frequency Domain")
+        fl.next("\n Frequency Domain")
         fl.plot(abs(s), color=abs_color, label="abs(analytic)")
         plt.text(
             x=0.5,
@@ -75,31 +76,28 @@ with psd.figlist_var() as fl:
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
             (s, "Heaviside hat", 0.3),
-            (Lorentzian_filtered, "Lorentzian", 0),
+            (Lorentzian_filtered, "Lorentzian", 0.1),
         ]:
             thiscolor = next(color_cycle)
             filtered_data.ift("t")
-            fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
+            fl.next("\n $\\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             fl.plot(
                 abs(filtered_data), color=thiscolor, label=label + " filter"
             )
             filtered_data.ft("t")
-            fl.next("Frequency Domain")
+            fl.next("\n Frequency Domain")
             fl.plot(
                 abs(filtered_data), color=thiscolor, alpha=0.5, label=label
             )
             filtered_data.ift("t")
-            beta = (
-                abs(filtered_data).integrate("t").data.item()
-                / np.sqrt(2)
-                * 1e6
-            )
-            fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
+            beta = abs(filtered_data).integrate("t").data.item() / np.sqrt(2)
+            fl.next("\n $\\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             plt.text(
-                (s["t"].max() * 1e6) / 2 - 50,
+                0.5,
                 ax_place,
-                r"$\beta_{%s} = %f \mu s \sqrt{W}$" % (label, beta),
+                r"$\beta_{%s} = %f s \sqrt{W}$" % (label, beta),
                 color=thiscolor,
+                transform=plt.gca().transAxes,
             )
         plt.ylabel(r"$\sqrt{P}$ / $\mathrm{\sqrt{W}}$")
         # }}}
