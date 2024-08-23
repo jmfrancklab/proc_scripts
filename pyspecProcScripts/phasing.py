@@ -799,7 +799,7 @@ def determine_sign(
     d /= zeroth_order_ph(d)
     if fl is not None:
         d_forplot = d.C
-    d = d.real.integrate(direct)
+    d = d.integrate(direct)
     d /= abs(d)
     if fl is not None:
         d_forplot /= d  # individually phased
