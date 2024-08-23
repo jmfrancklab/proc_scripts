@@ -50,6 +50,7 @@ with psd.figlist_var() as fl:
     )
     ax1.set_title("Signal pathway / ph0")
     # }}}
+    # {{{ Check phase variation along indirect
     mysign = prscr.determine_sign(
         s, "beta", signal_range
     )
@@ -59,22 +60,19 @@ with psd.figlist_var() as fl:
             s["t2":signal_range], s.get_prop("coherence_pathway")
         ),
         ax=ax2,
-        human_units=False,
+        human_units=False
     )
     ax2.set_title("Check phase variation along indirect")
     # }}}
     # {{{ apply phasing and FID slice
-    s.set_error(None)
-    s = prscr.fid_from_echo(s, s.get_prop("coherence_pathway"))
+    s = prscr.fid_from_echo(s.set_error(None), s.get_prop("coherence_pathway"))
     s *= mysign
     s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
     fl.image(s["t2":signal_range], ax=ax3)
     ax3.set_title("Phased and FID sliced")
     # }}}
-    s = s["t2":signal_range].real.integrate("t2")
-    s.set_error(
-        None
-    )  # error gets set again and messes up the sizing of the data
+    # {{{ generate the table of integrals and fit
+    s = s["t2":signal_range].real.integrate("t2").set_error(None)
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.next("Integrated and Fit")
     fl.plot(s, "o")
@@ -101,6 +99,7 @@ with psd.figlist_var() as fl:
     plt.text(
         beta_90 + 5,
         5e4,
-        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % (beta_90),
+        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % beta_90,
     )
     psd.gridandtick(plt.gca())
+    # }}}

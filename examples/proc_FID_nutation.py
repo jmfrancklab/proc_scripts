@@ -49,8 +49,11 @@ with psd.figlist_var() as fl:
         human_units=False,
     )
     ax1.set_title("Signal pathway / ph0")
+    # }}}
+    # {{{ Check phase variation along indirect
     mysign = prscr.determine_sign(
-        s, "beta", signal_range,fl=fl)
+        s, "beta", signal_range
+    )
     s *= mysign
     fl.image(
         prscr.select_pathway(
@@ -60,13 +63,12 @@ with psd.figlist_var() as fl:
         human_units=False
     )
     ax2.set_title("Check phase variation along indirect")
-    # }}}
     s *= mysign
+    # }}}
     # {{{ generate the table of integrals and fit
     s = prscr.select_pathway(
         s["t2":signal_range], s.get_prop("coherence_pathway")
-    ).real.integrate("t2")
-    s.set_error(None)
+    ).real.integrate("t2").set_error(None)
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.plot(s, "o", ax=ax3, human_units=False)
     s = psd.lmfitdata(s)

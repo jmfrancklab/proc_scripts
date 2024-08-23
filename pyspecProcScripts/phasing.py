@@ -784,10 +784,13 @@ def determine_sign(
         A dataset with all +1 or -1 (giving the sign of the original signal).
         Does *not* include the `direct` dimension
     """
-    if signal_pathway is None:
-        assert (
-            s.get_prop("coherence_pathway") is not None
-        ), "I don't know what your signal pathway is and it's not set as a property!!"
+    # To handle both older data where the coherence pathway was not set as a property
+    # and handle newer data where it is set I have the following if/else
+    if signal_pathway is None and s.get_prop("coherence_pathway") is None:
+        print(
+            "I don't know what your signal pathway is and it's not set as a property!! To fix this you need to tell me what the signal pathway is as a dictionary"
+        )
+    else:
         signal_pathway = s.get_prop("coherence_pathway")
     assert s.get_ft_prop(
         direct
@@ -796,14 +799,13 @@ def determine_sign(
     d /= zeroth_order_ph(d)
     if fl is not None:
         d_forplot = d.C
-    d = d.real.integrate(direct)  # determine phase if data is 1D
+    d = d.real.integrate(direct)
     d /= abs(d)
     if fl is not None:
-        d_indivphased = d_forplot / d  # individually phased
-        d_indivphased /= abs(d_indivphased)
-        fl.next("Variation in phasing")
-        fl.image(d_forplot / d_indivphased)
+        d_forplot /= d  # individually phased
+        fl.next("Check sign")
+        fl.image(d_forplot)
     mysign = d.angle.run(lambda x: np.exp(1j * np.round(x / pi) * pi)).run(
-        np.sign
+        np.sign  # sign essentially rounds to -1 or +1
     )
     return mysign
