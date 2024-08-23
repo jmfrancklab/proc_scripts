@@ -54,8 +54,9 @@ with psd.figlist_var() as fl:
             d.set_units("t", "s")
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
+        print(d.get_prop("programmed_t_pulse_us"))
+        quit()
         pulse_lengths = d.get_prop("programmed_t_pulse_us")
-
         def switch_to_plot(d, j):
             thislen = pulse_lengths[j]
             fl.next(f"pulse length = {thislen}")
