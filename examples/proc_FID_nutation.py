@@ -16,6 +16,8 @@ import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
 import sympy as sp
 import sys
+import numpy as np
+from numpy import pi
 
 signal_range = (-250, 250)
 assert len(sys.argv) == 4
@@ -35,16 +37,28 @@ with psd.figlist_var() as fl:
     fl.next("Raw Data with averaged scans", fig=fig)
     fig.suptitle("FID Nutation %s" % sys.argv[2])
     # }}}
-    # {{{ Apply overall zeroth order correction
-    s.ift("t2")
+    # {{{ Apply overall zeroth order correction, select the pathway, and apply a rudimentary alignment
     s /= prscr.zeroth_order_ph(
-        prscr.select_pathway(s["t2":0], s.get_prop("coherence_pathway"))
-    )
-    s.ft("t2")
-    fl.image(
         prscr.select_pathway(
-            s["t2":signal_range], s.get_prop("coherence_pathway")
-        ),
+            s["t2":signal_range].sum("t2"), s.get_prop("coherence_pathway")
+        )
+    )
+    s = prscr.select_pathway(
+        s["t2":signal_range], s.get_prop("coherence_pathway")
+    )
+    # {{{ determine shift for rough alignment, but don't use this yet, because
+    #     I want to see the signal resonance frequency
+    s.ift("t2")
+    shift = s * np.exp(-(pi**2) * s.fromaxis("t2") ** 2 * (2 * 50**2))
+    shift.ft("t2")
+    shift = shift["t2":signal_range].real.run(abs).argmax("t2")
+    shift.set_error(None)
+    # interestingly, if we were correcting here, we would multiply by the phase
+    # here to perform the shift, which would be efficient!
+    s.ft("t2")
+    # }}}
+    fl.image(
+        s["t2":signal_range],
         ax=ax1,
         human_units=False,
     )
@@ -53,28 +67,26 @@ with psd.figlist_var() as fl:
     # {{{ Check phase variation along indirect
     mysign = prscr.determine_sign(
         s,
-        "beta",
         signal_range,
     )
     s *= mysign
     fl.image(
-        prscr.select_pathway(
-            s["t2":signal_range], s.get_prop("coherence_pathway")
-        ),
+        s["t2":signal_range],
         ax=ax2,
         human_units=False,
     )
     ax2.set_title("Check phase variation along indirect")
-    s *= mysign
     # }}}
-    # {{{ generate the table of integrals and fit
-    s = (
-        prscr.select_pathway(
-            s["t2":signal_range], s.get_prop("coherence_pathway")
-        )
-        .real.integrate("t2")
-        .set_error(None)
-    )
+    # {{{ generate the table of integrals
+    s *= mysign  # flip the sign back, so we get sensible integrals
+    # {{{ actually apply the rough alignment
+    s.ift("t2")
+    s *= np.exp(-1j * 2 * pi * shift * s.fromaxis("t2"))
+    s.ft("t2")
+    # }}}
+    s = s.real.integrate("t2").set_error(None)
+    # }}}
+    # {{{ fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.plot(s, "o", ax=ax3, human_units=False)
     s = psd.lmfitdata(s)
@@ -91,7 +103,7 @@ with psd.figlist_var() as fl:
         beta_ninety=dict(value=2e-5, min=0, max=1),
     )
     s.fit()
-    fit = s.eval(100)
+    fit = s.eval(500)
     fl.plot(fit, ax=ax3, human_units=False)
     ax3.set_title("Integrated and fit")
     ax3.set_xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")

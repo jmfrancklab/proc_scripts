@@ -753,7 +753,7 @@ def hermitian_function_test(
 
 
 def determine_sign(
-    s, indirect, signal_freq_range, direct="t2", signal_pathway=None, fl=None
+    s, signal_freq_range, direct="t2", signal_pathway=None, fl=None
 ):
     """Determines the sign of the signal based on the difference between the
     signal with the zeroth order phase correction applied to the entire data set vs
@@ -766,8 +766,6 @@ def determine_sign(
     s: nddata
         data with a single (dominant) peak, where you want to return the sign
         of the integral over all the data.
-    indirect: str
-        Name of the indirect axis along which the sign is being determined
     signal_freq_range:  tuple
         narrow slice range where signal resides
     direct: str (default "t2")
@@ -784,33 +782,33 @@ def determine_sign(
         A dataset with all +1 or -1 (giving the sign of the original signal).
         Does *not* include the `direct` dimension
     """
+    if type(direct) is tuple:
+        raise ValueError("direct cannot be a tuple! You are probably using an older version that required you to pass an indirect dimension")
     # To handle both older data where the coherence pathway was not set as a property
     # and handle newer data where it is set I have the following if/else
     signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
-    if signal_pathway is None:
-        print(
-            "I don't know what your signal pathway is and it's not set as a property!! To fix this you need to tell me what the signal pathway is as a dictionary"
-        )
+    if signal_pathway is not None:
+        if list(signal_pathway.values())[0] in s.dimlabels:
+            s = select_pathway(s[direct:signal_freq_range], signal_pathway)
     assert s.get_ft_prop(
         direct
-    ), "this only works on data that has been FT'd along the direct dimension"
-    d = select_pathway(s[direct:signal_freq_range], signal_pathway)
-    d /= zeroth_order_ph(d)
+    ), "this only works on data that has been FT's along the direct dimension"
+    s /= zeroth_order_ph(s)
     if fl is not None:
-        d_forplot = d.C
-    d = d.integrate(direct)
-    d /= abs(d)
+        d_forplot = s.C
+    s = s.integrate(direct)
+    s /= abs(s)
     if fl is not None:
-        d_forplot /= d  # individually phased
+        d_forplot /= s  # individually phased
         fl.next("Individually phase corrected")
         fl.image(d_forplot)
-    mysign = d.angle.run(lambda x: np.exp(1j * np.round(x / pi) * pi)).run(
+    mysign = s.angle.run(lambda x: np.exp(1j * np.round(x / pi) * pi)).run(
         np.sign  # sign essentially rounds to -1 or +1
     )
     if fl is not None:
         fl.next(
             "phase difference between individually rotated and overall rotated"
         )
-        fl.plot(d.angle.set_error(None), "o", label="difference")
+        fl.plot(s.angle.set_error(None), "o", label="difference")
         fl.plot(mysign.angle.set_error(None), "o", label="rounded")
     return mysign
