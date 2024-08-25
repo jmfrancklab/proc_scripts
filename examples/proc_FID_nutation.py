@@ -13,11 +13,8 @@ Tested with:
 """
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import matplotlib.pyplot as plt
 import sympy as sp
 import sys
-import numpy as np
-from numpy import pi
 
 signal_range = (-250, 250)
 assert len(sys.argv) == 4
@@ -27,65 +24,10 @@ s = psd.find_file(
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
 )
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-fig.set_figwidth(15)
-fig.set_figheight(6)
 with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    # {{{ set up subplots
-    fl.next("Raw Data with averaged scans", fig=fig)
-    fig.suptitle("FID Nutation %s" % sys.argv[2])
-    # }}}
-    # {{{ Apply overall zeroth order correction, select the pathway, and apply a rudimentary alignment
-    s /= prscr.zeroth_order_ph(
-        prscr.select_pathway(
-            s["t2":signal_range].sum("t2"), s.get_prop("coherence_pathway")
-        )
-    )
-    s = prscr.select_pathway(
-        s["t2":signal_range], s.get_prop("coherence_pathway")
-    )
-    # {{{ determine shift for rough alignment, but don't use this yet, because
-    #     I want to see the signal resonance frequency
-    s.ift("t2")
-    shift = s * np.exp(-(pi**2) * s.fromaxis("t2") ** 2 * (2 * 50**2))
-    shift.ft("t2")
-    shift = shift["t2":signal_range].real.run(abs).argmax("t2")
-    shift.set_error(None)
-    # interestingly, if we were correcting here, we would multiply by the phase
-    # here to perform the shift, which would be efficient!
-    s.ft("t2")
-    # }}}
-    fl.image(
-        s["t2":signal_range],
-        ax=ax1,
-        human_units=False,
-    )
-    ax1.set_title("Signal pathway / ph0")
-    # }}}
-    # {{{ Check phase variation along indirect
-    mysign = prscr.determine_sign(
-        s,
-        signal_range,
-    )
-    s *= mysign
-    fl.image(
-        s["t2":signal_range],
-        ax=ax2,
-        human_units=False,
-    )
-    ax2.set_title("Check phase variation along indirect")
-    # }}}
-    # {{{ generate the table of integrals
-    s *= mysign  # flip the sign back, so we get sensible integrals
-    # {{{ actually apply the rough alignment
-    s.ift("t2")
-    s *= np.exp(-1j * 2 * pi * shift * s.fromaxis("t2"))
-    s.ft("t2")
-    # }}}
-    s = s.real.integrate("t2").set_error(None)
-    # }}}
+    s, ax3 = prscr.rough_table_of_integrals(s, signal_range, fl=fl, title=sys.argv[2])
     # {{{ fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.plot(s, "o", ax=ax3, human_units=False)

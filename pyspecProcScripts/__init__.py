@@ -6,6 +6,7 @@ from .phasing import (
     fid_from_echo,
 )
 from .first_level.fake_data import fake_data
+from .third_level.rough_table_of_integrals import rough_table_of_integrals
 from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
