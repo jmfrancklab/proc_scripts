@@ -25,57 +25,16 @@ s = psd.find_file(
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
 )
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-fig.set_figwidth(15)
-fig.set_figheight(6)
 with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    # {{{ set up subplots
-    fl.next("Raw Data with averaged scans", fig=fig)
-    fig.suptitle("Nutation %s" % sys.argv[2])
-    # }}}
-    # {{{ Apply overall zeroth order correction
-    s.ift("t2")
-    s /= prscr.zeroth_order_ph(
-        prscr.select_pathway(s["t2":0], s.get_prop("coherence_pathway"))
+    s, ax3 = prscr.rough_table_of_integrals(
+        s, signal_range, fl=fl, echo_like=True, title=sys.argv[2]
     )
-    s.ft("t2")
-    fl.image(
-        prscr.select_pathway(
-            s["t2":signal_range], s.get_prop("coherence_pathway")
-        ),
-        ax=ax1,
-        human_units=False,
-    )
-    ax1.set_title("Signal pathway / ph0")
-    # }}}
-    # {{{ Check phase variation along indirect
-    mysign = prscr.determine_sign(
-        s, "beta", signal_range
-    )
-    s *= mysign
-    fl.image(
-        prscr.select_pathway(
-            s["t2":signal_range], s.get_prop("coherence_pathway")
-        ),
-        ax=ax2,
-        human_units=False
-    )
-    ax2.set_title("Check phase variation along indirect")
-    # }}}
-    # {{{ apply phasing and FID slice
-    s = prscr.fid_from_echo(s.set_error(None), s.get_prop("coherence_pathway"))
-    s *= mysign
-    s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
-    fl.image(s["t2":signal_range], ax=ax3)
-    ax3.set_title("Phased and FID sliced")
-    # }}}
     # {{{ generate the table of integrals and fit
-    s = s["t2":signal_range].real.integrate("t2").set_error(None)
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.next("Integrated and Fit")
-    fl.plot(s, "o")
+    fl.plot(s, "o", human_units=False)
     s = psd.lmfitdata(s)
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2) ** 3
@@ -90,8 +49,8 @@ with psd.figlist_var() as fl:
         beta_ninety=dict(value=2e-5, min=0, max=1),
     )
     s.fit()
-    fit = s.eval(100)
-    fl.plot(fit)
+    fit = s.eval(500)
+    fl.plot(fit, human_units=False)
     plt.xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
     plt.ylabel(None)
     beta_90 = s.output("beta_ninety")

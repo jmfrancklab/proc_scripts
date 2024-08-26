@@ -1,9 +1,13 @@
-from ..phasing import zeroth_order_ph, determine_sign
+from ..phasing import zeroth_order_ph, determine_sign, fid_from_echo
 from ..simple_functions import select_pathway
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import pi
-def rough_table_of_integrals(s, signal_range, fl=None, echo_like=False, title="", direct="t2"):
+
+
+def rough_table_of_integrals(
+    d, signal_range, fl=None, echo_like=False, title="", direct="t2"
+):
     """manipulate s to generate a table of integrals (with only rough alignment)
 
     Returns
@@ -19,17 +23,24 @@ def rough_table_of_integrals(s, signal_range, fl=None, echo_like=False, title=""
     fig.set_figheight(6)
     # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
-    fig.suptitle("FID Nutation %s" % title)
+    fig.suptitle(title)
     # }}}
     # {{{ Apply overall zeroth order correction, select the pathway, and apply a rudimentary alignment
-    s /= zeroth_order_ph(
+    d /= zeroth_order_ph(
         select_pathway(
-            s[direct:signal_range].sum(direct), s.get_prop("coherence_pathway")
+            d[direct:signal_range].sum(direct), d.get_prop("coherence_pathway")
         )
     )
-    s = select_pathway(
-        s[direct:signal_range], s.get_prop("coherence_pathway")
-    )
+    if echo_like:
+        # if it's echo like we will be applying fid_from_echo which requires
+        # that the data passed still contains all coherence pathways
+        s = select_pathway(
+            d[direct:signal_range].C, d.get_prop("coherence_pathway")
+        )
+    else:
+        s = select_pathway(
+            d[direct:signal_range], d.get_prop("coherence_pathway")
+        )
     # {{{ determine shift for rough alignment, but don't use this yet, because
     #     I want to see the signal resonance frequency
     s.ift(direct)
@@ -61,8 +72,18 @@ def rough_table_of_integrals(s, signal_range, fl=None, echo_like=False, title=""
     )
     ax2.set_title("Check phase variation along indirect")
     # }}}
+    if echo_like:
+        d *= mysign
+        s = fid_from_echo(d.set_error(None), d.get_prop("coherence_pathway"))
+        s *= mysign
+        s = select_pathway(
+            s[direct:signal_range], d.get_prop("coherence_pathway")
+        )
+        fl.image(s[direct:signal_range], ax=ax3)
+        ax3.set_title("FID sliced and phased")
+    else:
+        s *= mysign  # flip the sign back, so we get sensible integrals
     # {{{ generate the table of integrals
-    s *= mysign  # flip the sign back, so we get sensible integrals
     # {{{ actually apply the rough alignment
     s.ift(direct)
     s *= np.exp(-1j * 2 * pi * shift * s.fromaxis(direct))

@@ -783,7 +783,9 @@ def determine_sign(
         Does *not* include the `direct` dimension
     """
     if type(direct) is tuple:
-        raise ValueError("direct cannot be a tuple! You are probably using an older version that required you to pass an indirect dimension")
+        raise ValueError(
+            "direct cannot be a tuple! You are probably using an older version that required you to pass an indirect dimension"
+        )
     # To handle both older data where the coherence pathway was not set as a property
     # and handle newer data where it is set I have the following if/else
     signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
@@ -792,12 +794,12 @@ def determine_sign(
             s = select_pathway(s[direct:signal_freq_range], signal_pathway)
     assert s.get_ft_prop(
         direct
-    ), "this only works on data that has been FT's along the direct dimension"
+    ), "this only works on data that has been FT'd along the direct dimension"
     s /= zeroth_order_ph(s)
     if fl is not None:
         d_forplot = s.C
     s = s.integrate(direct)
-    s /= abs(s)
+    s /= abs(s)  # now s is the phase of the signal along the indirect
     if fl is not None:
         d_forplot /= s  # individually phased
         fl.next("Individually phase corrected")
