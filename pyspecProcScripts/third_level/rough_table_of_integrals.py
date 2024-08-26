@@ -6,9 +6,35 @@ from numpy import pi
 
 
 def rough_table_of_integrals(
-    d, signal_range, fl=None, echo_like=False, title="", direct="t2"
+    d,
+    signal_range,
+    signal_pathway=None,
+    fl=None,
+    echo_like=False,
+    title="",
+    direct="t2",
 ):
     """manipulate s to generate a table of integrals (with only rough alignment)
+
+    Parameters
+    ==========
+    d: nddata
+        data with a single (dominant) peak, where you want to return the sign of the integral over all the data.
+    signal_range: tuple
+        narrow slice range where signal resides
+    signal_pathway: dict (default None)
+        If None, the function will go into the properties of the data looking
+        for the "coherence_pathway" property. I f that doesn't exist the user
+        needs to feed a dictionary containing the coherence transfer pathway
+        where the signal resides.
+    echo_like: boolean
+        If the signal has an echo the fid_from_echo function will be applied
+        prior to integration to apply the FID slice as well as proper phasing
+        and peak selection.
+    title: str
+        title for the returned figure
+    direct: str
+        Name of direct dimension
 
     Returns
     =======
@@ -25,22 +51,19 @@ def rough_table_of_integrals(
     fl.next("Raw Data with averaged scans", fig=fig)
     fig.suptitle(title)
     # }}}
+    # To handle both older data where the coherence pathway was not set as a property
+    # and handle newer data where it is set I have the following if/else
+    signal_pathway = signal_pathway or d.get_prop("coherence_pathway")
     # {{{ Apply overall zeroth order correction, select the pathway, and apply a rudimentary alignment
     d /= zeroth_order_ph(
-        select_pathway(
-            d[direct:signal_range].sum(direct), d.get_prop("coherence_pathway")
-        )
+        select_pathway(d[direct:signal_range].sum(direct), signal_pathway)
     )
     if echo_like:
         # if it's echo like we will be applying fid_from_echo which requires
         # that the data passed still contains all coherence pathways
-        s = select_pathway(
-            d[direct:signal_range].C, d.get_prop("coherence_pathway")
-        )
+        s = select_pathway(d[direct:signal_range].C, signal_pathway)
     else:
-        s = select_pathway(
-            d[direct:signal_range], d.get_prop("coherence_pathway")
-        )
+        s = select_pathway(d[direct:signal_range], signal_pathway)
     # {{{ determine shift for rough alignment, but don't use this yet, because
     #     I want to see the signal resonance frequency
     s.ift(direct)
@@ -74,11 +97,9 @@ def rough_table_of_integrals(
     # }}}
     if echo_like:
         d *= mysign
-        s = fid_from_echo(d.set_error(None), d.get_prop("coherence_pathway"))
+        s = fid_from_echo(d.set_error(None), signal_pathway)
         s *= mysign
-        s = select_pathway(
-            s[direct:signal_range], d.get_prop("coherence_pathway")
-        )
+        s = select_pathway(s[direct:signal_range], signal_pathway)
         fl.image(s[direct:signal_range], ax=ax3)
         ax3.set_title("FID sliced and phased")
     else:
