@@ -77,7 +77,7 @@ with psd.figlist_var() as fl:
         indiv_plots(d, "raw analytic", "blue")
         # {{{ find apparent frequency and apply HH
         indiv_plots(abs(d), "absolute analytic", "orange")
-        d, nu_a, _ = find_apparent_anal_freq(d)
+        d, nu_a_MHz, _ = find_apparent_anal_freq(d)
         d.ft("t")
         # {{{ diagnostic for finding apparent frequency
         fl.next("Frequency Domain")
@@ -85,16 +85,16 @@ with psd.figlist_var() as fl:
         plt.text(
             x=0.5,
             y=0.5,
-            s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
+            s=rf"$\nu_a={nu_a_MHz/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
         # }}}
-        assert (0 > nu_a + 0.5 * slicewidth) or (
-            0 < nu_a - 0.5 * slicewidth
+        assert (0 > nu_a_MHz + 0.5 * slicewidth) or (
+            0 < nu_a_MHz - 0.5 * slicewidth
         ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
         # {{{ apply HH frequency filter
-        d["t" : (0, nu_a - 0.5 * slicewidth)] *= 0
-        d["t" : (nu_a + 0.5 * slicewidth, None)] *= 0
+        d["t" : (0, nu_a_MHz - 0.5 * slicewidth)] *= 0
+        d["t" : (nu_a_MHz + 0.5 * slicewidth, None)] *= 0
         # }}}
         # }}}
         d.ift("t")
@@ -102,23 +102,23 @@ with psd.figlist_var() as fl:
         thiscolor = next(color_cycle)
         # {{{ set up beta shape to drop values into
         beta = d.shape.pop("t").alloc(dtype=np.float64)
-        beta.copy_axes(d)
-        beta.set_units(r"s√W")
+        beta.copy_axes(d).set_units(r"s√W")
         # }}}
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
+            # {{{ determine integration range
             int_range = abs(s).contiguous(lambda x: x > 0.05 * s.max())[0]
             # slightly expand int range to include rising edges
             int_range[0] -= 5e-6
             int_range[-1] += 5e-6
+            # }}}
+            # {{{ slice, integrate and convert to RMS
             beta["t_pulse", j] = (
                 abs(s["t":int_range]).integrate("t").data.item()
             )
             beta["t_pulse", j] /= np.sqrt(2)  # t*sqrt(Prms)
             # we've already isolated the t_pulse of interest so we
-            # can't call indiv_plots again (which applies the indexing)
-            # we additionally plot the calculated beta value on top of the
-            # plot as well
+            # can't call indiv_plots again
             if skip_plots is not None and j % skip_plots == 0:
                 switch_to_plot(d, j)
                 fl.plot(
@@ -126,14 +126,15 @@ with psd.figlist_var() as fl:
                     color="black",
                     label="integrated slice",
                 )
-                plt.ylabel(r"$\sqrt{P_{pulse}}$")
-                plt.text(
-                    0.5,
-                    0,
-                    r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
-                    % (beta["t_pulse", j].item() / 1e-6),
-                    transform=plt.gca().transAxes,
-                )
+            plt.ylabel(r"$\sqrt{P_{pulse}}$")
+            plt.text(
+                0.5,
+                0,
+                r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
+                % (beta["t_pulse", j].item() / 1e-6),
+                transform=plt.gca().transAxes,
+            )
+            # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None  # reset so all amplitudes are on same plots
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
@@ -143,7 +144,7 @@ with psd.figlist_var() as fl:
             "$A t_{pulse}$"
         ] *= amplitude  # we only want the x axis to be multiplied by amplitude for plotting only!
         fl.plot(
-            (beta.C),
+            (beta.C / 1e-6),
             color=thiscolor,
             label="amplitude = %f" % amplitude,
         )
@@ -167,25 +168,28 @@ with psd.figlist_var() as fl:
             beta = beta["t_pulse", decreasing_idx[-1] + 1 :]
         # }}}
         plt.axhline(  # the linear threshold is the threshold above which beta is linear
-            y=linear_threshold,  # as above
+            y=linear_threshold / 1e-6,  # as above
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
         # {{{ flip data so beta is on x axis now and A*t_pulse is the y axis
-        t_s_v_beta = beta.shape.alloc(dtype=np.float64).rename(
+        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename(
             "t_pulse", r"$\beta$"
         )
-        t_s_v_beta.setaxis(r"$\beta$", beta.data).set_units(r"s√W")
-        t_s_v_beta.data[:] = beta["t_pulse"].copy()  # because our ppg wants μs
+        t_us_v_beta.setaxis(r"$\beta$", beta.data)
+        t_us_v_beta.data[:] = (
+            beta["t_pulse"].copy() / 1e-6
+        )  # because our ppg wants μs
+        t_us_v_beta.set_units("μs").set_units(r"$\beta$", "s√W")
         # use as temp for ultimate coeff
         # }}}
         # {{{ Determine linear and nonliear coefficients
-        c_nonlinear = t_s_v_beta[r"$\beta$":(None, linear_threshold)].C
+        c_nonlinear = t_us_v_beta[r"$\beta$":(None, linear_threshold)].C
         c_nonlinear[
             r"$\beta$"
         ] -= linear_threshold  # Taylor expand around the linear threshold rather than 0
         c_nonlinear = c_nonlinear.polyfit(r"$\beta$", order=10)
-        c_linear = t_s_v_beta[r"$\beta$":(linear_threshold, None)].polyfit(
+        c_linear = t_us_v_beta[r"$\beta$":(linear_threshold, None)].polyfit(
             r"$\beta$", order=1
         )
         print(
@@ -216,31 +220,34 @@ with psd.figlist_var() as fl:
                 return ret_val.item()
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
-        t_s_v_beta.set_plot_color_next()
-        t_s_v_beta.name("A * $t_{pulse}$").set_units("s").set_units(
-            r"$\beta$", r"s√W"
-        )
+        t_us_v_beta.set_plot_color_next()
+        t_us_v_beta.name("A * $t_{pulse}$")
         fl.plot(
-            t_s_v_beta * amplitude,
+            t_us_v_beta * amplitude,
             ".",
             alpha=0.5,
             label=f"data for {amplitude}",
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
         fl.plot(
-            t_s_v_beta[r"$\beta$":(None, typical_180)] * amplitude,
+            t_us_v_beta[r"$\beta$":(None, typical_180)] * amplitude,
             ".",
             alpha=0.5,
             label=f"data for {amplitude}",
         )
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
-        for_extrap = psd.nddata(
-            np.linspace(0.5e-6, t_s_v_beta[r"$\beta$"].max() + 10e-6, 500),
-            r"$\beta$",
+        for_extrap = (
+            psd.nddata(
+                np.linspace(
+                    0.5e-6, t_us_v_beta[r"$\beta$"].max() + 10e-6, 500
+                ),
+                r"$\beta$",
+            )
+            .set_units("μs")
+            .set_units(r"$\beta$", "s√W")
         )
-        for_extrap.copy_props(t_s_v_beta)
-        for_extrap.set_units("s").set_units(r"$\beta$", r"s√W")
+        for_extrap.copy_props(t_us_v_beta)
         fl.plot(
             for_extrap.eval_poly(c_linear, r"$\beta$")[
                 r"$\beta$":(None, typical_180)
@@ -257,12 +264,7 @@ with psd.figlist_var() as fl:
             alpha=0.25,
             label="linear",
         )
-        full_fit = (
-            for_extrap.fromaxis(r"$\beta$")
-            .run(prog_plen)
-            .set_units("s")
-            .set_units(r"$\beta$", r"s√W")
-        )
+        full_fit = for_extrap.fromaxis(r"$\beta$").run(prog_plen)
         fl.plot(full_fit * amplitude, alpha=0.5, label="fit")
         plt.axvline(
             x=linear_threshold / 1e-6,  # units of μs
@@ -281,4 +283,6 @@ with psd.figlist_var() as fl:
         ):
             fl.next(j)
             psd.gridandtick(plt.gca())
+            plt.ylabel(r"$At_{pulse}$ / $\mathrm{\mu s}$")
+            plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         # }}}
