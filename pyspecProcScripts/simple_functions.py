@@ -156,7 +156,6 @@ def find_apparent_anal_freq(s):
         If aliased from a negative frequency, this notes whether the phase
         of the final time domain signal will be flipped
     """
-    # PR you need a docstring here
     carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
     dt = s["t"][1] - s["t"][0]
     if carrier < 1 / dt:
