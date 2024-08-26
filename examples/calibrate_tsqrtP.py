@@ -51,10 +51,9 @@ with psd.figlist_var() as fl:
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude}"
         if not d.get_units("t") == "s":
-            print(
-                "units weren't set for the t axis or else I can't read them from the hdf5 file!"
-            )
             d.set_units("t", "s")
+        if not d.get_units("t_pulse") == "s":
+            d.set_units("t_pulse", "s")
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
 
@@ -75,9 +74,9 @@ with psd.figlist_var() as fl:
                         label=thislabel,
                     )
 
-        indiv_plots(d, "raw", "blue")
+        indiv_plots(d, "raw analytic", "blue")
         # {{{ find apparent frequency and apply HH
-        indiv_plots(abs(d), "analytic", "orange")
+        indiv_plots(abs(d), "absolute analytic", "orange")
         d, nu_a, _ = find_apparent_anal_freq(d)
         d.ft("t")
         # {{{ diagnostic for finding apparent frequency
@@ -93,7 +92,7 @@ with psd.figlist_var() as fl:
         assert (0 > nu_a + 0.5 * slicewidth) or (
             0 < nu_a - 0.5 * slicewidth
         ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
-        # {{{ apply frequency filter
+        # {{{ apply HH frequency filter
         d["t" : (0, nu_a - 0.5 * slicewidth)] *= 0
         d["t" : (nu_a + 0.5 * slicewidth, None)] *= 0
         # }}}
@@ -104,7 +103,7 @@ with psd.figlist_var() as fl:
         # {{{ set up beta shape to drop values into
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d)
-        beta.set_units(r"s√W").set_units("t_pulse", "s")
+        beta.set_units(r"s√W")
         # }}}
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
@@ -144,7 +143,7 @@ with psd.figlist_var() as fl:
             "$A t_{pulse}$"
         ] *= amplitude  # we only want the x axis to be multiplied by amplitude for plotting only!
         fl.plot(
-            (beta.C / 1e-6).set_units("μs√W"),
+            (beta.C),
             color=thiscolor,
             label="amplitude = %f" % amplitude,
         )
@@ -168,29 +167,26 @@ with psd.figlist_var() as fl:
             beta = beta["t_pulse", decreasing_idx[-1] + 1 :]
         # }}}
         plt.axhline(  # the linear threshold is the threshold above which beta is linear
-            y=linear_threshold / 1e-6,  # as above
+            y=linear_threshold,  # as above
             color=thiscolor,
             label=f"linear threshold for amp={amplitude}",
         )
         # {{{ flip data so beta is on x axis now and A*t_pulse is the y axis
-        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename(
-            "t_pulse", "beta"
+        t_s_v_beta = beta.shape.alloc(dtype=np.float64).rename(
+            "t_pulse", r"$\beta$"
         )
-        t_us_v_beta.setaxis("beta", beta.data)
-        t_us_v_beta.data[:] = (
-            beta["t_pulse"].copy() / 1e-6
-        )  # because our ppg wants μs
-        t_us_v_beta.set_units("μs").set_units("beta", "s√W")
+        t_s_v_beta.setaxis(r"$\beta$", beta.data).set_units(r"s√W")
+        t_s_v_beta.data[:] = beta["t_pulse"].copy()  # because our ppg wants μs
         # use as temp for ultimate coeff
         # }}}
         # {{{ Determine linear and nonliear coefficients
-        c_nonlinear = t_us_v_beta["beta":(None, linear_threshold)].C
+        c_nonlinear = t_s_v_beta[r"$\beta$":(None, linear_threshold)].C
         c_nonlinear[
-            "beta"
+            r"$\beta$"
         ] -= linear_threshold  # Taylor expand around the linear threshold rather than 0
-        c_nonlinear = c_nonlinear.polyfit("beta", order=10)
-        c_linear = t_us_v_beta["beta":(linear_threshold, None)].polyfit(
-            "beta", order=1
+        c_nonlinear = c_nonlinear.polyfit(r"$\beta$", order=10)
+        c_linear = t_s_v_beta[r"$\beta$":(linear_threshold, None)].polyfit(
+            r"$\beta$", order=1
         )
         print(
             f"\n**************** Coefficients for {amplitude} ****************\n"
@@ -220,33 +216,35 @@ with psd.figlist_var() as fl:
                 return ret_val.item()
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
-        t_us_v_beta.set_plot_color_next()
+        t_s_v_beta.set_plot_color_next()
+        t_s_v_beta.name("A * $t_{pulse}$").set_units("s").set_units(
+            r"$\beta$", r"s√W"
+        )
         fl.plot(
-            t_us_v_beta * amplitude,
+            t_s_v_beta * amplitude,
             ".",
             alpha=0.5,
             label=f"data for {amplitude}",
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
         fl.plot(
-            t_us_v_beta["beta":(None, typical_180)] * amplitude,
+            t_s_v_beta[r"$\beta$":(None, typical_180)] * amplitude,
             ".",
             alpha=0.5,
             label=f"data for {amplitude}",
         )
         # {{{ we extrapolate past the edges of the data to show how the
         #     nonlinear is poorly behaved for large beta values
-        for_extrap = (
-            psd.nddata(
-                np.linspace(0.5e-6, t_us_v_beta["beta"].max() + 10e-6, 500),
-                "beta",
-            )
-            .set_units("μs")
-            .set_units("beta", "s√W")
+        for_extrap = psd.nddata(
+            np.linspace(0.5e-6, t_s_v_beta[r"$\beta$"].max() + 10e-6, 500),
+            r"$\beta$",
         )
-        for_extrap.copy_props(t_us_v_beta)
+        for_extrap.copy_props(t_s_v_beta)
+        for_extrap.set_units("s").set_units(r"$\beta$", r"s√W")
         fl.plot(
-            for_extrap.eval_poly(c_linear, "beta")["beta":(None, typical_180)]
+            for_extrap.eval_poly(c_linear, r"$\beta$")[
+                r"$\beta$":(None, typical_180)
+            ]
             * amplitude,
             "--",
             alpha=0.25,
@@ -254,12 +252,17 @@ with psd.figlist_var() as fl:
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$")
         fl.plot(
-            for_extrap.eval_poly(c_linear, "beta") * amplitude,
+            for_extrap.eval_poly(c_linear, r"$\beta$") * amplitude,
             "--",
             alpha=0.25,
             label="linear",
         )
-        full_fit = for_extrap.fromaxis("beta").run(prog_plen)
+        full_fit = (
+            for_extrap.fromaxis(r"$\beta$")
+            .run(prog_plen)
+            .set_units("s")
+            .set_units(r"$\beta$", r"s√W")
+        )
         fl.plot(full_fit * amplitude, alpha=0.5, label="fit")
         plt.axvline(
             x=linear_threshold / 1e-6,  # units of μs
@@ -268,7 +271,7 @@ with psd.figlist_var() as fl:
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
         fl.plot(
-            full_fit["beta":(None, typical_180)] * amplitude,
+            full_fit[r"$\beta$":(None, typical_180)] * amplitude,
             alpha=0.5,
             label="fit",
         )
@@ -278,6 +281,4 @@ with psd.figlist_var() as fl:
         ):
             fl.next(j)
             psd.gridandtick(plt.gca())
-            plt.ylabel(r"$At_{pulse}$ / $\mathrm{\mu s}$")
-            plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         # }}}
