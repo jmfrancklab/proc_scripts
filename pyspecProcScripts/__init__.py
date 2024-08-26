@@ -12,7 +12,7 @@ from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
 from .baseline import calc_baseline
-from .Utility import *
+from .Utility import Vpp2power, dBm2power, power2dBm
 from .CPMG_phasing import center_echo
 from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
@@ -54,6 +54,7 @@ __all__ = [
     "ph1_real_Abs",
     "power2dBm",
     "recovery",
+    "rough_table_of_integrals",
     "select_pathway",
     "slice_FID_from_echo",
     "zeroth_order_ph",
