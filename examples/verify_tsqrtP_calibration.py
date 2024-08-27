@@ -46,21 +46,20 @@ with psd.figlist_var() as fl:
             d.get_prop("postproc_type") == "GDS_capture_v1"
         ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
-        fl.basename = f"amplitude = {amplitude:.1f}"
+        fl.basename = f"amplitude = {amplitude:.2f}"  # .2 to differentiate amplitude 0.1 from 0.05
         if not d.get_units("t") == "s":
             psd.logger.info(
                 "units weren't set for the t axis or else I can't read them from the hdf5 file!"
             )
             d.set_units("t", "s")
         d *= V_atten_ratio  # V at output of amplifier
-        d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
+        d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P_p)
 
         # {{{ functions that streamline plotting the desired pulse length datasets
         def switch_to_plot(d, j):
             thislen = d.get_prop("programmed_t_pulse")[j] / 1e-6
             fl.next(f"pulse length = {thislen:.2f} μs")
 
-        # PR this change vs. c772298 was not good  -- it's a bit forced, and as noted below, you're leaving out stuff that was done before.  So I rolled it back
         def indiv_plots(d, thislabel, thiscolor):
             if skip_plots is None:
                 return
@@ -71,16 +70,16 @@ with psd.figlist_var() as fl:
                         d["beta", j],
                         alpha=0.2,
                         color=thiscolor,
-                        # PR the label here is weird -- I think you should give it a more meaningful label
-                        label="Amplitude = %f" % amplitude,
+                        label=thislabel,
                     )
+
         # }}}
 
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "abs(analytic)", "orange")  # sqrt(P_p)
         d, nu_a, _ = find_apparent_anal_freq(d)  # find frequency of signal
         d.ft("t")
-        # {{{ Diagnostic to ensure the frequency was properly identified
+        # {{{ Diagnostic to ensure the frequency of the signal was properly identified
         fl.next("Frequency Domain")
         fl.plot(d)
         plt.text(
@@ -91,7 +90,7 @@ with psd.figlist_var() as fl:
         )
         assert (0 > nu_a * 0.5 * HH_width) or (
             0 < nu_a - 0.5 * HH_width
-        ), "unfortunately the region I want to filter includes DC -- this is probablye not good, and you should pick a different timescale for your scope so this doesn't happen"
+        ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
         # }}}
         # {{{ apply frequency filter
         d["t" : (None, nu_a - 0.5 * HH_width)] *= 0
@@ -113,7 +112,6 @@ with psd.figlist_var() as fl:
             int_range[0] -= 2e-6
             int_range[-1] += 2e-6
             # {{{ plot the data that we're integrating all together
-            # PR -- this is the correct choice based on what I'm saying in the PR comments
             fl.push_marker()
             fl.basename = None
             fl.next("collect filtered analytic")
@@ -124,7 +122,6 @@ with psd.figlist_var() as fl:
                 abs(s["t":int_range]).integrate("t").data.item()
             )  # tp * sqrt(P_p)
             verify_beta["beta", j] /= np.sqrt(2)  # tp*sqrt(Prms)
-            # PR this change vs. c772298 was not good b/c you are leaving out some text commands
             # {{{ Can't use indiv_plots because we've already indexed the beta
             # out and we also want to plot the calculated beta on top
             if skip_plots is not None and j % skip_plots == 0:
