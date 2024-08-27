@@ -23,7 +23,7 @@ skip_plots = 45  # diagnostic -- set this to None, and there will be no plots
 slicewidth = 1e6
 typical_180 = 40e-6  # typical beta for a 180 -- it's really important to get pulses in this regime correct
 
-# the linear threshold seems to vary from one amplitude to the next
+# Note: the linear threshold seems to vary from one amplitude to the next
 with psd.figlist_var() as fl:
     for filename, nodename, linear_threshold in [
         (
@@ -49,37 +49,52 @@ with psd.figlist_var() as fl:
             d.get_prop("postproc_type") == "GDS_capture_v1"
         ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
-        fl.basename = f"amplitude = {amplitude}"
+        fl.basename = f"amplitude = {amplitude:.1f}"
+        # {{{ ensure units are set, the preprocessing will through out the statement that they were not set but to still be able to run this script we include the following
         if not d.get_units("t") == "s":
             d.set_units("t", "s")
         if not d.get_units("t_pulse") == "s":
             d.set_units("t_pulse", "s")
+        # }}}
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
+        t_pulses = (
+            d.getaxis("t_pulse") / 1e-6
+        )  # needed for titles of plots when t_pulse is already indexed
 
-        def switch_to_plot(d, j):
-            thislen = d["t_pulse"][j]
-            fl.next(f"pulse length = {thislen}")
+        # {{{ functions that streamline plotting the desired pulse length datasets
+        def switch_to_plot(d, thisj):
+            thislen = t_pulses[thisj]
+            fl.next(f"pulse length = {thislen:.2f} μs")
 
-        def indiv_plots(d, thislabel, thiscolor):
+        def indiv_plots(d, thislabel, thiscolor, thisj=None):
             if skip_plots is None:
                 return
-            for j in range(len(d["t_pulse"])):
-                if j % skip_plots == 0:
-                    switch_to_plot(d, j)
+            # {{{ this will handle both when t_pulse is (e.g showing integration bounded data) and is not indexed already
+            j = (
+                range(len(d["t_pulse"]))
+                if "t_pulse" in d.dimlabels
+                else [thisj]
+            )
+            for idx in j:
+                if idx % skip_plots == 0:
+                    switch_to_plot(d, idx)
                     fl.plot(
-                        d["t_pulse", j],
+                        d["t_pulse", idx] if "t_pulse" in d.dimlabels else d,
                         alpha=0.2,
                         color=thiscolor,
                         label=thislabel,
                     )
 
-        indiv_plots(d, "raw analytic", "blue")
-        # {{{ find apparent frequency and apply HH
-        indiv_plots(abs(d), "absolute analytic", "orange")
-        d, nu_a_MHz, _ = find_apparent_anal_freq(d)
+                    plt.ylabel(r"$\sqrt{P}$ / $\mathrm{\sqrt{W}}$")
+
+        # }}}
+
+        # {{{ data is already analytic, and downsampled to below 24 MHz
+        indiv_plots(abs(d), "absolute analytic", "orange")  # sqrt(P_p)
+        d, nu_a_MHz, _ = find_apparent_anal_freq(d)  # find frequency of signal
         d.ft("t")
-        # {{{ diagnostic for finding apparent frequency
+        # {{{ Diagnostic to ensure the frequency was properly identified
         fl.next("Frequency Domain")
         fl.plot(d)
         plt.text(
@@ -88,53 +103,38 @@ with psd.figlist_var() as fl:
             s=rf"$\nu_a={nu_a_MHz/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
-        # }}}
         assert (0 > nu_a_MHz + 0.5 * slicewidth) or (
             0 < nu_a_MHz - 0.5 * slicewidth
         ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
+        # }}}
         # {{{ apply HH frequency filter
         d["t" : (0, nu_a_MHz - 0.5 * slicewidth)] *= 0
         d["t" : (nu_a_MHz + 0.5 * slicewidth, None)] *= 0
         # }}}
-        # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
+        # }}}
         thiscolor = next(color_cycle)
-        # {{{ set up beta shape to drop values into
+        # {{{ set up shape of beta to drop the calculated values into
         beta = d.shape.pop("t").alloc(dtype=np.float64)
         beta.copy_axes(d).set_units(r"s√W")
         # }}}
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
-            # {{{ determine integration range
             int_range = abs(s).contiguous(lambda x: x > 0.05 * s.max())[0]
             # slightly expand int range to include rising edges
             int_range[0] -= 5e-6
             int_range[-1] += 5e-6
-            # }}}
-            # {{{ slice, integrate and convert to RMS
             beta["t_pulse", j] = (
                 abs(s["t":int_range]).integrate("t").data.item()
             )
             beta["t_pulse", j] /= np.sqrt(2)  # t*sqrt(Prms)
-            # we've already isolated the t_pulse of interest so we
-            # can't call indiv_plots again
-            if skip_plots is not None and j % skip_plots == 0:
-                switch_to_plot(d, j)
-                fl.plot(
-                    abs(s["t":int_range]),
-                    color="black",
-                    label="integrated slice",
-                )
-            plt.ylabel(r"$\sqrt{P_{pulse}}$")
-            plt.text(
-                0.5,
-                0,
-                r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
-                % (beta["t_pulse", j].item() / 1e-6),
-                transform=plt.gca().transAxes,
+            indiv_plots(
+                abs(s["t":int_range]),
+                thiscolor="black",
+                thislabel="integrated slice",
+                thisj=j,
             )
-            # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None  # reset so all amplitudes are on same plots
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
@@ -173,10 +173,11 @@ with psd.figlist_var() as fl:
             label=f"linear threshold for amp={amplitude}",
         )
         # {{{ flip data so beta is on x axis now and A*t_pulse is the y axis
-        t_us_v_beta = beta.shape.alloc(dtype=np.float64).rename(
-            "t_pulse", r"$\beta$"
+        t_us_v_beta = (
+            beta.shape.alloc(dtype=np.float64)
+            .rename("t_pulse", r"$\beta$")
+            .setaxis(r"$\beta$", beta.data)
         )
-        t_us_v_beta.setaxis(r"$\beta$", beta.data)
         t_us_v_beta.data[:] = (
             beta["t_pulse"].copy() / 1e-6
         )  # because our ppg wants μs
@@ -201,8 +202,7 @@ with psd.figlist_var() as fl:
         # }}}
         def prog_plen(desired):
             """function that takes the coefficients of the linear and nonlinear
-            regions and applies the fit respectively to calculate the pulse time that
-            will return the desired beta value
+            regions and applies the fit respectively
             """
 
             def zonefit(desired):
