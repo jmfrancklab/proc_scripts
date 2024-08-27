@@ -1,7 +1,7 @@
 r"""Calculating :math:`\beta` from individual pulse capture
 ===========================================================
-Assuming a single pulse was acquired via the GDS oscilloscope and 
-stored in an HDF5 file, this script plots the absolute analytic
+Assuming a single pulse was acquired via simple_onepulse_capture.py 
+in the FLInst repo using the GDS oscilloscope, this script plots the absolute analytic
 along with the frequency filtered absolute of the analytic before
 integrating to calculate :math:`\beta = \frac{1}{\sqrt{2}}\int{V(t)dt}'.
 """
