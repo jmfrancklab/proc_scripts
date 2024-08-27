@@ -4,13 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy import pi
 
-
 def rough_table_of_integrals(
-    d,
+    s,
     signal_range,
     signal_pathway=None,
     fl=None,
-    echo_like=False,
+    echo_like=True,
     title="",
     direct="t2",
 ):
@@ -18,7 +17,7 @@ def rough_table_of_integrals(
 
     Parameters
     ==========
-    d: nddata
+    s: nddata
         data with a single (dominant) peak, where you want to return the sign of the integral over all the data.
     signal_range: tuple
         narrow slice range where signal resides
@@ -55,8 +54,8 @@ def rough_table_of_integrals(
     # and handle newer data where it is set I have the following if/else
     signal_pathway = signal_pathway or d.get_prop("coherence_pathway")
     # {{{ Apply overall zeroth order correction, select the pathway, and apply a rudimentary alignment
-    d /= zeroth_order_ph(
-        select_pathway(d[direct:signal_range].sum(direct), signal_pathway)
+    s /= zeroth_order_ph(
+        select_pathway(s[direct:signal_range].sum(direct), signal_pathway)
     )
     if echo_like:
         # if it's echo like we will be applying fid_from_echo which requires

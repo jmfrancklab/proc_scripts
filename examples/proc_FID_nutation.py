@@ -27,7 +27,7 @@ s = psd.find_file(
 with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    s, ax3 = prscr.rough_table_of_integrals(s, signal_range, fl=fl, title=sys.argv[2])
+    s, ax3 = prscr.rough_table_of_integrals(s, signal_range, fl=fl, title=sys.argv[2], echo_like=False)
     # {{{ fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.plot(s, "o", ax=ax3, human_units=False)
