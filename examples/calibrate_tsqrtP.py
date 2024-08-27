@@ -61,7 +61,7 @@ with psd.figlist_var() as fl:
 
         # {{{ functions that streamline plotting the desired pulse length datasets
         def switch_to_plot(d, j):
-            thislen = t_pulses[j]
+            thislen = d["t_pulse"][j]
             fl.next(f"pulse length = {thislen:.2f} μs")
 
         def indiv_plots(d, thislabel, thiscolor):
@@ -83,7 +83,7 @@ with psd.figlist_var() as fl:
 
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "absolute analytic", "orange")  # sqrt(P_p)
-        d, nu_a_MHz, _ = find_apparent_anal_freq(d)  # find frequency of signal
+        d, nu_a, _ = find_apparent_anal_freq(d)  # find frequency of signal
         d.ft("t")
         # {{{ Diagnostic to ensure the frequency was properly identified
         fl.next("Frequency Domain")
@@ -120,7 +120,7 @@ with psd.figlist_var() as fl:
             fl.push_marker()
             fl.basename = None
             fl.next("collect filtered analytic")
-            fl.plot(abs(s["t":int_range]), alpha = 0.3)
+            fl.plot(abs(s["t":int_range]), alpha=0.3)
             fl.pop_marker()
             # }}}
             beta["t_pulse", j] = (
@@ -133,15 +133,15 @@ with psd.figlist_var() as fl:
                 switch_to_plot(d, j)
                 fl.plot(
                     abs(s["t":int_range]),
-                    color = "black",
-                    label = "integrated slice"
+                    color="black",
+                    label="integrated slice",
                 )
                 plt.ylabel(r"$\sqrt{P_{pulse}}$")
                 plt.text(
                     int_range[0] * 1e6 - 1,
                     0.25,
                     r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
-                    % (verify_beta["beta", j].item() / 1e-6),
+                    % (beta["beta", j].item() / 1e-6),
                 )
             # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
