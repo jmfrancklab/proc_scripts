@@ -38,7 +38,8 @@ def rough_table_of_integrals(
     Returns
     =======
     s: nddata
-        The table of integrals (collapse the direct dimension into a single number)
+        The table of integrals (collapse the direct dimension into a single number).
+        Processing is done in place.
     ax3: Axes
         return the axis with the table of integrals, in case you want to add a fit!
     """
@@ -58,6 +59,7 @@ def rough_table_of_integrals(
         select_pathway(s[direct:signal_range].sum(direct), signal_pathway)
     )
     if echo_like:
+        # PR why are you making copies here?  This doesn't make sense.
         # if it's echo like we will be applying fid_from_echo which requires
         # that the data passed still contains all coherence pathways
         s = select_pathway(d[direct:signal_range].C, signal_pathway)
@@ -95,6 +97,9 @@ def rough_table_of_integrals(
     ax2.set_title("Check phase variation along indirect")
     # }}}
     if echo_like:
+        # PR -- the comment below implies that at this point, the sign
+        # has been flipped, so we probably don't want the next line.
+        # You can plot to diagnose if you want ot check
         d *= mysign
         s = fid_from_echo(d.set_error(None), signal_pathway)
         s *= mysign

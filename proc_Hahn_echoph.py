@@ -10,6 +10,8 @@ logger = init_logging("info")
 
 
 def select_pathway(s, pathway):
+    if len(pathway) == 0:
+        return s
     retval = s
     for k, v in pathway.items():
         retval = retval[k, v]

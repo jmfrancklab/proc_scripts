@@ -34,7 +34,6 @@ with psd.figlist_var() as fl:
     # {{{ generate the table of integrals and fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     fl.next("Integrated and Fit")
-    fl.plot(s, "o", human_units=False)
     s = psd.lmfitdata(s)
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2) ** 3
@@ -50,7 +49,7 @@ with psd.figlist_var() as fl:
     )
     s.fit()
     fit = s.eval(500)
-    fl.plot(fit, human_units=False)
+    fl.plot(fit, human_units=False, ax=ax3)
     plt.xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
     plt.ylabel(None)
     beta_90 = s.output("beta_ninety")
