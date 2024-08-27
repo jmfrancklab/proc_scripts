@@ -96,6 +96,8 @@ def rough_table_of_integrals(
         s = fid_from_echo(s.set_error(None), signal_pathway)
         s *= mysign
         s = select_pathway(s[direct:signal_range], signal_pathway)
+        fl.image(s[direct:signal_range], ax=ax3)
+        ax3.set_title("FID sliced and phased")
     else:
         s *= mysign  # flip the sign back, so we get sensible integrals
     # {{{ generate the table of integrals
