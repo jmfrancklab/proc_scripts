@@ -164,13 +164,13 @@ def find_apparent_anal_freq(s):
     # the analytic signal or if the signal was aliased
     if carrier < 1 / dt:
         psd.logger.info(
-            psd.strm("You are in the clear and no aliasing took place!")
+            "You are in the clear and no aliasing took place!"
         )
         nu_a = carrier
         isflipped = False
     else:
         SW = 2 / dt  # SW of data before made analytic
-        #              - what scope sees = 2 * SW_analytic
+        #              - what scope sees
         n = np.floor(  # nearest integer multiple of
             #            sampling frequency.
             #            Measured from the left side of

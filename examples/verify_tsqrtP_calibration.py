@@ -49,35 +49,30 @@ with psd.figlist_var() as fl:
         fl.basename = f"amplitude = {amplitude:.1f}"
         if not d.get_units("t") == "s":
             psd.logger.info(
-                psd.strm(
-                    "units weren't set for the t axis or else I can't read them from the hdf5 file!"
-                )
+                "units weren't set for the t axis or else I can't read them from the hdf5 file!"
             )
             d.set_units("t", "s")
         d *= V_atten_ratio  # V at output of amplifier
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
 
         # {{{ functions that streamline plotting the desired pulse length datasets
-        def switch_to_plot(d, thisj):
-            thislen = d.get_prop("programmed_t_pulse")[thisj] / 1e-6
+        def switch_to_plot(d, j):
+            thislen = d.get_prop("programmed_t_pulse")[j] / 1e-6
             fl.next(f"pulse length = {thislen:.2f} μs")
 
-        def indiv_plots(d, thislabel, thiscolor, thisj=None):
+        # PR this change vs. c772298 was not good  -- it's a bit forced, and as noted below, you're leaving out stuff that was done before.  So I rolled it back
+        def indiv_plots(d, thislabel, thiscolor):
             if skip_plots is None:
                 return
-            # {{{ this will handle both when beta is and is not indexed already
-            j = range(len(d["beta"])) if "beta" in d.dimlabels else [thisj]
-            for idx in j:
-                if idx % skip_plots == 0:
-                    switch_to_plot(d, idx)
+            for j in range(len(d["beta"])):
+                if j % skip_plots == 0:
+                    switch_to_plot(d, j)
                     fl.plot(
-                        d if "beta" not in d.dimlabels else d["beta", idx],
+                        d["beta", j],
                         alpha=0.2,
                         color=thiscolor,
-                        label=thislabel,
+                        label="Amplitude = %f" % amplitude,
                     )
-                    plt.ylabel(r"$\sqrt{P}$ / $\mathrm{\sqrt{W}}$")
-
         # }}}
 
         # {{{ data is already analytic, and downsampled to below 24 MHz
@@ -103,6 +98,13 @@ with psd.figlist_var() as fl:
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
+        # {{{ Diagnostic to plot all pulses on the same plot to see none were skipped
+        fl.next("collect filtered analytic", legend=True)
+        for j in range(d.shape["beta"]):
+            s = d["beta", j].C
+            s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
+            fl.plot(abs(s), alpha=0.3, label=f"{j}")
+        # }}}
         # }}}
         thiscolor = next(color_cycle)
         # {{{ set up shape of data to drop the correct values in
@@ -120,19 +122,31 @@ with psd.figlist_var() as fl:
                 abs(s["t":int_range]).integrate("t").data.item()
             )  # tp * sqrt(P_p)
             verify_beta["beta", j] /= np.sqrt(2)  # tp*sqrt(Prms)
-            indiv_plots(
-                abs(s["t":int_range]),
-                thiscolor="black",
-                thislabel="integrated slice",
-                thisj=j,
-            )
+            # PR this change vs. c772298 was not good b/c you are leaving out some text commands
+            # {{{ Can't use indiv_plots because we've already indexed the beta
+            # out and we also want to plot the calculated beta on top
+            if skip_plots is not None and j % skip_plots == 0:
+                switch_to_plot(d, j)
+                fl.plot(
+                    abs(s["t":int_range]),
+                    color="black",
+                    label="integrated slice",
+                )
+                plt.ylabel(r"$\sqrt{P_{pulse}}$")
+                plt.text(
+                    int_range[0] * 1e6 - 1,
+                    0.25,
+                    r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
+                    % (verify_beta["beta", j].item() / 1e-6),
+                )
+            # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None  # we want to plot all amplitudes together now
         fl.next(r"Measured $\beta$ vs programmed $\beta$")
         fl.plot(
             (verify_beta / 1e-6).set_units("μs√W"),
             color=thiscolor,
-            label="Amplitude = %0.1f" % amplitude,
+            label="Amplitude = %0.2f" % amplitude,
         )
         plt.xlabel(r"Programmed $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         plt.ylabel(r"Measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
