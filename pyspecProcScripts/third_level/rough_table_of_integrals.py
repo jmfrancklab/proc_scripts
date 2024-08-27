@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy import pi
 
+
 def rough_table_of_integrals(
     s,
     signal_range,
@@ -53,18 +54,12 @@ def rough_table_of_integrals(
     # }}}
     # To handle both older data where the coherence pathway was not set as a property
     # and handle newer data where it is set I have the following if/else
-    signal_pathway = signal_pathway or d.get_prop("coherence_pathway")
+    signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
     # {{{ Apply overall zeroth order correction, select the pathway, and apply a rudimentary alignment
     s /= zeroth_order_ph(
         select_pathway(s[direct:signal_range].sum(direct), signal_pathway)
     )
-    if echo_like:
-        # PR why are you making copies here?  This doesn't make sense.
-        # if it's echo like we will be applying fid_from_echo which requires
-        # that the data passed still contains all coherence pathways
-        s = select_pathway(d[direct:signal_range].C, signal_pathway)
-    else:
-        s = select_pathway(d[direct:signal_range], signal_pathway)
+    s = select_pathway(s[direct:signal_range], signal_pathway)
     # {{{ determine shift for rough alignment, but don't use this yet, because
     #     I want to see the signal resonance frequency
     s.ift(direct)
@@ -97,15 +92,10 @@ def rough_table_of_integrals(
     ax2.set_title("Check phase variation along indirect")
     # }}}
     if echo_like:
-        # PR -- the comment below implies that at this point, the sign
-        # has been flipped, so we probably don't want the next line.
-        # You can plot to diagnose if you want ot check
-        d *= mysign
-        s = fid_from_echo(d.set_error(None), signal_pathway)
+        signal_pathway = {}
+        s = fid_from_echo(s.set_error(None), signal_pathway)
         s *= mysign
         s = select_pathway(s[direct:signal_range], signal_pathway)
-        fl.image(s[direct:signal_range], ax=ax3)
-        ax3.set_title("FID sliced and phased")
     else:
         s *= mysign  # flip the sign back, so we get sensible integrals
     # {{{ generate the table of integrals

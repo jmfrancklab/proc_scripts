@@ -13,7 +13,6 @@ Tested with:
 """
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import matplotlib.pyplot as plt
 import sympy as sp
 import sys
 
@@ -33,7 +32,7 @@ with psd.figlist_var() as fl:
     )
     # {{{ generate the table of integrals and fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
-    fl.next("Integrated and Fit")
+    fl.plot(s, "o", ax=ax3)
     s = psd.lmfitdata(s)
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2) ** 3
@@ -49,15 +48,15 @@ with psd.figlist_var() as fl:
     )
     s.fit()
     fit = s.eval(500)
-    fl.plot(fit, human_units=False, ax=ax3)
-    plt.xlabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
-    plt.ylabel(None)
-    beta_90 = s.output("beta_ninety")
-    plt.axvline(beta_90)
-    plt.text(
+    fl.plot(fit, ax=ax3)
+    ax3.set_xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+    ax3.set_ylabel(None)
+    beta_90 = s.output("beta_ninety") / 1e-6
+    ax3.axvline(beta_90)
+    ax3.text(
         beta_90 + 5,
         5e4,
         r"$\beta_{90} = %f \mathrm{s \sqrt{W}}$" % beta_90,
     )
-    psd.gridandtick(plt.gca())
+    ax3.grid()
     # }}}
