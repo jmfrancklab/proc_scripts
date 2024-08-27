@@ -77,6 +77,7 @@ def rough_table_of_integrals(
         human_units=False,
     )
     ax1.set_title("Signal pathway / ph0")
+    ax1.set_ylabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
     # }}}
     # {{{ Check phase variation along indirect
     mysign = determine_sign(
@@ -90,6 +91,7 @@ def rough_table_of_integrals(
         human_units=False,
     )
     ax2.set_title("Check phase variation along indirect")
+    ax2.set_ylabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
     # }}}
     if echo_like:
         signal_pathway = {}
