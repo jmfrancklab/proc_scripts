@@ -70,14 +70,14 @@ def rough_table_of_integrals(
     s.ift(direct)
     shift = s * np.exp(-(pi**2) * s.fromaxis(direct) ** 2 * (2 * 50**2))
     shift.ft(direct)
-    shift = shift[direct:signal_range].real.run(abs).argmax(direct)
+    shift = shift.real.run(abs).argmax(direct)
     shift.set_error(None)
     # interestingly, if we were correcting here, we would multiply by the phase
     # here to perform the shift, which would be efficient!
     s.ft(direct)
     # }}}
     fl.image(
-        s[direct:signal_range],
+        s,
         ax=ax1,
         # human_units=False,
     )
@@ -91,9 +91,8 @@ def rough_table_of_integrals(
     )
     s *= mysign
     fl.image(
-        s[direct:signal_range],
+        s,
         ax=ax2,
-        # human_units=False,
     )
     ax2.set_title("Check phase variation along indirect")
     ax2.set_ylabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
@@ -101,7 +100,7 @@ def rough_table_of_integrals(
     if echo_like:
         signal_pathway = {}
         s = fid_from_echo(s.set_error(None), signal_pathway)
-        s = select_pathway(s[direct:signal_range], signal_pathway)
+        s = select_pathway(s, signal_pathway)
         s *= mysign
         fl.image(s, ax=ax3)
         ax3.set_title("FID sliced and phased")
