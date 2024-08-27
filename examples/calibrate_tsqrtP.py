@@ -49,7 +49,7 @@ with psd.figlist_var() as fl:
             d.get_prop("postproc_type") == "GDS_capture_v1"
         ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
-        fl.basename = f"amplitude = {amplitude:.1f}"
+        fl.basename = f"amplitude = {amplitude:.2f}"
         # {{{ ensure units are set, the preprocessing will through out the statement that they were not set but to still be able to run this script we include the following
         if not d.get_units("t") == "s":
             d.set_units("t", "s")
@@ -58,29 +58,20 @@ with psd.figlist_var() as fl:
         # }}}
         d *= V_atten_ratio
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
-        t_pulses = (
-            d.getaxis("t_pulse") / 1e-6
-        )  # needed for titles of plots when t_pulse is already indexed
 
         # {{{ functions that streamline plotting the desired pulse length datasets
-        def switch_to_plot(d, thisj):
-            thislen = t_pulses[thisj]
+        def switch_to_plot(d, j):
+            thislen = t_pulses[j]
             fl.next(f"pulse length = {thislen:.2f} μs")
 
-        def indiv_plots(d, thislabel, thiscolor, thisj=None):
+        def indiv_plots(d, thislabel, thiscolor):
             if skip_plots is None:
                 return
-            # {{{ this will handle both when t_pulse is (e.g showing integration bounded data) and is not indexed already
-            j = (
-                range(len(d["t_pulse"]))
-                if "t_pulse" in d.dimlabels
-                else [thisj]
-            )
-            for idx in j:
-                if idx % skip_plots == 0:
-                    switch_to_plot(d, idx)
+            for j in range(len(d["t_pulse"])):
+                if j % skip_plots == 0:
+                    switch_to_plot(d, j)
                     fl.plot(
-                        d["t_pulse", idx] if "t_pulse" in d.dimlabels else d,
+                        d["t_pulse", j],
                         alpha=0.2,
                         color=thiscolor,
                         label=thislabel,
@@ -100,16 +91,16 @@ with psd.figlist_var() as fl:
         plt.text(
             x=0.5,
             y=0.5,
-            s=rf"$\nu_a={nu_a_MHz/1e6:0.2f}$ MHz",
+            s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
-        assert (0 > nu_a_MHz + 0.5 * slicewidth) or (
-            0 < nu_a_MHz - 0.5 * slicewidth
+        assert (0 > nu_a + 0.5 * slicewidth) or (
+            0 < nu_a - 0.5 * slicewidth
         ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
         # }}}
         # {{{ apply HH frequency filter
-        d["t" : (0, nu_a_MHz - 0.5 * slicewidth)] *= 0
-        d["t" : (nu_a_MHz + 0.5 * slicewidth, None)] *= 0
+        d["t" : (0, nu_a - 0.5 * slicewidth)] *= 0
+        d["t" : (nu_a + 0.5 * slicewidth, None)] *= 0
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
@@ -125,16 +116,34 @@ with psd.figlist_var() as fl:
             # slightly expand int range to include rising edges
             int_range[0] -= 5e-6
             int_range[-1] += 5e-6
+            # {{{ plot the data that we're integrating all together
+            fl.push_marker()
+            fl.basename = None
+            fl.next("collect filtered analytic")
+            fl.plot(abs(s["t":int_range]), alpha = 0.3)
+            fl.pop_marker()
+            # }}}
             beta["t_pulse", j] = (
                 abs(s["t":int_range]).integrate("t").data.item()
             )
             beta["t_pulse", j] /= np.sqrt(2)  # t*sqrt(Prms)
-            indiv_plots(
-                abs(s["t":int_range]),
-                thiscolor="black",
-                thislabel="integrated slice",
-                thisj=j,
-            )
+            # {{{ Can't use indiv_plots because we've already indexed the t_pulse
+            # out and we also want to plot the calculated beta on top
+            if skip_plots is not None and j % skip_plots == 0:
+                switch_to_plot(d, j)
+                fl.plot(
+                    abs(s["t":int_range]),
+                    color = "black",
+                    label = "integrated slice"
+                )
+                plt.ylabel(r"$\sqrt{P_{pulse}}$")
+                plt.text(
+                    int_range[0] * 1e6 - 1,
+                    0.25,
+                    r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
+                    % (verify_beta["beta", j].item() / 1e-6),
+                )
+            # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None  # reset so all amplitudes are on same plots
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
