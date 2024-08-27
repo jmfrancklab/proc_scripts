@@ -71,6 +71,7 @@ with psd.figlist_var() as fl:
                         d["beta", j],
                         alpha=0.2,
                         color=thiscolor,
+                        # PR the label here is weird -- I think you should give it a more meaningful label
                         label="Amplitude = %f" % amplitude,
                     )
         # }}}
@@ -98,13 +99,6 @@ with psd.figlist_var() as fl:
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
-        # {{{ Diagnostic to plot all pulses on the same plot to see none were skipped
-        fl.next("collect filtered analytic", legend=True)
-        for j in range(d.shape["beta"]):
-            s = d["beta", j].C
-            s["t"] -= abs(s).contiguous(lambda x: x > 0.03 * s.max())[0][0]
-            fl.plot(abs(s), alpha=0.3, label=f"{j}")
-        # }}}
         # }}}
         thiscolor = next(color_cycle)
         # {{{ set up shape of data to drop the correct values in
@@ -118,6 +112,14 @@ with psd.figlist_var() as fl:
             # slightly expand int range to include rising edges
             int_range[0] -= 2e-6
             int_range[-1] += 2e-6
+            # {{{ plot the data that we're integrating all together
+            # PR -- this is the correct choice based on what I'm saying in the PR comments
+            fl.push_marker()
+            fl.basename = None
+            fl.next("collect filtered analytic")
+            fl.plot(abs(s["t":int_range]), alpha=0.3)
+            fl.pop_marker()
+            # }}}
             verify_beta["beta", j] = (
                 abs(s["t":int_range]).integrate("t").data.item()
             )  # tp * sqrt(P_p)
