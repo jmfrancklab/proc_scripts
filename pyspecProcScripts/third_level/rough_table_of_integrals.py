@@ -100,7 +100,6 @@ def rough_table_of_integrals(
     if echo_like:
         signal_pathway = {}
         s = fid_from_echo(s.set_error(None), signal_pathway)
-        s = select_pathway(s, signal_pathway)
         s *= mysign
         fl.image(s, ax=ax3)
         ax3.set_title("FID sliced and phased")
