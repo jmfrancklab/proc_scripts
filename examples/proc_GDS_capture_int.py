@@ -1,3 +1,4 @@
+# PR docstring needed
 import pyspecdata as psd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -33,9 +34,7 @@ with psd.figlist_var() as fl:
         )
         # {{{ define basename
         amplitude = s.get_prop("acq_params")["amplitude"]
-        # Only adjusting beta to us for basename (it fits/looks better)
-        beta_us_sqrt_W = s.get_prop("acq_params")["beta_90_s_sqrtW"] * 1e6
-        fl.basename = f"amplitude = {amplitude}, ${{\\beta}}$ = {beta_us_sqrt_W} ${{\\mathrm{{\\mu s \\sqrt{{W}}}}}}$ \n"
+        fl.basename = f"amplitude = {amplitude}, ${{\\beta}}$ = {s.get_prop('acq_params')['beta_90_s_sqrtW'] / 1e-6} ${{\\mathrm{{\\mu s \\sqrt{{W}}}}}}$ \n"
         # }}}
         if not s.get_units("t") == "s":
             print(
