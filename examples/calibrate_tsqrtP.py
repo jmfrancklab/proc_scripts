@@ -61,7 +61,7 @@ with psd.figlist_var() as fl:
 
         # {{{ functions that streamline plotting the desired pulse length datasets
         def switch_to_plot(d, j):
-            thislen = d["t_pulse"][j]
+            thislen = d["t_pulse"][j] / 1e-6
             fl.next(f"pulse length = {thislen:.2f} μs")
 
         def indiv_plots(d, thislabel, thiscolor):
@@ -141,7 +141,7 @@ with psd.figlist_var() as fl:
                     int_range[0] * 1e6 - 1,
                     0.25,
                     r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
-                    % (beta["beta", j].item() / 1e-6),
+                    % (beta["t_pulse", j].item() / 1e-6),
                 )
             # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
