@@ -47,7 +47,8 @@ with psd.figlist_var() as fl:
     )
     s.fit()
     fit = s.eval(500)
-    # {{{ weirdness with units of subplots means fitting is in s*sqrt(W) and for plotting I convert to us*sqrt(W)
+    # {{{ weirdness with units of subplots means fitting is in s*sqrt(W) and
+    #     for plotting I convert to us*sqrt(W)
     s["beta"] /= 1e-6
     fit["beta"] /= 1e-6
     # }}}

@@ -31,9 +31,7 @@ with psd.figlist_var() as fl:
         s, signal_range, fl=fl, echo_like=True, title=sys.argv[2]
     )
     # {{{ generate the table of integrals and fit
-    s.set_units("beta", "s√W")
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
-    # fl.plot(s, "o", human_units = False, ax = ax4)
     s = psd.lmfitdata(s)
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2) ** 3
@@ -49,7 +47,8 @@ with psd.figlist_var() as fl:
     )
     s.fit()
     fit = s.eval(500)
-    # {{{ weirdness with units of subplots means fitting is s*sqrt(W) and converting to us*Sqrt(W) after
+    # {{{ weirdness with units of subplots means fitting is s*sqrt(W) and
+    #     for plotting I convert to us*sqrt(W)
     s["beta"] /= 1e-6
     fit["beta"] /= 1e-6
     # }}}

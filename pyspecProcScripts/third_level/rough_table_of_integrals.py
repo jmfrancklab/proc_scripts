@@ -46,13 +46,12 @@ def rough_table_of_integrals(
     """
     assert fl is not None, "for now, fl can't be None"
     if echo_like:
+        # If echo like we want an extra subplot to show the phased and FID sliced
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-        height = 7
     else:
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-        height = 6
     fig.set_figwidth(15)
-    fig.set_figheight(height)
+    fig.set_figheight(6)
     # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
     fig.suptitle(title)
@@ -79,7 +78,6 @@ def rough_table_of_integrals(
     fl.image(
         s,
         ax=ax1,
-        # human_units=False,
     )
     ax1.set_title("Signal pathway / ph0")
     ax1.set_ylabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
