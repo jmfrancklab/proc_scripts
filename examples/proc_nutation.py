@@ -13,7 +13,6 @@ Tested with:
 """
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import matplotlib.pyplot as plt
 import sympy as sp
 import sys
 
@@ -28,13 +27,13 @@ s = psd.find_file(
 with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    s, ax3 = prscr.rough_table_of_integrals(
+    s, ax4 = prscr.rough_table_of_integrals(
         s, signal_range, fl=fl, echo_like=True, title=sys.argv[2]
     )
     # {{{ generate the table of integrals and fit
+    s.set_units("beta", "s√W")
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
-    fl.next("Integrated and Fit")
-    fl.plot(s, "o")
+    # fl.plot(s, "o", human_units = False, ax = ax4)
     s = psd.lmfitdata(s)
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2) ** 3
@@ -50,15 +49,20 @@ with psd.figlist_var() as fl:
     )
     s.fit()
     fit = s.eval(500)
-    fl.plot(fit)
-    plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-    plt.ylabel(None)
+    # {{{ weirdness with units of subplots means fitting is s*sqrt(W) and converting to us*Sqrt(W) after
+    s["beta"] /= 1e-6
+    fit["beta"] /= 1e-6
+    # }}}
+    fl.plot(s, "o", human_units=False, ax=ax4)
+    fl.plot(fit, human_units=False, ax=ax4)
+    ax4.set_xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+    ax4.set_ylabel(None)
     beta_90 = s.output("beta_ninety") / 1e-6
-    plt.axvline(beta_90)
-    plt.text(
+    ax4.axvline(beta_90)
+    ax4.text(
         beta_90 + 5,
         5e4,
         r"$\beta_{90} = %f \mathrm{s \sqrt{W}}$" % beta_90,
     )
-    psd.gridandtick(plt.gca())
+    ax4.grid()
     # }}}

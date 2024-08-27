@@ -27,10 +27,11 @@ s = psd.find_file(
 with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    s, ax3 = prscr.rough_table_of_integrals(s, signal_range, fl=fl, title=sys.argv[2], echo_like=False)
+    s, ax3 = prscr.rough_table_of_integrals(
+        s, signal_range, fl=fl, title=sys.argv[2], echo_like=False
+    )
     # {{{ fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
-    fl.plot(s, "o", ax=ax3)
     s = psd.lmfitdata(s)
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
@@ -46,7 +47,12 @@ with psd.figlist_var() as fl:
     )
     s.fit()
     fit = s.eval(500)
-    fl.plot(fit, ax=ax3)
+    # {{{ weirdness with units of subplots means fitting is in s*sqrt(W) and for plotting I convert to us*sqrt(W)
+    s["beta"] /= 1e-6
+    fit["beta"] /= 1e-6
+    # }}}
+    fl.plot(s, "o", human_units=False, ax=ax3)
+    fl.plot(fit, human_units=False, ax=ax3)
     ax3.set_title("Integrated and fit")
     ax3.set_xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
     beta_90 = s.output("beta_ninety") / 1e-6
