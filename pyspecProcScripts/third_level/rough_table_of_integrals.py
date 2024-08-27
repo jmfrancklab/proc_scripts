@@ -45,9 +45,14 @@ def rough_table_of_integrals(
         return the axis with the table of integrals, in case you want to add a fit!
     """
     assert fl is not None, "for now, fl can't be None"
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+    if echo_like:
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+        height = 7
+    else:
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+        height = 6
     fig.set_figwidth(15)
-    fig.set_figheight(6)
+    fig.set_figheight(height)
     # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
     fig.suptitle(title)
@@ -74,10 +79,10 @@ def rough_table_of_integrals(
     fl.image(
         s[direct:signal_range],
         ax=ax1,
-        human_units=False,
+        # human_units=False,
     )
     ax1.set_title("Signal pathway / ph0")
-    ax1.set_ylabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
+    ax1.set_ylabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
     # }}}
     # {{{ Check phase variation along indirect
     mysign = determine_sign(
@@ -88,18 +93,19 @@ def rough_table_of_integrals(
     fl.image(
         s[direct:signal_range],
         ax=ax2,
-        human_units=False,
+        # human_units=False,
     )
     ax2.set_title("Check phase variation along indirect")
-    ax2.set_ylabel(r"$\beta$ / $\mathrm{s \sqrt{W}}$")
+    ax2.set_ylabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
     # }}}
     if echo_like:
         signal_pathway = {}
         s = fid_from_echo(s.set_error(None), signal_pathway)
-        s *= mysign
         s = select_pathway(s[direct:signal_range], signal_pathway)
-        fl.image(s[direct:signal_range], ax=ax3)
+        s *= mysign
+        fl.image(s, ax=ax3)
         ax3.set_title("FID sliced and phased")
+        ax3.set_ylabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
     else:
         s *= mysign  # flip the sign back, so we get sensible integrals
     # {{{ generate the table of integrals
@@ -110,4 +116,7 @@ def rough_table_of_integrals(
     # }}}
     s = s.real.integrate(direct).set_error(None)
     # }}}
-    return s, ax3
+    if echo_like:
+        return s, ax4
+    else:
+        return s, ax3
