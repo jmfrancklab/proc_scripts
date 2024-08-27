@@ -4,7 +4,7 @@ import numpy as np
 from itertools import cycle
 from pyspecProcScripts import find_apparent_anal_freq
 
-colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"][:3]
 color_cycle = cycle(colorcyc_list)
 
 V_atten_ratio = 102.2  # attenutation ratio
@@ -44,31 +44,36 @@ with psd.figlist_var() as fl:
             s.set_units("t", "s")
         s *= V_atten_ratio  # attenutation ratio
         s /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
+        # {{{ plot absolute analytic
         fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
-        abs_color = next(color_cycle)
-        fl.plot(abs(s), color=abs_color, label="abs(analytic)")
+        thiscolor = next(color_cycle)
+        fl.plot(abs(s), color=thiscolor, alpha=0.4, label="abs(analytic)")
+        # }}}
         # {{{ apply frequency filter
         s, nu_a, _ = find_apparent_anal_freq(s)
+        assert (0 > nu_a * 0.5 * HH_width) or (
+            0 < nu_a - 0.5 * HH_width
+        ), "unfortunately the region I want to filter includes DC -- this is probably not good, and means you should pick a different timescale for your scope so this doesn't happen"
         s.ft("t")
+        # {{{ Display frequency domain
         fl.next("Frequency Domain")
-        fl.plot(abs(s), color=abs_color, label="abs(analytic)")
+        fl.plot(abs(s), color=thiscolor, alpha=0.4, label="abs(analytic)")
         plt.text(
             x=0.5,
             y=0.5,
             s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
+        # }}}
         # {{{ lorentzian filter
         Lorentzian_filtered = s / (
             1 + 1j * 2 * (s.fromaxis("t") - nu_a) * (1 / Delta_nu)
         )
         # }}}
         # {{{ heaviside hat functions
-        assert (0 > nu_a * 0.5 * HH_width) or (
-            0 < nu_a - 0.5 * HH_width
-        ), "unfortunately the region I want to filter includes DC -- this is probably not good, and means you should pick a different timescale for your scope so this doesn't happen"
         s["t" : (None, nu_a - 0.5 * HH_width)] *= 0
         s["t" : (nu_a + 0.5 * HH_width, None)] *= 0
+        # }}}
         # }}}
         # {{{ plot application of all filters
         for filtered_data, label, ax_place in [
@@ -79,12 +84,15 @@ with psd.figlist_var() as fl:
             filtered_data.ift("t")
             fl.next(r"$\sqrt{P_{analytic}}$ vs $t_{pulse}$")
             fl.plot(
-                abs(filtered_data), color=thiscolor, label=label + " filter"
+                abs(filtered_data),
+                color=thiscolor,
+                alpha=0.4,
+                label=label + " filter",
             )
             filtered_data.ft("t")
             fl.next("Frequency Domain")
             fl.plot(
-                abs(filtered_data), color=thiscolor, alpha=0.5, label=label
+                abs(filtered_data), color=thiscolor, alpha=0.4, label=label
             )
             filtered_data.ift("t")
             beta = abs(filtered_data).integrate("t").data.item() / np.sqrt(2)
@@ -92,7 +100,7 @@ with psd.figlist_var() as fl:
             plt.text(
                 0.5,
                 ax_place,
-                r"$\beta_{%s} = %f s \sqrt{W}$" % (label, beta),
+                r"$\beta_{%s} = %f \mu s \sqrt{W}$" % (label, beta / 1e-6),
                 color=thiscolor,
                 transform=plt.gca().transAxes,
             )
