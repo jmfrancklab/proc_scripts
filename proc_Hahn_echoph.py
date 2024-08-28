@@ -7,13 +7,13 @@ logger = psd.init_logging("info")
 
 
 signal_pathway = {"ph1": 1, "ph2": 0}
-with psd.fl_mod() as fl:
+with psd.figlist_var() as fl:
     for searchstr, exp_type, nodename, postproc, label_str, slice_f in [
         (
             "200302_alex_probe_water",
-            "test_equip",
+            "ODNP_NMR_comp/ODNP/old/2020",
             "signal",
-            "spincore_Hahn_echoph_v1",
+            "proc_Hahn_echoph",
             "microwaves off",
             (-2.5e3, 2.5e3),
         ),
@@ -27,26 +27,13 @@ with psd.fl_mod() as fl:
             lookup=prscr.lookup_table,
             fl=fl,
         )
-        s.mean("nScans")
         # }}}
         # {{{rough centering of sliced data
         s = s["t2":slice_f]
         s.ift("t2")
-        rough_center = (
-            abs(s).convolve("t2", 0.01).mean_all_but("t2").argmax("t2").item()
-        )
-        s.setaxis(t2 - rough_center)
         psd.logger.debug(psd.strm(psd.ndshape(s)))
         # }}}
-        # {{{ apply phase corrections
-        best_shift = prscr.hermitian_function_test(
-            prscr.select_pathway(s, signal_pathway)
-        )
-        psd.logger.info(psd.strm("best shift is", best_shift))
         s_uncorrected = s.C.ft("t2")
-        s.setaxis("t2", lambda x: x - best_shift).register_axis(
-            {"t2": 0}, nearest=False
-        )
         ph0 = s["t2":0]["ph2", 0]["ph1", 1]
         psd.logger.info(psd.strm(psd.ndshape(ph0)))
         if len(ph0.dimlabels) > 0:
@@ -65,19 +52,10 @@ with psd.fl_mod() as fl:
         s /= ph0
         # }}}
         # {{{visualizes the data after hermitian function test and phasing
-        fl.next(
-            "frequency domain -- after hermitian function test and phasing"
-        )
         s.ft("t2", pad=512)  # power of 2 FT
-        fl.image(s.C.convolve("t2", 10))  # so that resolution of
-        # plot isn't higher than that of screen -- note that we do
-        # this on a copy of the data, since we don't actually want
-        # to alter the data here
         # }}}
         # {{{slice out FID from echo
-        s.ift("t2")
-        s = prscr.slice_FID_from_echo(s)
-        s.ft("t2")
+        s = prscr.fid_from_echo(s, signal_pathway)
         # }}}
         # {{{visualize final processed data
         s = prscr.select_pathway(s, signal_pathway)
@@ -85,9 +63,9 @@ with psd.fl_mod() as fl:
         fl.plot(
             s_uncorrected["ph2", -2]["ph1", 1],
             "ko",
-            label="without time-axis correction",
+            label="without correction",
         )
-        fl.plot(s, "ro", label="with time-axis correction")
+        fl.plot(s, "ro", label="with correction")
         fl.next("Spectrum FT")
         fl.plot(s.real, alpha=0.5, label="real - %s" % label_str)
         fl.plot(s.imag, alpha=0.5, label="imag - %s" % label_str)
