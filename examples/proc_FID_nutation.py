@@ -27,11 +27,12 @@ s = psd.find_file(
 with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
+    s.rename("beta", r"$\beta$")  # label beta with latex
     s, ax_last = prscr.rough_table_of_integrals(
         s, signal_range, fl=fl, title=sys.argv[2], echo_like=False
     )
     # {{{ generate the table of integrals and fit
-    A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
+    A, R, beta_ninety, beta = sp.symbols("A R beta_ninety $\\beta$", real=True)
     s = psd.lmfitdata(s)
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
