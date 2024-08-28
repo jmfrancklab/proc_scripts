@@ -41,7 +41,7 @@ def rough_table_of_integrals(
     s: nddata
         The table of integrals (collapse the direct dimension into a single number).
         Processing is done in place.
-    ax3: Axes
+    ax_last: Axes
         return the axis with the table of integrals, in case you want to add a fit!
     """
     assert fl is not None, "for now, fl can't be None"
@@ -54,6 +54,7 @@ def rough_table_of_integrals(
     fig.set_figheight(6)
     # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
+    fl.skip_units_check()
     fig.suptitle(title)
     # }}}
     # To handle both older data where the coherence pathway was not set as a property
@@ -80,7 +81,6 @@ def rough_table_of_integrals(
         ax=ax1,
     )
     ax1.set_title("Signal pathway / ph0")
-    ax1.set_ylabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
     # }}}
     # {{{ Check phase variation along indirect
     mysign = determine_sign(
@@ -93,7 +93,6 @@ def rough_table_of_integrals(
         ax=ax2,
     )
     ax2.set_title("Check phase variation along indirect")
-    ax2.set_ylabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
     # }}}
     if echo_like:
         signal_pathway = {}
@@ -101,7 +100,6 @@ def rough_table_of_integrals(
         s *= mysign
         fl.image(s, ax=ax3)
         ax3.set_title("FID sliced and phased")
-        ax3.set_ylabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
     else:
         s *= mysign  # flip the sign back, so we get sensible integrals
     # {{{ generate the table of integrals
