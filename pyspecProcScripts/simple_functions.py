@@ -89,3 +89,52 @@ def select_pathway(*args, **kwargs):
     for k, v in pathway.items():
         retval = retval[k, v]
     return retval
+
+
+def find_apparent_anal_freq(s):
+    """A function to identify the position of analytic signal as acquired on the oscilloscope.
+    Importantly this function takes into account the effects of aliasing in identifying the
+    frequency of the resulting signal.
+
+    Parameters
+    ==========
+    s: nddata
+        data with a single (dominant) peak, where you want to identify the frequency.
+
+    Returns
+    =======
+    s: nddata
+        The original data that was initially fed to the function
+    nu_a: float
+        The apparent frequency of the signal
+    isflipped: boolean
+        If aliased from a negative frequency, this notes whether the phase
+        of the final time domain signal will be flipped
+    """
+    carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+    dt = s["t"][1] - s["t"][0]
+    if carrier < 1 / dt:
+        print("You are in the clear and no aliasing took place!")
+        nu_a = carrier
+        isflipped = False
+    else:
+        SW = 2 / dt  # SW of data before made analytic
+        #              - what scope sees
+        n = np.floor(  # nearest integer multiple of
+            #            sampling frequency.
+            #            Measured from the left side of
+            #            the shifted spectrum
+            (carrier + SW / 2)
+            / SW
+        )
+        nu_a = carrier - n * SW
+        isflipped = False
+        if nu_a < 0:
+            # when stored, we threw out the negative frequencies
+            # so that means that we captured an aliased copy of the
+            # negative frequency
+            nu_a = -carrier + n * SW
+            # we need to make note of the fact that the phase of our final time domain signal
+            # (after filtering and up-conversion) will be flipped
+            isflipped = True
+    return s, nu_a, isflipped
