@@ -26,8 +26,8 @@ s = psd.find_file(
     lookup=prscr.lookup_table,
 )
 with psd.figlist_var() as fl:
-    frq_center,frq_half = prscr.find_peakrange(s, fl=fl)
-    signal_range = tuple(slice_expansion*r_[-1,1]*frq_half+frq_center)
+    frq_center, frq_half = prscr.find_peakrange(s, fl=fl)
+    signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
     if "nScans" in s.dimlabels:
         s.mean("nScans")
     s, ax_last = prscr.rough_table_of_integrals(
