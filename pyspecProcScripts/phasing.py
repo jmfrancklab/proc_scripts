@@ -255,69 +255,9 @@ def fid_from_echo(
     d: nddata
         FID of properly sliced and phased signal
     """
-    # {{{ autodetermine slice range
-    freq_envelope = d.C
-    freq_envelope.ift("t2")
-    freq_envelope = freq_envelope[
-        "t2":(0, None)
-    ]  # slice out rising echo estimate according to experimental tau in order to limit oscillations
-    freq_envelope.ft("t2")
-    freq_envelope.mean_all_but(direct).run(abs)
-    if fl is not None:
-        fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False, label="signal energy")
-    freq_envelope.convolve(
-        direct,
-        freq_envelope.get_ft_prop(direct, "df") * 5,
-        enforce_causality=False,
+    peakrange = find_peakrange(
+        d, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
     )
-    freq_envelope -= (
-        freq_envelope[direct, -1].item() + freq_envelope[direct, 0].item()
-    ) / 2
-    if fl is not None:
-        fl.next("autoslicing!")
-        fl.plot(
-            freq_envelope,
-            human_units=False,
-            label="signal energy\nconv + baselined",
-        )
-    narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
-    wide_ranges = freq_envelope.contiguous(
-        lambda x: x > peak_lower_thresh * x.data.max()
-    )
-
-    def filter_ranges(B, A):
-        """where A and B are lists of ranges (given as tuple pairs), filter B
-        to only return ranges that include ranges given in A"""
-        return [
-            np.array(b)
-            for b in B
-            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
-        ]
-
-    peakrange = filter_ranges(wide_ranges, narrow_ranges)
-    if len(peakrange) > 1:
-        max_range_width = max(
-            [thisrange[1] - thisrange[0] for thisrange in peakrange]
-        )
-        range_gaps = [
-            peakrange[j + 1][0] - peakrange[j][1]
-            for j in range(len(peakrange) - 1)
-        ]
-        # {{{ if the gaps are all smaller than the max peak that was found, we
-        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
-        if any(np.array(range_gaps) > max_range_width):
-            if fl is not None:
-                fl.next("debug filter ranges")
-                fl.plot(freq_envelope, human_units=False)
-                for thisrange in peakrange:
-                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
-            raise ValueError("finding more than one peak!")
-        else:
-            peakrange = [(peakrange[0][0], peakrange[-1][1])]
-    assert len(peakrange) == 1
-    # }}}
-    peakrange = peakrange[0]
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item() / 2
     if fl is not None:
@@ -467,6 +407,85 @@ def fid_from_echo(
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
+
+def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
+    """find the range of frequencies over which the signal occurs, so that we can autoslice
+
+    Parameters
+    ==========
+    d : nddata
+        Data in the frequency domain -- will not be altered.
+    direct : str (default "t2")
+        The name of the direct dimension
+    peak_lower_thresh: float
+        Fraction of the signal intensity used in calculating the
+        frequency slice. The smaller the value, the wider the slice.
+    fl : figlist (default None)
+        If you want to see diagnostic plots, feed the figure list.
+    """
+    # {{{ autodetermine slice range
+    freq_envelope = d.C
+    freq_envelope.ift(direct)
+    freq_envelope = freq_envelope[
+        direct:(0, None)
+    ]  # slice out rising echo estimate according to experimental tau in order to limit oscillations
+    freq_envelope.ft(direct)
+    freq_envelope.mean_all_but(direct).run(abs)
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False, label="signal energy")
+    freq_envelope.convolve(
+        direct,
+        freq_envelope.get_ft_prop(direct, "df") * 5,
+        enforce_causality=False,
+    )
+    freq_envelope -= (
+        freq_envelope[direct, -1].item() + freq_envelope[direct, 0].item()
+    ) / 2
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(
+            freq_envelope,
+            human_units=False,
+            label="signal energy\nconv + baselined",
+        )
+    narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
+    wide_ranges = freq_envelope.contiguous(
+        lambda x: x > peak_lower_thresh * x.data.max()
+    )
+
+    def filter_ranges(B, A):
+        """where A and B are lists of ranges (given as tuple pairs), filter B
+        to only return ranges that include ranges given in A"""
+        return [
+            np.array(b)
+            for b in B
+            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
+        ]
+
+    peakrange = filter_ranges(wide_ranges, narrow_ranges)
+    if len(peakrange) > 1:
+        max_range_width = max(
+            [thisrange[1] - thisrange[0] for thisrange in peakrange]
+        )
+        range_gaps = [
+            peakrange[j + 1][0] - peakrange[j][1]
+            for j in range(len(peakrange) - 1)
+        ]
+        # {{{ if the gaps are all smaller than the max peak that was found, we
+        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
+        if any(np.array(range_gaps) > max_range_width):
+            if fl is not None:
+                fl.next("debug filter ranges")
+                fl.plot(freq_envelope, human_units=False)
+                for thisrange in peakrange:
+                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
+            raise ValueError("finding more than one peak!")
+        else:
+            peakrange = [(peakrange[0][0], peakrange[-1][1])]
+    assert len(peakrange) == 1
+    # }}}
+    return peakrange[0]
 
 
 def hermitian_function_test(

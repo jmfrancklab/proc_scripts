@@ -5,7 +5,7 @@ Process FID nutation data
 
 Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
 This script plots the result as well as examines the phase variation along the indirect dimension.
-Finally the data is integrated and fit to a sin function to find the optimal beta_ninety.
+Finally the data is integrated and fit to a sin function to find the optimal :math:`\\beta_{90}`.
 
 Tested with:
 
