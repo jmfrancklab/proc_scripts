@@ -323,7 +323,6 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
 
 def proc_Hahn_echoph(s, fl=None):
     logging.debug("loading pre-processing for Hahn_echoph")
-    nScans = s.shape["nScans"]
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
@@ -333,7 +332,8 @@ def proc_Hahn_echoph(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder(["ph2", "ph1"])
-    s.setaxis("nScans", r_[0:nScans])
+    if "nScans" in s.dimlabels:
+        s.setaxis("nScans", "#")
     s.reorder("t2", first=False)
     s.ft("t2", shift=True)
     if fl is not None:
@@ -843,6 +843,8 @@ lookup_table = {
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
     "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
     "proc_Hahn_echoph": proc_Hahn_echoph,
+    "spincore_FID_nutation_v1": proc_spincore_generalproc_v1,
+    "spincore_FID_nutation_v2": proc_spincore_generalproc_v1,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
