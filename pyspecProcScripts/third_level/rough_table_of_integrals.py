@@ -19,33 +19,36 @@ def rough_table_of_integrals(
 
     Parameters
     ==========
-    s: nddata
-        data with a single (dominant) peak, where you want to return the sign of the integral over all the data.
-    signal_range: tuple
-        narrow slice range where signal resides
-    signal_pathway: dict (default None)
+    s : nddata
+        Data with a single (dominant) peak, where you want to return the sign
+        of the integral over all the data.
+    signal_range : tuple
+        Narrow slice range where signal resides.
+    signal_pathway : dict (default None)
         If None, the function will go into the properties of the data looking
-        for the "coherence_pathway" property. I f that doesn't exist the user
+        for the "coherence_pathway" property. If that doesn't exist the user
         needs to feed a dictionary containing the coherence transfer pathway
         where the signal resides.
-    echo_like: boolean
+    echo_like : boolean
         If the signal has an echo the fid_from_echo function will be applied
         prior to integration to apply the FID slice as well as proper phasing
         and peak selection.
-    title: str
-        title for the returned figure
-    direct: str
-        Name of direct dimension
+    title : str
+        Title for the returned figure.
+    direct : str
+        Name of direct dimension.
 
     Returns
     =======
-    s: nddata
+    s : nddata
         The table of integrals (collapse the direct dimension into a single number).
         Processing is done in place.
-    ax_last: Axes
-        return the axis with the table of integrals, in case you want to add a fit!
+    ax_last : Axes
+        Return the axis with the table of integrals, in case you want to add a fit!
     """
+
     assert fl is not None, "for now, fl can't be None"
+    # {{{ set up subplots
     if echo_like:
         # If echo like we want an extra subplot to show the phased and FID sliced
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
@@ -53,7 +56,6 @@ def rough_table_of_integrals(
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
     fig.set_figwidth(15)
     fig.set_figheight(6)
-    # {{{ set up subplots
     fl.next("Raw Data with averaged scans", fig=fig)
     fl.skip_units_check()
     fig.suptitle(title)
