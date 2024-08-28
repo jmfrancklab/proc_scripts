@@ -30,10 +30,13 @@ with psd.figlist_var() as fl:
     signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
     if "nScans" in s.dimlabels:
         s.mean("nScans")
+    s.set_plot_color(
+        "g"
+    )  # this affects the 1D plots, but not the images, etc.
+    # {{{ generate the table of integrals and fit
     s, ax_last = prscr.rough_table_of_integrals(
         s, signal_range, fl=fl, title=sys.argv[2], echo_like=False
     )
-    # {{{ generate the table of integrals and fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     s = psd.lmfitdata(s)
     s.functional_form = (
@@ -41,23 +44,26 @@ with psd.figlist_var() as fl:
     )
     s.set_guess(
         A=dict(
-            value=s.data.max() * 1.2,
+            value=s.data.max(),
             min=s.data.max() * 0.8,
             max=s.data.max() * 1.5,
         ),
-        R=dict(value=3e3, min=0, max=3e4),
-        beta_ninety=dict(value=2e-5, min=0, max=1),
+        R=dict(value=1e3, min=0, max=3e4),
+        beta_ninety=dict(value=20e-6, min=0, max=1000e-6),
     )
     s.fit()
+    # }}}
+    # {{{ show the fit and the β₉₀
     fit = s.eval(500)
     fl.plot(fit, ax=ax_last)
     ax_last.set_title("Integrated and fit")
     beta_90 = s.output("beta_ninety")
-    ax_last.axvline(beta_90 / 1e-6)
+    ax_last.axvline(beta_90 / 1e-6, color="b")
     ax_last.text(
         beta_90 / 1e-6 + 5,
         5e4,
         r"$\beta_{90} = %f\ \mathrm{μs \sqrt{W}}$" % (beta_90 / 1e-6),
+        color="b",
     )
-    ax_last.grid()
     # }}}
+    ax_last.grid()
