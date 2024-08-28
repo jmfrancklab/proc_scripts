@@ -333,7 +333,8 @@ def proc_Hahn_echoph(s, fl=None):
     s *= s.shape["nScans"]
     s.squeeze()
     s.reorder(["ph2", "ph1"])
-    s.setaxis("nScans", r_[0:nScans])
+    if "nScans" in s.dimlabels:
+        s.setaxis("nScans", r_[0:nScans])
     s.reorder("t2", first=False)
     s.ft("t2", shift=True)
     if fl is not None:
