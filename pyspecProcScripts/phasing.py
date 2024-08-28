@@ -255,71 +255,9 @@ def fid_from_echo(
     d: nddata
         FID of properly sliced and phased signal
     """
-    # {{{ autodetermine slice range
-    freq_envelope = d.C
-    freq_envelope.ift("t2")
-    freq_envelope = freq_envelope[
-        "t2":(0, None)
-    ]  # slice out rising echo estimate according to experimental tau in order to limit oscillations
-    freq_envelope.ft("t2")
-    freq_envelope.mean_all_but(direct).run(abs)
-    if fl is not None:
-        fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False, label="signal energy")
-    freq_envelope.convolve(
-        direct,
-        freq_envelope.get_ft_prop(direct, "df") * 5,
-        enforce_causality=False,
+    frq_center, frq_half = find_peakrange(
+        d, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
     )
-    freq_envelope -= (
-        freq_envelope[direct, -1].item() + freq_envelope[direct, 0].item()
-    ) / 2
-    if fl is not None:
-        fl.next("autoslicing!")
-        fl.plot(
-            freq_envelope,
-            human_units=False,
-            label="signal energy\nconv + baselined",
-        )
-    narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
-    wide_ranges = freq_envelope.contiguous(
-        lambda x: x > peak_lower_thresh * x.data.max()
-    )
-
-    def filter_ranges(B, A):
-        """where A and B are lists of ranges (given as tuple pairs), filter B
-        to only return ranges that include ranges given in A"""
-        return [
-            np.array(b)
-            for b in B
-            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
-        ]
-
-    peakrange = filter_ranges(wide_ranges, narrow_ranges)
-    if len(peakrange) > 1:
-        max_range_width = max(
-            [thisrange[1] - thisrange[0] for thisrange in peakrange]
-        )
-        range_gaps = [
-            peakrange[j + 1][0] - peakrange[j][1]
-            for j in range(len(peakrange) - 1)
-        ]
-        # {{{ if the gaps are all smaller than the max peak that was found, we
-        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
-        if any(np.array(range_gaps) > max_range_width):
-            if fl is not None:
-                fl.next("debug filter ranges")
-                fl.plot(freq_envelope, human_units=False)
-                for thisrange in peakrange:
-                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
-            raise ValueError("finding more than one peak!")
-        else:
-            peakrange = [(peakrange[0][0], peakrange[-1][1])]
-    assert len(peakrange) == 1
-    # }}}
-    peakrange = peakrange[0]
-    frq_center = np.mean(peakrange).item()
-    frq_half = np.diff(peakrange).item() / 2
     if fl is not None:
         fl.next("autoslicing!")
         axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
@@ -427,7 +365,6 @@ def fid_from_echo(
                 N_ratio /= (
                     for_resid.data.size
                 )  # the signal this has been plotted against is signal averaged by N_ratio
-                resi_sum = for_resid[direct, 7:-7].mean(direct).item()
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
@@ -468,6 +405,96 @@ def fid_from_echo(
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
+
+def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
+    """find the range of frequencies over which the signal occurs, so that we can autoslice
+
+    Parameters
+    ==========
+    d : nddata
+        Data in the frequency domain -- will not be altered.
+    direct : str (default "t2")
+        The name of the direct dimension
+    peak_lower_thresh: float
+        Fraction of the signal intensity used in calculating the
+        frequency slice. The smaller the value, the wider the slice.
+    fl : figlist (default None)
+        If you want to see diagnostic plots, feed the figure list.
+
+    Returns
+    =======
+    frq_center : float
+        The midpoint of the frequency slice.
+    frq_half : float
+        Half the width of the frequency slice.
+        Given in this way, so you can easily do
+        >>> newslice = r_[-expansino,expansion]*frq_half+frq_center
+    """
+    # {{{ autodetermine slice range
+    freq_envelope = d.C
+    freq_envelope.ift(direct)
+    freq_envelope = freq_envelope[
+        direct:(0, None)
+    ]  # slice out rising echo estimate according to experimental tau in order to limit oscillations
+    freq_envelope.ft(direct)
+    freq_envelope.mean_all_but(direct).run(abs)
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False, label="signal energy")
+    freq_envelope.convolve(
+        direct,
+        freq_envelope.get_ft_prop(direct, "df") * 5,
+        enforce_causality=False,
+    )
+    freq_envelope -= (
+        freq_envelope[direct, -1].item() + freq_envelope[direct, 0].item()
+    ) / 2
+    if fl is not None:
+        fl.next("autoslicing!")
+        fl.plot(
+            freq_envelope,
+            human_units=False,
+            label="signal energy\nconv + baselined",
+        )
+    narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
+    wide_ranges = freq_envelope.contiguous(
+        lambda x: x > peak_lower_thresh * x.data.max()
+    )
+
+    def filter_ranges(B, A):
+        """where A and B are lists of ranges (given as tuple pairs), filter B
+        to only return ranges that include ranges given in A"""
+        return [
+            np.array(b)
+            for b in B
+            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
+        ]
+
+    peakrange = filter_ranges(wide_ranges, narrow_ranges)
+    if len(peakrange) > 1:
+        max_range_width = max(
+            [thisrange[1] - thisrange[0] for thisrange in peakrange]
+        )
+        range_gaps = [
+            peakrange[j + 1][0] - peakrange[j][1]
+            for j in range(len(peakrange) - 1)
+        ]
+        # {{{ if the gaps are all smaller than the max peak that was found, we
+        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
+        if any(np.array(range_gaps) > max_range_width):
+            if fl is not None:
+                fl.next("debug filter ranges")
+                fl.plot(freq_envelope, human_units=False)
+                for thisrange in peakrange:
+                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
+            raise ValueError("finding more than one peak!")
+        else:
+            peakrange = [(peakrange[0][0], peakrange[-1][1])]
+    assert len(peakrange) == 1
+    # }}}
+    frq_center = np.mean(peakrange).item()
+    frq_half = np.diff(peakrange).item() / 2
+    return frq_center, frq_half
 
 
 def hermitian_function_test(
@@ -753,41 +780,65 @@ def hermitian_function_test(
         return echo_peak + min_echo
 
 
-def determine_sign(s, direct="t2", fl=None):
-    """Given that the signal resides in `pathway`, determine the sign of the signal.
-    The sign can be used, e.g. so that all data in an inversion-recover or
-    enhancement curve can be aligned together.
+def determine_sign(
+    s, signal_freq_range, direct="t2", signal_pathway=None, fl=None
+):
+    """Determines the sign of the signal based on the difference between the
+    signal with the zeroth order phase correction applied to the entire data set vs
+    applying the zeroth order phase correction to each individual indirect index.
+    The sign can be used, so that when multiplied by the signal the data has a uniform
+    sign along the indirect axis.
 
     Parameters
     ==========
-    s: nddata
-        data with a single (dominant) peak, where you want to return the sign
+    s : nddata
+        Data with a single (dominant) peak, where you want to return the sign
         of the integral over all the data.
-        This should only contain **a single coherence pathway**.
-    direct: str (default "t2")
-        Name of the direct dimension, along which the sum/integral is taken
+    signal_freq_range :  tuple
+        Narrow slice range where signal resides.
+    direct : str (default "t2")
+        Name of the direct dimension.
+    signal_pathway : dict (default None)
+        If None, the function will go into the properties of the data looking
+        for the "coherence_pathway" property. If that doesn't exist the user
+        needs to feed a dictionary containing the coherence transfer pathway
+        where the signal resides.
 
     Returns
     =======
-    data_sgn: nddata
+    mysign : nddata
         A dataset with all +1 or -1 (giving the sign of the original signal).
-        Does *not* include the `direct` dimension
+        Does *not* include the `direct` dimension.
     """
+    if type(direct) is tuple:
+        raise ValueError(
+            "direct cannot be a tuple! You are probably using an older version that required you to pass an indirect dimension"
+        )
+    # To handle both older data where the coherence pathway was not set as a property
+    # and handle newer data where it is set I have the following if/else
+    signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
+    if signal_pathway is not None:
+        if list(signal_pathway.values())[0] in s.dimlabels:
+            s = select_pathway(s[direct:signal_freq_range], signal_pathway)
     assert s.get_ft_prop(
         direct
     ), "this only works on data that has been FT'd along the direct dimension"
+    s /= zeroth_order_ph(s)
     if fl is not None:
-        fl.push_marker()
-        if basename is None:
-            basename = f"randombasename{int(rand()*1e5):d}"
-        fl.basename = basename
-        fl.next("selected pathway")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-    data_sgn = s.C.sum(direct)
-    data_sgn /= zeroth_order_ph(data_sgn)
-    data_sgn.run(np.real).run(lambda x: np.sign(x))
+        d_forplot = s.C
+    s = s.integrate(direct)
+    s /= abs(s)  # now s is the phase of the signal along the indirect
     if fl is not None:
-        fl.next("check sign")
-        fl.image((s.C.setaxis("vd", "#").set_units("vd", "scan #")) * data_sgn)
-        fl.pop_marker()
-    return data_sgn
+        d_forplot /= s  # individually phased
+        fl.next("Individually phase corrected")
+        fl.image(d_forplot)
+    mysign = s.angle.run(lambda x: np.exp(1j * np.round(x / pi) * pi)).run(
+        np.sign  # sign essentially rounds to -1 or +1
+    )
+    if fl is not None:
+        fl.next(
+            "phase difference between individually rotated and overall rotated"
+        )
+        fl.plot(s.angle.set_error(None), "o", label="difference")
+        fl.plot(mysign.angle.set_error(None), "o", label="rounded")
+    return mysign
