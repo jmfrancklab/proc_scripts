@@ -30,7 +30,7 @@ with psd.figlist_var() as fl:
     s, ax_last = prscr.rough_table_of_integrals(
         s, signal_range, fl=fl, title=sys.argv[2], echo_like=False
     )
-    # {{{ fit
+    # {{{ generate the table of integrals and fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     s = psd.lmfitdata(s)
     s.functional_form = (
@@ -47,15 +47,14 @@ with psd.figlist_var() as fl:
     )
     s.fit()
     fit = s.eval(500)
-    fl.plot(s, "o", ax=ax_last)
     fl.plot(fit, ax=ax_last)
     ax_last.set_title("Integrated and fit")
     beta_90 = s.output("beta_ninety")
-    ax_last.axvline(beta_90)
+    ax_last.axvline(beta_90 / 1e-6)
     ax_last.text(
-        beta_90 + 5,
+        beta_90 / 1e-6 + 5,
         5e4,
-        r"$\beta_{90} = %f \mathrm{\mu s \sqrt{W}}$" % (beta_90 / 1e-6),
+        r"$\beta_{90} = %f\ \mathrm{μs \sqrt{W}}$" % (beta_90 / 1e-6),
     )
     ax_last.grid()
     # }}}

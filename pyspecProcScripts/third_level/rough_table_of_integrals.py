@@ -3,6 +3,7 @@ from ..simple_functions import select_pathway
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import pi
+import pyspecdata as psd
 
 
 def rough_table_of_integrals(
@@ -109,8 +110,9 @@ def rough_table_of_integrals(
     s.ft(direct)
     # }}}
     s = s.real.integrate(direct).set_error(None)
+    ax_last = ax4 if echo_like else ax3
+    fl.plot(s, "o", ax=ax_last)
+    psd.gridandtick(plt.gca())
+    ax_last.set_title("table of integrals")
     # }}}
-    if echo_like:
-        return s, ax4
-    else:
-        return s, ax3
+    return s, ax_last

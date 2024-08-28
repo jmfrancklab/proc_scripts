@@ -27,8 +27,8 @@ s = psd.find_file(
 with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    s, ax4 = prscr.rough_table_of_integrals(
-        s, signal_range, fl=fl, echo_like=True, title=sys.argv[2]
+    s, ax_last = prscr.rough_table_of_integrals(
+        s, signal_range, fl=fl, title=sys.argv[2], echo_like=True
     )
     # {{{ generate the table of integrals and fit
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
@@ -47,21 +47,14 @@ with psd.figlist_var() as fl:
     )
     s.fit()
     fit = s.eval(500)
-    # {{{ weirdness with units of subplots means fitting is s*sqrt(W) and
-    #     for plotting I convert to us*sqrt(W)
-    s["beta"] /= 1e-6
-    fit["beta"] /= 1e-6
-    # }}}
-    fl.plot(s, "o", human_units=False, ax=ax4)
-    fl.plot(fit, human_units=False, ax=ax4)
-    ax4.set_xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-    ax4.set_ylabel(None)
-    beta_90 = s.output("beta_ninety") / 1e-6
-    ax4.axvline(beta_90)
-    ax4.text(
-        beta_90 + 5,
+    fl.plot(fit, ax=ax_last)
+    ax_last.set_title("Integrated and fit")
+    beta_90 = s.output("beta_ninety")
+    ax_last.axvline(beta_90 / 1e-6)
+    ax_last.text(
+        beta_90 / 1e-6 + 5,
         5e4,
-        r"$\beta_{90} = %f \mathrm{s \sqrt{W}}$" % beta_90,
+        r"$\beta_{90} = %f\ \mathrm{μs \sqrt{W}}$" % (beta_90 / 1e-6),
     )
-    ax4.grid()
+    ax_last.grid()
     # }}}

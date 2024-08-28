@@ -39,7 +39,9 @@ with psd.fl_mod() as fl:
         psd.logger.debug(psd.strm(psd.ndshape(s)))
         # }}}
         # {{{ apply phase corrections
-        best_shift = prscr.hermitian_function_test(prscr.select_pathway(s, signal_pathway))
+        best_shift = prscr.hermitian_function_test(
+            prscr.select_pathway(s, signal_pathway)
+        )
         psd.logger.info(psd.strm("best shift is", best_shift))
         s_uncorrected = s.C.ft("t2")
         s.setaxis("t2", lambda x: x - best_shift).register_axis(
@@ -63,7 +65,9 @@ with psd.fl_mod() as fl:
         s /= ph0
         # }}}
         # {{{visualizes the data after hermitian function test and phasing
-        fl.next("frequency domain -- after hermitian function test and phasing")
+        fl.next(
+            "frequency domain -- after hermitian function test and phasing"
+        )
         s.ft("t2", pad=512)  # power of 2 FT
         fl.image(s.C.convolve("t2", 10))  # so that resolution of
         # plot isn't higher than that of screen -- note that we do
