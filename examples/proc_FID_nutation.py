@@ -15,8 +15,9 @@ import pyspecdata as psd
 import pyspecProcScripts as prscr
 import sympy as sp
 import sys
+from numpy import r_
 
-signal_range = (-250, 250)
+slice_expansion = 5
 assert len(sys.argv) == 4
 s = psd.find_file(
     sys.argv[2],
@@ -25,6 +26,8 @@ s = psd.find_file(
     lookup=prscr.lookup_table,
 )
 with psd.figlist_var() as fl:
+    frq_center,frq_half = prscr.find_peakrange(s, fl=fl)
+    signal_range = tuple(slice_expansion*r_[-1,1]*frq_half+frq_center)
     if "nScans" in s.dimlabels:
         s.mean("nScans")
     s, ax_last = prscr.rough_table_of_integrals(

@@ -255,11 +255,9 @@ def fid_from_echo(
     d: nddata
         FID of properly sliced and phased signal
     """
-    peakrange = find_peakrange(
+    frq_center, frq_half = find_peakrange(
         d, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
     )
-    frq_center = np.mean(peakrange).item()
-    frq_half = np.diff(peakrange).item() / 2
     if fl is not None:
         fl.next("autoslicing!")
         axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
@@ -422,6 +420,15 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
         frequency slice. The smaller the value, the wider the slice.
     fl : figlist (default None)
         If you want to see diagnostic plots, feed the figure list.
+
+    Returns
+    =======
+    frq_center : float
+        The midpoint of the frequency slice.
+    frq_half : float
+        Half the width of the frequency slice.
+        Given in this way, so you can easily do
+        >>> newslice = r_[-expansino,expansion]*frq_half+frq_center
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
@@ -485,7 +492,9 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
             peakrange = [(peakrange[0][0], peakrange[-1][1])]
     assert len(peakrange) == 1
     # }}}
-    return peakrange[0]
+    frq_center = np.mean(peakrange).item()
+    frq_half = np.diff(peakrange).item() / 2
+    return frq_center, frq_half
 
 
 def hermitian_function_test(
