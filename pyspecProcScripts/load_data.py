@@ -323,7 +323,6 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
 
 def proc_Hahn_echoph(s, fl=None):
     logging.debug("loading pre-processing for Hahn_echoph")
-    nScans = s.shape["nScans"]
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
@@ -334,7 +333,7 @@ def proc_Hahn_echoph(s, fl=None):
     s.squeeze()
     s.reorder(["ph2", "ph1"])
     if "nScans" in s.dimlabels:
-        s.setaxis("nScans", r_[0:nScans])
+        s.setaxis("nScans", "#")
     s.reorder("t2", first=False)
     s.ft("t2", shift=True)
     if fl is not None:
