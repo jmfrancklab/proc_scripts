@@ -763,14 +763,14 @@ def determine_sign(
 
     Parameters
     ==========
-    s: nddata
-        data with a single (dominant) peak, where you want to return the sign
+    s : nddata
+        Data with a single (dominant) peak, where you want to return the sign
         of the integral over all the data.
-    signal_freq_range:  tuple
-        narrow slice range where signal resides
-    direct: str (default "t2")
-        Name of the direct dimension
-    signal_pathway: dict (default None)
+    signal_freq_range :  tuple
+        Narrow slice range where signal resides.
+    direct : str (default "t2")
+        Name of the direct dimension.
+    signal_pathway : dict (default None)
         If None, the function will go into the properties of the data looking
         for the "coherence_pathway" property. If that doesn't exist the user
         needs to feed a dictionary containing the coherence transfer pathway
@@ -778,9 +778,9 @@ def determine_sign(
 
     Returns
     =======
-    mysign: nddata
+    mysign : nddata
         A dataset with all +1 or -1 (giving the sign of the original signal).
-        Does *not* include the `direct` dimension
+        Does *not* include the `direct` dimension.
     """
     if type(direct) is tuple:
         raise ValueError(
