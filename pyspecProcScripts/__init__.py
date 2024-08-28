@@ -4,20 +4,22 @@ from .phasing import (
     ph1_real_Abs,
     determine_sign,
     fid_from_echo,
+    find_peakrange,
 )
 from .first_level.fake_data import fake_data
+from .third_level.rough_table_of_integrals import rough_table_of_integrals
 from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
 from .baseline import calc_baseline
-from .Utility import *
+from .Utility import dBm2power, Vpp2power, power2dBm
 from .CPMG_phasing import center_echo
 from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
-from .simple_functions import select_pathway, logobj
+from .simple_functions import select_pathway, logobj, find_apparent_anal_freq
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
@@ -41,6 +43,8 @@ __all__ = [
     "expand_limits",
     "fake_data",
     "fid_from_echo",
+    "find_apparent_anal_freq",
+    "find_peakrange",
     "fit_envelope",
     "fl_mod",
     "fwhm_calculator",
@@ -53,6 +57,7 @@ __all__ = [
     "ph1_real_Abs",
     "power2dBm",
     "recovery",
+    "rough_table_of_integrals",
     "select_pathway",
     "slice_FID_from_echo",
     "zeroth_order_ph",

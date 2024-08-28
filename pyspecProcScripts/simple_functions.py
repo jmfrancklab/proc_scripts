@@ -33,7 +33,7 @@ class logobj(object):
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
-            return concatenate(
+            return np.concatenate(
                 self.log_list + [self.log_array[: self.log_pos]]
             )
 
@@ -91,46 +91,50 @@ def select_pathway(*args, **kwargs):
     return retval
 
 
-def determine_sign(s, direct="t2", fl=None):
-    """Given that the signal resides in `pathway`, determine the sign of the signal.
-    The sign can be used, e.g. so that all data in an inversion-recover or
-    enhancement curve can be aligned together.
+def find_apparent_anal_freq(s):
+    """A function to identify the position of analytic signal as acquired on the oscilloscope.
+    Importantly this function takes into account the effects of aliasing in identifying the
+    frequency of the resulting signal.
 
     Parameters
     ==========
     s: nddata
-        data with a single (dominant) peak, where you want to return the sign
-        of the integral over all the data.
-        This should only contain **a single coherence pathway**.
-    direct: str (default "t2")
-        Name of the direct dimension, along which the sum/integral is taken
+        data with a single (dominant) peak, where you want to identify the frequency.
 
     Returns
     =======
-    data_sgn: nddata
-        A dataset with all +1 or -1 (giving the sign of the original signal).
-        Does *not* include the `direct` dimension
+    s: nddata
+        The original data that was initially fed to the function
+    nu_a: float
+        The apparent frequency of the signal
+    isflipped: boolean
+        If aliased from a negative frequency, this notes whether the phase
+        of the final time domain signal will be flipped
     """
-    assert s.get_ft_prop(
-        direct
-    ), "this only works on data that has been FT'd along the direct dimension"
-    if fl is not None:
-        fl.push_marker()
-        fl.next("selected pathway")
-        if "vd" in s.dimlabels:
-            fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-        else:
-            fl.image(s)
-    data_sgn = s.C.sum(direct)
-    data_sgn /= data_sgn.max().item()
-    data_sgn.run(np.real).run(lambda x: np.sign(x))
-    if fl is not None:
-        fl.next("check sign")
-        if "vd" in s.dimlabels:
-            fl.image(
-                s.C.setaxis("vd", "#").set_units("vd", "scan #") * data_sgn
-            )
-        else:
-            fl.image(s * data_sgn)
-        fl.pop_marker()
-    return data_sgn
+    carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
+    dt = s["t"][1] - s["t"][0]
+    if carrier < 1 / dt:
+        print("You are in the clear and no aliasing took place!")
+        nu_a = carrier
+        isflipped = False
+    else:
+        SW = 2 / dt  # SW of data before made analytic
+        #              - what scope sees
+        n = np.floor(  # nearest integer multiple of
+            #            sampling frequency.
+            #            Measured from the left side of
+            #            the shifted spectrum
+            (carrier + SW / 2)
+            / SW
+        )
+        nu_a = carrier - n * SW
+        isflipped = False
+        if nu_a < 0:
+            # when stored, we threw out the negative frequencies
+            # so that means that we captured an aliased copy of the
+            # negative frequency
+            nu_a = -carrier + n * SW
+            # we need to make note of the fact that the phase of our final time domain signal
+            # (after filtering and up-conversion) will be flipped
+            isflipped = True
+    return s, nu_a, isflipped
