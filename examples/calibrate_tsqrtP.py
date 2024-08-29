@@ -2,14 +2,16 @@ r"""
 Calculate actual beta as a function of pulse length
 ===================================================
 Assuming the data is a series of pulse lengths captured on the GDS oscilloscope
-(acquired using FLInst/examples/run_pulse_calibration.py), here each pulse
-length capture is frequency filtered and the absolute is taken prior to
-integrating to return the beta where :math:`\beta = \frac{1}{\sqrt{2}} \int
-\sqrt{P(t)} dt`. From these integrals the programmed pulse length is plotted as
-a function of the calculated :math:`\beta`. The fit is calculated and the
-fitting coefficients are output for the nonlinear and linear regime of the
-data. The user then puts these coefficients into
-FLInst/spincore_pp/pulse_length_conv.py to obtain calibrated pulse lengths.
+(acquired using `FLInst/examples/run_pulse_calibration.py`), here each pulse
+length capture is frequency filtered and the absolute is integrated and
+converted to yield :math:`t_{pulse}\sqrt{P_{peak}}`. To convert to rms power
+this value is divided by :math:`\sqrt{2}` to give the final beta where
+:math:`\beta = \frac{1}{\sqrt{2}} \int \sqrt{P_{rms}(t)} dt`. From these
+integrals the programmed pulse length is plotted as a function of the
+calculated :math:`\beta`. The fit is calculated and the fitting coefficients
+are output for the nonlinear and linear regime of the data. The user then
+copies these coefficients into FLInst/spincore_pp/pulse_length_conv.py in the
+appropriate section to obtain calibrated pulse lengths for the given amplitude.
 """
 
 import pyspecdata as psd
@@ -24,8 +26,10 @@ color_cycle = cycle(
 )  # this can be done more than once to spin up multiple lists
 
 V_atten_ratio = 102.2  # attenutation ratio
-skip_plots = 45  # diagnostic -- set this to None, and there will be no plots
-slicewidth = 1e6
+skip_plots = (
+    45  # diagnostic -- set this to None, and there will be no diagnostic plots
+)
+HH_slicewidth = 1e6
 typical_180 = 40e-6  # typical beta for a 180 -- it's really important to get pulses in this regime correct
 
 # Note: the linear threshold seems to vary from one amplitude to the next
@@ -55,16 +59,16 @@ with psd.figlist_var() as fl:
         ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude:.2f}"
-        # {{{ ensure units are set, the preprocessing will output the
-        #     statement that they were not set but to still be able to run this
-        #     script we include the following
+        # {{{ ensure units are set, the preprocessing will output the statement
+        #     that they were not set but to still be able to run this script we
+        #     include the following
         if not d.get_units("t") == "s":
             d.set_units("t", "s")
         if not d.get_units("t_pulse") == "s":
             d.set_units("t_pulse", "s")
         # }}}
         d *= V_atten_ratio
-        d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P)
+        d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P_amp)
 
         # {{{ functions that streamline plotting the desired pulse length
         #     datasets
@@ -101,20 +105,20 @@ with psd.figlist_var() as fl:
             s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
-        assert (0 > nu_a + 0.5 * slicewidth) or (
-            0 < nu_a - 0.5 * slicewidth
+        assert (0 > nu_a + 0.5 * HH_slicewidth) or (
+            0 < nu_a - 0.5 * HH_slicewidth
         ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
         # }}}
         # {{{ apply HH frequency filter
-        d["t" : (0, nu_a - 0.5 * slicewidth)] *= 0
-        d["t" : (nu_a + 0.5 * slicewidth, None)] *= 0
+        d["t" : (0, nu_a - 0.5 * HH_slicewidth)] *= 0
+        d["t" : (nu_a + 0.5 * HH_slicewidth, None)] *= 0
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
         # }}}
-        # {{{ set up shape of beta to drop the calculated values into
-        beta = d.shape.pop("t").alloc(dtype=np.float64)
-        beta.copy_axes(d).set_units(r"s√W")
+        # {{{ set up shape of data to drop the calculated beta values into
+        beta_v_t = d.shape.pop("t").alloc(dtype=np.float64)
+        beta_v_t.copy_axes(d).set_units(r"s√W")
         # }}}
         thiscolor = next(color_cycle)
         for j in range(len(d["t_pulse"])):
@@ -123,19 +127,19 @@ with psd.figlist_var() as fl:
             # slightly expand int range to include rising edges
             int_range[0] -= 5e-6
             int_range[-1] += 5e-6
-            # {{{ plot the data that we're integrating all together
-            #     serves as diagnostic to ensure the beta is consistently
-            #     increasing
+            # {{{ plot the integration range of all pulses prior to integrating.
+            #     Serves as diagnostic to ensure the beta is consistently
+            #     increasing.
             fl.push_marker()
             fl.basename = None
             fl.next("collect filtered analytic")
             fl.plot(abs(s["t":int_range]), alpha=0.3)
             fl.pop_marker()
             # }}}
-            beta["t_pulse", j] = (
+            beta_v_t["t_pulse", j] = (
                 abs(s["t":int_range]).integrate("t").data.item()
-            )
-            beta["t_pulse", j] /= np.sqrt(2)  # t*sqrt(Prms)
+            )  # t * sqrt(P_amp)
+            beta_v_t["t_pulse", j] /= np.sqrt(2)  # t * sqrt(P_rms)
             # {{{ Can't use indiv_plots because we've already indexed the t_pulse
             # out and we also want to plot the calculated beta on top
             if skip_plots is not None and j % skip_plots == 0:
@@ -145,45 +149,46 @@ with psd.figlist_var() as fl:
                     color="black",
                     label="integrated slice",
                 )
-                plt.ylabel(r"$\sqrt{P_{pulse}}$")
+                plt.ylabel(r"$\sqrt{P}$ / $\sqrt{W}$")
                 plt.text(
                     int_range[0] * 1e6 - 1,
                     0.25,
-                    r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
-                    % (beta["t_pulse", j].item() / 1e-6),
+                    r"$t_{pulse} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
+                    % (beta_v_t["t_pulse", j].item() / 1e-6),
                 )
             # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None  # reset so all amplitudes are on same plots
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
-        beta.rename("t_pulse", "$A t_{pulse}$")
-        beta.name(r"$\beta$")
-        beta[
+        beta_v_t.rename("t_pulse", "$A t_{pulse}$")
+        beta_v_t.name(r"$\beta$")
+        beta_v_t[
             "$A t_{pulse}$"
-        ] *= amplitude  # we only want the x axis to be multiplied by amplitude for plotting only!
+        ] *= amplitude  # we only t_pulse to be multiplied by amplitude for plotting purposes only!
         fl.plot(
-            (beta.C / 1e-6),
+            (beta_v_t.C / 1e-6),
             color=thiscolor,
             label="amplitude = %f" % amplitude,
         )
-        beta[
+        beta_v_t[
             "$A t_{pulse}$"
         ] /= amplitude  # need to divide back out for the determination of the coefficients below
         psd.gridandtick(plt.gca())
-        beta.rename("$A t_{pulse}$", "t_pulse")
+        beta_v_t.rename("$A t_{pulse}$", "t_pulse")
         # }}}
         # {{{ Identify captures that don't increase in beta - don't use
-        decreasing_idx = np.nonzero(~(np.diff(beta.data) > 0))[0]
+        decreasing_idx = np.nonzero(~(np.diff(beta_v_t.data) > 0))[0]
         if (
             len(decreasing_idx) > 0
         ):  # beta doesn't always increase with increasing pulse length
             fl.plot(
-                beta["t_pulse", : decreasing_idx[-1] + 1],
+                beta_v_t["t_pulse", : decreasing_idx[-1] + 1],
                 "x",
                 color="r",
                 label="can't use these",
             )
-            beta = beta["t_pulse", decreasing_idx[-1] + 1 :]
+            # throw out betas following a faulty pulse
+            beta_v_t = beta_v_t["t_pulse", decreasing_idx[-1] + 1 :]
         # }}}
         plt.axhline(  # the linear threshold is the threshold above which beta is linear
             y=linear_threshold / 1e-6,
@@ -192,18 +197,22 @@ with psd.figlist_var() as fl:
         )
         # {{{ flip data so beta is on x axis now and t_pulse is the y axis
         t_v_beta = (
-            beta.shape.alloc(dtype=np.float64)
+            beta_v_t.shape.alloc(dtype=np.float64)
             .rename("t_pulse", r"$\beta$")
-            .setaxis(r"$\beta$", beta.data)
+            .setaxis(r"$\beta$", beta_v_t.data)
         )
         t_v_beta.data[:] = (
-            beta["t_pulse"].copy() / 1e-6
+            beta_v_t["t_pulse"].copy() / 1e-6
         )  # because our ppg wants μs
         t_v_beta.set_units("μs").set_units(r"$\beta$", "s√W")
         # use as temp for ultimate coeff
         # }}}
         # {{{ Determine linear and nonliear coefficients
-        c_nonlinear = t_v_beta[r"$\beta$":(None, linear_threshold)].C
+        c_nonlinear = t_v_beta[
+            r"$\beta$":(None, linear_threshold)
+        ].C  # make copy to allow the next
+        #                                                               line not to cause the data to
+        #                                                               actually shift
         c_nonlinear[
             r"$\beta$"
         ] -= linear_threshold  # Taylor expand around the linear threshold rather than 0
@@ -219,8 +228,15 @@ with psd.figlist_var() as fl:
 
         # }}}
         def prog_plen(desired):
-            """function that takes the coefficients of the linear and nonlinear
-            regions and applies the fit respectively
+            """If the desired beta is above the linear threshold,
+            the linear fit is applied to return the pulse length
+            required to obtain the desired beta.
+            If the desired beta is below the linear threshold, the
+            nonlinear fit is applied to return the pulse length
+            required to obtain the desired beta.
+            If a series of desired betas is fed, both fits are
+            applied appropriately to return the pulse lengths
+            required to obtain each desired beta in the series.
             """
 
             def zonefit(desired):
@@ -253,8 +269,8 @@ with psd.figlist_var() as fl:
             alpha=0.5,
             label=f"data for {amplitude}",
         )
-        # {{{ we extrapolate past the edges of the data to show how the
-        #     linear is poorly behaved for smaller beta values
+        # {{{ we extrapolate past the edges of the data using the linear threshold
+        #     to show how the linear is poorly behaved for smaller beta values
         for_extrap = (
             psd.nddata(
                 np.linspace(0.5e-6, t_v_beta[r"$\beta$"].max() + 10e-6, 500),
@@ -285,7 +301,7 @@ with psd.figlist_var() as fl:
         fl.plot(full_fit * amplitude, alpha=0.5, label="fit")
         plt.axvline(
             x=linear_threshold / 1e-6,  # units of μs
-            alpha=0.1,
+            alpha=0.3,
             color=for_extrap.get_plot_color(),
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
