@@ -63,10 +63,14 @@ with psd.figlist_var() as fl:
         fl.basename = f"amplitude = {amplitude:.2f}"
         # {{{ ensure units are set
         if d.get_units("t") == None:
-            logging.info("Units for your t axis weren't set to anything so I am setting them to s")
+            logging.info(
+                "Units for your t axis weren't set to anything so I am setting them to s"
+            )
             d.set_units("t", "s")
-        if d.get_units("t_pulse") == None:    
-            logging.info("Units for your t_pulse axis weren't set to anything so I am setting them to s")
+        if d.get_units("t_pulse") == None:
+            logging.info(
+                "Units for your t_pulse axis weren't set to anything so I am setting them to s"
+            )
             d.set_units("t_pulse", "s")
         # }}}
         d *= V_atten_ratio
@@ -138,8 +142,10 @@ with psd.figlist_var() as fl:
             fl.plot(abs(s["t":int_range]), alpha=0.3)
             fl.pop_marker()
             # }}}
-            beta_v_t["t_pulse", j] = (
-                abs(s["t":int_range]).integrate("t").data.item()/np.sqrt(2)
+            beta_v_t["t_pulse", j] = abs(s["t":int_range]).integrate(
+                "t"
+            ).data.item() / np.sqrt(
+                2
             )  # t * sqrt(P_rms)
             # {{{ Can't use indiv_plots because we've already indexed the t_pulse
             # out and we also want to plot the calculated beta on top
@@ -255,7 +261,7 @@ with psd.figlist_var() as fl:
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
         t_v_beta.set_plot_color_next()
-        t_v_beta.name("A * $t_{pulse}$").set_units('μs')
+        t_v_beta.name("A * $t_{pulse}$").set_units("μs")
         fl.plot(
             t_v_beta * amplitude,
             ".",
