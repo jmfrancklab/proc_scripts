@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from itertools import cycle
 
+psd.init_logging()
+
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 color_cycle = cycle(
     colorcyc_list
@@ -117,8 +119,8 @@ with psd.figlist_var() as fl:
             # }}}
             verify_beta["beta", j] = (
                 abs(s["t":int_range]).integrate("t").data.item()
-            )  # tp * sqrt(P_amp)
-            verify_beta["beta", j] /= np.sqrt(2)  # tp*sqrt(P_rms)
+                / np.sqrt(2)
+            )  # tp * sqrt(P_rms)
             # {{{ Can't use indiv_plots because we've already indexed the beta
             # out and we also want to plot the calculated beta on top
             if skip_plots is not None and j % skip_plots == 0:
@@ -128,7 +130,7 @@ with psd.figlist_var() as fl:
                     color="black",
                     label="integrated slice",
                 )
-                plt.ylabel(r"$\sqrt{P_{pulse}}$ / $\sqrt{W}}$")
+                plt.ylabel(r"$\sqrt{P_{pulse}}$ / $\sqrt{\mathrm{W}}$")
                 plt.text(
                     int_range[0] * 1e6 - 1,
                     0.25,
@@ -144,7 +146,7 @@ with psd.figlist_var() as fl:
             color=thiscolor,
             label="Amplitude = %0.2f" % amplitude,
         )
-        plt.xlabel(r"Programmed $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
-        plt.ylabel(r"Measured $\beta$ / $\mathrm{\mu s \sqrt{W}}$")
+        plt.xlabel(r"Programmed $\beta$ / $\mathrm{μs}\sqrt{\mathrm{W}}$")
+        plt.ylabel(r"Measured $\beta$ / $\mathrm{μs}\sqrt{\mathrm{W}}$")
         psd.gridandtick(plt.gca())
         # }}}

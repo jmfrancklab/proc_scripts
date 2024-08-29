@@ -2,8 +2,6 @@
 import numpy as np
 import logging
 
-logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
-
 class logobj(object):
     def __init__(self, array_len=1000):  # just the size of the buffer
         self.log_list = []
@@ -119,7 +117,7 @@ def find_apparent_anal_freq(s):
     # So we first need to check if the carrier is in the SW of
     # the analytic signal or if the signal was aliased
     if carrier < 1 / dt:
-        logging.info(
+        logging.debug(
             "You are in the clear and no aliasing took place!"
         )
         nu_a = carrier
