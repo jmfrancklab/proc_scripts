@@ -4,8 +4,10 @@ from .phasing import (
     ph1_real_Abs,
     determine_sign,
     fid_from_echo,
+    find_peakrange,
 )
 from .first_level.fake_data import fake_data
+from .third_level.rough_table_of_integrals import rough_table_of_integrals
 from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
@@ -42,6 +44,7 @@ __all__ = [
     "fake_data",
     "fid_from_echo",
     "find_apparent_anal_freq",
+    "find_peakrange",
     "fit_envelope",
     "fl_mod",
     "fwhm_calculator",
@@ -54,6 +57,7 @@ __all__ = [
     "ph1_real_Abs",
     "power2dBm",
     "recovery",
+    "rough_table_of_integrals",
     "select_pathway",
     "slice_FID_from_echo",
     "zeroth_order_ph",
