@@ -1,6 +1,5 @@
 "First order functions for very simple (a few lines) data manipulation"
 import numpy as np
-import pyspecdata as psd
 import logging
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
