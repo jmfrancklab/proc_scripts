@@ -1,7 +1,9 @@
 "First order functions for very simple (a few lines) data manipulation"
 import numpy as np
 import pyspecdata as psd
+import logging
 
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
 class logobj(object):
     def __init__(self, array_len=1000):  # just the size of the buffer
@@ -118,12 +120,15 @@ def find_apparent_anal_freq(s):
     # So we first need to check if the carrier is in the SW of
     # the analytic signal or if the signal was aliased
     if carrier < 1 / dt:
-        psd.logger.info(
+        logging.info(
             "You are in the clear and no aliasing took place!"
         )
         nu_a = carrier
         isflipped = False
     else:
+        logging.info(
+            "Aliasing occurred, but we can still find that frequency!"
+        )
         SW = 2 / dt  # SW of data before made analytic
         #              - what scope sees
         n = np.floor(  # nearest integer multiple of
