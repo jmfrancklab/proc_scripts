@@ -53,7 +53,7 @@ with psd.figlist_var() as fl:
         d *= V_atten_ratio  # V at output of amplifier
         d /= np.sqrt(50)  # V/sqrt(R) = sqrt(P_amp)
 
-        # {{{ functions that streamline plotting the desired pulse length 
+        # {{{ functions that streamline plotting the desired pulse length
         #     datasets
         def switch_to_plot(d, j):
             thislen = d.get_prop("programmed_t_pulse")[j] / 1e-6
@@ -72,6 +72,7 @@ with psd.figlist_var() as fl:
                         label=thislabel,
                     )
                     plt.ylabel(r"$\sqrt{P}$ / $\mathrm{\sqrt{W}}$")
+
         # }}}
         # {{{ data is already analytic, and downsampled to below 24 MHz
         indiv_plots(abs(d), "abs(analytic)", "orange")
@@ -117,9 +118,10 @@ with psd.figlist_var() as fl:
             fl.plot(abs(s["t":int_range]), alpha=0.3)
             fl.pop_marker()
             # }}}
-            verify_beta["beta", j] = (
-                abs(s["t":int_range]).integrate("t").data.item()
-                / np.sqrt(2)
+            verify_beta["beta", j] = abs(s["t":int_range]).integrate(
+                "t"
+            ).data.item() / np.sqrt(
+                2
             )  # tp * sqrt(P_rms)
             # {{{ Can't use indiv_plots because we've already indexed the beta
             # out and we also want to plot the calculated beta on top
@@ -132,10 +134,11 @@ with psd.figlist_var() as fl:
                 )
                 plt.ylabel(r"$\sqrt{P_{pulse}}$ / $\sqrt{\mathrm{W}}$")
                 plt.text(
-                    int_range[0] * 1e6 - 1,
+                    np.mean(int_range) / 1e-6,
                     0.25,
                     r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
                     % (verify_beta["beta", j].item() / 1e-6),
+                    ha="center",
                 )
             # }}}
         # {{{ show what we observe -- how does β vary with the desired β
