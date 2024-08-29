@@ -18,6 +18,7 @@ import pyspecdata as psd
 import matplotlib.pyplot as plt
 from pyspecProcScripts import find_apparent_anal_freq
 import numpy as np
+import logging
 from itertools import cycle
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -25,6 +26,7 @@ color_cycle = cycle(
     colorcyc_list
 )  # this can be done more than once to spin up multiple lists
 
+psd.init_logging()
 V_atten_ratio = 102.2  # attenutation ratio
 skip_plots = (
     45  # diagnostic -- set this to None, and there will be no diagnostic plots
@@ -59,12 +61,12 @@ with psd.figlist_var() as fl:
         ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude:.2f}"
-        # {{{ ensure units are set, the preprocessing will output the statement
-        #     that they were not set but to still be able to run this script we
-        #     include the following
-        if not d.get_units("t") == "s":
+        # {{{ ensure units are set
+        if d.get_units("t") == None:
+            logging.info("Units for your t axis weren't set to anything so I am setting them to s")
             d.set_units("t", "s")
-        if not d.get_units("t_pulse") == "s":
+        if d.get_units("t_pulse") == None:    
+            logging.info("Units for your t_pulse axis weren't set to anything so I am setting them to s")
             d.set_units("t_pulse", "s")
         # }}}
         d *= V_atten_ratio
@@ -137,9 +139,8 @@ with psd.figlist_var() as fl:
             fl.pop_marker()
             # }}}
             beta_v_t["t_pulse", j] = (
-                abs(s["t":int_range]).integrate("t").data.item()
-            )  # t * sqrt(P_amp)
-            beta_v_t["t_pulse", j] /= np.sqrt(2)  # t * sqrt(P_rms)
+                abs(s["t":int_range]).integrate("t").data.item()/np.sqrt(2)
+            )  # t * sqrt(P_rms)
             # {{{ Can't use indiv_plots because we've already indexed the t_pulse
             # out and we also want to plot the calculated beta on top
             if skip_plots is not None and j % skip_plots == 0:
@@ -161,7 +162,7 @@ with psd.figlist_var() as fl:
         fl.basename = None  # reset so all amplitudes are on same plots
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
         beta_v_t.rename("t_pulse", "$A t_{pulse}$")
-        beta_v_t.name(r"$\beta$")
+        beta_v_t.name(r"$\beta$").set_units("μs√W")
         beta_v_t[
             "$A t_{pulse}$"
         ] *= amplitude  # we only t_pulse to be multiplied by amplitude for plotting purposes only!
@@ -170,10 +171,15 @@ with psd.figlist_var() as fl:
             color=thiscolor,
             label="amplitude = %f" % amplitude,
         )
+        plt.axhline(  # the linear threshold is the threshold above which beta is linear
+            y=linear_threshold / 1e-6,
+            color=thiscolor,
+            label=f"linear threshold for amp={amplitude}",
+        )
+        psd.gridandtick(plt.gca())
         beta_v_t[
             "$A t_{pulse}$"
         ] /= amplitude  # need to divide back out for the determination of the coefficients below
-        psd.gridandtick(plt.gca())
         beta_v_t.rename("$A t_{pulse}$", "t_pulse")
         # }}}
         # {{{ Identify captures that don't increase in beta - don't use
@@ -190,11 +196,6 @@ with psd.figlist_var() as fl:
             # throw out betas following a faulty pulse
             beta_v_t = beta_v_t["t_pulse", decreasing_idx[-1] + 1 :]
         # }}}
-        plt.axhline(  # the linear threshold is the threshold above which beta is linear
-            y=linear_threshold / 1e-6,
-            color=thiscolor,
-            label=f"linear threshold for amp={amplitude}",
-        )
         # {{{ flip data so beta is on x axis now and t_pulse is the y axis
         t_v_beta = (
             beta_v_t.shape.alloc(dtype=np.float64)
@@ -211,8 +212,7 @@ with psd.figlist_var() as fl:
         c_nonlinear = t_v_beta[
             r"$\beta$":(None, linear_threshold)
         ].C  # make copy to allow the next
-        #                                                               line not to cause the data to
-        #                                                               actually shift
+        #      line not to cause the data to actually shift
         c_nonlinear[
             r"$\beta$"
         ] -= linear_threshold  # Taylor expand around the linear threshold rather than 0
@@ -255,7 +255,7 @@ with psd.figlist_var() as fl:
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
         t_v_beta.set_plot_color_next()
-        t_v_beta.name("A * $t_{pulse}$")
+        t_v_beta.name("A * $t_{pulse}$").set_units('μs')
         fl.plot(
             t_v_beta * amplitude,
             ".",
@@ -317,6 +317,4 @@ with psd.figlist_var() as fl:
         ):
             fl.next(j)
             psd.gridandtick(plt.gca())
-            plt.ylabel(r"$At_{pulse}$ / $\mathrm{\mu s}$")
-            plt.xlabel(r"$\beta$ / $\mathrm{\mu s \sqrt{W}}$")
         # }}}
