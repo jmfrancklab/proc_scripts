@@ -16,7 +16,6 @@ import numpy as np
 from numpy import r_
 import re
 
-
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     logging.debug(psd.strm("this is the 90 time"))
@@ -852,6 +851,7 @@ lookup_table = {
     "spincore_nutation_amp": proc_nutation_amp,
     "spincore_nutation_v3": proc_nutation_chunked,
     "spincore_nutation_v4": proc_nutation_v4,
+    "spincore_nutation_v6": proc_spincore_generalproc_v1,
     "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
     "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
     "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no meter powers
