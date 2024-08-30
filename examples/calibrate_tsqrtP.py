@@ -162,7 +162,9 @@ with psd.figlist_var() as fl:
         beta_v_t.set_plot_color_next()  # cycle color list to next color
         thiscolor = beta_v_t.get_plot_color()  # set thiscolor to the above
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
-        beta_v_t.rename("t_pulse", "$A t_{pulse}$").name(r"$\beta$").set_units("μs√W")
+        beta_v_t.rename("t_pulse", "$A t_{pulse}$").name(r"$\beta$").set_units(
+            "μs√W"
+        )
         beta_v_t[
             "$A t_{pulse}$"
         ] *= amplitude  # we only t_pulse to be multiplied by amplitude for plotting purposes only!
@@ -239,6 +241,7 @@ with psd.figlist_var() as fl:
             applied appropriately to return the pulse lengths
             required to obtain each desired beta in the series.
             """
+
             def zonefit(desired):
                 if desired > linear_threshold:
                     return np.polyval(c_linear[::-1], desired)
