@@ -19,12 +19,6 @@ import matplotlib.pyplot as plt
 from pyspecProcScripts import find_apparent_anal_freq
 import numpy as np
 import logging
-from itertools import cycle
-
-colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-color_cycle = cycle(
-    colorcyc_list
-)  # this can be done more than once to spin up multiple lists
 
 psd.init_logging()
 V_atten_ratio = 102.2  # attenutation ratio
@@ -62,12 +56,12 @@ with psd.figlist_var() as fl:
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude:.2f}"
         # {{{ ensure units are set
-        if d.get_units("t") == None:
+        if d.get_units("t") is None:
             logging.info(
                 "Units for your t axis weren't set to anything so I am setting them to s"
             )
             d.set_units("t", "s")
-        if d.get_units("t_pulse") == None:
+        if d.get_units("t_pulse") is None:
             logging.info(
                 "Units for your t_pulse axis weren't set to anything so I am setting them to s"
             )
@@ -126,7 +120,6 @@ with psd.figlist_var() as fl:
         beta_v_t = d.shape.pop("t").alloc(dtype=np.float64)
         beta_v_t.copy_axes(d).set_units(r"s√W")
         # }}}
-        thiscolor = next(color_cycle)
         for j in range(len(d["t_pulse"])):
             s = d["t_pulse", j]
             int_range = abs(s).contiguous(lambda x: x > 0.05 * s.max())[0]
@@ -166,6 +159,8 @@ with psd.figlist_var() as fl:
             # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None  # reset so all amplitudes are on same plots
+        beta_v_t.set_plot_color_next() #cycle color list to next color
+        thiscolor = beta_v_t.get_plot_color() # set thiscolor to the above
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
         beta_v_t.rename("t_pulse", "$A t_{pulse}$")
         beta_v_t.name(r"$\beta$").set_units("μs√W")
@@ -180,6 +175,7 @@ with psd.figlist_var() as fl:
         plt.axhline(  # the linear threshold is the threshold above which beta is linear
             y=linear_threshold / 1e-6,
             color=thiscolor,
+            alpha=0.8,
             label=f"linear threshold for amp={amplitude}",
         )
         psd.gridandtick(plt.gca())
@@ -260,12 +256,12 @@ with psd.figlist_var() as fl:
                 return ret_val.item()
 
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$", legend=True)
-        t_v_beta.set_plot_color_next()
         t_v_beta.name("A * $t_{pulse}$").set_units("μs")
         fl.plot(
             t_v_beta * amplitude,
             ".",
             alpha=0.5,
+            color=thiscolor,
             label=f"data for {amplitude}",
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
@@ -273,6 +269,7 @@ with psd.figlist_var() as fl:
             t_v_beta[r"$\beta$":(None, typical_180)] * amplitude,
             ".",
             alpha=0.5,
+            color=thiscolor,
             label=f"data for {amplitude}",
         )
         # {{{ we extrapolate past the edges of the data using the linear threshold
@@ -293,6 +290,7 @@ with psd.figlist_var() as fl:
             * amplitude,
             "--",
             alpha=0.25,
+            color=thiscolor,
             label="linear",
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$")
@@ -300,20 +298,24 @@ with psd.figlist_var() as fl:
             for_extrap.eval_poly(c_linear, r"$\beta$") * amplitude,
             "--",
             alpha=0.25,
+            color=thiscolor,
             label="linear",
         )
         # }}}
         full_fit = for_extrap.fromaxis(r"$\beta$").run(prog_plen)
-        fl.plot(full_fit * amplitude, alpha=0.5, label="fit")
+        fl.plot(full_fit * amplitude, alpha=0.5, color=thiscolor, label="fit")
         plt.axvline(
             x=linear_threshold / 1e-6,  # units of μs
-            alpha=0.3,
-            color=for_extrap.get_plot_color(),
+            alpha=0.4,
+            color=thiscolor,
+            ls="dashdot",
+            label="linear threshold",
         )
         fl.next(r"Amplitude*$t_{pulse}$ vs $\beta$, zoomed")
         fl.plot(
             full_fit[r"$\beta$":(None, typical_180)] * amplitude,
             alpha=0.5,
+            color=thiscolor,
             label="fit",
         )
         # {{{ Add labels and grids to the fit plots
