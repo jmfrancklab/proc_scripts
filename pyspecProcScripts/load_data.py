@@ -16,7 +16,6 @@ import numpy as np
 from numpy import r_
 import re
 
-print("nothing")
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     logging.debug(psd.strm("this is the 90 time"))
