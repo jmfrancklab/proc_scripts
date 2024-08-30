@@ -8,15 +8,15 @@ converted to yield :math:`t_{pulse}\sqrt{P_{peak}}`. To convert to rms power
 this value is divided by :math:`\sqrt{2}` to give the final beta where
 :math:`\beta = \frac{1}{\sqrt{2}} \int \sqrt{P_{rms}(t)} dt`. From these
 integrals the programmed pulse length is plotted as a function of the
-calculated :math:`\beta`. The fit is calculated and the fitting coefficients
-are output for the nonlinear and linear regime of the data. The user then
+calculated :math:`\beta` and a fit is applied returning the fitting coefficients
+for the nonlinear and linear regime of the data. The user then
 copies these coefficients into FLInst/spincore_pp/pulse_length_conv.py in the
 appropriate section to obtain calibrated pulse lengths for the given amplitude.
 """
 
 import pyspecdata as psd
-import matplotlib.pyplot as plt
 from pyspecProcScripts import find_apparent_anal_freq
+import matplotlib.pyplot as plt
 import numpy as np
 import logging
 
@@ -88,20 +88,19 @@ with psd.figlist_var() as fl:
                         color=thiscolor,
                         label=thislabel,
                     )
-
-                    plt.ylabel(r"$\sqrt{P}$ / $\mathrm{\sqrt{W}}$")
+                    plt.ylabel(r"$\sqrt{P}$ / $\sqrt{\mathrm{W}}$")
 
         # }}}
         # {{{ data is already analytic, and downsampled to below 24 MHz
-        indiv_plots(abs(d), "absolute analytic", "orange")
+        indiv_plots(abs(d), "abs(analytic)", "orange")
         d, nu_a, _ = find_apparent_anal_freq(d)  # find frequency of signal
         d.ft("t")
-        # {{{ Diagnostic to ensure the frequency was properly identified
+        # {{{ Diagnostic to ensure the frequency properly identified
         fl.next("Frequency Domain")
         fl.plot(d)
         plt.text(
-            x=0.5,
-            y=0.5,
+            x=0.25,
+            y=0.75,
             s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
@@ -149,18 +148,19 @@ with psd.figlist_var() as fl:
                     color="black",
                     label="integrated slice",
                 )
-                plt.ylabel(r"$\sqrt{P}$ / $\sqrt{W}$")
+                plt.ylabel(r"$\sqrt{P_{pulse}}$ / $\sqrt{\mathrm{W}}$")
                 plt.text(
-                    int_range[0] * 1e6 - 1,
+                    np.mean(int_range) / 1e-6,
                     0.25,
                     r"$t_{pulse} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
                     % (beta_v_t["t_pulse", j].item() / 1e-6),
+                    ha="center",
                 )
             # }}}
         # {{{ show what we observe -- how does β vary with the programmed pulse length
         fl.basename = None  # reset so all amplitudes are on same plots
-        beta_v_t.set_plot_color_next() #cycle color list to next color
-        thiscolor = beta_v_t.get_plot_color() # set thiscolor to the above
+        beta_v_t.set_plot_color_next()  # cycle color list to next color
+        thiscolor = beta_v_t.get_plot_color()  # set thiscolor to the above
         fl.next(r"Measured $\beta$ vs A * $t_{pulse}$")
         beta_v_t.rename("t_pulse", "$A t_{pulse}$")
         beta_v_t.name(r"$\beta$").set_units("μs√W")
@@ -168,7 +168,7 @@ with psd.figlist_var() as fl:
             "$A t_{pulse}$"
         ] *= amplitude  # we only t_pulse to be multiplied by amplitude for plotting purposes only!
         fl.plot(
-            (beta_v_t.C / 1e-6),
+            (beta_v_t / 1e-6),
             color=thiscolor,
             label="amplitude = %f" % amplitude,
         )
