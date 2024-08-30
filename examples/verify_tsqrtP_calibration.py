@@ -7,6 +7,8 @@ that we get the β values that we program, where :math:`\beta =
 
 This data should be acquired using `example/run_pulse_calibration.py` in
 FLInst.
+
+Compare to `example/calibrate_tsqrtP.py`, which generates the calibration.
 """
 
 import pyspecdata as psd
@@ -23,7 +25,8 @@ color_cycle = cycle(
 )  # this can be done more than once to spin up multiple lists
 
 V_atten_ratio = 102.2  # attenutation ratio
-skip_plots = 33  # diagnostic -- set this to None, and there will be no plots
+skip_plots = 33  # diagnostic -- set this to None, and there will be no
+#                  plots
 HH_width = 2e6
 
 
@@ -71,7 +74,7 @@ with psd.figlist_var() as fl:
                         color=thiscolor,
                         label=thislabel,
                     )
-                    plt.ylabel(r"$\sqrt{P}$ / $\mathrm{\sqrt{W}}$")
+                    plt.ylabel(r"$\sqrt{P}$ / $\sqrt{\mathrm{W}}$")
 
         # }}}
         # {{{ data is already analytic, and downsampled to below 24 MHz

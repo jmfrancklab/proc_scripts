@@ -22,11 +22,11 @@ import logging
 
 psd.init_logging()
 V_atten_ratio = 102.2  # attenutation ratio
-skip_plots = (
-    45  # diagnostic -- set this to None, and there will be no diagnostic plots
-)
-HH_slicewidth = 1e6
-typical_180 = 40e-6  # typical beta for a 180 -- it's really important to get pulses in this regime correct
+skip_plots = 45  # diagnostic -- set this to None, and there will be no
+#                 diagnostic plots
+HH_width = 1e6
+typical_180 = 40e-6  # typical beta for a 180 -- it's really important to
+#                      get pulses in this regime correct
 
 # Note: the linear threshold seems to vary from one amplitude to the next
 with psd.figlist_var() as fl:
@@ -104,13 +104,13 @@ with psd.figlist_var() as fl:
             s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
-        assert (0 > nu_a + 0.5 * HH_slicewidth) or (
-            0 < nu_a - 0.5 * HH_slicewidth
+        assert (0 > nu_a + 0.5 * HH_width) or (
+            0 < nu_a - 0.5 * HH_width
         ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
         # }}}
         # {{{ apply HH frequency filter
-        d["t" : (0, nu_a - 0.5 * HH_slicewidth)] *= 0
-        d["t" : (nu_a + 0.5 * HH_slicewidth, None)] *= 0
+        d["t" : (0, nu_a - 0.5 * HH_width)] *= 0
+        d["t" : (nu_a + 0.5 * HH_width, None)] *= 0
         # }}}
         d.ift("t")
         indiv_plots(abs(d), "filtered analytic", "red")
