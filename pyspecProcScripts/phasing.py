@@ -2,7 +2,7 @@
 from pyspecdata import nddata, ndshape, strm
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
-from pylab import axvline, rand, legend
+from pylab import axvline, legend
 import numpy as np
 from numpy import r_, sqrt, pi
 from scipy import linalg
@@ -406,6 +406,7 @@ def fid_from_echo(
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
+
 
 def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     """find the range of frequencies over which the signal occurs, so that we can autoslice
