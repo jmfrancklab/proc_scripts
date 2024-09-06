@@ -834,7 +834,6 @@ def proc_field_sweep_v2(s):
     s.ft("ph1")
     return s
 
-print("bs")
 lookup_table = {
     "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,
     "ab_ir2h": proc_bruker_deut_IR_mancyc,
