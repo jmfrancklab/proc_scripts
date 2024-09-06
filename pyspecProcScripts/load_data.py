@@ -16,6 +16,7 @@ import numpy as np
 from numpy import r_
 import re
 
+
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     logging.debug(psd.strm("this is the 90 time"))
@@ -509,9 +510,11 @@ def proc_nutation_v4(s, fl=None):
     s *= s.shape["nScans"]
     return s
 
-def proc_FID_v1(s, fl = None):
-    s = proc_spincore_generalproc_v1(s,include_tau_sub = False,fl = fl)
+
+def proc_FID_v1(s, fl=None):
+    s = proc_spincore_generalproc_v1(s, include_tau_sub=False, fl=fl)
     return s
+
 
 def proc_var_tau(s, fl=None):
     s.get_prop("SW")
@@ -678,7 +681,7 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return s
 
 
-def proc_spincore_generalproc_v1(s, include_tau_sub = True, fl=None):
+def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
     if include_tau_sub:
         if "tau_us" in s.get_prop("acq_params").keys():
             s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
@@ -833,6 +836,7 @@ def proc_field_sweep_v2(s):
     s.ft("t2", shift=True)
     s.ft("ph1")
     return s
+
 
 lookup_table = {
     "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,
