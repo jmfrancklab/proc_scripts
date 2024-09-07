@@ -16,6 +16,7 @@ import numpy as np
 from numpy import r_
 import re
 
+
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
     logging.debug(psd.strm("this is the 90 time"))
@@ -510,6 +511,11 @@ def proc_nutation_v4(s, fl=None):
     return s
 
 
+def proc_FID_v1(s, fl=None):
+    s = proc_spincore_generalproc_v1(s, include_tau_sub=False, fl=fl)
+    return s
+
+
 def proc_var_tau(s, fl=None):
     s.get_prop("SW")
     if "ph1" not in s.dimlabels:
@@ -675,9 +681,10 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return s
 
 
-def proc_spincore_generalproc_v1(s, fl=None):
-    if "tau_us" in s.get_prop("acq_params").keys():
-        s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
+def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
+    if include_tau_sub:
+        if "tau_us" in s.get_prop("acq_params").keys():
+            s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.ft("t2", shift=True)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         s.ft([j])  # if we have used cycles for the axis
@@ -842,8 +849,8 @@ lookup_table = {
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
     "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
     "proc_Hahn_echoph": proc_Hahn_echoph,
-    "spincore_FID_nutation_v1": proc_spincore_generalproc_v1,
-    "spincore_FID_nutation_v2": proc_spincore_generalproc_v1,
+    "spincore_FID_nutation_v1": proc_FID_v1,
+    "spincore_FID_nutation_v2": proc_FID_v1,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
