@@ -5,6 +5,7 @@ from matplotlib.patches import FancyArrow, FancyArrowPatch, Circle
 from matplotlib.lines import Line2D
 from matplotlib.transforms import ScaledTranslation, IdentityTransform
 from pyspecdata.plot_funcs.image import imagehsv
+import matplotlib.ticker as mticker
 import logging
 
 
