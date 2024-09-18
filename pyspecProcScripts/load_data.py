@@ -349,28 +349,9 @@ def proc_Hahn_echoph(s, fl=None):
 def proc_spincore_IR(s, fl=None):
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
-    s.setaxis("ph1", r_[0, 2.0] / 4)
-    s.setaxis("ph2", r_[0, 2.0] / 4)
-    s.reorder(["ph1", "ph2"]).set_units("t2", "s")
-    s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
-    s.set_units("t2", "s")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
-    s.squeeze()
-    s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"])
-    if fl is not None:
-        fl.next("raw data -- coherence channels")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-    s.ift("t2")
-    if fl is not None:
-        fl.next("time domain (all $\\Delta p$)")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-    s.ft("t2")
-    if fl is not None:
-        fl.next("frequency domain (all $\\Delta p$)")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
-    return s
+    if s.get_prop("coherence_pathway") is None:
+        s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
+    return proc_spincore_generalproc_v1(s, fl=fl)
 
 
 def proc_spincore_IR_v2(s, fl=None):
@@ -651,31 +632,6 @@ def proc_spincore_ODNP_v3(s, fl=None):
     return s
 
 
-def proc_spincore_ODNP_v4(s, fl=None):
-    if "t" in s.dimlabels:
-        s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
-        s.set_units("t2", "s")
-    s.rename("power", "time")
-    s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
-    s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
-    s.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
-    s.set_units("t2", "s")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
-    s.squeeze()
-    s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"])
-    s.reorder(["ph1", "ph2", "time"])
-    if fl is not None:
-        fl.next("Raw Data \n Frequency Domain")
-        fl.image(s)
-        s.ift("t2")
-        fl.next("Raw Data \n Time Domain")
-        fl.image(s)
-        s.ft("t2")
-    return s
-
-
 def proc_spincore_generalproc_v1(s, fl=None):
     if "tau_us" in s.get_prop("acq_params").keys():
         s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
@@ -855,7 +811,7 @@ lookup_table = {
     "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
     "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
     "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no meter powers
-    "spincore_ODNP_v4": proc_spincore_ODNP_v4,  # for 4 x 4 phase cycle no meter powers
+    "spincore_ODNP_v4": proc_spincore_generalproc_v1,
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
     "spincore_generalproc_v1": proc_spincore_generalproc_v1,

@@ -14,6 +14,10 @@ Tested with:
 
 ``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
 
+``py proc_raw.py ODNP K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
+
+``py proc_raw.py FIR_34dBm K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
+
 """
 from pyspecProcScripts.load_data import lookup_table
 from pyspecProcScripts import select_pathway
@@ -22,6 +26,9 @@ import numpy as np
 import sys
 import os
 from itertools import cycle
+import pyspecdata as psd
+
+psd.init_logging(level="debug")
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 colorcyc = cycle(colorcyc_list)
