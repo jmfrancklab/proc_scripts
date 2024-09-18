@@ -3,8 +3,10 @@ Show data with postproc
 ====================
 `py proc_raw_data.py NODENAME FILENAME EXP_TYPE`
 
-Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
-This script plots the result, as well as signal that's averaged along the `nScans` dimension.
+Fourier transforms (and any needed data corrections for older data) are
+performed according to the `postproc_type` attribute of the data node.  This
+script plots the result, as well as signal that's averaged along the `nScans`
+dimension.
 
 Tested with:
 
@@ -21,10 +23,9 @@ Tested with:
 """
 from pyspecProcScripts.load_data import lookup_table
 from pyspecProcScripts import select_pathway
-from pyspecdata import *
 import numpy as np
 import sys
-import os
+import matplotlib.pyplot as plt
 from itertools import cycle
 import pyspecdata as psd
 
@@ -34,11 +35,11 @@ colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 colorcyc = cycle(colorcyc_list)
 
 assert len(sys.argv) == 4
-d = find_file(
+d = psd.find_file(
     sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table
 )
 print("postproc_type:", d.get_prop("postproc_type"))
-with figlist_var() as fl:
+with psd.figlist_var() as fl:
     d.squeeze()
     print("=" * 13 + "ACQ PARAMS" + "=" * 13)
     for k, v in d.get_prop("acq_params").items():
