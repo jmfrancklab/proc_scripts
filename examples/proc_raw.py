@@ -52,6 +52,15 @@ with figlist_var() as fl:
         elif len(d.dimlabels) == 2:
             iterdim = d.shape.min()
             if d.shape[iterdim] > 5:
+                # so that we can do pcolor, if the indirect is a structured
+                # array, just pull the first field
+                if d[d.dimlabels[0]].dtype.names is not None:
+                    the_field = d[d.dimlabels[0]].dtype.names[0]
+                    d[d.dimlabels[0]] = d[d.dimlabels[0]][the_field]
+                    if "time" in the_field:
+                        d[d.dimlabels[0]] -= d[d.dimlabels[0]][0]
+                        d[d.dimlabels[0]] /= 60
+                        d.set_units(d.dimlabels[0], "min")
                 d.pcolor()
                 return
             untfy_axis = d.unitify_axis(iterdim)

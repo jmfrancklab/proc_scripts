@@ -642,6 +642,15 @@ def proc_spincore_ODNP_v3(s, fl=None):
         s.ft("t2")
     return s
 
+def proc_spincore_ODNP_v4(s, fl=None):
+    if s.get_prop("coherence_pathway") is None:
+        print("WARNING!! The data was not saved with a coherence pathway property! You should fix this!")
+        result = input('Type "I will fix this" to confirm')
+        if result != "I will fix this":
+            raise ValueError("fix not confirmed!")
+        s.set_prop("coherence_pathway", {"ph1": 1})
+    return proc_spincore_generalproc_v1(s, fl=fl)
+
 
 def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
     if include_tau_sub:
@@ -831,8 +840,8 @@ lookup_table = {
     #                                             meter powers
     "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no 
     #                                             meter powers
-    "spincore_ODNP_v4": proc_spincore_generalproc_v1,
-    "spincore_ODNP_v5": proc_spincore_generalproc_v1,
+    "spincore_ODNP_v4": proc_spincore_ODNP_v4,
+    "spincore_ODNP_v5": proc_spincore_ODNP_v4,
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
     "spincore_generalproc_v1": proc_spincore_generalproc_v1,
