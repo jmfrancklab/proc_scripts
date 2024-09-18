@@ -710,7 +710,7 @@ def hermitian_function_test(
         fl.plot(
             forplot,
             label="cost function",
-            c="violet",
+            color="violet",
             alpha=0.5,
         )
     echo_peak = cost_min / 2.0

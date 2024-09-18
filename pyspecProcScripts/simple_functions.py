@@ -1,6 +1,6 @@
 "First order functions for very simple (a few lines) data manipulation"
 import numpy as np
-
+import logging
 
 class logobj(object):
     def __init__(self, array_len=1000):  # just the size of the buffer
@@ -113,11 +113,19 @@ def find_apparent_anal_freq(s):
     """
     carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
     dt = s["t"][1] - s["t"][0]
+    # In analytic signal the negative frequencies were tossed.
+    # So we first need to check if the carrier is in the SW of
+    # the analytic signal or if the signal was aliased
     if carrier < 1 / dt:
-        print("You are in the clear and no aliasing took place!")
+        logging.debug(
+            "You are in the clear and no aliasing took place!"
+        )
         nu_a = carrier
         isflipped = False
     else:
+        logging.info(
+            "Aliasing occurred, but we can still find that frequency!"
+        )
         SW = 2 / dt  # SW of data before made analytic
         #              - what scope sees
         n = np.floor(  # nearest integer multiple of
