@@ -354,7 +354,7 @@ def proc_spincore_IR(s, fl=None):
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
     if s.get_prop("coherence_pathway") is None:
-        s.set_prop("coherence_pathway", {"ph1": 0, "ph2": -1})
+        s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 
@@ -570,7 +570,7 @@ def proc_spincore_ODNP_v1(s, fl=None):
         fl.next("all data: frequency domain")
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
     # {{{ since the power axis was saved with settings and not meter powers,
-    # fix that here
+    #     fix that here
     power_axis_dBm = np.array(s.get_prop("meter_powers"))
     power_axis_W = np.zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
@@ -609,7 +609,7 @@ def proc_spincore_ODNP_v2(s, fl=None):
         fl.next("all data: frequency domain")
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
     # {{{ since the power axis was saved with settings and not meter powers,
-    # fix that here
+    #     fix that here
     power_axis_dBm = np.array(s.get_prop("meter_powers"))
     power_axis_W = np.zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
@@ -642,6 +642,7 @@ def proc_spincore_ODNP_v3(s, fl=None):
         s.ft("t2")
     return s
 
+
 def proc_spincore_ODNP_v4(s, fl=None):
     if s.get_prop("coherence_pathway") is None:
         print("WARNING!! The data was not saved with a coherence pathway property! You should fix this!")
@@ -673,7 +674,7 @@ def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
     # }}}
     s.reorder(neworder)
     # {{{ put ph_overall outside, if it exists, since there should be nothing
-    # outside that
+    #     outside that
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
     # }}}
@@ -697,7 +698,7 @@ def proc_DOSY_CPMG(s, fl=None):
         raise ValueError("you must pass kwarg fl or edit the source")
     logging.debug("loading pre-processing for DOSY-CPMG")
     # {{{ all of this would be your "preprocessing" and would be tied to the
-    # name of your pulse sequence
+    #     name of your pulse sequence
     l22 = int(
         s.get_prop("acq")["L"][22]
     )  # b/c the l are integers by definition
