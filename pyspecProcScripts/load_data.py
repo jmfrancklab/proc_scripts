@@ -350,7 +350,7 @@ def proc_spincore_IR(s, fl=None):
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
     if s.get_prop("coherence_pathway") is None:
-        s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
+        s.set_prop("coherence_pathway", {"ph1": 0, "ph2": -1})
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 
