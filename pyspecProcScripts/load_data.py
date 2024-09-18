@@ -381,6 +381,8 @@ def proc_spincore_IR_v2(s, fl=None):
     return s
 
 
+def proc_spincore_IR_v3(s, fl = None):
+    return proc_spincore_generalproc_v1(s,fl=fl)
 def proc_nutation(s, fl=None):
     logging.debug("loading pre-processing for nutation")
     s.set_units("p_90", "s")
@@ -809,6 +811,7 @@ lookup_table = {
     "spincore_FID_nutation_v2": proc_FID_v1,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
+    "spincore_IR_v3": proc_spincore_IR_v3,  # for 4 x 4 phase cycle data
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_v2,
     "spincore_nutation_amp": proc_nutation_amp,
