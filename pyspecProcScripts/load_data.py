@@ -872,4 +872,5 @@ lookup_table = {
     "ESR_linewidth": proc_ESR,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
+    "field_sweep_v4": proc_generalproc_v1,
 }
