@@ -12,9 +12,14 @@ Tested with:
 
 ``py proc_raw.py echo_6 240620_200uM_TEMPOL_pm_echo.h5 ODNP_NMR_comp/Echoes``
 
-``py proc_raw.py echo_8 240620_200uM_TEMPOL_pm_generic_echo.h5 ODNP_NMR_comp/Echoes``
+``py proc_raw.py echo_8 240620_200uM_TEMPOL_pm_generic_echo.h5
+ODNP_NMR_comp/Echoes``
 
-``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
+``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5
+ODNP_NMR_comp/Echoes``
+
+``py proc_raw.py field_2 240918_L56_MTSL_A1_Rasbatch240911_field
+ODNP_NMR_comp/field_dependent``
 
 ``py proc_raw.py ODNP K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
 
