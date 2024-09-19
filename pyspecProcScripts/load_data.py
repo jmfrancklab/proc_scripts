@@ -831,7 +831,8 @@ def proc_field_sweep_v2(s):
     s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
+    if "nScans" in s.dimlabels:
+        s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
     s.ft("ph1")
