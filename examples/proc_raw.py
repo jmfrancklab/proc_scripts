@@ -14,6 +14,8 @@ Tested with:
 
 ``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
 
+``py proc_raw.py field_2 240919_27mM_TEMPOL_debug_field.h5 ODNP_NMR_comp/field_dependent``
+
 """
 from pyspecProcScripts.load_data import lookup_table
 from pyspecProcScripts import select_pathway
@@ -45,7 +47,10 @@ with figlist_var() as fl:
         elif len(d.dimlabels) == 2:
             iterdim = d.shape.min()
             if d.shape[iterdim] > 5:
-                d.pcolor()
+                if len(d[iterdim][0])>1:
+                    newaxis = [d[iterdim][j][0] for j in range(len(d[iterdim]))]
+                    d.setaxis(iterdim,newaxis)    
+                d.pcolor(handle_axis_sharing=False)
                 return
             untfy_axis = d.unitify_axis(iterdim)
             for idx in range(d.shape[iterdim]):
