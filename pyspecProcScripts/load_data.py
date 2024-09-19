@@ -1,16 +1,11 @@
-"""Used to preprocess data based on type of experiment performed.
+"""
+Postproc dict and functions
+===========================
+
+Used to preprocess data based on type of experiment performed.
 Returns all data FTed into the frequency domain with the phase
 cycles also FTed (coherence domain). Data is not sliced or
 altered in anyway.
->>>>>>> master
-
-Parameters
-==========
-self:   nddata or h5 file
-
-Returns
-=======
-nddata that has been FTed and in coherence domain
 """
 import pyspecdata as psd
 import logging
