@@ -489,7 +489,9 @@ def proc_nutation_v4(s, fl=None):
         s.set_prop("coherence_pathway", {"ph1": 1})
     if s.get_units("t2") is None:
         raise ValueError(
-            "the units for t2 are none, but have been set for spincore_nutation_v4 since 6/25.  If your units are not set, you probably acquired with a very messed up version of the ppg!!!!!"
+            """the units for t2 are none, but have been set for
+            spincore_nutation_v4 since 6/25.  If your units are not set, you
+            probably acquired with a very messed up version of the ppg!!!!!"""
         )
     s.set_units("p_90", "s")
     s *= s.shape["nScans"]
@@ -645,7 +647,10 @@ def proc_spincore_ODNP_v3(s, fl=None):
 
 def proc_spincore_ODNP_v4(s, fl=None):
     if s.get_prop("coherence_pathway") is None:
-        print("WARNING!! The data was not saved with a coherence pathway property! You should fix this!")
+        print(
+            """WARNING!! The data was not saved with a coherence pathway
+            property! You should fix this!"""
+        )
         result = input('Type "I will fix this" to confirm')
         if result != "I will fix this":
             raise ValueError("fix not confirmed!")
@@ -785,7 +790,9 @@ def proc_ESR(s):
 
 def proc_field_sweep_v1(s):
     logging.debug(
-        "WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!"
+        """WARNING WARNING, you are using the wrong version of the
+        field sweep code -- should be chunked when data is aved, not
+        on loading!"""
     )
     logging.debug("loading preprocessing for fieldsweep")
     s.reorder("t", first=True)
@@ -838,9 +845,9 @@ lookup_table = {
     "spincore_nutation_v6": proc_spincore_generalproc_v1,
     "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take
     #                                             meter power
-    "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take 
+    "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take
     #                                             meter powers
-    "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no 
+    "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no
     #                                             meter powers
     "spincore_ODNP_v4": proc_spincore_ODNP_v4,
     "spincore_ODNP_v5": proc_spincore_ODNP_v4,
@@ -852,5 +859,5 @@ lookup_table = {
     "ESR_linewidth": proc_ESR,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
-    "field_sweep_v4": proc_field_sweep_v2,
+    "field_sweep_v4": proc_spincore_generalproc_v1,
 }
