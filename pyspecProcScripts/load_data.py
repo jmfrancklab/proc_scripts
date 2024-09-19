@@ -806,7 +806,8 @@ def proc_field_sweep_v2(s):
     s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
+    if "nScans" in s.dimlabels:
+        s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
     s.ft("ph1")
@@ -851,4 +852,5 @@ lookup_table = {
     "ESR_linewidth": proc_ESR,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
+    "field_sweep_v4": proc_field_sweep_v2,
 }
