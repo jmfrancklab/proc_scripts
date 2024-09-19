@@ -794,7 +794,7 @@ def proc_ESR(s):
 def proc_field_sweep_v1(s):
     logging.debug(
         """WARNING WARNING, you are using the wrong version of the
-        field sweep code -- should be chunked when data is aved, not
+        field sweep code -- should be chunked when data is saved, not
         on loading!"""
     )
     logging.debug("loading preprocessing for fieldsweep")
