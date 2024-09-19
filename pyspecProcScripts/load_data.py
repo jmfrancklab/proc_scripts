@@ -1,6 +1,8 @@
-"""Used to preprocess data based on type of experiment performed. Returns all
-data FTed into the frequency domain with the phase cycles also FTed (coherence
-domain). Data is not sliced or altered in anyway.
+"""Used to preprocess data based on type of experiment performed.
+Returns all data FTed into the frequency domain with the phase
+cycles also FTed (coherence domain). Data is not sliced or
+altered in anyway.
+>>>>>>> master
 
 Parameters
 ==========
@@ -490,8 +492,9 @@ def proc_nutation_v4(s, fl=None):
     if s.get_units("t2") is None:
         raise ValueError(
             """the units for t2 are none, but have been set for
-            spincore_nutation_v4 since 6/25.  If your units are not set, you
-            probably acquired with a very messed up version of the ppg!!!!!"""
+            spincore_nutation_v4 since 6/25.  If your units are
+            not set, you probably acquired with a very messed up
+            version of the ppg!!!!!"""
         )
     s.set_units("p_90", "s")
     s *= s.shape["nScans"]
@@ -571,8 +574,8 @@ def proc_spincore_ODNP_v1(s, fl=None):
     if fl is not None:
         fl.next("all data: frequency domain")
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
-    # {{{ since the power axis was saved with settings and not meter powers,
-    #     fix that here
+    # {{{ since the power axis was saved with settings and not
+    #     meter powers, fix that here
     power_axis_dBm = np.array(s.get_prop("meter_powers"))
     power_axis_W = np.zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
@@ -610,8 +613,8 @@ def proc_spincore_ODNP_v2(s, fl=None):
     if fl is not None:
         fl.next("all data: frequency domain")
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
-    # {{{ since the power axis was saved with settings and not meter powers,
-    #     fix that here
+    # {{{ since the power axis was saved with settings and not
+    #     meter powers, fix that here
     power_axis_dBm = np.array(s.get_prop("meter_powers"))
     power_axis_W = np.zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
@@ -678,8 +681,8 @@ def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
         neworder += [nonphdims[j] for j in sizeidx]
     # }}}
     s.reorder(neworder)
-    # {{{ put ph_overall outside, if it exists, since there should be nothing
-    #     outside that
+    # {{{ put ph_overall outside, if it exists, since there
+    #     should be nothing outside that
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
     # }}}
@@ -702,8 +705,8 @@ def proc_DOSY_CPMG(s, fl=None):
     if fl is None:
         raise ValueError("you must pass kwarg fl or edit the source")
     logging.debug("loading pre-processing for DOSY-CPMG")
-    # {{{ all of this would be your "preprocessing" and would be tied to the
-    #     name of your pulse sequence
+    # {{{ all of this would be your "preprocessing" and would be
+    #     tied to the name of your pulse sequence
     l22 = int(
         s.get_prop("acq")["L"][22]
     )  # b/c the l are integers by definition
@@ -765,8 +768,8 @@ def proc_DOSY_CPMG(s, fl=None):
     s.reorder(["m", "n", "ph4", "ph8", "indirect", "echo", "t2"])
     s.ft("t2", shift=True).ift(
         "t2"
-    )  # this is overkill -- need a pyspecdata function that does this w/out
-    #    the fft
+    )  # this is overkill -- need a pyspecdata function that does
+    #    this w/out the fft
     # }}}
     return s
 
