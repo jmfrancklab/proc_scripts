@@ -24,7 +24,7 @@ ODNP_NMR_comp/Echoes``
 # amplitude across nScans indicates bad repetition
 # delay.  (3) You can't see the rise and fall of
 # the ESR resonance.
-``py proc_raw.py field_2 240918_L56_MTSL_A1_Rasbatch240911_field
+``py proc_raw.py field_3 240920_27mM_TEMPOL_debug_field
 ODNP_NMR_comp/field_dependent``
 
 ``py proc_raw.py ODNP K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
