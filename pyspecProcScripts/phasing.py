@@ -212,6 +212,8 @@ def fid_from_echo(
     peak_lower_thresh=0.1,
     show_hermitian_sign_flipped=False,
     show_shifted_residuals=False,
+    frq_center=None,
+    frq_half=None,
 ):
     """
 
@@ -249,6 +251,18 @@ def fid_from_echo(
     show_shifted_residuals: boolean
         Diagnostic in analyzing the residuals after the hermitian phase
         correction.
+    frq_center: float (default None)
+        The center of the peak.
+        This only exists so that we don't end up calling
+        `find_peakrange` redundantly,
+        and it should come from a previous call to `find_peakrange` if
+        it's used.
+    frq_half: float (default None)
+        The half-width of the peak.
+        This only exists so that we don't end up calling
+        `find_peakrange` redundantly,
+        and it should come from a previous call to `find_peakrange` if
+        it's used.
 
     Returns
     =======
@@ -256,9 +270,10 @@ def fid_from_echo(
         FID of properly sliced and phased signal
 
     """
-    frq_center, frq_half = find_peakrange(
-        d, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
-    )
+    if frq_center is None:
+        frq_center, frq_half = find_peakrange(
+            d, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
+        )
     if fl is not None:
         fl.next("autoslicing!")
         axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
@@ -710,7 +725,7 @@ def hermitian_function_test(
         fl.plot(
             forplot,
             label="cost function",
-            c="violet",
+            color="violet",
             alpha=0.5,
         )
     echo_peak = cost_min / 2.0

@@ -3,35 +3,48 @@ Show data with postproc
 ====================
 `py proc_raw_data.py NODENAME FILENAME EXP_TYPE`
 
-Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
-This script plots the result, as well as signal that's averaged along the `nScans` dimension.
+Fourier transforms (and any needed data corrections for older data) are
+performed according to the `postproc_type` attribute of the data node.  This
+script plots the result, as well as signal that's averaged along the `nScans`
+dimension.
 
 Tested with:
 
 ``py proc_raw.py echo_6 240620_200uM_TEMPOL_pm_echo.h5 ODNP_NMR_comp/Echoes``
 
-``py proc_raw.py echo_8 240620_200uM_TEMPOL_pm_generic_echo.h5 ODNP_NMR_comp/Echoes``
+``py proc_raw.py echo_8 240620_200uM_TEMPOL_pm_generic_echo.h5 \
+ODNP_NMR_comp/Echoes``
 
-``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
+``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 \
+ODNP_NMR_comp/Echoes``
+
+``py proc_raw.py field_3 240920_27mM_TEMPOL_debug_field \
+ODNP_NMR_comp/field_dependent``
+
+``py proc_raw.py ODNP K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
+
+``py proc_raw.py FIR_34dBm K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
 
 """
 from pyspecProcScripts.load_data import lookup_table
 from pyspecProcScripts import select_pathway
-from pyspecdata import *
 import numpy as np
 import sys
-import os
+import matplotlib.pyplot as plt
 from itertools import cycle
+import pyspecdata as psd
+
+psd.init_logging(level="debug")
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 colorcyc = cycle(colorcyc_list)
 
 assert len(sys.argv) == 4
-d = find_file(
+d = psd.find_file(
     sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table
 )
 print("postproc_type:", d.get_prop("postproc_type"))
-with figlist_var() as fl:
+with psd.figlist_var() as fl:
     d.squeeze()
     print("=" * 13 + "ACQ PARAMS" + "=" * 13)
     for k, v in d.get_prop("acq_params").items():
@@ -45,6 +58,15 @@ with figlist_var() as fl:
         elif len(d.dimlabels) == 2:
             iterdim = d.shape.min()
             if d.shape[iterdim] > 5:
+                # so that we can do pcolor, if the indirect is a structured
+                # array, just pull the first field
+                if d[d.dimlabels[0]].dtype.names is not None:
+                    the_field = d[d.dimlabels[0]].dtype.names[0]
+                    d[d.dimlabels[0]] = d[d.dimlabels[0]][the_field]
+                    if "time" in the_field:
+                        d[d.dimlabels[0]] -= d[d.dimlabels[0]][0]
+                        d[d.dimlabels[0]] /= 60
+                        d.set_units(d.dimlabels[0], "min")
                 d.pcolor()
                 return
             untfy_axis = d.unitify_axis(iterdim)

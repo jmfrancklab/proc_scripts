@@ -1,14 +1,12 @@
-"""Used to preprocess data based on type of experiment performed. Returns all data FTed
-into the frequency domain with the phase cycles also FTed (coherence domain). Data is
-not sliced or altered in anyway.
+"""
+Postproc dict and functions
+===========================
 
-Parameters
-==========
-self:   nddata or h5 file
-
-Returns
-=======
-nddata that has been FTed and in coherence domain
+Used to preprocess data based on type of experiment performed.
+Returns all data FTed into the frequency domain with the phase
+cycles also FTed (coherence domain).
+Data is not sliced or manipulated in any other way that would reduce
+information content.
 """
 import pyspecdata as psd
 import logging
@@ -25,7 +23,11 @@ def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
         fl.image(s.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
     s.chunk(
         "indirect", ["ph2", "ph1", "indirect"], [4, 2, -1]
-    )  # expands the indirect dimension into indirect, ph1, and ph2. inner most dimension is the inner most in the loop in pulse sequence, is the one on the farthest right. Brackets with numbers are the number of phase cycle steps in each one. the number of steps is unknown in 'indirect' and is therefore -1.
+    )  # expands the indirect dimension into indirect, ph1, and ph2. inner most
+    #    dimension is the inner most in the loop in pulse sequence, is the one
+    #    on the farthest right. Brackets with numbers are the number of phase
+    #    cycle steps in each one. the number of steps is unknown in 'indirect'
+    #    and is therefore -1.
     s.setaxis("ph1", r_[0:2.0] / 4)  # setting values of axis ph1 to line up
     s.setaxis("ph2", r_[0:4.0] / 4)  # setting values of axis ph1 to line up
     s.setaxis("indirect", s.get_prop("vd"))
@@ -349,28 +351,9 @@ def proc_Hahn_echoph(s, fl=None):
 def proc_spincore_IR(s, fl=None):
     if "t" in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
-    s.setaxis("ph1", r_[0, 2.0] / 4)
-    s.setaxis("ph2", r_[0, 2.0] / 4)
-    s.reorder(["ph1", "ph2"]).set_units("t2", "s")
-    s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
-    s.set_units("t2", "s")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
-    s.squeeze()
-    s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"])
-    if fl is not None:
-        fl.next("raw data -- coherence channels")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-    s.ift("t2")
-    if fl is not None:
-        fl.next("time domain (all $\\Delta p$)")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"))
-    s.ft("t2")
-    if fl is not None:
-        fl.next("frequency domain (all $\\Delta p$)")
-        fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
-    return s
+    if s.get_prop("coherence_pathway") is None:
+        s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
+    return proc_spincore_generalproc_v1(s, fl=fl)
 
 
 def proc_spincore_IR_v2(s, fl=None):
@@ -504,10 +487,17 @@ def proc_nutation_v4(s, fl=None):
         s.set_prop("coherence_pathway", {"ph1": 1})
     if s.get_units("t2") is None:
         raise ValueError(
-            "the units for t2 are none, but have been set for spincore_nutation_v4 since 6/25.  If your units are not set, you probably acquired with a very messed up version of the ppg!!!!!"
+            "the units for t2 are none, but have been set for"
+            " spincore_nutation_v4 since 6/25.  If your units are not set, you"
+            " probably acquired with a very messed up version of the ppg!!!!!"
         )
     s.set_units("p_90", "s")
     s *= s.shape["nScans"]
+    return s
+
+
+def proc_FID_v1(s, fl=None):
+    s = proc_spincore_generalproc_v1(s, include_tau_sub=False, fl=fl)
     return s
 
 
@@ -579,7 +569,8 @@ def proc_spincore_ODNP_v1(s, fl=None):
     if fl is not None:
         fl.next("all data: frequency domain")
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
-    # {{{ since the power axis was saved with settings and not meter powers, fix that here
+    # {{{ since the power axis was saved with settings and not
+    #     meter powers, fix that here
     power_axis_dBm = np.array(s.get_prop("meter_powers"))
     power_axis_W = np.zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
@@ -617,7 +608,8 @@ def proc_spincore_ODNP_v2(s, fl=None):
     if fl is not None:
         fl.next("all data: frequency domain")
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
-    # {{{ since the power axis was saved with settings and not meter powers, fix that here
+    # {{{ since the power axis was saved with settings and not
+    #     meter powers, fix that here
     power_axis_dBm = np.array(s.get_prop("meter_powers"))
     power_axis_W = np.zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
@@ -652,33 +644,22 @@ def proc_spincore_ODNP_v3(s, fl=None):
 
 
 def proc_spincore_ODNP_v4(s, fl=None):
-    if "t" in s.dimlabels:
-        s.chunk("t", ["ph2", "ph1", "t2"], [4, 4, -1])
-        s.set_units("t2", "s")
-    s.rename("power", "time")
-    s.setaxis("ph1", r_[0, 1, 2, 3.0] / 4)
-    s.setaxis("ph2", r_[0, 1, 2, 3.0] / 4)
-    s.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
-    s.set_units("t2", "s")
-    s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
-    s.squeeze()
-    s.ft("t2", shift=True)
-    s.ft(["ph1", "ph2"])
-    s.reorder(["ph1", "ph2", "time"])
-    if fl is not None:
-        fl.next("Raw Data \n Frequency Domain")
-        fl.image(s)
-        s.ift("t2")
-        fl.next("Raw Data \n Time Domain")
-        fl.image(s)
-        s.ft("t2")
-    return s
+    if s.get_prop("coherence_pathway") is None:
+        print(
+            "WARNING!! The data was not saved with a coherence pathway"
+            " property! You should fix this!"
+        )
+        result = input('Type "I will fix this" to confirm')
+        if result != "I will fix this":
+            raise ValueError("fix not confirmed!")
+        s.set_prop("coherence_pathway", {"ph1": 1})
+    return proc_spincore_generalproc_v1(s, fl=fl)
 
 
-def proc_spincore_generalproc_v1(s, fl=None):
-    if "tau_us" in s.get_prop("acq_params").keys():
-        s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
+def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
+    if include_tau_sub:
+        if "tau_us" in s.get_prop("acq_params").keys():
+            s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.ft("t2", shift=True)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         s.ft([j])  # if we have used cycles for the axis
@@ -695,7 +676,8 @@ def proc_spincore_generalproc_v1(s, fl=None):
         neworder += [nonphdims[j] for j in sizeidx]
     # }}}
     s.reorder(neworder)
-    # {{{ put ph_overall outside, if it exists, since there should be nothing outside that
+    # {{{ put ph_overall outside, if it exists, since there
+    #     should be nothing outside that
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
     # }}}
@@ -718,14 +700,15 @@ def proc_DOSY_CPMG(s, fl=None):
     if fl is None:
         raise ValueError("you must pass kwarg fl or edit the source")
     logging.debug("loading pre-processing for DOSY-CPMG")
-    # {{{ all of this would be your "preprocessing" and would be tied to the name of your pulse sequence
+    # {{{ all of this would be your "preprocessing" and would be
+    #     tied to the name of your pulse sequence
     l22 = int(
         s.get_prop("acq")["L"][22]
     )  # b/c the l are integers by definition
     l25 = int(s.get_prop("acq")["L"][25])
     ppg = s.get_prop("pulprog")
     # {{{ these are explanatory -- maybe comment them out?
-    m = re.search((".*dwdel1=.*"), ppg, flags=re.IGNORECASE)
+    m = re.search(".*dwdel1=.*", ppg, flags=re.IGNORECASE)
     logging.debug(psd.strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.debug(
@@ -780,7 +763,8 @@ def proc_DOSY_CPMG(s, fl=None):
     s.reorder(["m", "n", "ph4", "ph8", "indirect", "echo", "t2"])
     s.ft("t2", shift=True).ift(
         "t2"
-    )  # this is overkill -- need a pyspecdata function that does this w/out the fft
+    )  # this is overkill -- need a pyspecdata function that does
+    #    this w/out the fft
     # }}}
     return s
 
@@ -804,7 +788,9 @@ def proc_ESR(s):
 
 def proc_field_sweep_v1(s):
     logging.debug(
-        "WARNING WARNING, you are using the wrong version of the field sweep code -- should be chunked when data is saved, not on loading!"
+        """WARNING WARNING, you are using the wrong version of the
+        field sweep code -- should be chunked when data is saved, not
+        on loading!"""
     )
     logging.debug("loading preprocessing for fieldsweep")
     s.reorder("t", first=True)
@@ -825,7 +811,8 @@ def proc_field_sweep_v2(s):
     s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_units("t2", "s")
     s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s *= s.shape["nScans"]
+    if "nScans" in s.dimlabels:
+        s *= s.shape["nScans"]
     s.squeeze()
     s.ft("t2", shift=True)
     s.ft("ph1")
@@ -843,19 +830,25 @@ lookup_table = {
     "spincore_diffph_SE_v1": proc_spincore_diffph_SE_v1,
     "spincore_diffph_SE_v2": proc_spincore_diffph_SE_v2,
     "proc_Hahn_echoph": proc_Hahn_echoph,
-    "spincore_FID_nutation_v1": proc_spincore_generalproc_v1,
-    "spincore_FID_nutation_v2": proc_spincore_generalproc_v1,
+    "spincore_FID_nutation_v1": proc_FID_v1,
+    "spincore_FID_nutation_v2": proc_FID_v1,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
+    "spincore_IR_v3": proc_spincore_generalproc_v1,
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_v2,
     "spincore_nutation_amp": proc_nutation_amp,
     "spincore_nutation_v3": proc_nutation_chunked,
     "spincore_nutation_v4": proc_nutation_v4,
-    "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take meter power
-    "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take meter powers
-    "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no meter powers
-    "spincore_ODNP_v4": proc_spincore_ODNP_v4,  # for 4 x 4 phase cycle no meter powers
+    "spincore_nutation_v6": proc_spincore_generalproc_v1,
+    "spincore_ODNP_v1": proc_spincore_ODNP_v1,  # for 4 x 1 phase cycle take
+    #                                             meter power
+    "spincore_ODNP_v2": proc_spincore_ODNP_v2,  # for 2 x 2 phase cycle take
+    #                                             meter powers
+    "spincore_ODNP_v3": proc_spincore_ODNP_v3,  # for 4 x 1 phase cycle no
+    #                                             meter powers
+    "spincore_ODNP_v4": proc_spincore_ODNP_v4,
+    "spincore_ODNP_v5": proc_spincore_ODNP_v4,
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
     "spincore_generalproc_v1": proc_spincore_generalproc_v1,
@@ -864,4 +857,5 @@ lookup_table = {
     "ESR_linewidth": proc_ESR,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
+    "field_sweep_v4": proc_spincore_generalproc_v1,
 }
