@@ -9,7 +9,7 @@ import pyspecdata as psd
 
 def rough_table_of_integrals(
     s,
-    signal_range,
+    signal_range=None,
     signal_pathway=None,
     fl=None,
     echo_like=True,
@@ -23,11 +23,14 @@ def rough_table_of_integrals(
     s : nddata
         Data with a single (dominant) peak, where you want to return the sign
         of the integral over all the data.
-    signal_range : tuple
+    signal_range : tuple (default None)
         Narrow slice range where signal resides.
         You probably want to get this from `find_peakrange` rather than trying
         to specify manually!
         (And expand the range that it gives you slightly)
+
+        If this is set to None, it assumes a previous call to `find_peakrange` has set the
+        `peakrange` property, and it uses that.
     signal_pathway : dict (default None)
         If None, the function will go into the properties of the data looking
         for the "coherence_pathway" property.
@@ -44,6 +47,8 @@ def rough_table_of_integrals(
         Title for the returned figure.
     direct : str (default "t2")
         Name of direct dimension.
+    expansion : float (default 2)
+        Expand peakrange about its center by this much.
 
     Returns
     =======
@@ -53,8 +58,10 @@ def rough_table_of_integrals(
     ax_last : Axes
         Return the axis with the table of integrals (plotted as `"o"`), in case you want to add a fit!
     """
+    if signal_range is None:
+        signal_range = s.getprop("peakrange")
     center_of_slice = np.mean(signal_range)
-    signal_range_expanded = center_of_slice + 2 * r_[-0.5, 0.5] * np.diff(
+    signal_range_expanded = center_of_slice + expansion * r_[-0.5, 0.5] * np.diff(
         signal_range
     )
     assert fl is not None, "for now, fl can't be None"
