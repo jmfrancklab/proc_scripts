@@ -18,3 +18,5 @@ doc_src/auto_examples/
 auto_figures/
 enhancement.png
 pyspecProcScripts.egg-info/
+examples/data_files.csv
+examples/missing_data_files.csv
