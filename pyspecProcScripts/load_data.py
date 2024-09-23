@@ -4,8 +4,9 @@ Postproc dict and functions
 
 Used to preprocess data based on type of experiment performed.
 Returns all data FTed into the frequency domain with the phase
-cycles also FTed (coherence domain). Data is not sliced or
-altered in anyway.
+cycles also FTed (coherence domain).
+Data is not sliced or manipulated in any other way that would reduce
+information content.
 """
 import pyspecdata as psd
 import logging
@@ -486,10 +487,9 @@ def proc_nutation_v4(s, fl=None):
         s.set_prop("coherence_pathway", {"ph1": 1})
     if s.get_units("t2") is None:
         raise ValueError(
-            """the units for t2 are none, but have been set for
-            spincore_nutation_v4 since 6/25.  If your units are
-            not set, you probably acquired with a very messed up
-            version of the ppg!!!!!"""
+            "the units for t2 are none, but have been set for"
+            " spincore_nutation_v4 since 6/25.  If your units are not set, you"
+            " probably acquired with a very messed up version of the ppg!!!!!"
         )
     s.set_units("p_90", "s")
     s *= s.shape["nScans"]
@@ -646,8 +646,8 @@ def proc_spincore_ODNP_v3(s, fl=None):
 def proc_spincore_ODNP_v4(s, fl=None):
     if s.get_prop("coherence_pathway") is None:
         print(
-            """WARNING!! The data was not saved with a coherence pathway
-            property! You should fix this!"""
+            "WARNING!! The data was not saved with a coherence pathway"
+            " property! You should fix this!"
         )
         result = input('Type "I will fix this" to confirm')
         if result != "I will fix this":
@@ -708,7 +708,7 @@ def proc_DOSY_CPMG(s, fl=None):
     l25 = int(s.get_prop("acq")["L"][25])
     ppg = s.get_prop("pulprog")
     # {{{ these are explanatory -- maybe comment them out?
-    m = re.search((".*dwdel1=.*"), ppg, flags=re.IGNORECASE)
+    m = re.search(".*dwdel1=.*", ppg, flags=re.IGNORECASE)
     logging.debug(psd.strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.debug(
