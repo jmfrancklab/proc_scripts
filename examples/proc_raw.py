@@ -18,12 +18,6 @@ ODNP_NMR_comp/Echoes``
 ``py proc_raw.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5
 ODNP_NMR_comp/Echoes``
 
-# PR -- this field sweep is not good field sweep
-# data.  (1) The acquisition length is small.  (2)
-# Phase cycling noise and difference in signal
-# amplitude across nScans indicates bad repetition
-# delay.  (3) You can't see the rise and fall of
-# the ESR resonance.
 ``py proc_raw.py field_3 240920_27mM_TEMPOL_debug_field
 ODNP_NMR_comp/field_dependent``
 
