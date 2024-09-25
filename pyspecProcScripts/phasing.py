@@ -268,8 +268,6 @@ def fid_from_echo(
     =======
     d: nddata
         FID of properly sliced and phased signal
-    peakrange: float
-
     """
     if frq_center is None:
         frq_center, frq_half = find_peakrange(
