@@ -26,7 +26,8 @@ def det_devisor(fl):
         divisor = 1e-6
     else:
         raise ValueError(
-            f"current units are {fl.units[fl.current]} right now, only programmed to work with results of s, ms and μs"
+            f"current units are {fl.units[fl.current]} right now, only"
+            " programmed to work with results of s, ms and μs"
         )
     return divisor
 
@@ -63,8 +64,11 @@ def zeroth_order_ph(d, fl=None):
     I2 = np.mean(imvector**2)
     C = np.mean(
         realvector * imvector
-    )  # for moment of inertia, this term is negative, but we use positive instead, so that the ellipse is aligned with the distribution
-    # note that this effectively changes the relative sign of x and y, reflecting the ellipse so that it circles the elements rather than going around them, and it's note the same as just flipping the eigenvalues
+    )  # for moment of inertia, this term is negative, but we use positive
+    # instead, so that the ellipse is aligned with the distribution
+    # note that this effectively changes the relative sign of x and y,
+    # reflecting the ellipse so that it circles the elements rather than going
+    # around them, and it's note the same as just flipping the eigenvalues
     inertia_matrix = np.array(
         [[R2, C], [C, I2]]
     )  # moment of inertia, with C inverted -- see comment below
@@ -75,10 +79,11 @@ def zeroth_order_ph(d, fl=None):
     idx = eigenValues.argsort()[::-1]
     eigenValues = eigenValues[idx]
     eigenVectors = eigenVectors[:, idx]
-    # eigenVectors[1,:] *= -1 # leave this line -- uncommenting this and negating the C above yields the same result!
+    # eigenVectors[1,:] *= -1   # leave this line -- uncommenting this and
+    #                             negating the C above yields the same result!
     rotation_vector = eigenVectors[:, 0]
     ph0 = np.arctan2(rotation_vector[1], rotation_vector[0])
-    if fl is not None:
+    if fl is not None: 
         fl.push_marker()
         d_forplot = d.C
         fl.next("check covariance test")
@@ -136,11 +141,10 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     by taking the sum of the absolute value of the real [DeBrouwer2009].
 
     .. todo::
-        update with `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_.
+        update with `sphinxcontrib-bibtex
+        <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_.
 
-    Parameters
-    ==========
-    s: nddata
+    Parameters ========== s: nddata
         Complex data whose first order phase you want
         to find.
 
@@ -377,15 +381,16 @@ def fid_from_echo(
             if (
                 s_flipped.getaxis(direct)[idx] == 0
                 and d_sigcoh.getaxis(direct)[idx] == 0
-            ):  # should be centered about zero, but will not be if too lopsided
-                for_resid = (
+            ):  # should be centered about zero,
+                # but will not be if too lopsided
+                for_resid = ( 
                     abs(s_flipped - d_sigcoh[direct:(t_start, -t_start)]) ** 2
                 )
                 N_ratio = for_resid.data.size
                 for_resid.mean_all_but(direct).run(sqrt)
-                N_ratio /= (
-                    for_resid.data.size
-                )  # the signal this has been plotted against is signal averaged by N_ratio
+                N_ratio /= (for_resid.data.size) 
+                # the signal this has been plotted against is signal averaged
+                # by N_ratio
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
@@ -427,15 +432,12 @@ def fid_from_echo(
     d.ft(direct)
     return d
 
-
-
 def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
-    """find the range of frequencies over which the signal occurs, so that we can autoslice
+    """find the range of frequencies over which the signal occurs, so that we
+    can autoslice
 
-    Parameters
-    ==========
-    d : nddata
-        Data in the frequency domain -- will not be altered.
+    Parameters ========== d : nddata Data in the frequency domain -- will not
+    be altered.
     direct : str (default "t2")
         The name of the direct dimension
     peak_lower_thresh: float
@@ -458,7 +460,8 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     freq_envelope.ift(direct)
     freq_envelope = freq_envelope[
         direct:(0, None)
-    ]  # slice out rising echo estimate according to experimental tau in order to limit oscillations
+    ]  # slice out rising echo estimate according to experimental tau in order
+    #   to limit oscillations
     freq_envelope.ft(direct)
     freq_envelope.mean_all_but(direct).run(abs)
     if fl is not None:
@@ -535,7 +538,8 @@ def hermitian_function_test(
     energy_threshold_lower=0.1,
     enable_refinement=False,
 ):
-    r"""Determine the center of the echo via hermitian symmetry of the time domain.
+    r"""Determine the center of the echo via hermitian symmetry of the time
+    domain.
 
     Note the following issues/feature:
 
@@ -616,9 +620,10 @@ def hermitian_function_test(
         direct,
         pad=2 ** int(np.ceil(np.log(ndshape(s_ext)[direct]) / np.log(2)) + 1),
     )
-    assert (
-        s_ext.get_ft_prop(direct, "start_time") == 0
-    ), "FT start point should also be equal to zero -- doing otherwise doesn't make sense"
+    assert s_ext.get_ft_prop(direct, "start_time") == 0, (
+        "FT start point should also be equal to zero -- doing otherwise"
+        " doesn't make sense"
+    )
     # }}}
     # {{{ move into over-sampled time domain -- do this
     # *after* previous to avoid aliasing glitch
@@ -700,10 +705,12 @@ def hermitian_function_test(
     s_correl.mean_all_but(direct).run(abs)
     s_correl *= normalization_term
     # }}}
-    # {{{ calculate the cost function and determine where the center of the echo is!
+    # {{{ calculate the cost function and determine where the center of the
+    # echo is!
     cost_func = abs(
         s_energy - s_correl
-    )  # b/c this should not be less than 0, so penalize for numerical error when it's not!
+    )  # b/c this should not be less than 0, so penalize for numerical error
+    # when it's not!
     reasonable_energy_range = s_energy.contiguous(
         lambda x: abs(x) > energy_threshold * abs(x.data).max()
     )[0, :]
@@ -795,7 +802,8 @@ def hermitian_function_test(
     else:
         if enable_refinement:
             logging.info(
-                "warning: can't do hermitian phasing refinement -- not enough points"
+                "warning: can't do hermitian phasing refinement -- not enough"
+                " points"
             )
         if fl is not None:
             fl.pop_marker()
@@ -806,9 +814,10 @@ def determine_sign(
     s, signal_freq_range, direct="t2", signal_pathway=None, fl=None
 ):
     """Determines the sign of the signal based on the difference between the
-    signal with the zeroth order phase correction applied to the entire data set vs
-    applying the zeroth order phase correction to each individual indirect index.
-    The sign can be used, so that when multiplied by the signal the data has a uniform
+    signal with the zeroth order phase correction applied to the entire data
+    set vs applying the zeroth order phase correction to each individual
+    indirect index.  The sign can be used, so that when multiplied by the
+    signal the data has a uniform
     sign along the indirect axis.
 
     Parameters
@@ -834,9 +843,11 @@ def determine_sign(
     """
     if type(direct) is tuple:
         raise ValueError(
-            "direct cannot be a tuple! You are probably using an older version that required you to pass an indirect dimension"
+            "direct cannot be a tuple! You are probably using an older version"
+            " that required you to pass an indirect dimension"
         )
-    # To handle both older data where the coherence pathway was not set as a property
+    # To handle both older data where the coherence pathway was not set as a
+    # property
     # and handle newer data where it is set I have the following if/else
     signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
     if signal_pathway is not None:

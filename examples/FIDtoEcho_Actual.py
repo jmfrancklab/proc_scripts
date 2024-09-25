@@ -8,18 +8,17 @@ Here we see this
 
 This example provides a relatively routine example.
 """
-from pylab import *
-from pyspecdata import *
-from pyspecProcScripts import *
+import pyspecdata as psd
+import pyspecProcScripts as pypcs
 import matplotlib.pyplot as plt
 from pyspecProcScripts.load_data import lookup_table
 
-init_logging(level="info")
-rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
+psd.init_logging(level="info")
+psd.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 1
 
 signal_pathway = {"ph1": 1}
-with figlist_var(file_name="tempdata220922final.pdf") as fl:
+with psd.figlist_var(file_name="tempdata220922final.pdf") as fl:
     for nodename in [
         "enhancement_10C",
         "enhancement_10C_repeat",
@@ -27,7 +26,7 @@ with figlist_var(file_name="tempdata220922final.pdf") as fl:
         "enhancement_21C",
         "enhancement_5C",
     ]:
-        d = find_file(
+        d = pypcs.find_file(
             "211103_TEMPOL_269uM_HeatExch.h5",
             exp_type="ODNP_NMR_comp/ODNP",
             postproc="spincore_ODNP_v1",
@@ -35,10 +34,10 @@ with figlist_var(file_name="tempdata220922final.pdf") as fl:
             expno=nodename,
         )  # returns signal with t=0 set approximately correctly
         fl.basename = nodename
-        d = fid_from_echo(d, signal_pathway, fl=fl)
+        d = pypcs.fid_from_echo(d, signal_pathway, fl=fl)
         fl.next("final phased spectrum")
         fl.image(d)
         # in the following, I assume the units are auto-scaled to kHz
-        print("peakrange",d.get_prop("peakrange"))
-        plt.axvline(x=d.get_prop("peakrange")[0]/1e3, color='w', ls=':')
-        plt.axvline(x=d.get_prop("peakrange")[1]/1e3, color='w', ls=':')
+        print("peakrange", d.get_prop("peakrange"))
+        plt.axvline(x=d.get_prop("peakrange")[0] / 1e3, color="w", ls=":")
+        plt.axvline(x=d.get_prop("peakrange")[1] / 1e3, color="w", ls=":")
