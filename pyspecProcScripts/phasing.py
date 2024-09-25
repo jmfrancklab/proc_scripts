@@ -307,8 +307,6 @@ def fid_from_echo(
         legend()
     slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
     reduced_slice_range = r_[-1, 1] * 2 * frq_half + frq_center
-    d.set_prop("frq_center", frq_center)
-    d.set_prop("frq_half", frq_half)
     # }}}
     d = d[direct:slice_range]
     d.ift(direct)
@@ -516,6 +514,7 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
         else:
             peakrange = [(peakrange[0][0], peakrange[-1][1])]
     assert len(peakrange) == 1
+    peakrange = peakrange[0]
     # }}}
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item() / 2

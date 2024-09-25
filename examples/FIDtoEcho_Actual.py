@@ -11,6 +11,7 @@ This example provides a relatively routine example.
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import *
+import matplotlib.pyplot as plt
 from pyspecProcScripts.load_data import lookup_table
 
 init_logging(level="info")
@@ -35,7 +36,9 @@ with figlist_var(file_name="tempdata220922final.pdf") as fl:
         )  # returns signal with t=0 set approximately correctly
         fl.basename = nodename
         d = fid_from_echo(d, signal_pathway, fl=fl)
-        frq_center = d.get_prop("frq_center")
-        frq_halfwindow = d.get_prop("frq_half")
-        frq_window = 2*frq_halfwindow
-        print("center frequency = ", frq_center, "with frequency window of ", frq_window)
+        fl.next("final phased spectrum")
+        fl.image(d)
+        # in the following, I assume the units are auto-scaled to kHz
+        print("peakrange",d.get_prop("peakrange"))
+        plt.axvline(x=d.get_prop("peakrange")[0]/1e3, color='w', ls=':')
+        plt.axvline(x=d.get_prop("peakrange")[1]/1e3, color='w', ls=':')
