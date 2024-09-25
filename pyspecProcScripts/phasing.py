@@ -268,6 +268,7 @@ def fid_from_echo(
     =======
     d: nddata
         FID of properly sliced and phased signal
+    peakrange: float
 
     """
     if frq_center is None:
@@ -285,13 +286,19 @@ def fid_from_echo(
             label="half width",
         )
         axvline(
+            x=frq_center + frq_half,
+            color="k",
+            ls=":",
+            alpha=0.25,
+            label="half width",
+        )
+        axvline(
             x=frq_center - slice_multiplier * frq_half,
             color="k",
             ls="--",
             alpha=0.5,
             label="final slice",
         )
-        axvline(x=frq_center + frq_half, color="k", ls=":", alpha=0.25)
         axvline(
             x=frq_center + slice_multiplier * frq_half,
             color="k",
@@ -302,6 +309,8 @@ def fid_from_echo(
         legend()
     slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
     reduced_slice_range = r_[-1, 1] * 2 * frq_half + frq_center
+    d.set_prop("frq_center", frq_center)
+    d.set_prop("frq_half", frq_half)
     # }}}
     d = d[direct:slice_range]
     d.ift(direct)
@@ -421,6 +430,7 @@ def fid_from_echo(
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
+
 
 
 def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):

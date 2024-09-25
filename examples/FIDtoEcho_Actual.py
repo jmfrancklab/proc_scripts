@@ -35,3 +35,7 @@ with figlist_var(file_name="tempdata220922final.pdf") as fl:
         )  # returns signal with t=0 set approximately correctly
         fl.basename = nodename
         d = fid_from_echo(d, signal_pathway, fl=fl)
+        frq_center = d.get_prop("frq_center")
+        frq_halfwindow = d.get_prop("frq_half")
+        frq_window = 2*frq_halfwindow
+        print("center frequency = ", frq_center, "with frequency window of ", frq_window)
