@@ -63,7 +63,7 @@ def rough_table_of_integrals(
         you want to add a fit!
     """
     if signal_range is None:
-        signal_range = s.getprop("peakrange")
+        signal_range = s.get_prop("peakrange")
     center_of_slice = np.mean(signal_range)
     signal_range_expanded = center_of_slice + expansion * r_[
         -0.5, 0.5
