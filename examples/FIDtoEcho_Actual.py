@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from pyspecProcScripts.load_data import lookup_table
 
 psd.init_logging(level="info")
-psd.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
+plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 1
 
 signal_pathway = {"ph1": 1}
@@ -26,7 +26,7 @@ with psd.figlist_var(file_name="tempdata220922final.pdf") as fl:
         "enhancement_21C",
         "enhancement_5C",
     ]:
-        d = pypcs.find_file(
+        d = psd.find_file(
             "211103_TEMPOL_269uM_HeatExch.h5",
             exp_type="ODNP_NMR_comp/ODNP",
             postproc="spincore_ODNP_v1",
