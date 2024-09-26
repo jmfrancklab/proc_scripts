@@ -26,14 +26,71 @@ from PyQt5.QtWidgets import (
 from pyspecdata import search_filename
 
 
+class NodeAsDict:
+    def __init__(self, node):
+        self.node = node
+
+    def __getitem__(self, key):
+        if key in self.node.attrs:
+            value = self.node.attrs[key]
+            if isinstance(value, bytes):
+                return value.decode('utf-8')  # Decode byte string to UTF-8 string
+            return value
+        elif key in self.node:
+            return NodeAsDict(self.node[key])  # Return a group as another NodeAsDict instance
+        else:
+            return None
+
+    def __setitem__(self, key, value):
+        if isinstance(value, (int, float)):  # Numbers stored as attributes
+            self.node.attrs[key] = value
+        elif isinstance(value, str):  # Strings stored as byte strings (UTF-8 encoded)
+            self.node.attrs[key] = value.encode('utf-8')
+        elif isinstance(value, dict):  # Dictionaries stored as groups
+            if key not in self.node:
+                self.node.create_group(key)  # Create group if it doesn't exist
+            group = self.node[key]
+            node_dict = NodeAsDict(group)
+            for subkey, subvalue in value.items():
+                node_dict[subkey] = subvalue  # Recursively assign subkeys and values
+        else:
+            raise TypeError(f"Unsupported value type for key '{key}': {type(value)}")
+
+    def __delitem__(self, key):
+        if key in self.node.attrs:
+            del self.node.attrs[key]
+        elif key in self.node:
+            del self.node[key]
+        else:
+            raise KeyError(f"Key '{key}' not found")
+
+    def __contains__(self, key):
+        return key in self.node.attrs or key in self.node
+
+    def get(self, key, default=None):
+        """Get a value from the attributes or group, with UTF-8 decoding and default handling."""
+        if key in self.node.attrs:
+            value = self.node.attrs[key]
+            if isinstance(value, bytes):
+                return value.decode('utf-8')  # Decode byte string to UTF-8 string
+            return value
+        elif key in self.node:
+            return NodeAsDict(self.node[key])  # Return a group as another NodeAsDict instance
+        else:
+            return default
+
+    def __repr__(self):
+        return f"<NodeAsDict for HDF5 node '{self.node.name}'>"
+
+
 class EditAcqParams(QWidget):
     def __init__(self, hdf_filename, nodename):
         super().__init__()
         self.hdf_filename = hdf_filename
         self.nodename = nodename
-        self.acq_params = {}
         self.hdf_file = None
         self.node = None
+        self.acq_params = None
 
         # Define property names and labels
         self.property_names = [
@@ -74,12 +131,10 @@ class EditAcqParams(QWidget):
             "other_info" in self.node
             and "acq_params" in self.node["other_info"]
         ):
-            self.acq_params = self.node["other_info"]["acq_params"].attrs
+            # Set acq_params as a NodeAsDict object
+            self.acq_params = NodeAsDict(self.node["other_info"]["acq_params"])
             print("The string attributes will appear here:")
             for k, v in self.acq_params.items():
-                # Decode byte strings to regular strings, if necessary
-                if isinstance(v, bytes):
-                    v = v.decode("utf-8")
                 print(k, v)
         else:
             raise ValueError(
@@ -93,17 +148,12 @@ class EditAcqParams(QWidget):
         self.input_fields = {}
 
         # Dynamically create labeled text fields
-        for prop_name, label_text in zip(
-            self.property_names, self.property_labels
-        ):
+        for prop_name, label_text in zip(self.property_names, self.property_labels):
             h_layout = QHBoxLayout()
             label = QLabel(label_text)
 
-            # Retrieve the existing v from the HDF5 acq_params and use it to
-            # pre-fill the text fields
+            # Retrieve the existing value from NodeAsDict with default handling
             v = self.acq_params.get(prop_name, "")
-            if isinstance(v, bytes):
-                v = v.decode("utf-8")
             print("attempting", prop_name, "which is", v)
             text_field = QLineEdit(str(v))
 
@@ -123,15 +173,13 @@ class EditAcqParams(QWidget):
 
     def save_changes(self):
         try:
-            acq_params = self.node["other_info"]["acq_params"].attrs
-
             # Update the HDF5 file with new values from the text fields
             for prop_name in self.property_names:
                 value = self.input_fields[prop_name].text()
                 # Convert string values to byte strings if they are not already
                 if isinstance(value, str):
                     value = value.encode("utf-8")
-                acq_params[prop_name] = value
+                self.acq_params[prop_name] = value  # Set the value using NodeAsDict
 
             QMessageBox.information(
                 self, "Success", "Values saved successfully!"
