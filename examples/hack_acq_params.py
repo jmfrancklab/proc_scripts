@@ -34,27 +34,37 @@ class NodeAsDict:
         if key in self.node.attrs:
             value = self.node.attrs[key]
             if isinstance(value, bytes):
-                return value.decode('utf-8')  # Decode byte string to UTF-8 string
+                return value.decode(
+                    "utf-8"
+                )  # Decode byte string to UTF-8 string
             return value
         elif key in self.node:
-            return NodeAsDict(self.node[key])  # Return a group as another NodeAsDict instance
+            return NodeAsDict(
+                self.node[key]
+            )  # Return a group as another NodeAsDict instance
         else:
             return None
 
     def __setitem__(self, key, value):
         if isinstance(value, (int, float)):  # Numbers stored as attributes
             self.node.attrs[key] = value
-        elif isinstance(value, str):  # Strings stored as byte strings (UTF-8 encoded)
-            self.node.attrs[key] = value.encode('utf-8')
+        elif isinstance(
+            value, str
+        ):  # Strings stored as byte strings (UTF-8 encoded)
+            self.node.attrs[key] = value.encode("utf-8")
         elif isinstance(value, dict):  # Dictionaries stored as groups
             if key not in self.node:
                 self.node.create_group(key)  # Create group if it doesn't exist
             group = self.node[key]
             node_dict = NodeAsDict(group)
             for subkey, subvalue in value.items():
-                node_dict[subkey] = subvalue  # Recursively assign subkeys and values
+                node_dict[
+                    subkey
+                ] = subvalue  # Recursively assign subkeys and values
         else:
-            raise TypeError(f"Unsupported value type for key '{key}': {type(value)}")
+            raise TypeError(
+                f"Unsupported value type for key '{key}': {type(value)}"
+            )
 
     def __delitem__(self, key):
         if key in self.node.attrs:
@@ -72,12 +82,35 @@ class NodeAsDict:
         if key in self.node.attrs:
             value = self.node.attrs[key]
             if isinstance(value, bytes):
-                return value.decode('utf-8')  # Decode byte string to UTF-8 string
+                return value.decode(
+                    "utf-8"
+                )  # Decode byte string to UTF-8 string
             return value
         elif key in self.node:
-            return NodeAsDict(self.node[key])  # Return a group as another NodeAsDict instance
+            return NodeAsDict(
+                self.node[key]
+            )  # Return a group as another NodeAsDict instance
         else:
             return default
+
+    def keys(self):
+        """Yield sorted attribute keys and group names together alphabetically."""
+        all_keys = list(self.node.attrs.keys()) + list(self.node.keys())
+        for key in sorted(all_keys):
+            yield key
+
+    def items(self):
+        """Yield key-value pairs using __getitem__ for both attributes and groups."""
+        for key in self.keys():
+            yield key, self[key]
+
+    def __str__(self):
+        """Return a string representation similar to a dictionary."""
+        return (
+            "{"
+            + ", ".join(f"{repr(k)}: {repr(v)}" for k, v in self.items())
+            + "}"
+        )
 
     def __repr__(self):
         return f"<NodeAsDict for HDF5 node '{self.node.name}'>"
@@ -148,7 +181,9 @@ class EditAcqParams(QWidget):
         self.input_fields = {}
 
         # Dynamically create labeled text fields
-        for prop_name, label_text in zip(self.property_names, self.property_labels):
+        for prop_name, label_text in zip(
+            self.property_names, self.property_labels
+        ):
             h_layout = QHBoxLayout()
             label = QLabel(label_text)
 
@@ -179,7 +214,9 @@ class EditAcqParams(QWidget):
                 # Convert string values to byte strings if they are not already
                 if isinstance(value, str):
                     value = value.encode("utf-8")
-                self.acq_params[prop_name] = value  # Set the value using NodeAsDict
+                self.acq_params[
+                    prop_name
+                ] = value  # Set the value using NodeAsDict
 
             QMessageBox.information(
                 self, "Success", "Values saved successfully!"
