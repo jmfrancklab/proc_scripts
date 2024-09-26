@@ -1,3 +1,16 @@
+"""
+Hack H5 Properties
+==================
+
+There are various labeling properties that are stored in the HDF5 file.
+Sometimes we mess up, and we need to hack these properties ex-post-facto.
+
+Note that is intended *only* for hacking labeling/categorizing properties, and
+should *never* be used to hack information about pulse program parameters, etc,
+that were actually sent to the spectrometer.
+
+The GPT conversation is `here <https://chatgpt.com/c/66f5aef7-8f68-800b-8a13-0b133ede1ca5>`_.
+"""
 import sys
 import h5py
 from PyQt5.QtWidgets import (
@@ -86,7 +99,8 @@ class EditAcqParams(QWidget):
             h_layout = QHBoxLayout()
             label = QLabel(label_text)
 
-            # Retrieve the existing v from the HDF5 acq_params and use it to pre-fill the text fields
+            # Retrieve the existing v from the HDF5 acq_params and use it to
+            # pre-fill the text fields
             v = self.acq_params.get(prop_name, "")
             if isinstance(v, bytes):
                 v = v.decode("utf-8")
@@ -141,6 +155,7 @@ def main():
 
     app = QApplication(sys.argv)
     with EditAcqParams(hdf_filename, nodename) as editor:
+        print(editor)
         pass
     sys.exit(app.exec_())
 
