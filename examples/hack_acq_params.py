@@ -24,12 +24,14 @@ class EditAcqParams(QWidget):
 
         # Define property names and labels
         self.property_names = [
+            "date",
             "coherence_pathway",
             "chemical",
             "concentration",
             "postproc_type",
         ]
         self.property_labels = [
+            "Date",
             "Coherence Pathway",
             "Chemical Name",
             "Concentration",
@@ -62,8 +64,10 @@ class EditAcqParams(QWidget):
             self.acq_params = self.node["other_info"]["acq_params"].attrs
             print("The string attributes will appear here:")
             for k, v in self.acq_params.items():
+                # Decode byte strings to regular strings, if necessary
+                if isinstance(v, bytes):
+                    v = v.decode("utf-8")
                 print(k, v)
-                print("by using get:", self.acq_params.get(k, ""))
         else:
             raise ValueError(
                 f"acq_params not found in '{self.nodename}/other_info'."
@@ -82,10 +86,12 @@ class EditAcqParams(QWidget):
             h_layout = QHBoxLayout()
             label = QLabel(label_text)
 
-            # Retrieve the existing value from the HDF5 acq_params and use it to pre-fill the text fields
-            value = self.acq_params.get(prop_name, "")
-            print("attempting", prop_name, "which is", value)
-            text_field = QLineEdit(str(value))
+            # Retrieve the existing v from the HDF5 acq_params and use it to pre-fill the text fields
+            v = self.acq_params.get(prop_name, "")
+            if isinstance(v, bytes):
+                v = v.decode("utf-8")
+            print("attempting", prop_name, "which is", v)
+            text_field = QLineEdit(str(v))
 
             h_layout.addWidget(label)
             h_layout.addWidget(text_field)
@@ -107,7 +113,11 @@ class EditAcqParams(QWidget):
 
             # Update the HDF5 file with new values from the text fields
             for prop_name in self.property_names:
-                acq_params[prop_name] = self.input_fields[prop_name].text()
+                value = self.input_fields[prop_name].text()
+                # Convert string values to byte strings if they are not already
+                if isinstance(value, str):
+                    value = value.encode("utf-8")
+                acq_params[prop_name] = value
 
             QMessageBox.information(
                 self, "Success", "Values saved successfully!"
