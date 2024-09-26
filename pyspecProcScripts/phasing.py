@@ -383,14 +383,18 @@ def fid_from_echo(
             if (
                 s_flipped.getaxis(direct)[idx] == 0
                 and d_sigcoh.getaxis(direct)[idx] == 0
-            ): # should be centered about zero, but will not be if too lopsided
+            ):  # should be centered about zero,
+                # but will not be if too lopsided
                 for_resid = ( 
                     abs(s_flipped - d_sigcoh[direct:(t_start, -t_start)]) ** 2
                 )
                 N_ratio = for_resid.data.size
                 for_resid.mean_all_but(direct).run(sqrt)
-                N_ratio /= (for_resid.data.size) # the signal this has been
-                # plotted against is signal averaged by N_ratio
+                N_ratio /= (for_resid.data.size) # the signal this
+                #                                  has been plotted
+                #                                  against is signal
+                #                                  averaged by
+                #                                  N_ratio
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
