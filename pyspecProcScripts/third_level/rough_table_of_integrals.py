@@ -1,4 +1,9 @@
-from ..phasing import zeroth_order_ph, determine_sign, fid_from_echo, find_peakrange
+from ..phasing import (
+    zeroth_order_ph,
+    determine_sign,
+    fid_from_echo,
+    find_peakrange,
+)
 from ..simple_functions import select_pathway
 import matplotlib.pyplot as plt
 import numpy as np
@@ -67,9 +72,9 @@ def rough_table_of_integrals(
         signal_range = s.get_prop("peakrange")
     else:
         frq_center, frq_half = frq_center, frq_half
-    signal_range_expanded = frq_center + expansion * r_[
-        -0.5, 0.5
-    ] * np.diff(signal_range)
+    signal_range_expanded = frq_center + expansion * r_[-0.5, 0.5] * np.diff(
+        signal_range
+    )
     assert fl is not None, "for now, fl can't be None"
     # {{{ set up subplots
     if echo_like:
@@ -126,7 +131,12 @@ def rough_table_of_integrals(
     # }}}
     if echo_like:
         signal_pathway = {}
-        s = fid_from_echo(s.set_error(None), signal_pathway, frq_center=frq_center, frq_half=frq_half)
+        s = fid_from_echo(
+            s.set_error(None),
+            signal_pathway,
+            frq_center=frq_center,
+            frq_half=frq_half,
+        )
         s *= mysign
         fl.image(s, ax=ax3)
         ax3.set_title("FID sliced and phased")
@@ -143,13 +153,15 @@ def rough_table_of_integrals(
     s.ft(direct)
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
-    fieldaxis = np.array([field for field, _ in s.getaxis("indirect")]) #ChatGPT and AG helped me vectorize this
-    s.setaxis("indirect",fieldaxis)
-    #print("rough table dimlabels", s[s.dimlabels[0]])
-    #print(type(s["indirect"[j,_[0]]] for j in range(len(s[0]))))
+    fieldaxis = np.array(
+        [field for field, _ in s.getaxis("indirect")]
+    )  # ChatGPT and AG helped me vectorize this
+    s.setaxis("indirect", fieldaxis)
+    # print("rough table dimlabels", s[s.dimlabels[0]])
+    # print(type(s["indirect"[j,_[0]]] for j in range(len(s[0]))))
     fl.plot(s, "o", ax=ax_last)
-    #print(type(s))
-    #s = psd.nddata(s)
+    # print(type(s))
+    # s = psd.nddata(s)
     psd.gridandtick(plt.gca())
     ax_last.set_title("table of integrals")
     # }}}

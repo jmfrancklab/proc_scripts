@@ -1,7 +1,5 @@
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import numpy as np
-import matplotlib.pyplot as plt
 
 signal_pathway = {"ph1": 1}
 with psd.figlist_var() as fl:
@@ -28,10 +26,10 @@ with psd.figlist_var() as fl:
         fl.image(s, interpolation="auto")
         ###}}}
         ###{{{ Time Domain
-        #print(s)
-        #print(psd.ndshape(s))
-        #fl.show();quit()
-        field_axis = s["indirect"]        
+        # print(s)
+        # print(psd.ndshape(s))
+        # fl.show();quit()
+        field_axis = s["indirect"]
         s.setaxis("indirect", field_axis)
         print("field_axis is", field_axis)
         if "nScans" in s.dimlabels:
@@ -48,29 +46,28 @@ with psd.figlist_var() as fl:
         s.ft(["ph1"])
         fl.image(s["t2":(None, t2_max)])
         print("t2 units", s.get_units("t2"))
-        #fl.show();quit()
+        # fl.show();quit()
         ###}}}
         ###{{{ Before Phasing
-        #s.ft("t2")
-        #s = s["t2":s.get_prop("peakrange")]
+        # s.ft("t2")
+        # s = s["t2":s.get_prop("peakrange")]
         fl.next("before phasing")
         if "nScans" in s.dimlabels:
-            fl.plot(prscr.select_pathway(s.C.mean('nScans'),signal_pathway))
+            fl.plot(prscr.select_pathway(s.C.mean("nScans"), signal_pathway))
         else:
             fl.plot(prscr.select_pathway(s, signal_pathway))
-        #print("peakrange before rough func", s.get_prop("peakrange"))
+        # print("peakrange before rough func", s.get_prop("peakrange"))
         s.ft("t2")
-        #print("s before rough_table_of_int is ", s)
+        # print("s before rough_table_of_int is ", s)
         print("shape of s before rough_tab is ", psd.ndshape(s))
         s, _ = prscr.rough_table_of_integrals(s, fl=fl, title=label_str)
-        #print("peakrange after rough func", s.get_prop("peakrange"))
+        # print("peakrange after rough func", s.get_prop("peakrange"))
         fl.next("before phasing")
         print(psd.ndshape(s))
-        #fl.show();quit()
+        # fl.show();quit()
         ###}}}
-        #s.set_units("t2","s")
+        # s.set_units("t2","s")
         # s.setaxis('t2', lambda x: x-best_shift).register_axis({'t2':0})
         fl.next("phased")
-        fl.plot(s, 'gX', human_units=False)
+        fl.plot(s, "gX", human_units=False)
 fl.show()
-
