@@ -19,6 +19,7 @@ filename = '240924_13p5mM_TEMPOL_ODNP_1'
 exptype = 'ODNP_NMR_comp/ODNP'
 postproctype = 'spincore_ODNP_v3'
 nodename = 'ODNP'
+fl.basename = nodename
 powers = []
 errors = []
 power_list = []
@@ -80,7 +81,16 @@ else:
     s.reorder(['ph1', powername])
 fl.next('Raw E(p)',figsize = (5,20))
 fl.image(s)
-#fl.show();quit()
-# }}}
-# {{{
-fl.show();quit()
+# }}} 
+# {{{ DC offset correction 
+s.ift('t2')
+s.ift(['ph1'])
+Ep_t_max = s.getaxis('t2')[-1]
+rx_offset_corr = s['t2':(Ep_t_max*0.75, None)]
+rx_offset_corr = rx_offset_corr.mean(['t2'])
+s -= rx_offset_corr
+s.ft('t2')
+s.ft(['ph1'])
+# }}} 
+s = prscr.rough_table_of_integrals(s, fl=fl, title=conctag)
+fl.show()
