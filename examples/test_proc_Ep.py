@@ -14,7 +14,6 @@ data_target = os.path.normpath(psd.getDATADIR('WK_processed_data'))
 fl = psd.figlist_var()
 Ep_signal_pathway = {'ph1':1}
 Ep_f_slice = (-1e3,1e3) # stop using this, switch to peakrange (?)
-thermal_scans = 2 # pull this from the h5 file  
 filename = '240924_13p5mM_TEMPOL_ODNP_1'
 exptype = 'ODNP_NMR_comp/ODNP'
 postproctype = 'spincore_ODNP_v3'
@@ -32,6 +31,7 @@ color_cycle = cycle(['red','orange','yellow','green','cyan','blue','purple','mag
     '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2',
     '#7f7f7f', '#bcbd22', '#17becf'])
 my_filename = psd.search_filename(filename+".h5", exp_type=exptype, unique=True)
+
 # {{{ power log
 powername = 'time'
 with h5py.File(my_filename,'r') as f:
@@ -71,16 +71,10 @@ fl.plot(power_axis,'.')
 # }}}
 # {{{ raw proc E(p)
 s = psd.find_file(filename, exptype, expno=nodename, postproc=postproctype, lookup=lookup_table)
-if 'indirect' in s.dimlabels:
-    s.rename('indirect', powername)
-if 'power' in s.dimlabels:
-    s.rename('power', powername)
-if 'nScans' in s.dimlabels: 
-    s.reorder(['nScans', 'ph1', powername])
-else:
-    s.reorder(['ph1', powername])
 fl.next('Raw E(p)',figsize = (5,20))
 fl.image(s)
+print("s is ", s)
+print("shape of s is ", psd.ndshape(s))
 # }}} 
 # {{{ DC offset correction 
 s.ift('t2')
