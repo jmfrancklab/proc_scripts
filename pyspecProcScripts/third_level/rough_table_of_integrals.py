@@ -1,4 +1,4 @@
-from ..phasing import zeroth_order_ph, determine_sign, fid_from_echo
+from ..phasing import zeroth_order_ph, determine_sign, fid_from_echo, find_peakrange
 from ..simple_functions import select_pathway
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,9 +63,11 @@ def rough_table_of_integrals(
         you want to add a fit!
     """
     if signal_range is None:
+        frq_center, frq_half = find_peakrange(s, fl=fl)
         signal_range = s.get_prop("peakrange")
-    center_of_slice = np.mean(signal_range)
-    signal_range_expanded = center_of_slice + expansion * r_[
+    else:
+        frq_center, frq_half = frq_center, frq_half
+    signal_range_expanded = frq_center + expansion * r_[
         -0.5, 0.5
     ] * np.diff(signal_range)
     assert fl is not None, "for now, fl can't be None"
@@ -124,23 +126,30 @@ def rough_table_of_integrals(
     # }}}
     if echo_like:
         signal_pathway = {}
-        s = fid_from_echo(s.set_error(None), signal_pathway)
+        s = fid_from_echo(s.set_error(None), signal_pathway, frq_center=frq_center, frq_half=frq_half)
         s *= mysign
         fl.image(s, ax=ax3)
         ax3.set_title("FID sliced and phased")
+        ax_last = ax4
     else:
         s *= mysign  # flip the sign back, so we get sensible integrals
+        ax_last = ax3
     # {{{ generate the table of integrals
     # {{{ actually apply the rough alignment
     #     Note that we center about the center of the slice, so our
     #     sliced integration works out OK, not about zero.
     s.ift(direct)
-    s *= np.exp(-1j * 2 * pi * (shift - center_of_slice) * s.fromaxis(direct))
+    s *= np.exp(-1j * 2 * pi * (shift - frq_center) * s.fromaxis(direct))
     s.ft(direct)
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
-    ax_last = ax4 if echo_like else ax3
+    fieldaxis = np.array([field for field, _ in s.getaxis("indirect")]) #ChatGPT and AG helped me vectorize this
+    s.setaxis("indirect",fieldaxis)
+    #print("rough table dimlabels", s[s.dimlabels[0]])
+    #print(type(s["indirect"[j,_[0]]] for j in range(len(s[0]))))
     fl.plot(s, "o", ax=ax_last)
+    #print(type(s))
+    #s = psd.nddata(s)
     psd.gridandtick(plt.gca())
     ax_last.set_title("table of integrals")
     # }}}
