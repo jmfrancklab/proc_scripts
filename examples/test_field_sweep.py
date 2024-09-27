@@ -52,9 +52,13 @@ with psd.figlist_var() as fl:
         #fl.show();quit()
         ###}}}
         ###{{{ Before Phasing
-        s.ft("t2")
+        #s.ft("t2")
         s = s["t2":s.get_prop("peakrange")]
+        fl.next("before phasing")
+        if "nScans" in s.dimlabels:
+            fl.plot(prscr.select_pathway(s.C.mean('nScans'),signal_pathway))
         print("peakrange before rough func", s.get_prop("peakrange"))
+        s.ft("t2")
         s = prscr.rough_table_of_integrals(s, fl=fl, title=label_str)
         print("peakrange after rough func", s.get_prop("peakrange"))
         fl.next("before phasing")
