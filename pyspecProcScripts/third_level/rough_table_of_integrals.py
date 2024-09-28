@@ -153,7 +153,7 @@ def rough_table_of_integrals(
     #     Note that we center about the center of the slice, so our
     #     sliced integration works out OK, not about zero.
     s.ift(direct)
-    s *= np.exp(-1j * 2 * pi * (shift - frq_center) * s.fromaxis(direct))
+    s *= np.exp(-1j * 2 * pi * (shift - center_of_range) * s.fromaxis(direct))
     s.ft(direct)
     fl.image(s, ax=ax3)
     ax3.set_title(
