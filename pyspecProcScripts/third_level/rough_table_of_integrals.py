@@ -144,6 +144,7 @@ def rough_table_of_integrals(
             signal_pathway,
             frq_center=center_of_range,
             frq_half=half_range,
+            fl=fl,
         )
         s *= mysign
     else:
@@ -161,7 +162,7 @@ def rough_table_of_integrals(
     )
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
-    fl.plot(s, "-o", ax=ax4)
+    psd.plot(s, "-o", ax=ax4)
     print(s)
     psd.gridandtick(plt.gca())
     ax4.set_title("table of integrals")

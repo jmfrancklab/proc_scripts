@@ -318,7 +318,7 @@ def fid_from_echo(
     d.ift(direct)
     # {{{ apply phasing, and check the residual
     d[direct] -= d.getaxis(direct)[0]
-    if fl is not None:
+    if fl is not None and fl.basename is not None:
         thebasename = fl.basename
     else:
         thebasename = ""
