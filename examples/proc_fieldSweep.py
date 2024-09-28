@@ -19,10 +19,11 @@ with psd.figlist_var() as fl:
     )
     use_freq = False
     if use_freq:
-        s["indirect"] = s["indirect"]["carrierFreq"]*1e6
-        s.set_units("indirect","Hz")
+        s["indirect"] = s["indirect"]["carrierFreq"] * 1e6
+        s.set_units("indirect", "Hz")
     else:
         # I wanted to use the carrier (use_frep=True), but it seems like the
         # first point isn't stored properly
         s["indirect"] = s["indirect"]["Field"]
+        s.set_units("indirect", "G")
     prscr.rough_table_of_integrals(s, fl=fl)
