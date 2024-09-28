@@ -144,7 +144,9 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
         update with `sphinxcontrib-bibtex
         <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_.
 
-    Parameters ========== s: nddata
+    Parameters 
+    ========== 
+    s: nddata
         Complex data whose first order phase you want
         to find.
 
@@ -388,9 +390,11 @@ def fid_from_echo(
                 )
                 N_ratio = for_resid.data.size
                 for_resid.mean_all_but(direct).run(sqrt)
-                N_ratio /= (for_resid.data.size) 
-                # the signal this has been plotted against is signal averaged
-                # by N_ratio
+                N_ratio /= (for_resid.data.size) # the signal this
+                #                                  has been plotted
+                #                                  against is signal
+                #                                  averaged by
+                #                                  N_ratio
                 fl.next("residual after shift")
                 fl.plot(
                     for_resid / sqrt(N_ratio),
@@ -436,8 +440,10 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     """find the range of frequencies over which the signal occurs, so that we
     can autoslice
 
-    Parameters ========== d : nddata Data in the frequency domain -- will not
-    be altered.
+    Parameters
+    ==========
+    d : nddata
+        Data in the frequency domain -- will not be altered.
     direct : str (default "t2")
         The name of the direct dimension
     peak_lower_thresh: float

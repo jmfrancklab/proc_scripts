@@ -21,9 +21,10 @@ def rough_table_of_integrals(
     title="",
     direct="t2",
     expansion=2,
+    peak_lower_thresh=0.1,
 ):
-    """manipulate s to generate a table of integrals (with only rough
-    alignment)
+    """manipulate s to generate a table of integrals
+    (with only rough alignment)
 
     Parameters
     ==========
@@ -35,9 +36,14 @@ def rough_table_of_integrals(
         You probably want to get this from `find_peakrange` rather than trying
         to specify manually!
         (And expand the range that it gives you slightly)
-        If this is set to None, it assumes a previous call to `find_peakrange`
+
+        If this is set to the string `'peakrange'`,
+        it assumes a previous call to `find_peakrange`
         has set the
-        `peakrange` property, and it uses that.
+        `'peakrange'` property, and it uses that.
+
+        If this is set to None, then it assume you want to call
+        `find_peakrange`
     signal_pathway : dict (default None)
         If None, the function will go into the properties of the data looking
         for the "coherence_pathway" property.
@@ -56,6 +62,8 @@ def rough_table_of_integrals(
         Name of direct dimension.
     expansion : float (default 2)
         Expand peakrange about its center by this much.
+    peak_lower_thresh: float
+        passed to :func:`find_peakrange`
 
     Returns
     =======
@@ -63,26 +71,26 @@ def rough_table_of_integrals(
         The table of integrals (collapse the direct dimension into a single
         number).
         Processing is done in place.
-    ax_last : Axes
+    ax4 : Axes
         Return the axis with the table of integrals (plotted as `"o"`), in case
         you want to add a fit!
     """
     if signal_range is None:
-        frq_center, frq_half = find_peakrange(s, fl=fl)
+        center_of_range, half_range = find_peakrange(
+            s, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
+        )
         signal_range = s.get_prop("peakrange")
     else:
-        frq_center, frq_half = frq_center, frq_half
-    signal_range_expanded = frq_center + expansion * r_[-0.5, 0.5] * np.diff(
-        signal_range
+        if signal_range == "peakrange":
+            signal_range = s.get_prop("peakrange")
+        center_of_range = np.mean(signal_range)
+        half_range = 0.5 * np.diff(signal_range).item()
+    signal_range_expanded = (
+        center_of_range + expansion * r_[-1, 1] * half_range
     )
     assert fl is not None, "for now, fl can't be None"
     # {{{ set up subplots
-    if echo_like:
-        # If echo like we want an extra subplot to show the phased and FID
-        # sliced
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-    else:
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
     fig.set_figwidth(15)
     fig.set_figheight(6)
     fig.suptitle(title)
@@ -94,7 +102,7 @@ def rough_table_of_integrals(
     # and handle newer data where it is set I have the following if/else
     signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
     # {{{ Apply overall zeroth order correction, select the pathway, and apply
-    # a rudimentary alignment
+    #     a rudimentary alignment
     s /= zeroth_order_ph(
         select_pathway(s[direct:signal_range].sum(direct), signal_pathway)
     )
@@ -134,16 +142,12 @@ def rough_table_of_integrals(
         s = fid_from_echo(
             s.set_error(None),
             signal_pathway,
-            frq_center=frq_center,
-            frq_half=frq_half,
+            frq_center=center_of_range,
+            frq_half=half_range,
         )
         s *= mysign
-        fl.image(s, ax=ax3)
-        ax3.set_title("FID sliced and phased")
-        ax_last = ax4
     else:
         s *= mysign  # flip the sign back, so we get sensible integrals
-        ax_last = ax3
     # {{{ generate the table of integrals
     # {{{ actually apply the rough alignment
     #     Note that we center about the center of the slice, so our
@@ -151,18 +155,15 @@ def rough_table_of_integrals(
     s.ift(direct)
     s *= np.exp(-1j * 2 * pi * (shift - frq_center) * s.fromaxis(direct))
     s.ft(direct)
+    fl.image(s, ax=ax3)
+    ax3.set_title(
+        "FID sliced" + (", phased," if echo_like else "") + " and aligned"
+    )
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
-    fieldaxis = np.array(
-        [field for field, _ in s.getaxis("indirect")]
-    )  # ChatGPT and AG helped me vectorize this
-    s.setaxis("indirect", fieldaxis)
-    # print("rough table dimlabels", s[s.dimlabels[0]])
-    # print(type(s["indirect"[j,_[0]]] for j in range(len(s[0]))))
-    fl.plot(s, "o", ax=ax_last)
-    # print(type(s))
-    # s = psd.nddata(s)
+    fl.plot(s, "-o", ax=ax4)
+    print(s)
     psd.gridandtick(plt.gca())
-    ax_last.set_title("table of integrals")
+    ax4.set_title("table of integrals")
     # }}}
-    return s, ax_last
+    return s, ax4
