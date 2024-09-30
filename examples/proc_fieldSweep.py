@@ -1,3 +1,9 @@
+"""
+Check NMR/ESR resonance ratio using a field sweep
+====================================================
+Analyzes field sweep data. Determines the optimal field across a gradient that is on-resonance with the Bridge 12 μw frequency stored in the file to determine the resonance ratio of MHz/GHz.
+"""
+
 import pyspecdata as psd
 import pyspecProcScripts as prscr
 
