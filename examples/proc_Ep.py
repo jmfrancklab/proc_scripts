@@ -13,7 +13,7 @@ with psd.figlist_var() as fl:
     thisfile, exptype, nodename, post_proc, lookup = (
         "240924_13p5mM_TEMPOL_ODNP_1.h5",
         "ODNP_NMR_comp/ODNP",
-        "FIR_34dBm",
+        "ODNP",
         "spincore_ODNP_v5",
         prscr.lookup_table,
     )
