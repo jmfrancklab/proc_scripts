@@ -9,10 +9,12 @@ the resonance ratio of MHz/GHz.
 import pyspecdata as psd
 import pyspecProcScripts as prscr
 import os, h5py
+import numpy as np
 from Instruments.logobj import logobj
 import logging
-data_target = os.path.normpath(psd.getDATADIR('WK_processed_data'))
+import matplotlib.pyplot as plt
 
+data_target = os.path.normpath(psd.getDATADIR('WK_processed_data'))
 signal_pathway = {"ph1": 1}
 # {{{ file identifiers 
 my_filename = "240924_13p5mM_TEMPOL_field.h5"
@@ -46,11 +48,10 @@ with psd.figlist_var() as fl:
         s["indirect"] = s["indirect"]["Field"]
         s.set_units("indirect", "G")
     prscr.rough_table_of_integrals(s, fl=fl)
-    # {{{Obtain ESR frequency and chunk/reorder dimensions	
-    nu_B12_GHz = (s.get_prop("acq_params")["mw_freqs"][0]) / 1e9	
-    print(nu_B12_GHz)
-    # }}}	
-    # {{{DC offset correction	
+    
+    field_axis = s["indirect"]
+    nu_B12_GHz = (s.get_prop("acq_params")["uw_dip_center_GHz"]) / 1e9	
+    print("B12 freq is ", nu_B12_GHz)
     s.ift("t2")	
     s.ift("ph1")	
     t2_max = s.getaxis("t2")[-1]	
@@ -59,26 +60,74 @@ with psd.figlist_var() as fl:
     s -= rx_offset_corr	
     s.ft(["ph1"])	
     s.ft("t2")	
-    # }}}	
-    # {{{ set up figure and plot raw data	
-    fig, ax_list = subplots(1, 4, figsize=(10, 3))	
-    fl.next("Field Sweep Processing", fig=fig)	
-    fl.image(s, ax=ax_list[0])	
-    ax_list[0].set_title("Raw data\nFrequency Domain")	
-    # }}}	
-    # {{{frequency filtering and phase correct	
+    fl.next("Field Sweep Processing")	
+    fl.image(s)	
     s = s["t2":(-1e3, 1e3)]	
     s.ift("t2")	
-    best_shift = hermitian_function_test(select_pathway(s, signal_pathway))	
+    s = s["t2":(0,None)]
+    best_shift = prscr.hermitian_function_test(prscr.select_pathway(s, signal_pathway))	
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})	
-    s = s["t2":(0, None)]	
+    #s = s["t2":(0, None)]	
     s["t2", 0] *= 0.5	
     s.ft("t2")	
-    s = select_pathway(s, signal_pathway)	
-    s /= zeroth_order_ph(s.C.mean("t2"))	
-    nu_NMR = []	
-    assert set(s.getaxis("indirect").dtype.names) == {	
-        "Field",	
-        "carrierFreq",	
-    }, "'indirect' axis should be a structured array that stores the carrier frequency and the field"	 
-
+    s = prscr.select_pathway(s, signal_pathway)	
+    s /= prscr.zeroth_order_ph(s.C.mean("t2"))	
+    print("s's dimlabels are ", s.dimlabels)
+    #assert set(s.getaxis("indirect").dtype.names) == {	
+    #    "Field",	
+    #    "carrierFreq",	
+    #}, "'indirect' axis should be a structured array that stores the carrier frequency and the field"	 
+    all_offsets = np.zeros(len(s.getaxis("indirect")))
+    carrier_freq_MHz = []
+    for z in range(len(s.getaxis("indirect"))):
+        fl.next("Field slicing")
+        if "nScans" in s.dimlabels:
+            fl.plot(s["indirect", z].C.mean("nScans"), label="scan %d" % z)
+            offset = s["indirect", z].C.mean("nScans").argmax("t2").item()
+        else:
+            fl.plot(s["indirect", z], label="scan %d" % z)
+            offset = s["indirect", z].C.argmax("t2").item()
+        all_offsets[z] = offset
+        carrier_freq_MHz = s["indirect"][:][z]
+    s.ift("t2")
+    s *= np.exp(
+        -1j
+        * 2
+        * np.pi
+        * psd.nddata(all_offsets, [-1], ["indirect"])
+        * s.fromaxis("t2")
+    )    
+    s.ft("t2")
+    peak_range = nu_B12_GHz
+    peak_range = 1.2 * np.r_[-0.5, 0.5] * peak_range + np.mean(peak_range)
+    frq_slice = peak_range
+    fl.next("phased data")
+    fl.plot(s)
+    plt.axvline(x=frq_slice[0])
+    plt.axvline(x=frq_slice[-1])
+    print("t2 as a dimlabel is ", s["t2"])
+    if "nScans" in s.dimlabels:
+        s = s["t2":frq_slice].C.mean("nScans").integrate("t2")
+    else:
+        s = s["t2":frq_slice].integrate("t2")
+    field_axis_array = np.asarray(field_axis)
+    ppt = field_axis_array * s.get_prop("acq_params")["gamma_eff_MHz_G"]
+    ppt_axis = np.asarray(ppt)
+    ppt_axis /= s.get_prop("acq_params")["uw_dip_center_GHz"]
+    fl.next("integrated - ppt")
+    fl.plot(s.setaxis("indirect", ppt_axis), "o-")
+    s.setaxis("indirect", ppt_axis)
+    print(s)
+    fl.show();quit()
+    fitting = s.polyfit("indirect", order=4)
+    x_min = s["indirect"][0]
+    x_max = s["indirect"][-1]
+    Field = psd.nddata(np.r_[x_min:x_max:100j], "field")
+    fl.plot(Field.eval_poly(fitting, "field"), label="fit")
+    print("ESR frequency is %f" % (nu_B12_GHz))
+    print(
+        "The fit finds a max with ppt value:",
+        Field.eval_poly(fitting, "field").argmax().item(),
+    )
+    print("The data finds a ppt value", abs(s["indirect"]).argmax().item())
+   
