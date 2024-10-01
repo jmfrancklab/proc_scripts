@@ -83,7 +83,7 @@ def zeroth_order_ph(d, fl=None):
     #                             negating the C above yields the same result!
     rotation_vector = eigenVectors[:, 0]
     ph0 = np.arctan2(rotation_vector[1], rotation_vector[0])
-    if fl is not None: 
+    if fl is not None:
         fl.push_marker()
         d_forplot = d.C
         fl.next("check covariance test")
@@ -144,8 +144,8 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
         update with `sphinxcontrib-bibtex
         <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_.
 
-    Parameters 
-    ========== 
+    Parameters
+    ==========
     s: nddata
         Complex data whose first order phase you want
         to find.
@@ -385,12 +385,12 @@ def fid_from_echo(
                 and d_sigcoh.getaxis(direct)[idx] == 0
             ):  # should be centered about zero,
                 # but will not be if too lopsided
-                for_resid = ( 
+                for_resid = (
                     abs(s_flipped - d_sigcoh[direct:(t_start, -t_start)]) ** 2
                 )
                 N_ratio = for_resid.data.size
                 for_resid.mean_all_but(direct).run(sqrt)
-                N_ratio /= (for_resid.data.size) # the signal this
+                N_ratio /= for_resid.data.size  # the signal this
                 #                                  has been plotted
                 #                                  against is signal
                 #                                  averaged by
@@ -401,6 +401,15 @@ def fid_from_echo(
                     human_units=False,
                     label="best shift%+e, mean of residual" % test_offset,
                 )
+                # {{{ zoom to twice the width of the displayed residual
+                #     on the left and more on the right
+                left_bound = for_resid[direct][0]
+                right_bound = for_resid[direct][-1]
+                left_bound, right_bound = (
+                    r_[-1.0, 4.0] * (right_bound - left_bound)
+                    + (right_bound + left_bound) / 2
+                )
+                # }}}
                 if test_offset == 0:
                     fl.plot(
                         d_sigcoh.C.mean_all_but(direct).run(abs),
@@ -419,6 +428,7 @@ def fid_from_echo(
                     ax = plt.gca()
                     yl = ax.get_ylim()
                     ax.set_ylim((0, yl[-1]))
+                plt.gca().set_xlim((left_bound, right_bound))
     # }}}
     if add_rising:
         d_rising = d[direct:(None, 0)][
@@ -435,6 +445,7 @@ def fid_from_echo(
     d[direct, 0] *= 0.5
     d.ft(direct)
     return d
+
 
 def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     """find the range of frequencies over which the signal occurs, so that we
@@ -680,6 +691,7 @@ def hermitian_function_test(
             forplot,
             label="echo envelope",
         )
+        left_bound = forplot[direct][0]
     s_ext[direct, :-min_echo_idx] = s_ext[direct, min_echo_idx:]
     if fl is not None:
         fl.next("power terms")
@@ -748,6 +760,7 @@ def hermitian_function_test(
             color="violet",
             alpha=0.5,
         )
+        right_bound = forplot[direct][-1]
     echo_peak = cost_min / 2.0
     if fl is not None:
         fl.plot(
@@ -759,6 +772,12 @@ def hermitian_function_test(
             human_units=False,
         )
         axvline(x=echo_peak / det_devisor(fl), linestyle=":")
+        # {{{ this makes sure we're zoomed on a decent region for the
+        #     Hermitian cost function plot
+        plt.gca().set_xlim(
+            tuple(r_[left_bound, right_bound] / det_devisor(fl))
+        )
+        # }}}
     # }}}
     echo_idx = int((echo_peak + min_echo) / t_dw + 0.5)
     shift_range = 4
