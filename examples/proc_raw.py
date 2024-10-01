@@ -114,4 +114,5 @@ with psd.figlist_var() as fl:
         image_or_plot(forplot)
         d = select_pathway(d, d.get_prop("coherence_pathway"))
         fl.next("with coherence pathway selected")
+        plt.gca().set_title("select " + str(d.get_prop("coherence_pathway")))
         image_or_plot(d)
