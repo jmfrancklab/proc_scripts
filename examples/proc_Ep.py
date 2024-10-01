@@ -27,5 +27,3 @@ with psd.figlist_var() as fl:
     s["indirect"] = s["indirect"]["start_times"]
     s.set_units("indirect", "s")
     prscr.rough_table_of_integrals(s, fl=fl)
-    fl.show()
-
