@@ -112,7 +112,7 @@ with psd.figlist_var() as fl:
             list(d.get_prop("coherence_pathway").keys()) + [guess_direct]
         )
         image_or_plot(forplot)
-        d = select_pathway(d, d.get_prop("coherence_pathway"))
+        d = prscr.select_pathway(d, d.get_prop("coherence_pathway"))
         fl.next("with coherence pathway selected")
         plt.gca().set_title("select " + str(d.get_prop("coherence_pathway")))
         image_or_plot(d)

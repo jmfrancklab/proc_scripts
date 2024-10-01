@@ -382,6 +382,12 @@ def proc_spincore_IR_v2(s, fl=None):
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
     return s
 
+def hack_spincore_IR_v3(s, fl=None):
+    "v3 has an incorrectly stored coherence pathway"
+    proc_spincore_generalproc_v1(s, fl=fl)
+    s.set_prop("coherence_pathway", {'ph1':0,'ph2':+1})
+    return s
+
 
 def proc_nutation(s, fl=None):
     logging.debug("loading pre-processing for nutation")
@@ -835,7 +841,8 @@ lookup_table = {
     "spincore_FID_nutation_v2": proc_FID_v1,
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
-    "spincore_IR_v3": proc_spincore_generalproc_v1,
+    "spincore_IR_v3": hack_spincore_IR_v3,
+    "spincore_IR_v4": proc_spincore_generalproc_v1,
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_v2,
     "spincore_nutation_amp": proc_nutation_amp,
