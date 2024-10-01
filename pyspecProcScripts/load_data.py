@@ -668,6 +668,7 @@ def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
         #            this
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
+    neworder.sort() # it's confusing if the pulses don't come in order
     # }}}
     # {{{ reorder the rest based on size
     nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
