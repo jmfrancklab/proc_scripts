@@ -109,7 +109,7 @@ with psd.figlist_var() as fl:
     if "nScans" in s.dimlabels:
         s = s["t2":frq_slice].C.mean("nScans").integrate("t2")
     else:
-        s = s["t2":frq_slice].integrate("t2")
+        s = s["t2":frq_slice].C.integrate("t2")
     field_axis_array = np.asarray(field_axis)
     ppt = field_axis_array * s.get_prop("acq_params")["gamma_eff_MHz_G"]
     ppt_axis = np.asarray(ppt)
@@ -118,7 +118,6 @@ with psd.figlist_var() as fl:
     fl.plot(s.setaxis("indirect", ppt_axis), "o-")
     s.setaxis("indirect", ppt_axis)
     print(s)
-    fl.show();quit()
     fitting = s.polyfit("indirect", order=4)
     x_min = s["indirect"][0]
     x_max = s["indirect"][-1]
