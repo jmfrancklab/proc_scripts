@@ -1,13 +1,9 @@
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import os, time, h5py
+import os, h5py
 import matplotlib.pyplot as plt
-from sympy import exp as s_exp
-from sympy import symbols, Symbol, latex
 import numpy as np
-from pyspecProcScripts import lookup_table
 from Instruments.logobj import logobj
-from itertools import cycle
 
 data_target = os.path.normpath(psd.getDATADIR("WK_processed_data"))
 filename = "240924_13p5mM_TEMPOL_ODNP_1"
@@ -29,8 +25,11 @@ with h5py.File(my_filename, "r") as f:
     log_dict = thislog.log_dict
 # }}}
 print(log_array.dtype.names)
-# I don't know if the following are code is correct, but you should be able to correct based on the names of the fields, given by the previous line
-# log_array['time'] -= log_array['time'][0] # always convert to relative time right away
+# I don't know if the following are code is correct, but you should be
+# able to correct based on the names of the fields, given by the
+# previous line
+log_array["time"] -= log_array["time"][0]  # always convert to relative
+#                                           time right away
 log_vs_time = psd.nddata(
     log_array[
         "power"
@@ -45,8 +44,11 @@ log_vs_time = psd.nddata(
 )
 fl.next("power log")
 fl.plot(log_vs_time)  # should be a picture of the gigatronics powers
-# {{{ construct an nddata whose data are the average power values, whose errors are the std of of the power values, and whose time axis is the center time for each power
-# {{{ AG does something else, but basically we want to create an nddata that will store our powers and the associated errors
+# {{{ construct an nddata whose data are the average power values,
+#     whose errors are the std of of the power values, and whose time
+#     axis is the center time for each power
+# {{{ AG does something else, but basically we want to create an
+#     nddata that will store our powers and the associated errors
 with psd.figlist_var() as fl:
     thisfile, exptype, nodename, post_proc, lookup = (
         filename + ".h5",
@@ -109,6 +111,9 @@ print(relative_times)
 power_vs_time.setaxis("time", relative_times)
 fl.plot(
     power_vs_time, "o"
-)  # this  should be a *single* o at the center of each power step.  Its y value should be the avaerage power for that step, and its error bars should give the standard deviation of the power over the step
+)  # this  should be a *single* o at the center of each power step.
+#    Its y value should be the avaerage power for that step, and its
+#    error bars should give the standard deviation of the power over
+#    the step
 # }}}
 fl.show()
