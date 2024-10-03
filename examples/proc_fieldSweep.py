@@ -19,7 +19,8 @@ signal_pathway = {"ph1": 1}
 with psd.figlist_var() as fl:
     # (delete when read) -- you were just adding lines of code for no reason --
     # the following is perfectly legible
-    thisfile, exptype, nodename, label_str = (
+    # (delete when read): also, it's odd to have exp_type vs. exptype
+    thisfile, exp_type, nodename, label_str = (
         "240924_13p5mM_TEMPOL_field.h5",
         "ODNP_NMR_comp/field_dependent",
         "field_1",
@@ -29,7 +30,7 @@ with psd.figlist_var() as fl:
     # There are very few cases where it should be overwritten.
     s = psd.find_file(
         thisfile,
-        exp_type=exptype,
+        exp_type=exp_type,
         expno=nodename,
         lookup=prscr.lookup_table,
     )
