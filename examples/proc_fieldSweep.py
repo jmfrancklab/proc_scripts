@@ -46,12 +46,17 @@ with psd.figlist_var() as fl:
         s["indirect"] = s["indirect"]["Field"]
         s.set_units("indirect", "G")
     prscr.rough_table_of_integrals(s, fl=fl)
+    # {{{ this entire section does nothing useful aside from plot the
+    #     data.  It's very unclear what you are trying to do by
+    #     assigning the axis coordinates to a new axis, etc.
     print(s["indirect"])
     ppt_axis = s["indirect"]
     fl.next("integrated - ppt")
     fl.plot(s.setaxis("indirect", ppt_axis), "o-")
     s.setaxis("indirect", ppt_axis)
     print("s is ", s)
+    # }}}
+    # (delete when read) it's not clear why you are fitting to a 4th order polynomial
     fitting = s.polyfit("indirect", 4)
     x_min = s["indirect"][0]
     x_max = s["indirect"][-1]
@@ -63,4 +68,3 @@ with psd.figlist_var() as fl:
             Field.eval_poly(fitting, "field").argmax().item(),
     )    
     print("The data finds a ppt value", abs(s).argmax().item())
-
