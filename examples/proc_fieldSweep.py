@@ -16,26 +16,21 @@ import matplotlib.pyplot as plt
 
 data_target = os.path.normpath(psd.getDATADIR('WK_processed_data'))
 signal_pathway = {"ph1": 1}
-# {{{ file identifiers 
-my_filename = "240924_13p5mM_TEMPOL_field.h5"
-my_exptype = "ODNP_NMR_comp/field_dependent"
-my_expnode = "field_1"
-my_postproctype = "field_sweep_v5"
-find_my_file = psd.search_filename(my_filename, exp_type=my_exptype, unique=True)
-# }}}
 with psd.figlist_var() as fl:
-    thisfile, exptype, nodename, post_proc, label_str = (
-        my_filename,
-        my_exptype,
-        my_expnode,
-        my_postproctype,
+    # (delete when read) -- you were just adding lines of code for no reason --
+    # the following is perfectly legible
+    thisfile, exptype, nodename, label_str = (
+        "240924_13p5mM_TEMPOL_field.h5",
+        "ODNP_NMR_comp/field_dependent",
+        "field_1",
         "240924 13.5 mM TEMPOL field sweep",
     )
+    # (delete when read) also, the postproc type should be stored in the file.
+    # There are very few cases where it should be overwritten.
     s = psd.find_file(
         thisfile,
         exp_type=exptype,
         expno=nodename,
-        postproc=post_proc,
         lookup=prscr.lookup_table,
     )
     nu_B12 = s.get_prop("acq_params")["uw_dip_center_GHz"]
