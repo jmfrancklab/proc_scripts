@@ -20,7 +20,7 @@ signal_pathway = {"ph1": 1}
 my_filename = "240924_13p5mM_TEMPOL_field.h5"
 my_exptype = "ODNP_NMR_comp/field_dependent"
 my_expnode = "field_1"
-my_postproctype = "field_sweep_v4"
+my_postproctype = "field_sweep_v5"
 find_my_file = psd.search_filename(my_filename, exp_type=my_exptype, unique=True)
 # }}}
 with psd.figlist_var() as fl:
@@ -40,14 +40,31 @@ with psd.figlist_var() as fl:
     )
     use_freq = True
     if use_freq:
-        s["indirect"]["carrierFreq"][0] = s["indirect"]["Field"][0] * s.get_prop("acq_params")["gamma_eff_MHz_G"]
-        s["indirect"] = s["indirect"]["carrierFreq"] * 1e6
-        s.set_units("indirect", "Hz")
+        s["indirect"] = s["indirect"]["carrierFreq"]
+        s.set_units("indirect", "MHz")
+        s["indirect"] = s["indirect"] / s.get_prop("acq_params")["uw_dip_center_GHz"]
     else:
         # I wanted to use the carrier (use_frep=True), but it seems like the
         # first point isn't stored properly
         s["indirect"] = s["indirect"]["Field"]
         s.set_units("indirect", "G")
     prscr.rough_table_of_integrals(s, fl=fl)
-    
-    
+    print(s["indirect"])
+    ppt_axis = s["indirect"]
+
+    fl.next("integrated - ppt")
+    fl.plot(s.setaxis("indirect", ppt_axis), "o-")
+    s.setaxis("indirect", ppt_axis)
+    print(s)
+    fitting = s.polyfit("indirect", 4)
+    x_min = s["indirect"][0]
+    x_max = s["indirect"][-1]
+    Field = psd.nddata(np.r_[x_min:x_max:100j], "field")
+    fl.plot(Field.eval_poly(fitting, "field"), label="fit")
+    print("ESR frequency is %f" % (nu_B12))
+    print(
+            "The fit finds a max with ppt value:",
+            Field.eval_poly(fitting, "field").argmax().item(),
+    )    
+    print("The data finds a ppt value", abs(s).argmax().item())
+
