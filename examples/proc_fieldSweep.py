@@ -17,17 +17,12 @@ import matplotlib.pyplot as plt
 data_target = os.path.normpath(psd.getDATADIR('WK_processed_data'))
 signal_pathway = {"ph1": 1}
 with psd.figlist_var() as fl:
-    # (delete when read) -- you were just adding lines of code for no reason --
-    # the following is perfectly legible
-    # (delete when read): also, it's odd to have exp_type vs. exptype
     thisfile, exp_type, nodename, label_str = (
         "240924_13p5mM_TEMPOL_field.h5",
         "ODNP_NMR_comp/field_dependent",
         "field_1",
         "240924 13.5 mM TEMPOL field sweep",
     )
-    # (delete when read) also, the postproc type should be stored in the file.
-    # There are very few cases where it should be overwritten.
     s = psd.find_file(
         thisfile,
         exp_type=exp_type,
@@ -46,17 +41,6 @@ with psd.figlist_var() as fl:
         s["indirect"] = s["indirect"]["Field"]
         s.set_units("indirect", "G")
     prscr.rough_table_of_integrals(s, fl=fl)
-    # {{{ this entire section does nothing useful aside from plot the
-    #     data.  It's very unclear what you are trying to do by
-    #     assigning the axis coordinates to a new axis, etc.
-    print(s["indirect"])
-    ppt_axis = s["indirect"]
-    fl.next("integrated - ppt")
-    fl.plot(s.setaxis("indirect", ppt_axis), "o-")
-    s.setaxis("indirect", ppt_axis)
-    print("s is ", s)
-    # }}}
-    # (delete when read) it's not clear why you are fitting to a 4th order polynomial
     fitting = s.polyfit("indirect", 4)
     x_min = s["indirect"][0]
     x_max = s["indirect"][-1]
