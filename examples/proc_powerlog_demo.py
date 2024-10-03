@@ -95,16 +95,14 @@ with psd.figlist_var() as fl:
             "time":(time_start, time_stop)
         ].mean("time", std=True)
         mean_power_vs_time["time"][j] = (time_start + time_stop) / 2
-        # {{{ these lines show the start and the stop of the power step
-        plt.axvline(
-            x=time_start,
-            color="green",
-            alpha=0.5,
-        )
-        plt.axvline(
-            x=time_stop,
-            color="red",
-            alpha=0.5,
+        # {{{ I realized a crosshatch would be better here
+        plt.axvspan(
+            time_start,
+            time_stop,
+            facecolor="none",
+            edgecolor="k",
+            hatch="XXXXXX",
+            alpha=0.1,
         )
         # }}}
     fl.plot(
