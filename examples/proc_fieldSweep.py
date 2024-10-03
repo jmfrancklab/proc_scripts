@@ -8,13 +8,10 @@ the resonance ratio of MHz/GHz.
 
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import os, h5py
+import os
 import numpy as np
-from Instruments.logobj import logobj
-import logging
-import matplotlib.pyplot as plt
 
-data_target = os.path.normpath(psd.getDATADIR('WK_processed_data'))
+data_target = os.path.normpath(psd.getDATADIR("WK_processed_data"))
 signal_pathway = {"ph1": 1}
 with psd.figlist_var() as fl:
     thisfile, exp_type, nodename, label_str = (
@@ -48,7 +45,7 @@ with psd.figlist_var() as fl:
     fl.plot(Field.eval_poly(fitting, "field"), label="fit")
     print("ESR frequency is %f" % (nu_B12))
     print(
-            "The fit finds a max with ppt value:",
-            Field.eval_poly(fitting, "field").argmax().item(),
-    )    
+        "The fit finds a max with ppt value:",
+        Field.eval_poly(fitting, "field").argmax().item(),
+    )
     print("The data finds a ppt value", abs(s).argmax().item())
