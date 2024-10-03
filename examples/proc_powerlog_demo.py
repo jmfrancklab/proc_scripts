@@ -4,31 +4,32 @@ import os, h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from Instruments.logobj import logobj
+import re
 
-data_target = os.path.normpath(psd.getDATADIR("WK_processed_data"))
-filename = "240924_13p5mM_TEMPOL_ODNP_1"
-expdata = "ODNP_NMR_comp/ODNP"
-nodename = "ODNP"
-postproctype = "spincore_ODNP_v5"
-my_filename = psd.search_filename(
-    filename + ".h5", exp_type=expdata, unique=True
+filename, exp_type, nodename, postproc_type = (
+    "240924_13p5mM_TEMPOL_ODNP_1.h5",
+    "ODNP_NMR_comp/ODNP",
+    "ODNP",
+    "spincore_ODNP_v5",
 )
+my_filename = psd.search_filename(
+    re.escape(filename), exp_type=expdata, unique=True
+)
+# {{{ this pulls the log from the file
+with h5py.File(my_filename, "r") as f:
+    log_grp = f["log"]
+    thislog = logobj.from_group(log_grp)
+    log_array = thislog.total_log
+    log_dict = thislog.log_dict
+# }}}
+print(log_array.dtype.names)
+# I don't know if the following are code is correct, but you should be
+# able to correct based on the names of the fields, given by the
+# previous line
+log_array["time"] -= log_array["time"][0]  # always convert to relative
+#                                           time right away
 with psd.figlist_var() as fl:
-    Ep_signal_pathway = {"ph1": 1}
-    Ep_f_slice = (-1e3, 1e3)
-    # {{{ this pulls the log from the file
-    with h5py.File(my_filename, "r") as f:
-        log_grp = f["log"]
-        thislog = logobj.from_group(log_grp)
-        log_array = thislog.total_log
-        log_dict = thislog.log_dict
-    # }}}
-    print(log_array.dtype.names)
-    # I don't know if the following are code is correct, but you should be
-    # able to correct based on the names of the fields, given by the
-    # previous line
-    log_array["time"] -= log_array["time"][0]  # always convert to relative
-    #                                           time right away
+    fl.next("power log")
     log_vs_time = psd.nddata(
         log_array[
             "power"
@@ -42,34 +43,16 @@ with psd.figlist_var() as fl:
         ],  # to the "time" field of the structured array that comes from the
         #     log
     )
-    fl.next("power log")
     fl.plot(log_vs_time)  # should be a picture of the gigatronics powers
     # {{{ construct an nddata whose data are the average power values,
     #     whose errors are the std of of the power values, and whose time
     #     axis is the center time for each power
     # {{{ AG does something else, but basically we want to create an
     #     nddata that will store our powers and the associated errors
-    with psd.figlist_var() as fl:
-        thisfile, exptype, nodename, post_proc, lookup = (
-            filename + ".h5",
-            expdata,
-            nodename,
-            postproctype,
-            prscr.lookup_table,
-        )
-        s = psd.find_file(
-            thisfile,
-            exp_type=exptype,
-            expno=nodename,
-            postproc=post_proc,
-            lookup=prscr.lookup_table,
-        )
-        s.set_units("indirect", "s")
-    # print(s["indirect"])
     powername = "time"
     dnp_time_axis = s["indirect"]
     log_vs_time.set_units("time", "s")
-    power_vs_time = (
+    mean_power_vs_time = (
         psd.ndshape([("time", len(dnp_time_axis))])
         .alloc()
         .set_error(0)
@@ -81,17 +64,17 @@ with psd.figlist_var() as fl:
     print(log_vs_time.dimlabels)
     relative_times = []
     # }}}
-    print(power_vs_time)
+    print(mean_power_vs_time)
     for j, (time_start, time_stop) in enumerate(
         zip(dnp_time_axis[:]["start_times"], dnp_time_axis[:]["stop_times"])
     ):
         print(log_vs_time["time", -1])
         print(log_vs_time["time":(time_start, time_stop)])
-        print(power_vs_time[powername, j])
-        power_vs_time[powername, j] = log_vs_time[
+        print(mean_power_vs_time[powername, j])
+        mean_power_vs_time[powername, j] = log_vs_time[
             "time":(time_start, time_stop)
         ].mean("time", std=True)
-        print(power_vs_time[powername, j])
+        print(mean_power_vs_time[powername, j])
         fl.next("power log")
         relative_times.append(
             (time_stop - log_vs_time.getaxis("time")[0])
@@ -110,9 +93,9 @@ with psd.figlist_var() as fl:
         )
         # }}}
     print(relative_times)
-    power_vs_time.setaxis("time", relative_times)
+    mean_power_vs_time.setaxis("time", relative_times)
     fl.plot(
-        power_vs_time, "o"
+        mean_power_vs_time, "o"
     )  # this  should be a *single* o at the center of each power step.
     #    Its y value should be the avaerage power for that step, and its
     #    error bars should give the standard deviation of the power over
