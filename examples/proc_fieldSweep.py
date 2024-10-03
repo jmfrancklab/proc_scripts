@@ -38,11 +38,12 @@ with psd.figlist_var() as fl:
         postproc=post_proc,
         lookup=prscr.lookup_table,
     )
+    nu_B12 = s.get_prop("acq_params")["uw_dip_center_GHz"]
     use_freq = True
     if use_freq:
         s["indirect"] = s["indirect"]["carrierFreq"]
         s.set_units("indirect", "MHz")
-        s["indirect"] = s["indirect"] / s.get_prop("acq_params")["uw_dip_center_GHz"]
+        s["indirect"] = s["indirect"] / nu_B12
     else:
         # I wanted to use the carrier (use_frep=True), but it seems like the
         # first point isn't stored properly
@@ -51,11 +52,10 @@ with psd.figlist_var() as fl:
     prscr.rough_table_of_integrals(s, fl=fl)
     print(s["indirect"])
     ppt_axis = s["indirect"]
-
     fl.next("integrated - ppt")
     fl.plot(s.setaxis("indirect", ppt_axis), "o-")
     s.setaxis("indirect", ppt_axis)
-    print(s)
+    print("s is ", s)
     fitting = s.polyfit("indirect", 4)
     x_min = s["indirect"][0]
     x_max = s["indirect"][-1]
