@@ -1,18 +1,18 @@
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import os, h5py
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from Instruments.logobj import logobj
 import datetime
 import re
 
+
 # TODO ☐: this is not going to work, because it doesn't have the info to
 #         get the structured array -- please see my notes on slack
-def convert_to_power(
-    filename, exptype, s, fl=None
-):
-    """ Generate power axis for ODNP/E(p)/FIR experiments, converts instrument power log to useable axis
+def convert_to_power(filename, exptype, s, fl=None):
+    """Generate power axis for ODNP/E(p)/FIR experiments, converts instrument
+    power log to useable axis
     Parameters
     ===========
     filename: thisfile,
@@ -24,12 +24,11 @@ def convert_to_power(
     fl: figlist_var()
     """
     my_filename = psd.search_filename(
-    re.escape(filename), exp_type=exptype, unique=True
+        re.escape(filename), exp_type=exptype, unique=True
     )
     with h5py.File(my_filename, "r") as f:
         thislog = logobj.from_group(f["log"])
         log_array = thislog.total_log
-        log_dict = thislog.log_dict
     assert log_array.dtype.names == ("time", "Rx", "power", "cmd"), str(
         log_array.dtype.names
     )
@@ -50,11 +49,13 @@ def convert_to_power(
             "time",  # set the coordinate axis
             log_array[
                 "time"
-            ],  # to the "time" field of the structured array that comes from the
-            #     log
+            ],  # to the "time" field of the structured array that comes from
+            #      the log
         )
         .set_units("time", "s")
     )
+    log_vs_time = prscr.dBm2power(log_vs_time)
+    log_vs_time.set_units("W")
     fl.plot(log_vs_time, ".")  # should be a picture of the gigatronics powers
     # {{{ this is just matplotlib time formatting
     ax = plt.gca()
@@ -104,6 +105,8 @@ def convert_to_power(
             hatch="XXXXXX",
             alpha=0.1,
         )
+        # mean_power_vs_time = prscr.dBm2power(mean_power_vs_time)
+        mean_power_vs_time.set_units("W")
         # }}}
     fl.plot(
         mean_power_vs_time, "o"
@@ -112,5 +115,5 @@ def convert_to_power(
     #    error bars should give the standard deviation of the power over
     #    the step
     # }}}
+    s["indirect"].data = mean_power_vs_time.data
     return s
-
