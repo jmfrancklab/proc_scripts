@@ -4,7 +4,6 @@ import os, h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from Instruments.logobj import logobj
-import matplotlib.dates as mdates
 import datetime
 import re
 
