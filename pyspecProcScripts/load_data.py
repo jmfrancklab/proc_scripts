@@ -825,7 +825,6 @@ def hack_field_sweep_v4(s, fl=None):
     )
     return proc_spincore_generalproc_v1(s, fl=fl)
 
-
 lookup_table = {
     "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,
     "ab_ir2h": proc_bruker_deut_IR_mancyc,
