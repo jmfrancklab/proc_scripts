@@ -21,18 +21,13 @@ with psd.figlist_var() as fl:
         "ODNP",
         "log",
     )
-    s_log = psd.find_file(
-        thisfile,
-        exp_type=exptype,
-        expno=log_nodename,
-    )
-    s_log, poweraxis = prscr.convert_to_power(s_log, fl=fl)
     s = psd.find_file(
         thisfile,
         exp_type=exptype,
         expno=nodename,
         lookup=prscr.lookup_table,
     )
+    s = prscr.convert_to_power(thisfile, exptype, s, fl=fl)
     s["indirect"] = s["indirect"]["start_times"]
     s.set_units("indirect", "s")
     s, _ = prscr.rough_table_of_integrals(s, fl=fl)

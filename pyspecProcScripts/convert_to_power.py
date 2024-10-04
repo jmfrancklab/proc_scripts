@@ -8,19 +8,31 @@ import datetime
 import re
 
 def convert_to_power(
-    s, fl=None
+    filename, exptype, s, fl=None
 ):
     """ Generate power axis for ODNP/E(p)/FIR experiments, converts instrument power log to useable axis
     Parameters
     ===========
+    filename: thisfile,
+
+    exptype: exp_type
+
     s: nddata
+
+    fl: figlist_var()
     """
-    log_array = s["log"]
-    zero_time = log_array["time"][0]
-    log_array["time"] -= zero_time
+    my_filename = psd.search_filename(
+    re.escape(filename), exp_type=exptype, unique=True
+    )
+    with h5py.File(my_filename, "r") as f:
+        thislog = logobj.from_group(f["log"])
+        log_array = thislog.total_log
+        log_dict = thislog.log_dict
     assert log_array.dtype.names == ("time", "Rx", "power", "cmd"), str(
         log_array.dtype.names
     )
+    zero_time = log_array["time"][0]
+    log_array["time"] -= zero_time
     fl.next("power log")
     log_vs_time = (
         psd.nddata(
@@ -74,7 +86,6 @@ def convert_to_power(
     s["indirect"]["start_times"] -= zero_time
     s["indirect"]["stop_times"] -= zero_time
     # }}}
-    fl.next("Instrument power log")
     for j, (time_start, time_stop) in enumerate(
         zip(s["indirect"][:]["start_times"], s["indirect"][:]["stop_times"])
     ):
@@ -99,7 +110,5 @@ def convert_to_power(
     #    error bars should give the standard deviation of the power over
     #    the step
     # }}}
-    return s, mean_power_vs_time 
-
-
+    return s
 
