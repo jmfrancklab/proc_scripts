@@ -819,9 +819,6 @@ def proc_field_sweep_v2(s):
     return s
 
 
-# (delete when read): No -- v5 will hopefully be *fixed* the point is
-# that v4 data is stored *incorrectly* and needs to be hacked!
-# Although my code here is the same as yours (after black) b/c your hack is correct!
 def hack_field_sweep_v4(s, fl=None):
     s["indirect"]["carrierFreq"][0] = (
         s["indirect"]["Field"][0] * s.get_prop("acq_params")["gamma_eff_MHz_G"]
