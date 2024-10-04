@@ -21,13 +21,18 @@ with psd.figlist_var() as fl:
         "ODNP",
         "log",
     )
-    s = psd.find_file(
+    # TODO ☐: it complains about the following, as it should,
+    #         because it's not an nddata.  This is why
+    #         I was saying you will want to pass the
+    #         filename and node name to your function.
+    s_log = psd.find_file(
         thisfile,
         exp_type=exptype,
-        expno=nodename,
-        lookup=prscr.lookup_table,
+        expno=log_nodename,
     )
     s = prscr.convert_to_power(thisfile, exptype, s, fl=fl)
+    orig_axis = s["indirect"] # let's save this so we
+    #                           can pass it to the log
     s["indirect"] = s["indirect"]["start_times"]
     s.set_units("indirect", "s")
     s, _ = prscr.rough_table_of_integrals(s, fl=fl)

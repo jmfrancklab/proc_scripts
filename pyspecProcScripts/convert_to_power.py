@@ -7,6 +7,8 @@ from Instruments.logobj import logobj
 import datetime
 import re
 
+# TODO ☐: this is not going to work, because it doesn't have the info to
+#         get the structured array -- please see my notes on slack
 def convert_to_power(
     filename, exptype, s, fl=None
 ):
