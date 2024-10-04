@@ -7,6 +7,8 @@ from Instruments.logobj import logobj
 import datetime
 import re
 
+# TODO ☐: this is not going to work, because it doesn't have the info to
+#         get the structured array -- please see my notes on slack
 def convert_to_power(
     s, fl=None
 ):
@@ -100,6 +102,4 @@ def convert_to_power(
     #    the step
     # }}}
     return s, mean_power_vs_time 
-
-
 

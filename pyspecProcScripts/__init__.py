@@ -37,6 +37,7 @@ __all__ = [
     "apod_matched_filter",
     "calc_baseline",
     "center_echo",
+    "convert_to_power",
     "correl_align",
     "dBm2power",
     "decay",
@@ -63,5 +64,4 @@ __all__ = [
     "select_pathway",
     "slice_FID_from_echo",
     "zeroth_order_ph",
-    "convert_to_power",
 ]
