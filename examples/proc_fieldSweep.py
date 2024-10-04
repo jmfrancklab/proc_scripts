@@ -8,7 +8,6 @@ determine the resonance ratio of MHz/GHz.
 
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import os
 import numpy as np
 import matplotlib as mpl
 from numpy import r_
@@ -51,7 +50,6 @@ with psd.figlist_var() as fl:
         transform=ax4.transAxes,
     )
     c_poly = s.polyfit("indirect", 4)
-    # (delete when read) I realized we do this "finer axis" thing with the polynomials a lot, so I add the npts keyword in a new commit to pyspecdata
     forplot = s.eval_poly(c_poly, "indirect", npts=100)
     psd.plot(forplot, label="fit", ax=ax4)
     theroots = np.roots(
