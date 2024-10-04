@@ -15,11 +15,18 @@ import matplotlib.pyplot as plt
 data_target = os.path.normpath(psd.getDATADIR("WK_processed_data"))
 
 with psd.figlist_var() as fl:
-    thisfile, exptype, nodename = (
+    thisfile, exptype, nodename, log_nodename = (
         "240924_13p5mM_TEMPOL_ODNP_1.h5",
         "ODNP_NMR_comp/ODNP",
         "ODNP",
+        "log",
     )
+    s_log = psd.find_file(
+        thisfile,
+        exp_type=exptype,
+        expno=log_nodename,
+    )
+    s_log, poweraxis = prscr.convert_to_power(s_log, fl=fl)
     s = psd.find_file(
         thisfile,
         exp_type=exptype,
