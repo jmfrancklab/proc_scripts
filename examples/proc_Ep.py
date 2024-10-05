@@ -32,7 +32,6 @@ with psd.figlist_var() as fl:
     )
     orig_axis = s["indirect"]  # let's save this so we
     #                           can pass it to the log
-    s = prscr.convert_to_power(thisfile, exptype, s, fl=fl)
     s["indirect"] = s["indirect"]["start_times"]
     s.set_units("indirect", "s")
     s, _ = prscr.rough_table_of_integrals(s, fl=fl)
@@ -52,3 +51,8 @@ with psd.figlist_var() as fl:
         plt.FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=x)))
     )
     # }}}
+    # (delete when read) just note that I moved this to the end
+    s["indirect"] = orig_axis
+    s = prscr.convert_to_power(s, thisfile, exptype, fl=fl)
+    fl.next("normalized $E(p)$")
+    fl.plot(s, "o")
