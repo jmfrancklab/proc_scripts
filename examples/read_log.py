@@ -1,18 +1,17 @@
-from pyspecdata import *
 from pyspecProcScripts import logobj
+import pyspecdata as psd
 import h5py
-from matplotlib.pyplot import subplots
+import matplotlib.pyplot as plt
 from matplotlib.transforms import blended_transform_factory
-from numpy import log10
 import datetime
 
 coupler_atten = 22
-myfilename = search_filename(
+myfilename = psd.search_filename(
     "230626_batch230515_E37_Ras_B10_ODNP_1.h5",
     exp_type="ODNP_NMR_comp/ODNP",
     unique=True,
 )
-with figlist_var() as fl:
+with psd.figlist_var() as fl:
     # {{{ open h5 file to real log
     with h5py.File(myfilename, "r") as f:
         thislog = logobj.from_group(f["log"])
@@ -23,7 +22,7 @@ with figlist_var() as fl:
     thislog.total_log["time"] -= thislog.total_log["time"][0]
     # }}}
     # {{{ plot the output power and reflection
-    fig, (ax_Rx, ax_power) = subplots(2, 1, figsize=(10, 8))
+    fig, (ax_Rx, ax_power) = plt.subplots(2, 1, figsize=(10, 8))
     fl.next("log figure", fig=fig)
     ax_Rx.set_ylabel("Rx / mV")
     ax_Rx.set_xlabel("Time / ms")
