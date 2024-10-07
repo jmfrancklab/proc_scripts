@@ -16,7 +16,7 @@ data_target = os.path.normpath(psd.getDATADIR("WK_processed_data"))
 
 with psd.figlist_var() as fl:
     thisfile, exptype, nodename = (
-        "240705_13p5mM_TEMPOL_VTUprobe_ODNP_1.h5",
+        "240924_13p5mM_TEMPOL_ODNP_1.h5",
         "ODNP_NMR_comp/ODNP",
         "ODNP",
     )
