@@ -163,7 +163,6 @@ def rough_table_of_integrals(
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
     psd.plot(s, "-o", ax=ax4)
-    print(s)
     psd.gridandtick(plt.gca())
     ax4.set_title("table of integrals")
     # }}}

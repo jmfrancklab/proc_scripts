@@ -826,6 +826,12 @@ def proc_field_sweep_v2(s):
     return s
 
 
+def hack_field_sweep_v4(s, fl=None):
+    s["indirect"]["carrierFreq"][0] = (
+        s["indirect"]["Field"][0] * s.get_prop("acq_params")["gamma_eff_MHz_G"]
+    )
+    return proc_spincore_generalproc_v1(s, fl=fl)
+
 lookup_table = {
     "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,
     "ab_ir2h": proc_bruker_deut_IR_mancyc,
@@ -865,5 +871,5 @@ lookup_table = {
     "ESR_linewidth": proc_ESR,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
-    "field_sweep_v4": proc_spincore_generalproc_v1,
+    "field_sweep_v4": hack_field_sweep_v4,
 }
