@@ -1,8 +1,10 @@
 from pyspecdata import *
 from pyspecProcScripts import logobj
 import h5py
-from matplotlib.pyplot import subplots, blended_transform_factory
+from matplotlib.pyplot import subplots
+from matplotlib.transforms import blended_transform_factory
 from numpy import log10
+import datetime
 
 coupler_atten = 22
 myfilename = search_filename(
@@ -25,33 +27,44 @@ with figlist_var() as fl:
     fl.next("log figure", fig=fig)
     ax_Rx.set_ylabel("Rx / mV")
     ax_Rx.set_xlabel("Time / ms")
-    ax_Rx.plot(thislog.total_log['time'], thislog.total_log["Rx"], ".")
+    ax_Rx.plot(thislog.total_log["time"], thislog.total_log["Rx"], ".")
     ax_power.set_ylabel("power / W")
     ax_power.set_xlabel("Time / ms")
     ax_power.plot(
-        thislog.total_log['time'],
-        10 ** (thislog.total_log["power"] / 10 + 3 + coupler_atten / 10),
+        thislog.total_log["time"],
+        10 ** ((thislog.total_log["power"] + coupler_atten) / 10 + 3),
         ".",
     )
     # }}}
-    # {{{ Add a vertical line at the time the data acquisition for the
-    #     set power began
     mask = thislog.total_log["cmd"] != 0
     position = 0
+    npositions = 20
     for j, thisevent in enumerate(thislog.total_log[mask]):
-        ax_Rx.axvline(x=thisevent["time"], color='g', alpha=0.5)
-        ax_power.axvline(x=thisevent["time"], color='g', alpha=0.5)
-        # use 10 positions top to bottom
-        position = position % 10
-        ax_power.text(
-                s = thislog.log_dict[thisevent['cmd']],
+        # {{{ Add a vertical line at the time the data acquisition for the
+        #     set power began
+        event_name = thislog.log_dict[thisevent["cmd"]]
+        if event_name.lower().startswith("get_power"):
+            continue  # ignore "get power" commands
+        position = (
+            position % npositions
+        )  # use npositions positions top to bottom, then roll over
+        for thisax in [ax_Rx, ax_power]:
+            thisax.axvline(x=thisevent["time"], color="g", alpha=0.5)
+            thisax.text(
+                s=event_name,
                 x=thisevent["time"],
-                y=position,
+                y=0.1 + (0.9 - 0.1) * position / npositions,
                 transform=blended_transform_factory(
-                    ax_power.transData,
-                    ax_power.transAxes)
-                alpha=0.5
-                )
+                    thisax.transData, thisax.transAxes
+                ),
+                alpha=0.5,
+                color="g",
+                size=8,  # really tiny!
+            )
         position += 1
-    # }}}
+        # }}}
+    for thisax in [ax_Rx, ax_power]:
+        thisax.xaxis.set_major_formatter(
+            plt.FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=x)))
+        )
     plt.tight_layout()
