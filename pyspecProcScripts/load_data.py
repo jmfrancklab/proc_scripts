@@ -671,8 +671,8 @@ def proc_spincore_generalproc_v1(
         #            the amplitude of signal in a single transient if we do
         #            this
         s[j] = -s[j]/4 + 1 # invert (b/c of conj), convert to cyc and add 1 full cyc
+        s[j] %= 1
         s.sort(j)
-        s[j] *= 4
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
     # }}}
@@ -688,11 +688,9 @@ def proc_spincore_generalproc_v1(
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
         s["ph_overall"] = -s["ph_overall"]/4 + 1
+        s["ph_overall"] %= 1
         s.sort("ph_overall")
-        s["ph_overall"] *= 4
     # }}}
-    for k in s.get_prop("coherence_pathway"):
-        s.get_prop("coherence_pathway")[k] -= 1
     # {{{ apply the receiver response
     s.set_prop(
         "dig_filter",
