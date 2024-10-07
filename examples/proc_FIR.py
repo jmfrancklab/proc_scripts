@@ -26,7 +26,7 @@ with psd.figlist_var() as fl:
         prscr.lookup_table,
     )
     for nodename in [
-        #"FIR_noPower",
+        "FIR_noPower",
         "FIR_34dBm",
         ]:
         print(nodename)
@@ -41,7 +41,6 @@ with psd.figlist_var() as fl:
         clock_correction = True
         indirect = "vd"
         direct = "t2"
-        #if "nScans" in s.dimlabels:
         if clock_correction:
             # {{{ clock correction
             clock_corr = psd.nddata(np.linspace(-3, 3, 2500), "clock_corr")
@@ -69,24 +68,20 @@ with psd.figlist_var() as fl:
                 fl.next("after auto-clock correction")
                 fl.image(s)
             # }}}
-        print("shape of s ", psd.ndshape(s))
+        np.squeeze(s)
         s,_ = prscr.rough_table_of_integrals(s, fl=fl)
-        s_int = s.C
+        s_int = s.C.mean("nScans")
+        print(s_int)
         thiscolor = next(color_cycle)
         Mi,R1,vd = sympy.symbols("M_inf R_1 vd",real=True)
         psd.logger.debug(psd.strm("acq keys",s.get_prop('acq_params')))
         W = (s.get_prop('acq_params')['FIR_rep']*1e-6
                 +
                 s.get_prop('acq_params')['acq_time_ms']*1e-3)
-        print(W)
         functional_form = Mi*(1-(2-sympy.exp(-W*R1))*sympy.exp(-vd*R1))
         IR_data = psd.nddata(s_int.C.data,['vd'])
         IR_data.setaxis('vd',s_int.getaxis('vd'))
-        np.squeeze(IR_data)
         f = psd.lmfitdata(IR_data)
-        print("shape of IR_data", psd.ndshape(IR_data))
-        print("f is ", f)
-        print("shape of f is ", psd.ndshape(f))
         f.functional_form = functional_form
         f.set_guess(
                 M_inf = dict(value=3.9e4, min=0, max=2e7),
