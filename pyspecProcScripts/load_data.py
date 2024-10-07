@@ -665,8 +665,7 @@ def proc_spincore_generalproc_v1(
     s, direct="t2", include_tau_sub=True, fl=None
 ):
     s.fromaxis(direct).run(np.conj)  # SC flips data in a weird way, this
-    s
-    #             corrects for that
+    #                                  corrects for that
     if include_tau_sub:
         if "tau_us" in s.get_prop("acq_params").keys():
             s[direct] -= s.get_prop("acq_params")["tau_us"] * 1e-6
