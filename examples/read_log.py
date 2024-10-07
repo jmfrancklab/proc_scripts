@@ -28,11 +28,14 @@ with figlist_var() as fl:
     ax_Rx.set_ylabel("Rx / mV")
     ax_Rx.set_xlabel("Time / ms")
     ax_Rx.plot(thislog.total_log["time"], thislog.total_log["Rx"], ".")
-    ax_power.set_ylabel("power / W")
+    ax_power.set_ylabel("power / dBm")
     ax_power.set_xlabel("Time / ms")
     ax_power.plot(
         thislog.total_log["time"],
-        10 ** ((thislog.total_log["power"] + coupler_atten) / 10 + 3),
+        10
+        ** (
+            (thislog.total_log["power"] + coupler_atten) / 10 - 3
+        ),  # -3 for mW to W
         ".",
     )
     # }}}
