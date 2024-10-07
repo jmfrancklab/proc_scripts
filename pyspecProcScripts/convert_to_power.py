@@ -69,7 +69,7 @@ def convert_to_power(s, filename, exp_type, fl=None, node_name="log"):
         )
         .set_units("time", "s")
     )
-    # TODO ☐: these are the power readings on the gigatronics.  They
+    # TODO ☑: these are the power readings on the gigatronics.  They
     # need to be converted to actual powers by adding in a constant dB
     # value that represents our directional coupler and the associated
     # losses.  This number is about (but not exactly) 20.  Alex should
