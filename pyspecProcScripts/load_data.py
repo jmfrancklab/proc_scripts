@@ -670,8 +670,11 @@ def proc_spincore_generalproc_v1(
         #            coordinates, signal in the coherence dimension will match
         #            the amplitude of signal in a single transient if we do
         #            this
-        s[j] = -s[j]/4 + 1 # invert (b/c of conj), convert to cyc and add 1 full cyc
+        s[j] = (
+            -s[j] / 4 + 1
+        )  # invert (b/c of conj), convert to cyc and add 1 full cyc
         s[j] %= 1
+        s[j] *= 4  # back to rad
         s.sort(j)
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
@@ -687,8 +690,9 @@ def proc_spincore_generalproc_v1(
     #     should be nothing outside that
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
-        s["ph_overall"] = -s["ph_overall"]/4 + 1
+        s["ph_overall"] = -s["ph_overall"] / 4 + 1
         s["ph_overall"] %= 1
+        s["ph_overall"] *= 4
         s.sort("ph_overall")
     # }}}
     # {{{ apply the receiver response
@@ -853,8 +857,9 @@ lookup_table = {
     "proc_Hahn_echoph": proc_Hahn_echoph,
     "spincore_FID_nutation_v1": proc_FID_v1,
     "spincore_FID_nutation_v2": proc_FID_v1,
-    "spincore_general": lambda s: proc_spincore_generalproc_v1(s,
-        include_tau_sub=False, direct="t"),
+    "spincore_general": lambda s: proc_spincore_generalproc_v1(
+        s, include_tau_sub=False, direct="t"
+    ),
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_IR_v3": proc_spincore_generalproc_v1,
