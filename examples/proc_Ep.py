@@ -16,7 +16,7 @@ data_target = os.path.normpath(psd.getDATADIR("WK_processed_data"))
 
 with psd.figlist_var() as fl:
     thisfile, exptype, nodename = (
-        "240924_13p5mM_TEMPOL_ODNP_1.h5",
+        "240705_13p5mM_TEMPOL_VTUprobe_ODNP_1.h5",
         "ODNP_NMR_comp/ODNP",
         "ODNP",
     )
@@ -51,7 +51,6 @@ with psd.figlist_var() as fl:
         plt.FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=x)))
     )
     # }}}
-    # (delete when read) just note that I moved this to the end
     s["indirect"] = orig_axis
     s = prscr.convert_to_power(s, thisfile, exptype, fl=fl)
     fl.next("normalized $E(p)$")
