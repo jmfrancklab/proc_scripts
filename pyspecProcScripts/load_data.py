@@ -323,11 +323,6 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
     return s
 
 
-def proc_spincore_general_v1(s, fl=None):
-    s = proc_spincore_generalproc_v1(s, include_tau_sub=False, direct="t")
-    return s
-
-
 def proc_Hahn_echoph(s, fl=None):
     logging.debug("loading pre-processing for Hahn_echoph")
     s.reorder("t", first=True)
@@ -664,7 +659,7 @@ def proc_spincore_ODNP_v4(s, fl=None):
 def proc_spincore_generalproc_v1(
     s, direct="t2", include_tau_sub=True, fl=None
 ):
-    s.fromaxis(direct).run(np.conj)  # SC flips data in a weird way, this
+    s.run(np.conj)  # SC flips data in a weird way, this
     #                                  corrects for that
     if include_tau_sub:
         if "tau_us" in s.get_prop("acq_params").keys():
@@ -675,6 +670,9 @@ def proc_spincore_generalproc_v1(
         #            coordinates, signal in the coherence dimension will match
         #            the amplitude of signal in a single transient if we do
         #            this
+        s[j] = -s[j]/4 + 1 # invert (b/c of conj), convert to cyc and add 1 full cyc
+        s.sort(j)
+        s[j] *= 4
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
     # }}}
@@ -689,7 +687,12 @@ def proc_spincore_generalproc_v1(
     #     should be nothing outside that
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
+        s["ph_overall"] = -s["ph_overall"]/4 + 1
+        s.sort("ph_overall")
+        s["ph_overall"] *= 4
     # }}}
+    for k in s.get_prop("coherence_pathway"):
+        s.get_prop("coherence_pathway")[k] -= 1
     # {{{ apply the receiver response
     s.set_prop(
         "dig_filter",
@@ -852,7 +855,8 @@ lookup_table = {
     "proc_Hahn_echoph": proc_Hahn_echoph,
     "spincore_FID_nutation_v1": proc_FID_v1,
     "spincore_FID_nutation_v2": proc_FID_v1,
-    "spincore_general": proc_spincore_general_v1,
+    "spincore_general": lambda s: proc_spincore_generalproc_v1(s,
+        include_tau_sub=False, direct="t"),
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
     "spincore_IR_v3": proc_spincore_generalproc_v1,
