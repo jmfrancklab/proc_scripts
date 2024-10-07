@@ -9,7 +9,14 @@ import pyspecProcScripts as prscr
 import pyspecdata as psd
 from Instruments.logobj import logobj
 import numpy as np
+import sympy
 import matplotlib.pyplot as plt
+from itertools import cycle
+
+color_cycle = cycle(['red','orange','yellow','green','cyan','blue','purple','magenta',
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2',
+    '#7f7f7f', '#bcbd22', '#17becf'])
+T1_list = []
 
 with psd.figlist_var() as fl:
     thisfile, exptype, post_proc, lookup = (
@@ -19,7 +26,7 @@ with psd.figlist_var() as fl:
         prscr.lookup_table,
     )
     for nodename in [
-        "FIR_noPower",
+        #"FIR_noPower",
         "FIR_34dBm",
         ]:
         print(nodename)
@@ -34,6 +41,7 @@ with psd.figlist_var() as fl:
         clock_correction = True
         indirect = "vd"
         direct = "t2"
+        #if "nScans" in s.dimlabels:
         if clock_correction:
             # {{{ clock correction
             clock_corr = psd.nddata(np.linspace(-3, 3, 2500), "clock_corr")
@@ -61,4 +69,42 @@ with psd.figlist_var() as fl:
                 fl.next("after auto-clock correction")
                 fl.image(s)
             # }}}
-        prscr.rough_table_of_integrals(s, fl=fl)
+        print("shape of s ", psd.ndshape(s))
+        s,_ = prscr.rough_table_of_integrals(s, fl=fl)
+        s_int = s.C
+        thiscolor = next(color_cycle)
+        Mi,R1,vd = sympy.symbols("M_inf R_1 vd",real=True)
+        psd.logger.debug(psd.strm("acq keys",s.get_prop('acq_params')))
+        W = (s.get_prop('acq_params')['FIR_rep']*1e-6
+                +
+                s.get_prop('acq_params')['acq_time_ms']*1e-3)
+        print(W)
+        functional_form = Mi*(1-(2-sympy.exp(-W*R1))*sympy.exp(-vd*R1))
+        IR_data = psd.nddata(s_int.C.data,['vd'])
+        IR_data.setaxis('vd',s_int.getaxis('vd'))
+        np.squeeze(IR_data)
+        f = psd.lmfitdata(IR_data)
+        print("shape of IR_data", psd.ndshape(IR_data))
+        print("f is ", f)
+        print("shape of f is ", psd.ndshape(f))
+        f.functional_form = functional_form
+        f.set_guess(
+                M_inf = dict(value=3.9e4, min=0, max=2e7),
+                R_1 = dict(value=0.8, min=0.01, max=100)
+                )
+        fl.next('IR fit - before norm')
+        fl.plot(s_int, 'o', color=thiscolor, label='%s'%nodename)
+        f.fit()
+        T1 = 1./f.output('R_1')
+        Mi = f.output('M_inf')
+        T1_list.append(T1)
+        f.set_units('vd','s')
+        fit = f.eval(100)
+        fl.plot(fit, ls = '-', color=thiscolor,alpha=0.5,
+                label = 'fit for %s'%nodename)
+        fl.next('IR fit - before norm - %s'%nodename)
+        fl.plot(s_int, 'o', color=thiscolor, label='%s'%nodename)
+        fl.plot(fit, ls = '-', color=thiscolor,alpha=0.5,
+                label = 'fit for %s'%nodename)
+        ax=plt.gca()
+        
