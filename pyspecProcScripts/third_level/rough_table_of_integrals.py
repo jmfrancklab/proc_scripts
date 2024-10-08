@@ -22,6 +22,7 @@ def rough_table_of_integrals(
     direct="t2",
     expansion=2,
     peak_lower_thresh=0.1,
+    inc_plot_color=True,
 ):
     """manipulate s to generate a table of integrals
     (with only rough alignment)
@@ -64,6 +65,9 @@ def rough_table_of_integrals(
         Expand peakrange about its center by this much.
     peak_lower_thresh: float
         passed to :func:`find_peakrange`
+    inc_plot_color: boolean
+        assume that we are processing multiple datasets, and want to increment
+        the color counter with every run of this function.
 
     Returns
     =======
@@ -162,7 +166,9 @@ def rough_table_of_integrals(
     )
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
-    psd.plot(s, "-o", ax=ax4)
+    if inc_plot_color:
+        s.set_plot_color_next()
+    psd.plot(s, "o", ax=ax4)
     psd.gridandtick(plt.gca())
     ax4.set_title("table of integrals")
     # }}}
