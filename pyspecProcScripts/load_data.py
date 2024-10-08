@@ -387,6 +387,7 @@ def hack_spincore_IR_v3(s, fl=None):
     "v3 has an incorrectly stored coherence pathway"
     proc_spincore_generalproc_v1(s, fl=fl)
     s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
+    s.set_units("vd", "s")
     return s
 
 
