@@ -20,10 +20,6 @@ with psd.figlist_var() as fl:
         "ODNP_NMR_comp/ODNP",
         "ODNP",
     )
-    # TODO ☑: it complains about the following, as it should,
-    #         because it's not an nddata.  This is why
-    #         I was saying you will want to pass the
-    #         filename and node name to your function.
     s = psd.find_file(
         thisfile,
         exp_type=exptype,
