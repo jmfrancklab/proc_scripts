@@ -93,7 +93,6 @@ with psd.figlist_var() as fl:
                 alpha=0.5,
                 label="fit for %s" % nodename,
             )
-
             ax = plt.gca()
 # I'm not printing anything for 'T1 = ?' as desired in the list of goals, what
 # should I be printing? T1 at s.max()?
