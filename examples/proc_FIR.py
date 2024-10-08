@@ -11,10 +11,24 @@ import pyspecProcScripts as prscr
 import pyspecdata as psd
 import sympy
 import matplotlib.pyplot as plt
+import numpy as np
 
-T1_list = []
 clock_correction = True
 plot_fit = True
+thisfile, exptype, post_proc, lookup = (
+    "240924_13p5mM_TEMPOL_ODNP_1.h5",
+    "ODNP_NMR_comp/ODNP",
+    "spincore_IR_v3",
+    prscr.lookup_table,
+)
+R1nodenames = [
+    "FIR_noPower",
+    "FIR_34dBm",
+]
+# Because we are going ot want to get both R1 fit values as well as the
+# associated errors, we collect the results in an nddata rather than
+# just e.g. a list
+R1data = psd.ndshape([("power", len(R1nodenames))]).alloc(dtype=np.float64)
 # TODO ☐: to directly answer your question, the thing you get from
 #         matplotlib isn't a cycle, but a "cycler", which is different.
 #         You need to feed it to "cycle" from "itertools" in order to
@@ -26,16 +40,7 @@ plot_fit = True
 #         axvline, etc) with `s.get_plot_color()`
 
 with psd.figlist_var() as fl:
-    thisfile, exptype, post_proc, lookup = (
-        "240924_13p5mM_TEMPOL_ODNP_1.h5",
-        "ODNP_NMR_comp/ODNP",
-        "spincore_IR_v3",
-        prscr.lookup_table,
-    )
-    for nodename in [
-        "FIR_noPower",
-        "FIR_34dBm",
-    ]:
+    for j, nodename in enumerate(R1nodenames):
         fl.basename = nodename  # this is a good example of how we can
         #                         use basename to make it easy to deal
         #                         with multiple datasets
@@ -73,19 +78,15 @@ with psd.figlist_var() as fl:
             R_1=dict(value=0.8, min=0.01, max=100),
         )
         s.fit()
-        print(s.get_units("vd"))
         s_fit = s.eval(200)
-        print(s_fit.get_units("vd"))
         psd.plot(s_fit, ax=ax_last, alpha=0.5)  # here, we plot the fit
         #                                         together with the
         #                                         table of integrals.
         if plot_fit:  # JF has not reviewed this -- needs to be re-written
             #       consistently w/ above.  Stuff that's not used can
             #       just be removed
-            T1 = 1.0 / s.output("R_1")
+            R1data["power", j] = s.output("R_1")
             Mi = s.output("M_inf")
-            T1_list.append(T1)
-            s_fit.set_units("vd", "s")
             fit = s.eval(100)
             fit.set_plot_color(s_fit.get_plot_color())
             fl.basename = None  # because we want the following plot to

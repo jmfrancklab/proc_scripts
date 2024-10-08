@@ -38,7 +38,8 @@ def clock_correct(s, fl=None):
         fl.next("clock correction")
         fl.plot(s_clock, ".", alpha=0.7)
     clock_corr = s_clock.argmax("clock_corr").item()
-    plt.axvline(x=clock_corr, alpha=0.5, color="r")
+    if fl is not None:
+        plt.axvline(x=clock_corr, alpha=0.5, color="r")
     s *= np.exp(-1j * clock_corr * s.fromaxis("vd"))
     s.ft(phase_dims)
     if fl is not None:
