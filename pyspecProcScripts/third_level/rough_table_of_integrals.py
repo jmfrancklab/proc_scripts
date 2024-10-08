@@ -168,10 +168,10 @@ def rough_table_of_integrals(
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
     if inc_plot_color:
         s.set_plot_color_next()
+    if "nScans" in s.dimlabels:
+        s.mean("nScans")
     psd.plot(s, "o", ax=ax4)
     psd.gridandtick(plt.gca())
     ax4.set_title("table of integrals")
-    if "nScans" in s.dimlabels:
-        s.mean("nScans")
     # }}}
     return s, ax4

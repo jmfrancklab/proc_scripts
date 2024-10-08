@@ -15,16 +15,15 @@ import matplotlib.pyplot as plt
 T1_list = []
 clock_correction = True
 plot_fit = True
-# I'm using the color cycle for more plots than just those made by
-# rough_table_of_integrals, I don't have this iterating correctly though
-prop_cycle = plt.rcParams["axes.prop_cycle"]
-color_cycle = prop_cycle.by_key()["color"]
-thiscolor = next(iter(color_cycle))
-
-# should I be using something like this instead?
-# colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-# colorcyc = cycle(colorcyc_list)
-
+# TODO ☐: to directly answer your question, the thing you get from
+#         matplotlib isn't a cycle, but a "cycler", which is different.
+#         You need to feed it to "cycle" from "itertools" in order to
+#         make it into a "cycle" and be able to use "next" on it.
+#         BUT you should't do that, anyways.  The nddata object that
+#         comes out of rough_table_of_integrals will always plot with
+#         the same color (as will copies of it).  You can also get the
+#         color of that object (e.g. for use in an unrelated dataset
+#         axvline, etc) with `s.get_plot_color()`
 
 with psd.figlist_var() as fl:
     thisfile, exptype, post_proc, lookup = (
@@ -38,8 +37,8 @@ with psd.figlist_var() as fl:
         "FIR_34dBm",
     ]:
         fl.basename = nodename  # this is a good example of how we can
-        #                        use basename to make it easy to deal
-        #                        with multiple datasets
+        #                         use basename to make it easy to deal
+        #                         with multiple datasets
         s = psd.find_file(
             thisfile,
             exp_type=exptype,
@@ -50,9 +49,8 @@ with psd.figlist_var() as fl:
         indirect = "vd"
         direct = "t2"
         if clock_correction:
-            # {{{ clock correction
-            s = prscr.clock_correct(s, fl=fl)
-            # }}}
+            s = prscr.clock_correct(s)
+        # TODO ☐: why do you return dropped?
         s, dropped_dims = s.squeeze(return_dropped=True)
         s, ax_last = prscr.rough_table_of_integrals(s, fl=fl)
         # Included signal averaging in rough_table_of_integrals
@@ -67,14 +65,20 @@ with psd.figlist_var() as fl:
             1 - (2 - sympy.exp(-W * R1)) * sympy.exp(-vd * R1)
         )
         s.set_guess(
-            M_inf=dict(value=s.max().item(), min=0, max=1.5 * s.max().item()),
+            M_inf=dict(
+                value=s.max().item(),
+                min=0.1 * s.max().item(),
+                max=1.5 * s.max().item(),
+            ),
             R_1=dict(value=0.8, min=0.01, max=100),
         )
         s.fit()
+        print(s.get_units("vd"))
         s_fit = s.eval(200)
+        print(s_fit.get_units("vd"))
         psd.plot(s_fit, ax=ax_last, alpha=0.5)  # here, we plot the fit
-        #                                       together with the table of
-        #                                       integrals.
+        #                                         together with the
+        #                                         table of integrals.
         if plot_fit:  # JF has not reviewed this -- needs to be re-written
             #       consistently w/ above.  Stuff that's not used can
             #       just be removed
@@ -84,15 +88,19 @@ with psd.figlist_var() as fl:
             s_fit.set_units("vd", "s")
             fit = s.eval(100)
             fit.set_plot_color(s_fit.get_plot_color())
-            fl.next("IR fit - normalized - %s" % nodename)
-            fl.plot(s / Mi, "o", color=thiscolor, label=nodename)
+            fl.basename = None  # because we want the following plot to
+            #                    show up together
+            fl.next("IR fit - normalized")
+            fl.plot(s / Mi, "o", label=nodename)
             fl.plot(
                 fit / Mi,
                 ls="-",
-                color=thiscolor,
                 alpha=0.5,
                 label="fit for %s" % nodename,
             )
             ax = plt.gca()
 # I'm not printing anything for 'T1 = ?' as desired in the list of goals, what
 # should I be printing? T1 at s.max()?
+# TODO ☐: pyspecdata gives an example of how to show the fit equation on
+#         the plot (fit_fake_data.py).  I would do that on the bottom
+#         right plot of the table of integrals.
