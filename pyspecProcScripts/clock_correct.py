@@ -3,15 +3,16 @@ import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def clock_correct(s, fl=None):
-    """ Do clock correction
-    
+    """Do clock correction
+
     Parameters
     ==========
     s:
 
     fl: figlist_var()
-    
+
     Returns
     ==========
     s:

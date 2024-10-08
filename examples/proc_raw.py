@@ -26,8 +26,7 @@ ODNP_NMR_comp/field_dependent``
 ``py proc_raw.py FIR_34dBm K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
 
 """
-from pyspecProcScripts.load_data import lookup_table
-from pyspecProcScripts import select_pathway
+import pyspecProcScripts as prscr
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
@@ -41,7 +40,8 @@ colorcyc = cycle(colorcyc_list)
 
 assert len(sys.argv) == 4
 d = psd.find_file(
-    sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table
+    sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1],
+    lookup=prscr.lookup_table
 )
 print("postproc_type:", d.get_prop("postproc_type"))
 with psd.figlist_var() as fl:
