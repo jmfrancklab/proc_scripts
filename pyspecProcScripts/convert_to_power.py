@@ -69,11 +69,6 @@ def convert_to_power(s, filename, exp_type, fl=None, node_name="log"):
         )
         .set_units("time", "s")
     )
-    # TODO ☑: these are the power readings on the gigatronics.  They
-    # need to be converted to actual powers by adding in a constant dB
-    # value that represents our directional coupler and the associated
-    # losses.  This number is about (but not exactly) 20.  Alex should
-    # be able to tell you what it is.
     log_vs_time = prscr.dBm2power(log_vs_time + 22)
     log_vs_time.set_units("W")
     if fl:  # checks that fl is not None
