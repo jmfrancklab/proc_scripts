@@ -1,5 +1,4 @@
 "These are simple utility functions"
-
 import numpy as np
 
 
@@ -11,7 +10,7 @@ def dBm2power(dBm):
 
 
 def power2dBm(power):
-    "convert from dBm to W"
+    "convert from W to dBm"
     if type(power) is not np.ndarray:
         power = np.array(power)
     return np.log10(power) * 10 + 30
