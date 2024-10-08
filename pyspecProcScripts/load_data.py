@@ -382,10 +382,11 @@ def proc_spincore_IR_v2(s, fl=None):
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
     return s
 
+
 def hack_spincore_IR_v3(s, fl=None):
     "v3 has an incorrectly stored coherence pathway"
     proc_spincore_generalproc_v1(s, fl=fl)
-    s.set_prop("coherence_pathway", {'ph1':0,'ph2':+1})
+    s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
     return s
 
 
@@ -674,7 +675,7 @@ def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
         #            this
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
-    neworder.sort() # it's confusing if the pulses don't come in order
+    neworder.sort()  # it's confusing if the pulses don't come in order
     # }}}
     # {{{ reorder the rest based on size
     nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
@@ -831,6 +832,7 @@ def hack_field_sweep_v4(s, fl=None):
         s["indirect"]["Field"][0] * s.get_prop("acq_params")["gamma_eff_MHz_G"]
     )
     return proc_spincore_generalproc_v1(s, fl=fl)
+
 
 lookup_table = {
     "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,

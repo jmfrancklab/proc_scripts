@@ -1,7 +1,7 @@
 """
 Process FIR experiment 
 ====================================================
-Opens .h5 results file, uses rough_table_of_integrals() to roughly process
+Opens .h5 results file, uses :func:`rough_table_of_integrals` to roughly process
 dataset including generating a table of integrals
 """
 
@@ -13,28 +13,6 @@ import sympy
 import matplotlib.pyplot as plt
 from itertools import cycle
 
-color_cycle = cycle(
-    [
-        "red",
-        "orange",
-        "yellow",
-        "green",
-        "cyan",
-        "blue",
-        "purple",
-        "magenta",
-        "#1f77b4",
-        "#ff7f0e",
-        "#2ca02c",
-        "#d62728",
-        "#9467bd",
-        "#8c564b",
-        "#e377c2",
-        "#7f7f7f",
-        "#bcbd22",
-        "#17becf",
-    ]
-)
 T1_list = []
 
 with psd.figlist_var() as fl:
@@ -96,7 +74,7 @@ with psd.figlist_var() as fl:
         else:
             s_int = s.C
         print(s_int)
-        thiscolor = next(color_cycle)
+        s.set_plot_color_next()
         Mi, R1, vd = sympy.symbols("M_inf R_1 vd", real=True)
         psd.logger.debug(psd.strm("acq keys", s.get_prop("acq_params")))
         W = (
@@ -115,7 +93,7 @@ with psd.figlist_var() as fl:
             R_1=dict(value=0.8, min=0.01, max=100),
         )
         fl.next("IR fit - before norm")
-        fl.plot(s_int, "o", color=thiscolor, label="%s" % nodename)
+        fl.plot(s_int, "o", label="%s" % nodename)
         f.fit()
         T1 = 1.0 / f.output("R_1")
         Mi = f.output("M_inf")
@@ -125,16 +103,14 @@ with psd.figlist_var() as fl:
         fl.plot(
             fit,
             ls="-",
-            color=thiscolor,
             alpha=0.5,
             label="fit for %s" % nodename,
         )
         fl.next("IR fit - before norm - %s" % nodename)
-        fl.plot(s_int, "o", color=thiscolor, label="%s" % nodename)
+        fl.plot(s_int, "o", label="%s" % nodename)
         fl.plot(
             fit,
             ls="-",
-            color=thiscolor,
             alpha=0.5,
             label="fit for %s" % nodename,
         )

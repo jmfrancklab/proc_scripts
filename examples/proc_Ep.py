@@ -51,4 +51,3 @@ with psd.figlist_var() as fl:
     s = prscr.convert_to_power(s, thisfile, exptype, fl=fl)
     fl.next("normalized $E(p)$")
     fl.plot(s, "o")
-
