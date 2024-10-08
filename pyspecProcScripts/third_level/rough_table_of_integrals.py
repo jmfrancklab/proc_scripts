@@ -171,5 +171,7 @@ def rough_table_of_integrals(
     psd.plot(s, "o", ax=ax4)
     psd.gridandtick(plt.gca())
     ax4.set_title("table of integrals")
+    if "nScans" in s.dimlabels:
+        s.mean("nScans")
     # }}}
     return s, ax4
