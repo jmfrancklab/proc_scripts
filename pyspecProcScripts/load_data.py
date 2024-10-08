@@ -660,22 +660,39 @@ def proc_spincore_generalproc_v1(
     s, direct="t2", include_tau_sub=True, fl=None
 ):
     s.run(np.conj)  # SC flips data in a weird way, this
-    #                                  corrects for that
+    #                 corrects for that
     if include_tau_sub:
         if "tau_us" in s.get_prop("acq_params").keys():
             s[direct] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.ft(direct, shift=True)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
+        # TODO ☐: I wrote the message below, then I realized that you
+        # were doing this in the wrong place!
+        s[j] = ((-s[j] + 4) % 4) / 4 # when we take the complex conjugate,
+        #                              that changes the phase of the
+        #                              phase cycle, as well, so we have
+        #                              to re-label the axis coordinates
+        #                              for the phase cycle to the
+        #                              negative of what they were
+        #                              before.  To keep things sane, we
+        #                              also apply phase wrapping to get
+        #                              positive numbers.
+        s.sort(j)
         s.ft([j])  # if we have used cycles for the axis
         #            coordinates, signal in the coherence dimension will match
         #            the amplitude of signal in a single transient if we do
         #            this
-        s[j] = (
-            -s[j] / 4 + 1
-        )  # invert (b/c of conj), convert to cyc and add 1 full cyc
-        s[j] %= 1
-        s[j] *= 4  # back to rad
-        s.sort(j)
+        # TODO ☐: (just remove the todos when complete) the following is
+        # equivalent to what you have before.
+        # *HOWEVER* you seem to think that this is in radians.  It is not
+        # -- it's in units of quarter cycles, which is weird.
+        # If you look at the DCCT paper, you will see that we say that the
+        # units of phase here should be in units of cycles (which is this
+        # divided by four).
+        # Also, if you look at other postproc methods here, we are always
+        # doing that.  So I don't understand why you are doing this this
+        # way.
+        # s[j] = (-s[j] + 4) % 4
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
     # }}}
@@ -690,10 +707,6 @@ def proc_spincore_generalproc_v1(
     #     should be nothing outside that
     if "ph_overall" in s.dimlabels:
         s.reorder("ph_overall")
-        s["ph_overall"] = -s["ph_overall"] / 4 + 1
-        s["ph_overall"] %= 1
-        s["ph_overall"] *= 4
-        s.sort("ph_overall")
     # }}}
     # {{{ apply the receiver response
     s.set_prop(
