@@ -16,6 +16,7 @@ import pyspecProcScripts as prscr
 import sympy as sp
 import sys
 from numpy import r_
+import numpy as np
 
 slice_expansion = 5
 assert len(sys.argv) == 4
@@ -25,7 +26,7 @@ s = psd.find_file(
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
 )
-print("using postproc type",s.get_prop("postproc_type"))
+print("using postproc type", s.get_prop("postproc_type"))
 with psd.figlist_var() as fl:
     frq_center, frq_half = prscr.find_peakrange(s, fl=fl)
     signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
@@ -35,6 +36,7 @@ with psd.figlist_var() as fl:
         "g"
     )  # this affects the 1D plots, but not the images, etc.
     # {{{ generate the table of integrals and fit
+    print("1", s.get_units("beta"))
     s, ax_last = prscr.rough_table_of_integrals(
         s, signal_range, fl=fl, title=sys.argv[2], echo_like=False
     )
@@ -43,6 +45,7 @@ with psd.figlist_var() as fl:
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
     )
+    prefactor = 10 ** psd.det_unit_prefactor(s.get_units("beta"))
     s.set_guess(
         A=dict(
             value=s.data.max(),
@@ -50,7 +53,9 @@ with psd.figlist_var() as fl:
             max=s.data.max() * 1.5,
         ),
         R=dict(value=1e3, min=0, max=3e4),
-        beta_ninety=dict(value=20e-6, min=0, max=1000e-6),
+        beta_ninety=dict(
+            value=20e-6 / prefactor, min=0, max=1000e-6 / prefactor
+        ),
     )
     s.fit()
     # }}}
@@ -58,12 +63,15 @@ with psd.figlist_var() as fl:
     fit = s.eval(500)
     fl.plot(fit, ax=ax_last)
     ax_last.set_title("Integrated and fit")
-    beta_90 = s.output("beta_ninety")
-    ax_last.axvline(beta_90 / 1e-6, color="b")
+    beta_90 = s.output("beta_ninety")  # because we allow
+    #                                   rough_table_of_integrals to convert to
+    #                                   human units (with prefactors), this
+    #                                   will be in human units
+    ax_last.axvline(beta_90, color="b")
     ax_last.text(
-        beta_90 / 1e-6 + 5,
+        beta_90 + 5,
         5e4,
-        r"$\beta_{90} = %f\ \mathrm{μs \sqrt{W}}$" % (beta_90 / 1e-6),
+        r"$\beta_{90} = %0.1f\ \mathrm{μs \sqrt{W}}$" % beta_90,
         color="b",
     )
     # }}}
