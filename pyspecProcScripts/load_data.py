@@ -666,15 +666,26 @@ def proc_spincore_generalproc_v1(
             s[direct] -= s.get_prop("acq_params")["tau_us"] * 1e-6
     s.ft(direct, shift=True)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
-        s[j] = ((-s[j] + 1) % 1) # when we take the complex conjugate,
-        #                              that changes the phase of the
-        #                              phase cycle, as well, so we have
-        #                              to re-label the axis coordinates
-        #                              for the phase cycle to the
-        #                              negative of what they were
-        #                              before.  To keep things sane, we
-        #                              also apply phase wrapping to get
-        #                              positive numbers.
+        dph = s[j][1] - s[j][0]
+        Dph = s[j][-1] + dph - s[j][0]
+        if Dph == 1:
+            s[j] = (-s[j] + 1) % 1  # when we take the complex
+            #                          conjugate, that changes the phase
+            #                          of the phase cycle, as well, so
+            #                          we have to re-label the axis
+            #                          coordinates for the phase cycle
+            #                          to the negative of what they were
+            #                          before.  To keep things sane, we
+            #                          also apply phase wrapping to get
+            #                          positive numbers.
+        elif Dph == 4:  # uses units of quarter cycle
+            s[j] = (-s[j] + 4) % 4
+        else:
+            raise ValueError(
+                "the phase cycling dimension "
+                + j
+                + " appears not to go all the way around the circle!"
+            )
         s.sort(j)
         s.ft([j])  # if we have used cycles for the axis
         #            coordinates, signal in the coherence dimension will match

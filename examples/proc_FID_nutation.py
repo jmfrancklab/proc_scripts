@@ -25,6 +25,7 @@ s = psd.find_file(
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
 )
+print("using postproc type",s.get_prop("postproc_type"))
 with psd.figlist_var() as fl:
     frq_center, frq_half = prscr.find_peakrange(s, fl=fl)
     signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
