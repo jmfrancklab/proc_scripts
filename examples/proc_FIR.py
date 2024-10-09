@@ -104,6 +104,4 @@ with psd.figlist_var() as fl:
             ax = plt.gca()
 # I'm not printing anything for 'T1 = ?' as desired in the list of goals, what
 # should I be printing? T1 at s.max()?
-# TODO ☐: pyspecdata gives an example of how to show the fit equation on
-#         the plot (fit_fake_data.py).  I would do that on the bottom
-#         right plot of the table of integrals.
+
