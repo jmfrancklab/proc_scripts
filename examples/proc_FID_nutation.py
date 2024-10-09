@@ -3,20 +3,23 @@ Process FID nutation data
 ====================
 `py proc_FID_nutation.py NODENAME FILENAME EXP_TYPE`
 
-Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
-This script plots the result as well as examines the phase variation along the indirect dimension.
-Finally the data is integrated and fit to a sin function to find the optimal :math:`\\beta_{90}`.
+Fourier transforms (and any needed data corrections for older data) are
+performed according to the `postproc_type` attribute of the data node.
+This script plots the result as well as examines the phase variation along the
+indirect dimension.
+Finally the data is integrated and fit to a sin function to find the optimal
+:math:`\\beta_{90}`.
 
 Tested with:
 
-``py proc_FID_nutation.py FID_nutation_1 240805_amp0p1_27mM_TEMPOL_FID_nutation.h5 ODNP_NMR_comp/nutation``
+``py proc_FID_nutation.py FID_nutation_1 240805_amp0p1_27mM_TEMPOL_FID_nutat\
+        ion.h5 ODNP_NMR_comp/nutation``
 """
 import pyspecdata as psd
 import pyspecProcScripts as prscr
 import sympy as sp
 import sys
 from numpy import r_
-import numpy as np
 
 slice_expansion = 5
 assert len(sys.argv) == 4
@@ -36,7 +39,6 @@ with psd.figlist_var() as fl:
         "g"
     )  # this affects the 1D plots, but not the images, etc.
     # {{{ generate the table of integrals and fit
-    print("1", s.get_units("beta"))
     s, ax_last = prscr.rough_table_of_integrals(
         s, signal_range, fl=fl, title=sys.argv[2], echo_like=False
     )
