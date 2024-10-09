@@ -3,13 +3,17 @@ Process FID nutation data
 ====================
 `py proc_FID_nutation.py NODENAME FILENAME EXP_TYPE`
 
-Fourier transforms (and any needed data corrections for older data) are performed according to the `postproc_type` attribute of the data node.
-This script plots the result as well as examines the phase variation along the indirect dimension.
-Finally the data is integrated and fit to a sin function to find the optimal :math:`\\beta_{90}`.
+Fourier transforms (and any needed data corrections for older data) are
+performed according to the `postproc_type` attribute of the data node.
+This script plots the result as well as examines the phase variation along the
+indirect dimension.
+Finally the data is integrated and fit to a sin function to find the optimal
+:math:`\\beta_{90}`.
 
 Tested with:
 
-``py proc_FID_nutation.py FID_nutation_1 240805_amp0p1_27mM_TEMPOL_FID_nutation.h5 ODNP_NMR_comp/nutation``
+``py proc_FID_nutation.py FID_nutation_1 240805_amp0p1_27mM_TEMPOL_FID_nutat\
+        ion.h5 ODNP_NMR_comp/nutation``
 """
 import pyspecdata as psd
 import pyspecProcScripts as prscr
@@ -25,6 +29,7 @@ s = psd.find_file(
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
 )
+print("using postproc type", s.get_prop("postproc_type"))
 with psd.figlist_var() as fl:
     frq_center, frq_half = prscr.find_peakrange(s, fl=fl)
     signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
@@ -42,6 +47,7 @@ with psd.figlist_var() as fl:
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
     )
+    prefactor = 10 ** psd.det_unit_prefactor(s.get_units("beta"))
     s.set_guess(
         A=dict(
             value=s.data.max(),
@@ -49,7 +55,9 @@ with psd.figlist_var() as fl:
             max=s.data.max() * 1.5,
         ),
         R=dict(value=1e3, min=0, max=3e4),
-        beta_ninety=dict(value=20e-6, min=0, max=1000e-6),
+        beta_ninety=dict(
+            value=20e-6 / prefactor, min=0, max=1000e-6 / prefactor
+        ),
     )
     s.fit()
     # }}}
@@ -57,12 +65,15 @@ with psd.figlist_var() as fl:
     fit = s.eval(500)
     fl.plot(fit, ax=ax_last)
     ax_last.set_title("Integrated and fit")
-    beta_90 = s.output("beta_ninety")
-    ax_last.axvline(beta_90 / 1e-6, color="b")
+    beta_90 = s.output("beta_ninety")  # because we allow
+    #                                   rough_table_of_integrals to convert to
+    #                                   human units (with prefactors), this
+    #                                   will be in human units
+    ax_last.axvline(beta_90, color="b")
     ax_last.text(
-        beta_90 / 1e-6 + 5,
+        beta_90 + 5,
         5e4,
-        r"$\beta_{90} = %f\ \mathrm{μs \sqrt{W}}$" % (beta_90 / 1e-6),
+        r"$\beta_{90} = %0.1f\ \mathrm{μs \sqrt{W}}$" % beta_90,
         color="b",
     )
     # }}}
