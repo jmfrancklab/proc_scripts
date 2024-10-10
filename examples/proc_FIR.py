@@ -6,7 +6,6 @@ process
 dataset including generating a table of integrals
 """
 
-
 import pyspecProcScripts as prscr
 import pyspecdata as psd
 import sympy
@@ -59,30 +58,32 @@ with psd.figlist_var() as fl:
         s.functional_form = Mi * (
             1 - (2 - sympy.exp(-W * R1)) * sympy.exp(-vd * R1)
         )
+        prefactor_scaling = 10 ** psd.det_unit_prefactor(s.get_units("vd"))
         s.set_guess(
             M_inf=dict(
                 value=s.max().item(),
                 min=0.1 * s.max().item(),
                 max=1.5 * s.max().item(),
             ),
-            R_1=dict(value=0.8, min=0.01, max=100),
+            R_1=dict(
+                value=0.8 * prefactor_scaling,
+                min=0.01 * prefactor_scaling,
+                max=100 * prefactor_scaling,
+            ),
         )
         s.fit()
         s_fit = s.eval(200)
         psd.plot(s_fit, ax=ax_last, alpha=0.5)  # here, we plot the fit
         #                                         together with the
         #                                         table of integrals.
-        # TODO ☐: pyspecdata gives an example of how to show the fit equation on
-        # the plot (fit_fake_data.py).  I would do that on the bottom
-        # right plot of the table of integrals.
-        plt.text(
-            nodename,
-            indirect,
+        ax_last.text(
+            0.5,
+            0.5,
             f"{nodename} RESULT: %s" % s.latex(),
             ha="center",
             va="center",
-            color='darkorchid',
-            transform=plt.gca().transAxes,
+            color=s_fit.get_plot_color(),
+            transform=ax_last.transAxes,
         )
         if plot_fit:  # JF has not reviewed this -- needs to be re-written
             #       consistently w/ above.  Stuff that's not used can
@@ -104,4 +105,3 @@ with psd.figlist_var() as fl:
             ax = plt.gca()
 # I'm not printing anything for 'T1 = ?' as desired in the list of goals, what
 # should I be printing? T1 at s.max()?
-
