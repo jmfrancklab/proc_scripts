@@ -29,15 +29,6 @@ R1nodenames = [
 # associated errors, we collect the results in an nddata rather than
 # just e.g. a list
 R1data = psd.ndshape([("power", len(R1nodenames))]).alloc(dtype=np.float64)
-# TODO ☐: to directly answer your question, the thing you get from
-#         matplotlib isn't a cycle, but a "cycler", which is different.
-#         You need to feed it to "cycle" from "itertools" in order to
-#         make it into a "cycle" and be able to use "next" on it.
-#         BUT you should't do that, anyways.  The nddata object that
-#         comes out of rough_table_of_integrals will always plot with
-#         the same color (as will copies of it).  You can also get the
-#         color of that object (e.g. for use in an unrelated dataset
-#         axvline, etc) with `s.get_plot_color()`
 
 with psd.figlist_var() as fl:
     for j, nodename in enumerate(R1nodenames):
@@ -55,8 +46,7 @@ with psd.figlist_var() as fl:
         direct = "t2"
         if clock_correction:
             s = prscr.clock_correct(s)
-        # TODO ☐: why do you return dropped?
-        s, dropped_dims = s.squeeze(return_dropped=True)
+        s = s.squeeze()
         s, ax_last = prscr.rough_table_of_integrals(s, fl=fl)
         # Included signal averaging in rough_table_of_integrals
         Mi, R1, vd = sympy.symbols("M_inf R_1 vd", real=True)
@@ -82,6 +72,18 @@ with psd.figlist_var() as fl:
         psd.plot(s_fit, ax=ax_last, alpha=0.5)  # here, we plot the fit
         #                                         together with the
         #                                         table of integrals.
+        # TODO ☐: pyspecdata gives an example of how to show the fit equation on
+        # the plot (fit_fake_data.py).  I would do that on the bottom
+        # right plot of the table of integrals.
+        plt.text(
+            nodename,
+            indirect,
+            f"{nodename} RESULT: %s" % s.latex(),
+            ha="center",
+            va="center",
+            color='darkorchid',
+            transform=plt.gca().transAxes,
+        )
         if plot_fit:  # JF has not reviewed this -- needs to be re-written
             #       consistently w/ above.  Stuff that's not used can
             #       just be removed
@@ -102,6 +104,4 @@ with psd.figlist_var() as fl:
             ax = plt.gca()
 # I'm not printing anything for 'T1 = ?' as desired in the list of goals, what
 # should I be printing? T1 at s.max()?
-# TODO ☐: pyspecdata gives an example of how to show the fit equation on
-#         the plot (fit_fake_data.py).  I would do that on the bottom
-#         right plot of the table of integrals.
+
