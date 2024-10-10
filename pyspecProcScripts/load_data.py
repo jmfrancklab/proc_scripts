@@ -383,6 +383,14 @@ def proc_spincore_IR_v2(s, fl=None):
     return s
 
 
+def hack_spincore_IR_v3(s, fl=None):
+    "v3 has an incorrectly stored coherence pathway"
+    proc_spincore_generalproc_v1(s, fl=fl)
+    s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
+    s.set_units("vd", "s")
+    return s
+
+
 def proc_nutation(s, fl=None):
     logging.debug("loading pre-processing for nutation")
     s.set_units("p_90", "s")
@@ -693,6 +701,7 @@ def proc_spincore_generalproc_v1(
         #            this
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
+    neworder.sort()  # it's confusing if the pulses don't come in order
     # }}}
     # {{{ reorder the rest based on size
     nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
@@ -873,7 +882,8 @@ lookup_table = {
     ),
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
-    "spincore_IR_v3": proc_spincore_generalproc_v1,
+    "spincore_IR_v3": hack_spincore_IR_v3,
+    "spincore_IR_v4": proc_spincore_generalproc_v1,
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_v2,
     "spincore_nutation_amp": proc_nutation_amp,
