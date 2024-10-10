@@ -162,9 +162,11 @@ def rough_table_of_integrals(
     )
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
-    s.human_units() # because the units aren't under the control of the figure
-    #                 list, we're going to convert to "human" units here
-    psd.plot(s, "-o", ax=ax4)
+    if s.get_units(s.dimlabels[-1]) != "s":
+        s.human_units()  # because the units aren't under the control of
+        #                  the figure list, we're going to convert to
+        #                  "human" units here
+    psd.plot(s, "o", ax=ax4, alpha=0.5)
     psd.gridandtick(plt.gca())
     ax4.set_title("table of integrals")
     # }}}

@@ -279,7 +279,7 @@ def fid_from_echo(
         frq_center, frq_half = find_peakrange(
             d, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
         )
-    if fl is not None:
+    if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
         axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
         axvline(

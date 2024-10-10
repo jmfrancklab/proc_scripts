@@ -8,7 +8,14 @@ import datetime
 import re
 
 
-def convert_to_power(s, filename, exp_type, fl=None, node_name="log"):
+def convert_to_power(
+    s,
+    filename,
+    exp_type,
+    fl=None,
+    node_name="log",
+    directional_coupler_dB=22,
+):
     """Generate power axis for ODNP/E(p)/FIR experiments, converts instrument
     power log to useable axis
     Parameters
@@ -22,6 +29,11 @@ def convert_to_power(s, filename, exp_type, fl=None, node_name="log"):
         Name of the hdf file that contains the power log.
     exp_type : str
         The "experiment type" used to search for the file.
+    directional_coupler_dB : float
+        The ratio (in dB) of the power that leaves the main port of the
+        directional coupler vs. the power that arrives at the power
+        detector.  This is measured, and the value here is a previously
+        measured value for our system.
     fl: figlist_var()
 
     Returns
@@ -69,22 +81,23 @@ def convert_to_power(s, filename, exp_type, fl=None, node_name="log"):
         )
         .set_units("time", "s")
     )
-    log_vs_time = prscr.dBm2power(log_vs_time + 22)
+    log_vs_time = prscr.dBm2power(log_vs_time + directional_coupler_dB)
     log_vs_time.set_units("W")
     if fl:  # checks that fl is not None
         fl.next("power log")
         fl.plot(
-            log_vs_time, "."
+            log_vs_time, ".",
+            human_units=False,
         )  # should be a picture of the gigatronics powers
         # {{{ this is just matplotlib time formatting
         ax = plt.gca()
         ax.xaxis.set_major_formatter(
             plt.FuncFormatter(
-                lambda x, _: str(datetime.timedelta(seconds=x))
-                .lstrip("0:")
-                .lstrip(":")
-                if x > 0
-                else "0:00"
+                lambda x, _: (
+                    str(datetime.timedelta(seconds=x)).lstrip("0:").lstrip(":")
+                    if x > 0
+                    else "0:00"
+                )
             )
         )
         # }}}
@@ -96,7 +109,7 @@ def convert_to_power(s, filename, exp_type, fl=None, node_name="log"):
     log_vs_time.set_units("time", "s")
     mean_power_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
-        .alloc()
+        .alloc(dtype=np.float64)
         .set_error(0)
         .set_units("time", "s")
         .setaxis("time", np.zeros(len(s["indirect"])))
@@ -131,7 +144,8 @@ def convert_to_power(s, filename, exp_type, fl=None, node_name="log"):
         # }}}
     if fl:
         fl.plot(
-            mean_power_vs_time, "o"
+            mean_power_vs_time, "o",
+            human_units=False,
         )  # this  should be a *single* o at the center of each power step.
         #    Its y value should be the avaerage power for that step, and its
         #    error bars should give the standard deviation of the power over
@@ -140,4 +154,11 @@ def convert_to_power(s, filename, exp_type, fl=None, node_name="log"):
     s.setaxis("indirect", mean_power_vs_time.data).set_error(
         "indirect", mean_power_vs_time.get_error()
     ).set_units("indirect", "W")
+    s["indirect"][abs(s["indirect"]) < 10**-10] = 0  # the power log
+    #                                                 reads as a very
+    #                                                 very small power
+    #                                                 rather than 0, so
+    #                                                 threshold these
+    #                                                 out
+    s.rename("indirect", "power")
     return s

@@ -15,6 +15,7 @@ Tested with:
 ``py proc_FID_nutation.py FID_nutation_1 240805_amp0p1_27mM_TEMPOL_FID_nutat\
         ion.h5 ODNP_NMR_comp/nutation``
 """
+
 import pyspecdata as psd
 import pyspecProcScripts as prscr
 import sympy as sp
@@ -22,7 +23,7 @@ import sys
 from numpy import r_
 
 slice_expansion = 5
-assert len(sys.argv) == 4
+assert len(sys.argv) == 4, "intended to be called with file info at cmdline"
 s = psd.find_file(
     sys.argv[2],
     exp_type=sys.argv[3],
@@ -47,16 +48,20 @@ with psd.figlist_var() as fl:
     s.functional_form = (
         A * sp.exp(-R * beta) * sp.sin(beta / beta_ninety * sp.pi / 2)
     )
-    prefactor = 10 ** psd.det_unit_prefactor(s.get_units("beta"))
+    prefactor_scaling = 10 ** psd.det_unit_prefactor(s.get_units("beta"))
     s.set_guess(
         A=dict(
             value=s.data.max(),
             min=s.data.max() * 0.8,
             max=s.data.max() * 1.5,
         ),
-        R=dict(value=1e3, min=0, max=3e4),
+        R=dict(
+            value=1e3 * prefactor_scaling, min=0, max=3e4 * prefactor_scaling
+        ),
         beta_ninety=dict(
-            value=20e-6 / prefactor, min=0, max=1000e-6 / prefactor
+            value=20e-6 / prefactor_scaling,
+            min=0,
+            max=1000e-6 / prefactor_scaling,
         ),
     )
     s.fit()

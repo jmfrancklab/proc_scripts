@@ -5,7 +5,6 @@ Opens .h5 results file, uses rough_table_of_integrals() to roughly process
 dataset including generating a table of integrals
 """
 
-
 import pyspecProcScripts as prscr
 import pyspecdata as psd
 import os
@@ -28,9 +27,12 @@ with psd.figlist_var() as fl:
     )
     orig_axis = s["indirect"]  # let's save this so we
     #                           can pass it to the log
-    s["indirect"] = s["indirect"]["start_times"]
+    s["indirect"] = (
+        s["indirect"]["start_times"] - s["indirect"]["start_times"][0]
+    )
     s.set_units("indirect", "s")
     s, _ = prscr.rough_table_of_integrals(s, fl=fl)
+    assert psd.det_unit_prefactor(s.get_units("indirect")) == 0
     s.set_error(s["indirect", 0].item() * 0.01)  # We are not calculating the
     #                                              errors in rough table of
     #                                              integrals, so just make up a
