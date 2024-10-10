@@ -1,6 +1,6 @@
 """
 Process FIR experiment 
-====================================================
+======================
 Opens .h5 results file, uses :func:`rough_table_of_integrals` to roughly
 process
 dataset including generating a table of integrals
