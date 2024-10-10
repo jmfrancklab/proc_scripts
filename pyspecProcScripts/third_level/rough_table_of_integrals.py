@@ -170,7 +170,11 @@ def rough_table_of_integrals(
         s.set_plot_color_next()
     if "nScans" in s.dimlabels:
         s.mean("nScans")
-    psd.plot(s, "o", ax=ax4)
+    if s.get_units(s.dimlabels[-1]) != "s":
+        s.human_units()  # because the units aren't under the control of
+        #                  the figure list, we're going to convert to
+        #                  "human" units here
+    psd.plot(s, "o", ax=ax4, alpha=0.5)
     psd.gridandtick(plt.gca())
     ax4.set_title("table of integrals")
     # }}}

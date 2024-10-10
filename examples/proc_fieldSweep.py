@@ -52,26 +52,37 @@ with psd.figlist_var() as fl:
         ha="center",
         transform=ax4.transAxes,
     )
-    # {{{ use analytic differentiation to find the max of the polynomial
-    c_poly = s.polyfit("indirect", 4)
-    psd.plot(s.eval_poly(c_poly, "indirect", npts=100), label="fit", ax=ax4)
-    theroots = np.roots(
-        (c_poly[1:] * r_[1 : len(c_poly)])[  # differentiate the polynomial
-            ::-1
-        ]  # in numpy, poly coeff are backwards
-    )
-    theroots = theroots[abs(theroots.imag) < 1e-6].real  # only real roots
-    idx_max = np.argmax(np.polyval(c_poly[::-1], theroots))
-    # }}}
-    ax4.axvline(x=theroots[idx_max], ls=":", color="k", alpha=0.5)
-    ax4.text(
-        x=theroots[idx_max],
-        y=0.9,
-        s=" %0.5f ppt" % theroots[idx_max],
-        ha="left",
-        va="center",
-        color="k",
-        transform=mpl.transforms.blended_transform_factory(
-            ax4.transData, ax4.transAxes
-        ),
-    )
+    if use_freq:
+        assert (
+            psd.det_unit_prefactor(s.get_units("indirect")) == 6
+        ), "doesn't seem to be in MHz"
+        # {{{ use analytic differentiation to find the max of the polynomial
+        c_poly = s.polyfit("indirect", 4)
+        print(s.get_plot_color())
+        forplot = s.eval_poly(c_poly, "indirect", npts=100)
+        print(forplot.get_plot_color())
+        psd.plot(
+            forplot, label="fit", ax=ax4
+        )
+        theroots = np.roots(
+            (c_poly[1:] * r_[1 : len(c_poly)])[  # differentiate the polynomial
+                ::-1
+            ]  # in numpy, poly coeff are backwards
+        )
+        theroots = theroots[
+            np.isclose(theroots.imag, 0)
+        ].real  # only real roots
+        idx_max = np.argmax(np.polyval(c_poly[::-1], theroots))
+        # }}}
+        ax4.axvline(x=theroots[idx_max], ls=":", color="k", alpha=0.5)
+        ax4.text(
+            x=theroots[idx_max],
+            y=0.9,
+            s=" %0.5f ppt" % theroots[idx_max],
+            ha="left",
+            va="center",
+            color="k",
+            transform=mpl.transforms.blended_transform_factory(
+                ax4.transData, ax4.transAxes
+            ),
+        )
