@@ -26,7 +26,7 @@ from .apod_matched_filter import apod_matched_filter
 from .envelope import L2G, fit_envelope
 from .first_level.QESR_rescale import QESR_scalefactor
 from .convert_to_power import convert_to_power
-
+from .clock_correct import clock_correct
 
 __all__ = [
     "DCCT",
@@ -37,6 +37,7 @@ __all__ = [
     "apod_matched_filter",
     "calc_baseline",
     "center_echo",
+    "clock_correct",
     "convert_to_power",
     "correl_align",
     "dBm2power",
