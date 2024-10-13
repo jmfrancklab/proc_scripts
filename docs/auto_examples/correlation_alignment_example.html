@@ -1,113 +1,51 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Align data with significant frequency drift &mdash; pyspecProcScripts 0.9 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-binder.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-dataframe.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-rendered-html.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/gallery_custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-    <script src="../_static/js/theme.js"></script>
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Align data with significant frequency drift &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=c5d9065b" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="&lt;no title&gt;" href="time_domain_noise.html" />
-    <link rel="prev" title="Check integral error calculation" href="check_integration_error.html" /> 
-</head>
+    <link rel="next" title="Check integral error calculation" href="check_integration_error.html" />
+    <link rel="prev" title="Calculating \(\beta\) from individual pulse capture" href="proc_GDS_capture_int.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> pyspecProcScripts
-          </a>
-              <div class="version">
-                0.9
-              </div>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
-<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_Challenging.html">Phasing and Timing Correction with Real Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Align data with significant frequency drift</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
-</ul>
-</li>
-</ul>
+  
+  
 
-        </div>
-      </div>
-    </nav>
+  </head><body>
+  
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">pyspecProcScripts</a>
-      </nav>
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
 
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">ProcScripts Example Gallery</a></li>
-      <li class="breadcrumb-item active">Align data with significant frequency drift</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/auto_examples/correlation_alignment_example.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+          <div class="body" role="main">
+            
   <div class="sphx-glr-download-link-note admonition note">
 <p class="admonition-title">Note</p>
 <p><a class="reference internal" href="#sphx-glr-download-auto-examples-correlation-alignment-example-py"><span class="std std-ref">Go to the end</span></a>
 to download the full example code</p>
 </div>
 <section class="sphx-glr-example-title" id="align-data-with-significant-frequency-drift">
-<span id="sphx-glr-auto-examples-correlation-alignment-example-py"></span><h1>Align data with significant frequency drift<a class="headerlink" href="#align-data-with-significant-frequency-drift" title="Permalink to this heading">¶</a></h1>
+<span id="sphx-glr-auto-examples-correlation-alignment-example-py"></span><h1>Align data with significant frequency drift<a class="headerlink" href="#align-data-with-significant-frequency-drift" title="Link to this heading">¶</a></h1>
 <p>Takes a 2D data set and applies proper phasing corrections followed by
 aligning the data through a correlation routine.</p>
 <ul class="sphx-glr-horizontal">
@@ -118,7 +56,7 @@ aligning the data through a correlation routine.</p>
 <li><img src="../_images/sphx_glr_correlation_alignment_example_005.png" srcset="../_images/sphx_glr_correlation_alignment_example_005.png" alt="Correlation Diagnostic (enhancement), before correlation sig. energy=49135.6, correlation function (t),  after apod, correlation function (v),  after apod, after correlation before ph0 restore, after correlation ph0 restored  sig. energy=49135.6" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_correlation_alignment_example_006.png" srcset="../_images/sphx_glr_correlation_alignment_example_006.png" alt="(enhancement) correlation convergence" class = "sphx-glr-multi-img"/></li>
 </ul>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>c:\users\jmfranck\git_repos\proc_scripts\pyspecProcScripts\first_level\fake_data.py:58: SymPyDeprecationWarning:
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/first_level/fake_data.py:58: SymPyDeprecationWarning:
 
 Passing the function arguments to lambdify() as a set is deprecated. This
 leads to unpredictable results since sets are unordered. Instead, use a list
@@ -131,12 +69,18 @@ This has been deprecated since SymPy version 1.6.3. It
 will be removed in a future version of SymPy.
 
   thefunction = lambdify(mysymbols, expression, &quot;numpy&quot;)
+1: (IR) Data Processing |||(&#39;Hz&#39;, None)
+2: (IR) Correlation Diagnostics |||(&#39;ms&#39;, None)
+3: (IR) correlation convergence |||(&#39;Hz&#39;, None)
+4: (enhancement) Data Processing |||(&#39;Hz&#39;, None)
+5: (enhancement) Correlation Diagnostics |||(&#39;ms&#39;, None)
+6: (enhancement) correlation convergence |||(&#39;Hz&#39;, None)
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">s</span>
@@ -210,7 +154,9 @@ will be removed in a future version of SymPy.
         <span class="n">ax_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Phased and </span><span class="se">\n</span><span class="s2"> Centered&quot;</span><span class="p">)</span>
         <span class="c1"># }}}</span>
         <span class="c1"># {{{ Applying Correlation Routine to Align Data</span>
-        <span class="n">mysgn</span> <span class="o">=</span> <span class="n">select_pathway</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">signal_pathway</span><span class="p">)</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">)</span>
+        <span class="n">mysgn</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">select_pathway</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">signal_pathway</span><span class="p">)</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="c1">#    this is the sign of the signal -- note how on the next line,</span>
         <span class="c1">#    I pass sign-flipped data, so that we don&#39;t need to worry about</span>
         <span class="c1">#    messing with the original signal</span>
@@ -224,7 +170,7 @@ will be removed in a future version of SymPy.
             <span class="c1">#                 kHz (so much wider than the signal), and</span>
             <span class="c1">#                 max_shift needs to be set just wide enough to</span>
             <span class="c1">#                 accommodate the drift in signal</span>
-            <span class="n">fl</span><span class="o">=</span><span class="n">fl</span>
+            <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># removed display of the mask (I think that&#39;s what it was)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
@@ -240,47 +186,131 @@ will be removed in a future version of SymPy.
         <span class="c1"># }}}</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  44.207 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (1 minutes 56.391 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-correlation-alignment-example-py">
-<div class="sphx-glr-download sphx-glr-download-python docutils container">
-<p><a class="reference download internal" download="" href="../_downloads/41f5ae055607a134a8b3ffde1f39b05e/correlation_alignment_example.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">correlation_alignment_example.py</span></code></a></p>
-</div>
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/0f058efc7db9d267ec48ccd183846321/correlation_alignment_example.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">correlation_alignment_example.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/41f5ae055607a134a8b3ffde1f39b05e/correlation_alignment_example.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">correlation_alignment_example.py</span></code></a></p>
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
 </section>
 
 
-           </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="check_integration_error.html" class="btn btn-neutral float-left" title="Check integral error calculation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="time_domain_noise.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2021, John M. Franck group.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
+          
         </div>
       </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
 
-</body>
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit_ODNP_data.html">Fitting ODNP Datasets for Ksigma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="proc_GDS_capture_int.html" title="previous chapter">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+      <li>Next: <a href="check_integration_error.html" title="next chapter">Check integral error calculation</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/correlation_alignment_example.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
 </html>

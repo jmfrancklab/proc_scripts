@@ -12,6 +12,9 @@ import numpy as np
 import matplotlib as mpl
 from numpy import r_
 
+plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
+# sphinx_gallery_thumbnail_number = 2
+
 thisfile, exp_type, nodename, label_str = (
     "240924_13p5mM_TEMPOL_field.h5",
     "ODNP_NMR_comp/field_dependent",

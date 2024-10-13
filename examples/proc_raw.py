@@ -28,10 +28,18 @@ ODNP_NMR_comp/field_dependent``
 """
 import pyspecProcScripts as prscr
 import numpy as np
-import sys
+import sys, os
 import matplotlib.pyplot as plt
 from itertools import cycle
 import pyspecdata as psd
+
+if "SPHINX_GALLERY_RUNNING" in os.environ and os.environ['SPHINX_GALLERY_RUNNING'] == 'True':
+    sys.argv = [
+        sys.argv[0],
+        "echo_6",
+        "240620_200uM_TEMPOL_pm_echo.h5",
+        "ODNP_NMR_comp/Echoes",
+    ]
 
 psd.init_logging(level="debug")
 

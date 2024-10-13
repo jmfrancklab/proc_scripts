@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Fitting ODNP Datasets for Ksigma &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=c5d9065b" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Verify the pulse calibration" href="verify_tsqrtP_calibration.html" />
+    <link rel="prev" title="Check Integration" href="integration_with_error.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-fit-odnp-data-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="fitting-odnp-datasets-for-ksigma">
+<span id="sphx-glr-auto-examples-fit-odnp-data-py"></span><h1>Fitting ODNP Datasets for Ksigma<a class="headerlink" href="#fitting-odnp-datasets-for-ksigma" title="Link to this heading">¶</a></h1>
+<p>The T1(p) and E(p) integrals are generated
+using the example, <cite>generate_integrals.py</cite>
+(as of 11/8/23 the <cite>generate_integrals</cite> is not
+updated), and stored in an HDF5 file.
+We then calculate
+<span class="math notranslate nohighlight">\((k_\rho(p) + R_{1,HH}/C_{SL})^{-1}  =
+\frac{(\Delta T_{1,w} p + T_{1,w}(0))C_{SL}}{
+\left(\Delta T_{1,w} p + T_{1,w}(0)\right) R_1(p) - C_{SL}
+}\)</span>
+(where
+<span class="math notranslate nohighlight">\(R^{-1}_{1,HH}/C_{SL}\)</span>
+is assumed to be small or constant),
+and fit it to a line.
+The linear fit coefficients are used
+for two purposes:</p>
+<ul class="simple">
+<li><p>directly, to directly calculate the fit value of <span class="math notranslate nohighlight">\(R_1(p)\)</span></p></li>
+<li><p>they are plugged in, as raw numbers, as part of the nonlinear expression
+that is used to fit the <span class="math notranslate nohighlight">\(M_0 E(p)\)</span> (<em>i.e.</em> the raw integral) values.</p></li>
+</ul>
+<div class="sphx-glr-script-out highlight-pytb notranslate"><div class="highlight"><pre><span></span><span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;/home/jmfranck/git_repos/proc_scripts/examples/fit_ODNP_data.py&quot;</span>, line <span class="m">44</span>, in <span class="n">&lt;module&gt;</span>
+<span class="w">    </span><span class="n">integral_vs_p</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
+<span class="w">                    </span><span class="pm">^^^^^^^^^^^^^^</span>
+  File <span class="nb">&quot;/home/jmfranck/git_repos/pyspecdata/pyspecdata/load_files/__init__.py&quot;</span>, line <span class="m">438</span>, in <span class="n">find_file</span>
+<span class="w">    </span><span class="n">data</span> <span class="o">=</span> <span class="n">postproc_lookup</span><span class="p">[</span><span class="n">postproc_type</span><span class="p">](</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="w">           </span><span class="pm">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>
+  File <span class="nb">&quot;/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/load_data.py&quot;</span>, line <span class="m">655</span>, in <span class="n">proc_spincore_ODNP_v4</span>
+<span class="w">    </span><span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fix not confirmed!&quot;</span><span class="p">)</span>
+<span class="gr">ValueError</span>: <span class="n">fix not confirmed!</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyspecdata</span> <span class="k">as</span> <span class="nn">psd</span>
+<span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="n">symbols</span><span class="p">,</span> <span class="n">Symbol</span><span class="p">,</span> <span class="n">latex</span><span class="p">,</span> <span class="n">lambdify</span>
+<span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <span class="n">loadmat</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">r_</span>
+
+<span class="c1"># {{{ This block changes when the data changes -- everything else should be</span>
+<span class="c1"># left alone for most circumstances</span>
+<span class="n">data_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;ras.h5&quot;</span><span class="p">,</span>  <span class="c1"># h5 file containing table of integrals for different datasets</span>
+    <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;AG_processed_data&quot;</span><span class="p">,</span>  <span class="c1"># directory of the dataset of table of integrals</span>
+    <span class="n">nodename</span><span class="o">=</span><span class="s2">&quot;230706_M67_a&quot;</span><span class="p">,</span>  <span class="c1"># specific nodename of the dataset of interest</span>
+<span class="p">)</span>
+<span class="n">T_1w_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;T10_DI_water_230412&quot;</span><span class="p">,</span>
+    <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;AG_processed_data&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># }}}</span>
+
+<span class="c1"># {{{ load data</span>
+<span class="n">integral_vs_p</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
+    <span class="n">data_info</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">],</span>
+    <span class="n">exp_type</span><span class="o">=</span><span class="n">data_info</span><span class="p">[</span><span class="s2">&quot;data_dir&quot;</span><span class="p">],</span>
+    <span class="n">expno</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_info</span><span class="p">[</span><span class="s1">&#39;nodename&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">/Ep&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># {{{ Some older h5 files save the T1p rather than the R1p. If there isn&#39;t an</span>
+<span class="c1"># R1p expno then it will load the T1p integrals and convert to R1p by taking</span>
+<span class="c1"># the inverse</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">R1p</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
+        <span class="n">data_info</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">],</span>
+        <span class="n">exp_type</span><span class="o">=</span><span class="n">data_info</span><span class="p">[</span><span class="s2">&quot;data_dir&quot;</span><span class="p">],</span>
+        <span class="n">expno</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_info</span><span class="p">[</span><span class="s1">&#39;nodename&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">/R1p&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">T1p</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
+        <span class="n">data_info</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">],</span>
+        <span class="n">exp_type</span><span class="o">=</span><span class="n">data_info</span><span class="p">[</span><span class="s2">&quot;data_dir&quot;</span><span class="p">],</span>
+        <span class="n">expno</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_info</span><span class="p">[</span><span class="s1">&#39;nodename&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">/T1p&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">R1p</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">T1p</span>
+<span class="c1"># }}}</span>
+<span class="c1"># }}}</span>
+<span class="c1"># {{{ The powers go up, and then go back down in order to check for</span>
+<span class="c1"># reproducibility. Figure out where this flip occurs</span>
+<span class="n">flip_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">integral_vs_p</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="s2">&quot;power&quot;</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="c1"># }}}</span>
+<span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="c1"># {{{Plot integrals as a function of power</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Integrals vs power&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">integral_vs_p</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="p">:</span><span class="n">flip_idx</span><span class="p">],</span>
+        <span class="s2">&quot;ko&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Progressive Saturation Data&quot;</span><span class="p">,</span>
+        <span class="n">capsize</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">integral_vs_p</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="n">flip_idx</span><span class="p">:],</span>
+        <span class="s2">&quot;ro&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Returning Power Check&quot;</span><span class="p">,</span>
+        <span class="n">capsize</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ plot R1p data</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$R_</span><span class="si">{1}</span><span class="s2">(p)$&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">R1p</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Experimental Data&quot;</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ fit kᵨ⁻¹ with two degrees of freedom (to a straight line) and then</span>
+    <span class="c1"># apply to fit R1p</span>
+    <span class="n">T10_p</span> <span class="o">=</span> <span class="n">loadmat</span><span class="p">(</span>
+        <span class="n">psd</span><span class="o">.</span><span class="n">search_filename</span><span class="p">(</span>
+            <span class="n">T_1w_info</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">],</span> <span class="n">exp_type</span><span class="o">=</span><span class="n">T_1w_info</span><span class="p">[</span><span class="s2">&quot;data_dir&quot;</span><span class="p">],</span> <span class="n">unique</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+    <span class="p">)[</span><span class="s2">&quot;a&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">R10_p</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">R1p</span><span class="o">.</span><span class="n">fromaxis</span><span class="p">(</span><span class="s2">&quot;power&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eval_poly</span><span class="p">(</span><span class="n">T10_p</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">))</span>
+    <span class="n">powers_fine</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">nddata</span><span class="p">(</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span> <span class="p">:</span> <span class="n">R1p</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="s2">&quot;power&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">:</span> <span class="mi">300</span><span class="n">j</span><span class="p">],</span> <span class="s2">&quot;p&quot;</span><span class="p">)</span>
+    <span class="n">krho_inv</span> <span class="o">=</span> <span class="n">integral_vs_p</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;concentration&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span>
+        <span class="n">R1p</span> <span class="o">-</span> <span class="n">R10_p</span>
+    <span class="p">)</span>
+    <span class="n">krho_inv_coeff</span> <span class="o">=</span> <span class="n">krho_inv</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">M0</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">phalf</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">symbols</span><span class="p">(</span><span class="s2">&quot;M0 A phalf power&quot;</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">R1p_expr</span> <span class="o">=</span> <span class="p">(</span><span class="n">T10_p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">T10_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span>
+        <span class="n">integral_vs_p</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;concentration&quot;</span><span class="p">]</span>
+        <span class="o">/</span> <span class="p">(</span><span class="n">krho_inv_coeff</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">krho_inv_coeff</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">R1p_fit</span> <span class="o">=</span> <span class="n">lambdify</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">R1p_expr</span><span class="p">)(</span><span class="n">powers_fine</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">R1p_fit</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Fit&quot;</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$R_</span><span class="si">{1}</span><span class="s2"> / s^{-1}$&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Power / W&quot;</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ Fit NMR integrals as function of power</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Integrals vs power&quot;</span><span class="p">)</span>
+    <span class="n">sp_expr</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">phalf</span><span class="p">)</span>
+    <span class="n">integral_vs_p_fit</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">lmfitdata</span><span class="p">(</span><span class="n">integral_vs_p</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="p">:</span><span class="n">flip_idx</span><span class="p">])</span>
+    <span class="c1"># Symbolic expression for integrals as a function of power that is used</span>
+    <span class="c1"># in the symbolic function for the fitting of the integrals as a function of power</span>
+    <span class="n">integral_vs_p_fit</span><span class="o">.</span><span class="n">functional_form</span> <span class="o">=</span> <span class="n">M0</span> <span class="o">-</span> <span class="p">((</span><span class="n">M0</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="n">sp_expr</span><span class="p">)</span> <span class="o">/</span> <span class="n">R1p_expr</span><span class="p">)</span>
+    <span class="c1"># generate a guess for the A parameter of the fit based on the normalized</span>
+    <span class="c1"># enhancement weighted by the relaxation rate. The bounds for the fit are</span>
+    <span class="c1"># then set to center around this value.</span>
+    <span class="c1"># Since</span>
+    <span class="c1"># E(pₘₐₓ) = 1 - A s(pₘₐₓ)/R₁(pₘₐₓ)</span>
+    <span class="c1"># and the max s(p) is about 1,</span>
+    <span class="c1"># 1-E(pₘₐₓ)R₁(pₘₐₓ) ≈ A</span>
+    <span class="c1"># because R₁(0) is typically larger and also easier to access than</span>
+    <span class="c1"># R₁(pₘₐₓ), we just use it instead.</span>
+    <span class="n">A_guess</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mi">1</span>
+        <span class="o">-</span> <span class="p">(</span>
+            <span class="n">R1p</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="o">*</span> <span class="p">(</span>
+                <span class="n">integral_vs_p</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="n">flip_idx</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="o">/</span> <span class="n">integral_vs_p</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">real</span>
+    <span class="p">)</span>
+    <span class="n">integral_vs_p_fit</span><span class="o">.</span><span class="n">set_guess</span><span class="p">(</span>
+        <span class="n">M0</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">integral_vs_p</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e4</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">11e4</span>
+        <span class="p">),</span>
+        <span class="n">A</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">A_guess</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.2</span> <span class="o">*</span> <span class="n">A_guess</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">3</span> <span class="o">*</span> <span class="n">A_guess</span><span class="p">),</span>
+        <span class="n">phalf</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">integral_vs_p_fit</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+    <span class="n">thisfit</span> <span class="o">=</span> <span class="n">integral_vs_p_fit</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">thisfit</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Fit&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">ksig</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">integral_vs_p_fit</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
+        <span class="o">*</span> <span class="n">integral_vs_p</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;guessed_MHz_to_GHz&quot;</span><span class="p">]</span>
+        <span class="o">*</span> <span class="mf">1e-3</span>  <span class="c1"># the experimental ppt overwrites the guess for our</span>
+        <span class="c1"># final ODNP experiment. Though the key is labeled</span>
+        <span class="c1"># guessed, it is the ppt returned with a field sweep</span>
+    <span class="p">)</span> <span class="o">/</span> <span class="n">integral_vs_p</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;concentration&quot;</span><span class="p">]</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+        <span class="mf">0.5</span><span class="p">,</span>
+        <span class="mf">0.7</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">&quot;$</span><span class="si">{</span><span class="n">latex</span><span class="p">(</span><span class="n">Symbol</span><span class="p">(</span><span class="n">j</span><span class="p">))</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">k</span><span class="si">:</span><span class="s2">0.5g</span><span class="si">}</span><span class="s2">$&quot;</span>
+                <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">integral_vs_p_fit</span><span class="o">.</span><span class="n">output</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="o">+</span> <span class="p">[</span><span class="sa">r</span><span class="s2">&quot;$k_{\sigma} = </span><span class="si">%0.6f</span><span class="s2"> M^{-1}s^{-1}$&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ksig</span><span class="p">)]</span>
+        <span class="p">),</span>
+        <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+        <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+        <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Power / W&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$M_</span><span class="si">{0}</span><span class="s2">E(p)$&quot;</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 14.303 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-fit-odnp-data-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/3b5b0483cd94d6aeb146fb2e10a74eb1/fit_ODNP_data.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">fit_ODNP_data.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/12fdbb2248ef0720d7ae76b2fdf20408/fit_ODNP_data.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">fit_ODNP_data.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Fitting ODNP Datasets for Ksigma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="integration_with_error.html" title="previous chapter">Check Integration</a></li>
+      <li>Next: <a href="verify_tsqrtP_calibration.html" title="next chapter">Verify the pulse calibration</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/fit_ODNP_data.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

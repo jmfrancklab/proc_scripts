@@ -299,7 +299,8 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 def proc_spincore_SE_v1(s, fl=None):
     s = proc_spincore_generalproc_v1(s, fl=fl)
-    s *= s.shape["nScans"]
+    if "nScans" in s.shape:
+        s *= s.shape["nScans"]
     return s
 
 

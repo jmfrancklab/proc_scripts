@@ -44,10 +44,26 @@ pyspecProcScripts.baseline module
    :undoc-members:
    :show-inheritance:
 
+pyspecProcScripts.convert\_to\_power module
+-------------------------------------------
+
+.. automodule:: pyspecProcScripts.convert_to_power
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyspecProcScripts.correlation\_alignment module
 -----------------------------------------------
 
 .. automodule:: pyspecProcScripts.correlation_alignment
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyspecProcScripts.envelope module
+---------------------------------
+
+.. automodule:: pyspecProcScripts.envelope
    :members:
    :undoc-members:
    :show-inheritance:
@@ -96,14 +112,6 @@ pyspecProcScripts.load\_data module
 -----------------------------------
 
 .. automodule:: pyspecProcScripts.load_data
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyspecProcScripts.lorentzian\_to\_gaussian module
--------------------------------------------------
-
-.. automodule:: pyspecProcScripts.lorentzian_to_gaussian
    :members:
    :undoc-members:
    :show-inheritance:

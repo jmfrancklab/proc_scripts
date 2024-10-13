@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Calculate actual beta as a function of pulse length &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=c5d9065b" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="EPR correlation alignment" href="epr_overlay.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-calibrate-tsqrtp-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="calculate-actual-beta-as-a-function-of-pulse-length">
+<span id="sphx-glr-auto-examples-calibrate-tsqrtp-py"></span><h1>Calculate actual beta as a function of pulse length<a class="headerlink" href="#calculate-actual-beta-as-a-function-of-pulse-length" title="Link to this heading">¶</a></h1>
+<p>Assuming the data is a series of pulse lengths captured on the GDS oscilloscope
+(acquired using <cite>FLInst/examples/run_pulse_calibration.py</cite>), here each pulse
+length capture is frequency filtered and the absolute is integrated and
+converted to yield <span class="math notranslate nohighlight">\(t_{pulse}\sqrt{P_{peak}}\)</span>. To convert to rms power
+this value is divided by <span class="math notranslate nohighlight">\(\sqrt{2}\)</span> to give the final beta where
+<span class="math notranslate nohighlight">\(\beta = \frac{1}{\sqrt{2}} \int \sqrt{P_{rms}(t)} dt\)</span>. From these
+integrals the programmed pulse length is plotted as a function of the
+calculated <span class="math notranslate nohighlight">\(\beta\)</span> and a fit is applied returning the fitting coefficients
+for the nonlinear and linear regime of the data. The user then
+copies these coefficients into FLInst/spincore_pp/pulse_length_conv.py in the
+appropriate section to obtain calibrated pulse lengths for the given amplitude.</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_001.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_001.png" alt="amplitude = 0.05 pulse length = 1.15 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_002.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_002.png" alt="amplitude = 0.05 pulse length = 294.55 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_003.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_003.png" alt="amplitude = 0.05 pulse length = 587.95 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_004.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_004.png" alt="amplitude = 0.05 Frequency Domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_005.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_005.png" alt="collect filtered analytic" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_006.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_006.png" alt="Measured $\beta$ vs A * $t_{pulse}$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_007.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_007.png" alt="Amplitude*$t_{pulse}$ vs $\beta$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_008.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_008.png" alt="Amplitude*$t_{pulse}$ vs $\beta$, zoomed" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_009.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_009.png" alt="amplitude = 0.10 pulse length = 0.58 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_010.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_010.png" alt="amplitude = 0.10 pulse length = 184.02 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_011.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_011.png" alt="amplitude = 0.10 pulse length = 367.46 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_012.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_012.png" alt="amplitude = 0.10 Frequency Domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_013.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_013.png" alt="amplitude = 0.20 pulse length = 0.29 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_014.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_014.png" alt="amplitude = 0.20 pulse length = 78.89 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_015.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_015.png" alt="amplitude = 0.20 pulse length = 157.49 μs" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_calibrate_tsqrtP_016.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_016.png" alt="amplitude = 0.20 Frequency Domain" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
+--&gt; simple_functions.py(126):root find_apparent_anal_freq 2024-10-13 08:46:54,561
+INFO: Aliasing occurred, but we can still find that frequency!
+/home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1699: ComplexWarning: Casting complex values to real discards the imaginary part
+  return math.isfinite(val)
+/home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1345: ComplexWarning: Casting complex values to real discards the imaginary part
+  return np.asarray(x, float)
+
+**************** Coefficients for 0.05 ****************
+
+Non-linear regime coefficients:
+ [ 3.75442878e+02  2.00599762e+06 -8.17658362e+10 -6.14612522e+15
+ -2.47655751e+20 -5.88569415e+24 -8.65005568e+28 -7.95171001e+32
+ -4.45091091e+36 -1.38696656e+40 -1.84433605e+43]
+Linear regime coefficients:
+ [2.31318373e+00 2.49223410e+06]
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;.&quot; (-&gt; marker=&#39;.&#39;). The keyword argument will take precedence.
+  retval = myplotfunc(*plotargs, **kwargs)
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: linestyle is redundantly defined by the &#39;linestyle&#39; keyword argument and the fmt string &quot;--&quot; (-&gt; linestyle=&#39;--&#39;). The keyword argument will take precedence.
+  retval = myplotfunc(*plotargs, **kwargs)
+
+**************** Coefficients for 0.1 ****************
+
+Non-linear regime coefficients:
+ [ 2.93528215e+02  9.59757416e+05 -1.32947207e+10 -5.17620067e+14
+ -1.05255134e+19 -1.27041564e+23 -9.58050939e+26 -4.56587780e+30
+ -1.33800953e+34 -2.20250690e+37 -1.55941251e+40]
+Linear regime coefficients:
+ [4.38010537e+00 1.06971597e+06]
+
+**************** Coefficients for 0.2 ****************
+
+Non-linear regime coefficients:
+ [ 1.62924179e+02  4.91729568e+05 -1.99215893e+09 -6.38076923e+13
+ -1.05046642e+18 -1.04830747e+22 -6.88084079e+25 -3.02459439e+29
+ -8.58707022e+32 -1.41598700e+36 -1.02210088e+39]
+Linear regime coefficients:
+ [-7.43656432e+00  5.48421364e+05]
+1: amplitude = 0.05 pulse length = 1.15 μs |||μs
+2: amplitude = 0.05 pulse length = 294.55 μs |||μs
+3: amplitude = 0.05 pulse length = 587.95 μs |||μs
+4: amplitude = 0.05 Frequency Domain |||(&#39;MHz&#39;, &#39;μs&#39;)
+5: collect filtered analytic |||μs
+6: Measured $\beta$ vs A * $t_{pulse}$ |||μs
+7: Amplitude*$t_{pulse}$ vs $\beta$ |||μs√W
+8: Amplitude*$t_{pulse}$ vs $\beta$, zoomed |||μs√W
+9: amplitude = 0.10 pulse length = 0.58 μs |||μs
+10: amplitude = 0.10 pulse length = 184.02 μs |||μs
+11: amplitude = 0.10 pulse length = 367.46 μs |||μs
+12: amplitude = 0.10 Frequency Domain |||(&#39;MHz&#39;, &#39;μs&#39;)
+13: amplitude = 0.20 pulse length = 0.29 μs |||μs
+14: amplitude = 0.20 pulse length = 78.89 μs |||μs
+15: amplitude = 0.20 pulse length = 157.49 μs |||μs
+16: amplitude = 0.20 Frequency Domain |||(&#39;MHz&#39;, &#39;μs&#39;)
+
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  plt.gcf().tight_layout()
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyspecdata</span> <span class="k">as</span> <span class="nn">psd</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="n">find_apparent_anal_freq</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">psd</span><span class="o">.</span><span class="n">init_logging</span><span class="p">()</span>
+<span class="n">V_atten_ratio</span> <span class="o">=</span> <span class="mf">102.2</span>  <span class="c1"># attenutation ratio</span>
+<span class="n">skip_plots</span> <span class="o">=</span> <span class="mi">45</span>  <span class="c1"># diagnostic -- set this to None, and there will be no</span>
+<span class="c1">#                 diagnostic plots</span>
+<span class="n">HH_width</span> <span class="o">=</span> <span class="mf">1e6</span>
+<span class="n">typical_180</span> <span class="o">=</span> <span class="mf">40e-6</span>  <span class="c1"># typical beta for a 180 -- it&#39;s really important to</span>
+<span class="c1">#                      get pulses in this regime correct</span>
+
+<span class="c1"># Note: the linear threshold seems to vary from one amplitude to the next</span>
+<span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">nodename</span><span class="p">,</span> <span class="n">linear_threshold</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;240819_test_amp0p05_calib_pulse_calib.h5&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pulse_calib_3&quot;</span><span class="p">,</span>
+            <span class="mf">150e-6</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;240819_amp0p1_calib_pulse_calib.h5&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pulse_calib_1&quot;</span><span class="p">,</span>
+            <span class="mf">270e-6</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;240819_amp0p2_calib_repeat_pulse_calib.h5&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pulse_calib_8&quot;</span><span class="p">,</span>
+            <span class="mf">310e-6</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
+            <span class="n">filename</span><span class="p">,</span> <span class="n">expno</span><span class="o">=</span><span class="n">nodename</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;ODNP_NMR_comp/test_equipment&quot;</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;postproc_type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;GDS_capture_v1&quot;</span>
+        <span class="p">),</span> <span class="s2">&quot;The wrong postproc_type was set so you most likely used the wrong script for acquisition&quot;</span>
+        <span class="n">amplitude</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">]</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">basename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;amplitude = </span><span class="si">{</span><span class="n">amplitude</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="c1"># {{{ ensure units are set</span>
+        <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">get_units</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Units for your t axis weren&#39;t set to anything so I am setting them to s&quot;</span>
+            <span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">get_units</span><span class="p">(</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Units for your t_pulse axis weren&#39;t set to anything so I am setting them to s&quot;</span>
+            <span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="n">d</span> <span class="o">*=</span> <span class="n">V_atten_ratio</span>
+        <span class="n">d</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>  <span class="c1"># V/sqrt(R) = sqrt(P_amp)</span>
+
+        <span class="c1"># {{{ functions that streamline plotting the desired pulse length</span>
+        <span class="c1">#     datasets</span>
+        <span class="k">def</span> <span class="nf">switch_to_plot</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+            <span class="n">thislen</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e-6</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pulse length = </span><span class="si">{</span><span class="n">thislen</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> μs&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">indiv_plots</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">thislabel</span><span class="p">,</span> <span class="n">thiscolor</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">skip_plots</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">])):</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="o">%</span> <span class="n">skip_plots</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">switch_to_plot</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+                    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span>
+                        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                        <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+                        <span class="n">label</span><span class="o">=</span><span class="n">thislabel</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\sqrt</span><span class="si">{P}</span><span class="s2">$ / $\sqrt{\mathrm</span><span class="si">{W}</span><span class="s2">}$&quot;</span><span class="p">)</span>
+
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ data is already analytic, and downsampled to below 24 MHz</span>
+        <span class="n">indiv_plots</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="s2">&quot;abs(analytic)&quot;</span><span class="p">,</span> <span class="s2">&quot;orange&quot;</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">nu_a</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_apparent_anal_freq</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>  <span class="c1"># find frequency of signal</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+        <span class="c1"># {{{ Diagnostic to ensure the frequency properly identified</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Frequency Domain&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
+            <span class="n">s</span><span class="o">=</span><span class="sa">rf</span><span class="s2">&quot;$\nu_a=</span><span class="si">{</span><span class="n">nu_a</span><span class="o">/</span><span class="mf">1e6</span><span class="si">:</span><span class="s2">0.2f</span><span class="si">}</span><span class="s2">$ MHz&quot;</span><span class="p">,</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">nu_a</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">HH_width</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">nu_a</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">HH_width</span>
+        <span class="p">),</span> <span class="s2">&quot;unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn&#39;t happen&quot;</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ apply HH frequency filter</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;t&quot;</span> <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nu_a</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">HH_width</span><span class="p">)]</span> <span class="o">*=</span> <span class="mi">0</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;t&quot;</span> <span class="p">:</span> <span class="p">(</span><span class="n">nu_a</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">HH_width</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span> <span class="o">*=</span> <span class="mi">0</span>
+        <span class="c1"># }}}</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+        <span class="n">indiv_plots</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="s2">&quot;filtered analytic&quot;</span><span class="p">,</span> <span class="s2">&quot;red&quot;</span><span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ set up shape of data to drop the calculated beta values into</span>
+        <span class="n">beta_v_t</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">alloc</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">beta_v_t</span><span class="o">.</span><span class="n">copy_axes</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;s√W&quot;</span><span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">])):</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+            <span class="n">int_range</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">s</span><span class="o">.</span><span class="n">max</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># slightly expand int range to include rising edges</span>
+            <span class="n">int_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="mf">5e-6</span>
+            <span class="n">int_range</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">5e-6</span>
+            <span class="c1"># {{{ plot the integration range of all pulses prior to integrating.</span>
+            <span class="c1">#     Serves as diagnostic to ensure the beta is consistently</span>
+            <span class="c1">#     increasing.</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">push_marker</span><span class="p">()</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">basename</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;collect filtered analytic&quot;</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;t&quot;</span><span class="p">:</span><span class="n">int_range</span><span class="p">]),</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">pop_marker</span><span class="p">()</span>
+            <span class="c1"># }}}</span>
+            <span class="n">beta_v_t</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;t&quot;</span><span class="p">:</span><span class="n">int_range</span><span class="p">])</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span>
+                <span class="s2">&quot;t&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="mi">2</span>
+            <span class="p">)</span>  <span class="c1"># t * sqrt(P_rms)</span>
+            <span class="c1"># {{{ Can&#39;t use indiv_plots because we&#39;ve already indexed the t_pulse</span>
+            <span class="c1"># out and we also want to plot the calculated beta on top</span>
+            <span class="k">if</span> <span class="n">skip_plots</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">j</span> <span class="o">%</span> <span class="n">skip_plots</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">switch_to_plot</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+                <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                    <span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;t&quot;</span><span class="p">:</span><span class="n">int_range</span><span class="p">]),</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;integrated slice&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\sqrt{P_</span><span class="si">{pulse}</span><span class="s2">}$ / $\sqrt{\mathrm</span><span class="si">{W}</span><span class="s2">}$&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">int_range</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e-6</span><span class="p">,</span>
+                    <span class="mf">0.25</span><span class="p">,</span>
+                    <span class="sa">r</span><span class="s2">&quot;$t_</span><span class="si">{pulse}</span><span class="s2"> \sqrt{P_</span><span class="si">{tx}</span><span class="s2">} = </span><span class="si">%f</span><span class="s2"> \mathrm</span><span class="si">{μs}</span><span class="s2"> \sqrt{\mathrm</span><span class="si">{W}</span><span class="s2">}$&quot;</span>
+                    <span class="o">%</span> <span class="p">(</span><span class="n">beta_v_t</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="mf">1e-6</span><span class="p">),</span>
+                    <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="c1"># }}}</span>
+        <span class="c1"># {{{ show what we observe -- how does β vary with the programmed pulse length</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">basename</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># reset so all amplitudes are on same plots</span>
+        <span class="n">beta_v_t</span><span class="o">.</span><span class="n">set_plot_color_next</span><span class="p">()</span>  <span class="c1"># cycle color list to next color</span>
+        <span class="n">thiscolor</span> <span class="o">=</span> <span class="n">beta_v_t</span><span class="o">.</span><span class="n">get_plot_color</span><span class="p">()</span>  <span class="c1"># set thiscolor to the above</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Measured $\beta$ vs A * $t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span><span class="p">)</span>
+        <span class="n">beta_v_t</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="s2">&quot;$A t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span>
+            <span class="s2">&quot;μs√W&quot;</span>
+        <span class="p">)</span>
+        <span class="n">beta_v_t</span><span class="p">[</span>
+            <span class="s2">&quot;$A t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span>
+        <span class="p">]</span> <span class="o">*=</span> <span class="n">amplitude</span>  <span class="c1"># we only t_pulse to be multiplied by amplitude for plotting purposes only!</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">beta_v_t</span> <span class="o">/</span> <span class="mf">1e-6</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;amplitude = </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">amplitude</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span>  <span class="c1"># the linear threshold is the threshold above which beta is linear</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">linear_threshold</span> <span class="o">/</span> <span class="mf">1e-6</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;linear threshold for amp=</span><span class="si">{</span><span class="n">amplitude</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">psd</span><span class="o">.</span><span class="n">gridandtick</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">())</span>
+        <span class="n">beta_v_t</span><span class="p">[</span>
+            <span class="s2">&quot;$A t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span>
+        <span class="p">]</span> <span class="o">/=</span> <span class="n">amplitude</span>  <span class="c1"># need to divide back out for the determination of the coefficients below</span>
+        <span class="n">beta_v_t</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;$A t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span><span class="p">,</span> <span class="s2">&quot;t_pulse&quot;</span><span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ Identify captures that don&#39;t increase in beta - don&#39;t use</span>
+        <span class="n">decreasing_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="o">~</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">beta_v_t</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">decreasing_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">):</span>  <span class="c1"># beta doesn&#39;t always increase with increasing pulse length</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">beta_v_t</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="p">:</span> <span class="n">decreasing_idx</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="s2">&quot;x&quot;</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">&quot;can&#39;t use these&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># throw out betas following a faulty pulse</span>
+            <span class="n">beta_v_t</span> <span class="o">=</span> <span class="n">beta_v_t</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="n">decreasing_idx</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ flip data so beta is on x axis now and t_pulse is the y axis</span>
+        <span class="n">t_v_beta</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">beta_v_t</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">alloc</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">,</span> <span class="n">beta_v_t</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">t_v_beta</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">beta_v_t</span><span class="p">[</span><span class="s2">&quot;t_pulse&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="o">/</span> <span class="mf">1e-6</span>
+        <span class="p">)</span>  <span class="c1"># because our ppg wants μs</span>
+        <span class="n">t_v_beta</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;μs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">,</span> <span class="s2">&quot;s√W&quot;</span><span class="p">)</span>
+        <span class="c1"># use as temp for ultimate coeff</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ Determine linear and nonliear coefficients</span>
+        <span class="n">c_nonlinear</span> <span class="o">=</span> <span class="n">t_v_beta</span><span class="p">[</span>
+            <span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">:(</span><span class="kc">None</span><span class="p">,</span> <span class="n">linear_threshold</span><span class="p">)</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">C</span>  <span class="c1"># make copy to allow the next</span>
+        <span class="c1">#      line not to cause the data to actually shift</span>
+        <span class="n">c_nonlinear</span><span class="p">[</span>
+            <span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span>
+        <span class="p">]</span> <span class="o">-=</span> <span class="n">linear_threshold</span>  <span class="c1"># Taylor expand around the linear threshold rather than 0</span>
+        <span class="n">c_nonlinear</span> <span class="o">=</span> <span class="n">c_nonlinear</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">c_linear</span> <span class="o">=</span> <span class="n">t_v_beta</span><span class="p">[</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">:(</span><span class="n">linear_threshold</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">**************** Coefficients for </span><span class="si">{</span><span class="n">amplitude</span><span class="si">}</span><span class="s2"> ****************</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Non-linear regime coefficients:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">c_nonlinear</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Linear regime coefficients:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">c_linear</span><span class="p">)</span>
+
+        <span class="c1"># }}}</span>
+        <span class="k">def</span> <span class="nf">prog_plen</span><span class="p">(</span><span class="n">desired</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;If the desired beta is above the linear threshold,</span>
+<span class="sd">            the linear fit is applied to return the pulse length</span>
+<span class="sd">            required to obtain the desired beta.</span>
+<span class="sd">            If the desired beta is below the linear threshold, the</span>
+<span class="sd">            nonlinear fit is applied to return the pulse length</span>
+<span class="sd">            required to obtain the desired beta.</span>
+<span class="sd">            If a series of desired betas is fed, both fits are</span>
+<span class="sd">            applied appropriately to return the pulse lengths</span>
+<span class="sd">            required to obtain each desired beta in the series.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">def</span> <span class="nf">zonefit</span><span class="p">(</span><span class="n">desired</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">desired</span> <span class="o">&gt;</span> <span class="n">linear_threshold</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">c_linear</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">desired</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span>
+                        <span class="n">c_nonlinear</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">desired</span> <span class="o">-</span> <span class="n">linear_threshold</span>
+                    <span class="p">)</span>
+
+            <span class="n">ret_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">zonefit</span><span class="p">)(</span><span class="n">desired</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ret_val</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ret_val</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ret_val</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Amplitude*$t_</span><span class="si">{pulse}</span><span class="s2">$ vs $\beta$&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">t_v_beta</span><span class="o">.</span><span class="n">name</span><span class="p">(</span><span class="s2">&quot;A * $t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;μs&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">t_v_beta</span> <span class="o">*</span> <span class="n">amplitude</span><span class="p">,</span>
+            <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;data for </span><span class="si">{</span><span class="n">amplitude</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Amplitude*$t_</span><span class="si">{pulse}</span><span class="s2">$ vs $\beta$, zoomed&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">t_v_beta</span><span class="p">[</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">:(</span><span class="kc">None</span><span class="p">,</span> <span class="n">typical_180</span><span class="p">)]</span> <span class="o">*</span> <span class="n">amplitude</span><span class="p">,</span>
+            <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;data for </span><span class="si">{</span><span class="n">amplitude</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># {{{ we extrapolate past the edges of the data using the linear threshold</span>
+        <span class="c1">#     to show how the linear is poorly behaved for smaller beta values</span>
+        <span class="n">for_extrap</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">psd</span><span class="o">.</span><span class="n">nddata</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.5e-6</span><span class="p">,</span> <span class="n">t_v_beta</span><span class="p">[</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mf">10e-6</span><span class="p">,</span> <span class="mi">500</span><span class="p">),</span>
+                <span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;μs&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">,</span> <span class="s2">&quot;s√W&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">for_extrap</span><span class="o">.</span><span class="n">eval_poly</span><span class="p">(</span><span class="n">c_linear</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">)[</span>
+                <span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">:(</span><span class="kc">None</span><span class="p">,</span> <span class="n">typical_180</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="o">*</span> <span class="n">amplitude</span><span class="p">,</span>
+            <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Amplitude*$t_</span><span class="si">{pulse}</span><span class="s2">$ vs $\beta$&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">for_extrap</span><span class="o">.</span><span class="n">eval_poly</span><span class="p">(</span><span class="n">c_linear</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">amplitude</span><span class="p">,</span>
+            <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="n">full_fit</span> <span class="o">=</span> <span class="n">for_extrap</span><span class="o">.</span><span class="n">fromaxis</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">prog_plen</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">full_fit</span> <span class="o">*</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;fit&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">linear_threshold</span> <span class="o">/</span> <span class="mf">1e-6</span><span class="p">,</span>  <span class="c1"># units of μs</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+            <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;dashdot&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;linear threshold&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Amplitude*$t_</span><span class="si">{pulse}</span><span class="s2">$ vs $\beta$, zoomed&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">full_fit</span><span class="p">[</span><span class="sa">r</span><span class="s2">&quot;$\beta$&quot;</span><span class="p">:(</span><span class="kc">None</span><span class="p">,</span> <span class="n">typical_180</span><span class="p">)]</span> <span class="o">*</span> <span class="n">amplitude</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;fit&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># {{{ Add grids to the fit plots</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;Amplitude*$t_</span><span class="si">{pulse}</span><span class="s2">$ vs $\beta$&quot;</span><span class="p">,</span>
+            <span class="sa">r</span><span class="s2">&quot;Amplitude*$t_</span><span class="si">{pulse}</span><span class="s2">$ vs $\beta$, zoomed&quot;</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+            <span class="n">psd</span><span class="o">.</span><span class="n">gridandtick</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">())</span>
+        <span class="c1"># }}}</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 24.804 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-calibrate-tsqrtp-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/50a87d894440a83246a2280769405598/calibrate_tsqrtP.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">calibrate_tsqrtP.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/d2bf2b410560686c689a8550ca14bda9/calibrate_tsqrtP.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">calibrate_tsqrtP.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit_ODNP_data.html">Fitting ODNP Datasets for Ksigma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="epr_overlay.html" title="previous chapter">EPR correlation alignment</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/calibrate_tsqrtP.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
