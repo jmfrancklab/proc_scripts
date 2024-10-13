@@ -10,6 +10,7 @@ import pyspecdata as psd
 import pyspecProcScripts as prscr
 import numpy as np
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 from numpy import r_
 
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery

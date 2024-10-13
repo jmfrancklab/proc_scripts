@@ -50,12 +50,22 @@ for two purposes:
       File "/home/jmfranck/git_repos/proc_scripts/examples/fit_ODNP_data.py", line 44, in <module>
         integral_vs_p = psd.find_file(
                         ^^^^^^^^^^^^^^
-      File "/home/jmfranck/git_repos/pyspecdata/pyspecdata/load_files/__init__.py", line 438, in find_file
-        data = postproc_lookup[postproc_type](data, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/load_data.py", line 655, in proc_spincore_ODNP_v4
-        raise ValueError("fix not confirmed!")
-    ValueError: fix not confirmed!
+      File "/home/jmfranck/git_repos/pyspecdata/pyspecdata/load_files/__init__.py", line 384, in find_file
+        data = load_indiv_file(
+               ^^^^^^^^^^^^^^^^
+      File "/home/jmfranck/git_repos/pyspecdata/pyspecdata/load_files/__init__.py", line 715, in load_indiv_file
+        with h5py.File(filename, "r") as h5:
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/home/jmfranck/base/lib/python3.11/site-packages/h5py-3.10.0-py3.11-linux-x86_64.egg/h5py/_hl/files.py", line 562, in __init__
+        fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/home/jmfranck/base/lib/python3.11/site-packages/h5py-3.10.0-py3.11-linux-x86_64.egg/h5py/_hl/files.py", line 235, in make_fid
+        fid = h5f.open(name, flags, fapl=fapl)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+      File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+      File "h5py/h5f.pyx", line 102, in h5py.h5f.open
+    BlockingIOError: [Errno 11] Unable to synchronously open file (unable to lock file, errno = 11, error message = 'Resource temporarily unavailable')
 
 
 
@@ -231,7 +241,7 @@ for two purposes:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 14.303 seconds)
+   **Total running time of the script:** (0 minutes 0.125 seconds)
 
 
 .. _sphx_glr_download_auto_examples_fit_ODNP_data.py:

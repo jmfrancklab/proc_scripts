@@ -216,7 +216,7 @@ This example provides a relatively routine example.
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
     You didn't set units for power before saving the data!!!
-    /home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/load_data.py:556: RuntimeWarning: invalid value encountered in divide
+    /home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/load_data.py:564: RuntimeWarning: invalid value encountered in divide
       s.getaxis("power") / prog_power,
     /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
       retval = myplotfunc(*plotargs, **kwargs)
@@ -308,7 +308,7 @@ This example provides a relatively routine example.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 10.435 seconds)
+   **Total running time of the script:** (0 minutes 10.406 seconds)
 
 
 .. _sphx_glr_download_auto_examples_FIDtoEcho_Actual.py:

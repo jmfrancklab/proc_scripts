@@ -44,6 +44,14 @@ pyspecProcScripts.baseline module
    :undoc-members:
    :show-inheritance:
 
+pyspecProcScripts.clock\_correct module
+---------------------------------------
+
+.. automodule:: pyspecProcScripts.clock_correct
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyspecProcScripts.convert\_to\_power module
 -------------------------------------------
 

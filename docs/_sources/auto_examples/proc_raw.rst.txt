@@ -65,7 +65,7 @@ Tested with:
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_raw_003.png
-         :alt: with coherence pathway selected
+         :alt: select {'ph1': 1}
          :srcset: /auto_examples/images/sphx_glr_proc_raw_003.png
          :class: sphx-glr-multi-img
 
@@ -128,9 +128,7 @@ Tested with:
 
 .. code-block:: Python
 
-
-    from pyspecProcScripts.load_data import lookup_table
-    from pyspecProcScripts import select_pathway
+    import pyspecProcScripts as prscr
     import numpy as np
     import sys, os
     import matplotlib.pyplot as plt
@@ -152,7 +150,8 @@ Tested with:
 
     assert len(sys.argv) == 4
     d = psd.find_file(
-        sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1], lookup=lookup_table
+        sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1],
+        lookup=prscr.lookup_table
     )
     print("postproc_type:", d.get_prop("postproc_type"))
     with psd.figlist_var() as fl:
@@ -223,14 +222,15 @@ Tested with:
                 list(d.get_prop("coherence_pathway").keys()) + [guess_direct]
             )
             image_or_plot(forplot)
-            d = select_pathway(d, d.get_prop("coherence_pathway"))
+            d = prscr.select_pathway(d, d.get_prop("coherence_pathway"))
             fl.next("with coherence pathway selected")
+            plt.gca().set_title("select " + str(d.get_prop("coherence_pathway")))
             image_or_plot(d)
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 1.324 seconds)
+   **Total running time of the script:** (0 minutes 1.302 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_raw.py:

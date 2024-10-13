@@ -45,7 +45,7 @@ is consistent.
       File "/home/jmfranck/git_repos/pyspecdata/pyspecdata/load_files/__init__.py", line 438, in find_file
         data = postproc_lookup[postproc_type](data, **kwargs)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/load_data.py", line 513, in proc_var_tau
+      File "/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/load_data.py", line 521, in proc_var_tau
         s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~
     TypeError: can't multiply sequence by non-int of type 'float'

@@ -8,7 +8,7 @@
     <title>Show data with postproc &#8212; pyspecProcScripts 0.9 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
-    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
@@ -20,7 +20,7 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Calculating \(\beta\) from individual pulse capture" href="proc_GDS_capture_int.html" />
+    <link rel="next" title="Process FIR experiment" href="proc_FIR.html" />
     <link rel="prev" title="Captured Nutation" href="proc_capture_nutation.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -61,7 +61,7 @@ dimension.</p>
 <ul class="sphx-glr-horizontal">
 <li><img src="../_images/sphx_glr_proc_raw_001.png" srcset="../_images/sphx_glr_proc_raw_001.png" alt="raw data" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_raw_002.png" srcset="../_images/sphx_glr_proc_raw_002.png" alt="sum of abs of all coherence pathways (for comparison)" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_raw_003.png" srcset="../_images/sphx_glr_proc_raw_003.png" alt="with coherence pathway selected" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_raw_003.png" srcset="../_images/sphx_glr_proc_raw_003.png" alt="select {'ph1': 1}" class = "sphx-glr-multi-img"/></li>
 </ul>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
 postproc_type: spincore_SE_v1
@@ -111,8 +111,7 @@ postproc_type: spincore_SE_v1
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyspecProcScripts.load_data</span> <span class="kn">import</span> <span class="n">lookup_table</span>
-<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="n">select_pathway</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyspecProcScripts</span> <span class="k">as</span> <span class="nn">prscr</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -134,7 +133,8 @@ postproc_type: spincore_SE_v1
 
 <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span>
 <span class="n">d</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
-    <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">exp_type</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">expno</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lookup</span><span class="o">=</span><span class="n">lookup_table</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">exp_type</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">expno</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+    <span class="n">lookup</span><span class="o">=</span><span class="n">prscr</span><span class="o">.</span><span class="n">lookup_table</span>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;postproc_type:&quot;</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;postproc_type&quot;</span><span class="p">))</span>
 <span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
@@ -205,12 +205,13 @@ postproc_type: spincore_SE_v1
             <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;coherence_pathway&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="p">[</span><span class="n">guess_direct</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="n">image_or_plot</span><span class="p">(</span><span class="n">forplot</span><span class="p">)</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">select_pathway</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;coherence_pathway&quot;</span><span class="p">))</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">prscr</span><span class="o">.</span><span class="n">select_pathway</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;coherence_pathway&quot;</span><span class="p">))</span>
         <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;with coherence pathway selected&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;select &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;coherence_pathway&quot;</span><span class="p">)))</span>
         <span class="n">image_or_plot</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.324 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.302 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-raw-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/c14bb3b1260032af0743234a3d1f7368/proc_raw.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_raw.ipynb</span></code></a></p>
@@ -258,10 +259,10 @@ postproc_type: spincore_SE_v1
 <li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
@@ -274,6 +275,7 @@ postproc_type: spincore_SE_v1
 <li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
@@ -294,7 +296,7 @@ postproc_type: spincore_SE_v1
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">ProcScripts Example Gallery</a><ul>
       <li>Previous: <a href="proc_capture_nutation.html" title="previous chapter">Captured Nutation</a></li>
-      <li>Next: <a href="proc_GDS_capture_int.html" title="next chapter">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+      <li>Next: <a href="proc_FIR.html" title="next chapter">Process FIR experiment</a></li>
   </ul></li>
   </ul></li>
 </ul>

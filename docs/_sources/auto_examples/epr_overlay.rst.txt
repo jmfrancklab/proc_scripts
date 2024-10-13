@@ -398,7 +398,7 @@ Here, we simply find the largest spectrum in the group
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 4.218 seconds)
+   **Total running time of the script:** (0 minutes 3.209 seconds)
 
 
 .. _sphx_glr_download_auto_examples_epr_overlay.py:

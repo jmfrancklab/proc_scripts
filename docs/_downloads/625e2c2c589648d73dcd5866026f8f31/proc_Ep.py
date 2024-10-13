@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 2
 
-data_target = os.path.normpath(psd.getDATADIR("WK_processed_data"))
 
 with psd.figlist_var() as fl:
     thisfile, exptype, nodename = (

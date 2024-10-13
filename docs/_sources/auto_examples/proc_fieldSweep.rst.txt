@@ -24,18 +24,70 @@ Analyzes field sweep data. Determines the optimal field across a gradient that
 is on-resonance with the Bridge 12 μw frequency stored in the file to
 determine the resonance ratio of MHz/GHz.
 
-.. GENERATED FROM PYTHON SOURCE LINES 8-92
+.. GENERATED FROM PYTHON SOURCE LINES 8-93
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_proc_fieldSweep_001.png
+         :alt: autoslicing!
+         :srcset: /auto_examples/images/sphx_glr_proc_fieldSweep_001.png
+         :class: sphx-glr-multi-img
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_proc_fieldSweep_002.png
+         :alt: , Signal pathway / ph0, Check phase variation along indirect, FID sliced, phased, and aligned, table of integrals
+         :srcset: /auto_examples/images/sphx_glr_proc_fieldSweep_002.png
+         :class: sphx-glr-multi-img
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_proc_fieldSweep_003.png
+         :alt: power terms
+         :srcset: /auto_examples/images/sphx_glr_proc_fieldSweep_003.png
+         :class: sphx-glr-multi-img
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_proc_fieldSweep_004.png
+         :alt: check covariance test
+         :srcset: /auto_examples/images/sphx_glr_proc_fieldSweep_004.png
+         :class: sphx-glr-multi-img
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_proc_fieldSweep_005.png
+         :alt: residual after shift
+         :srcset: /auto_examples/images/sphx_glr_proc_fieldSweep_005.png
+         :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
 
-.. code-block:: pytb
+ .. code-block:: none
 
-    Traceback (most recent call last):
-      File "/home/jmfranck/git_repos/proc_scripts/examples/proc_fieldSweep.py", line 15, in <module>
-        plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
-        ^^^
-    NameError: name 'plt' is not defined
+    You didn't set units for indirect before saving the data!!!
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9166: RuntimeWarning: invalid value encountered in sqrt
+      return np.sqrt(arg)
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
+      retval = myplotfunc(*plotargs, **kwargs)
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
+      retval = myplotfunc(*plotargs, **kwargs)
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "ko" (-> marker='o'). The keyword argument will take precedence.
+      retval = myplotfunc(*plotargs, **kwargs)
+    #7f7f7f
+    None
+    1: autoslicing!
+    2: Raw Data with averaged scans
+    3: power terms |||ms
+    4: check covariance test
+    5: residual after shift |||('Hz', 'MHz')
+
 
 
 
@@ -51,6 +103,7 @@ determine the resonance ratio of MHz/GHz.
     import pyspecProcScripts as prscr
     import numpy as np
     import matplotlib as mpl
+    import matplotlib.pyplot as plt
     from numpy import r_
 
     plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
@@ -134,7 +187,7 @@ determine the resonance ratio of MHz/GHz.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.003 seconds)
+   **Total running time of the script:** (0 minutes 2.725 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_fieldSweep.py:

@@ -23,7 +23,7 @@ Process Enhancement experiment
 Opens .h5 results file, uses rough_table_of_integrals() to roughly process
 dataset including generating a table of integrals
 
-.. GENERATED FROM PYTHON SOURCE LINES 7-59
+.. GENERATED FROM PYTHON SOURCE LINES 7-58
 
 
 
@@ -131,7 +131,6 @@ dataset including generating a table of integrals
     plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
     # sphinx_gallery_thumbnail_number = 2
 
-    data_target = os.path.normpath(psd.getDATADIR("WK_processed_data"))
 
     with psd.figlist_var() as fl:
         thisfile, exptype, nodename = (
@@ -177,7 +176,7 @@ dataset including generating a table of integrals
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.765 seconds)
+   **Total running time of the script:** (0 minutes 3.153 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_Ep.py:

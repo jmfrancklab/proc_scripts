@@ -80,14 +80,14 @@ of the fitted square wave reflection.
  .. code-block:: none
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
-    --> proc_square_refl.py(24):pyspecdata.core             <module> 2024-10-13 08:41:54,039
+    --> proc_square_refl.py(24):pyspecdata.core             <module> 2024-10-13 09:01:58,514
     INFO: processing dataset hairpin probe
     You didn't set units for ch before saving the data!!!
     You didn't set units for t before saving the data!!!
     logarithmic
-    --> analyze_square_refl.py(123):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:54,621
+    --> analyze_square_refl.py(123):pyspecdata.core  analyze_square_refl 2024-10-13 09:01:59,093
     INFO: frq: 14889966.915265452
-    --> analyze_square_refl.py(153):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:54,803
+    --> analyze_square_refl.py(153):pyspecdata.core  analyze_square_refl 2024-10-13 09:01:59,268
     INFO: the amplitude is 0.5041899787959184
     {A, R}
     {\bf Warning:} You have no error associated with your plot, and I want to flag this for now
@@ -95,36 +95,36 @@ of the fitted square wave reflection.
 
     /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:8620: Warning: You have no error associated with your plot, and I want to flag this for now
       warnings.warn(
-    --> analyze_square_refl.py(225):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:55,100
+    --> analyze_square_refl.py(225):pyspecdata.core  analyze_square_refl 2024-10-13 09:01:59,556
     INFO: output: {'A': 0.6191578695480574, 'C': 0.0007775310076085551, 'R': 8731153.71929354}
-    --> analyze_square_refl.py(226):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:55,104
+    --> analyze_square_refl.py(226):pyspecdata.core  analyze_square_refl 2024-10-13 09:01:59,559
     INFO: latex: $f(t)=0.62 e^{- 8.73\times 10^{6} t} + 0.00$
     /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9166: RuntimeWarning: invalid value encountered in sqrt
       return np.sqrt(arg)
-    --> analyze_square_refl.py(240):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:55,114
+    --> analyze_square_refl.py(240):pyspecdata.core  analyze_square_refl 2024-10-13 09:01:59,569
     INFO: -11728.316475972004
     /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1342: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
       return ax.errorbar(*tebargs[:-1], **tebkwargs)
     /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: linestyle is redundantly defined by the 'linestyle' keyword argument and the fmt string "k--" (-> linestyle='--'). The keyword argument will take precedence.
       retval = myplotfunc(*plotargs, **kwargs)
-    --> proc_square_refl.py(24):pyspecdata.core             <module> 2024-10-13 08:41:55,290
+    --> proc_square_refl.py(24):pyspecdata.core             <module> 2024-10-13 09:01:59,750
     INFO: processing dataset solenoid probe
     You didn't set units for ch before saving the data!!!
     You didn't set units for t before saving the data!!!
     logarithmic
-    --> analyze_square_refl.py(123):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:55,627
+    --> analyze_square_refl.py(123):pyspecdata.core  analyze_square_refl 2024-10-13 09:02:00,093
     INFO: frq: 14889553.824459042
-    --> analyze_square_refl.py(153):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:55,709
+    --> analyze_square_refl.py(153):pyspecdata.core  analyze_square_refl 2024-10-13 09:02:00,174
     INFO: the amplitude is 0.5013108588730282
     {A, R}
     {\bf Warning:} You have no error associated with your plot, and I want to flag this for now
 
 
-    --> analyze_square_refl.py(225):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:55,851
+    --> analyze_square_refl.py(225):pyspecdata.core  analyze_square_refl 2024-10-13 09:02:00,312
     INFO: output: {'A': 0.5118213811859424, 'C': 0.0021007698742564924, 'R': 3969130.4825602476}
-    --> analyze_square_refl.py(226):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:55,853
+    --> analyze_square_refl.py(226):pyspecdata.core  analyze_square_refl 2024-10-13 09:02:00,315
     INFO: latex: $f(t)=0.51 e^{- 3.97\times 10^{6} t} + 0.00$
-    --> analyze_square_refl.py(240):pyspecdata.core  analyze_square_refl 2024-10-13 08:41:55,867
+    --> analyze_square_refl.py(240):pyspecdata.core  analyze_square_refl 2024-10-13 09:02:00,330
     INFO: 22313.576370994408
     1: hairpin probe show the frequency distribution |||MHz
     2: hairpin probe after slice and mix down freq domain |||('MHz', None)
@@ -176,7 +176,7 @@ of the fitted square wave reflection.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 10.953 seconds)
+   **Total running time of the script:** (0 minutes 10.952 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_square_refl.py:
