@@ -1,5 +1,7 @@
-r"""Calculating :math:`\beta` from individual pulse capture
-===========================================================
+r"""
+Calculating :math:`\beta` from individual pulse capture
+=======================================================
+
 Assuming a single pulse was acquired via simple_onepulse_capture.py 
 in the FLInst repo using the GDS oscilloscope, this script plots the absolute analytic
 along with the frequency filtered absolute of the analytic before

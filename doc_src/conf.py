@@ -15,21 +15,9 @@
 import sys
 import os
 import shlex
-import sphinx_rtd_theme
 import mock
 from matplotlib import rcParams
 
-autodoc_mock_imports = [
-    "numpy",
-    "scipy",
-    "scipy.interpolate",
-    "pylab",
-    "mpl_toolkits",
-    "get_ipython",
-    "pyspecdata",
-    "matplotlib",
-    "tables",
-]
 # {{{ mock unit registry, which belongs to pint
 if not os.getenv("SPHINX_GALLERY_RUNNING", False):
 
@@ -107,10 +95,17 @@ extensions = [
 
 sphinx_gallery_conf = {
     "examples_dirs": ["../examples"],  # path to examples scripts
-    "gallery_dirs": (
+    "gallery_dirs": [
         "auto_examples"
-    ),  # path to where to save gallery generated output
+    ],  # path to where to save gallery generated output
     "filename_pattern": ".py",  # modified to make more general
+    "ignore_pattern": r"__init__\.py",  # |.*/text_only.*|.*/matplotlib.*',
+    "reference_url": {
+        "pyspecProcScripts": None,
+    },
+    "doc_module": ("pyspecProcScripts",),
+    ## directory where function/class granular galleries are stored
+    "backreferences_dir": "gen_modules/backreferences",
 }
 autosummary_generate = True
 
@@ -149,7 +144,7 @@ release = __version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

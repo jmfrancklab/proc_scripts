@@ -1,5 +1,6 @@
-"""Align data with significant frequency drift
-==============================================
+"""
+Align data with significant frequency drift
+===========================================
 
 Takes a 2D data set and applies proper phasing corrections followed by 
 aligning the data through a correlation routine.

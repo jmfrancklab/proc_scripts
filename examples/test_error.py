@@ -1,5 +1,6 @@
-""" Validate Inactive CT Error
-==============================
+"""
+Validate Inactive CT Error
+==========================
 
 Estimates the error of the integral of an actual data set of a standard echo
 experiment. Three methods of acquiring the error associated with the data are 
