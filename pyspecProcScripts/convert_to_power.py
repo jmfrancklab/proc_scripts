@@ -18,8 +18,10 @@ def convert_to_power(
 ):
     """Generate power axis for ODNP/E(p)/FIR experiments, converts instrument
     power log to useable axis
+
     Parameters
     ===========
+
     s: nddata
         This is an nddata whose "indirect"
         axis is a structured array.  This structured array gives the
@@ -29,7 +31,7 @@ def convert_to_power(
         Name of the hdf file that contains the power log.
     exp_type : str
         The "experiment type" used to search for the file.
-    directional_coupler_dB : float
+        directional_coupler_dB : float
         The ratio (in dB) of the power that leaves the main port of the
         directional coupler vs. the power that arrives at the power
         detector.  This is measured, and the value here is a previously
@@ -38,8 +40,9 @@ def convert_to_power(
 
     Returns
     =======
-    values: numpy.array
-    s: nddata
+
+    values : numpy.array
+    s : nddata
         (modified in-place)
         When we're done, the axis coordinates for "indirect" are a (not
         structured) array containing the average power recorded on the

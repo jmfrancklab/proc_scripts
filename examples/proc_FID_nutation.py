@@ -1,6 +1,7 @@
 """
 Process FID nutation data
-====================
+=========================
+
 `py proc_FID_nutation.py NODENAME FILENAME EXP_TYPE`
 
 Fourier transforms (and any needed data corrections for older data) are

@@ -1,6 +1,6 @@
 """
 CPMG-specific processing
-====================
+========================
 `py proc_CPMG.py NODENAME FILENAME EXP_TYPE`
 
 Based on `proc_raw.py`:
@@ -11,13 +11,26 @@ Tested with:
 ``py proc_CPMG.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
 
 """
+
 from pyspecProcScripts.load_data import lookup_table
 from pyspecProcScripts import select_pathway
 import pyspecdata as psd
-import sys
+import sys, os
 import numpy as np
 from itertools import cycle
 import matplotlib.pylab as plt
+
+if (
+    "SPHINX_GALLERY_RUNNING" in os.environ
+    and os.environ["SPHINX_GALLERY_RUNNING"] == "True"
+):
+    sys.argv = [
+        sys.argv[0],
+        "proc_CPMG.py",
+        "CPMG_9",
+        "240620_200uM_TEMPOL_pm_generic_CPMG.h5",
+        "ODNP_NMR_comp/Echoes",
+    ]
 
 filter_data = False
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -54,7 +67,8 @@ with psd.figlist_var() as fl:
         }  # this should be stored as the coherence_pathway property of the
         #    data, but for CPMG_9, it appears that it is not
         print(
-            "WARNING! the file doesn't have coherence_pathway set, so I'm assuming",
+            "WARNING! the file doesn't have coherence_pathway set, so I'm"
+            " assuming",
             cohpth,
         )
     d = select_pathway(d, cohpth)
