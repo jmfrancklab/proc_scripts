@@ -95,6 +95,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.mathjax",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",  # should allow numpydoc
     "sphinx.ext.autosummary",  # should allow numpydoc
     #'matplotlib.sphinxext.only_directives',
