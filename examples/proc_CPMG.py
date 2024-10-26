@@ -26,7 +26,6 @@ if (
 ):
     sys.argv = [
         sys.argv[0],
-        "proc_CPMG.py",
         "CPMG_9",
         "240620_200uM_TEMPOL_pm_generic_CPMG.h5",
         "ODNP_NMR_comp/Echoes",
