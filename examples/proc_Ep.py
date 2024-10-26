@@ -13,6 +13,15 @@ import matplotlib.pyplot as plt
 
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 2
+plt.rcParams.update({
+    "errorbar.capsize": 2,
+    "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+    "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+    "savefig.bbox": "tight",
+    "savefig.dpi": 300,
+    "figure.figsize": (6, 2),
+})
 
 
 with psd.figlist_var() as fl:

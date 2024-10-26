@@ -95,8 +95,6 @@ def rough_table_of_integrals(
     assert fl is not None, "for now, fl can't be None"
     # {{{ set up subplots
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-    fig.set_figwidth(15)
-    fig.set_figheight(6)
     fig.suptitle(title)
     fl.next("Raw Data with averaged scans", fig=fig)
     fl.skip_units_check()
@@ -124,8 +122,9 @@ def rough_table_of_integrals(
     fl.image(
         s,
         ax=ax1,
+        interpolation="auto",
     )
-    ax1.set_title("Signal pathway / ph0")
+    ax1.set_title("extract signal pathway")
     # }}}
     # {{{ Check phase variation along indirect
     #     I don't want the data aligned to do this,  in case there is
@@ -138,8 +137,9 @@ def rough_table_of_integrals(
     fl.image(
         s,
         ax=ax2,
+        interpolation="auto",
     )
-    ax2.set_title("Check phase variation along indirect")
+    ax2.set_title("check phase variation\nalong indirect")
     # }}}
     if echo_like:
         signal_pathway = {}
@@ -160,7 +160,9 @@ def rough_table_of_integrals(
     s.ift(direct)
     s *= np.exp(-1j * 2 * pi * (shift - center_of_range) * s.fromaxis(direct))
     s.ft(direct)
-    fl.image(s, ax=ax3)
+    fl.image(s, ax=ax3,
+        interpolation="auto",
+             )
     ax3.set_title(
         "FID sliced" + (", phased," if echo_like else "") + " and aligned"
     )
@@ -175,7 +177,7 @@ def rough_table_of_integrals(
         #                  the figure list, we're going to convert to
         #                  "human" units here
     psd.plot(s, "o", ax=ax4, alpha=0.5)
-    psd.gridandtick(plt.gca())
     ax4.set_title("table of integrals")
+    psd.gridandtick(ax4)
     # }}}
     return s, ax4
