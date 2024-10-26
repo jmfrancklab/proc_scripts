@@ -17,10 +17,11 @@
 
 .. _sphx_glr_auto_examples_read_log.py:
 
+
 Read Instrument Log
 ===================
 
-.. GENERATED FROM PYTHON SOURCE LINES 4-76
+.. GENERATED FROM PYTHON SOURCE LINES 5-77
 
 
 
@@ -122,7 +123,7 @@ Read Instrument Log
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 1.613 seconds)
+   **Total running time of the script:** (0 minutes 1.433 seconds)
 
 
 .. _sphx_glr_download_auto_examples_read_log.py:

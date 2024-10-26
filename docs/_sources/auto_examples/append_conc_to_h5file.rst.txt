@@ -17,8 +17,9 @@
 
 .. _sphx_glr_auto_examples_append_conc_to_h5file.py:
 
+
 Edit the concentration parameter of a saved HDF5 file
-========================================================
+=====================================================
 
 Loads in a previously saved HDF5 dataset. If the attribute
 'concentration' does not exist in the acq_params, this will 
@@ -27,7 +28,7 @@ under 'concentration'. If the attribute already exists it will
 simply replace the current concentration with the value of 
 'actual_conc'.
 
-.. GENERATED FROM PYTHON SOURCE LINES 11-26
+.. GENERATED FROM PYTHON SOURCE LINES 12-27
 
 
 

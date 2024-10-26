@@ -19,7 +19,7 @@
 
 
 Show data with postproc
-====================
+=======================
 `py proc_raw_data.py NODENAME FILENAME EXP_TYPE`
 
 Fourier transforms (and any needed data corrections for older data) are
@@ -230,7 +230,7 @@ Tested with:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 1.302 seconds)
+   **Total running time of the script:** (0 minutes 1.355 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_raw.py:

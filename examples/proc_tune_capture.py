@@ -5,6 +5,12 @@ Processing the Captured Tuning Curve
 Takes the npz file of the captured tuning curve at different
 zoom levels and plots them on the same plot, allowing us to 
 look at any drift or discrepancies of the tuning curve.
+
+This also fits the tuning curves to a Lorentzian for more
+detailed comparison, and gives the width in the legend.
+Note that if we converted the x-axis here (which is
+determined by Bruker XEPR) to actual frequency units,
+then we could convert this width to a Q factor.
 """
 import sympy as sp
 from pyspecdata import figlist_var, nddata, search_filename, lmfitdata
@@ -20,12 +26,14 @@ with figlist_var() as fl:
         (
             "220114_3mM_TEMPOL_3b.npz",
             "std 3 mM",
-        ),  # this is our control so don't change! You want your tuning curve to match this one
+        ),  # this is our control so don't change! You want your tuning curve
+        #     to match this one
     ]:
         # {{{Load in npz file
         thisfile = search_filename(
             filename,
-            exp_type="francklab_esr/alex",  # adjust the exp_type according to your personal folder
+            exp_type="francklab_esr/alex",  # adjust the exp_type according to
+            #                                 your personal folder
             unique=True,
         )
         data = np.load(thisfile)
@@ -52,9 +60,18 @@ with figlist_var() as fl:
                     c_re + 1j * c_im - A / (1 + 1j * 2 * (nu - nu0) / ll)
                 )
                 zoom_data_nd.set_guess(
-                    A=200, c_re=200, c_im=0, lambda_L=0.01, nu_0=0
+                    A=200, c_re=200, c_im=0, lambda_L=0.03, nu_0=0
                 )
-                zoom_data_nd.fit()
+                zoom_data_nd.fit(use_jacobian=False) # the Jacobian seems to
+                #                                      contain NaN values.  The
+                #                                      rigorous way to rectify
+                #                                      this would be to use the
+                #                                      transform methodology
+                #                                      and define the
+                #                                      Lorentzian in the
+                #                                      inverse Fourier domain,
+                #                                      but that seems overkill
+                #                                      for this application.
                 fl.plot(
                     zoom_data_nd,
                     "o",

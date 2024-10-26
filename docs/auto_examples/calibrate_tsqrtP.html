@@ -76,7 +76,7 @@ appropriate section to obtain calibrated pulse lengths for the given amplitude.<
 <li><img src="../_images/sphx_glr_calibrate_tsqrtP_016.png" srcset="../_images/sphx_glr_calibrate_tsqrtP_016.png" alt="amplitude = 0.20 Frequency Domain" class = "sphx-glr-multi-img"/></li>
 </ul>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
---&gt; simple_functions.py(126):root find_apparent_anal_freq 2024-10-13 09:07:12,482
+--&gt; simple_functions.py(126):root find_apparent_anal_freq 2024-10-14 21:33:07,505
 INFO: Aliasing occurred, but we can still find that frequency!
 /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1699: ComplexWarning: Casting complex values to real discards the imaginary part
   return math.isfinite(val)
@@ -91,10 +91,6 @@ Non-linear regime coefficients:
  -4.45091091e+36 -1.38696656e+40 -1.84433605e+43]
 Linear regime coefficients:
  [2.31318373e+00 2.49223410e+06]
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;.&quot; (-&gt; marker=&#39;.&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: linestyle is redundantly defined by the &#39;linestyle&#39; keyword argument and the fmt string &quot;--&quot; (-&gt; linestyle=&#39;--&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
 
 **************** Coefficients for 0.1 ****************
 
@@ -138,7 +134,7 @@ Linear regime coefficients:
 <div class="line"><br /></div>
 </div>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyspecdata</span> <span class="k">as</span> <span class="nn">psd</span>
-<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="n">find_apparent_anal_freq</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.find_apparent_anal_freq" title="pyspecProcScripts.find_apparent_anal_freq" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">find_apparent_anal_freq</span></a>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -216,7 +212,7 @@ Linear regime coefficients:
         <span class="c1"># }}}</span>
         <span class="c1"># {{{ data is already analytic, and downsampled to below 24 MHz</span>
         <span class="n">indiv_plots</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="s2">&quot;abs(analytic)&quot;</span><span class="p">,</span> <span class="s2">&quot;orange&quot;</span><span class="p">)</span>
-        <span class="n">d</span><span class="p">,</span> <span class="n">nu_a</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_apparent_anal_freq</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>  <span class="c1"># find frequency of signal</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">nu_a</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.find_apparent_anal_freq" title="pyspecProcScripts.find_apparent_anal_freq" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">find_apparent_anal_freq</span></a><span class="p">(</span><span class="n">d</span><span class="p">)</span>  <span class="c1"># find frequency of signal</span>
         <span class="n">d</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
         <span class="c1"># {{{ Diagnostic to ensure the frequency properly identified</span>
         <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Frequency Domain&quot;</span><span class="p">)</span>
@@ -451,7 +447,7 @@ Linear regime coefficients:
         <span class="c1"># }}}</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 24.821 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 26.719 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-calibrate-tsqrtp-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/50a87d894440a83246a2280769405598/calibrate_tsqrtP.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">calibrate_tsqrtP.ipynb</span></code></a></p>
@@ -490,34 +486,29 @@ Linear regime coefficients:
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fit_ODNP_data.html">Fitting ODNP Datasets for Ksigma</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Calculate actual beta as a function of pulse length</a></li>
 </ul>

@@ -140,8 +140,6 @@ limits with vertical lines on the final plot.
     will be removed in a future version of SymPy.
 
       thefunction = lambdify(mysymbols, expression, "numpy")
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1699: ComplexWarning: Casting complex values to real discards the imaginary part
       return math.isfinite(val)
     /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1345: ComplexWarning: Casting complex values to real discards the imaginary part
@@ -240,7 +238,7 @@ limits with vertical lines on the final plot.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.618 seconds)
+   **Total running time of the script:** (0 minutes 3.619 seconds)
 
 
 .. _sphx_glr_download_auto_examples_integrate_limits.py:

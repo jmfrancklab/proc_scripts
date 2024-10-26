@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:11.474** total execution time for 34 files **from auto_examples**:
+**00:01.086** total execution time for 27 files **from auto_examples**:
 
 .. container::
 
@@ -32,29 +32,8 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_auto_examples_L2G.py` (``L2G.py``)
-     - 00:09.718
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_test_error.py` (``test_error.py``)
-     - 00:00.824
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_generate_integrals_RealData.py` (``generate_integrals_RealData.py``)
-     - 00:00.440
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_generate_integrals.py` (``generate_integrals.py``)
-     - 00:00.367
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_Hermitian_Phasing_Actual_var_tau.py` (``Hermitian_Phasing_Actual_var_tau.py``)
-     - 00:00.045
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_fit_ODNP_data.py` (``fit_ODNP_data.py``)
-     - 00:00.038
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_proc_var_tau.py` (``proc_var_tau.py``)
-     - 00:00.038
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_proc_CPMG.py` (``proc_CPMG.py``)
-     - 00:00.003
+   * - :ref:`sphx_glr_auto_examples_proc_tune_capture.py` (``proc_tune_capture.py``)
+     - 00:01.086
      - 0.0
    * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py` (``FIDtoEcho_Actual.py``)
      - 00:00.000
@@ -95,6 +74,9 @@ Computation times
    * - :ref:`sphx_glr_auto_examples_phaseCycNoise_example.py` (``phaseCycNoise_example.py``)
      - 00:00.000
      - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_CPMG.py` (``proc_CPMG.py``)
+     - 00:00.000
+     - 0.0
    * - :ref:`sphx_glr_auto_examples_proc_Ep.py` (``proc_Ep.py``)
      - 00:00.000
      - 0.0
@@ -120,9 +102,6 @@ Computation times
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_proc_square_refl.py` (``proc_square_refl.py``)
-     - 00:00.000
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_proc_tune_capture.py` (``proc_tune_capture.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_read_log.py` (``read_log.py``)

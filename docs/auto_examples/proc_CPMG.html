@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Process Enhancement experiment" href="proc_Ep.html" />
-    <link rel="prev" title="&lt;no title&gt;" href="phaseCycNoise_example.html" />
+    <link rel="prev" title="Demonstrate Integrate Limits on Experimental Data" href="integrate_limits_realData.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -51,23 +51,41 @@ to download the full example code</p>
 Here we apply the postprocessing, and then do some stuff specific to a CPMG.</p>
 <p>Tested with:</p>
 <p><code class="docutils literal notranslate"><span class="pre">py</span> <span class="pre">proc_CPMG.py</span> <span class="pre">CPMG_9</span> <span class="pre">240620_200uM_TEMPOL_pm_generic_CPMG.h5</span> <span class="pre">ODNP_NMR_comp/Echoes</span></code></p>
-<div class="sphx-glr-script-out highlight-pytb notranslate"><div class="highlight"><pre><span></span><span class="gt">Traceback (most recent call last):</span>
-  File <span class="nb">&quot;/home/jmfranck/git_repos/proc_scripts/examples/proc_CPMG.py&quot;</span>, line <span class="m">26</span>, in <span class="n">&lt;module&gt;</span>
-<span class="w">    </span><span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span>
-<span class="w">           </span><span class="pm">^^^^^^^^^^^^^^^^^^</span>
-<span class="gr">AssertionError</span>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_proc_CPMG_001.png" srcset="../_images/sphx_glr_proc_CPMG_001.png" alt="raw data" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_CPMG_002.png" srcset="../_images/sphx_glr_proc_CPMG_002.png" alt="time domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_CPMG_003.png" srcset="../_images/sphx_glr_proc_CPMG_003.png" alt="plot as time trace" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>You didn&#39;t set units for indirect before saving the data!!!
+You didn&#39;t set units for nEcho before saving the data!!!
+You didn&#39;t set units for t2 before saving the data!!!
+WARNING! the file doesn&#39;t have coherence_pathway set, so I&#39;m assuming {&#39;ph1&#39;: 1, &#39;ph_overall&#39;: -1}
+1: raw data |||(None, None)
+2: time domain |||(None, None)
+3: plot as time trace |||None
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyspecProcScripts.load_data</span> <span class="kn">import</span> <span class="n">lookup_table</span>
-<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="n">select_pathway</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.select_pathway" title="pyspecProcScripts.select_pathway" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">select_pathway</span></a>
 <span class="kn">import</span> <span class="nn">pyspecdata</span> <span class="k">as</span> <span class="nn">psd</span>
-<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">cycle</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="k">if</span> <span class="p">(</span>
+    <span class="s2">&quot;SPHINX_GALLERY_RUNNING&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+    <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SPHINX_GALLERY_RUNNING&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;True&quot;</span>
+<span class="p">):</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;CPMG_9&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;240620_200uM_TEMPOL_pm_generic_CPMG.h5&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ODNP_NMR_comp/Echoes&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
 
 <span class="n">filter_data</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="n">colorcyc_list</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.prop_cycle&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">by_key</span><span class="p">()[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span>
@@ -104,10 +122,11 @@ Here we apply the postprocessing, and then do some stuff specific to a CPMG.</p>
         <span class="p">}</span>  <span class="c1"># this should be stored as the coherence_pathway property of the</span>
         <span class="c1">#    data, but for CPMG_9, it appears that it is not</span>
         <span class="nb">print</span><span class="p">(</span>
-            <span class="s2">&quot;WARNING! the file doesn&#39;t have coherence_pathway set, so I&#39;m assuming&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;WARNING! the file doesn&#39;t have coherence_pathway set, so I&#39;m&quot;</span>
+            <span class="s2">&quot; assuming&quot;</span><span class="p">,</span>
             <span class="n">cohpth</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="n">d</span> <span class="o">=</span> <span class="n">select_pathway</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">cohpth</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.select_pathway" title="pyspecProcScripts.select_pathway" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">select_pathway</span></a><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">cohpth</span><span class="p">)</span>
     <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
     <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;plot as time trace&quot;</span><span class="p">)</span>
     <span class="n">d</span><span class="o">.</span><span class="n">smoosh</span><span class="p">([</span><span class="s2">&quot;nEcho&quot;</span><span class="p">,</span> <span class="s2">&quot;t2&quot;</span><span class="p">],</span> <span class="s2">&quot;t2&quot;</span><span class="p">)</span>
@@ -117,7 +136,7 @@ Here we apply the postprocessing, and then do some stuff specific to a CPMG.</p>
     <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.003 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.594 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-cpmg-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/04256f932e7b113c01067b5fdeab0d4f/proc_CPMG.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_CPMG.ipynb</span></code></a></p>
@@ -156,34 +175,29 @@ Here we apply the postprocessing, and then do some stuff specific to a CPMG.</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fit_ODNP_data.html">Fitting ODNP Datasets for Ksigma</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
 </ul>
@@ -195,7 +209,7 @@ Here we apply the postprocessing, and then do some stuff specific to a CPMG.</p>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">ProcScripts Example Gallery</a><ul>
-      <li>Previous: <a href="phaseCycNoise_example.html" title="previous chapter">&lt;no title&gt;</a></li>
+      <li>Previous: <a href="integrate_limits_realData.html" title="previous chapter">Demonstrate Integrate Limits on Experimental Data</a></li>
       <li>Next: <a href="proc_Ep.html" title="next chapter">Process Enhancement experiment</a></li>
   </ul></li>
   </ul></li>

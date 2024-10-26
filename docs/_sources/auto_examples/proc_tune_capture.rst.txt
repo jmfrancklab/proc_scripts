@@ -25,7 +25,13 @@ Takes the npz file of the captured tuning curve at different
 zoom levels and plots them on the same plot, allowing us to 
 look at any drift or discrepancies of the tuning curve.
 
-.. GENERATED FROM PYTHON SOURCE LINES 9-67
+This also fits the tuning curves to a Lorentzian for more
+detailed comparison, and gives the width in the legend.
+Note that if we converted the x-axis here (which is
+determined by Bruker XEPR) to actual frequency units,
+then we could convert this width to a Q factor.
+
+.. GENERATED FROM PYTHON SOURCE LINES 15-84
 
 
 
@@ -51,8 +57,6 @@ look at any drift or discrepancies of the tuning curve.
 
  .. code-block:: none
 
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     1: Tuning curve comparison-zoom1 |||None
     2: Tuning curve comparison-zoom2 |||None
 
@@ -80,12 +84,14 @@ look at any drift or discrepancies of the tuning curve.
             (
                 "220114_3mM_TEMPOL_3b.npz",
                 "std 3 mM",
-            ),  # this is our control so don't change! You want your tuning curve to match this one
+            ),  # this is our control so don't change! You want your tuning curve
+            #     to match this one
         ]:
             # {{{Load in npz file
             thisfile = search_filename(
                 filename,
-                exp_type="francklab_esr/alex",  # adjust the exp_type according to your personal folder
+                exp_type="francklab_esr/alex",  # adjust the exp_type according to
+                #                                 your personal folder
                 unique=True,
             )
             data = np.load(thisfile)
@@ -112,9 +118,18 @@ look at any drift or discrepancies of the tuning curve.
                         c_re + 1j * c_im - A / (1 + 1j * 2 * (nu - nu0) / ll)
                     )
                     zoom_data_nd.set_guess(
-                        A=200, c_re=200, c_im=0, lambda_L=0.01, nu_0=0
+                        A=200, c_re=200, c_im=0, lambda_L=0.03, nu_0=0
                     )
-                    zoom_data_nd.fit()
+                    zoom_data_nd.fit(use_jacobian=False) # the Jacobian seems to
+                    #                                      contain NaN values.  The
+                    #                                      rigorous way to rectify
+                    #                                      this would be to use the
+                    #                                      transform methodology
+                    #                                      and define the
+                    #                                      Lorentzian in the
+                    #                                      inverse Fourier domain,
+                    #                                      but that seems overkill
+                    #                                      for this application.
                     fl.plot(
                         zoom_data_nd,
                         "o",
@@ -128,7 +143,7 @@ look at any drift or discrepancies of the tuning curve.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.838 seconds)
+   **Total running time of the script:** (0 minutes 1.086 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_tune_capture.py:

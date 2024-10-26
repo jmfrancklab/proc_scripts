@@ -148,12 +148,6 @@ one of which has a very short echo time.
  .. code-block:: none
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "ko" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     1: (tau is 1 ms) Data processing |||('Hz', None)
     2: (tau is 1 ms) autoslicing!
     3: (tau is 1 ms) power terms |||ms
@@ -251,7 +245,7 @@ one of which has a very short echo time.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 9.985 seconds)
+   **Total running time of the script:** (0 minutes 11.964 seconds)
 
 
 .. _sphx_glr_download_auto_examples_FIDtoEcho_Actual_Challenging.py:

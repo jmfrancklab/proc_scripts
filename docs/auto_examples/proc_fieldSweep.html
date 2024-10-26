@@ -20,8 +20,8 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Phasing and Timing Correction With Fake Data" href="Hermitian_Phasing.html" />
-    <link rel="prev" title="Read Instrument Log" href="read_log.html" />
+    <link rel="next" title="Captured Nutation" href="proc_capture_nutation.html" />
+    <link rel="prev" title="Phasing and Timing Correction With Fake Data" href="Hermitian_Phasing.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -51,27 +51,19 @@ is on-resonance with the Bridge 12 μw frequency stored in the file to
 determine the resonance ratio of MHz/GHz.</p>
 <ul class="sphx-glr-horizontal">
 <li><img src="../_images/sphx_glr_proc_fieldSweep_001.png" srcset="../_images/sphx_glr_proc_fieldSweep_001.png" alt="autoslicing!" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_fieldSweep_002.png" srcset="../_images/sphx_glr_proc_fieldSweep_002.png" alt=", Signal pathway / ph0, Check phase variation along indirect, FID sliced, phased, and aligned, table of integrals" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_fieldSweep_002.png" srcset="../_images/sphx_glr_proc_fieldSweep_002.png" alt=", extract signal pathway, check phase variation along indirect, FID sliced, phased, and aligned, table of integrals" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_fieldSweep_003.png" srcset="../_images/sphx_glr_proc_fieldSweep_003.png" alt="power terms" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_fieldSweep_004.png" srcset="../_images/sphx_glr_proc_fieldSweep_004.png" alt="check covariance test" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_fieldSweep_005.png" srcset="../_images/sphx_glr_proc_fieldSweep_005.png" alt="residual after shift" class = "sphx-glr-multi-img"/></li>
 </ul>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>You didn&#39;t set units for indirect before saving the data!!!
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9166: RuntimeWarning: invalid value encountered in sqrt
-  return np.sqrt(arg)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;o&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;.&quot; (-&gt; marker=&#39;.&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;ko&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-#7f7f7f
-None
+#2ca02c
+#2ca02c
 1: autoslicing!
 2: Raw Data with averaged scans
 3: power terms |||ms
 4: check covariance test
-5: residual after shift |||(&#39;Hz&#39;, &#39;MHz&#39;)
+5: residual after shift |||(&#39;Hz&#39;, &#39;ppt&#39;)
 </pre></div>
 </div>
 <div class="line-block">
@@ -86,6 +78,15 @@ None
 
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;image.aspect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>  <span class="c1"># needed for sphinx gallery</span>
 <span class="c1"># sphinx_gallery_thumbnail_number = 2</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+    <span class="s2">&quot;errorbar.capsize&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s2">&quot;figure.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># clear</span>
+    <span class="s2">&quot;axes.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">),</span>  <span class="c1"># 90% transparent white</span>
+    <span class="s2">&quot;savefig.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># clear</span>
+    <span class="s2">&quot;savefig.bbox&quot;</span><span class="p">:</span> <span class="s2">&quot;tight&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;savefig.dpi&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+    <span class="s2">&quot;figure.figsize&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+<span class="p">})</span>
 
 <span class="n">thisfile</span><span class="p">,</span> <span class="n">exp_type</span><span class="p">,</span> <span class="n">nodename</span><span class="p">,</span> <span class="n">label_str</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">&quot;240924_13p5mM_TEMPOL_field.h5&quot;</span><span class="p">,</span>
@@ -100,7 +101,7 @@ None
     <span class="n">lookup</span><span class="o">=</span><span class="n">prscr</span><span class="o">.</span><span class="n">lookup_table</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">use_freq</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+<span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">(</span><span class="n">black</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
     <span class="n">nu_B12</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;uw_dip_center_GHz&quot;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">use_freq</span><span class="p">:</span>
         <span class="c1"># Unusually, we want to keep the units of the frequency in MHz</span>
@@ -109,36 +110,21 @@ None
         <span class="n">s</span><span class="p">[</span><span class="s2">&quot;indirect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;indirect&quot;</span><span class="p">][</span><span class="s2">&quot;carrierFreq&quot;</span><span class="p">]</span>
         <span class="n">s</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;indirect&quot;</span><span class="p">,</span> <span class="s2">&quot;MHz&quot;</span><span class="p">)</span>
         <span class="n">s</span><span class="p">[</span><span class="s2">&quot;indirect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;indirect&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">nu_B12</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;indirect&quot;</span><span class="p">,</span> <span class="s2">&quot;ppt&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># if we wanted to plot the field instead, we could set use_freq</span>
         <span class="c1"># above to False</span>
         <span class="n">s</span><span class="p">[</span><span class="s2">&quot;indirect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;indirect&quot;</span><span class="p">][</span><span class="s2">&quot;Field&quot;</span><span class="p">]</span>
         <span class="n">s</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;indirect&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">)</span>
-    <span class="n">s</span><span class="p">,</span> <span class="n">ax4</span> <span class="o">=</span> <span class="n">prscr</span><span class="o">.</span><span class="n">rough_table_of_integrals</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">)</span>
-    <span class="n">ax4</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
-        <span class="mf">0.5</span><span class="p">,</span>
-        <span class="mf">0.5</span><span class="p">,</span>
-        <span class="s2">&quot;Warning!!!, I&#39;m using uw_dip_center_GHz as the microwave</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;frequency, but there is no guarantee that it is!!!  It is only the</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;input to dip_lock!!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span>
-        <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
-        <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
-        <span class="n">transform</span><span class="o">=</span><span class="n">ax4</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">s</span><span class="p">,</span> <span class="n">ax4</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.rough_table_of_integrals" title="pyspecProcScripts.rough_table_of_integrals" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">prscr</span><span class="o">.</span><span class="n">rough_table_of_integrals</span></a><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">use_freq</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="n">psd</span><span class="o">.</span><span class="n">det_unit_prefactor</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_units</span><span class="p">(</span><span class="s2">&quot;indirect&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="mi">6</span>
-        <span class="p">),</span> <span class="s2">&quot;doesn&#39;t seem to be in MHz&quot;</span>
+        <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">get_units</span><span class="p">(</span><span class="s2">&quot;indirect&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;ppt&quot;</span><span class="p">,</span> <span class="s2">&quot;doesn&#39;t seem to be in ppt&quot;</span>
         <span class="c1"># {{{ use analytic differentiation to find the max of the polynomial</span>
         <span class="n">c_poly</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="s2">&quot;indirect&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_plot_color</span><span class="p">())</span>
         <span class="n">forplot</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">eval_poly</span><span class="p">(</span><span class="n">c_poly</span><span class="p">,</span> <span class="s2">&quot;indirect&quot;</span><span class="p">,</span> <span class="n">npts</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">forplot</span><span class="o">.</span><span class="n">get_plot_color</span><span class="p">())</span>
-        <span class="n">psd</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-            <span class="n">forplot</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;fit&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax4</span>
-        <span class="p">)</span>
+        <span class="n">psd</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">forplot</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;fit&quot;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax4</span><span class="p">)</span>
         <span class="n">theroots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roots</span><span class="p">(</span>
             <span class="p">(</span><span class="n">c_poly</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">*</span> <span class="n">r_</span><span class="p">[</span><span class="mi">1</span> <span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">c_poly</span><span class="p">)])[</span>  <span class="c1"># differentiate the polynomial</span>
                 <span class="p">::</span><span class="o">-</span><span class="mi">1</span>
@@ -152,7 +138,7 @@ None
         <span class="n">ax4</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">theroots</span><span class="p">[</span><span class="n">idx_max</span><span class="p">],</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
         <span class="n">ax4</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
             <span class="n">x</span><span class="o">=</span><span class="n">theroots</span><span class="p">[</span><span class="n">idx_max</span><span class="p">],</span>
-            <span class="n">y</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
             <span class="n">s</span><span class="o">=</span><span class="s2">&quot; </span><span class="si">%0.5f</span><span class="s2"> ppt&quot;</span> <span class="o">%</span> <span class="n">theroots</span><span class="p">[</span><span class="n">idx_max</span><span class="p">],</span>
             <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
             <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
@@ -161,9 +147,11 @@ None
                 <span class="n">ax4</span><span class="o">.</span><span class="n">transData</span><span class="p">,</span> <span class="n">ax4</span><span class="o">.</span><span class="n">transAxes</span>
             <span class="p">),</span>
         <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.725 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 3.743 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-fieldsweep-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/2bb316154bf32a6027e189fc5a6b0f8b/proc_fieldSweep.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_fieldSweep.ipynb</span></code></a></p>
@@ -202,34 +190,29 @@ None
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fit_ODNP_data.html">Fitting ODNP Datasets for Ksigma</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
 </ul>
@@ -241,8 +224,8 @@ None
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">ProcScripts Example Gallery</a><ul>
-      <li>Previous: <a href="read_log.html" title="previous chapter">Read Instrument Log</a></li>
-      <li>Next: <a href="Hermitian_Phasing.html" title="next chapter">Phasing and Timing Correction With Fake Data</a></li>
+      <li>Previous: <a href="Hermitian_Phasing.html" title="previous chapter">Phasing and Timing Correction With Fake Data</a></li>
+      <li>Next: <a href="proc_capture_nutation.html" title="next chapter">Captured Nutation</a></li>
   </ul></li>
   </ul></li>
 </ul>

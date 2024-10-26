@@ -17,13 +17,14 @@
 
 .. _sphx_glr_auto_examples_correlation_alignment_example.py:
 
+
 Align data with significant frequency drift
-==============================================
+===========================================
 
 Takes a 2D data set and applies proper phasing corrections followed by 
 aligning the data through a correlation routine.
 
-.. GENERATED FROM PYTHON SOURCE LINES 7-111
+.. GENERATED FROM PYTHON SOURCE LINES 8-112
 
 
 
@@ -215,7 +216,7 @@ aligning the data through a correlation routine.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (2 minutes 4.065 seconds)
+   **Total running time of the script:** (1 minutes 40.430 seconds)
 
 
 .. _sphx_glr_download_auto_examples_correlation_alignment_example.py:

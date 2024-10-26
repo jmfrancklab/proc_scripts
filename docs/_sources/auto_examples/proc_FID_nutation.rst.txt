@@ -19,7 +19,8 @@
 
 
 Process FID nutation data
-====================
+=========================
+
 `py proc_FID_nutation.py NODENAME FILENAME EXP_TYPE`
 
 Fourier transforms (and any needed data corrections for older data) are
@@ -33,7 +34,7 @@ Tested with:
 
 ``py proc_FID_nutation.py FID_nutation_1 240805_amp0p1_27mM_TEMPOL_FID_nutat        ion.h5 ODNP_NMR_comp/nutation``
 
-.. GENERATED FROM PYTHON SOURCE LINES 18-94
+.. GENERATED FROM PYTHON SOURCE LINES 19-95
 
 
 
@@ -60,10 +61,6 @@ Tested with:
  .. code-block:: none
 
     using postproc type spincore_FID_nutation_v1
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9166: RuntimeWarning: invalid value encountered in sqrt
-      return np.sqrt(arg)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     1: autoslicing!
     2: Raw Data with averaged scans
 
@@ -157,7 +154,7 @@ Tested with:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.550 seconds)
+   **Total running time of the script:** (0 minutes 2.692 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_FID_nutation.py:

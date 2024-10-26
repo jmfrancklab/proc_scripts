@@ -1,4 +1,5 @@
-""" Read Instrument Log
+"""
+Read Instrument Log
 ===================
 """
 from pyspecProcScripts import logobj

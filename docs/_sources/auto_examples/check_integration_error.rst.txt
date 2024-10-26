@@ -17,6 +17,7 @@
 
 .. _sphx_glr_auto_examples_check_integration_error.py:
 
+
 Check integral error calculation
 ================================
 
@@ -32,7 +33,7 @@ Check that the following match:
   coherence channels (do this manually inside this script -- should mimic
   what :func:`~pyspecProcScripts.integral_w_errors` does)
 
-.. GENERATED FROM PYTHON SOURCE LINES 16-128
+.. GENERATED FROM PYTHON SOURCE LINES 17-129
 
 
 
@@ -74,8 +75,6 @@ Check that the following match:
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
     shape of all results [(40, 'vd'), (100, 'repeats')]
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     #0
     #1
     #2
@@ -196,8 +195,6 @@ Check that the following match:
            0.8974359 , 0.92307692, 0.94871795, 0.97435897, 1.        ])
                             +/-None}
      programmed std 2.0
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1342: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
-      return ax.errorbar(*tebargs[:-1], **tebkwargs)
     /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all axes decorations.
       plt.gcf().tight_layout()
 
@@ -326,7 +323,7 @@ Check that the following match:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 53.532 seconds)
+   **Total running time of the script:** (0 minutes 46.994 seconds)
 
 
 .. _sphx_glr_download_auto_examples_check_integration_error.py:

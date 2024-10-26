@@ -113,16 +113,6 @@ dataset including generating a table of integrals
 
  .. code-block:: none
 
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9166: RuntimeWarning: invalid value encountered in sqrt
-      return np.sqrt(arg)
-    /home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/phasing.py:740: RuntimeWarning: invalid value encountered in divide
-      cost_func.run(lambda x: x / sqrt(abs(x)))  # based on what we'd seen
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "ko" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     1: FIR_noPower autoslicing!
     2: FIR_noPower Raw Data with averaged scans
     3: FIR_noPower power terms |||ms
@@ -253,7 +243,7 @@ dataset including generating a table of integrals
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 6.757 seconds)
+   **Total running time of the script:** (0 minutes 6.917 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_FIR.py:

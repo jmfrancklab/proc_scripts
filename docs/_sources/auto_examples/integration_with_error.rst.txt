@@ -86,10 +86,6 @@ better than what you would choose by hand.
  .. code-block:: none
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1342: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
-      return ax.errorbar(*tebargs[:-1], **tebkwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
       plt.gcf().tight_layout()
 
@@ -250,7 +246,7 @@ better than what you would choose by hand.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.582 seconds)
+   **Total running time of the script:** (0 minutes 2.684 seconds)
 
 
 .. _sphx_glr_download_auto_examples_integration_with_error.py:

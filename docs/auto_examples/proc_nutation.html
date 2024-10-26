@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Demonstrate Integrate Limits" href="integrate_limits.html" />
-    <link rel="prev" title="Convert 2D to Integrals with Errors" href="generate_integrals.html" />
+    <link rel="prev" title="FID from Echo after Phasing and Timing Correction – Challenging Actual Data" href="FIDtoEcho_Actual_Challenging.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -62,15 +62,7 @@ optimal beta_ninety.</p>
 <li><img src="../_images/sphx_glr_proc_nutation_004.png" srcset="../_images/sphx_glr_proc_nutation_004.png" alt="check covariance test" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_nutation_005.png" srcset="../_images/sphx_glr_proc_nutation_005.png" alt="residual after shift" class = "sphx-glr-multi-img"/></li>
 </ul>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9166: RuntimeWarning: invalid value encountered in sqrt
-  return np.sqrt(arg)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;o&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;.&quot; (-&gt; marker=&#39;.&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;ko&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-1: autoslicing!
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>1: autoslicing!
 2: Raw Data with averaged scans
 3: power terms |||ms
 4: check covariance test
@@ -110,7 +102,7 @@ optimal beta_ninety.</p>
     <span class="n">lookup</span><span class="o">=</span><span class="n">prscr</span><span class="o">.</span><span class="n">lookup_table</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
-    <span class="n">frq_center</span><span class="p">,</span> <span class="n">frq_half</span> <span class="o">=</span> <span class="n">prscr</span><span class="o">.</span><span class="n">find_peakrange</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">)</span>
+    <span class="n">frq_center</span><span class="p">,</span> <span class="n">frq_half</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.find_peakrange" title="pyspecProcScripts.find_peakrange" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">prscr</span><span class="o">.</span><span class="n">find_peakrange</span></a><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">)</span>
     <span class="n">signal_range</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">slice_expansion</span> <span class="o">*</span> <span class="n">r_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">frq_half</span> <span class="o">+</span> <span class="n">frq_center</span><span class="p">)</span>
     <span class="k">if</span> <span class="s2">&quot;nScans&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">dimlabels</span><span class="p">:</span>
         <span class="n">s</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s2">&quot;nScans&quot;</span><span class="p">)</span>
@@ -118,7 +110,7 @@ optimal beta_ninety.</p>
         <span class="s2">&quot;g&quot;</span>
     <span class="p">)</span>  <span class="c1"># this affects the 1D plots, but not the images, etc.</span>
     <span class="c1"># {{{ generate the table of integrals and fit</span>
-    <span class="n">s</span><span class="p">,</span> <span class="n">ax_last</span> <span class="o">=</span> <span class="n">prscr</span><span class="o">.</span><span class="n">rough_table_of_integrals</span><span class="p">(</span>
+    <span class="n">s</span><span class="p">,</span> <span class="n">ax_last</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.rough_table_of_integrals" title="pyspecProcScripts.rough_table_of_integrals" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">prscr</span><span class="o">.</span><span class="n">rough_table_of_integrals</span></a><span class="p">(</span>
         <span class="n">s</span><span class="p">,</span> <span class="n">signal_range</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">echo_like</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
     <span class="n">prefactor_scaling</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="n">psd</span><span class="o">.</span><span class="n">det_unit_prefactor</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_units</span><span class="p">(</span><span class="s2">&quot;beta&quot;</span><span class="p">))</span>
@@ -160,7 +152,7 @@ optimal beta_ninety.</p>
     <span class="n">ax_last</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 4.069 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 4.039 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-nutation-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/7339a73853605ab93ae02b898ec39035/proc_nutation.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_nutation.ipynb</span></code></a></p>
@@ -199,34 +191,29 @@ optimal beta_ninety.</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Process nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fit_ODNP_data.html">Fitting ODNP Datasets for Ksigma</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
 </ul>
@@ -238,7 +225,7 @@ optimal beta_ninety.</p>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">ProcScripts Example Gallery</a><ul>
-      <li>Previous: <a href="generate_integrals.html" title="previous chapter">Convert 2D to Integrals with Errors</a></li>
+      <li>Previous: <a href="FIDtoEcho_Actual_Challenging.html" title="previous chapter">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
       <li>Next: <a href="integrate_limits.html" title="next chapter">Demonstrate Integrate Limits</a></li>
   </ul></li>
   </ul></li>

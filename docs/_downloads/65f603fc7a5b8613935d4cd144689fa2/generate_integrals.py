@@ -1,4 +1,5 @@
-"""Convert 2D to Integrals with Errors
+"""
+Convert 2D to Integrals with Errors
 ===================================
 
 Take a 2D dataset and convert it to a table of integrals with errors, utilizing

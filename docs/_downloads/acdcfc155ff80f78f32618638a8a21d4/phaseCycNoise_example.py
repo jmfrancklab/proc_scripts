@@ -1,4 +1,8 @@
-"""A demo of the correlation alignment on a dataset
+"""
+Phase Cycling Noise
+===================
+
+A demo of the correlation alignment on a dataset
 with a lot of phase cycling noise"""
 from pyspecdata import figlist_var, find_file
 from pyspecProcScripts import correl_align

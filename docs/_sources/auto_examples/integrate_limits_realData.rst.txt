@@ -91,8 +91,6 @@ with vertical lines on the final plots.
 
     You didn't set units for t2 before saving the data!!!
     phasing dimension as one
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
 
 
 
@@ -156,7 +154,7 @@ with vertical lines on the final plots.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 1.363 seconds)
+   **Total running time of the script:** (0 minutes 1.584 seconds)
 
 
 .. _sphx_glr_download_auto_examples_integrate_limits_realData.py:

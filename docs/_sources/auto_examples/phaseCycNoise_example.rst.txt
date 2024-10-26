@@ -17,10 +17,14 @@
 
 .. _sphx_glr_auto_examples_phaseCycNoise_example.py:
 
+
+Phase Cycling Noise
+===================
+
 A demo of the correlation alignment on a dataset
 with a lot of phase cycling noise
 
-.. GENERATED FROM PYTHON SOURCE LINES 3-43
+.. GENERATED FROM PYTHON SOURCE LINES 7-47
 
 
 
@@ -113,7 +117,7 @@ with a lot of phase cycling noise
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 9.498 seconds)
+   **Total running time of the script:** (0 minutes 15.926 seconds)
 
 
 .. _sphx_glr_download_auto_examples_phaseCycNoise_example.py:

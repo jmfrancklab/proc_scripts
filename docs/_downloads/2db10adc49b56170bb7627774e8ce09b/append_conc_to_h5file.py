@@ -1,5 +1,6 @@
-"""Edit the concentration parameter of a saved HDF5 file
-========================================================
+"""
+Edit the concentration parameter of a saved HDF5 file
+=====================================================
 
 Loads in a previously saved HDF5 dataset. If the attribute
 'concentration' does not exist in the acq_params, this will 

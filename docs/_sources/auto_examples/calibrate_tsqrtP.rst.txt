@@ -157,7 +157,7 @@ appropriate section to obtain calibrated pulse lengths for the given amplitude.
  .. code-block:: none
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
-    --> simple_functions.py(126):root find_apparent_anal_freq 2024-10-13 09:07:12,482
+    --> simple_functions.py(126):root find_apparent_anal_freq 2024-10-14 21:33:07,505
     INFO: Aliasing occurred, but we can still find that frequency!
     /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1699: ComplexWarning: Casting complex values to real discards the imaginary part
       return math.isfinite(val)
@@ -172,10 +172,6 @@ appropriate section to obtain calibrated pulse lengths for the given amplitude.
      -4.45091091e+36 -1.38696656e+40 -1.84433605e+43]
     Linear regime coefficients:
      [2.31318373e+00 2.49223410e+06]
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: linestyle is redundantly defined by the 'linestyle' keyword argument and the fmt string "--" (-> linestyle='--'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
 
     **************** Coefficients for 0.1 ****************
 
@@ -540,7 +536,7 @@ appropriate section to obtain calibrated pulse lengths for the given amplitude.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 24.821 seconds)
+   **Total running time of the script:** (0 minutes 26.719 seconds)
 
 
 .. _sphx_glr_download_auto_examples_calibrate_tsqrtP.py:

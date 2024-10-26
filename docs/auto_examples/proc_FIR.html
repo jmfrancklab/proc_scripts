@@ -20,7 +20,7 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Calculating \(\beta\) from individual pulse capture" href="proc_GDS_capture_int.html" />
+    <link rel="next" title="Calculating β from individual pulse capture" href="proc_GDS_capture_int.html" />
     <link rel="prev" title="Show data with postproc" href="proc_raw.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -62,17 +62,7 @@ dataset including generating a table of integrals</p>
 <li><img src="../_images/sphx_glr_proc_FIR_010.png" srcset="../_images/sphx_glr_proc_FIR_010.png" alt="FIR_34dBm check covariance test" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_011.png" srcset="../_images/sphx_glr_proc_FIR_011.png" alt="FIR_34dBm residual after shift" class = "sphx-glr-multi-img"/></li>
 </ul>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9166: RuntimeWarning: invalid value encountered in sqrt
-  return np.sqrt(arg)
-/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/phasing.py:740: RuntimeWarning: invalid value encountered in divide
-  cost_func.run(lambda x: x / sqrt(abs(x)))  # based on what we&#39;d seen
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;o&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;.&quot; (-&gt; marker=&#39;.&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;ko&quot; (-&gt; marker=&#39;o&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs, **kwargs)
-1: FIR_noPower autoslicing!
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>1: FIR_noPower autoslicing!
 2: FIR_noPower Raw Data with averaged scans
 3: FIR_noPower power terms |||ms
 4: FIR_noPower check covariance test
@@ -130,9 +120,9 @@ dataset including generating a table of integrals</p>
         <span class="n">indirect</span> <span class="o">=</span> <span class="s2">&quot;vd&quot;</span>
         <span class="n">direct</span> <span class="o">=</span> <span class="s2">&quot;t2&quot;</span>
         <span class="k">if</span> <span class="n">clock_correction</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="n">prscr</span><span class="o">.</span><span class="n">clock_correct</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.clock_correct" title="pyspecProcScripts.clock_correct" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">prscr</span><span class="o">.</span><span class="n">clock_correct</span></a><span class="p">(</span><span class="n">s</span><span class="p">)</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
-        <span class="n">s</span><span class="p">,</span> <span class="n">ax_last</span> <span class="o">=</span> <span class="n">prscr</span><span class="o">.</span><span class="n">rough_table_of_integrals</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">ax_last</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.rough_table_of_integrals" title="pyspecProcScripts.rough_table_of_integrals" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">prscr</span><span class="o">.</span><span class="n">rough_table_of_integrals</span></a><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">)</span>
         <span class="c1"># Included signal averaging in rough_table_of_integrals</span>
         <span class="n">Mi</span><span class="p">,</span> <span class="n">R1</span><span class="p">,</span> <span class="n">vd</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="s2">&quot;M_inf R_1 vd&quot;</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">psd</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">psd</span><span class="o">.</span><span class="n">strm</span><span class="p">(</span><span class="s2">&quot;acq keys&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)))</span>
@@ -193,7 +183,7 @@ dataset including generating a table of integrals</p>
 <span class="c1"># should I be printing? T1 at s.max()?</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 6.757 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 6.917 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-fir-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/3328d0199d7b1cf53f02dba370c341f4/proc_FIR.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_FIR.ipynb</span></code></a></p>
@@ -232,34 +222,29 @@ dataset including generating a table of integrals</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Process FIR experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fit_ODNP_data.html">Fitting ODNP Datasets for Ksigma</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
 </ul>
@@ -272,7 +257,7 @@ dataset including generating a table of integrals</p>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">ProcScripts Example Gallery</a><ul>
       <li>Previous: <a href="proc_raw.html" title="previous chapter">Show data with postproc</a></li>
-      <li>Next: <a href="proc_GDS_capture_int.html" title="next chapter">Calculating <span class="math notranslate nohighlight">\(\beta\)</span> from individual pulse capture</a></li>
+      <li>Next: <a href="proc_GDS_capture_int.html" title="next chapter">Calculating β from individual pulse capture</a></li>
   </ul></li>
   </ul></li>
 </ul>

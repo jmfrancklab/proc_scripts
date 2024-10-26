@@ -19,7 +19,7 @@
 
 
 CPMG-specific processing
-====================
+========================
 `py proc_CPMG.py NODENAME FILENAME EXP_TYPE`
 
 Based on `proc_raw.py`:
@@ -29,18 +29,47 @@ Tested with:
 
 ``py proc_CPMG.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
 
-.. GENERATED FROM PYTHON SOURCE LINES 14-68
+.. GENERATED FROM PYTHON SOURCE LINES 14-81
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_proc_CPMG_001.png
+         :alt: raw data
+         :srcset: /auto_examples/images/sphx_glr_proc_CPMG_001.png
+         :class: sphx-glr-multi-img
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_proc_CPMG_002.png
+         :alt: time domain
+         :srcset: /auto_examples/images/sphx_glr_proc_CPMG_002.png
+         :class: sphx-glr-multi-img
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_proc_CPMG_003.png
+         :alt: plot as time trace
+         :srcset: /auto_examples/images/sphx_glr_proc_CPMG_003.png
+         :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
 
-.. code-block:: pytb
+ .. code-block:: none
 
-    Traceback (most recent call last):
-      File "/home/jmfranck/git_repos/proc_scripts/examples/proc_CPMG.py", line 26, in <module>
-        assert len(sys.argv) == 4
-               ^^^^^^^^^^^^^^^^^^
-    AssertionError
+    You didn't set units for indirect before saving the data!!!
+    You didn't set units for nEcho before saving the data!!!
+    You didn't set units for t2 before saving the data!!!
+    WARNING! the file doesn't have coherence_pathway set, so I'm assuming {'ph1': 1, 'ph_overall': -1}
+    1: raw data |||(None, None)
+    2: time domain |||(None, None)
+    3: plot as time trace |||None
+
 
 
 
@@ -51,13 +80,25 @@ Tested with:
 
 .. code-block:: Python
 
+
     from pyspecProcScripts.load_data import lookup_table
     from pyspecProcScripts import select_pathway
     import pyspecdata as psd
-    import sys
+    import sys, os
     import numpy as np
     from itertools import cycle
     import matplotlib.pylab as plt
+
+    if (
+        "SPHINX_GALLERY_RUNNING" in os.environ
+        and os.environ["SPHINX_GALLERY_RUNNING"] == "True"
+    ):
+        sys.argv = [
+            sys.argv[0],
+            "CPMG_9",
+            "240620_200uM_TEMPOL_pm_generic_CPMG.h5",
+            "ODNP_NMR_comp/Echoes",
+        ]
 
     filter_data = False
     colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -94,7 +135,8 @@ Tested with:
             }  # this should be stored as the coherence_pathway property of the
             #    data, but for CPMG_9, it appears that it is not
             print(
-                "WARNING! the file doesn't have coherence_pathway set, so I'm assuming",
+                "WARNING! the file doesn't have coherence_pathway set, so I'm"
+                " assuming",
                 cohpth,
             )
         d = select_pathway(d, cohpth)
@@ -109,7 +151,7 @@ Tested with:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.003 seconds)
+   **Total running time of the script:** (0 minutes 1.594 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_CPMG.py:

@@ -17,14 +17,16 @@
 
 .. _sphx_glr_auto_examples_proc_GDS_capture_int.py:
 
-Calculating :math:`\beta` from individual pulse capture
-===========================================================
+
+Calculating β from individual pulse capture
+===========================================
+
 Assuming a single pulse was acquired via simple_onepulse_capture.py 
 in the FLInst repo using the GDS oscilloscope, this script plots the absolute analytic
 along with the frequency filtered absolute of the analytic before
 integrating to calculate :math:`\beta = \frac{1}{\sqrt{2}}\int{V(t)dt}'.
 
-.. GENERATED FROM PYTHON SOURCE LINES 8-114
+.. GENERATED FROM PYTHON SOURCE LINES 10-116
 
 
 
@@ -211,7 +213,7 @@ integrating to calculate :math:`\beta = \frac{1}{\sqrt{2}}\int{V(t)dt}'.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.656 seconds)
+   **Total running time of the script:** (0 minutes 3.171 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_GDS_capture_int.py:

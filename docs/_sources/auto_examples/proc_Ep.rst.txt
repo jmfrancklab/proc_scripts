@@ -23,7 +23,7 @@ Process Enhancement experiment
 Opens .h5 results file, uses rough_table_of_integrals() to roughly process
 dataset including generating a table of integrals
 
-.. GENERATED FROM PYTHON SOURCE LINES 7-58
+.. GENERATED FROM PYTHON SOURCE LINES 7-67
 
 
 
@@ -40,7 +40,7 @@ dataset including generating a table of integrals
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_Ep_002.png
-         :alt: , Signal pathway / ph0, Check phase variation along indirect, FID sliced, phased, and aligned, table of integrals
+         :alt: , extract signal pathway, check phase variation along indirect, FID sliced, phased, and aligned, table of integrals
          :srcset: /auto_examples/images/sphx_glr_proc_Ep_002.png
          :class: sphx-glr-multi-img
 
@@ -92,16 +92,8 @@ dataset including generating a table of integrals
  .. code-block:: none
 
     You didn't set units for indirect before saving the data!!!
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9166: RuntimeWarning: invalid value encountered in sqrt
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9190: RuntimeWarning: invalid value encountered in sqrt
       return np.sqrt(arg)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "ko" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1342: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      return ax.errorbar(*tebargs[:-1], **tebkwargs)
     1: autoslicing!
     2: Raw Data with averaged scans
     3: power terms |||ms
@@ -130,6 +122,15 @@ dataset including generating a table of integrals
 
     plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
     # sphinx_gallery_thumbnail_number = 2
+    plt.rcParams.update({
+        "errorbar.capsize": 2,
+        "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+        "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "savefig.bbox": "tight",
+        "savefig.dpi": 300,
+        "figure.figsize": (6, 2),
+    })
 
 
     with psd.figlist_var() as fl:
@@ -176,7 +177,7 @@ dataset including generating a table of integrals
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.153 seconds)
+   **Total running time of the script:** (0 minutes 5.740 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_Ep.py:

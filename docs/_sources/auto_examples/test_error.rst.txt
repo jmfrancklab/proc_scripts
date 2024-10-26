@@ -17,8 +17,9 @@
 
 .. _sphx_glr_auto_examples_test_error.py:
 
+
 Validate Inactive CT Error
-==============================
+==========================
 
 Estimates the error of the integral of an actual data set of a standard echo
 experiment. Three methods of acquiring the error associated with the data are 
@@ -36,7 +37,7 @@ compared:
 Demonstrates that by propagating the error of the integral in the inactive CTs we still
 get a reasonable error within the limits of traditional methods.
 
-.. GENERATED FROM PYTHON SOURCE LINES 20-225
+.. GENERATED FROM PYTHON SOURCE LINES 21-226
 
 
 .. rst-class:: sphx-glr-script-out
@@ -44,7 +45,7 @@ get a reasonable error within the limits of traditional methods.
 .. code-block:: pytb
 
     Traceback (most recent call last):
-      File "/home/jmfranck/git_repos/proc_scripts/examples/test_error.py", line 65, in <module>
+      File "/home/jmfranck/git_repos/proc_scripts/examples/test_error.py", line 66, in <module>
         best_shift = hermitian_function_test(
                      ^^^^^^^^^^^^^^^^^^^^^^^^
       File "/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/phasing.py", line 620, in hermitian_function_test
@@ -273,7 +274,7 @@ get a reasonable error within the limits of traditional methods.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.824 seconds)
+   **Total running time of the script:** (0 minutes 0.626 seconds)
 
 
 .. _sphx_glr_download_auto_examples_test_error.py:

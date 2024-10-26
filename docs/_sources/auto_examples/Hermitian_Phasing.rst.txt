@@ -95,12 +95,6 @@ domain.
     will be removed in a future version of SymPy.
 
       thefunction = lambdify(mysymbols, expression, "numpy")
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "." (-> marker='.'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "ko" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     1: (IR) Data processing |||('Hz', None)
     2: (IR) check covariance test
     3: (IR) power terms |||ms
@@ -199,7 +193,7 @@ domain.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.441 seconds)
+   **Total running time of the script:** (0 minutes 3.711 seconds)
 
 
 .. _sphx_glr_download_auto_examples_Hermitian_Phasing.py:

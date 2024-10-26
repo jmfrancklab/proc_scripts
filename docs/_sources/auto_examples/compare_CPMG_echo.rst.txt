@@ -218,8 +218,6 @@ compare CPMG echo
     You didn't set units for indirect before saving the data!!!
     You didn't set units for nEcho before saving the data!!!
     You didn't set units for t2 before saving the data!!!
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:1568: UserWarning: marker is redundantly defined by the 'marker' keyword argument and the fmt string "o" (-> marker='o'). The keyword argument will take precedence.
-      retval = myplotfunc(*plotargs, **kwargs)
     You didn't set units for indirect before saving the data!!!
     You didn't set units for t2 before saving the data!!!
     You didn't set units for indirect before saving the data!!!
@@ -502,7 +500,7 @@ compare CPMG echo
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 18.637 seconds)
+   **Total running time of the script:** (0 minutes 20.557 seconds)
 
 
 .. _sphx_glr_download_auto_examples_compare_CPMG_echo.py:
