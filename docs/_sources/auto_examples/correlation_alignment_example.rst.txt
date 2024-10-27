@@ -78,19 +78,6 @@ aligning the data through a correlation routine.
 
  .. code-block:: none
 
-    /home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/first_level/fake_data.py:58: SymPyDeprecationWarning: 
-
-    Passing the function arguments to lambdify() as a set is deprecated. This
-    leads to unpredictable results since sets are unordered. Instead, use a list
-    or tuple for the function arguments.
-
-    See https://docs.sympy.org/latest/explanation/active-deprecations.html#deprecated-lambdify-arguments-set
-    for details.
-
-    This has been deprecated since SymPy version 1.6.3. It
-    will be removed in a future version of SymPy.
-
-      thefunction = lambdify(mysymbols, expression, "numpy")
     1: (IR) Data Processing |||('Hz', None)
     2: (IR) Correlation Diagnostics |||('ms', None)
     3: (IR) correlation convergence |||('Hz', None)
@@ -216,7 +203,7 @@ aligning the data through a correlation routine.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (1 minutes 40.430 seconds)
+   **Total running time of the script:** (2 minutes 32.497 seconds)
 
 
 .. _sphx_glr_download_auto_examples_correlation_alignment_example.py:

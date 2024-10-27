@@ -18,6 +18,15 @@ import shlex
 import mock
 from matplotlib import rcParams
 
+
+def reset_mpl(gallery_conf, fname):
+    import matplotlib as mpl
+    mpl.rcParams.update({
+        "figure.figsize": (8, 8),
+        "image.aspect": "auto",
+    })
+
+
 # {{{ mock unit registry, which belongs to pint
 if not os.getenv("SPHINX_GALLERY_RUNNING", False):
 
@@ -37,6 +46,7 @@ if not os.getenv("SPHINX_GALLERY_RUNNING", False):
 
         def Quantity(self, *args, **kwargs):
             return self
+
         def define(self, *args, **kwargs):
             return self
 
@@ -106,6 +116,7 @@ sphinx_gallery_conf = {
     "doc_module": ("pyspecProcScripts",),
     ## directory where function/class granular galleries are stored
     "backreferences_dir": "gen_modules/backreferences",
+    "reset_modules": (reset_mpl, "seaborn"),
 }
 autosummary_generate = True
 
@@ -195,6 +206,7 @@ html_theme_options = {
     "logo": "logo.png",
     #'logo_name': None, # don't show the name with the logo
 }
+html_favicon = "_static/favicon.ico"
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []

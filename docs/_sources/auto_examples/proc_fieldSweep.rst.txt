@@ -72,8 +72,8 @@ determine the resonance ratio of MHz/GHz.
  .. code-block:: none
 
     You didn't set units for indirect before saving the data!!!
-    #2ca02c
-    #2ca02c
+    #d62728
+    #d62728
     1: autoslicing!
     2: Raw Data with averaged scans
     3: power terms |||ms
@@ -175,7 +175,7 @@ determine the resonance ratio of MHz/GHz.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.743 seconds)
+   **Total running time of the script:** (0 minutes 4.409 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_fieldSweep.py:

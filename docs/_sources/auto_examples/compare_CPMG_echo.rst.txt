@@ -251,8 +251,6 @@ compare CPMG echo
     You didn't set units for indirect before saving the data!!!
     You didn't set units for nEcho before saving the data!!!
     You didn't set units for t2 before saving the data!!!
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:418: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
-      fig = plt.figure(num_figs_before_add + 1, **kwargs)
     You didn't set units for indirect before saving the data!!!
     You didn't set units for t2 before saving the data!!!
     You didn't set units for indirect before saving the data!!!
@@ -500,7 +498,7 @@ compare CPMG echo
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 20.557 seconds)
+   **Total running time of the script:** (1 minutes 7.534 seconds)
 
 
 .. _sphx_glr_download_auto_examples_compare_CPMG_echo.py:

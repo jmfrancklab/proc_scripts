@@ -162,12 +162,8 @@ Compare to `example/calibrate_tsqrtP.py`, which generates the calibration.
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
     You didn't set units for beta before saving the data!!!
-    --> simple_functions.py(126):root find_apparent_anal_freq 2024-10-14 21:32:12,190
+    --> simple_functions.py(126):root find_apparent_anal_freq 2024-10-26 15:48:51,629
     INFO: Aliasing occurred, but we can still find that frequency!
-    /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1699: ComplexWarning: Casting complex values to real discards the imaginary part
-      return math.isfinite(val)
-    /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1345: ComplexWarning: Casting complex values to real discards the imaginary part
-      return np.asarray(x, float)
     You didn't set units for beta before saving the data!!!
     You didn't set units for beta before saving the data!!!
     1: amplitude = 0.05 pulse length = 0.51 μs |||μs
@@ -348,7 +344,7 @@ Compare to `example/calibrate_tsqrtP.py`, which generates the calibration.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 28.116 seconds)
+   **Total running time of the script:** (0 minutes 51.393 seconds)
 
 
 .. _sphx_glr_download_auto_examples_verify_tsqrtP_calibration.py:

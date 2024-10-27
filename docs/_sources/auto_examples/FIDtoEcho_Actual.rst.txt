@@ -216,7 +216,7 @@ This example provides a relatively routine example.
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
     You didn't set units for power before saving the data!!!
-    /home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/load_data.py:564: RuntimeWarning: invalid value encountered in divide
+    /home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/load_data.py:567: RuntimeWarning: invalid value encountered in divide
       s.getaxis("power") / prog_power,
     peakrange [-134.95278479  429.39522435]
     You didn't set units for power before saving the data!!!
@@ -302,7 +302,7 @@ This example provides a relatively routine example.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 10.408 seconds)
+   **Total running time of the script:** (0 minutes 12.416 seconds)
 
 
 .. _sphx_glr_download_auto_examples_FIDtoEcho_Actual.py:

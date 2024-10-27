@@ -51,7 +51,7 @@ Tested with:
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_FID_nutation_002.png
-         :alt: 240805_amp0p1_27mM_TEMPOL_FID_nutation.h5, Signal pathway / ph0, Check phase variation along indirect, FID sliced and aligned, Integrated and fit
+         :alt: 240805_amp0p1_27mM_TEMPOL_FID_nutation.h5, extract signal pathway, check phase variation along indirect, FID sliced and aligned, Integrated and fit
          :srcset: /auto_examples/images/sphx_glr_proc_FID_nutation_002.png
          :class: sphx-glr-multi-img
 
@@ -154,7 +154,7 @@ Tested with:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.692 seconds)
+   **Total running time of the script:** (0 minutes 4.652 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_FID_nutation.py:

@@ -74,15 +74,9 @@ linearity.
 
     You didn't set units for p90 before saving the data!!!
     You didn't set units for t before saving the data!!!
-    /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1699: ComplexWarning: Casting complex values to real discards the imaginary part
-      return math.isfinite(val)
-    /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1345: ComplexWarning: Casting complex values to real discards the imaginary part
-      return np.asarray(x, float)
     {\bf Warning:} You have no error associated with your plot, and I want to flag this for now
 
 
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:8614: Warning: You have no error associated with your plot, and I want to flag this for now
-      warnings.warn(
     {\bf Warning:} You have no error associated with your plot, and I want to flag this for now
 
 
@@ -191,7 +185,7 @@ linearity.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 1.895 seconds)
+   **Total running time of the script:** (0 minutes 8.048 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_capture_nutation.py:

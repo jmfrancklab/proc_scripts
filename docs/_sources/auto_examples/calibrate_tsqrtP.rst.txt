@@ -157,7 +157,7 @@ appropriate section to obtain calibrated pulse lengths for the given amplitude.
  .. code-block:: none
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
-    --> simple_functions.py(126):root find_apparent_anal_freq 2024-10-14 21:33:07,505
+    --> simple_functions.py(126):root find_apparent_anal_freq 2024-10-26 15:51:02,441
     INFO: Aliasing occurred, but we can still find that frequency!
     /home/jmfranck/base/lib/python3.11/site-packages/matplotlib/cbook.py:1699: ComplexWarning: Casting complex values to real discards the imaginary part
       return math.isfinite(val)
@@ -207,8 +207,6 @@ appropriate section to obtain calibrated pulse lengths for the given amplitude.
     15: amplitude = 0.20 pulse length = 157.49 μs |||μs
     16: amplitude = 0.20 Frequency Domain |||('MHz', 'μs')
 
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
-      plt.gcf().tight_layout()
 
 
 
@@ -536,7 +534,7 @@ appropriate section to obtain calibrated pulse lengths for the given amplitude.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 26.719 seconds)
+   **Total running time of the script:** (0 minutes 44.446 seconds)
 
 
 .. _sphx_glr_download_auto_examples_calibrate_tsqrtP.py:

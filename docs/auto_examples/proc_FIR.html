@@ -18,6 +18,7 @@
     <script src="../_static/documentation_options.js?v=049aceee"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Calculating β from individual pulse capture" href="proc_GDS_capture_int.html" />
@@ -51,18 +52,20 @@ process
 dataset including generating a table of integrals</p>
 <ul class="sphx-glr-horizontal">
 <li><img src="../_images/sphx_glr_proc_FIR_001.png" srcset="../_images/sphx_glr_proc_FIR_001.png" alt="FIR_noPower autoslicing!" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_FIR_002.png" srcset="../_images/sphx_glr_proc_FIR_002.png" alt=", Signal pathway / ph0, Check phase variation along indirect, FID sliced, phased, and aligned, table of integrals" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_FIR_002.png" srcset="../_images/sphx_glr_proc_FIR_002.png" alt=", extract signal pathway, check phase variation along indirect, FID sliced, phased, and aligned, table of integrals" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_003.png" srcset="../_images/sphx_glr_proc_FIR_003.png" alt="FIR_noPower power terms" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_004.png" srcset="../_images/sphx_glr_proc_FIR_004.png" alt="FIR_noPower check covariance test" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_005.png" srcset="../_images/sphx_glr_proc_FIR_005.png" alt="FIR_noPower residual after shift" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_006.png" srcset="../_images/sphx_glr_proc_FIR_006.png" alt="IR fit - normalized" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_007.png" srcset="../_images/sphx_glr_proc_FIR_007.png" alt="FIR_34dBm autoslicing!" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_FIR_008.png" srcset="../_images/sphx_glr_proc_FIR_008.png" alt=", Signal pathway / ph0, Check phase variation along indirect, FID sliced, phased, and aligned, table of integrals" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_FIR_008.png" srcset="../_images/sphx_glr_proc_FIR_008.png" alt=", extract signal pathway, check phase variation along indirect, FID sliced, phased, and aligned, table of integrals" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_009.png" srcset="../_images/sphx_glr_proc_FIR_009.png" alt="FIR_34dBm power terms" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_010.png" srcset="../_images/sphx_glr_proc_FIR_010.png" alt="FIR_34dBm check covariance test" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_FIR_011.png" srcset="../_images/sphx_glr_proc_FIR_011.png" alt="FIR_34dBm residual after shift" class = "sphx-glr-multi-img"/></li>
 </ul>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>1: FIR_noPower autoslicing!
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/phasing.py:740: RuntimeWarning: invalid value encountered in divide
+  cost_func.run(lambda x: x / sqrt(abs(x)))  # based on what we&#39;d seen
+1: FIR_noPower autoslicing!
 2: FIR_noPower Raw Data with averaged scans
 3: FIR_noPower power terms |||ms
 4: FIR_noPower check covariance test
@@ -183,7 +186,7 @@ dataset including generating a table of integrals</p>
 <span class="c1"># should I be printing? T1 at s.max()?</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 6.917 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 15.734 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-fir-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/3328d0199d7b1cf53f02dba370c341f4/proc_FIR.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_FIR.ipynb</span></code></a></p>

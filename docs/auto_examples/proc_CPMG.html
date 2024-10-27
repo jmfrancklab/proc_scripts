@@ -18,6 +18,7 @@
     <script src="../_static/documentation_options.js?v=049aceee"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Process Enhancement experiment" href="proc_Ep.html" />
@@ -76,6 +77,8 @@ WARNING! the file doesn&#39;t have coherence_pathway set, so I&#39;m assuming {&
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">cycle</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
 
+<span class="c1"># sphinx_gallery_thumbnail_number = 3</span>
+
 <span class="k">if</span> <span class="p">(</span>
     <span class="s2">&quot;SPHINX_GALLERY_RUNNING&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
     <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SPHINX_GALLERY_RUNNING&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;True&quot;</span>
@@ -99,10 +102,7 @@ WARNING! the file doesn&#39;t have coherence_pathway set, so I&#39;m assuming {&
     <span class="n">d</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
     <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;raw data&quot;</span><span class="p">)</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">dimlabels</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
-    <span class="k">if</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">:</span>
-        <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
     <span class="c1"># {{{ allows us to see how filtering affects things</span>
     <span class="c1">#     -- relevant to considerations about</span>
     <span class="c1">#     integration, etc</span>
@@ -136,7 +136,7 @@ WARNING! the file doesn&#39;t have coherence_pathway set, so I&#39;m assuming {&
     <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.594 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.053 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-cpmg-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/04256f932e7b113c01067b5fdeab0d4f/proc_CPMG.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_CPMG.ipynb</span></code></a></p>

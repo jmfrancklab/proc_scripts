@@ -82,19 +82,6 @@ domain.
  .. code-block:: none
 
     ----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
-    /home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/first_level/fake_data.py:58: SymPyDeprecationWarning: 
-
-    Passing the function arguments to lambdify() as a set is deprecated. This
-    leads to unpredictable results since sets are unordered. Instead, use a list
-    or tuple for the function arguments.
-
-    See https://docs.sympy.org/latest/explanation/active-deprecations.html#deprecated-lambdify-arguments-set
-    for details.
-
-    This has been deprecated since SymPy version 1.6.3. It
-    will be removed in a future version of SymPy.
-
-      thefunction = lambdify(mysymbols, expression, "numpy")
     1: (IR) Data processing |||('Hz', None)
     2: (IR) check covariance test
     3: (IR) power terms |||ms
@@ -193,7 +180,7 @@ domain.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.711 seconds)
+   **Total running time of the script:** (0 minutes 7.593 seconds)
 
 
 .. _sphx_glr_download_auto_examples_Hermitian_Phasing.py:

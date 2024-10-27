@@ -29,7 +29,7 @@ Tested with:
 
 ``py proc_CPMG.py CPMG_9 240620_200uM_TEMPOL_pm_generic_CPMG.h5 ODNP_NMR_comp/Echoes``
 
-.. GENERATED FROM PYTHON SOURCE LINES 14-81
+.. GENERATED FROM PYTHON SOURCE LINES 14-80
 
 
 
@@ -89,6 +89,8 @@ Tested with:
     from itertools import cycle
     import matplotlib.pylab as plt
 
+    # sphinx_gallery_thumbnail_number = 3
+
     if (
         "SPHINX_GALLERY_RUNNING" in os.environ
         and os.environ["SPHINX_GALLERY_RUNNING"] == "True"
@@ -112,10 +114,7 @@ Tested with:
         d.squeeze()
         fl.next("raw data")
         rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
-        if rows < 500:
-            fl.image(d)
-        else:
-            fl.image(d, interpolation="bilinear")
+        fl.image(d, interpolation="auto")
         # {{{ allows us to see how filtering affects things
         #     -- relevant to considerations about
         #     integration, etc
@@ -151,7 +150,7 @@ Tested with:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 1.594 seconds)
+   **Total running time of the script:** (0 minutes 1.053 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_CPMG.py:

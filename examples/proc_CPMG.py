@@ -20,6 +20,8 @@ import numpy as np
 from itertools import cycle
 import matplotlib.pylab as plt
 
+# sphinx_gallery_thumbnail_number = 3
+
 if (
     "SPHINX_GALLERY_RUNNING" in os.environ
     and os.environ["SPHINX_GALLERY_RUNNING"] == "True"
@@ -43,10 +45,7 @@ with psd.figlist_var() as fl:
     d.squeeze()
     fl.next("raw data")
     rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
-    if rows < 500:
-        fl.image(d)
-    else:
-        fl.image(d, interpolation="bilinear")
+    fl.image(d, interpolation="auto")
     # {{{ allows us to see how filtering affects things
     #     -- relevant to considerations about
     #     integration, etc
