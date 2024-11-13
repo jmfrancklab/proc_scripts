@@ -1,19 +1,23 @@
-from pylab import *
-from pyspecdata import *
+import numpy as np
+import pyspecdata as psd
+from numpy import r_
 import matplotlib.lines as lines
-from matplotlib.patches import FancyArrow, FancyArrowPatch, Circle
-from matplotlib.lines import Line2D
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrow, Circle
 from matplotlib.transforms import ScaledTranslation, IdentityTransform
 from pyspecdata.plot_funcs.image import imagehsv
+import matplotlib.ticker as mticker
 import logging
 
 
-@FuncFormatter
+@plt.FuncFormatter
 def ph2(x, pos):
     ordered_labels = {}
     n_ph = 2
     this_max_coh_jump = 1
-    all_possibilities = empty((int((2 * this_max_coh_jump + 1) / n_ph) + 1) * n_ph)
+    all_possibilities = np.empty(
+        (int((2 * this_max_coh_jump + 1) / n_ph) + 1) * n_ph
+    )
     all_possibilities[: this_max_coh_jump + 1] = r_[0 : this_max_coh_jump + 1]
     all_possibilities[-this_max_coh_jump:] = r_[-this_max_coh_jump:0]
     all_possibilities = all_possibilities.reshape((-1, n_ph))
@@ -21,15 +25,15 @@ def ph2(x, pos):
     for j in range(n_ph):
         temp = all_possibilities[:, j]
         if j == 0:
-            temp = ", ".join(["%d" % j for j in temp[isfinite(temp)]])
+            temp = ", ".join(["%d" % j for j in temp[np.isfinite(temp)]])
         else:
-            temp = ", ".join(["%+d" % j for j in temp[isfinite(temp)]])
+            temp = ", ".join(["%+d" % j for j in temp[np.isfinite(temp)]])
         if len(temp) == 0:
             temp = "X"
         labels_in_order.append(temp)
     ordered_labels["ph2"] = labels_in_order
     if x == 0:
-        temp = ("%s") % ordered_labels["ph2"][0]
+        temp = "%s" % ordered_labels["ph2"][0]
     return temp
 
 
@@ -59,13 +63,13 @@ def DCCT(
     max_coh_jump={"ph1": 2, "ph2": 1},
     direct="t2",
     plot_title="DCCT",
-    **kwargs
+    **kwargs,
 ):
     """DCCT plot
 
     Parameters
     ==========
-    this_nddata:    nddata
+    this_nddata:    psd.nddata
                     data being plotted
     thi_fig_obj:    figure
                     size/type of figure to be plotted on
@@ -94,7 +98,8 @@ def DCCT(
     RHS_pad:        float
                     adjusts padding on right hand side of DCCT plot
     shareaxis:      boolean
-                    subplots scale together, but currently, this means there must be tick
+                    subplots scale together, but currently, this means there
+                    must be tick
                     labels on both top and bottom
     cmap:           str
                     string for color mapping if specified
@@ -103,7 +108,8 @@ def DCCT(
     just_2D:        boolean
                     If true will only return axis coordinates/shape NOT ax_list
     scaling_factor: float
-                    If using custom scaling this allows user to set the scaling factor
+                    If using custom scaling this allows user to set the scaling
+                    factor
     max_coh_jump:   dict
                     maximum allowed transitions for each phase cycle
     direct:         str
@@ -117,20 +123,24 @@ def DCCT(
     ordered_labels = {}
     # {{{ Generate alias labels - goes to scientific fn
     for this_dim in [j for j in my_data.dimlabels if j.startswith("ph")]:
-        n_ph = ndshape(my_data)[this_dim]
+        n_ph = psd.ndshape(my_data)[this_dim]
         this_max_coh_jump = max_coh_jump[this_dim]
-        all_possibilities = empty((int((2 * this_max_coh_jump + 1) / n_ph) + 1) * n_ph)
-        all_possibilities[:] = nan
-        all_possibilities[: this_max_coh_jump + 1] = r_[0 : this_max_coh_jump + 1]
+        all_possibilities = np.empty(
+            (int((2 * this_max_coh_jump + 1) / n_ph) + 1) * n_ph
+        )
+        all_possibilities[:] = np.nan
+        all_possibilities[: this_max_coh_jump + 1] = r_[
+            0 : this_max_coh_jump + 1
+        ]
         all_possibilities[-this_max_coh_jump:] = r_[-this_max_coh_jump:0]
         all_possibilities = all_possibilities.reshape((-1, n_ph))
         labels_in_order = []
         for j in range(n_ph):
             temp = all_possibilities[:, j]
             if j == 0:
-                temp = ", ".join(["%d" % j for j in temp[isfinite(temp)]])
+                temp = ", ".join(["%d" % j for j in temp[np.isfinite(temp)]])
             else:
-                temp = ", ".join(["%+d" % j for j in temp[isfinite(temp)]])
+                temp = ", ".join(["%+d" % j for j in temp[np.isfinite(temp)]])
             if len(temp) == 0:
                 temp = "X"
             labels_in_order.append(temp)
@@ -139,16 +149,16 @@ def DCCT(
     real_data = False
     if cmap is not None:
         assert all(
-            isclose(my_data.data.imag, 0)
+            np.isclose(my_data.data.imag, 0)
         ), "In order to use a color map, you must pass real data"
-        if type(cmap) == str:
-            cmap = get_cmap(cmap)
+        if type(cmap) is str:
+            cmap = plt.get_cmap(cmap)
             my_data.data = my_data.data.real
             real_data = True
     my_data.human_units()
     grid_bottom += bottom_pad
     grid_top -= top_pad
-    a_shape = ndshape(this_nddata)
+    a_shape = psd.ndshape(this_nddata)
     num_dims = len(a_shape.dimlabels[:-2])
     divisions = []
 
@@ -156,17 +166,21 @@ def DCCT(
     for j, thisdim in enumerate(a_shape.dimlabels[::-1][2:]):
         old = [j / 2.0 for j in divisions]
         divisions = (old + [1]) * (a_shape[thisdim] - 1) + old
-        logging.debug(strm("for", thisdim, "I get", divisions))
+        logging.debug(psd.strm("for", thisdim, "I get", divisions))
     divisions = [j * total_spacing / sum(divisions) for j in divisions]
-    axes_height = (grid_top - grid_bottom - total_spacing) / prod(a_shape.shape[:-2])
-    axes_bottom = np.cumsum([axes_height + j for j in divisions])  # becomes ndarray
+    axes_height = (grid_top - grid_bottom - total_spacing) / np.prod(
+        a_shape.shape[:-2]
+    )
+    axes_bottom = np.cumsum(
+        [axes_height + j for j in divisions]
+    )  # becomes ndarray
     axes_bottom = r_[0, axes_bottom]
     axes_bottom += grid_bottom
-    axes_top = grid_bottom + grid_top
     fig = this_fig_obj
     ax_list = []
-    yMajorLocator = lambda: mticker.MaxNLocator(nbins="auto", steps=[1, 2, 5, 10])
-    majorLocator = lambda: mticker.MaxNLocator(nbins="auto", steps=[1, 2, 2.5, 5, 10])
+    majorLocator = lambda: mticker.MaxNLocator(
+        nbins="auto", steps=[1, 2, 2.5, 5, 10]
+    )
     minorLocator = lambda: mticker.AutoMinorLocator(n=5)
     LHS_labels, _ = fig.transFigure.inverted().transform(
         (label_spacing_multiplier * num_dims + allow_for_ticks_default, 0)
@@ -175,20 +189,24 @@ def DCCT(
     for j, b in enumerate(axes_bottom):
         if j != 0 and shareaxis:
             ax_list.append(
-                axes(
+                plt.axes(
                     [LHS_labels + LHS_pad, b, width, axes_height],
                     sharex=ax_list[0],
                     sharey=ax_list[0],
                 )
             )  # lbwh
         else:
-            ax_list.append(axes([LHS_labels + LHS_pad, b, width, axes_height]))  # lbwh
+            ax_list.append(
+                plt.axes([LHS_labels + LHS_pad, b, width, axes_height])
+            )  # lbwh
     # {{{ adjust tick settings -- AFTER extents are set
     # {{{ bottom subplot
     ax_list[0].xaxis.set_major_locator(majorLocator())
     ax_list[0].xaxis.set_minor_locator(minorLocator())
     ax_list[0].set_ylabel(None)
-    ax_list[0].set_xlabel(my_data.unitify_axis(my_data.dimlabels[-1]), labelpad=20)
+    ax_list[0].set_xlabel(
+        my_data.unitify_axis(my_data.dimlabels[-1]), labelpad=20
+    )
     # }}}
     # {{{ intermediate subplots
     for j in range(1, len(axes_bottom) - 1):
@@ -212,7 +230,9 @@ def DCCT(
         if inner_dim == "ph2":
             logging.debug("Inner dimension is phase cycling dimension")
             ax_list[j].yaxis.set_major_formatter(ph2)
-            ax_list[j].yaxis.set_major_locator(MaxNLocator(integer=True))
+            ax_list[j].yaxis.set_major_locator(
+                mticker.MaxNLocator(integer=True)
+            )
         else:
             ax_list[j].yaxis.set_minor_locator(minorLocator())
             ax_list[j].yaxis.set_ticks_position("both")
@@ -223,11 +243,12 @@ def DCCT(
     # }}}
 
     if len(a_shape.dimlabels) > 3:
-        A = this_nddata.C.smoosh(a_shape.dimlabels[:-2], "smooshed", noaxis=True)
+        A = this_nddata.C.smoosh(
+            a_shape.dimlabels[:-2], "smooshed", noaxis=True
+        )
         A.reorder("smooshed", first=True)
     else:
         A = this_nddata.C
-        A_data = A.C
         A.rename(a_shape.dimlabels[:-2][0], "smooshed")
 
     def draw_span(
@@ -245,9 +266,15 @@ def DCCT(
         x2 -= allow_for_ticks
         # following line to create an offset for different dimension labels
         label_spacing = this_label_num * label_spacing_multiplier
-        x1, y1 = fig.transFigure.inverted().transform(r_[x1 - label_spacing, y1])
-        x_text, _ = fig.transFigure.inverted().transform(r_[x_text - label_spacing, 0])
-        x2, y2 = fig.transFigure.inverted().transform(r_[x2 - label_spacing, y2])
+        x1, y1 = fig.transFigure.inverted().transform(
+            r_[x1 - label_spacing, y1]
+        )
+        x_text, _ = fig.transFigure.inverted().transform(
+            r_[x_text - label_spacing, 0]
+        )
+        x2, y2 = fig.transFigure.inverted().transform(
+            r_[x2 - label_spacing, y2]
+        )
         lineA = lines.Line2D(
             [x1, x2],
             [y1, y2],
@@ -256,7 +283,7 @@ def DCCT(
             transform=fig.transFigure,
             clip_on=False,
         )
-        text(
+        plt.text(
             x_text,
             (y2 + y1) / 2,
             label,
@@ -268,7 +295,7 @@ def DCCT(
         )
         fig.add_artist(lineA)
 
-    label_placed = zeros(num_dims)
+    label_placed = np.zeros(num_dims)
 
     def place_labels(
         ax1,
@@ -295,16 +322,22 @@ def DCCT(
                 )
                 x_textdisp = x_axorigindisp + Dx_textdisp
             else:
-                # same as above, but determine text
+                # same as above, but determine plt.text
                 # position based on tick labels
                 label = my_data.unitify_axis(my_data.dimlabels[-2])
-                x_axorigindisp, y_axorigindisp = ax1.transAxes.transform(r_[0, 0])
-                # from here https://stackoverflow.com/questions/44012436/python-matplotlib-get-position-of-xtick-labels
+                x_axorigindisp, y_axorigindisp = ax1.transAxes.transform(
+                    r_[0, 0]
+                )
+                # from here https://stackoverflow.com/questions/44012436/\
+                # python-matplotlib-get-position-of-xtick-labels
                 # then searching for BBox docs
                 logging.debug(
-                    strm(
+                    psd.strm(
                         "tick locations",
-                        [j.get_window_extent().bounds for j in ax1.get_yticklabels()],
+                        [
+                            j.get_window_extent().bounds
+                            for j in ax1.get_yticklabels()
+                        ],
                     )
                 )
                 x_textdisp = [
@@ -332,36 +365,22 @@ def DCCT(
                 width=arrow_width_px,
                 clip_on=False,
                 transform=(
-                    IdentityTransform() + ScaledTranslation(ax_x, ax_y, fig.transFigure)
+                    IdentityTransform()
+                    + ScaledTranslation(ax_x, ax_y, fig.transFigure)
                 ),
                 alpha=0.1,
                 color="k",
             )
-            # could do fancier w/ the following, but need to mess w/ width parameters
+            # could do fancier w/ the following, but need to mess w/ width
+            # parameters
             # arrow_base = r_[x_arrowbase_fig-arrow_width/2, y_arrowbase_fig]
             # a = FancyArrowPatch(arrow_base, arrow_base+r_[dx, dy],
             #        arrowstyle='|-|',
             #        alpha=0.1,  color='k')
             fig.add_artist(AnArrow)
-            if diagnostic:
-                a = Line2D(
-                    [x_arrowbase_fig, x_arrowbase_fig + dx],
-                    [y_arrowbase_fig, y_arrowbase_fig + dy],
-                    transform=fig.transFigure,
-                    color="r",
-                )
-                fig.add_artist(a)
-                a = Circle(
-                    (x_textfig, y_textfig),
-                    0.01,
-                    clip_on=False,
-                    transform=fig.transFigure,
-                    color="r",
-                )
-                fig.add_artist(a)
             x_textfig = x_textdisp + arrow_width_px
             y_textfig = y_textdisp - 5.0
-            text(
+            plt.text(
                 x_textfig,
                 y_textfig,
                 label,
@@ -370,7 +389,8 @@ def DCCT(
                 rotation=45,
                 clip_on=False,
                 transform=(
-                    IdentityTransform() + ScaledTranslation(ax_x, ax_y, fig.transFigure)
+                    IdentityTransform()
+                    + ScaledTranslation(ax_x, ax_y, fig.transFigure)
                 ),
                 color="k",
             )
@@ -383,7 +403,7 @@ def DCCT(
             imagehsvkwargs[k] = kwargs.pop(k)
 
     for j in range(len(ax_list)):
-        spacing, ax, x_first, origin, renumber = process_kwargs(
+        spacing, ax, x_first, origin, renumber = psd.process_kwargs(
             [
                 ("spacing", 1),
                 ("ax", ax_list[j]),
@@ -433,11 +453,13 @@ def DCCT(
             # }}}
         else:
             raise ValueError(
-                "I don't understand the value you've set for the origin keyword argument"
+                "I don't understand the value you've set for the origin"
+                " keyword argument"
             )
-        kwargs[
-            "origin"
-        ] = origin  # required so that imshow now displays the image correctly
+        kwargs["origin"] = (
+            origin  # required so that plt.imshow now displays the image
+            #         correctly
+        )
 
         if real_data:
             kwargs["cmap"] = cmap
@@ -445,14 +467,18 @@ def DCCT(
         else:
             if custom_scaling:
                 K = imagehsv(
-                    A["smooshed", j].data, **imagehsvkwargs, scaling=scaling_factor
+                    A["smooshed", j].data,
+                    **imagehsvkwargs,
+                    scaling=scaling_factor,
                 )
             if not custom_scaling:
                 K = imagehsv(
-                    A["smooshed", j].data, **imagehsvkwargs, scaling=abs(A).data.max()
+                    A["smooshed", j].data,
+                    **imagehsvkwargs,
+                    scaling=abs(A).data.max(),
                 )
-        sca(ax_list[j])
-        imshow(K, extent=myext, **kwargs)
+        plt.sca(ax_list[j])
+        plt.imshow(K, extent=myext, **kwargs)
         ax_list[j].set_ylabel(None)
         if pass_frq_slice:
             frq_slice = []
@@ -475,38 +501,42 @@ def DCCT(
     # to drop into ax_list, just do
     # A.smoosh(a_shape.dimlabels, 'smooshed', noaxis=True)
     # in ax_list[0] put A['smooshed',0], etc
-    idx = nddata(r_[0 : prod(a_shape.shape[:-2])], [-1], ["smooshed"])
+    idx = psd.nddata(r_[0 : np.prod(a_shape.shape[:-2])], [-1], ["smooshed"])
     idx.chunk("smooshed", a_shape.dimlabels[:-2], a_shape.shape[:-2])
     remaining_dim = a_shape.dimlabels[:-2]
     depth = num_dims
 
     def decorate_axes(idx, remaining_dim, depth):
         thisdim = remaining_dim[0]
-        logging.debug(strm("This is remaining dim", remaining_dim))
-        logging.debug(strm("This dim is", thisdim))
+        logging.debug(psd.strm("This is remaining dim", remaining_dim))
+        logging.debug(psd.strm("This dim is", thisdim))
         depth -= 1
         for j in range(a_shape[thisdim]):
             idx_slice = idx[thisdim, j]
-            logging.debug(strm("For", thisdim, "element", j, idx_slice.data.ravel()))
+            logging.debug(
+                psd.strm("For", thisdim, "element", j, idx_slice.data.ravel())
+            )
             first_axes = ax_list[idx_slice.data.ravel()[0]]
             last_axes = ax_list[idx_slice.data.ravel()[-1]]
-            if my_data.get_ft_prop(thisdim) == True:
+            if my_data.get_ft_prop(thisdim):
                 if j == 0:
                     draw_span(
                         last_axes,
                         first_axes,
-                        ("%s") % ordered_labels[thisdim][0],
+                        "%s" % ordered_labels[thisdim][0],
                         this_label_num=depth,
                     )
                 else:
                     draw_span(
                         last_axes,
                         first_axes,
-                        ("%s") % ordered_labels[thisdim][j],
+                        "%s" % ordered_labels[thisdim][j],
                         this_label_num=depth,
                     )
             else:
-                draw_span(last_axes, first_axes, ("%d") % (j), this_label_num=depth)
+                draw_span(
+                    last_axes, first_axes, "%d" % (j), this_label_num=depth
+                )
 
             place_labels(
                 ax_list[0],
@@ -529,7 +559,12 @@ def DCCT(
     )
     plt.title(plot_title)
     if just_2D:
-        return LHS_pad + LHS_labels, axes_bottom[0], width, axes_bottom[-1] - top_pad
+        return (
+            LHS_pad + LHS_labels,
+            axes_bottom[0],
+            width,
+            axes_bottom[-1] - top_pad,
+        )
     else:
         return (
             ax_list,
