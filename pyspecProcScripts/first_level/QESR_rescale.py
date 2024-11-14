@@ -114,8 +114,9 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
                         capillary was used.
     Returns
     =======
-    Denominator of equation 2-17 divided by the proportionality constant. Also
-    includes a factor of 1e-6 to convert Molar to micromolar.
+    Denominator of equation 2-17 (in the E500 manual) divided by the
+    proportionality constant. Also includes a factor of 1e-6 to convert Molar
+    to micromolar.
     """
     calibcache.use_calibration(calibration_name)
     calibcache.use_diameter(diameter_name)
@@ -124,7 +125,7 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     C_t = Q_(*d.get_prop("ConvTime"))
     power = Q_(*d.get_prop("Power"))
     B_m = Q_(*d.get_prop("ModAmp"))
-    Q = Q_(calibcache.default_Q, "dimensionless")  # hard set Q value
+    Qfactor = Q_(calibcache.default_Q, "dimensionless")  # hard set Q value
     d = Q_(calibcache.d, "mm")  # hard set diameter
     n_B = Q_(1, "dimensionless")  # calculate this
     S = Q_(0.5, "dimensionless")
@@ -132,19 +133,19 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
         1, "dimensionless"
     )  # the first fraction on eq 2-17 -- in bruker E500 manual
     signal_denom = (
-        G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q * d**2
+        G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Qfactor * d**2
     )
     signal_denom = signal_denom.to(
         Q_("G") * sqrt(Q_("W")) * Q_("s") * Q_("m") ** 2
     )
     # }}}
-    logger.debug(
+    logging.debug(
         strm(
             f"$G_R={G_R:~L}$\n"
             + f"$C_t={C_t:~L}$\n"
             + f"$power={power:~L}$\n"
             + f"$B_m={B_m:~L}$\n"
-            + f"$Q={Q:~L} $\n"
+            + f"$Q={Qfactor:~L} $\n"
             + f"$n_B={n_B:~L} $\n"
             + f"$S={S:~L} $\n"
             + f"$c={c:~L} $\n"
