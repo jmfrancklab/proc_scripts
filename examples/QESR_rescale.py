@@ -1,14 +1,25 @@
+"""Rescaling QESR spectra
+=========================
+Demonstration of the rescaling of QESR spectra based on the
+parameters of the dataset as well as the diameter and 
+calibration info in the users pyspecdata config file
+(``~/.pyspecdata`` on Linux/Mac or ``~/_pyspecdata`` on
+Windows).
+To run this example you should have the following parameters
+set in your config file:
+    :220720 propfactor: 8.637e-5
+    :220720 q: 4600
+    :220720 diameter: 0.704
+"""
 import pyspecdata as psd
 from pyspecProcScripts import QESR_scalefactor
 import matplotlib.pyplot as plt
 
 file_loc = "francklab_esr/alex"
 fig, ax_list = plt.subplots(1, 2)
-calib_info = (  # QESR_scalefactor takes the propfactor and diameter from
-    "220720"
-)
-#                       my config file and I want to use the values that I've
-#                       designated with the label 220720
+# QESR_scalefactor takes the propfactor and diameter from my config file and I
+# want to use the values that I've designated with the label 220720
+calib_info = "220720"
 with psd.figlist_var() as fl:
     d = psd.find_file("220922_70mM_270deg_teflon.DSC", exp_type=file_loc)
     if "harmonic" in d.dimlabels:
