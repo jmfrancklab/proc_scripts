@@ -2,7 +2,7 @@ from pyspecdata.datadir import pyspec_config  # piggyback on _pyspecdata
 from pyspecdata.general_functions import strm
 import logging
 from pint import UnitRegistry
-import pyspecdata as psd
+from numpy import sqrt
 
 logger = logging.getLogger("pySpecProcScripts.first_level.QESR_rescale")
 
@@ -133,10 +133,10 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
         1, "dimensionless"
     )  # the first fraction on eq 2-17 -- in bruker E500 manual
     signal_denom = (
-        G_R * C_t * psd.sqrt(power) * B_m * n_B * S * (S + 1) * Qfactor * d**2
+        G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Qfactor * d**2
     )
     signal_denom = signal_denom.to(
-        Q_("G") * psd.sqrt(Q_("W")) * Q_("s") * Q_("m") ** 2
+        Q_("G") * sqrt(Q_("W")) * Q_("s") * Q_("m") ** 2
     )
     # }}}
     logging.debug(
