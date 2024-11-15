@@ -6,7 +6,6 @@ from .phasing import (
     fid_from_echo,
     find_peakrange,
 )
-from .first_level.fake_data import fake_data
 from .third_level.rough_table_of_integrals import rough_table_of_integrals
 from .generate_integrals import generate_integrals
 from .load_data import lookup_table
@@ -48,7 +47,6 @@ __all__ = [
     "determine_sign",
     "draw_limits",
     "expand_limits",
-    "fake_data",
     "fid_from_echo",
     "find_apparent_anal_freq",
     "find_peakrange",
