@@ -2,7 +2,6 @@ from pyspecdata.datadir import pyspec_config  # piggyback on _pyspecdata
 from pyspecdata.general_functions import strm
 import logging
 from pint import UnitRegistry
-from numpy import sqrt
 
 logger = logging.getLogger("pySpecProcScripts.first_level.QESR_rescale")
 
