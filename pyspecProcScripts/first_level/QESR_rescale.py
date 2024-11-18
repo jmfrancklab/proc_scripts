@@ -28,7 +28,7 @@ class calib_info(object):
             # propFactor" and "[calibration_name] q" set in your pyspecdata
             # file
             try:
-                self.default_Q = float(
+                self.default_Qfactor = float(
                     pyspec_config.get_setting(f"{calibration_name} Q")
                 )
                 self.dint_propFactor = float(
@@ -40,7 +40,8 @@ class calib_info(object):
                     " pyspecdata config file (in your home directory) that"
                     " sets the value of the following"
                     f" variables:\n{calibration_name} q\n{calibration_name}"
-                    " propFactor\n\n(I" " can't run without these)"
+                    " propFactor\n\n(I"
+                    " can't run without these)"
                 )
             self.current_calib_name = calibration_name
 
@@ -83,7 +84,7 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     should be equal to concentration in μM.
 
     We specifically calculate
-    :math:`d^{2} G_{R}  C_{t}  \\sqrt{P}  B_{m}  Q  n_{B}  S  (S + 1) /
+    :math:`d^{2} G_{R}  C_{t}  \\sqrt{P}  B_{m}  Qfactor  n_{B}  S  (S + 1) /
     c_{propfactor}`
     (the denominator of equation 2-17 in the E500 manual with :math:`d^2`
     (diameter squared) added in, so that after dividing by this term, we get a
@@ -93,8 +94,8 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     change during an experiment that would change the double integral.
     By dividing the double integral by this, we get a number that is
     proportionate to the concentration of spins.
-    The diameter, Q, and proportionality constants are all pulled from the
-    pyspecdata config file.
+    The diameter, Q factor, and proportionality constants are all pulled from
+    the pyspecdata config file.
 
     The constant :math:`c_{propfactor}` is determined by the calibration name.
     Note that a larger :math:`c_{propfactor}` corresponds to a higher
@@ -125,11 +126,13 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     C_t = Q_(*d.get_prop("ConvTime"))
     power = Q_(*d.get_prop("Power"))
     B_m = Q_(*d.get_prop("ModAmp"))
-    Qfactor = Q_(calibcache.default_Q, "dimensionless")  # hard set Q value
+    Qfactor = Q_(
+        calibcache.default_Qfactor, "dimensionless"
+    )  # hard set Q value
     d = Q_(calibcache.d, "mm")  # hard set diameter
     n_B = Q_(1, "dimensionless")  # calculate this
     S = Q_(0.5, "dimensionless")
-    c = Q_(
+    c_propfactor = Q_(
         1, "dimensionless"
     )  # the first fraction on eq 2-17 -- in bruker E500 manual
     signal_denom = (
@@ -148,7 +151,7 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
             + f"$Q={Qfactor:~L} $\n"
             + f"$n_B={n_B:~L} $\n"
             + f"$S={S:~L} $\n"
-            + f"$c={c:~L} $\n"
+            + f"$c_propfactor={c_propfactor:~L} $\n"
             + f"$d={d:~L} $\n"
             + f"signal denom$={signal_denom:~L}$"
             + f"doubleint propFactor$={calibcache.dint_propFactor}$"
