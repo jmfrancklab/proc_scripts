@@ -42,13 +42,17 @@ relative to the noisier spectrum
 -- *i.e.* above, we want :math:`\mathbf{b}` to be less noisy.
 Here, we simply find the largest spectrum in the group
 (assuming it is least noisy) and use it as :math:`\mathbf{b}`.
+To utilize the rescaling you need the following inside your pyspecdata
+config file:
+    :220720 propfactor: 8.637e-5
+    :220720 q: 4600
+    :220720 diameter: 0.704
 """
-from pylab import *
-from pyspecdata import *
+import pylab as plt
+import pyspecdata as psd
 from pyspecProcScripts import QESR_scalefactor
 from collections import OrderedDict
 import matplotlib as mpl
-import pickle
 import numpy as np
 
 mpl.rcParams.update(
@@ -61,7 +65,8 @@ mpl.rcParams.update(
 
 
 def calc_phdiff(self, axis):
-    "calculate the phase gradient (cyc/Δx) along axis, setting the error appropriately"
+    """calculate the phase gradient (cyc/Δx) along axis, setting the error
+    appropriately"""
     if self.get_ft_prop(axis):
         dt = self.get_ft_prop(axis, "df")
     else:
@@ -72,21 +77,21 @@ def calc_phdiff(self, axis):
     A_sigma = 1 if A_sigma is None else A_sigma
     B_sigma = B.get_error()
     B_sigma = 1 if B_sigma is None else B_sigma
-    self.data = np.angle(A.data / B.data) / 2 / pi / dt
+    self.data = np.angle(A.data / B.data) / 2 / np.pi / dt
     self.setaxis(axis, A.getaxis(axis))
     self.set_error(
-        sqrt(
+        np.sqrt(
             A_sigma**2 * abs(0.5 / A.data) ** 2
             + B_sigma**2 * abs(0.5 / B.data) ** 2
         )
         / 2
-        / pi
+        / np.pi
         / dt
     )
     return self
 
 
-init_logging(level="debug")
+psd.init_logging(level="debug")
 filenames_w_labels = [
     ("220307_S175_KCl.DSC", "220307_S175_KCl"),
     ("220729_prS175.DSC", "220729 prS175"),
@@ -106,15 +111,15 @@ all_axes_extents = []
 maxval = 0
 for j, (filename, label_str) in enumerate(filenames_w_labels):
     # {{{ load, rescale
-    d = find_file(filename, exp_type="francklab_esr/Farhana")
+    d = psd.find_file(filename, exp_type="francklab_esr/Farhana")
     d.setaxis(Bname, lambda x: x / 1e4).set_units(Bname, "T")
-    d /= QESR_scalefactor(d)
+    d /= QESR_scalefactor(d, calibration_name="220720", diameter_name="220720")
     if "harmonic" in d.dimlabels:
         d = d["harmonic", 0]
     d -= d[Bname, :50].C.mean(Bname).data
     all_axes_extents.append(
-        tuple(d.getaxis(Bname)[r_[0, -1]])  # min, max
-        + (diff(d.getaxis(Bname)[r_[0, 1]]).item(),)  # difference
+        tuple(d.getaxis(Bname)[psd.r_[0, -1]])  # min, max
+        + (np.diff(d.getaxis(Bname)[psd.r_[0, 1]]).item(),)  # difference
     )
     all_files[label_str] = d
     temp = d.data.max() - d.data.min()
@@ -126,10 +131,10 @@ minB, maxB, dB = zip(*all_axes_extents)
 minB = min(minB)
 maxB = max(maxB)
 dB = min(dB)
-ref_axis = r_[minB : maxB + dB : dB]
+ref_axis = psd.r_[minB : maxB + dB : dB]
 # }}}
 
-with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
+with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     # {{{ arrange the figures in the PDF
     fl.par_break()  # each fig on new line
     fl.next("Raw")
@@ -154,7 +159,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             ref_spec_Bdom = d.C
             ref_spec = d.C
             ref_spec.ift(Bname, shift=True)
-            ref_spec.run(conj)
+            ref_spec.run(np.conj)
             scaling = 1
             print(
                 "for d, before",
@@ -194,7 +199,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             fl.next("correlation")
             fl.plot(correlation, label=label_str)
             thisshift = correlation.real.argmax(Bname).item()
-            d *= exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
+            d *= np.exp(-1j * 2 * np.pi * d.fromaxis(Bname) * thisshift)
             d.ft(Bname)
             a = d
             b = ref_spec_Bdom
@@ -211,7 +216,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.next("u domain")
         if (
             d.get_ft_prop(Bname, ["start", "time"]) is None
-        ):  #  this is the same
+        ):  # this is the same
             d.ift(Bname, shift=True)
         else:
             d.ift(Bname)
@@ -221,13 +226,13 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         phdiff = phdiff[Bname, 1:] / phdiff[Bname, :-1]
         alphaforpoints = abs(d[Bname:(0, None)][Bname, :-1])
         alphaforpoints /= alphaforpoints.max()
-        scatter(
+        plt.scatter(
             phdiff.getaxis(Bname),
             phdiff.angle.data,
             alpha=0.5 * alphaforpoints.data,
             s=10,
         )
-        xlim(0, 0.8e4)
+        plt.xlim(0, 0.8e4)
         fl.next("u domain -- phase, propagate error")
         phdiff = calc_phdiff(d[Bname:(0, None)], Bname)
         arb_scaling = 20  # the weighted sum will need to be scaled up
@@ -236,7 +241,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         )  # to show what a weighted sum looks like
         alphapoints[~np.isfinite(alphapoints)] = 0
         alphapoints /= sum(alphapoints)
-        sc = scatter(
+        sc = plt.scatter(
             phdiff.getaxis(Bname),
             phdiff.data,
             alpha=np.clip(alphapoints.ravel() * arb_scaling, 0, 1),
@@ -244,28 +249,27 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         )
         phdiff.mean_weighted(Bname)
         determined_phdiff = phdiff.item()
-        axhline(determined_phdiff, c=sc.get_facecolors()[-1], alpha=0.2)
-        xlim(0, 0.8e4)
-        d *= exp(-1j * 2 * pi * determined_phdiff * d.fromaxis(Bname))
+        plt.axhline(determined_phdiff, c=sc.get_facecolors()[-1], alpha=0.2)
+        plt.xlim(0, 0.8e4)
+        d *= np.exp(-1j * 2 * np.pi * determined_phdiff * d.fromaxis(Bname))
         fl.next("ift, indiv centered")
         fl.plot(d)
         all_phdiff.append(determined_phdiff)
-    avg_phdiff = mean(all_phdiff)
+    avg_phdiff = np.mean(all_phdiff)
     for label_str, d in all_files.items():
-        d *= exp(+1j * 2 * pi * d.fromaxis(Bname) * avg_phdiff)
+        d *= np.exp(+1j * 2 * np.pi * d.fromaxis(Bname) * avg_phdiff)
         fl.next("centered spectra -- ift")
         fl.plot(d)
         fl.next("centered spectra")
         d.ft(Bname)
         fl.plot(d, human_units=False)
     fl.next("aligned, autoscaled")
-    xlim(346, 358)
+    plt.xlim(346, 358)
     mpl.pyplot.legend("", frameon=False)
-    # gca().get_legend().remove()
     fl.autolegend_list[fl.current] = False
     fl.adjust_spines("bottom")
-    savefig("single_mutant_overlay.pdf")
-    title("")
-    xlabel("$B_0$ / mT")
-    ylabel("")
-    gca().set_yticks([])
+    psd.savefig("single_mutant_overlay.pdf")
+    plt.title("")
+    plt.xlabel("$B_0$ / mT")
+    plt.ylabel("")
+    plt.gca().set_yticks([])

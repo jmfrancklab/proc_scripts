@@ -31,7 +31,6 @@ from .clock_correct import clock_correct
 __all__ = [
     "DCCT",
     "L2G",
-    "QESR_scalefactor",
     "Vpp2power",
     "active_propagation",
     "apod_matched_filter",
@@ -60,6 +59,7 @@ __all__ = [
     "lookup_table",
     "ph1_real_Abs",
     "power2dBm",
+    "QESR_scalefactor",
     "recovery",
     "rough_table_of_integrals",
     "select_pathway",
