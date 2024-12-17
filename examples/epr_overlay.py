@@ -43,6 +43,7 @@ relative to the noisier spectrum
 Here, we simply find the largest spectrum in the group
 (assuming it is least noisy) and use it as :math:`\mathbf{b}`.
 """
+
 from pylab import *
 from pyspecdata import *
 from pyspecProcScripts import QESR_scalefactor
@@ -51,13 +52,11 @@ import matplotlib as mpl
 import pickle
 import numpy as np
 
-mpl.rcParams.update(
-    {
-        "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
-        "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
-        "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
-    }
-)
+mpl.rcParams.update({
+    "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+    "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+})
 
 
 init_logging(level="debug")
@@ -158,7 +157,8 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
                 },
             )
             correlation = d * ref_spec
-            correlation /= normfactor
+            correlation /= normfactor # just for display purposes, since only
+            #                           the argmax is used
             correlation.ft_clear_startpoints(
                 Bname, f="reset"
             )  # I want to calculate things in terms of an offset,
@@ -170,9 +170,9 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             thisshift = correlation.real.argmax(Bname).item()
             d *= exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
             d.ft(Bname)
-            a = d
-            b = ref_spec_Bdom
-            scaling = (a * b).sum(Bname) / (b * b).sum(Bname)
+            scaling = (d * ref_spec_Bdom).sum(Bname) / (
+                ref_spec_Bdom * ref_spec_Bdom
+            ).sum(Bname)
             scaling = scaling.real.item()
         fl.next("aligned, autoscaled")
         aligned_autoscaled[label_str] = d / scaling
@@ -190,6 +190,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         else:
             d.ift(Bname)
         fl.plot(d, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
+        # {{{ plot the phdiff and determine the average phdiff
         fl.next("u domain -- phase, propagate error")
         phdiff = d[Bname:(0, None)].phdiff(Bname)
         arb_scaling = 20  # the weighted sum will need to be scaled up
@@ -208,6 +209,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         determined_phdiff = phdiff.item()
         axhline(determined_phdiff, c=sc.get_facecolors()[-1], alpha=0.2)
         xlim(0, 0.8e4)
+        # }}}
         d *= exp(-1j * 2 * pi * determined_phdiff * d.fromaxis(Bname))
         fl.next("ift, indiv centered")
         fl.plot(d)
