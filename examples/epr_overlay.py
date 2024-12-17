@@ -60,32 +60,6 @@ mpl.rcParams.update(
 )
 
 
-def calc_phdiff(self, axis):
-    "calculate the phase gradient (cyc/Δx) along axis, setting the error appropriately"
-    if self.get_ft_prop(axis):
-        dt = self.get_ft_prop(axis, "df")
-    else:
-        dt = self.get_ft_prop(axis, "dt")
-    A = self[axis, 1:]
-    B = self[axis, :-1]
-    A_sigma = A.get_error()
-    A_sigma = 1 if A_sigma is None else A_sigma
-    B_sigma = B.get_error()
-    B_sigma = 1 if B_sigma is None else B_sigma
-    self.data = np.angle(A.data / B.data) / 2 / pi / dt
-    self.setaxis(axis, A.getaxis(axis))
-    self.set_error(
-        sqrt(
-            A_sigma**2 * abs(0.5 / A.data) ** 2
-            + B_sigma**2 * abs(0.5 / B.data) ** 2
-        )
-        / 2
-        / pi
-        / dt
-    )
-    return self
-
-
 init_logging(level="debug")
 filenames_w_labels = [
     ("220307_S175_KCl.DSC", "220307_S175_KCl"),
