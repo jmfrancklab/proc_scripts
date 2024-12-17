@@ -76,7 +76,6 @@ filenames_w_labels = [
 Bname = "$B_0$"
 all_files = OrderedDict()
 aligned_autoscaled = {}
-all_scaling = {}
 # {{{ load all files first and do the following:
 #       -   determine ref_axis which spans all the axes with the finest
 #           resolution → ref_axis
@@ -162,12 +161,15 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             scaling = scaling.real.item()
         fl.next("aligned, autoscaled")
         aligned_autoscaled[label_str] = d / scaling
-        all_scaling[label_str] = scaling
+        aligned_autoscaled[label_str].set_prop('scaling',scaling)
         fl.plot(
             aligned_autoscaled[label_str],
             label=f"{label_str}\nscaling {scaling}",
             alpha=0.5,
         )
+    # {{{ this loop is to move all into the u domain and then find the average
+    #     "center field"
+    for label_str, d in aligned_autoscaled.items():
         fl.next("u domain")
         if (
             d.get_ft_prop(Bname, ["start", "time"]) is None
@@ -175,26 +177,24 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             d.ift(Bname, shift=True)
         else:
             d.ift(Bname)
-        fl.plot(d, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
-        fl.next("ift, indiv centered")
-        fl.plot(d)
-    for label_str, d in all_files.items():
+        fl.plot(d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5)
+    # }}}
+    for label_str, d in aligned_autoscaled.items():
         d *= np.exp(
-            +1j * 2 * pi * d.fromaxis(Bname) * 10.0
+            +1j * 2 * pi * d.fromaxis(Bname) * 10
         )  # go for 10 G shift
         fl.next("centered spectra -- ift")
         fl.plot(d)
         fl.next("centered spectra")
         d.ft(Bname)
         fl.plot(d, human_units=False)
-    fl.next("aligned, autoscaled")
-    plt.xlim(346, 358)
-    mpl.pyplot.legend("", frameon=False)
-    # plt.gca().get_legend().remove()
-    fl.autolegend_list[fl.current] = False
-    fl.adjust_spines("bottom")
-    plt.savefig("single_mutant_overlay.pdf")
-    plt.title("")
-    plt.xlabel("$B_0$ / mT")
-    plt.ylabel("")
-    plt.gca().set_yticks([])
+    #fl.next("aligned, autoscaled")
+    #plt.xlim(346, 358)
+    #mpl.pyplot.legend("", frameon=False)
+    #fl.autolegend_list[fl.current] = False
+    #fl.adjust_spines("bottom")
+    #plt.savefig("single_mutant_overlay.pdf")
+    #plt.title("")
+    #plt.xlabel("$B_0$ / mT")
+    #plt.ylabel("")
+    #plt.gca().set_yticks([])
