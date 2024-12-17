@@ -229,7 +229,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         )
         xlim(0, 0.8e4)
         fl.next("u domain -- phase, propagate error")
-        phdiff = calc_phdiff(d[Bname:(0, None)], Bname)
+        phdiff = d[Bname:(0, None)].phdiff(Bname)
         arb_scaling = 20  # the weighted sum will need to be scaled up
         alphapoints = (
             1 / phdiff.get_error()
