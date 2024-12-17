@@ -216,18 +216,6 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         else:
             d.ift(Bname)
         fl.plot(d, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
-        fl.next("u domain -- phase, mag as error")
-        phdiff = d[Bname:(0, None)]
-        phdiff = phdiff[Bname, 1:] / phdiff[Bname, :-1]
-        alphaforpoints = abs(d[Bname:(0, None)][Bname, :-1])
-        alphaforpoints /= alphaforpoints.max()
-        scatter(
-            phdiff.getaxis(Bname),
-            phdiff.angle.data,
-            alpha=0.5 * alphaforpoints.data,
-            s=10,
-        )
-        xlim(0, 0.8e4)
         fl.next("u domain -- phase, propagate error")
         phdiff = d[Bname:(0, None)].phdiff(Bname)
         arb_scaling = 20  # the weighted sum will need to be scaled up
