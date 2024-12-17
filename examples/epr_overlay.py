@@ -83,6 +83,8 @@ aligned_autoscaled = {}
 #       -   ref_spec, which is the label/key of the largest spectrum
 all_axes_extents = []
 maxval = 0
+test_shifts_coarse = psd.nddata(r_[-10e-4:10e-4:100j], "test_shifts")
+test_shifts_fine = psd.nddata(r_[-1e-4:1e-4:100j], "test_shifts")
 for j, (filename, label_str) in enumerate(filenames_w_labels):
     # {{{ load, rescale
     d = psd.find_file(filename, exp_type="francklab_esr/Farhana")
@@ -120,7 +122,7 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     # {{{ pull the reference (largest) up front
     all_files.move_to_end(ref_spec, last=False)
     # }}}
-    all_phdiff = []  # to store all the phase differences?
+    all_shifts = []  # to store all the phase differences?
     for j, (label_str, d) in enumerate(
         (k, v) for (k, v) in all_files.items() if v != ref_spec
     ):
@@ -161,7 +163,7 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             scaling = scaling.real.item()
         fl.next("aligned, autoscaled")
         aligned_autoscaled[label_str] = d / scaling
-        aligned_autoscaled[label_str].set_prop('scaling',scaling)
+        aligned_autoscaled[label_str].set_prop("scaling", scaling)
         fl.plot(
             aligned_autoscaled[label_str],
             label=f"{label_str}\nscaling {scaling}",
@@ -171,30 +173,61 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     #     "center field"
     for label_str, d in aligned_autoscaled.items():
         fl.next("u domain")
-        if (
-            d.get_ft_prop(Bname, ["start", "time"]) is None
-        ):
+        if d.get_ft_prop(Bname, ["start", "time"]) is None:
             d.ift(Bname, shift=True)
         else:
             d.ift(Bname)
-        fl.plot(d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5)
+        fl.plot(
+            d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5
+        )
+        vec_alignment = (
+            (
+                np.exp(
+                    -1j
+                    * 2
+                    * pi
+                    * test_shifts_coarse
+                    * d.fromaxis(Bname)[Bname:(-1e3, 1e3)]
+                )
+                * d[Bname:(-1e3, 1e3)]
+            )
+            .sum(Bname)
+            .run(abs)
+        )
+        shift = vec_alignment.real.argmax("test_shifts").item()
+        vec_alignment = (
+            (
+                np.exp(
+                    -1j
+                    * 2
+                    * pi
+                    * (shift + test_shifts_fine)
+                    * d.fromaxis(Bname)
+                )
+                * d
+            )
+            .sum(Bname)
+            .run(abs)
+        )
+        shift += vec_alignment.real.argmax("test_shifts").item()
+        all_shifts.append(shift)
     # }}}
+    mean_shift = 10e-4
     for label_str, d in aligned_autoscaled.items():
-        d *= np.exp(
-            +1j * 2 * pi * d.fromaxis(Bname) * 10
-        )  # go for 10 G shift
+        d *= np.exp(+1j * 2 * pi * d.fromaxis(Bname) * mean_shift)  # go for 10 G shift
         fl.next("centered spectra -- ift")
         fl.plot(d)
         fl.next("centered spectra")
         d.ft(Bname)
+        d[Bname] -= mean_shift
         fl.plot(d, human_units=False)
-    #fl.next("aligned, autoscaled")
-    #plt.xlim(346, 358)
-    #mpl.pyplot.legend("", frameon=False)
-    #fl.autolegend_list[fl.current] = False
-    #fl.adjust_spines("bottom")
-    #plt.savefig("single_mutant_overlay.pdf")
-    #plt.title("")
-    #plt.xlabel("$B_0$ / mT")
-    #plt.ylabel("")
-    #plt.gca().set_yticks([])
+    # fl.next("aligned, autoscaled")
+    # plt.xlim(346, 358)
+    # mpl.pyplot.legend("", frameon=False)
+    # fl.autolegend_list[fl.current] = False
+    # fl.adjust_spines("bottom")
+    # plt.savefig("single_mutant_overlay.pdf")
+    # plt.title("")
+    # plt.xlabel("$B_0$ / mT")
+    # plt.ylabel("")
+    # plt.gca().set_yticks([])
