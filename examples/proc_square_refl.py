@@ -1,5 +1,6 @@
-"""Process a square wave reflection
-===================================
+"""
+Process a square wave reflection
+================================
 
 Processes a square wave reflection in order to calculate the 
 Q of a NMR probe.

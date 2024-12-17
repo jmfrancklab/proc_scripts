@@ -1,19 +1,19 @@
-from pylab import *
-from pyspecdata import *
-from scipy.optimize import minimize, leastsq
-from sympy import exp as s_exp
 import numpy as np
+from numpy import pi
+import pyspecdata as psd
 import matplotlib.pyplot as plt
-from sympy import symbols, latex, Symbol
-from pyspecProcScripts import *
 from .simple_functions import select_pathway
 from .correlation_alignment import correl_align
 from .integral_w_error import integral_w_errors
 from .DCCT_func import DCCT
+import sympy as sp
+from .phasing import zeroth_order_ph, hermitian_function_test, determine_sign
 import matplotlib.patches as patches
+import matplotlib.ticker as mticker
+import logging
 
 this_figsize = (6, 12)
-t2 = symbols("t2")
+t2 = sp.symbols("t2")
 
 
 def generate_integrals(
@@ -48,13 +48,13 @@ def generate_integrals(
     direct:         str
                     Direct dimension of the signal
     indirect:       str
-                    Indirect dimension of the signal. Usually 'power' or 'nScans'
-                    for example.
+                    Indirect dimension of the signal. Usually 'power' or
+                    'nScans' for example.
     alias_slop:     int
                     Aliasing_slop used in the hermitian function.
     clock_correction:   bool
-                        If true, will apply a clock correction. Is needed for IR
-                        but not enhancement data.
+                        If true, will apply a clock correction. Is needed for
+                        IR but not enhancement data.
     error_bars:     bool
                     Option to apply integration *with* error bars.
     correlate:      bool
@@ -62,9 +62,9 @@ def generate_integrals(
 
     Returns
     =======
-    s:              nddata
+    s:              psd.nddata
                     Data with applied corrections but *not* integrated
-    s_int:          nddata
+    s_int:          psd.nddata
                     Integrated and corrected data
     """
     s.ift(direct)
@@ -89,7 +89,7 @@ def generate_integrals(
     best_shift = hermitian_function_test(
         select_pathway(s, signal_pathway), aliasing_slop=alias_slop
     )
-    logger.info(strm("best shift is", best_shift))
+    logging.info(psd.strm("best shift is", best_shift))
     s.setaxis(direct, lambda x: x - best_shift).register_axis({direct: 0})
     s.ft(direct)
     if "nScans" in s.dimlabels:
@@ -119,7 +119,7 @@ def generate_integrals(
         scale_factor = abs(s.C).max().item()
     # }}}
     if fl:
-        this_fig = figure(figsize=(20, 10))
+        this_fig = plt.figure(figsize=(20, 10))
         DCCT(
             raw_s,
             this_fig,
@@ -162,9 +162,9 @@ def generate_integrals(
     s.ift(direct)
     if clock_correction:
         # {{{clock correction
-        clock_corr = nddata(np.linspace(-2, 2, 2500), "clock_corr")
+        clock_corr = psd.nddata(np.linspace(-2, 2, 2500), "clock_corr")
         s.ft(direct)
-        if "vd" is indirect:
+        if "vd" == indirect:
             s_clock = s["ph1", 0]["ph2", 1].sum(direct)
         else:
             s_clock = s["ph1", 0].sum(direct)
@@ -198,22 +198,20 @@ def generate_integrals(
             plot_title="FID \nfor %s" % searchstr,
         )
     if "ph2" in s.dimlabels:
-        logger.info(strm("PH2 IS PRESENT"))
+        logging.info(psd.strm("PH2 IS PRESENT"))
         error_path = (
-            set(
-                (
-                    (j, k)
-                    for j in range(ndshape(s)["ph1"])
-                    for k in range(ndshape(s)["ph2"])
-                )
-            )
+            set((
+                (j, k)
+                for j in range(psd.ndshape(s)["ph1"])
+                for k in range(psd.ndshape(s)["ph2"])
+            ))
             - set(excluded_pathways)
             - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
         )
         error_path = [{"ph1": j, "ph2": k} for j, k in error_path]
     else:
         error_path = (
-            set(((j) for j in range(ndshape(s)["ph1"])))
+            set(((j) for j in range(psd.ndshape(s)["ph1"])))
             - set(excluded_pathways)
             - set([(signal_pathway["ph1"])])
         )
@@ -239,16 +237,13 @@ def generate_integrals(
                 return_frq_slice=True,
             )
         x = s_int.get_error()
-        x[:] /= sqrt(2)
+        x[:] /= np.sqrt(2)
         if fl is not None:
-            fig0 = figure(figsize=this_figsize)
+            fig0 = plt.figure(figsize=this_figsize)
             x = s_after.getaxis(direct)
             dx = x[1] - x[0]
             fl.next("Real Integrated Data with Bounds", fig=fig0)
             ax1 = plt.axes([0.2933, 0.15, 0.6567, 0.713])
-            yMajorLocator = lambda: mticker.MaxNLocator(
-                nbins="auto", steps=[1, 2, 5, 10]
-            )
             majorLocator = lambda: mticker.MaxNLocator(
                 nbins="auto", steps=[1, 2, 2.5, 5, 10]
             )
@@ -257,7 +252,9 @@ def generate_integrals(
             ax1.xaxis.set_minor_locator(minorLocator())
             ax1.set_ylabel(None)
             fl.image(
-                select_pathway(s_after.real.run(complex128), signal_pathway),
+                select_pathway(
+                    s_after.real.run(np.complex128), signal_pathway
+                ),
                 black=False,
                 ax=ax1,
             )
@@ -288,16 +285,16 @@ def generate_integrals(
                 ec="k",
             )
             ax1.add_patch(q)
-    if indirect is "vd":
+    if indirect == "vd":
         s_int = s_int
         if fl is not None:
-            fig1 = figure()
+            fig1 = plt.figure()
             fl.next("Integrated Data", fig=fig1)
             fl.plot(s_int, "o", capsize=6, alpha=0.3)
     else:
         s_int[indirect, :] /= s_int.data[0]
         if fl is not None:
-            fig1 = figure()
+            fig1 = plt.figure()
             fl.next("Integrated Data", fig=fig1)
             fl.plot(s_int["power", :-3], "o", capsize=6, alpha=0.3)
     # }}}

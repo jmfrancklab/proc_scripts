@@ -1,4 +1,5 @@
-"""Check integral error calculation
+"""
+Check integral error calculation
 ================================
 
 Generate a fake dataset of an inversion recovery with multiple repeats (φ

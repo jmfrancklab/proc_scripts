@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>EPR correlation alignment &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=0838f141" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Calculate actual beta as a function of pulse length" href="calibrate_tsqrtP.html" />
+    <link rel="prev" title="compare CPMG echo" href="compare_CPMG_echo.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-epr-overlay-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="epr-correlation-alignment">
+<span id="sphx-glr-auto-examples-epr-overlay-py"></span><h1>EPR correlation alignment<a class="headerlink" href="#epr-correlation-alignment" title="Link to this heading">¶</a></h1>
+<p>While we can align by microwave frequency and normalize
+according to peak-to-peak amplitude, it scan still be
+hard to identify subtle differences between ESR
+spectra, and small imperfections – such as free MTSL
+– can play an outsized role.</p>
+<p>Therefore, here, we use correlation to align the
+spectra and then use “dot-product scaling” to normalize
+them.  By “dot-product scaling” we mean scaling the
+amplitude of one vector (here a spectrum,
+<span class="math notranslate nohighlight">\(\mathbf{b}\)</span>) relative to a reference (here
+<span class="math notranslate nohighlight">\(\mathbf{a}\)</span>) to minimize the residual between the
+two – <em>i.e.</em> we minimize the expression</p>
+<div class="math notranslate nohighlight">
+\[|\mathbf{a}-c\mathbf{b}|^2\]</div>
+<p>by varying the
+scaling constant <span class="math notranslate nohighlight">\(c\)</span>.
+The solution to this is</p>
+<div class="math notranslate nohighlight">
+\[c = \frac{\Re[\mathbf{a}\cdot \mathbf{b}]}{||\mathbf{b}||^2}\]</div>
+<p>In order to do all this, we need a common <em>x</em>-axis that
+we can use for correlation, etc.
+Here, we look for the fields that are furthest left and furthest right,
+and for the smallest spacing between field samples
+– we use these values to construct a (therefore all-inclusive) x axis.</p>
+<p>Also, for the purposes of dot-product scaling,
+it is better to scale the less noisy spectrum
+(<span class="math notranslate nohighlight">\(\mathbf{b}\)</span> above)
+relative to the noisier spectrum
+(<span class="math notranslate nohighlight">\(\mathbf{a}\)</span> above)
+– <em>i.e.</em> above, we want <span class="math notranslate nohighlight">\(\mathbf{b}\)</span> to be less noisy.
+Here, we simply find the largest spectrum in the group
+(assuming it is least noisy) and use it as <span class="math notranslate nohighlight">\(\mathbf{b}\)</span>.</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_epr_overlay_001.png" srcset="../_images/sphx_glr_epr_overlay_001.png" alt="Raw" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_002.png" srcset="../_images/sphx_glr_epr_overlay_002.png" alt="correlation" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_003.png" srcset="../_images/sphx_glr_epr_overlay_003.png" alt="epr overlay" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_004.png" srcset="../_images/sphx_glr_epr_overlay_004.png" alt="u domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_005.png" srcset="../_images/sphx_glr_epr_overlay_005.png" alt="epr overlay" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_006.png" srcset="../_images/sphx_glr_epr_overlay_006.png" alt="epr overlay" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_007.png" srcset="../_images/sphx_glr_epr_overlay_007.png" alt="ift, indiv centered" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_008.png" srcset="../_images/sphx_glr_epr_overlay_008.png" alt="centered spectra -- ift" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_009.png" srcset="../_images/sphx_glr_epr_overlay_009.png" alt="centered spectra" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
+for d, before {&#39;FT_start_freq&#39;: {&#39;$B_0$&#39;: 0.33729000000000003}}
+for d, before {&#39;FT_start_freq&#39;: {&#39;$B_0$&#39;: 0.33729000000000003}}
+for d {&#39;FT_start_freq&#39;: {&#39;$B_0$&#39;: 0.33729000000000003}}
+for d, before {&#39;FT_start_freq&#39;: {&#39;$B_0$&#39;: 0.33729000000000003}}
+for d {&#39;FT_start_freq&#39;: {&#39;$B_0$&#39;: 0.33729000000000003}}
+for d, before {&#39;FT_start_freq&#39;: {&#39;$B_0$&#39;: 0.33729000000000003}}
+for d {&#39;FT_start_freq&#39;: {&#39;$B_0$&#39;: 0.33729000000000003}}
+{&#39;width&#39;: 0.7, &#39;filename&#39;: &#39;ESR_align_example.pdf&#39;}
+1: Raw |||mT
+2: correlation |||mT
+3: aligned, autoscaled |||mT
+4: u domain |||kcyc · (T)$^{-1}$
+5: u domain -- phase, mag as error
+6: u domain -- phase, propagate error
+7: ift, indiv centered |||kcyc · (T)$^{-1}$
+8: centered spectra -- ift |||kcyc · (T)$^{-1}$
+9: centered spectra
+
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  plt.gcf().tight_layout()
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.QESR_scalefactor" title="pyspecProcScripts.QESR_scalefactor" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">QESR_scalefactor</span></a>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;figure.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># clear</span>
+        <span class="s2">&quot;axes.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">),</span>  <span class="c1"># 90% transparent white</span>
+        <span class="s2">&quot;savefig.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># clear</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">calc_phdiff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+    <span class="s2">&quot;calculate the phase gradient (cyc/Δx) along axis, setting the error appropriately&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ft_prop</span><span class="p">(</span><span class="n">axis</span><span class="p">):</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ft_prop</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="s2">&quot;df&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ft_prop</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="s2">&quot;dt&quot;</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">axis</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">axis</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">A_sigma</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">get_error</span><span class="p">()</span>
+    <span class="n">A_sigma</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">A_sigma</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">A_sigma</span>
+    <span class="n">B_sigma</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">get_error</span><span class="p">()</span>
+    <span class="n">B_sigma</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">B_sigma</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">B_sigma</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">data</span> <span class="o">/</span> <span class="n">B</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">pi</span> <span class="o">/</span> <span class="n">dt</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">axis</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">set_error</span><span class="p">(</span>
+        <span class="n">sqrt</span><span class="p">(</span>
+            <span class="n">A_sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">/</span> <span class="n">A</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="o">+</span> <span class="n">B_sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">/</span> <span class="n">B</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="o">/</span> <span class="mi">2</span>
+        <span class="o">/</span> <span class="n">pi</span>
+        <span class="o">/</span> <span class="n">dt</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="n">init_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
+<span class="n">filenames_w_labels</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">&quot;220307_S175_KCl.DSC&quot;</span><span class="p">,</span> <span class="s2">&quot;220307_S175_KCl&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;220729_prS175.DSC&quot;</span><span class="p">,</span> <span class="s2">&quot;220729 prS175&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;220307_S175_KI.DSC&quot;</span><span class="p">,</span> <span class="s2">&quot;220307_S175_KI&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;220307_prS175_KH2PO4.DSC&quot;</span><span class="p">,</span> <span class="s2">&quot;220307_S175_KH2PO4&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">Bname</span> <span class="o">=</span> <span class="s2">&quot;$B_0$&quot;</span>
+<span class="n">all_files</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+<span class="n">aligned_autoscaled</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">all_scaling</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="c1"># {{{ load all files first and do the following:</span>
+<span class="c1">#       -   determine ref_axis which spans all the axes with the finest</span>
+<span class="c1">#           resolution → ref_axis</span>
+<span class="c1">#       -   all_files is an ordered dict of all files</span>
+<span class="c1">#       -   ref_spec, which is the label/key of the largest spectrum</span>
+<span class="n">all_axes_extents</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">maxval</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">label_str</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">filenames_w_labels</span><span class="p">):</span>
+    <span class="c1"># {{{ load, rescale</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;francklab_esr/Farhana&quot;</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="n">Bname</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">1e4</span><span class="p">)</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="n">Bname</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">/=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.QESR_scalefactor" title="pyspecProcScripts.QESR_scalefactor" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">QESR_scalefactor</span></a><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;harmonic&quot;</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">dimlabels</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;harmonic&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">d</span> <span class="o">-=</span> <span class="n">d</span><span class="p">[</span><span class="n">Bname</span><span class="p">,</span> <span class="p">:</span><span class="mi">50</span><span class="p">]</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">all_axes_extents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="nb">tuple</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">Bname</span><span class="p">)[</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]])</span>  <span class="c1"># min, max</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">diff</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">Bname</span><span class="p">)[</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span><span class="o">.</span><span class="n">item</span><span class="p">(),)</span>  <span class="c1"># difference</span>
+    <span class="p">)</span>
+    <span class="n">all_files</span><span class="p">[</span><span class="n">label_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">temp</span> <span class="o">&gt;</span> <span class="n">maxval</span><span class="p">:</span>
+        <span class="n">maxval</span> <span class="o">=</span> <span class="n">temp</span>
+        <span class="n">ref_spec</span> <span class="o">=</span> <span class="n">label_str</span>
+    <span class="c1"># }}}</span>
+<span class="n">minB</span><span class="p">,</span> <span class="n">maxB</span><span class="p">,</span> <span class="n">dB</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">all_axes_extents</span><span class="p">)</span>
+<span class="n">minB</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">minB</span><span class="p">)</span>
+<span class="n">maxB</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">maxB</span><span class="p">)</span>
+<span class="n">dB</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dB</span><span class="p">)</span>
+<span class="n">ref_axis</span> <span class="o">=</span> <span class="n">r_</span><span class="p">[</span><span class="n">minB</span> <span class="p">:</span> <span class="n">maxB</span> <span class="o">+</span> <span class="n">dB</span> <span class="p">:</span> <span class="n">dB</span><span class="p">]</span>
+<span class="c1"># }}}</span>
+
+<span class="k">with</span> <span class="n">figlist_var</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;ESR_align_example.pdf&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="c1"># {{{ arrange the figures in the PDF</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">par_break</span><span class="p">()</span>  <span class="c1"># each fig on new line</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Raw&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">par_break</span><span class="p">()</span>  <span class="c1"># each fig on new line</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;correlation&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">par_break</span><span class="p">()</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;aligned, autoscaled&quot;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="mf">1.618</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">legend</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ pull the reference (largest) up front</span>
+    <span class="n">all_files</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">ref_spec</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="n">all_phdiff</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># to store all the phase differences?</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">label_str</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">all_files</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">ref_spec</span>
+    <span class="p">):</span>
+        <span class="c1"># {{{ just show the raw data</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Raw&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label_str</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">Bname</span><span class="p">,</span> <span class="n">ref_axis</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ref_spec_Bdom</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">C</span>
+            <span class="n">ref_spec</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">C</span>
+            <span class="n">ref_spec</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="n">Bname</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">ref_spec</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">conj</span><span class="p">)</span>
+            <span class="n">scaling</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;for d, before&quot;</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ref_spec</span><span class="o">.</span><span class="n">other_info</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;FT_start&quot;</span><span class="p">)</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">normfactor</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;for d, before&quot;</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ref_spec</span><span class="o">.</span><span class="n">other_info</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;FT_start&quot;</span><span class="p">)</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="n">Bname</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;for d&quot;</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ref_spec</span><span class="o">.</span><span class="n">other_info</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;FT_start&quot;</span><span class="p">)</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="n">correlation</span> <span class="o">=</span> <span class="n">d</span> <span class="o">*</span> <span class="n">ref_spec</span>
+            <span class="n">correlation</span> <span class="o">/=</span> <span class="n">normfactor</span>
+            <span class="n">correlation</span><span class="o">.</span><span class="n">ft_clear_startpoints</span><span class="p">(</span>
+                <span class="n">Bname</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="s2">&quot;reset&quot;</span>
+            <span class="p">)</span>  <span class="c1"># I want to calculate things in terms of an offset,</span>
+            <span class="c1">#    which can be positive or negative, and need to shift in</span>
+            <span class="c1">#    the next step</span>
+            <span class="n">correlation</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="n">Bname</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;correlation&quot;</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">correlation</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label_str</span><span class="p">)</span>
+            <span class="n">thisshift</span> <span class="o">=</span> <span class="n">correlation</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">d</span> <span class="o">*=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">d</span><span class="o">.</span><span class="n">fromaxis</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span> <span class="o">*</span> <span class="n">thisshift</span><span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">d</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">ref_spec_Bdom</span>
+            <span class="n">scaling</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span>
+            <span class="n">scaling</span> <span class="o">=</span> <span class="n">scaling</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;aligned, autoscaled&quot;</span><span class="p">)</span>
+        <span class="n">aligned_autoscaled</span><span class="p">[</span><span class="n">label_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span> <span class="o">/</span> <span class="n">scaling</span>
+        <span class="n">all_scaling</span><span class="p">[</span><span class="n">label_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">scaling</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">aligned_autoscaled</span><span class="p">[</span><span class="n">label_str</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label_str</span><span class="si">}</span><span class="se">\n</span><span class="s2">scaling </span><span class="si">{</span><span class="n">scaling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;u domain&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">get_ft_prop</span><span class="p">(</span><span class="n">Bname</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>  <span class="c1">#  this is the same</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="n">Bname</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label_str</span><span class="si">}</span><span class="se">\n</span><span class="s2">scaling </span><span class="si">{</span><span class="n">scaling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;u domain -- phase, mag as error&quot;</span><span class="p">)</span>
+        <span class="n">phdiff</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">Bname</span><span class="p">:(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
+        <span class="n">phdiff</span> <span class="o">=</span> <span class="n">phdiff</span><span class="p">[</span><span class="n">Bname</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">/</span> <span class="n">phdiff</span><span class="p">[</span><span class="n">Bname</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">alphaforpoints</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">Bname</span><span class="p">:(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)][</span><span class="n">Bname</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">alphaforpoints</span> <span class="o">/=</span> <span class="n">alphaforpoints</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">scatter</span><span class="p">(</span>
+            <span class="n">phdiff</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">Bname</span><span class="p">),</span>
+            <span class="n">phdiff</span><span class="o">.</span><span class="n">angle</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">alphaforpoints</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.8e4</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;u domain -- phase, propagate error&quot;</span><span class="p">)</span>
+        <span class="n">phdiff</span> <span class="o">=</span> <span class="n">calc_phdiff</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">Bname</span><span class="p">:(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)],</span> <span class="n">Bname</span><span class="p">)</span>
+        <span class="n">arb_scaling</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># the weighted sum will need to be scaled up</span>
+        <span class="n">alphapoints</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">1</span> <span class="o">/</span> <span class="n">phdiff</span><span class="o">.</span><span class="n">get_error</span><span class="p">()</span>
+        <span class="p">)</span>  <span class="c1"># to show what a weighted sum looks like</span>
+        <span class="n">alphapoints</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">alphapoints</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">alphapoints</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">alphapoints</span><span class="p">)</span>
+        <span class="n">sc</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+            <span class="n">phdiff</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">Bname</span><span class="p">),</span>
+            <span class="n">phdiff</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">alphapoints</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="o">*</span> <span class="n">arb_scaling</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">phdiff</span><span class="o">.</span><span class="n">mean_weighted</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span>
+        <span class="n">determined_phdiff</span> <span class="o">=</span> <span class="n">phdiff</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">axhline</span><span class="p">(</span><span class="n">determined_phdiff</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">get_facecolors</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+        <span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.8e4</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">*=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">determined_phdiff</span> <span class="o">*</span> <span class="n">d</span><span class="o">.</span><span class="n">fromaxis</span><span class="p">(</span><span class="n">Bname</span><span class="p">))</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;ift, indiv centered&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">all_phdiff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">determined_phdiff</span><span class="p">)</span>
+    <span class="n">avg_phdiff</span> <span class="o">=</span> <span class="n">mean</span><span class="p">(</span><span class="n">all_phdiff</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">label_str</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">all_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">*=</span> <span class="n">exp</span><span class="p">(</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">d</span><span class="o">.</span><span class="n">fromaxis</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span> <span class="o">*</span> <span class="n">avg_phdiff</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;centered spectra -- ift&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;centered spectra&quot;</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="n">Bname</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">human_units</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;aligned, autoscaled&quot;</span><span class="p">)</span>
+    <span class="n">xlim</span><span class="p">(</span><span class="mi">346</span><span class="p">,</span> <span class="mi">358</span><span class="p">)</span>
+    <span class="n">mpl</span><span class="o">.</span><span class="n">pyplot</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># gca().get_legend().remove()</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">autolegend_list</span><span class="p">[</span><span class="n">fl</span><span class="o">.</span><span class="n">current</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">adjust_spines</span><span class="p">(</span><span class="s2">&quot;bottom&quot;</span><span class="p">)</span>
+    <span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;single_mutant_overlay.pdf&quot;</span><span class="p">)</span>
+    <span class="n">title</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;$B_0$ / mT&quot;</span><span class="p">)</span>
+    <span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 9.960 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-epr-overlay-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/bb26ee652291dfe5ef7c3d1ac4959ca5/epr_overlay.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">epr_overlay.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/ef22d0e87df12aba6c3f8063e036cd32/epr_overlay.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">epr_overlay.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">EPR correlation alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="compare_CPMG_echo.html" title="previous chapter">compare CPMG echo</a></li>
+      <li>Next: <a href="calibrate_tsqrtP.html" title="next chapter">Calculate actual beta as a function of pulse length</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/epr_overlay.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
