@@ -44,13 +44,13 @@ Here, we simply find the largest spectrum in the group
 (assuming it is least noisy) and use it as :math:`\mathbf{b}`.
 """
 
-from pylab import *
-from pyspecdata import *
+import pyspecdata as psd
 from pyspecProcScripts import QESR_scalefactor
 from collections import OrderedDict
 import matplotlib as mpl
-import pickle
+import matplotlib.pylab as plt
 import numpy as np
+from numpy import r_, pi
 
 mpl.rcParams.update({
     "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
@@ -59,7 +59,14 @@ mpl.rcParams.update({
 })
 
 
-init_logging(level="debug")
+def check_startpoint(d):
+    print(
+        "check startpoints:",
+        {k: v for k, v in d.other_info.items() if k.startswith("FT_start")},
+    )
+
+
+psd.init_logging(level="debug")
 filenames_w_labels = [
     ("220307_S175_KCl.DSC", "220307_S175_KCl"),
     ("220729_prS175.DSC", "220729 prS175"),
@@ -79,7 +86,7 @@ all_axes_extents = []
 maxval = 0
 for j, (filename, label_str) in enumerate(filenames_w_labels):
     # {{{ load, rescale
-    d = find_file(filename, exp_type="francklab_esr/Farhana")
+    d = psd.find_file(filename, exp_type="francklab_esr/Farhana")
     d.setaxis(Bname, lambda x: x / 1e4).set_units(Bname, "T")
     d /= QESR_scalefactor(d)
     if "harmonic" in d.dimlabels:
@@ -87,7 +94,7 @@ for j, (filename, label_str) in enumerate(filenames_w_labels):
     d -= d[Bname, :50].C.mean(Bname).data
     all_axes_extents.append(
         tuple(d.getaxis(Bname)[r_[0, -1]])  # min, max
-        + (diff(d.getaxis(Bname)[r_[0, 1]]).item(),)  # difference
+        + (np.diff(d.getaxis(Bname)[r_[0, 1]]).item(),)  # difference
     )
     all_files[label_str] = d
     temp = d.data.max() - d.data.min()
@@ -102,7 +109,7 @@ dB = min(dB)
 ref_axis = r_[minB : maxB + dB : dB]
 # }}}
 
-with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
+with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     # {{{ arrange the figures in the PDF
     fl.par_break()  # each fig on new line
     fl.next("Raw")
@@ -127,37 +134,16 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             ref_spec_Bdom = d.C
             ref_spec = d.C
             ref_spec.ift(Bname, shift=True)
-            ref_spec.run(conj)
+            ref_spec.run(np.conj)
             scaling = 1
-            print(
-                "for d, before",
-                {
-                    k: v
-                    for k, v in ref_spec.other_info.items()
-                    if k.startswith("FT_start")
-                },
-            )
+            check_startpoint(ref_spec)
         else:
             normfactor = d.data.max()
-            print(
-                "for d, before",
-                {
-                    k: v
-                    for k, v in ref_spec.other_info.items()
-                    if k.startswith("FT_start")
-                },
-            )
+            check_startpoint(ref_spec)
             d.ift(Bname, shift=True)
-            print(
-                "for d",
-                {
-                    k: v
-                    for k, v in ref_spec.other_info.items()
-                    if k.startswith("FT_start")
-                },
-            )
+            check_startpoint(ref_spec)
             correlation = d * ref_spec
-            correlation /= normfactor # just for display purposes, since only
+            correlation /= normfactor  # just for display purposes, since only
             #                           the argmax is used
             correlation.ft_clear_startpoints(
                 Bname, f="reset"
@@ -168,7 +154,7 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             fl.next("correlation")
             fl.plot(correlation, label=label_str)
             thisshift = correlation.real.argmax(Bname).item()
-            d *= exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
+            d *= np.exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
             d.ft(Bname)
             scaling = (d * ref_spec_Bdom).sum(Bname) / (
                 ref_spec_Bdom * ref_spec_Bdom
@@ -185,51 +171,30 @@ with figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.next("u domain")
         if (
             d.get_ft_prop(Bname, ["start", "time"]) is None
-        ):  #  this is the same
+        ):
             d.ift(Bname, shift=True)
         else:
             d.ift(Bname)
         fl.plot(d, label=f"{label_str}\nscaling {scaling}", alpha=0.5)
-        # {{{ plot the phdiff and determine the average phdiff
-        fl.next("u domain -- phase, propagate error")
-        phdiff = d[Bname:(0, None)].phdiff(Bname)
-        arb_scaling = 20  # the weighted sum will need to be scaled up
-        alphapoints = (
-            1 / phdiff.get_error()
-        )  # to show what a weighted sum looks like
-        alphapoints[~np.isfinite(alphapoints)] = 0
-        alphapoints /= sum(alphapoints)
-        sc = scatter(
-            phdiff.getaxis(Bname),
-            phdiff.data,
-            alpha=np.clip(alphapoints.ravel() * arb_scaling, 0, 1),
-            s=10,
-        )
-        phdiff.mean_weighted(Bname)
-        determined_phdiff = phdiff.item()
-        axhline(determined_phdiff, c=sc.get_facecolors()[-1], alpha=0.2)
-        xlim(0, 0.8e4)
-        # }}}
-        d *= exp(-1j * 2 * pi * determined_phdiff * d.fromaxis(Bname))
         fl.next("ift, indiv centered")
         fl.plot(d)
-        all_phdiff.append(determined_phdiff)
-    avg_phdiff = mean(all_phdiff)
     for label_str, d in all_files.items():
-        d *= exp(+1j * 2 * pi * d.fromaxis(Bname) * avg_phdiff)
+        d *= np.exp(
+            +1j * 2 * pi * d.fromaxis(Bname) * 10.0
+        )  # go for 10 G shift
         fl.next("centered spectra -- ift")
         fl.plot(d)
         fl.next("centered spectra")
         d.ft(Bname)
         fl.plot(d, human_units=False)
     fl.next("aligned, autoscaled")
-    xlim(346, 358)
+    plt.xlim(346, 358)
     mpl.pyplot.legend("", frameon=False)
-    # gca().get_legend().remove()
+    # plt.gca().get_legend().remove()
     fl.autolegend_list[fl.current] = False
     fl.adjust_spines("bottom")
-    savefig("single_mutant_overlay.pdf")
-    title("")
-    xlabel("$B_0$ / mT")
-    ylabel("")
-    gca().set_yticks([])
+    plt.savefig("single_mutant_overlay.pdf")
+    plt.title("")
+    plt.xlabel("$B_0$ / mT")
+    plt.ylabel("")
+    plt.gca().set_yticks([])
