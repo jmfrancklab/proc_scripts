@@ -83,8 +83,6 @@ aligned_autoscaled = {}
 #       -   ref_spec, which is the label/key of the largest spectrum
 all_axes_extents = []
 maxval = 0
-test_shifts_coarse = psd.nddata(r_[-10e-4:10e-4:100j], "test_shifts")
-test_shifts_fine = psd.nddata(r_[-1e-4:1e-4:100j], "test_shifts")
 for j, (filename, label_str) in enumerate(filenames_w_labels):
     # {{{ load, rescale
     d = psd.find_file(filename, exp_type="francklab_esr/Farhana")
@@ -108,6 +106,10 @@ minB = min(minB)
 maxB = max(maxB)
 dB = min(dB)
 ref_axis = r_[minB : maxB + dB : dB]
+BSW = maxB-minB
+test_shifts_coarse = psd.nddata(r_[-BSW/2:BSW/2:100j], "test_shifts")
+test_shifts_fine = psd.nddata(r_[-10e-4:10e-4:100j], "test_shifts")
+print(f"center point: {maxB - maxB % BSW:#0.3g}")
 # }}}
 
 with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
@@ -117,7 +119,9 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     fl.par_break()  # each fig on new line
     fl.next("correlation", legend=True)
     fl.par_break()
-    fl.next("aligned, autoscaled", figsize=(3 * 1.618, 3), legend=None)
+    fl.next("aligned, autoscaled", figsize=(3 * 1.05 * 1.618, 3), legend=True)
+    fl.par_break()
+    fl.next("centered spectra", figsize=(3 * 1.05 * 1.618, 3), legend=True)
     # }}}
     # {{{ pull the reference (largest) up front
     all_files.move_to_end(ref_spec, last=False)
@@ -180,46 +184,42 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.plot(
             d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5
         )
-        vec_alignment = (
-            (
-                np.exp(
-                    -1j
-                    * 2
-                    * pi
-                    * test_shifts_coarse
-                    * d.fromaxis(Bname)[Bname:(-1e3, 1e3)]
-                )
-                * d[Bname:(-1e3, 1e3)]
+        diagnostic = True
+        if diagnostic: fl.next(f"{label_str} shifting")
+        temp = (
+            np.exp(
+                -1j
+                * 2
+                * pi
+                * test_shifts_coarse
+                * d.fromaxis(Bname)[Bname:(-1e3, 1e3)]
             )
-            .sum(Bname)
-            .run(abs)
+            * d[Bname:(-1e3, 1e3)]
         )
+        if diagnostic: fl.image(temp)
+        vec_alignment = temp.sum(Bname).run(abs)
         shift = vec_alignment.real.argmax("test_shifts").item()
-        vec_alignment = (
-            (
-                np.exp(
-                    -1j
-                    * 2
-                    * pi
-                    * (shift + test_shifts_fine)
-                    * d.fromaxis(Bname)
-                )
-                * d
+        if diagnostic: fl.next(f"{label_str} shifting, fine")
+        temp = (
+            np.exp(
+                -1j * 2 * pi * (shift + test_shifts_fine) * d.fromaxis(Bname)
             )
-            .sum(Bname)
-            .run(abs)
+            * d
         )
+        if diagnostic: fl.image(temp)
+        vec_alignment = temp.sum(Bname).run(abs)
         shift += vec_alignment.real.argmax("test_shifts").item()
         all_shifts.append(shift)
     # }}}
-    mean_shift = 10e-4
+    mean_shift = np.mean(all_shifts)
+    print(f"mean shift {mean_shift:#0.4g}")
     for label_str, d in aligned_autoscaled.items():
-        d *= np.exp(+1j * 2 * pi * d.fromaxis(Bname) * mean_shift)  # go for 10 G shift
+        d *= np.exp(-1j * 2 * pi * d.fromaxis(Bname) * mean_shift)
         fl.next("centered spectra -- ift")
         fl.plot(d)
+        fl.plot(d.imag, alpha=0.2)
         fl.next("centered spectra")
         d.ft(Bname)
-        d[Bname] -= mean_shift
         fl.plot(d, human_units=False)
     # fl.next("aligned, autoscaled")
     # plt.xlim(346, 358)
