@@ -61,8 +61,8 @@ mpl.rcParams.update({
 
 def check_startpoint(d):
     print(
-        "check startpoints:",
-        {k: v for k, v in d.other_info.items() if k.startswith("FT_start")},
+        "check ft props:",
+        {k: v for k, v in d.other_info.items() if k.startswith("FT")},
     )
 
 
@@ -160,6 +160,7 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             fl.plot(correlation, label=label_str)
             thisshift = correlation.real.argmax(Bname).item()
             d *= np.exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
+            check_startpoint(d)
             d.ft(Bname)
             scaling = (d * ref_spec_Bdom).sum(Bname) / (
                 ref_spec_Bdom * ref_spec_Bdom
@@ -181,6 +182,7 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             d.ift(Bname, shift=True)
         else:
             d.ift(Bname)
+        print("for u domain plot initial domain is",d.get_ft_prop(Bname,"initial_domain"),d.unitify_axis(Bname))
         fl.plot(
             d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5
         )
@@ -209,17 +211,28 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         if diagnostic: fl.image(temp)
         vec_alignment = temp.sum(Bname).run(abs)
         shift += vec_alignment.real.argmax("test_shifts").item()
+        d.ft(Bname)
         all_shifts.append(shift)
     # }}}
     mean_shift = np.mean(all_shifts)
     print(f"mean shift {mean_shift:#0.4g}")
     for label_str, d in aligned_autoscaled.items():
-        d *= np.exp(-1j * 2 * pi * d.fromaxis(Bname) * mean_shift)
-        fl.next("centered spectra -- ift")
+        d[Bname] -= mean_shift
+        Bname_new = f"$(B_0{mean_shift/d.div_units(Bname,'T'):+#0.5g})$"
+        d.rename(Bname,Bname_new)
+        d.set_prop('Bcenter',mean_shift)
+        d.ift(Bname_new)
+        fl.next("before centering -- ift")
+        print("for u domain plot before centering",d.get_ft_prop(Bname_new,"initial_domain"),d.unitify_axis(Bname_new))
         fl.plot(d)
-        fl.plot(d.imag, alpha=0.2)
+        fl.next("after centering -- ift")
+        d.ft_new_startpoint(Bname_new, 'f', -BSW/2,
+                            nearest=True)
+        d.ft(Bname_new)
+        d.ift(Bname_new)
+        fl.plot(d)
         fl.next("centered spectra")
-        d.ft(Bname)
+        d.ft(Bname_new)
         fl.plot(d, human_units=False)
     # fl.next("aligned, autoscaled")
     # plt.xlim(346, 358)
