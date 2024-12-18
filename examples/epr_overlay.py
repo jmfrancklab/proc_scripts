@@ -150,8 +150,8 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             correlation = d * ref_spec
             correlation /= normfactor  # just for display purposes, since only
             #                           the argmax is used
-            correlation.ft_clear_startpoints(
-                Bname, f="reset"
+            correlation.ft_new_startpoint(
+                Bname, 'f'
             )  # I want to calculate things in terms of an offset,
             #    which can be positive or negative, and need to shift in
             #    the next step
