@@ -59,16 +59,13 @@ mpl.rcParams.update({
 # {{{ so we can control directories, etc, load the data, but don't mess with it
 #     at all (that's handled by align_esr)
 filename_dict = {
-    "220307_S175_KCl": "220307_S175_KCl.DSC",
-    "220729 prS175": "220729_prS175.DSC",
-    "220307_S175_KI": "220307_S175_KI.DSC",
-    "220307_S175_KH2PO4": "220307_prS175_KH2PO4.DSC",
-}
+        "A": '240228_E37_Rasbatch240220reg.DSC',
+        "Fraction 5": '240330_E37_MTSL_Rasbatch240320_frac5.DSC'}
 data_dict = {}
 for k, v in filename_dict.items():
-    data_dict[k] = psd.find_file(v, exp_type="francklab_esr/Farhana")
+    data_dict[k] = psd.find_file(v, exp_type="francklab_esr/warren")
 # }}}
-with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
-    align_esr(data_dict, fl=fl)
+with psd.figlist_var(width=0.7) as fl:
+    align_esr(data_dict, fl=fl, correlation_slice=(1e-3,3e-3))
     # fl.next("centered spectra")
     # plt.savefig("single_mutant_overlay.pdf")

@@ -5,7 +5,8 @@ import numpy as np
 from numpy import r_, pi
 import matplotlib.pyplot as plt
 
-def align_esr(data_dict, fl=None):
+
+def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
     r"""open and correlation align ESR spectra.
     Store the shifts and scalefactors as
     properties of the nddata, which are returned
@@ -46,14 +47,26 @@ def align_esr(data_dict, fl=None):
     and for the smallest spacing between field samples
     -- we use these values to construct a (therefore all-inclusive) x axis.
 
-    Also, for the purposes of dot-product scaling, 
+    Also, for the purposes of dot-product scaling,
     it is better to scale the less noisy spectrum
-    (:math:`\mathbf{b}` above) 
+    (:math:`\mathbf{b}` above)
     relative to the noisier spectrum
     (:math:`\mathbf{a}` above)
     -- *i.e.* above, we want :math:`\mathbf{b}` to be less noisy.
     Here, we simply find the largest spectrum in the group
     (assuming it is least noisy) and use it as :math:`\mathbf{b}`.
+
+    Parameters
+    ==========
+    correlation_slice: tuple default None
+        This should ONLY be needed for VERY
+        different spectra -- e.g. pure MTSL vs.
+        a protein -- where without it, the
+        different hyperfines show up out of
+        register.
+        You can look at the correlation plot,
+        and select a range of shifts for it to
+        find a max over.
     """
     Bname = "$B_0$"
     all_files = OrderedDict()
@@ -134,6 +147,8 @@ def align_esr(data_dict, fl=None):
             correlation.ft(Bname, shift=True)
             fl.next("correlation")
             fl.plot(correlation, label=label_str)
+            if correlation_slice is not None:
+                correlation = correlation[Bname:correlation_slice]
             thisshift = correlation.real.argmax(Bname).item()
             d *= np.exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
             d.ft(Bname)
@@ -151,6 +166,7 @@ def align_esr(data_dict, fl=None):
         )
     # {{{ this loop is to move all into the u domain and then find the average
     #     "center field"
+    sum_abs = 0
     for label_str, d in aligned_autoscaled.items():
         fl.next("u domain")
         d.ift(Bname)
@@ -159,13 +175,35 @@ def align_esr(data_dict, fl=None):
         )
         fl.plot(d)
         d.ft(Bname)
-        shift = abs(d).argmax(Bname).item()
-        all_shifts.append(shift)
+        sum_abs += abs(d)
     # }}}
-    mean_shift = np.mean(all_shifts)
+    # {{{ pick the dip
+    peak = sum_abs.C.argmax(Bname).item()
+    if on_crossing:
+        idx, dips = sum_abs.contiguous(
+            lambda x: x / x.max() < 0.5, return_idx=True
+        )
+        dips = dips[np.where(np.diff(idx, axis=1).ravel() > 3)[0], :]
+        center_point = (
+            sum_abs[
+                Bname : tuple(
+                    dips[np.argmin(abs(np.mean(dips, axis=1) - peak)), :]
+                )
+            ]
+            .argmin(Bname)
+            .item()
+        )
+        fl.next("find center")
+        sum_abs[Bname] -= center_point
+        fl.plot(sum_abs, color="k")
+    else:
+        center_point = peak
+    # }}}
     for label_str, d in aligned_autoscaled.items():
-        d[Bname] -= mean_shift
-        d.set_prop("Bcenter", mean_shift)
+        d[Bname] -= center_point
+        d.set_prop("Bcenter", center_point)
+        fl.next("find center")
+        fl.plot(abs(d))
         d.ift(Bname)
         fl.next("before centering -- ift")
         fl.plot(d)
@@ -178,9 +216,14 @@ def align_esr(data_dict, fl=None):
         d.ft(Bname)
         d = d[Bname : (-BSW / 2, BSW / 2)]
         d.human_units()
-        Bname_new = f"$(B_0{-mean_shift/d.div_units(Bname,'T'):+#0.5g})$"
+        Bname_new = f"$(B_0{-center_point/d.div_units(Bname,'T'):+#0.5g})$"
         d.rename(Bname, Bname_new)
-        fl.plot(d, human_units=False)
+        fl.plot(
+            d,
+            label=f"{label_str}\nscaling {d.get_prop('scaling')}",
+            alpha=0.5,
+            human_units=False,
+        )
     fl.next("centered spectra")
     fl.adjust_spines("bottom")
     plt.title("")
