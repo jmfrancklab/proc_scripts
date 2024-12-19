@@ -55,24 +55,55 @@ mpl.rcParams.update({
     "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
 })
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 1
 
-# {{{ so we can control directories, etc, load the data, but don't mess with it
-#     at all (that's handled by align_esr)
+# %% so we can control directories, etc, load the data, but don't mess with it
+#    at all (that's handled by align_esr)
+filename_dict = {
+    "220307_S175_KCl": "220307_S175_KCl.DSC",
+    "220729 prS175": "220729_prS175.DSC",
+    "220307_S175_KI": "220307_S175_KI.DSC",
+    "220307_S175_KH2PO4": "220307_prS175_KH2PO4.DSC",
+}
+data_dict_multiexpr = {}
+for k, v in filename_dict.items():
+    data_dict_multiexpr[k] = psd.find_file(v, exp_type="francklab_esr/Farhana")
+
+# %% This one is straightforward, so I just save the output, which I plot
+#    below.  This compares several samples with slightly different
+#    conditions to look for differences.  Not, in particular, how things
+#    get lined up nicely despite the presence of MTSL contaminant in
+#    some.
+data_dict_multiexpr = align_esr(data_dict_multiexpr)
+
+# %% Next, I load the data from a desalting run (separating protein from
+#    MTSL).  I run this at the end.
+
 filename_dict = {}
 for j in range(3, 6):
     filename_dict[f"fraction {j}"] = (
         f"240404_L56_MTSL_Rasbatch240320_fraction{j}.DSC"
     )
-data_dict = {}
+data_dict_desalt = {}
+gen_pdf = False
 for k, v in filename_dict.items():
-    data_dict[k] = psd.find_file(v, exp_type="francklab_esr/warren")
+    data_dict_desalt[k] = psd.find_file(v, exp_type="francklab_esr/warren")
 # }}}
 with psd.figlist_var(width=0.7) as fl:
+    fl.next("PR comparison", legend=True, figsize=(3 * 1.05 * 1.618, 3))
+    for k, v in data_dict_multiexpr.items():
+        fl.plot(v, label=f"{k}\n×{v.get_prop('scaling'):#0.2g}")
+    fl.adjust_spines("bottom")
+    plt.title("")
+    plt.ylabel("")
+    plt.gca().set_yticks([])
     align_esr(
-        data_dict, fl=fl, on_crossing=True, correlation_slice=(-0.5e-3, 0.5e-3)
+        data_dict_desalt,
+        fl=fl,
+        on_crossing=True,
+        correlation_slice=(-0.5e-3, 0.5e-3),
     )
-    # fl.next("centered spectra")
-    fl.show_prep()
-    fl.next("centered spectra")
-    plt.savefig("overlay.pdf")
+    if gen_pdf:
+        fl.show_prep()
+        fl.next("centered spectra")
+        plt.savefig("overlay.pdf")

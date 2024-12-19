@@ -104,14 +104,17 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
     BSW = maxB - minB
     # }}}
     # {{{ arrange the figures in the PDF
-    fl.par_break()  # each fig on new line
-    fl.next("Raw")
-    fl.par_break()  # each fig on new line
-    fl.next("correlation", legend=True)
-    fl.par_break()
-    fl.next("aligned, autoscaled", figsize=(3 * 1.05 * 1.618, 3), legend=True)
-    fl.par_break()
-    fl.next("centered spectra", figsize=(3 * 1.05 * 1.618, 3), legend=True)
+    if fl:
+        fl.par_break()  # each fig on new line
+        fl.next("Raw")
+        fl.par_break()  # each fig on new line
+        fl.next("correlation", legend=True)
+        fl.par_break()
+        fl.next(
+            "aligned, autoscaled", figsize=(3 * 1.05 * 1.618, 3), legend=True
+        )
+        fl.par_break()
+        fl.next("centered spectra", figsize=(3 * 1.05 * 1.618, 3), legend=True)
     # }}}
     # {{{ pull the reference (largest) up front
     all_files.move_to_end(ref_spec, last=False)
@@ -120,8 +123,9 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
         (k, v) for (k, v) in all_files.items() if v != ref_spec
     ):
         # {{{ just show the raw data
-        fl.next("Raw")
-        fl.plot(d, label=label_str, alpha=0.5)
+        if fl:
+            fl.next("Raw")
+            fl.plot(d, label=label_str, alpha=0.5)
         # }}}
         d = d.interp(Bname, ref_axis.copy(), kind="linear")
         d.set_ft_initial(Bname, "f")
@@ -143,8 +147,9 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
             #    which can be positive or negative, and need to shift in
             #    the next step
             correlation.ft(Bname, shift=True)
-            fl.next("correlation")
-            fl.plot(correlation, label=label_str)
+            if fl:
+                fl.next("correlation")
+                fl.plot(correlation, label=label_str)
             if correlation_slice is not None:
                 correlation = correlation[Bname:correlation_slice]
             thisshift = correlation.real.argmax(Bname).item()
@@ -154,24 +159,30 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
                 ref_spec_Bdom * ref_spec_Bdom
             ).sum(Bname)
             scaling = scaling.real.item()
-        fl.next("aligned, autoscaled")
+        if fl:
+            fl.next("aligned, autoscaled")
         aligned_autoscaled[label_str] = d / scaling
         aligned_autoscaled[label_str].set_prop("scaling", scaling)
-        fl.plot(
-            aligned_autoscaled[label_str],
-            label=f"{label_str}\nscaling {scaling}",
-            alpha=0.5,
-        )
+        if fl:
+            fl.plot(
+                aligned_autoscaled[label_str],
+                label=f"{label_str}\nscaling {scaling}",
+                alpha=0.5,
+            )
     # {{{ this loop is to move all into the u domain and then find the average
     #     "center field"
     sum_abs = 0
     for label_str, d in aligned_autoscaled.items():
-        fl.next("u domain")
+        if fl:
+            fl.next("u domain")
         d.ift(Bname)
-        fl.plot(
-            d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5
-        )
-        fl.plot(d)
+        if fl:
+            fl.plot(
+                d,
+                label=f"{label_str}\nscaling {d.get_prop('scaling')}",
+                alpha=0.5,
+            )
+            fl.plot(d)
         d.ft(Bname)
         sum_abs += abs(d)
     # }}}
@@ -191,40 +202,51 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
             .argmin(Bname)
             .item()
         )
-        fl.next("find center")
+        if fl:
+            fl.next("find center")
         sum_abs[Bname] -= center_point
-        fl.plot(sum_abs, color="k")
+        if fl:
+            fl.plot(sum_abs, color="k")
     else:
         center_point = peak
     # }}}
     for label_str, d in aligned_autoscaled.items():
         d[Bname] -= center_point
         d.set_prop("Bcenter", center_point)
-        fl.next("find center")
-        fl.plot(abs(d))
+        if fl:
+            fl.next("find center")
+        if fl:
+            fl.plot(abs(d))
         d.ift(Bname)
-        fl.next("before centering -- ift")
-        fl.plot(d)
-        fl.next("after centering -- ift")
+        if fl:
+            fl.next("before centering -- ift")
+        if fl:
+            fl.plot(d)
+        if fl:
+            fl.next("after centering -- ift")
         d.ft_new_startpoint(Bname, "f", -BSW / 2, nearest=True)
         d.ft(Bname)
         d.ift(Bname)
-        fl.plot(d)
-        fl.next("centered spectra")
+        if fl:
+            fl.plot(d)
+            fl.next("centered spectra")
         d.ft(Bname)
         d = d[Bname : (-BSW / 2, BSW / 2)]
         d.human_units()
         Bname_new = f"$(B_0{-center_point/d.div_units(Bname,'T'):+#0.5g})$"
         d.rename(Bname, Bname_new)
-        fl.plot(
-            d,
-            label=f"{label_str}\nscaling {d.get_prop('scaling')}",
-            alpha=0.5,
-            human_units=False,
-        )
-    fl.next("centered spectra")
-    fl.adjust_spines("bottom")
-    plt.title("")
-    plt.ylabel("")
-    plt.gca().set_yticks([])
+        if fl:
+            fl.plot(
+                d,
+                label=f"{label_str}\n×{d.get_prop('scaling')}",
+                alpha=0.5,
+                human_units=False,
+            )
+        aligned_autoscaled[label_str] = d
+    if fl:
+        fl.next("centered spectra")
+        fl.adjust_spines("bottom")
+        plt.title("")
+        plt.ylabel("")
+        plt.gca().set_yticks([])
     return aligned_autoscaled
