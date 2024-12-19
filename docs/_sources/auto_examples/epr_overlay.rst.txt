@@ -136,12 +136,16 @@ presence of MTSL contaminant in some.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 84-86
+.. GENERATED FROM PYTHON SOURCE LINES 84-90
 
-Next, I load the data from a desalting run (separating protein from MTSL).  I
-run this at the end.
+The first plot below comes from this data.
 
-.. GENERATED FROM PYTHON SOURCE LINES 86-116
+However, I then load the data from a desalting run (separating protein from
+MTSL). Because that data is a bit trickier, and I'm using more of the options
+for the alignment function, I pass the function the figure list object
+(`fl`), and let it generate all the diagnostic plots.
+
+.. GENERATED FROM PYTHON SOURCE LINES 90-120
 
 .. code-block:: Python
 
@@ -258,7 +262,7 @@ run this at the end.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 117-123
+.. GENERATED FROM PYTHON SOURCE LINES 121-127
 
 Note that the ÷ in the legend above indicates what the (QESR rescaled)
 spectrum has been divided by in order to get the spectrum shown.
@@ -270,7 +274,7 @@ full-blown QESR does.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.493 seconds)
+   **Total running time of the script:** (0 minutes 2.679 seconds)
 
 
 .. _sphx_glr_download_auto_examples_epr_overlay.py:

@@ -115,8 +115,11 @@ presence of MTSL contaminant in some.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">data_dict_multiexpr</span> <span class="o">=</span> <span class="n">align_esr</span><span class="p">(</span><span class="n">data_dict_multiexpr</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Next, I load the data from a desalting run (separating protein from MTSL).  I
-run this at the end.</p>
+<p>The first plot below comes from this data.</p>
+<p>However, I then load the data from a desalting run (separating protein from
+MTSL). Because that data is a bit trickier, and I’m using more of the options
+for the alignment function, I pass the function the figure list object
+(<cite>fl</cite>), and let it generate all the diagnostic plots.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">filename_dict</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">):</span>
     <span class="n">filename_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;fraction </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -177,7 +180,7 @@ Thus, if the spectra line up well, this gives a <strong>very</strong> accurate m
 <em>relative</em> concentration.
 This can be useful, since it doesn’t depend on baseline correction, etc, as a
 full-blown QESR does.</p>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.493 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.679 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-epr-overlay-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/bb26ee652291dfe5ef7c3d1ac4959ca5/epr_overlay.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">epr_overlay.ipynb</span></code></a></p>

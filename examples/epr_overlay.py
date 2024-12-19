@@ -81,8 +81,12 @@ for k, v in filename_dict.items():
 data_dict_multiexpr = align_esr(data_dict_multiexpr)
 
 # %%
-# Next, I load the data from a desalting run (separating protein from MTSL).  I
-# run this at the end.
+# The first plot below comes from this data.
+# 
+# However, I then load the data from a desalting run (separating protein from
+# MTSL). Because that data is a bit trickier, and I'm using more of the options
+# for the alignment function, I pass the function the figure list object
+# (`fl`), and let it generate all the diagnostic plots.
 
 filename_dict = {}
 for j in range(3, 6):
