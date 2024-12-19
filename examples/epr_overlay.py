@@ -51,6 +51,7 @@ import matplotlib as mpl
 import matplotlib.pylab as plt
 import numpy as np
 from numpy import r_, pi
+from scipy.special import jv
 
 mpl.rcParams.update({
     "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
@@ -186,6 +187,8 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.plot(
             d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5
         )
+        modamp = d.get_prop('ModAmp')[0]*1e-4
+        fl.plot(d*d.fromaxis(Bname).run(lambda x: x/jv(1,2*pi*x*modamp)))
         d.ft(Bname)
         shift = abs(d).argmax(Bname).item()
         all_shifts.append(shift)
