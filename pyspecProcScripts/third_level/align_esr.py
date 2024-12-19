@@ -106,15 +106,18 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
     # {{{ arrange the figures in the PDF
     if fl:
         fl.par_break()  # each fig on new line
-        fl.next("Raw")
+        fl.next("Raw", legend=True)
         fl.par_break()  # each fig on new line
         fl.next("correlation", legend=True)
         fl.par_break()
-        fl.next(
-            "aligned, autoscaled", figsize=(3 * 1.05 * 1.618, 3), legend=True
-        )
+        fl.next("find center", legend=True)
+        fl.next("before centering -- ift", legend=True)
         fl.par_break()
-        fl.next("centered spectra", figsize=(3 * 1.05 * 1.618, 3), legend=True)
+        fl.next("after centering -- ift", legend=True)
+        fl.par_break()
+        fl.next("aligned, autoscaled", legend=True)
+        fl.par_break()
+        fl.next("centered spectra", legend=True)
     # }}}
     # {{{ pull the reference (largest) up front
     all_files.move_to_end(ref_spec, last=False)
@@ -166,24 +169,13 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
         if fl:
             fl.plot(
                 aligned_autoscaled[label_str],
-                label=f"{label_str}\nscaling {scaling}",
+                label=f"{label_str}\n÷ {scaling:#0.3g}",
                 alpha=0.5,
             )
     # {{{ this loop is to move all into the u domain and then find the average
     #     "center field"
     sum_abs = 0
     for label_str, d in aligned_autoscaled.items():
-        if fl:
-            fl.next("u domain")
-        d.ift(Bname)
-        if fl:
-            fl.plot(
-                d,
-                label=f"{label_str}\nscaling {d.get_prop('scaling')}",
-                alpha=0.5,
-            )
-            fl.plot(d)
-        d.ft(Bname)
         sum_abs += abs(d)
     # }}}
     # {{{ pick the dip
@@ -238,7 +230,7 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
         if fl:
             fl.plot(
                 d,
-                label=f"{label_str}\n×{d.get_prop('scaling')}",
+                label=f"{label_str}\n÷ {d.get_prop('scaling'):#0.3g}",
                 alpha=0.5,
                 human_units=False,
             )
