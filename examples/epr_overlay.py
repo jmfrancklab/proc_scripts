@@ -51,7 +51,6 @@ import matplotlib as mpl
 import matplotlib.pylab as plt
 import numpy as np
 from numpy import r_, pi
-from scipy.special import jv
 
 mpl.rcParams.update({
     "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
@@ -59,61 +58,47 @@ mpl.rcParams.update({
     "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
 })
 
-
-def check_startpoint(d):
-    print(
-        "check ft props:",
-        {k: v for k, v in d.other_info.items() if k.startswith("FT")},
-    )
+# sphinx_gallery_thumbnail_number = 4
 
 
-psd.init_logging(level="debug")
-filenames_w_labels = [
-    ("220307_S175_KCl.DSC", "220307_S175_KCl"),
-    ("220729_prS175.DSC", "220729 prS175"),
-    ("220307_S175_KI.DSC", "220307_S175_KI"),
-    ("220307_prS175_KH2PO4.DSC", "220307_S175_KH2PO4"),
-]
-
-Bname = "$B_0$"
-all_files = OrderedDict()
-aligned_autoscaled = {}
-# {{{ load all files first and do the following:
-#       -   determine ref_axis which spans all the axes with the finest
-#           resolution → ref_axis
-#       -   all_files is an ordered dict of all files
-#       -   ref_spec, which is the label/key of the largest spectrum
-all_axes_extents = []
-maxval = 0
-for j, (filename, label_str) in enumerate(filenames_w_labels):
-    # {{{ load, rescale
-    d = psd.find_file(filename, exp_type="francklab_esr/Farhana")
-    d.setaxis(Bname, lambda x: x / 1e4).set_units(Bname, "T")
-    d /= QESR_scalefactor(d)
-    if "harmonic" in d.dimlabels:
-        d = d["harmonic", 0]
-    # set up so that we FT into a symmetric time domain
-    d.set_ft_initial(Bname, "f")
-    d -= d[Bname, :50].C.mean(Bname).data
-    all_axes_extents.append(
-        tuple(d.getaxis(Bname)[r_[0, -1]])  # min, max
-        + (np.diff(d.getaxis(Bname)[r_[0, 1]]).item(),)  # difference
-    )
-    all_files[label_str] = d
-    temp = d.data.max() - d.data.min()
-    if temp > maxval:
-        maxval = temp
-        ref_spec = label_str
+def align_esr(filename_dict, fl=None):
+    Bname = "$B_0$"
+    all_files = OrderedDict()
+    aligned_autoscaled = {}
+    # {{{ load all files first and do the following:
+    #       -   determine ref_axis which spans all the axes with the finest
+    #           resolution → ref_axis
+    #       -   all_files is an ordered dict of all files
+    #       -   ref_spec, which is the label/key of the largest spectrum
+    all_axes_extents = []
+    maxval = 0
+    for label_str, filename in filename_dict.items():
+        # {{{ load, rescale
+        d = psd.find_file(filename, exp_type="francklab_esr/Farhana")
+        d.setaxis(Bname, lambda x: x / 1e4).set_units(Bname, "T")
+        d /= QESR_scalefactor(d)
+        if "harmonic" in d.dimlabels:
+            d = d["harmonic", 0]
+        # set up so that we FT into a symmetric time domain
+        d.set_ft_initial(Bname, "f")
+        d -= d[Bname, :50].C.mean(Bname).data
+        all_axes_extents.append(
+            tuple(d.getaxis(Bname)[r_[0, -1]])  # min, max
+            + (np.diff(d.getaxis(Bname)[r_[0, 1]]).item(),)  # difference
+        )
+        all_files[label_str] = d
+        temp = d.data.max() - d.data.min()
+        if temp > maxval:
+            maxval = temp
+            ref_spec = label_str
+        # }}}
+    minB, maxB, dB = zip(*all_axes_extents)
+    minB = min(minB)
+    maxB = max(maxB)
+    dB = min(dB)
+    ref_axis = r_[minB : maxB + dB : dB]
+    BSW = maxB - minB
     # }}}
-minB, maxB, dB = zip(*all_axes_extents)
-minB = min(minB)
-maxB = max(maxB)
-dB = min(dB)
-ref_axis = r_[minB : maxB + dB : dB]
-BSW = maxB-minB
-# }}}
-
-with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     # {{{ arrange the figures in the PDF
     fl.par_break()  # each fig on new line
     fl.next("Raw")
@@ -143,17 +128,14 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             ref_spec.ift(Bname)
             ref_spec.run(np.conj)
             scaling = 1
-            check_startpoint(ref_spec)
         else:
             normfactor = d.data.max()
-            check_startpoint(ref_spec)
             d.ift(Bname)
-            check_startpoint(ref_spec)
             correlation = d * ref_spec
             correlation /= normfactor  # just for display purposes, since only
             #                           the argmax is used
             correlation.ft_new_startpoint(
-                Bname, 'f'
+                Bname, "f"
             )  # I want to calculate things in terms of an offset,
             #    which can be positive or negative, and need to shift in
             #    the next step
@@ -162,7 +144,6 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
             fl.plot(correlation, label=label_str)
             thisshift = correlation.real.argmax(Bname).item()
             d *= np.exp(-1j * 2 * pi * d.fromaxis(Bname) * thisshift)
-            check_startpoint(d)
             d.ft(Bname)
             scaling = (d * ref_spec_Bdom).sum(Bname) / (
                 ref_spec_Bdom * ref_spec_Bdom
@@ -190,31 +171,43 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         all_shifts.append(shift)
     # }}}
     mean_shift = np.mean(all_shifts)
-    print(f"mean shift {mean_shift:#0.4g}")
     for label_str, d in aligned_autoscaled.items():
         d[Bname] -= mean_shift
-        d.set_prop('Bcenter',mean_shift)
+        d.set_prop("Bcenter", mean_shift)
         d.ift(Bname)
         fl.next("before centering -- ift")
         fl.plot(d)
         fl.next("after centering -- ift")
-        d.ft_new_startpoint(Bname, 'f', -BSW/2,
-                            nearest=True)
+        d.ft_new_startpoint(Bname, "f", -BSW / 2, nearest=True)
         d.ft(Bname)
         d.ift(Bname)
         fl.plot(d)
         fl.next("centered spectra")
         d.ft(Bname)
-        d = d[Bname:(-BSW/2,BSW/2)]
+        d = d[Bname : (-BSW / 2, BSW / 2)]
         d.human_units()
         Bname_new = f"$(B_0{-mean_shift/d.div_units(Bname,'T'):+#0.5g})$"
-        d.rename(Bname,Bname_new)
+        d.rename(Bname, Bname_new)
         fl.plot(d, human_units=False)
     fl.next("centered spectra")
-    # mpl.pyplot.legend("", frameon=False)
-    # fl.autolegend_list[fl.current] = False
     fl.adjust_spines("bottom")
-    # plt.savefig("single_mutant_overlay.pdf")
     plt.title("")
     plt.ylabel("")
     plt.gca().set_yticks([])
+    return aligned_autoscaled
+
+
+filenames_w_labels = []
+
+with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
+    align_esr(
+        {
+            "220307_S175_KCl": "220307_S175_KCl.DSC",
+            "220729 prS175": "220729_prS175.DSC",
+            "220307_S175_KI": "220307_S175_KI.DSC",
+            "220307_S175_KH2PO4": "220307_prS175_KH2PO4.DSC",
+        },
+        fl=fl,
+    )
+    # fl.next("centered spectra")
+    # plt.savefig("single_mutant_overlay.pdf")
