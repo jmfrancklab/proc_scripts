@@ -89,6 +89,7 @@ Here, we simply find the largest spectrum in the group
     <span class="s2">&quot;figure.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># clear</span>
     <span class="s2">&quot;axes.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">),</span>  <span class="c1"># 90% transparent white</span>
     <span class="s2">&quot;savefig.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># clear</span>
+    <span class="s2">&quot;figure.figsize&quot;</span><span class="p">:(</span><span class="mi">3</span> <span class="o">*</span> <span class="mf">1.05</span> <span class="o">*</span> <span class="mf">1.618</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
 <span class="p">})</span>
 
 <span class="c1"># sphinx_gallery_thumbnail_number = 1</span>
@@ -125,9 +126,9 @@ some.</p>
     <span class="n">data_dict_desalt</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;francklab_esr/warren&quot;</span><span class="p">)</span>
 <span class="c1"># }}}</span>
 <span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
-    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;PR comparison&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="mf">1.05</span> <span class="o">*</span> <span class="mf">1.618</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;PR comparison&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data_dict_multiexpr</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="se">\n</span><span class="s2">×</span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s1">&#39;scaling&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">#0.2g</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="se">\n</span><span class="s2">÷ </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s1">&#39;scaling&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">#0.3g</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">fl</span><span class="o">.</span><span class="n">adjust_spines</span><span class="p">(</span><span class="s2">&quot;bottom&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
@@ -148,29 +149,27 @@ some.</p>
 <li><img src="../_images/sphx_glr_epr_overlay_001.png" srcset="../_images/sphx_glr_epr_overlay_001.png" alt="epr overlay" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_epr_overlay_002.png" srcset="../_images/sphx_glr_epr_overlay_002.png" alt="Raw" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_epr_overlay_003.png" srcset="../_images/sphx_glr_epr_overlay_003.png" alt="correlation" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_epr_overlay_004.png" srcset="../_images/sphx_glr_epr_overlay_004.png" alt="aligned, autoscaled" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_epr_overlay_005.png" srcset="../_images/sphx_glr_epr_overlay_005.png" alt="epr overlay" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_epr_overlay_006.png" srcset="../_images/sphx_glr_epr_overlay_006.png" alt="u domain" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_epr_overlay_007.png" srcset="../_images/sphx_glr_epr_overlay_007.png" alt="find center" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_epr_overlay_008.png" srcset="../_images/sphx_glr_epr_overlay_008.png" alt="before centering -- ift" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_epr_overlay_009.png" srcset="../_images/sphx_glr_epr_overlay_009.png" alt="after centering -- ift" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_004.png" srcset="../_images/sphx_glr_epr_overlay_004.png" alt="find center" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_005.png" srcset="../_images/sphx_glr_epr_overlay_005.png" alt="before centering -- ift" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_006.png" srcset="../_images/sphx_glr_epr_overlay_006.png" alt="after centering -- ift" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_007.png" srcset="../_images/sphx_glr_epr_overlay_007.png" alt="aligned, autoscaled" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_epr_overlay_008.png" srcset="../_images/sphx_glr_epr_overlay_008.png" alt="epr overlay" class = "sphx-glr-multi-img"/></li>
 </ul>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;width&#39;: 0.7}
 1: PR comparison |||mT
 2: Raw |||mT
 3: correlation |||mT
-4: aligned, autoscaled |||mT
-5: centered spectra
-6: u domain |||kcyc · (T)$^{-1}$
-7: find center |||mT
-8: before centering -- ift |||kcyc · (T)$^{-1}$
-9: after centering -- ift |||kcyc · (T)$^{-1}$
+4: find center |||mT
+5: before centering -- ift |||kcyc · (T)$^{-1}$
+6: after centering -- ift |||kcyc · (T)$^{-1}$
+7: aligned, autoscaled |||mT
+8: centered spectra
 
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:733: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
   plt.gcf().tight_layout()
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 3.311 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.502 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-epr-overlay-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/bb26ee652291dfe5ef7c3d1ac4959ca5/epr_overlay.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">epr_overlay.ipynb</span></code></a></p>

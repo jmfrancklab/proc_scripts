@@ -62,7 +62,7 @@ relative to the noisier spectrum
 Here, we simply find the largest spectrum in the group
 (assuming it is least noisy) and use it as :math:`\mathbf{b}`.
 
-.. GENERATED FROM PYTHON SOURCE LINES 46-60
+.. GENERATED FROM PYTHON SOURCE LINES 46-61
 
 .. code-block:: Python
 
@@ -76,6 +76,7 @@ Here, we simply find the largest spectrum in the group
         "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
         "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
         "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "figure.figsize":(3 * 1.05 * 1.618, 3),
     })
 
     # sphinx_gallery_thumbnail_number = 1
@@ -87,11 +88,11 @@ Here, we simply find the largest spectrum in the group
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 61-62
+.. GENERATED FROM PYTHON SOURCE LINES 62-63
 
 at all (that's handled by align_esr)
 
-.. GENERATED FROM PYTHON SOURCE LINES 62-72
+.. GENERATED FROM PYTHON SOURCE LINES 63-73
 
 .. code-block:: Python
 
@@ -112,14 +113,14 @@ at all (that's handled by align_esr)
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 73-77
+.. GENERATED FROM PYTHON SOURCE LINES 74-78
 
 below.  This compares several samples with slightly different
 conditions to look for differences.  Not, in particular, how things
 get lined up nicely despite the presence of MTSL contaminant in
 some.
 
-.. GENERATED FROM PYTHON SOURCE LINES 77-79
+.. GENERATED FROM PYTHON SOURCE LINES 78-80
 
 .. code-block:: Python
 
@@ -132,11 +133,11 @@ some.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 80-81
+.. GENERATED FROM PYTHON SOURCE LINES 81-82
 
 MTSL).  I run this at the end.
 
-.. GENERATED FROM PYTHON SOURCE LINES 81-110
+.. GENERATED FROM PYTHON SOURCE LINES 82-111
 
 .. code-block:: Python
 
@@ -152,9 +153,9 @@ MTSL).  I run this at the end.
         data_dict_desalt[k] = psd.find_file(v, exp_type="francklab_esr/warren")
     # }}}
     with psd.figlist_var(width=0.7) as fl:
-        fl.next("PR comparison", legend=True, figsize=(3 * 1.05 * 1.618, 3))
+        fl.next("PR comparison", legend=True)
         for k, v in data_dict_multiexpr.items():
-            fl.plot(v, label=f"{k}\n×{v.get_prop('scaling'):#0.2g}")
+            fl.plot(v, label=f"{k}\n÷ {v.get_prop('scaling'):#0.3g}")
         fl.adjust_spines("bottom")
         plt.title("")
         plt.ylabel("")
@@ -199,43 +200,36 @@ MTSL).  I run this at the end.
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_epr_overlay_004.png
-         :alt: aligned, autoscaled
+         :alt: find center
          :srcset: /auto_examples/images/sphx_glr_epr_overlay_004.png
          :class: sphx-glr-multi-img
 
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_epr_overlay_005.png
-         :alt: epr overlay
+         :alt: before centering -- ift
          :srcset: /auto_examples/images/sphx_glr_epr_overlay_005.png
          :class: sphx-glr-multi-img
 
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_epr_overlay_006.png
-         :alt: u domain
+         :alt: after centering -- ift
          :srcset: /auto_examples/images/sphx_glr_epr_overlay_006.png
          :class: sphx-glr-multi-img
 
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_epr_overlay_007.png
-         :alt: find center
+         :alt: aligned, autoscaled
          :srcset: /auto_examples/images/sphx_glr_epr_overlay_007.png
          :class: sphx-glr-multi-img
 
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_epr_overlay_008.png
-         :alt: before centering -- ift
+         :alt: epr overlay
          :srcset: /auto_examples/images/sphx_glr_epr_overlay_008.png
-         :class: sphx-glr-multi-img
-
-    *
-
-      .. image-sg:: /auto_examples/images/sphx_glr_epr_overlay_009.png
-         :alt: after centering -- ift
-         :srcset: /auto_examples/images/sphx_glr_epr_overlay_009.png
          :class: sphx-glr-multi-img
 
 
@@ -247,14 +241,13 @@ MTSL).  I run this at the end.
     1: PR comparison |||mT
     2: Raw |||mT
     3: correlation |||mT
-    4: aligned, autoscaled |||mT
-    5: centered spectra
-    6: u domain |||kcyc · (T)$^{-1}$
-    7: find center |||mT
-    8: before centering -- ift |||kcyc · (T)$^{-1}$
-    9: after centering -- ift |||kcyc · (T)$^{-1}$
+    4: find center |||mT
+    5: before centering -- ift |||kcyc · (T)$^{-1}$
+    6: after centering -- ift |||kcyc · (T)$^{-1}$
+    7: aligned, autoscaled |||mT
+    8: centered spectra
 
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:733: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
       plt.gcf().tight_layout()
 
 
@@ -263,7 +256,7 @@ MTSL).  I run this at the end.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.311 seconds)
+   **Total running time of the script:** (0 minutes 2.502 seconds)
 
 
 .. _sphx_glr_download_auto_examples_epr_overlay.py:

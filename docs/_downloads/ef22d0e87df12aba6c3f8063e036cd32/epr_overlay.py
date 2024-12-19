@@ -53,6 +53,7 @@ mpl.rcParams.update({
     "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
     "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
     "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+    "figure.figsize":(3 * 1.05 * 1.618, 3),
 })
 
 # sphinx_gallery_thumbnail_number = 1
@@ -90,9 +91,9 @@ for k, v in filename_dict.items():
     data_dict_desalt[k] = psd.find_file(v, exp_type="francklab_esr/warren")
 # }}}
 with psd.figlist_var(width=0.7) as fl:
-    fl.next("PR comparison", legend=True, figsize=(3 * 1.05 * 1.618, 3))
+    fl.next("PR comparison", legend=True)
     for k, v in data_dict_multiexpr.items():
-        fl.plot(v, label=f"{k}\n×{v.get_prop('scaling'):#0.2g}")
+        fl.plot(v, label=f"{k}\n÷ {v.get_prop('scaling'):#0.3g}")
     fl.adjust_spines("bottom")
     plt.title("")
     plt.ylabel("")
