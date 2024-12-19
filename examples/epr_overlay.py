@@ -47,6 +47,7 @@ Here, we simply find the largest spectrum in the group
 from pyspecProcScripts import align_esr
 import matplotlib as mpl
 import pyspecdata as psd
+import matplotlib.pylab as plt
 
 mpl.rcParams.update({
     "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
@@ -58,14 +59,16 @@ mpl.rcParams.update({
 
 # {{{ so we can control directories, etc, load the data, but don't mess with it
 #     at all (that's handled by align_esr)
-filename_dict = {
-        "A": '240228_E37_Rasbatch240220reg.DSC',
-        "Fraction 5": '240330_E37_MTSL_Rasbatch240320_frac5.DSC'}
+filename_dict = {}
+for j in range(3,6):
+    filename_dict[f"fraction {j}"] = f"240404_L56_MTSL_Rasbatch240320_fraction{j}.DSC"
 data_dict = {}
 for k, v in filename_dict.items():
     data_dict[k] = psd.find_file(v, exp_type="francklab_esr/warren")
 # }}}
 with psd.figlist_var(width=0.7) as fl:
-    align_esr(data_dict, fl=fl, correlation_slice=(1e-3,3e-3))
+    align_esr(data_dict, fl=fl, on_crossing=True, correlation_slice=(-0.5e-3,0.5e-3))
     # fl.next("centered spectra")
-    # plt.savefig("single_mutant_overlay.pdf")
+    fl.show_prep()
+    fl.next("centered spectra")
+    plt.savefig("overlay.pdf")

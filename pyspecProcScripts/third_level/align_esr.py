@@ -86,7 +86,7 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
             d = d["harmonic", 0]
         # set up so that we FT into a symmetric time domain
         d.set_ft_initial(Bname, "f")
-        d -= d[Bname, :50].C.mean(Bname).data
+        d -= d[Bname, -50:].C.mean(Bname).data
         all_axes_extents.append(
             tuple(d.getaxis(Bname)[r_[0, -1]])  # min, max
             + (np.diff(d.getaxis(Bname)[r_[0, 1]]).item(),)  # difference
