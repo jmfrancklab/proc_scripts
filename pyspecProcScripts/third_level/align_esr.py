@@ -5,7 +5,7 @@ import numpy as np
 from numpy import r_, pi
 import matplotlib.pyplot as plt
 
-def align_esr(filename_dict, fl=None):
+def align_esr(data_dict, fl=None):
     r"""open and correlation align ESR spectra.
     Store the shifts and scalefactors as
     properties of the nddata, which are returned
@@ -65,9 +65,8 @@ def align_esr(filename_dict, fl=None):
     #       -   ref_spec, which is the label/key of the largest spectrum
     all_axes_extents = []
     maxval = 0
-    for label_str, filename in filename_dict.items():
+    for label_str, d in data_dict.items():
         # {{{ load, rescale
-        d = psd.find_file(filename, exp_type="francklab_esr/Farhana")
         d.setaxis(Bname, lambda x: x / 1e4).set_units(Bname, "T")
         d /= QESR_scalefactor(d)
         if "harmonic" in d.dimlabels:
