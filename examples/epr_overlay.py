@@ -74,6 +74,7 @@ filenames_w_labels = [
     ("220307_S175_KI.DSC", "220307_S175_KI"),
     ("220307_prS175_KH2PO4.DSC", "220307_S175_KH2PO4"),
 ]
+
 Bname = "$B_0$"
 all_files = OrderedDict()
 aligned_autoscaled = {}
@@ -91,6 +92,8 @@ for j, (filename, label_str) in enumerate(filenames_w_labels):
     d /= QESR_scalefactor(d)
     if "harmonic" in d.dimlabels:
         d = d["harmonic", 0]
+    # set up so that we FT into a symmetric time domain
+    d.set_ft_initial(Bname, "f")
     d -= d[Bname, :50].C.mean(Bname).data
     all_axes_extents.append(
         tuple(d.getaxis(Bname)[r_[0, -1]])  # min, max
@@ -108,9 +111,6 @@ maxB = max(maxB)
 dB = min(dB)
 ref_axis = r_[minB : maxB + dB : dB]
 BSW = maxB-minB
-test_shifts_coarse = psd.nddata(r_[-BSW/2:BSW/2:100j], "test_shifts")
-test_shifts_fine = psd.nddata(r_[-10e-4:10e-4:100j], "test_shifts")
-print(f"center point: {maxB - maxB % BSW:#0.3g}")
 # }}}
 
 with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
@@ -136,17 +136,18 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.plot(d, label=label_str, alpha=0.5)
         # }}}
         d = d.interp(Bname, ref_axis.copy(), kind="linear")
+        d.set_ft_initial(Bname, "f")
         if j == 0:
             ref_spec_Bdom = d.C
             ref_spec = d.C
-            ref_spec.ift(Bname, shift=True)
+            ref_spec.ift(Bname)
             ref_spec.run(np.conj)
             scaling = 1
             check_startpoint(ref_spec)
         else:
             normfactor = d.data.max()
             check_startpoint(ref_spec)
-            d.ift(Bname, shift=True)
+            d.ift(Bname)
             check_startpoint(ref_spec)
             correlation = d * ref_spec
             correlation /= normfactor  # just for display purposes, since only
@@ -179,16 +180,11 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     #     "center field"
     for label_str, d in aligned_autoscaled.items():
         fl.next("u domain")
-        if d.get_ft_prop(Bname, ["start", "time"]) is None:
-            d.ift(Bname, shift=True)
-        else:
-            d.ift(Bname)
-        print("for u domain plot initial domain is",d.get_ft_prop(Bname,"initial_domain"),d.unitify_axis(Bname))
+        d.ift(Bname)
         fl.plot(
             d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5
         )
-        modamp = d.get_prop('ModAmp')[0]*1e-4
-        fl.plot(d*d.fromaxis(Bname).run(lambda x: x/jv(1,2*pi*x*modamp)))
+        fl.plot(d)
         d.ft(Bname)
         shift = abs(d).argmax(Bname).item()
         all_shifts.append(shift)
@@ -197,29 +193,28 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
     print(f"mean shift {mean_shift:#0.4g}")
     for label_str, d in aligned_autoscaled.items():
         d[Bname] -= mean_shift
-        Bname_new = f"$(B_0{mean_shift/d.div_units(Bname,'T'):+#0.5g})$"
-        d.rename(Bname,Bname_new)
         d.set_prop('Bcenter',mean_shift)
-        d.ift(Bname_new)
+        d.ift(Bname)
         fl.next("before centering -- ift")
-        print("for u domain plot before centering",d.get_ft_prop(Bname_new,"initial_domain"),d.unitify_axis(Bname_new))
         fl.plot(d)
         fl.next("after centering -- ift")
-        d.ft_new_startpoint(Bname_new, 'f', -BSW/2,
+        d.ft_new_startpoint(Bname, 'f', -BSW/2,
                             nearest=True)
-        d.ft(Bname_new)
-        d.ift(Bname_new)
+        d.ft(Bname)
+        d.ift(Bname)
         fl.plot(d)
         fl.next("centered spectra")
-        d.ft(Bname_new)
+        d.ft(Bname)
+        d = d[Bname:(-BSW/2,BSW/2)]
+        d.human_units()
+        Bname_new = f"$(B_0{-mean_shift/d.div_units(Bname,'T'):+#0.5g})$"
+        d.rename(Bname,Bname_new)
         fl.plot(d, human_units=False)
-    # fl.next("aligned, autoscaled")
-    # plt.xlim(346, 358)
+    fl.next("centered spectra")
     # mpl.pyplot.legend("", frameon=False)
     # fl.autolegend_list[fl.current] = False
-    # fl.adjust_spines("bottom")
+    fl.adjust_spines("bottom")
     # plt.savefig("single_mutant_overlay.pdf")
-    # plt.title("")
-    # plt.xlabel("$B_0$ / mT")
-    # plt.ylabel("")
-    # plt.gca().set_yticks([])
+    plt.title("")
+    plt.ylabel("")
+    plt.gca().set_yticks([])
