@@ -186,32 +186,8 @@ with psd.figlist_var(width=0.7, filename="ESR_align_example.pdf") as fl:
         fl.plot(
             d, label=f"{label_str}\nscaling {d.get_prop('scaling')}", alpha=0.5
         )
-        diagnostic = True
-        if diagnostic: fl.next(f"{label_str} shifting")
-        temp = (
-            np.exp(
-                -1j
-                * 2
-                * pi
-                * test_shifts_coarse
-                * d.fromaxis(Bname)[Bname:(-1e3, 1e3)]
-            )
-            * d[Bname:(-1e3, 1e3)]
-        )
-        if diagnostic: fl.image(temp)
-        vec_alignment = temp.sum(Bname).run(abs)
-        shift = vec_alignment.real.argmax("test_shifts").item()
-        if diagnostic: fl.next(f"{label_str} shifting, fine")
-        temp = (
-            np.exp(
-                -1j * 2 * pi * (shift + test_shifts_fine) * d.fromaxis(Bname)
-            )
-            * d
-        )
-        if diagnostic: fl.image(temp)
-        vec_alignment = temp.sum(Bname).run(abs)
-        shift += vec_alignment.real.argmax("test_shifts").item()
         d.ft(Bname)
+        shift = abs(d).argmax(Bname).item()
         all_shifts.append(shift)
     # }}}
     mean_shift = np.mean(all_shifts)
