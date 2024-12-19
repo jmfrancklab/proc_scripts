@@ -60,14 +60,18 @@ mpl.rcParams.update({
 # {{{ so we can control directories, etc, load the data, but don't mess with it
 #     at all (that's handled by align_esr)
 filename_dict = {}
-for j in range(3,6):
-    filename_dict[f"fraction {j}"] = f"240404_L56_MTSL_Rasbatch240320_fraction{j}.DSC"
+for j in range(3, 6):
+    filename_dict[f"fraction {j}"] = (
+        f"240404_L56_MTSL_Rasbatch240320_fraction{j}.DSC"
+    )
 data_dict = {}
 for k, v in filename_dict.items():
     data_dict[k] = psd.find_file(v, exp_type="francklab_esr/warren")
 # }}}
 with psd.figlist_var(width=0.7) as fl:
-    align_esr(data_dict, fl=fl, on_crossing=True, correlation_slice=(-0.5e-3,0.5e-3))
+    align_esr(
+        data_dict, fl=fl, on_crossing=True, correlation_slice=(-0.5e-3, 0.5e-3)
+    )
     # fl.next("centered spectra")
     fl.show_prep()
     fl.next("centered spectra")
