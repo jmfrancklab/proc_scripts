@@ -88,13 +88,15 @@ Here, we simply find the largest spectrum in the group
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 62-63
+.. GENERATED FROM PYTHON SOURCE LINES 62-64
 
+so we can control directories, etc, load the data, but don't mess with it
 at all (that's handled by align_esr)
 
-.. GENERATED FROM PYTHON SOURCE LINES 63-73
+.. GENERATED FROM PYTHON SOURCE LINES 64-75
 
 .. code-block:: Python
+
 
     filename_dict = {
         "220307_S175_KCl": "220307_S175_KCl.DSC",
@@ -113,16 +115,17 @@ at all (that's handled by align_esr)
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 74-78
+.. GENERATED FROM PYTHON SOURCE LINES 76-80
 
-below.  This compares several samples with slightly different
-conditions to look for differences.  Not, in particular, how things
-get lined up nicely despite the presence of MTSL contaminant in
-some.
+This one is straightforward, so I just save the output, which I plot below.
+This compares several samples with slightly different conditions to look for
+differences.  Not, in particular, how things get lined up nicely despite the
+presence of MTSL contaminant in some.
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-80
+.. GENERATED FROM PYTHON SOURCE LINES 80-83
 
 .. code-block:: Python
+
 
     data_dict_multiexpr = align_esr(data_dict_multiexpr)
 
@@ -133,11 +136,12 @@ some.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 81-82
+.. GENERATED FROM PYTHON SOURCE LINES 84-86
 
-MTSL).  I run this at the end.
+Next, I load the data from a desalting run (separating protein from MTSL).  I
+run this at the end.
 
-.. GENERATED FROM PYTHON SOURCE LINES 82-111
+.. GENERATED FROM PYTHON SOURCE LINES 86-116
 
 .. code-block:: Python
 
@@ -170,6 +174,7 @@ MTSL).  I run this at the end.
             fl.show_prep()
             fl.next("centered spectra")
             plt.savefig("overlay.pdf")
+
 
 
 
@@ -253,10 +258,19 @@ MTSL).  I run this at the end.
 
 
 
+.. GENERATED FROM PYTHON SOURCE LINES 117-123
+
+Note that the ÷ in the legend above indicates what the (QESR rescaled)
+spectrum has been divided by in order to get the spectrum shown.
+Thus, if the spectra line up well, this gives a **very** accurate measure of
+*relative* concentration.
+This can be useful, since it doesn't depend on baseline correction, etc, as a
+full-blown QESR does.
+
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.502 seconds)
+   **Total running time of the script:** (0 minutes 2.493 seconds)
 
 
 .. _sphx_glr_download_auto_examples_epr_overlay.py:

@@ -58,8 +58,10 @@ mpl.rcParams.update({
 
 # sphinx_gallery_thumbnail_number = 1
 
-# %% so we can control directories, etc, load the data, but don't mess with it
-#    at all (that's handled by align_esr)
+# %%
+# so we can control directories, etc, load the data, but don't mess with it
+# at all (that's handled by align_esr)
+
 filename_dict = {
     "220307_S175_KCl": "220307_S175_KCl.DSC",
     "220729 prS175": "220729_prS175.DSC",
@@ -70,15 +72,17 @@ data_dict_multiexpr = {}
 for k, v in filename_dict.items():
     data_dict_multiexpr[k] = psd.find_file(v, exp_type="francklab_esr/Farhana")
 
-# %% This one is straightforward, so I just save the output, which I plot
-#    below.  This compares several samples with slightly different
-#    conditions to look for differences.  Not, in particular, how things
-#    get lined up nicely despite the presence of MTSL contaminant in
-#    some.
+# %%
+# This one is straightforward, so I just save the output, which I plot below.
+# This compares several samples with slightly different conditions to look for
+# differences.  Not, in particular, how things get lined up nicely despite the
+# presence of MTSL contaminant in some.
+
 data_dict_multiexpr = align_esr(data_dict_multiexpr)
 
-# %% Next, I load the data from a desalting run (separating protein from
-#    MTSL).  I run this at the end.
+# %%
+# Next, I load the data from a desalting run (separating protein from MTSL).  I
+# run this at the end.
 
 filename_dict = {}
 for j in range(3, 6):
@@ -108,3 +112,11 @@ with psd.figlist_var(width=0.7) as fl:
         fl.show_prep()
         fl.next("centered spectra")
         plt.savefig("overlay.pdf")
+
+# %%
+# Note that the ÷ in the legend above indicates what the (QESR rescaled)
+# spectrum has been divided by in order to get the spectrum shown.
+# Thus, if the spectra line up well, this gives a **very** accurate measure of
+# *relative* concentration.
+# This can be useful, since it doesn't depend on baseline correction, etc, as a
+# full-blown QESR does.

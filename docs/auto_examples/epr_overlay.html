@@ -95,7 +95,8 @@ Here, we simply find the largest spectrum in the group
 <span class="c1"># sphinx_gallery_thumbnail_number = 1</span>
 </pre></div>
 </div>
-<p>at all (that’s handled by align_esr)</p>
+<p>so we can control directories, etc, load the data, but don’t mess with it
+at all (that’s handled by align_esr)</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">filename_dict</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;220307_S175_KCl&quot;</span><span class="p">:</span> <span class="s2">&quot;220307_S175_KCl.DSC&quot;</span><span class="p">,</span>
     <span class="s2">&quot;220729 prS175&quot;</span><span class="p">:</span> <span class="s2">&quot;220729_prS175.DSC&quot;</span><span class="p">,</span>
@@ -107,14 +108,15 @@ Here, we simply find the largest spectrum in the group
     <span class="n">data_dict_multiexpr</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;francklab_esr/Farhana&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>below.  This compares several samples with slightly different
-conditions to look for differences.  Not, in particular, how things
-get lined up nicely despite the presence of MTSL contaminant in
-some.</p>
+<p>This one is straightforward, so I just save the output, which I plot below.
+This compares several samples with slightly different conditions to look for
+differences.  Not, in particular, how things get lined up nicely despite the
+presence of MTSL contaminant in some.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">data_dict_multiexpr</span> <span class="o">=</span> <span class="n">align_esr</span><span class="p">(</span><span class="n">data_dict_multiexpr</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>MTSL).  I run this at the end.</p>
+<p>Next, I load the data from a desalting run (separating protein from MTSL).  I
+run this at the end.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">filename_dict</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">):</span>
     <span class="n">filename_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;fraction </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -169,7 +171,13 @@ some.</p>
   plt.gcf().tight_layout()
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.502 seconds)</p>
+<p>Note that the ÷ in the legend above indicates what the (QESR rescaled)
+spectrum has been divided by in order to get the spectrum shown.
+Thus, if the spectra line up well, this gives a <strong>very</strong> accurate measure of
+<em>relative</em> concentration.
+This can be useful, since it doesn’t depend on baseline correction, etc, as a
+full-blown QESR does.</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.493 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-epr-overlay-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/bb26ee652291dfe5ef7c3d1ac4959ca5/epr_overlay.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">epr_overlay.ipynb</span></code></a></p>

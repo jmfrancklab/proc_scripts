@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:02.502** total execution time for 27 files **from auto_examples**:
+**00:02.493** total execution time for 27 files **from auto_examples**:
 
 .. container::
 
@@ -33,7 +33,7 @@ Computation times
      - Time
      - Mem (MB)
    * - :ref:`sphx_glr_auto_examples_epr_overlay.py` (``epr_overlay.py``)
-     - 00:02.502
+     - 00:02.493
      - 0.0
    * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py` (``FIDtoEcho_Actual.py``)
      - 00:00.000
