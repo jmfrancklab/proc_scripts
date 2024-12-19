@@ -1,5 +1,4 @@
 from ..first_level.QESR_rescale import QESR_scalefactor
-import pyspecdata as psd
 from collections import OrderedDict
 import numpy as np
 from numpy import r_, pi
@@ -117,7 +116,6 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
     # {{{ pull the reference (largest) up front
     all_files.move_to_end(ref_spec, last=False)
     # }}}
-    all_shifts = []  # to store all the phase differences?
     for j, (label_str, d) in enumerate(
         (k, v) for (k, v) in all_files.items() if v != ref_spec
     ):
