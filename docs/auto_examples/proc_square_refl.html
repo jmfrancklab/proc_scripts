@@ -1,113 +1,52 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Process a square wave reflection &mdash; pyspecProcScripts 0.9 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-binder.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-dataframe.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-rendered-html.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/gallery_custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-    <script src="../_static/js/theme.js"></script>
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Process a square wave reflection &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=0838f141" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Convert 2D Real Data into Integrals with Errors" href="generate_integrals_RealData.html" />
-    <link rel="prev" title="ProcScripts Example Gallery" href="index.html" /> 
-</head>
+    <link rel="next" title="FID from Echo after Phasing and Timing Correction" href="FIDtoEcho_Actual.html" />
+    <link rel="prev" title="Edit the concentration parameter of a saved HDF5 file" href="append_conc_to_h5file.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> pyspecProcScripts
-          </a>
-              <div class="version">
-                0.9
-              </div>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals_RealData.html">Convert 2D  Real Data into Integrals with Errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_var_tau.html">Echoes with varied tau lengths</a></li>
-<li class="toctree-l2"><a class="reference internal" href="L2G.html">Lorentzian to Gaussian Transformation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_var_tau.html">Phasing and Timing Correction Using a Varied Tau Experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing_Actual_Challenging.html">Phasing and Timing Correction with Real Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_integrals.html">Convert 2D to Integrals with Errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="test_error.html">Validate Inactive CT Error</a></li>
-</ul>
-</li>
-</ul>
+  
+  
 
-        </div>
-      </div>
-    </nav>
+  </head><body>
+  
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">pyspecProcScripts</a>
-      </nav>
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
 
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">ProcScripts Example Gallery</a></li>
-      <li class="breadcrumb-item active">Process a square wave reflection</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/auto_examples/proc_square_refl.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+          <div class="body" role="main">
+            
   <div class="sphx-glr-download-link-note admonition note">
 <p class="admonition-title">Note</p>
 <p><a class="reference internal" href="#sphx-glr-download-auto-examples-proc-square-refl-py"><span class="std std-ref">Go to the end</span></a>
 to download the full example code</p>
 </div>
 <section class="sphx-glr-example-title" id="process-a-square-wave-reflection">
-<span id="sphx-glr-auto-examples-proc-square-refl-py"></span><h1>Process a square wave reflection<a class="headerlink" href="#process-a-square-wave-reflection" title="Permalink to this heading">¶</a></h1>
+<span id="sphx-glr-auto-examples-proc-square-refl-py"></span><h1>Process a square wave reflection<a class="headerlink" href="#process-a-square-wave-reflection" title="Link to this heading">¶</a></h1>
 <p>Processes a square wave reflection in order to calculate the
 Q of a NMR probe.
 Optional to show the phasing and real on top
@@ -120,113 +59,206 @@ of the fitted square wave reflection.</p>
 <li><img src="../_images/sphx_glr_proc_square_refl_005.png" srcset="../_images/sphx_glr_proc_square_refl_005.png" alt="solenoid probe show the frequency distribution" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_square_refl_006.png" srcset="../_images/sphx_glr_proc_square_refl_006.png" alt="solenoid probe after slice and mix down freq domain" class = "sphx-glr-multi-img"/></li>
 </ul>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>----------  logging output to C:\Users\jmfranck\pyspecdata.0.log  ----------
---&gt; proc_square_refl.py(19):pyspecdata.core             &lt;module&gt; 2023-05-13 16:25:35,783
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
+--&gt; proc_square_refl.py(25):pyspecdata.core             &lt;module&gt; 2024-10-26 15:42:07,466
 INFO: processing dataset hairpin probe
+You didn&#39;t set units for ch before saving the data!!!
+You didn&#39;t set units for t before saving the data!!!
 logarithmic
---&gt; analyze_square_refl.py(101):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:36,114
+--&gt; analyze_square_refl.py(123):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:08,068
 INFO: frq: 14889966.915265452
---&gt; analyze_square_refl.py(125):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:36,213
-INFO: the amplitude is 0.5041899787959185
+--&gt; analyze_square_refl.py(153):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:08,257
+INFO: the amplitude is 0.5041899787959184
 {R, A}
 {\bf Warning:} You have no error associated with your plot, and I want to flag this for now
 
 
-c:\users\jmfranck\git_repos\pyspecdata\pyspecdata\core.py:7068: Warning: You have no error associated with your plot, and I want to flag this for now
-  warnings.warn(&#39;You have no error associated with your plot, and I want to flag this for now&#39;,Warning)
---&gt; analyze_square_refl.py(169):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:36,419
-INFO: output: {&#39;A&#39;: 0.619157866200667, &#39;C&#39;: 0.0007775306046049341, &#39;R&#39;: 8731153.658925781}
---&gt; analyze_square_refl.py(170):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:36,588
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:8646: Warning: You have no error associated with your plot, and I want to flag this for now
+  warnings.warn(
+--&gt; analyze_square_refl.py(225):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:08,581
+INFO: output: {&#39;A&#39;: 0.6191578695480574, &#39;C&#39;: 0.0007775310076085551, &#39;R&#39;: 8731153.71929354}
+--&gt; analyze_square_refl.py(226):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:08,584
 INFO: latex: $f(t)=0.62 e^{- 8.73\times 10^{6} t} + 0.00$
---&gt; analyze_square_refl.py(179):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:36,591
-INFO: -11728.316475971678
-c:\users\jmfranck\git_repos\pyspecdata\pyspecdata\core.py:1959: UserWarning: marker is redundantly defined by the &#39;marker&#39; keyword argument and the fmt string &quot;.&quot; (-&gt; marker=&#39;.&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs,**kwargs)
-c:\users\jmfranck\git_repos\pyspecdata\pyspecdata\core.py:1959: UserWarning: linestyle is redundantly defined by the &#39;linestyle&#39; keyword argument and the fmt string &quot;k--&quot; (-&gt; linestyle=&#39;--&#39;). The keyword argument will take precedence.
-  retval = myplotfunc(*plotargs,**kwargs)
---&gt; proc_square_refl.py(19):pyspecdata.core             &lt;module&gt; 2023-05-13 16:25:36,756
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:9192: RuntimeWarning: invalid value encountered in sqrt
+  return np.sqrt(arg)
+--&gt; analyze_square_refl.py(240):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:08,595
+INFO: -11728.316475972004
+--&gt; proc_square_refl.py(25):pyspecdata.core             &lt;module&gt; 2024-10-26 15:42:08,810
 INFO: processing dataset solenoid probe
+You didn&#39;t set units for ch before saving the data!!!
+You didn&#39;t set units for t before saving the data!!!
 logarithmic
---&gt; analyze_square_refl.py(101):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:36,993
+--&gt; analyze_square_refl.py(123):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:09,201
 INFO: frq: 14889553.824459042
---&gt; analyze_square_refl.py(125):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:37,042
-INFO: the amplitude is 0.5013108588730283
+--&gt; analyze_square_refl.py(153):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:09,295
+INFO: the amplitude is 0.5013108588730282
 {R, A}
 {\bf Warning:} You have no error associated with your plot, and I want to flag this for now
 
 
---&gt; analyze_square_refl.py(169):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:37,092
-INFO: output: {&#39;A&#39;: 0.5118213794712735, &#39;C&#39;: 0.002100769021292038, &#39;R&#39;: 3969130.4439018033}
---&gt; analyze_square_refl.py(170):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:37,094
+--&gt; analyze_square_refl.py(225):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:09,614
+INFO: output: {&#39;A&#39;: 0.5118213811859424, &#39;C&#39;: 0.0021007698742564924, &#39;R&#39;: 3969130.4825602476}
+--&gt; analyze_square_refl.py(226):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:09,617
 INFO: latex: $f(t)=0.51 e^{- 3.97\times 10^{6} t} + 0.00$
---&gt; analyze_square_refl.py(179):pyspecdata.core  analyze_square_refl 2023-05-13 16:25:37,098
-INFO: 22313.576370994568
+--&gt; analyze_square_refl.py(240):pyspecdata.core  analyze_square_refl 2024-10-26 15:42:09,636
+INFO: 22313.576370994408
+1: hairpin probe show the frequency distribution |||MHz
+2: hairpin probe after slice and mix down freq domain |||(&#39;MHz&#39;, None)
+3: analytic signal |||μs
+4: blips |||ns
+5: solenoid probe show the frequency distribution |||MHz
+6: solenoid probe after slice and mix down freq domain |||(&#39;MHz&#39;, None)
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">pyspecProcScripts.third_level.analyze_square_refl</span> <span class="kn">import</span> <span class="n">analyze_square_refl</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts.third_level.analyze_square_refl</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">analyze_square_refl</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="o">*</span>
+
 <span class="n">init_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
-<span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;image.aspect&quot;</span><span class="p">]</span> <span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+<span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;image.aspect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
 <span class="c1"># sphinx_gallery_thumbnail_number = 3</span>
-<span class="k">with</span> <span class="n">fl_mod</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
-    <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expno</span><span class="p">,</span> <span class="n">dataset_name</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;210125_sqwv_cap_probe_1&quot;</span><span class="p">,</span> <span class="s2">&quot;capture1&quot;</span><span class="p">,</span> <span class="s2">&quot;hairpin probe&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="s1">&#39;210111_sqwv_sol_probe_1&#39;</span><span class="p">,</span> <span class="s1">&#39;capture1&#39;</span><span class="p">,</span> <span class="s1">&#39;solenoid probe&#39;</span><span class="p">)]:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">strm</span><span class="p">(</span><span class="s2">&quot;processing dataset&quot;</span><span class="p">,</span><span class="n">dataset_name</span><span class="p">))</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">exp_type</span><span class="o">=</span><span class="s1">&#39;ODNP_NMR_comp/test_equip&#39;</span><span class="p">,</span><span class="n">expno</span><span class="o">=</span><span class="n">expno</span><span class="p">)</span>
-        <span class="n">d</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">(</span><span class="s1">&#39;Amplitude&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+<span class="k">with</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.fl_mod" title="pyspecProcScripts.fl_mod" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-class"><span class="n">fl_mod</span></a><span class="p">()</span> <span class="k">as</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.fl_mod" title="pyspecProcScripts.fl_mod" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fl</span></a><span class="p">:</span>
+    <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expno</span><span class="p">,</span> <span class="n">dataset_name</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;210125_sqwv_cap_probe_1&quot;</span><span class="p">,</span> <span class="s2">&quot;capture1&quot;</span><span class="p">,</span> <span class="s2">&quot;hairpin probe&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;210111_sqwv_sol_probe_1&quot;</span><span class="p">,</span> <span class="s2">&quot;capture1&quot;</span><span class="p">,</span> <span class="s2">&quot;solenoid probe&quot;</span><span class="p">),</span>
+    <span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">strm</span><span class="p">(</span><span class="s2">&quot;processing dataset&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">))</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span>
+            <span class="n">filename</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;ODNP_NMR_comp/test_equipment&quot;</span><span class="p">,</span> <span class="n">expno</span><span class="o">=</span><span class="n">expno</span>
+        <span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">(</span><span class="s2">&quot;Amplitude&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;V&quot;</span><span class="p">)</span>
         <span class="n">d</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;ch&quot;</span><span class="p">,</span> <span class="n">r_</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
         <span class="n">d</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
-        <span class="n">analyze_square_refl</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">,</span>
-                <span class="n">show_analytic_signal_phase</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                <span class="n">show_analytic_signal_real</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">analyze_square_refl</span><span class="p">(</span>
+            <span class="n">d</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+            <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.fl_mod" title="pyspecProcScripts.fl_mod" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fl</span></a><span class="o">=</span><a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.fl_mod" title="pyspecProcScripts.fl_mod" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fl</span></a><span class="p">,</span>
+            <span class="n">show_analytic_signal_phase</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">show_analytic_signal_real</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  3.393 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 12.261 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-square-refl-py">
-<div class="sphx-glr-download sphx-glr-download-python docutils container">
-<p><a class="reference download internal" download="" href="../_downloads/28724c711d5db8c4aa1d393d0d583015/proc_square_refl.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">proc_square_refl.py</span></code></a></p>
-</div>
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/ebb36dbf2b9643492e7d8068a5c0b321/proc_square_refl.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_square_refl.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/28724c711d5db8c4aa1d393d0d583015/proc_square_refl.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">proc_square_refl.py</span></code></a></p>
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
 </section>
 
 
-           </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="ProcScripts Example Gallery" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="generate_integrals_RealData.html" class="btn btn-neutral float-right" title="Convert 2D Real Data into Integrals with Errors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2021, John M. Franck group.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
+          
         </div>
       </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
 
-</body>
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="append_conc_to_h5file.html" title="previous chapter">Edit the concentration parameter of a saved HDF5 file</a></li>
+      <li>Next: <a href="FIDtoEcho_Actual.html" title="next chapter">FID from Echo after Phasing and Timing Correction</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/proc_square_refl.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
 </html>

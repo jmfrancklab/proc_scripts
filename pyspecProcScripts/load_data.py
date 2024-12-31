@@ -299,13 +299,15 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 def proc_spincore_SE_v1(s, fl=None):
     s = proc_spincore_generalproc_v1(s, fl=fl)
-    s *= s.shape["nScans"]
+    if "nScans" in s.shape:
+        s *= s.shape["nScans"]
     return s
 
 
 def proc_spincore_diffph_SE_v1(s, fl=None):
     s = proc_spincore_diffph_SE_v2(s, fl=fl)
-    s *= s.shape["nScans"]
+    if "nScans" in s.dimlabels:
+        s *= s.shape["nScans"]
     return s
 
 
@@ -325,6 +327,8 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
 
 def proc_Hahn_echoph(s, fl=None):
     logging.debug("loading pre-processing for Hahn_echoph")
+    if "nScans" in s.dimlabels:
+        nScans = s.shape["nScans"]
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
@@ -380,6 +384,14 @@ def proc_spincore_IR_v2(s, fl=None):
     if fl is not None:
         fl.next("frequency domain (all $\\Delta p$)")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
+    return s
+
+
+def hack_spincore_IR_v3(s, fl=None):
+    "v3 has an incorrectly stored coherence pathway"
+    proc_spincore_generalproc_v1(s, fl=fl)
+    s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
+    s.set_units("vd", "s")
     return s
 
 
@@ -656,18 +668,44 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 
-def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
+def proc_spincore_generalproc_v1(
+    s, direct="t2", include_tau_sub=True, fl=None
+):
+    s.run(np.conj)  # SC flips data in a weird way, this
+    #                 corrects for that
     if include_tau_sub:
         if "tau_us" in s.get_prop("acq_params").keys():
-            s["t2"] -= s.get_prop("acq_params")["tau_us"] * 1e-6
-    s.ft("t2", shift=True)
+            s[direct] -= s.get_prop("acq_params")["tau_us"] * 1e-6
+    s.ft(direct, shift=True)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
+        dph = s[j][1] - s[j][0]
+        Dph = s[j][-1] + dph - s[j][0]
+        if Dph == 1:
+            s[j] = (-s[j] + 1) % 1  # when we take the complex
+            #                          conjugate, that changes the phase
+            #                          of the phase cycle, as well, so
+            #                          we have to re-label the axis
+            #                          coordinates for the phase cycle
+            #                          to the negative of what they were
+            #                          before.  To keep things sane, we
+            #                          also apply phase wrapping to get
+            #                          positive numbers.
+        elif Dph == 4:  # uses units of quarter cycle
+            s[j] = (-s[j] + 4) % 4
+        else:
+            raise ValueError(
+                "the phase cycling dimension "
+                + j
+                + " appears not to go all the way around the circle!"
+            )
+        s.sort(j)
         s.ft([j])  # if we have used cycles for the axis
         #            coordinates, signal in the coherence dimension will match
         #            the amplitude of signal in a single transient if we do
         #            this
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
+    neworder.sort()  # it's confusing if the pulses don't come in order
     # }}}
     # {{{ reorder the rest based on size
     nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
@@ -682,9 +720,13 @@ def proc_spincore_generalproc_v1(s, include_tau_sub=True, fl=None):
         s.reorder("ph_overall")
     # }}}
     # {{{ apply the receiver response
-    s /= s.fromaxis("t2").run(
-        lambda x: np.sinc(x / (s.get_prop("acq_params")["SW_kHz"] * 1e3))
+    s.set_prop(
+        "dig_filter",
+        s.fromaxis(direct).run(
+            lambda x: np.sinc(x / (s.get_prop("acq_params")["SW_kHz"] * 1e3))
+        ),
     )
+    s /= s.get_prop("dig_filter")
     # }}}
     s.squeeze()
     return s
@@ -819,6 +861,13 @@ def proc_field_sweep_v2(s):
     return s
 
 
+def hack_field_sweep_v4(s, fl=None):
+    s["indirect"]["carrierFreq"][0] = (
+        s["indirect"]["Field"][0] * s.get_prop("acq_params")["gamma_eff_MHz_G"]
+    )
+    return proc_spincore_generalproc_v1(s, fl=fl)
+
+
 lookup_table = {
     "ag_IR2H": proc_bruker_deut_IR_withecho_mancyc,
     "ab_ir2h": proc_bruker_deut_IR_mancyc,
@@ -832,9 +881,13 @@ lookup_table = {
     "proc_Hahn_echoph": proc_Hahn_echoph,
     "spincore_FID_nutation_v1": proc_FID_v1,
     "spincore_FID_nutation_v2": proc_FID_v1,
+    "spincore_general": lambda s: proc_spincore_generalproc_v1(
+        s, include_tau_sub=False, direct="t"
+    ),
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
-    "spincore_IR_v3": proc_spincore_generalproc_v1,
+    "spincore_IR_v3": hack_spincore_IR_v3,
+    "spincore_IR_v4": proc_spincore_generalproc_v1,
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_v2,
     "spincore_nutation_amp": proc_nutation_amp,
@@ -857,5 +910,5 @@ lookup_table = {
     "ESR_linewidth": proc_ESR,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
-    "field_sweep_v4": proc_spincore_generalproc_v1,
+    "field_sweep_v4": hack_field_sweep_v4,
 }

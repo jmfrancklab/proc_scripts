@@ -15,6 +15,23 @@ various functions.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Loads in a previously saved HDF5 dataset. If the attribute &#x27;concentration&#x27; does not exist in th...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_append_conc_to_h5file_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_append_conc_to_h5file.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Edit the concentration parameter of a saved HDF5 file</div>
+    </div>
+
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Processes a square wave reflection in order to calculate the  Q of a NMR probe. Optional to sho...">
 
 .. only:: html
@@ -32,52 +49,52 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Take a 2D dataset and convert it to a table of integrals with errors, utilizing all the bells a...">
+    <div class="sphx-glr-thumbcontainer" tooltip="Demonstrate how we can automatically find the zeroth order phase and the center of the echo and...">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_generate_integrals_RealData_thumb.png
+  .. image:: /auto_examples/images/thumb/sphx_glr_FIDtoEcho_Actual_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_generate_integrals_RealData.py`
+  :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Convert 2D  Real Data into Integrals with Errors</div>
+      <div class="sphx-glr-thumbnail-title">FID from Echo after Phasing and Timing Correction</div>
     </div>
 
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Processes data which has varying lengths of tau.  Demonstrates how to load a h5 file. ">
+    <div class="sphx-glr-thumbcontainer" tooltip="A demo of the correlation alignment on a dataset with a lot of phase cycling noise">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_proc_var_tau_thumb.png
+  .. image:: /auto_examples/images/thumb/sphx_glr_phaseCycNoise_example_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_proc_var_tau.py`
+  :ref:`sphx_glr_auto_examples_phaseCycNoise_example.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Echoes with varied tau lengths</div>
+      <div class="sphx-glr-thumbnail-title">Phase Cycling Noise</div>
     </div>
 
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Demonstrates the Lorentzian to Gaussian transformation.">
+    <div class="sphx-glr-thumbcontainer" tooltip="While we can align by microwave frequency and normalize according to peak-to-peak amplitude, it...">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_L2G_thumb.png
+  .. image:: /auto_examples/images/thumb/sphx_glr_epr_overlay_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_L2G.py`
+  :ref:`sphx_glr_auto_examples_epr_overlay.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Lorentzian to Gaussian Transformation</div>
+      <div class="sphx-glr-thumbnail-title">EPR correlation alignment</div>
     </div>
 
 
@@ -100,18 +117,69 @@ various functions.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Based on proc_raw.py: Here we apply the postprocessing, and then do some stuff specific to a CP...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_CPMG_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_CPMG.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">CPMG-specific processing</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Process Enhancement experiment">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_Ep_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_Ep.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Process Enhancement experiment</div>
+    </div>
+
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Take real data with varying echo times,  and demonstrate how we can automatically find the zero...">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_Hermitian_Phasing_Actual_var_tau_thumb.png
+  .. image:: /auto_examples/images/thumb/sphx_glr_FIDtoEcho_Actual_Challenging_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_Hermitian_Phasing_Actual_var_tau.py`
+  :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual_Challenging.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Phasing and Timing Correction Using a Varied Tau Experiment</div>
+      <div class="sphx-glr-thumbnail-title">FID from Echo after Phasing and Timing Correction -- Challenging Actual Data</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="py proc_nutation.py NODENAME FILENAME EXP_TYPE">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_nutation_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_nutation.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Process nutation data</div>
     </div>
 
 
@@ -134,52 +202,35 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Take real data with varying echo times,  and demonstrate how we can automatically find the zero...">
+    <div class="sphx-glr-thumbcontainer" tooltip="py proc_FID_nutation.py NODENAME FILENAME EXP_TYPE">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_Hermitian_Phasing_Actual_Challenging_thumb.png
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_FID_nutation_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_Hermitian_Phasing_Actual_Challenging.py`
+  :ref:`sphx_glr_auto_examples_proc_FID_nutation.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Phasing and Timing Correction with Real Data</div>
+      <div class="sphx-glr-thumbnail-title">Process FID nutation data</div>
     </div>
 
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Take a 2D dataset and convert it to a table of integrals with errors, utilizing all the bells a...">
+    <div class="sphx-glr-thumbcontainer" tooltip="Read Instrument Log">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_generate_integrals_thumb.png
+  .. image:: /auto_examples/images/thumb/sphx_glr_read_log_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_generate_integrals.py`
+  :ref:`sphx_glr_auto_examples_read_log.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Convert 2D to Integrals with Errors</div>
-    </div>
-
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Processes and visualizes the nutation pulse program that has been  captured on a oscilloscope. ...">
-
-.. only:: html
-
-  .. image:: /auto_examples/images/thumb/sphx_glr_proc_capture_nutation_thumb.png
-    :alt:
-
-  :ref:`sphx_glr_auto_examples_proc_capture_nutation.py`
-
-.. raw:: html
-
-      <div class="sphx-glr-thumbnail-title">Captured Nutation</div>
+      <div class="sphx-glr-thumbnail-title">Read Instrument Log</div>
     </div>
 
 
@@ -202,18 +253,103 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Generate a fake dataset of an inversion recovery with multiple repeats (φ × t2 × vd × repeats) ...">
+    <div class="sphx-glr-thumbcontainer" tooltip="Check NMR/ESR resonance ratio using a field sweep">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_check_integration_error_thumb.png
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_fieldSweep_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_check_integration_error.py`
+  :ref:`sphx_glr_auto_examples_proc_fieldSweep.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Check integral error calculation</div>
+      <div class="sphx-glr-thumbnail-title">Check NMR/ESR resonance ratio using a field sweep</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Processes and visualizes the nutation pulse program that has been  captured on a oscilloscope. ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_capture_nutation_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_capture_nutation.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Captured Nutation</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Takes the npz file of the captured tuning curve at different zoom levels and plots them on the ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_tune_capture_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_tune_capture.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Processing the Captured Tuning Curve</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Fourier transforms (and any needed data corrections for older data) are performed according to ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_raw_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_raw.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Show data with postproc</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Process FIR experiment">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_FIR_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_FIR.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Process FIR experiment</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Assuming a single pulse was acquired via simple_onepulse_capture.py  in the FLInst repo using t...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_GDS_capture_int_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_GDS_capture_int.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Calculating β from individual pulse capture</div>
     </div>
 
 
@@ -236,7 +372,24 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Here, we want to calculate the time-domain variance to use in error propagation.">
+    <div class="sphx-glr-thumbcontainer" tooltip="Generate a fake dataset of an inversion recovery with multiple repeats (φ × t2 × vd × repeats) ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_check_integration_error_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_check_integration_error.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Check integral error calculation</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Here, we want to calculate the time-domain variance to use in error propagation. But, to make s...">
 
 .. only:: html
 
@@ -247,24 +400,7 @@ various functions.
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Here, we want to calculate the time-domain variance to use in error propagation.</div>
-    </div>
-
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Analyzes field sweep data.  Determines the resonance frequency from the carrier frequency and t...">
-
-.. only:: html
-
-  .. image:: /auto_examples/images/thumb/sphx_glr_proc_fieldSweep_thumb.png
-    :alt:
-
-  :ref:`sphx_glr_auto_examples_proc_fieldSweep.py`
-
-.. raw:: html
-
-      <div class="sphx-glr-thumbnail-title">Check NMR/ESR resonance ratio using a field sweep</div>
+      <div class="sphx-glr-thumbnail-title">Time-Domain Noise</div>
     </div>
 
 
@@ -287,18 +423,52 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Estimates the error of the integral of an actual data set of a standard echo experiment. Three ...">
+    <div class="sphx-glr-thumbcontainer" tooltip="This data should be acquired using example/run_pulse_calibration.py in FLInst.">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_test_error_thumb.png
+  .. image:: /auto_examples/images/thumb/sphx_glr_verify_tsqrtP_calibration_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_test_error.py`
+  :ref:`sphx_glr_auto_examples_verify_tsqrtP_calibration.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Validate Inactive CT Error</div>
+      <div class="sphx-glr-thumbnail-title">Verify the pulse calibration</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="compare CPMG echo">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_compare_CPMG_echo_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_compare_CPMG_echo.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">compare CPMG echo</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Calculate actual beta as a function of pulse length">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_calibrate_tsqrtP_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_calibrate_tsqrtP.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Calculate actual beta as a function of pulse length</div>
     </div>
 
 
@@ -310,23 +480,33 @@ various functions.
 .. toctree::
    :hidden:
 
+   /auto_examples/append_conc_to_h5file
    /auto_examples/proc_square_refl
-   /auto_examples/generate_integrals_RealData
-   /auto_examples/proc_var_tau
-   /auto_examples/L2G
+   /auto_examples/FIDtoEcho_Actual
+   /auto_examples/phaseCycNoise_example
+   /auto_examples/epr_overlay
    /auto_examples/integrate_limits_realData
-   /auto_examples/Hermitian_Phasing_Actual_var_tau
+   /auto_examples/proc_CPMG
+   /auto_examples/proc_Ep
+   /auto_examples/FIDtoEcho_Actual_Challenging
+   /auto_examples/proc_nutation
    /auto_examples/integrate_limits
-   /auto_examples/Hermitian_Phasing_Actual_Challenging
-   /auto_examples/generate_integrals
-   /auto_examples/proc_capture_nutation
+   /auto_examples/proc_FID_nutation
+   /auto_examples/read_log
    /auto_examples/Hermitian_Phasing
-   /auto_examples/check_integration_error
-   /auto_examples/correlation_alignment_example
-   /auto_examples/time_domain_noise
    /auto_examples/proc_fieldSweep
+   /auto_examples/proc_capture_nutation
+   /auto_examples/proc_tune_capture
+   /auto_examples/proc_raw
+   /auto_examples/proc_FIR
+   /auto_examples/proc_GDS_capture_int
+   /auto_examples/correlation_alignment_example
+   /auto_examples/check_integration_error
+   /auto_examples/time_domain_noise
    /auto_examples/integration_with_error
-   /auto_examples/test_error
+   /auto_examples/verify_tsqrtP_calibration
+   /auto_examples/compare_CPMG_echo
+   /auto_examples/calibrate_tsqrtP
 
 
 .. only:: html
