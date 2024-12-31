@@ -61,6 +61,8 @@ class NodeAsDict:
                 node_dict[
                     subkey
                 ] = subvalue  # Recursively assign subkeys and values
+        elif isinstance(value,bytes):
+            self.node.attrs[key] = value.decode( "utf-8")
         else:
             raise TypeError(
                 f"Unsupported value type for key '{key}': {type(value)}"
@@ -207,6 +209,14 @@ class EditAcqParams(QWidget):
         self.show()
 
     def save_changes(self):
+        self.hdf_file = h5py.File(self.hdf_filename, "r+")
+        if self.nodename in self.hdf_file:
+            self.node = self.hdf_file[self.nodename]
+        else:
+            raise ValueError(
+                f"Expno '{self.nodename}' not found in the HDF5 file."
+            )
+        self.read_acq_params()
         try:
             # Update the HDF5 file with new values from the text fields
             for prop_name in self.property_names:
