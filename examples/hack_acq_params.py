@@ -61,8 +61,6 @@ class NodeAsDict:
                 node_dict[
                     subkey
                 ] = subvalue  # Recursively assign subkeys and values
-        elif isinstance(value,bytes):
-            self.node.attrs[key] = value.decode( "utf-8")
         else:
             raise TypeError(
                 f"Unsupported value type for key '{key}': {type(value)}"
@@ -221,9 +219,6 @@ class EditAcqParams(QWidget):
             # Update the HDF5 file with new values from the text fields
             for prop_name in self.property_names:
                 value = self.input_fields[prop_name].text()
-                # Convert string values to byte strings if they are not already
-                if isinstance(value, str):
-                    value = value.encode("utf-8")
                 self.acq_params[
                     prop_name
                 ] = value  # Set the value using NodeAsDict
