@@ -9,7 +9,8 @@ Note that is intended *only* for hacking labeling/categorizing properties, and
 should *never* be used to hack information about pulse program parameters, etc,
 that were actually sent to the spectrometer.
 
-The GPT conversation is `here <https://chatgpt.com/c/66f5aef7-8f68-800b-8a13-0b133ede1ca5>`_.
+The GPT conversation is `here
+<https://chatgpt.com/c/66f5aef7-8f68-800b-8a13-0b133ede1ca5>`_.
 """
 import sys
 import h5py
@@ -78,7 +79,8 @@ class NodeAsDict:
         return key in self.node.attrs or key in self.node
 
     def get(self, key, default=None):
-        """Get a value from the attributes or group, with UTF-8 decoding and default handling."""
+        """Get a value from the attributes or group, with UTF-8 decoding and
+        default handling."""
         if key in self.node.attrs:
             value = self.node.attrs[key]
             if isinstance(value, bytes):
@@ -94,13 +96,15 @@ class NodeAsDict:
             return default
 
     def keys(self):
-        """Yield sorted attribute keys and group names together alphabetically."""
+        """Yield sorted attribute keys and group names together
+        alphabetically."""
         all_keys = list(self.node.attrs.keys()) + list(self.node.keys())
         for key in sorted(all_keys):
             yield key
 
     def items(self):
-        """Yield key-value pairs using __getitem__ for both attributes and groups."""
+        """Yield key-value pairs using __getitem__ for both attributes and
+        groups."""
         for key in self.keys():
             yield key, self[key]
 
