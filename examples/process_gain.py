@@ -18,10 +18,9 @@ The plots are produced in the following order:
     3) Gain of the receiver chain as a function of frequency
 """
 import numpy as np
-from numpy import r_
 import pyspecdata as psd
 import pylab as plt
-from sympy import symbols, Symbol, latex
+from sympy import symbols
 import sympy as sp
 from scipy.interpolate import CubicSpline
 
@@ -99,7 +98,7 @@ with psd.figlist_var() as fl:
     #                                         in units of μW
     fl.plot(P_fine, for_plot_spline, color="red")
     plt.xlabel(r"$\nu_{rf}$ / kHz")
-    plt.ylabel("Power / $\mu$W")
+    plt.ylabel(r"Power / $\mu$W")
 # }}}
 # }}}
 # {{{ Calculate Power exiting the Receiver Chain as Function
@@ -162,7 +161,7 @@ with psd.figlist_var() as fl:
     for_plot_spline = P_out_cs(P_fine) * 1e6
     fl.plot(P_fine, for_plot_spline, color="blue")
     plt.xlabel(r"$\nu_{rf}$ / kHz")
-    plt.ylabel("Power / $\mu$W")
+    plt.ylabel(r"Power / $\mu$W")
 # }}}
 # }}}
 # {{{ Divide spline function for P in W
