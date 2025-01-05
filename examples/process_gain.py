@@ -44,9 +44,26 @@ all_node_names = sorted(
     ),
     key=lambda x: int(x.split("_")[1]),
 )
+# TODO ☐: shouldn't the previous and the following be the
+#         same for both input and output? Because you know
+#         that's how the data is acquired? So, could you
+#         save effort by just doing both of these for the
+#         one file?
+# TODO ☐: In the allocation block, you could then just create output_data as a
+#         copy of input_data, as wel
 input_frq_kHz = np.array(
     [int(j.split("_")[1]) for j in all_node_names]
 )
+# {{{ allocate an nddata that's bit enough to just
+#     store the data for all frequencies
+input_data = (
+    psd.ndshape([len(all_node_names)], ["nu"])
+    .alloc()
+    .set_units("nu", "Hz")
+)
+input_data["nu"] = input_frq_kHz * 1e3
+input_data.name("input power").set_units("W")
+# }}}
 for j, nodename in enumerate(all_node_names):
     # second part of nodename contains output frequency in
     # kHz
@@ -54,17 +71,6 @@ for j, nodename in enumerate(all_node_names):
         file1 + "/" + "%s" % nodename,
         directory=psd.getDATADIR(exp_type=data_dir),
     )
-    if j == 0:
-        # {{{ allocate an nddata that's bit enough to just
-        #     store the data for all frequencies
-        input_data = (
-            psd.ndshape([len(all_node_names)], ["nu"])
-            .alloc()
-            .set_units("nu", "Hz")
-        )
-        input_data["nu"] = input_frq_kHz * 1e3
-        input_data.name("input power").set_units("W")
-        # }}}
     # {{{ fit to complex
     A, omega, phi, t = symbols("A omega phi t", real=True)
     d = psd.lmfitdata(d)
@@ -81,9 +87,9 @@ for j, nodename in enumerate(all_node_names):
         phi=dict(value=0.75, min=-np.pi, max=np.pi),
     )
     d.fit(use_jacobian=False)
-    fit = d.eval()
     # }}}
-    # instantaneous $V_{p} \rightarrow V_{rms}$
+    # calculate (cycle averaged) power from amplitude of the
+    # analytic signal:
     input_data["nu", j] = abs(d.output("A")) ** 2 / 2 / 50
 input_data.sort("nu")
 # {{{ plot P at input of Receiver Chain
