@@ -57,9 +57,11 @@ for j, nodename in enumerate(all_node_names):
     if j == 0:
         # {{{ allocate an nddata that's bit enough to just
         #     store the data for all frequencies
-        input_data = psd.ndshape(
-            [len(all_node_names)], ["nu"]
-        ).alloc()
+        input_data = (
+            psd.ndshape([len(all_node_names)], ["nu"])
+            .alloc()
+            .set_units("nu", "Hz")
+        )
         input_data["nu"] = input_frq_kHz * 1e3
         input_data.name("input power").set_units("W")
         # }}}
@@ -88,7 +90,7 @@ input_data.sort("nu")
 with psd.figlist_var() as fl:
     fl.next("Power Input to Receiver Chain")
     input_data.set_plot_color("r")
-    fl.plot(input_data, "o")
+    input_data.human_units(scale_data=True)
     # TODO ☐: be sure you pull most recent pyspecdata -- I
     #         modified spline to copy props so the color
     #         will match
@@ -99,6 +101,7 @@ with psd.figlist_var() as fl:
         500,
     )
     fl.plot(myspline(P_fine))
+    fl.plot(input_data, "o")
 # }}}
 # }}}
 # {{{ Calculate Power exiting the Receiver Chain as Function
