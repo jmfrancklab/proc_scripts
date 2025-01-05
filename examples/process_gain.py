@@ -17,6 +17,7 @@ The plots are produced in the following order:
     2) Power output by the receiver chain as a function of frequency
     3) Gain of the receiver chain as a function of frequency
 """
+
 import numpy as np
 import pyspecdata as psd
 import pylab as plt
@@ -24,17 +25,15 @@ from sympy import symbols
 import sympy as sp
 from scipy.interpolate import CubicSpline
 
-attenuator_dB = 40.021  # attenuator between rf source and receiver chain
+attenuator_dB = 40.021  # exact (measured) attenuation of
+#                         attenuation assembly between
+#                         source and receiver chain
 data_dir = "ODNP_NMR_comp/noise_tests"
 file1 = "240123_power_in_analytic.h5"
 file2 = "240123_power_out_analytic.h5"
-# Make lists to place the power going into the receiver
-# chain and out
-P_in = []
+# TODO ☐: you're still using the following, which is sloppy
+# -- fix
 P_out = []
-# Make list to place the frequencies output by the rf
-# source.
-P_frq_kHz = []
 # {{{ Calculate Power Going into Receiver Chain as Function
 #     of Frequency
 all_node_names = sorted(
@@ -45,16 +44,25 @@ all_node_names = sorted(
     ),
     key=lambda x: int(x.split("_")[1]),
 )
+input_frq_kHz = np.array(
+    [int(j.split("_")[1]) for j in all_node_names]
+)
 for j, nodename in enumerate(all_node_names):
     # second part of nodename contains output frequency in
     # kHz
-    rf_frq_kHz = int(nodename.split("_")[1])
     d = psd.nddata_hdf5(
         file1 + "/" + "%s" % nodename,
         directory=psd.getDATADIR(exp_type=data_dir),
     )
-    P_frq_kHz.append(rf_frq_kHz)  # Add output frequency to
-    #                              list
+    if j == 0:
+        # {{{ allocate an nddata that's bit enough to just
+        #     store the data for all frequencies
+        input_data = psd.ndshape(
+            [len(all_node_names)], ["nu"]
+        ).alloc()
+        input_data["nu"] = input_frq_kHz * 1e3
+        input_data.name("input power").set_units("W")
+        # }}}
     # {{{ fit to complex
     A, omega, phi, t = symbols("A omega phi t", real=True)
     d = psd.lmfitdata(d)
@@ -64,9 +72,9 @@ for j, nodename in enumerate(all_node_names):
     d.set_guess(
         A=dict(value=5e-2, min=1e-4, max=1),
         omega=dict(
-            value=rf_frq_kHz * 1e3,
-            min=rf_frq_kHz * 1e3 - 1e4,
-            max=rf_frq_kHz * 1e3 + 1e4,
+            value=input_data["nu"][j],
+            min=input_data["nu"][j] - 1e4,
+            max=input_data["nu"][j] + 1e4,
         ),
         phi=dict(value=0.75, min=-np.pi, max=np.pi),
     )
@@ -74,31 +82,23 @@ for j, nodename in enumerate(all_node_names):
     fit = d.eval()
     # }}}
     # instantaneous $V_{p} \rightarrow V_{rms}$
-    V = d.output("A") / np.sqrt(2)
-    V_sq = abs(V) ** 2  # $V_{rms}^{2}$
-    P = V_sq / 50  # $\frac{V_{rms}^2}{50 \Omega} = P$
-    P_in.append(P)
-# {{{ make spline for power in
-P_in_data = psd.nddata(P_in, [-1], ["nu"]).setaxis(
-    "nu", P_frq_kHz
-)
-for_plot = P_in_data.C * 1e6  # for plotting in units of μW
-P_in_cs = CubicSpline(
-    np.array(P_in_data.getaxis("nu")), P_in_data.data
-)
-# }}}
+    input_data["nu", j] = abs(d.output("A")) ** 2 / 2 / 50
+input_data.sort("nu")
 # {{{ plot P at input of Receiver Chain
 with psd.figlist_var() as fl:
     fl.next("Power Input to Receiver Chain")
-    fl.plot(for_plot, "ro")
-    P_frq_kHz.sort()
-    # make axis of finely spaced frequencies
-    P_fine = np.linspace(P_frq_kHz[0], P_frq_kHz[-1], 100)
-    for_plot_spline = P_in_cs(P_fine) * 1e6  # for plotting
-    #                                         in units of μW
-    fl.plot(P_fine, for_plot_spline, color="red")
-    plt.xlabel(r"$\nu_{rf}$ / kHz")
-    plt.ylabel(r"Power / $\mu$W")
+    input_data.set_plot_color("r")
+    fl.plot(input_data, "o")
+    # TODO ☐: be sure you pull most recent pyspecdata -- I
+    #         modified spline to copy props so the color
+    #         will match
+    myspline = input_data.spline_lambda()
+    P_fine = np.linspace(
+        input_data["nu"][0],
+        input_data["nu"][-1],
+        500,
+    )
+    fl.plot(myspline(P_fine))
 # }}}
 # }}}
 # {{{ Calculate Power exiting the Receiver Chain as Function
@@ -147,7 +147,7 @@ for j, nodename in enumerate(all_node_names):
     # }}}
 # {{{ make spline for power out
 P_out_data = psd.nddata(P_out, [-1], ["nu"]).setaxis(
-    "nu", P_frq_kHz
+    "nu", input_frq_kHz
 )
 for_plot = P_out_data.C * 1e6  # plot in units of μW
 P_out_cs = CubicSpline(
@@ -155,6 +155,9 @@ P_out_cs = CubicSpline(
 )
 # }}}
 # {{{ Plot P at output of Receiver Chain
+# TODO ☐: below, you have a second (and third!!!) figurelist
+#         -- a pretty fundamental nono that we've talked
+#         about many times
 with psd.figlist_var() as fl:
     fl.next("Power Output by Receiver Chain")
     fl.plot(for_plot, "bo")
@@ -166,7 +169,7 @@ with psd.figlist_var() as fl:
 # }}}
 # {{{ Divide spline function for P in W
 gain_fine = P_out_cs(P_fine) / P_in_cs(P_fine)
-gain = P_out_data / P_in_data
+gain = P_out_data / input_data
 # }}}
 with psd.figlist_var() as fl:
     fl.next("Gain")
