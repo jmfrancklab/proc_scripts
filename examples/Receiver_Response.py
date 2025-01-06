@@ -16,7 +16,6 @@ Two files are required for the following example:
     :math:`V^{2}(\\nu)` which is fit to a sinc function. The final plot shows
     the square of the data with the fit.
 """
-
 import numpy as np
 import pylab as plt
 import pyspecdata as psd
