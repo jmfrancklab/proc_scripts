@@ -25,7 +25,7 @@ import re
 
 def for_plot(thisdata):
     """Converts :math:`dg^{2}/V^{2}` to :math:`dg/\\mu V`
-    and sets labels accordingly for pretty plotting"""
+    and sets labels accordingly for plotting"""
     # Take sqrt for units of $dg/V$
     thisdata.data = np.sqrt(thisdata.data)
     # Units of $dg/\mu V$
@@ -35,27 +35,26 @@ def for_plot(thisdata):
     return thisdata
 
 
+lambda_G = 0.4e3  # Width for Gaussian convolution
+data_dir = "ODNP_NMR_comp/noise_tests"
 file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
 file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
-lambda_G = 0.4e3  # Width for Gaussian convolution
 # There are less nodes acquired for the control case (since we assume it's
 # relatively flat) so I need to separately define them
 file1_nodes = psd.find_file(
     re.escape(file1),
-    exp_type="ODNP_NMR_comp/noise_tests",
+    exp_type=data_dir,
     return_list=True,
 )
 control_frqs_kHz = np.array([float(j.split("_")[1]) for j in file1_nodes])
 file2_nodes = psd.find_file(
     re.escape(file2),
-    exp_type="ODNP_NMR_comp/noise_tests",
+    exp_type=data_dir,
     return_list=True,
 )
 # $\nu_{test}$
-resp_frq_kHz = np.array([float(j.split("_")[1]) for j in file2_nodes])
+nu_test_kHz = np.array([float(j.split("_")[1]) for j in file2_nodes])
 # {{{ Calculate input power (acquired on Oscilloscope)
-#     To determine the input power, just take a capture of the signal in the
-#     time domain and fit to a complex exponential
 # {{{ Make empty nddata to drop the calculated $V^{2}$ into with corresponding
 #     frequency ($\nu$) output by AFG source, and set the frequencies based on
 #     the node names
@@ -67,7 +66,7 @@ for j, nodename in enumerate(file1_nodes):
     d = psd.find_file(
         file1,
         expno=nodename,
-        exp_type="ODNP_NMR_comp/noise_tests",
+        exp_type=data_dir,
     )
     # {{{ fit signal in t domain to complex exponential
     A, omega, phi, t = symbols("A omega phi t", real=True)
@@ -96,27 +95,28 @@ Pin_spline = control.spline_lambda()
 for j, nodename in enumerate(file2_nodes):
     d = psd.find_file(
         file2,
-        exp_type="ODNP_NMR_comp/noise_tests",
+        exp_type=data_dir,
         expno=nodename,
     )
     carrier = (
         d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
     )  # $\nu_{RX,LO}$
     if j == 0:
-        # Allocate and array that's shaped like the data acquired
-        # for one frequency but add axis to store the frequency of
-        # the test signal frequency
-        rec_data = (d.shape + ("nu_test", len(resp_frq_kHz))).alloc()
+        # Allocate and array that's shaped like one of the datasets
+        # acquired (with 100 captures and a direct t dimension)
+        # but add axis to store the frequency of the test signal
+        rec_data = (d.shape + ("nu_test", len(nu_test_kHz))).alloc()
         rec_data.setaxis("t", d.getaxis("t")).set_units("t", "s")
-        rec_data.setaxis("nu_test", resp_frq_kHz).set_units("nu_test", "Hz")
+        rec_data.setaxis("nu_test", nu_test_kHz).set_units("nu_test", "Hz")
     rec_data["nu_test", j] = d
-    SW = str(d.get_prop("acq_params")["SW_kHz"])
+    SW = str(d.get_prop("acq_params")["SW_kHz"]) # For labeling final plot
 rec_data.sort("nu_test")
 rec_data.rename("nScans", "capture")  # To be more consistent with the
-#                                         oscilloscope data rename the nScans
-#                                         dimension
+#                                        oscilloscope data rename the nScans
+#                                        dimension
 acq_time = np.diff(rec_data.getaxis("t")[np.r_[0, -1]]).item()
-# {{{ Calculate PSD for each frequency
+# {{{ Calculate PSD for each frequency (we will calculate power from the A
+#     of the convolved test signal)
 rec_data.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
 rec_data = abs(rec_data) ** 2  # $dg^{2}*s/Hz$
 rec_data.mean("capture")
@@ -127,16 +127,16 @@ rec_data.ift("t")
 rec_data.run(np.conj)  # Empirically needed to give offset
 #                        that increases with field
 rec_data.ft("t")
-rec_data["t"] += carrier
 # }}}
 # {{{ Calculate power of test signal (Eq. S3)
+rec_data["t"] += carrier
 rec_data.run(np.max, "t")
 rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(2 * np.pi)
 # }}}
 # }}}
 # {{{ Calculate receiver response as function of frequencies
 # Make axis of finely spaced frequencies to feed to spline
-rec_data["nu_test"] -= carrier
+rec_data["nu_test"] -= carrier # center data at 0 MHz
 Dnu = np.linspace(
     (carrier) - (rec_data.getaxis("nu_test")[-1] / 2),
     (carrier) + (rec_data.getaxis("nu_test")[-1] / 2),
