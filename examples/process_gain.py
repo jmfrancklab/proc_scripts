@@ -20,7 +20,6 @@ The plots are produced in the following order:
 
 import numpy as np
 import pyspecdata as psd
-import pylab as plt
 from sympy import symbols
 import sympy as sp
 
@@ -39,14 +38,15 @@ all_node_names = sorted(
     ),
     key=lambda x: int(x.split("_")[1]),
 )
-input_frq_kHz = np.array([int(j.split("_")[1]) for j in all_node_names])
+# Frequency of signal saved in each nodename in kHz
+frq_kHz = np.array([int(j.split("_")[1]) for j in all_node_names])
 # {{{ Allocate an nddata that's big enough to just
 #     store the data for all frequencies
 input_data = (
     psd.ndshape([len(all_node_names)], ["nu"]).alloc().set_units("nu", "Hz")
 )
-input_data["nu"] = input_frq_kHz * 1e3
-input_data.rename("nu",r"$\nu$").name("Input Power").set_units("W")
+input_data["nu"] = frq_kHz * 1e3
+input_data.rename("nu", r"$\nu$").name("Input Power").set_units("W")
 # Copy shape of data but rename for output power
 output_data = input_data.C
 output_data.name("Output Power").set_units("W")
@@ -59,8 +59,6 @@ with psd.figlist_var() as fl:
     # {{{ Calculate Power Going into Receiver Chain as Function
     #     of Frequency
     for j, nodename in enumerate(all_node_names):
-        # second part of nodename contains output frequency in
-        # kHz
         d = psd.nddata_hdf5(
             file1 + "/" + "%s" % nodename,
             directory=psd.getDATADIR(exp_type=data_dir),
@@ -89,19 +87,18 @@ with psd.figlist_var() as fl:
     input_data.set_plot_color("r")
     input_data.human_units(scale_data=True)
     input_spline = input_data.spline_lambda()
-    P_fine = np.linspace(
+    nu_fine = np.linspace(
         input_data[r"$\nu$"][0],
         input_data[r"$\nu$"][-1],
         500,
     )
-    fl.plot(input_spline(P_fine))
+    fl.plot(input_spline(nu_fine))
     fl.plot(input_data, "o")
     # }}}
     # }}}
     # {{{ Calculate Power exiting the Receiver Chain as Function
     #     of Frequency
     for j, nodename in enumerate(all_node_names):
-        rf_frq_kHz = int(nodename.split("_")[1])
         d = psd.nddata_hdf5(
             file2 + "/" + "%s" % nodename,
             directory=psd.getDATADIR(exp_type=data_dir),
@@ -112,9 +109,9 @@ with psd.figlist_var() as fl:
         d.set_guess(
             A=dict(value=15e-2, min=1e-4, max=1),
             omega=dict(
-                value=rf_frq_kHz * 1e3,
-                min=rf_frq_kHz * 1e3 - 1e4,
-                max=rf_frq_kHz * 1e3 + 1e4,
+                value=output_data[r"$\nu$"][j],
+                min=output_data[r"$\nu$"][j] - 1e4,
+                max=output_data[r"$\nu$"][j] + 1e4,
             ),
             phi=dict(value=0.75, min=-np.pi, max=np.pi),
         )
@@ -131,18 +128,17 @@ with psd.figlist_var() as fl:
     output_data.human_units(scale_data=True)
     output_spline = output_data.spline_lambda()
     fl.plot(output_data, "o")
-    fl.plot(output_spline(P_fine))
+    fl.plot(output_spline(nu_fine))
     # }}}
     # }}}
     # {{{ Calculate and plot gain
-    gain_fine_dB = (
-        10 * np.log10(output_spline(P_fine) / input_spline(P_fine))
-        + attenuator_dB
-    )
     gain_dB = 10 * np.log10(output_data / input_data) + attenuator_dB
+    gain_dB.name("Gain").set_units("dB")
+    gain_dB.set_plot_color("purple")
+    gain_dB.human_units(scale_data=True)
+    gain_spline = gain_dB.spline_lambda()
     # {{{ Plot gain
     fl.next("Gain")
-    fl.plot(gain_fine_dB, color="purple")
-    fl.plot(gain_dB, "o", color="purple")
-    plt.ylabel("Gain / dB")
+    fl.plot(gain_spline(nu_fine))
+    fl.plot(gain_dB, "o")
     # }}}
