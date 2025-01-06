@@ -27,9 +27,8 @@ import re
 file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
 file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
 # {{{ Calculate input power (acquired on Oscilloscope)
-#     To determine the input power, just take a capture of
-#     the signal in the time domain and fit to a complex
-#     exponential
+#     To determine the input power, just take a capture of the signal in the
+#     time domain and fit to a complex exponential
 all_nodes = psd.find_file(
     re.escape(file1),
     exp_type="ODNP_NMR_comp/noise_tests",
@@ -37,9 +36,7 @@ all_nodes = psd.find_file(
 )
 # {{{ Sort node names based on frequency output
 #     by source
-frqs_str_kHz = sorted(
-    all_nodes, key=lambda x: int(x.split("_")[1])
-)
+frqs_str_kHz = sorted(all_nodes, key=lambda x: int(x.split("_")[1]))
 # }}}
 # {{{ Make empty nddata to drop the calculated
 #     $V^{2}$ into with corresponding frequency
@@ -48,11 +45,7 @@ frqs_str_kHz = sorted(
 control = psd.ndshape([len(frqs_str_kHz)], ["nu"]).alloc()
 control.setaxis(
     "nu",
-    np.array(
-        list(
-            int(j.split("_")[1]) * 1e3 for j in frqs_str_kHz
-        )
-    ),
+    np.array(list(int(j.split("_")[1]) * 1e3 for j in frqs_str_kHz)),
 ).set_units("nu", "Hz")
 # }}}
 for j, nodename in enumerate(frqs_str_kHz):
@@ -65,9 +58,7 @@ for j, nodename in enumerate(frqs_str_kHz):
     # {{{ fit signal in t domain to complex exponential
     A, omega, phi, t = symbols("A omega phi t", real=True)
     f = psd.lmfitdata(d)
-    f.functional_form = A * sp.exp(
-        1j * 2 * np.pi * omega * t + 1j * phi
-    )
+    f.functional_form = A * sp.exp(1j * 2 * np.pi * omega * t + 1j * phi)
     f.set_guess(
         A=dict(value=5e-2, min=1e-4, max=1),
         omega=dict(
@@ -83,9 +74,7 @@ for j, nodename in enumerate(frqs_str_kHz):
     V_amp = f.output("A")
     control["nu", j] = V_amp**2
 # {{{ make spline for power going into RX box
-t_Pin_cs = CubicSpline(
-    np.array(control.getaxis("nu")), control.data
-)
+t_Pin_cs = CubicSpline(np.array(control.getaxis("nu")), control.data)
 # }}}
 # }}}
 # {{{ Calculate $dg^2$
@@ -124,9 +113,7 @@ rec_data.rename(
     "nScans", "capture"
 )  # To be more consistent with the oscilloscope data rename
 #    the nScans dimension
-acq_time = np.diff(
-    rec_data.getaxis("t")[np.r_[0, -1]]
-).item()
+acq_time = np.diff(rec_data.getaxis("t")[np.r_[0, -1]]).item()
 rec_data.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
 rec_data = abs(rec_data) ** 2  # $dg^{2}*s/Hz$
 rec_data.mean("capture")
@@ -141,18 +128,14 @@ rec_data["t"] += carrier
 # }}}
 # {{{ Calculate power of test signal (Eq. S3)
 rec_data.run(np.max, "t")
-rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(
-    np.pi
-)
+rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(np.pi)
 # }}}
 # set x axis to $\Delta\nu$ and rename accordingly
 rec_data.rename("nu_test", "nu_offset")
 rec_data["nu_offset"] -= carrier
 Dnu = np.linspace(
-    (carrier / 1e3)
-    - (rec_data.getaxis("nu_offset")[-1] / 2),
-    (carrier / 1e3)
-    + (rec_data.getaxis("nu_offset")[-1] / 2),
+    (carrier / 1e3) - (rec_data.getaxis("nu_offset")[-1] / 2),
+    (carrier / 1e3) + (rec_data.getaxis("nu_offset")[-1] / 2),
     len(rec_data.getaxis("nu_offset")),
 )
 # }}}
@@ -165,13 +148,7 @@ print(dig_filter["nu_offset"])
 A, omega, delta_nu, nu_offset = symbols(
     "A omega delta_nu nu_offset", real=True
 )
-func_form = (
-    A
-    * sp.sinc(
-        (2 * np.pi * (nu_offset - omega)) / (delta_nu)
-    )
-    ** 2
-)
+func_form = A * sp.sinc((2 * np.pi * (nu_offset - omega)) / (delta_nu)) ** 2
 f = psd.lmfitdata(dig_filter)
 f.functional_form = func_form
 f.set_guess(
@@ -192,6 +169,4 @@ with psd.figlist_var() as fl:
     fl.plot(dig_filter, "o")
     fl.plot(fit, color="red", alpha=0.5)
     plt.xlabel(r"$\Delta \nu$ / kHz")
-    plt.ylabel(
-        r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW
-    )
+    plt.ylabel(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
