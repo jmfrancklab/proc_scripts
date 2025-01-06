@@ -23,7 +23,7 @@ import pyspecdata as psd
 from sympy import symbols
 import sympy as sp
 
-attenuator_dB = 40.021  # exact (measured) attenuation of
+attenuator_dB = 40.021  # Exact (measured) attenuation of
 #                         attenuation assembly between
 #                         source and receiver chain
 data_dir = "ODNP_NMR_comp/noise_tests"
@@ -51,7 +51,7 @@ input_data.rename("nu", r"$\nu$").name("Input Power").set_units("W")
 output_data = input_data.C
 output_data.name("Output Power").set_units("W")
 # }}}
-# {{{ set symbols and function for fit
+# {{{ Set symbols and function for fit
 A, omega, phi, t = symbols("A omega phi t", real=True)
 fit_function = A * sp.exp(1j * 2 * np.pi * omega * t + 1j * phi)
 # }}}
@@ -63,7 +63,7 @@ with psd.figlist_var() as fl:
             file1 + "/" + "%s" % nodename,
             directory=psd.getDATADIR(exp_type=data_dir),
         )
-        # {{{ fit to complex
+        # {{{ Fit to complex
         d = psd.lmfitdata(d)
         d.functional_form = fit_function
         d.set_guess(
@@ -78,11 +78,11 @@ with psd.figlist_var() as fl:
         d.fit(use_jacobian=False)
         d.eval()
         # }}}
-        # calculate (cycle averaged) power from amplitude of the
+        # Calculate (cycle averaged) power from amplitude of the
         # analytic signal:
         input_data[r"$\nu$", j] = abs(d.output("A")) ** 2 / 2 / 50
     input_data.sort(r"$\nu$")
-    # {{{ plot P at input of Receiver Chain
+    # {{{ Plot P at input of Receiver Chain
     fl.next("Power Input to Receiver Chain")
     input_data.set_plot_color("r")
     input_data.human_units(scale_data=True)
@@ -103,7 +103,7 @@ with psd.figlist_var() as fl:
             file2 + "/" + "%s" % nodename,
             directory=psd.getDATADIR(exp_type=data_dir),
         )
-        # {{{ fit to complex
+        # {{{ Fit to complex
         d = psd.lmfitdata(d)
         d.functional_form = fit_function
         d.set_guess(
@@ -137,7 +137,6 @@ with psd.figlist_var() as fl:
     gain_dB.set_plot_color("purple")
     gain_dB.human_units(scale_data=True)
     gain_spline = gain_dB.spline_lambda()
-    # {{{ Plot gain
     fl.next("Gain")
     fl.plot(gain_spline(nu_fine))
     fl.plot(gain_dB, "o")
