@@ -106,44 +106,44 @@ for j, nodename in enumerate(file2_nodes):
         # Allocate and array that's shaped like the data acquired
         # for one frequency but add axis to store the frequency of
         # the test signal frequency
-        rec_data1 = (d.shape + ("nu_test", len(resp_frq_kHz))).alloc()
-        rec_data1.setaxis("t", d.getaxis("t")).set_units("t", "s")
-        rec_data1.setaxis("nu_test", resp_frq_kHz).set_units("nu_test", "Hz")
-    rec_data1["nu_test", j] = d
+        rec_data = (d.shape + ("nu_test", len(resp_frq_kHz))).alloc()
+        rec_data.setaxis("t", d.getaxis("t")).set_units("t", "s")
+        rec_data.setaxis("nu_test", resp_frq_kHz).set_units("nu_test", "Hz")
+    rec_data["nu_test", j] = d
     SW = str(d.get_prop("acq_params")["SW_kHz"])
-rec_data1.sort("nu_test")
-rec_data1.rename("nScans", "capture")  # To be more consistent with the
+rec_data.sort("nu_test")
+rec_data.rename("nScans", "capture")  # To be more consistent with the
 #                                         oscilloscope data rename the nScans
 #                                         dimension
-acq_time = np.diff(rec_data1.getaxis("t")[np.r_[0, -1]]).item()
+acq_time = np.diff(rec_data.getaxis("t")[np.r_[0, -1]]).item()
 # {{{ Calculate PSD for each frequency
-rec_data1.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
-rec_data1 = abs(rec_data1) ** 2  # $dg^{2}*s/Hz$
-rec_data1.mean("capture")
-rec_data1 /= acq_time  # $dg^{2}/Hz$
+rec_data.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
+rec_data = abs(rec_data) ** 2  # $dg^{2}*s/Hz$
+rec_data.mean("capture")
+rec_data /= acq_time  # $dg^{2}/Hz$
 # Convolve using $\lambda_{G}$ specified above
-rec_data1.convolve("t", lambda_G, enforce_causality=False)
-rec_data1.ift("t")
-rec_data1.run(np.conj)  # Empirically needed to give offset
+rec_data.convolve("t", lambda_G, enforce_causality=False)
+rec_data.ift("t")
+rec_data.run(np.conj)  # Empirically needed to give offset
 #                        that increases with field
-rec_data1.ft("t")
-rec_data1["t"] += carrier
+rec_data.ft("t")
+rec_data["t"] += carrier
 # }}}
 # {{{ Calculate power of test signal (Eq. S3)
-rec_data1.run(np.max, "t")
-rec_data1 *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(2 * np.pi)
+rec_data.run(np.max, "t")
+rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(2 * np.pi)
 # }}}
 # }}}
 # {{{ Calculate receiver response as function of frequencies
 # Make axis of finely spaced frequencies to feed to spline
-rec_data1["nu_test"] -= carrier
+rec_data["nu_test"] -= carrier
 Dnu = np.linspace(
-    (carrier) - (rec_data1.getaxis("nu_test")[-1] / 2),
-    (carrier) + (rec_data1.getaxis("nu_test")[-1] / 2),
-    len(rec_data1.getaxis("nu_test")),
+    (carrier) - (rec_data.getaxis("nu_test")[-1] / 2),
+    (carrier) + (rec_data.getaxis("nu_test")[-1] / 2),
+    len(rec_data.getaxis("nu_test")),
 )
 P_in = Pin_spline(Dnu)  # Generate spline of input powers
-dig_filter = rec_data1 / P_in
+dig_filter = rec_data / P_in
 # }}}
 # {{{ Fit receiver response
 A, omega, delta_nu, nu_test = symbols("A omega delta_nu nu_test", real=True)
