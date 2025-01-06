@@ -17,23 +17,24 @@ Two files are required for the following example:
     the square of the data with the fit.
 """
 import numpy as np
-import pylab as plt
 import pyspecdata as psd
 from sympy import symbols
-from scipy.interpolate import CubicSpline
 import sympy as sp
 import re
 
+
 def for_plot(thisdata):
-    """ Converts :math:`dg^{2}/V^{2}` to :math:`dg/\mu V`
+    """Converts :math:`dg^{2}/V^{2}` to :math:`dg/\\mu V`
     and sets labels accordingly for pretty plotting"""
     # Take sqrt for units of $dg/V$
     thisdata.data = np.sqrt(thisdata.data)
     # Units of $dg/\mu V$
     thisdata /= 1e6
-    thisdata.rename("nu_test",r"$\Delta \nu$")
+    thisdata.rename("nu_test", r"$\Delta \nu$")
     thisdata.name(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
     return thisdata
+
+
 file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
 file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
 lambda_G = 0.4e3  # Width for Gaussian convolution
@@ -103,7 +104,7 @@ for j, nodename in enumerate(file2_nodes):
     )  # $\nu_{RX,LO}$
     if j == 0:
         # Allocate and array that's shaped like the data acquired
-        # for one frequency but add axis to store the frequency of 
+        # for one frequency but add axis to store the frequency of
         # the test signal frequency
         rec_data1 = (d.shape + ("nu_test", len(resp_frq_kHz))).alloc()
         rec_data1.setaxis("t", d.getaxis("t")).set_units("t", "s")
