@@ -73,13 +73,13 @@ def make_ndData(thisfile, nodes_in_kHz=True):
     if nodes_in_kHz:
         these_frqs = (
             np.array(
-                [int(j.split("_")[1]) for j in nodenames]
+                [float(j.split("_")[1]) for j in nodenames]
             )
             * 1e3
         )
     else:
         these_frqs = np.array(
-            [int(j.split("_")[1]) for j in nodenames]
+            [float(j.split("_")[1]) for j in nodenames]
         )
     # Determine if nScans is a dimension in the acquired data
     # If nScans is a dimension this indicates the data was acquired on the
@@ -189,7 +189,7 @@ with psd.figlist_var() as fl:
     rec_data.run(np.sqrt)  # dg
     # center data at 0 MHz thus converting to $\Delta\nu$ rather than
     # $\nu_{test}$
-    rec_data["nu_test"] = rec_data["nu_test"] - carrier
+    rec_data["nu_test"] -= carrier
     rec_data.rename("nu_test", Dnu_name)
     rec_data.rename("t", nu_direct_name)
     # {{{ Plot 2D pcolor
