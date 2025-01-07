@@ -50,8 +50,8 @@ file2_nodes = psd.find_file(
 )
 # $\nu_{test}$
 nu_test = np.array([int(j.split("_")[1]) for j in file2_nodes])
-# {{{ Calculate input power (acquired on Oscilloscope)
-# {{{ Make empty nddata to drop the calculated $V^{2}$ into with corresponding
+# {{{ Calculate input V (acquired on Oscilloscope)
+# {{{ Make empty nddata to drop the calculated V into with corresponding
 #     frequency ($\nu$) output by AFG source, and set the frequencies based on
 #     the node names
 control = psd.ndshape([len(control_frqs)], ["nu_test"]).alloc()
@@ -81,13 +81,13 @@ for j, nodename in enumerate(file1_nodes):
     f.eval()
     # }}}
     V_amp = f.output("A")
-    control["nu_test", j] = V_amp * 1e6 # 
+    control["nu_test", j] = abs(V_amp) * 1e6 # μV
 # {{{ make spline for power going into RX box
 control.sort("nu_test")
 Pin_spline = control.spline_lambda()
 # }}}
 # }}}
-# {{{ Calculate $dg^2$
+# {{{ Calculate dg
 for j, nodename in enumerate(file2_nodes):
     d = psd.find_file(
         file2,
