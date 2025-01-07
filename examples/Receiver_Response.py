@@ -9,7 +9,7 @@ Two files are required for the following example:
     the :math:`V_{pp}` (in μV).
     File2 contains the quadrature signal acquired on the receiver when the same
     signal of File1 is injected into it. Each node pertains to signal with a
-    different frequency (in kHz) which are converted to a PSD. The amplitude
+    different frequency (in Hz) which are converted to a PSD. The amplitude
     (in dg) is calculated from the peak of the convolved PSD.
 
     The receiver response is then the ratio of :math:`dg(\\nu)` to
