@@ -23,15 +23,7 @@ from sympy import symbols
 import sympy as sp
 import re
 
-
-def for_plot(thisdata):
-    """Converts :math:`dg^{2}/V^{2}` to :math:`dg/\\mu V`
-    and sets labels accordingly for plotting"""
-    thisdata.rename("nu_test", r"$\Delta \nu$")
-    thisdata.name(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
-    return thisdata
-
-
+Dnu_name = r"$\Delta\nu$"
 lambda_G = 0.4e3  # Width for Gaussian convolution
 data_dir = "ODNP_NMR_comp/noise_tests"
 file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
@@ -85,6 +77,8 @@ for j, nodename in enumerate(file1_nodes):
     control["nu_test", j] = abs(V_amp) * 1e6 # μV
 # {{{ make spline for power going into RX box
 control.sort("nu_test")
+control.rename("nu_test",Dnu_name) # since we will be applying $\Delta\nu$
+#                                    axis to spline
 Pin_spline = control.spline_lambda()
 # }}}
 # }}}
@@ -133,17 +127,21 @@ rec_data.run(np.sqrt) # dg
 # {{{ Calculate receiver response as function of frequencies
 # Make axis of finely spaced frequencies to feed to spline
 rec_data["nu_test"] = rec_data["nu_test"] - carrier # center data at 0 MHz
+#                                                     thus converting to $\Delta\nu$
+#                                                     rather than $\nu_{test}$
+rec_data.rename("nu_test",Dnu_name)
 Dnu = np.linspace(
-    (carrier) - (rec_data.getaxis("nu_test")[-1] / 2),
-    (carrier) + (rec_data.getaxis("nu_test")[-1] / 2),
-    len(rec_data.getaxis("nu_test")),
+    (carrier) - (rec_data.getaxis(Dnu_name)[-1] / 2),
+    (carrier) + (rec_data.getaxis(Dnu_name)[-1] / 2),
+    len(rec_data.getaxis(Dnu_name)),
 )
 P_in = Pin_spline(Dnu)  # Generate spline of input powers
 dig_filter = rec_data / P_in # dg/μV
+dig_filter.name(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
 # }}}
 # {{{ Fit receiver response
-A, omega, delta_nu, nu_test = symbols("A omega delta_nu nu_test", real=True)
-func_form = A * abs(sp.sinc((2 * pi * (nu_test - omega)) / (delta_nu)))
+A, omega, delta_nu, Dnu_name = symbols(r"A omega delta_nu $\Delta\nu$", real=True)
+func_form = A * abs(sp.sinc((2 * pi * (Dnu_name - omega)) / (delta_nu)))
 f = psd.lmfitdata(dig_filter)
 f.functional_form = func_form
 f.set_guess(
@@ -156,5 +154,5 @@ fit = f.eval()
 # }}}
 with psd.figlist_var() as fl:
     fl.next("Receiver Response")
-    fl.plot(for_plot(dig_filter), "o")
-    fl.plot(for_plot(fit), color="red", alpha=0.5)
+    fl.plot(dig_filter, "o")
+    fl.plot(fit, color="red", alpha=0.5)
