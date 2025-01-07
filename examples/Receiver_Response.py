@@ -48,8 +48,8 @@ def get_freqs(thisfile):
     =======
     nodenames: list
         List of strings of the nodenames sorted by the test signal frequency.
-    these_frqs: list
-        List of sorted signal frequencies as integers
+    these_frqs: array
+        Array of sorted signal frequencies as integers
     """
     nodenames = sorted(
         psd.find_file(
