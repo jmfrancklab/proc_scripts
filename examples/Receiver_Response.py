@@ -114,20 +114,18 @@ rec_data.rename("nScans", "capture")  # To be more consistent with the
 acq_time = np.diff(rec_data["t"][r_[0, -1]]).item()
 # {{{ Calculate PSD for each frequency (we will calculate power from the A
 #     of the convolved test signal)
+rec_data.run(np.conj)  # Empirically needed to give offset
+#                        that increases with field
 rec_data.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
 rec_data = abs(rec_data) ** 2  # $dg^{2}*s/Hz$
 rec_data.mean("capture")
 rec_data /= acq_time  # $dg^{2}/Hz$
 # Convolve using $\lambda_{G}$ specified above
 rec_data.convolve("t", lambda_G, enforce_causality=False)
-rec_data.ift("t")
-rec_data.run(np.conj)  # Empirically needed to give offset
-#                        that increases with field
-rec_data.ft("t")
 # }}}
 # {{{ Calculate power of test signal (Eq. S3)
 rec_data["t"] += carrier
-rec_data.run(np.max, "t") # $dg^{2}$
+rec_data.run(np.max, "t") # Takes maximum of PSD $\rightarrow dg^{2}$
 rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(pi)
 rec_data.run(np.sqrt) # dg
 # }}}
