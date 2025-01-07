@@ -34,12 +34,6 @@ nu_name = r"$\nu$"
 
 
 def determine_power_from_fit(filename, guessamp, guessph):
-    """open the file, and output an nddata that gives amplitude vs. frequency
-
-    assume node names end with _frq with frq in kHz and signal is complex
-    exponential in the time domain.
-    """
-    # make symbols for fits
     A, omega, phi, t = symbols("A omega phi t", real=True)
     # Nodenames for both files match so extract them here for both files
     all_node_names = sorted(
@@ -83,7 +77,7 @@ def determine_power_from_fit(filename, guessamp, guessph):
         # Calculate (cycle averaged) power from amplitude of the analytic
         # signal:
         p[nu_name, j] = abs(d.output("A")) ** 2 / 2 / 50
-        return p
+    return p
 
 
 input_power = determine_power_from_fit(file1, 5e-2, 0.75)
@@ -111,6 +105,6 @@ with psd.figlist_var() as fl:
     gain_dB = 10 * np.log10(output_power / input_power) + attenuator_dB
     gain_dB.name("Gain").set_units("dB").set_plot_color("purple")
     gain_dB.human_units(scale_data=True)
-    #gain_spline = gain_dB.spline_lambda()
-    #fl.plot(gain_spline(nu_fine))
+    gain_spline = gain_dB.spline_lambda()
+    fl.plot(gain_spline(nu_fine))
     fl.plot(gain_dB, "o")
