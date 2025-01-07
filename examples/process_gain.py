@@ -33,7 +33,7 @@ file2 = "240123_power_out_analytic.h5"
 nu_name = r"$\nu$"
 
 
-def determine_power_from_fit(filename):
+def determine_power_from_fit(filename, guessamp, guessph):
     """open the file, and output an nddata that gives amplitude vs. frequency
 
     assume node names end with _frq with frq in kHz and signal is complex
@@ -62,7 +62,7 @@ def determine_power_from_fit(filename):
     )
     for j, nodename in enumerate(all_node_names):
         d = psd.find_file(
-            filename,
+            re.escape(filename),
             expno=nodename,
             exp_type=data_dir,
         )
@@ -70,13 +70,13 @@ def determine_power_from_fit(filename):
         d = psd.lmfitdata(d)
         d.functional_form = A * sp.exp(1j * 2 * pi * omega * t + 1j * phi)
         d.set_guess(
-            A=dict(value=5e-2, min=1e-4, max=1),
+            A=dict(value=guessamp, min=1e-4, max=1),
             omega=dict(
                 value=p[nu_name][j],
                 min=p[nu_name][j] - 1e4,
                 max=p[nu_name][j] + 1e4,
             ),
-            phi=dict(value=0.75, min=-pi, max=pi),
+            phi=dict(value=guessph, min=-pi, max=pi),
         )
         d.fit(use_jacobian=False)
         # }}}
@@ -86,9 +86,9 @@ def determine_power_from_fit(filename):
         return p
 
 
-input_power = determine_power_from_fit(file1)
+input_power = determine_power_from_fit(file1, 5e-2, 0.75)
 input_power.name("Input Power").set_plot_color("r")
-output_power = determine_power_from_fit(file2)
+output_power = determine_power_from_fit(file2, 15e-2, 0.75)
 output_power.name("Output Power").set_plot_color("b")
 
 with psd.figlist_var() as fl:
