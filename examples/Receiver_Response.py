@@ -42,14 +42,14 @@ file1_nodes = psd.find_file(
     exp_type=data_dir,
     return_list=True,
 )
-control_frqs = np.array([float(j.split("_")[1]) for j in file1_nodes])*1e3
+control_frqs = np.array([int(j.split("_")[1]) for j in file1_nodes])*1e3
 file2_nodes = psd.find_file(
     re.escape(file2),
     exp_type=data_dir,
     return_list=True,
 )
 # $\nu_{test}$
-nu_test = np.array([float(j.split("_")[1]) for j in file2_nodes])
+nu_test = np.array([int(j.split("_")[1]) for j in file2_nodes])
 # {{{ Calculate input power (acquired on Oscilloscope)
 # {{{ Make empty nddata to drop the calculated $V^{2}$ into with corresponding
 #     frequency ($\nu$) output by AFG source, and set the frequencies based on
@@ -78,7 +78,7 @@ for j, nodename in enumerate(file1_nodes):
         phi=dict(value=0.75, min=-np.pi, max=np.pi),
     )
     f.fit(use_jacobian=False)
-    fit = f.eval()
+    f.eval()
     # }}}
     V_amp = f.output("A")
     control["nu_test", j] = V_amp * 1e6 # 
@@ -133,7 +133,7 @@ rec_data.run(np.sqrt) # dg
 # }}}
 # {{{ Calculate receiver response as function of frequencies
 # Make axis of finely spaced frequencies to feed to spline
-rec_data["nu_test"] -= carrier # center data at 0 MHz
+rec_data["nu_test"] = rec_data["nu_test"] - carrier # center data at 0 MHz
 Dnu = np.linspace(
     (carrier) - (rec_data.getaxis("nu_test")[-1] / 2),
     (carrier) + (rec_data.getaxis("nu_test")[-1] / 2),
