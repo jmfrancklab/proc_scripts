@@ -135,15 +135,14 @@ Dnu = np.linspace(
     (carrier) + (rec_data.getaxis(Dnu_name)[-1] / 2),
     len(rec_data.getaxis(Dnu_name)),
 )
-P_in = Pin_spline(Dnu)  # Generate spline of input powers
-dig_filter = rec_data / P_in # dg/μV
+control = Pin_spline(Dnu)  # Generate spline of input powers
+dig_filter = rec_data / control # dg/μV
 dig_filter.name(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
 # }}}
 # {{{ Fit receiver response
 A, omega, delta_nu, Dnu_name = symbols(r"A omega delta_nu $\Delta\nu$", real=True)
-func_form = A * abs(sp.sinc((2 * pi * (Dnu_name - omega)) / (delta_nu)))
 f = psd.lmfitdata(dig_filter)
-f.functional_form = func_form
+f.functional_form = A * abs(sp.sinc((2 * pi * (Dnu_name - omega)) / (delta_nu)))
 f.set_guess(
     A=dict(value=400, min=1, max=9e3),
     omega=dict(value=1, min=-100, max=100),
