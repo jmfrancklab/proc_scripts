@@ -27,7 +27,7 @@ def for_plot(thisdata):
     """Converts :math:`dg^{2}/V^{2}` to :math:`dg/\\mu V`
     and sets labels accordingly for plotting"""
     # Take sqrt for units of $dg/V$
-    thisdata.data = np.sqrt(thisdata.data)
+    #thisdata.data = np.sqrt(thisdata.data)
     # Units of $dg/\mu V$
     thisdata /= 1e6
     thisdata.rename("nu_test", r"$\Delta \nu$")
@@ -46,20 +46,20 @@ file1_nodes = psd.find_file(
     exp_type=data_dir,
     return_list=True,
 )
-control_frqs_kHz = np.array([float(j.split("_")[1]) for j in file1_nodes])
+control_frqs = np.array([float(j.split("_")[1]) for j in file1_nodes])*1e3
 file2_nodes = psd.find_file(
     re.escape(file2),
     exp_type=data_dir,
     return_list=True,
 )
 # $\nu_{test}$
-nu_test_kHz = np.array([float(j.split("_")[1]) for j in file2_nodes])
+nu_test = np.array([float(j.split("_")[1]) for j in file2_nodes])
 # {{{ Calculate input power (acquired on Oscilloscope)
 # {{{ Make empty nddata to drop the calculated $V^{2}$ into with corresponding
 #     frequency ($\nu$) output by AFG source, and set the frequencies based on
 #     the node names
-control = psd.ndshape([len(control_frqs_kHz)], ["nu_test"]).alloc()
-control.setaxis("nu_test", control_frqs_kHz).set_units("nu_test", "Hz")
+control = psd.ndshape([len(control_frqs)], ["nu_test"]).alloc()
+control.setaxis("nu_test", control_frqs).set_units("nu_test", "Hz")
 # }}}
 for j, nodename in enumerate(file1_nodes):
     rf_frq = control["nu_test"][j]
@@ -73,7 +73,7 @@ for j, nodename in enumerate(file1_nodes):
     f = psd.lmfitdata(d)
     f.functional_form = A * sp.exp(1j * 2 * np.pi * omega * t + 1j * phi)
     f.set_guess(
-        A=dict(value=5e-2, min=1e-4, max=1),
+        A=dict(value=5e-3, min=1e-4, max=1),
         omega=dict(
             value=rf_frq,
             min=rf_frq - 1e4,
@@ -85,9 +85,12 @@ for j, nodename in enumerate(file1_nodes):
     fit = f.eval()
     # }}}
     V_amp = f.output("A")
-    control["nu_test", j] = V_amp**2
+    control["nu_test", j] = V_amp * 1e6#**2
 # {{{ make spline for power going into RX box
 control.sort("nu_test")
+with psd.figlist_var() as fl:
+    fl.next("P in uV")
+    fl.plot(control)
 Pin_spline = control.spline_lambda()
 # }}}
 # }}}
@@ -105,9 +108,9 @@ for j, nodename in enumerate(file2_nodes):
         # Allocate and array that's shaped like one of the datasets
         # acquired (with 100 captures and a direct t dimension)
         # but add axis to store the frequency of the test signal
-        rec_data = (d.shape + ("nu_test", len(nu_test_kHz))).alloc()
+        rec_data = (d.shape + ("nu_test", len(nu_test))).alloc()
         rec_data.setaxis("t", d.getaxis("t")).set_units("t", "s")
-        rec_data.setaxis("nu_test", nu_test_kHz).set_units("nu_test", "Hz")
+        rec_data.setaxis("nu_test", nu_test).set_units("nu_test", "Hz")
     rec_data["nu_test", j] = d
     SW = str(d.get_prop("acq_params")["SW_kHz"]) # For labeling final plot
 rec_data.sort("nu_test")
@@ -130,8 +133,9 @@ rec_data.ft("t")
 # }}}
 # {{{ Calculate power of test signal (Eq. S3)
 rec_data["t"] += carrier
-rec_data.run(np.max, "t")
-rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(2 * np.pi)
+rec_data.run(np.max, "t") # $dg^{2}$
+rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(np.pi)
+rec_data.run(np.sqrt) # dg
 # }}}
 # }}}
 # {{{ Calculate receiver response as function of frequencies
@@ -143,15 +147,15 @@ Dnu = np.linspace(
     len(rec_data.getaxis("nu_test")),
 )
 P_in = Pin_spline(Dnu)  # Generate spline of input powers
-dig_filter = rec_data / P_in
+dig_filter = rec_data / P_in # dg/μV
 # }}}
 # {{{ Fit receiver response
 A, omega, delta_nu, nu_test = symbols("A omega delta_nu nu_test", real=True)
-func_form = A * sp.sinc((2 * np.pi * (nu_test - omega)) / (delta_nu)) ** 2
+func_form = A * abs(sp.sinc((2 * np.pi * (nu_test - omega)) / (delta_nu)))
 f = psd.lmfitdata(dig_filter)
 f.functional_form = func_form
 f.set_guess(
-    A=dict(value=1.6e17, min=1e17, max=9e19),
+    A=dict(value=400, min=1, max=9e3),
     omega=dict(value=1, min=-100, max=100),
     delta_nu=dict(value=9e3, min=3, max=1e4),
 )
