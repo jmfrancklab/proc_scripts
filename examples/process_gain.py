@@ -31,21 +31,41 @@ data_dir = "ODNP_NMR_comp/noise_tests"
 file1 = "240123_power_in_analytic.h5"
 file2 = "240123_power_out_analytic.h5"
 nu_name = r"$\nu$"
+# Nodenames for both files match so extract them here for both files
+all_node_names = sorted(
+    psd.find_file(
+        re.escape(file1),
+        exp_type=data_dir,
+        return_list=True,
+    ),
+    key=lambda x: float(x.split("_")[1]),
+)
+# Frequency of signal saved in each nodename in kHz
+frq_kHz = np.array(
+    [float(j.split("_")[1]) for j in all_node_names]
+)
 
 
 def determine_power_from_fit(filename, guessamp, guessph):
+    """Fit time capture to extract the amplitude ($V_{p}$) for each node within
+    the fed HDF5 file.
+
+    Parameters
+    ==========
+    filename: str
+        Name of HDF5 file
+    guessamp: float
+        Approximate guess for the amplitude of the test signal in V
+    guessph: float
+        Approximate guess for the phase of the test signal
+
+    Returns
+    =======
+    p: nddata
+        nddata containing the test signal frequencies and corresponding
+        amplitudes from fits
+    """
     A, omega, phi, t = symbols("A omega phi t", real=True)
-    # Nodenames for both files match so extract them here for both files
-    all_node_names = sorted(
-        psd.find_file(
-            re.escape(filename),
-            exp_type=data_dir,
-            return_list=True,
-        ),
-        key=lambda x: float(x.split("_")[1]),
-    )
-    # Frequency of signal saved in each nodename in kHz
-    frq_kHz = np.array([float(j.split("_")[1]) for j in all_node_names])
     p = (
         psd.ndshape([len(frq_kHz)], ["nu"])
         .alloc()
@@ -62,7 +82,9 @@ def determine_power_from_fit(filename, guessamp, guessph):
         )
         # {{{ Fit to complex
         d = psd.lmfitdata(d)
-        d.functional_form = A * sp.exp(1j * 2 * pi * omega * t + 1j * phi)
+        d.functional_form = A * sp.exp(
+            1j * 2 * pi * omega * t + 1j * phi
+        )
         d.set_guess(
             A=dict(value=guessamp, min=1e-4, max=1),
             omega=dict(
@@ -82,7 +104,9 @@ def determine_power_from_fit(filename, guessamp, guessph):
 
 input_power = determine_power_from_fit(file1, 5e-2, 0.75)
 input_power.name("Input Power").set_plot_color("r")
-output_power = determine_power_from_fit(file2, 15e-2, 0.75)
+output_power = determine_power_from_fit(
+    file2, 15e-2, 0.75
+)
 output_power.name("Output Power").set_plot_color("b")
 
 with psd.figlist_var() as fl:
@@ -102,8 +126,13 @@ with psd.figlist_var() as fl:
     fl.plot(output_power, "o")
     fl.plot(output_spline(nu_fine))
     fl.next("Gain")
-    gain_dB = 10 * np.log10(output_power / input_power) + attenuator_dB
-    gain_dB.name("Gain").set_units("dB").set_plot_color("purple")
+    gain_dB = (
+        10 * np.log10(output_power / input_power)
+        + attenuator_dB
+    )
+    gain_dB.name("Gain").set_units("dB").set_plot_color(
+        "purple"
+    )
     gain_dB.human_units(scale_data=True)
     gain_spline = gain_dB.spline_lambda()
     fl.plot(gain_spline(nu_fine))
