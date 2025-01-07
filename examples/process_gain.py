@@ -19,6 +19,7 @@ The plots are produced in the following order:
 """
 
 import numpy as np
+from numpy import pi
 import pyspecdata as psd
 from sympy import symbols
 import sympy as sp
@@ -60,7 +61,7 @@ output_data.name("Output Power").set_units("W")
 # {{{ Set symbols and function for fits
 A, omega, phi, t = symbols("A omega phi t", real=True)
 fit_function = A * sp.exp(
-    1j * 2 * np.pi * omega * t + 1j * phi
+    1j * 2 * pi * omega * t + 1j * phi
 )
 # }}}
 with psd.figlist_var() as fl:
@@ -81,7 +82,7 @@ with psd.figlist_var() as fl:
                 min=input_data[r"$\nu$"][j] - 1e4,
                 max=input_data[r"$\nu$"][j] + 1e4,
             ),
-            phi=dict(value=0.75, min=-np.pi, max=np.pi),
+            phi=dict(value=0.75, min=-pi, max=pi),
         )
         d.fit(use_jacobian=False)
         d.eval()
@@ -123,7 +124,7 @@ with psd.figlist_var() as fl:
                 min=output_data[r"$\nu$"][j] - 1e4,
                 max=output_data[r"$\nu$"][j] + 1e4,
             ),
-            phi=dict(value=0.75, min=-np.pi, max=np.pi),
+            phi=dict(value=0.75, min=-pi, max=pi),
         )
         d.fit(use_jacobian=False)
         d.eval()
