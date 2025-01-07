@@ -6,14 +6,14 @@ Two files are required for the following example:
     File1 contains the analytic signal acquired on the GDS oscilloscope
     directly output from the AFG output. Each node pertains to signal with a
     different frequency (in kHz) which are fit to a complex function to extract
-    the :math:`V_{pp}` (in :math:`\mu\\text{V}`).
+    the :math:`V_{pp}` (in μV).
     File2 contains the quadrature signal acquired on the receiver when the same
     signal of File1 is injected into it. Each node pertains to signal with a
-    different frequency (in kHz) which are converted to a PSD. The amplitude (in
-    dg) is calculated from the peak of the convolved PSD.
+    different frequency (in kHz) which are converted to a PSD. The amplitude
+    (in dg) is calculated from the peak of the convolved PSD.
 
     The receiver response is then the ratio of :math:`dg(\\nu)` to
-    :math:`V(\\nu)` which is fit to an absolute sinc function.
+    :math:`μV(\\nu)` which is fit to an absolute sinc function.
 """
 import numpy as np
 from numpy import r_, pi
@@ -29,19 +29,42 @@ file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
 file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
 # There are less nodes acquired for the control case (since we assume it's
 # relatively flat) so I need to separately define them
-control_nodes = sorted(psd.find_file( re.escape(file1), exp_type=data_dir,
-    return_list=True), key=lambda x: int(x.split("_")[1]))
-control_frqs = np.array([int(j.split("_")[1]) for j in control_nodes])*1e3
-nu_test_nodes = sorted(psd.find_file(re.escape(file2), exp_type=data_dir,
-    return_list=True), key = lambda x: int(x.split("_")[1]))
+control_nodes = sorted(
+    psd.find_file(
+        re.escape(file1),
+        exp_type=data_dir,
+        return_list=True,
+    ),
+    key=lambda x: int(x.split("_")[1]),
+)
+control_frqs = (
+    np.array(
+        [int(j.split("_")[1]) for j in control_nodes]
+    )
+    * 1e3
+)
+nu_test_nodes = sorted(
+    psd.find_file(
+        re.escape(file2),
+        exp_type=data_dir,
+        return_list=True,
+    ),
+    key=lambda x: int(x.split("_")[1]),
+)
 # $\nu_{test}$
-nu_test = np.array([int(j.split("_")[1]) for j in nu_test_nodes])
+nu_test = np.array(
+    [int(j.split("_")[1]) for j in nu_test_nodes]
+)
 # {{{ Calculate input V (acquired on Oscilloscope)
 # {{{ Make empty nddata to drop the calculated V into with corresponding
 #     frequency ($\nu$) output by AFG source, and set the frequencies based on
 #     the node names
-control = psd.ndshape([len(control_frqs)], ["nu_test"]).alloc()
-control.setaxis("nu_test", control_frqs).set_units("nu_test", "Hz")
+control = psd.ndshape(
+    [len(control_frqs)], ["nu_test"]
+).alloc()
+control.setaxis("nu_test", control_frqs).set_units(
+    "nu_test", "Hz"
+)
 # }}}
 for j, nodename in enumerate(control_nodes):
     rf_frq = control["nu_test"][j]
@@ -53,7 +76,9 @@ for j, nodename in enumerate(control_nodes):
     # {{{ fit signal in t domain to complex exponential
     A, omega, phi, t = symbols("A omega phi t", real=True)
     f = psd.lmfitdata(d)
-    f.functional_form = A * sp.exp(1j * 2 * pi * omega * t + 1j * phi)
+    f.functional_form = A * sp.exp(
+        1j * 2 * pi * omega * t + 1j * phi
+    )
     f.set_guess(
         A=dict(value=5e-3, min=1e-4, max=1),
         omega=dict(
@@ -67,9 +92,11 @@ for j, nodename in enumerate(control_nodes):
     f.eval()
     # }}}
     V_amp = f.output("A")
-    control["nu_test", j] = abs(V_amp) * 1e6 # μV
+    control["nu_test", j] = abs(V_amp) * 1e6  # μV
 # {{{ make spline for power going into RX box
-control.rename("nu_test",Dnu_name) # since we will be applying $\Delta\nu$
+control.rename(
+    "nu_test", Dnu_name
+)  # since we will be applying $\Delta\nu$
 #                                    axis to spline
 Pin_spline = control.spline_lambda()
 # }}}
@@ -88,12 +115,22 @@ for j, nodename in enumerate(nu_test_nodes):
         # Allocate and array that's shaped like one of the datasets
         # acquired (with 100 captures and a direct t dimension)
         # but add axis to store the frequency of the test signal
-        rec_data = (d.shape + ("nu_test", len(nu_test))).alloc()
-        rec_data.setaxis("t", d.getaxis("t")).set_units("t", "s")
-        rec_data.setaxis("nu_test", nu_test).set_units("nu_test", "Hz")
+        rec_data = (
+            d.shape + ("nu_test", len(nu_test))
+        ).alloc()
+        rec_data.setaxis("t", d.getaxis("t")).set_units(
+            "t", "s"
+        )
+        rec_data.setaxis("nu_test", nu_test).set_units(
+            "nu_test", "Hz"
+        )
     rec_data["nu_test", j] = d
-    SW = str(d.get_prop("acq_params")["SW_kHz"]) # For labeling final plot
-rec_data.rename("nScans", "capture")  # To be more consistent with the
+    SW = str(
+        d.get_prop("acq_params")["SW_kHz"]
+    )  # For labeling final plot
+rec_data.rename(
+    "nScans", "capture"
+)  # To be more consistent with the
 #                                        oscilloscope data rename the nScans
 #                                        dimension
 acq_time = np.diff(rec_data["t"][r_[0, -1]]).item()
@@ -110,30 +147,43 @@ rec_data.convolve("t", lambda_G, enforce_causality=False)
 # }}}
 # {{{ Calculate power of test signal (Eq. S3)
 rec_data["t"] += carrier
-rec_data.run(np.max, "t") # Takes maximum of PSD $\rightarrow dg^{2}$
-rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(pi)
-rec_data.run(np.sqrt) # dg
+rec_data.run(
+    np.max, "t"
+)  # Takes maximum of PSD $\rightarrow dg^{2}$
+rec_data *= (
+    lambda_G / (2 * np.sqrt(np.log(2)))
+) * np.sqrt(pi)
+rec_data.run(np.sqrt)  # dg
 # }}}
 # }}}
 # {{{ Calculate receiver response as function of frequencies
 # Make axis of finely spaced frequencies to feed to spline
-rec_data["nu_test"] = rec_data["nu_test"] - carrier # center data at 0 MHz
-#                                                     thus converting to $\Delta\nu$
-#                                                     rather than $\nu_{test}$
-rec_data.rename("nu_test",Dnu_name)
+rec_data["nu_test"] = (
+    rec_data["nu_test"] - carrier
+)  # center data at 0 MHz thus converting to $\Delta\nu$ rather than
+#    $\nu_{test}$
+rec_data.rename("nu_test", Dnu_name)
 Dnu = np.linspace(
     (carrier) - (rec_data.getaxis(Dnu_name)[-1] / 2),
     (carrier) + (rec_data.getaxis(Dnu_name)[-1] / 2),
     len(rec_data.getaxis(Dnu_name)),
 )
-control = Pin_spline(Dnu)  # Generate spline of input powers
-dig_filter = rec_data / control # dg/μV
-dig_filter.name(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
+control = Pin_spline(
+    Dnu
+)  # Generate spline of input powers
+dig_filter = rec_data / control  # dg/μV
+dig_filter.name(
+    r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW
+)
 # }}}
 # {{{ Fit receiver response
-A, omega, delta_nu, Dnu_name = symbols(r"A omega delta_nu $\Delta\nu$", real=True)
+A, omega, delta_nu, Dnu_name = symbols(
+    r"A omega delta_nu $\Delta\nu$", real=True
+)
 f = psd.lmfitdata(dig_filter)
-f.functional_form = A * abs(sp.sinc((2 * pi * (Dnu_name - omega)) / (delta_nu)))
+f.functional_form = A * abs(
+    sp.sinc((2 * pi * (Dnu_name - omega)) / (delta_nu))
+)
 f.set_guess(
     A=dict(value=400, min=1, max=9e3),
     omega=dict(value=1, min=-100, max=100),
