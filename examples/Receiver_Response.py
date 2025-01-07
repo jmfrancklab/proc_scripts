@@ -23,7 +23,7 @@ from sympy import symbols
 import sympy as sp
 import re
 
-
+# {{{ Functions
 def get_nodenames(thisfile, file_loc):
     """Get a list of the nodenames sorted by the AFG signal
     frequency
@@ -106,7 +106,7 @@ def make_ndData(thisdata, nodenames, nodes_in_kHz=True):
         "nu_test", "Hz"
     )
     return these_frqs, ret_data
-
+# }}}
 
 Dnu_name = r"$\Delta\nu$"
 nu_direct = r"$\nu_{direct}$"
