@@ -96,8 +96,7 @@ for j, nodename in enumerate(control_nodes):
 # {{{ make spline for power going into RX box
 control.rename(
     "nu_test", Dnu_name
-)  # since we will be applying $\Delta\nu$
-#                                    axis to spline
+)  # since we will be applying $\Delta\nu$ axis to spline
 Pin_spline = control.spline_lambda()
 # }}}
 # }}}
