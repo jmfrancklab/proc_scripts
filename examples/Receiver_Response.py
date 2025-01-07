@@ -33,24 +33,16 @@ file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
 
 # {{{ Function to return the nodenames, test signal frequencies, and an
 #     empty nddata to drop calculated dg and V into
-def make_ndData(thisfile, nodes_in_kHz=True):
-    """Determine the nodenames of the file and sort them according to the
-    frequency of the test signal. Based on these nodenames a list of the
-    frequencies as integers are made. Anempty NDData in the shape of the
-    acquired data is created with an extra dimension 'nu_test' that
-    the sorted frequencies are placed inside that dimension.
+def get_freqs(thisfile):
+    """Determine the nodenames of the file and put them in
+    an ordered list. From the list produce an array
+    containing the ordered frequencies as floats.
 
     Parameters
     ==========
     thisfile: str
         Name of file that has nodes containing test signal at varying
         frequencies.
-    nodes_in_kHz: bool
-        Typically the nodenames are saved with the signal frequency
-        in kHz. However, in older files the nodenames are saved with
-        the signal frequency in Hz. If the frequencies are in Hz and
-        this argument is true, the frequencies will be converted to
-        Hz.
 
     Returns
     =======
@@ -58,9 +50,6 @@ def make_ndData(thisfile, nodes_in_kHz=True):
         List of strings of the nodenames sorted by the test signal frequency.
     these_frqs: list
         List of sorted signal frequencies as integers
-    ret_data: nddata
-        Empty nddata in the appropriate shape with an extra 'nu_test'
-        dimension that contains the signal frequencies
     """
     nodenames = sorted(
         psd.find_file(
@@ -70,48 +59,22 @@ def make_ndData(thisfile, nodes_in_kHz=True):
         ),
         key=lambda x: int(x.split("_")[1]),
     )
-    if nodes_in_kHz:
-        these_frqs = (
-            np.array(
-                [float(j.split("_")[1]) for j in nodenames]
-            )
-            * 1e3
-        )
-    else:
-        these_frqs = np.array(
-            [float(j.split("_")[1]) for j in nodenames]
-        )
-    # Determine if nScans is a dimension in the acquired data
-    # If nScans is a dimension this indicates the data was acquired on the
-    # receiver with the intention to convert to a PSD in which case we will
-    # just pull the shape of one of the datasets and copy its shape first
-    og_data = psd.find_file(
-        thisfile, expno=nodenames[0], exp_type=data_dir
+    these_frqs = np.array(
+        [float(j.split("_")[1]) for j in nodenames]
     )
-    if "nScans" in og_data.dimlabels:
-        ret_data = (
-            og_data.shape + ("nu_test", len(these_frqs))
-        ).alloc()
-        ret_data.setaxis(
-            "t", og_data.getaxis("t")
-        ).set_units("t", "s")
-    else:
-        ret_data = psd.ndshape(
-            [len(these_frqs)], ["nu_test"]
-        ).alloc()
-    ret_data.setaxis("nu_test", these_frqs).set_units(
-        "nu_test", "Hz"
-    )
-    return nodenames, these_frqs, ret_data
+    return nodenames, these_frqs
 
 
 # }}}
-control_nodenames, control_frqs, control = make_ndData(
-    file1
+control_nodenames, control_frqs = get_freqs(file1)
+control_frqs *= 1e3  # kHz to Hz
+control = (
+    psd.ndshape([len(control_frqs)], ["nu_test"])
+    .alloc()
+    .setaxis("nu_test", control_frqs)
+    .set_units("nu_test", "Hz")
 )
-rec_nodenames, nu_test, rec_data = make_ndData(
-    thisfile=file2, nodes_in_kHz=False
-)
+rec_nodenames, rec_frqs = get_freqs(file2)
 # {{{ Calculate input V (acquired on Oscilloscope)
 for j, nodename in enumerate(control_nodenames):
     d = psd.find_file(
@@ -154,6 +117,16 @@ with psd.figlist_var() as fl:
             exp_type=data_dir,
             expno=nodename,
         )
+        if j == 0:
+            rec_data = (
+                d.shape + ("nu_test", len(rec_frqs))
+            ).alloc()
+            rec_data.setaxis(
+                "t", d.getaxis("t")
+            ).set_units("t", "s")
+            rec_data.setaxis(
+                "nu_test", rec_frqs
+            ).set_units("nu_test", "Hz")
         carrier = (
             d.get_prop("acq_params")["carrierFreq_MHz"]
             * 1e6
