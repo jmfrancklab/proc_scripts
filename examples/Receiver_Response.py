@@ -54,7 +54,7 @@ def get_freqs(thisfile):
         psd.find_file(
             re.escape(thisfile), exp_type=data_dir, return_list=True
         ),
-        key=lambda x: int(x.split("_")[1]),
+        key=lambda x: float(x.split("_")[1]),
     )
     these_frqs = np.array([float(j.split("_")[1]) for j in nodenames])
     return nodenames, these_frqs
