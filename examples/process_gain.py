@@ -22,6 +22,7 @@ import numpy as np
 import pyspecdata as psd
 from sympy import symbols
 import sympy as sp
+import re
 
 attenuator_dB = 40.021  # Exact (measured) attenuation of
 #                         attenuation assembly between
@@ -32,7 +33,7 @@ file2 = "240123_power_out_analytic.h5"
 # Nodenames for both files match so extract them here for both files
 all_node_names = sorted(
     psd.find_file(
-        file1,
+        re.escape(file1),
         exp_type=data_dir,
         return_list=True,
     ),
@@ -51,7 +52,7 @@ input_data.rename("nu", r"$\nu$").name("Input Power").set_units("W")
 output_data = input_data.C
 output_data.name("Output Power").set_units("W")
 # }}}
-# {{{ Set symbols and function for fit
+# {{{ Set symbols and function for fits
 A, omega, phi, t = symbols("A omega phi t", real=True)
 fit_function = A * sp.exp(1j * 2 * np.pi * omega * t + 1j * phi)
 # }}}
