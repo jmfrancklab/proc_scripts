@@ -23,58 +23,112 @@ from sympy import symbols
 import sympy as sp
 import re
 
+
+def get_nodenames(thisfile, file_loc):
+    """Get a list of the nodenames sorted by the AFG signal
+    frequency
+
+    Parameters
+    ==========
+    thisfile: str
+        Name of file that contains the nodenames
+    file_loc: str
+        Location of file
+
+    Returns
+    =======
+    these_nodes: list
+        list containing the strings of the nodenames sorted by
+        the output frequency of the AFG signal
+    """
+    these_nodes = sorted(
+        psd.find_file(
+            re.escape(thisfile),
+            exp_type=file_loc,
+            return_list=True,
+        ),
+        key=lambda x: int(x.split("_")[1]),
+    )
+    return these_nodes
+
+
+def make_ndData(thisdata, nodenames, nodes_in_kHz=True):
+    """Create an empty NDData in the shape of the acquired data
+    with an extra dimension 'nu_test' that in the shape of the number of
+    frequencies output by the AFG source.
+
+    Parameters
+    ==========
+    thisdata: nddata
+        original data that acts as the base shape of the returned nddata
+    nodenames: list
+        list of strings of nodenames sorted by signal frequency
+    nodes_in_kHz: bool
+        Typically the nodenames are saved with the signal frequency
+        in kHz. However, in older files the nodenames are saved with
+        the signal frequency in Hz. If the frequencies are in Hz and
+        this argument is true, the frequencies will be converted to
+        Hz.
+
+    Returns
+    =======
+    these_frqs: list
+        list of sorted signal frequencies as integers
+    thisdata: nddata
+        Empty nddata in the appropriate shape with an extra 'nu_test'
+        dimension that contains the signal frequencies
+    """
+    if nodes_in_kHz:
+        these_frqs = (
+            np.array(
+                [int(j.split("_")[1]) for j in nodenames]
+            )
+            * 1e3
+        )
+    else:
+        these_frqs = np.array(
+            [int(j.split("_")[1]) for j in nodenames]
+        )
+    if "nScans" in thisdata.dimlabels:
+        # If nScans is a dimension this indicates the data was acquired on
+        # the receiver with the intention to convert to a PSD
+        ret_data = (
+            thisdata.shape + ("nu_test", len(these_frqs))
+        ).alloc()
+        ret_data.setaxis(
+            "t", thisdata.getaxis("t")
+        ).set_units("t", "s")
+    else:
+        ret_data = psd.ndshape(
+            [len(these_frqs)], ["nu_test"]
+        ).alloc()
+    ret_data.setaxis("nu_test", these_frqs).set_units(
+        "nu_test", "Hz"
+    )
+    return these_frqs, ret_data
+
+
 Dnu_name = r"$\Delta\nu$"
 nu_direct = r"$\nu_{direct}$"
 lambda_G = 0.4e3  # Width for Gaussian convolution
 data_dir = "ODNP_NMR_comp/noise_tests"
 file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
 file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
-# There are less nodes acquired for the control case (since we assume it's
-# relatively flat) so I need to separately define them
-control_nodes = sorted(
-    psd.find_file(
-        re.escape(file1),
-        exp_type=data_dir,
-        return_list=True,
-    ),
-    key=lambda x: int(x.split("_")[1]),
-)
-control_frqs = (
-    np.array(
-        [int(j.split("_")[1]) for j in control_nodes]
-    )
-    * 1e3
-)
-nu_test_nodes = sorted(
-    psd.find_file(
-        re.escape(file2),
-        exp_type=data_dir,
-        return_list=True,
-    ),
-    key=lambda x: int(x.split("_")[1]),
-)
-# $\nu_{test}$
-nu_test = np.array(
-    [int(j.split("_")[1]) for j in nu_test_nodes]
-)
 # {{{ Calculate input V (acquired on Oscilloscope)
-# {{{ Make empty nddata to drop the calculated V into with corresponding
-#     frequency ($\nu$) output by AFG source, and set the frequencies based on
-#     the node names
-control = psd.ndshape(
-    [len(control_frqs)], ["nu_test"]
-).alloc()
-control.setaxis("nu_test", control_frqs).set_units(
-    "nu_test", "Hz"
-)
-# }}}
-for j, nodename in enumerate(control_nodes):
-    rf_frq = control["nu_test"][j]
+for j, nodename in enumerate(
+    get_nodenames(file1, data_dir)
+):
     d = psd.find_file(
         file1,
         expno=nodename,
         exp_type=data_dir,
     )
+    if j == 0:
+        # Make nddata in shape of original dataset but with additional
+        # dimension to store the frequency of the test signal in
+        control_frqs, control = make_ndData(
+            d, nodenames=get_nodenames(file1, data_dir)
+        )
     # {{{ fit signal in t domain to complex exponential
     A, omega, phi, t = symbols("A omega phi t", real=True)
     f = psd.lmfitdata(d)
@@ -84,9 +138,9 @@ for j, nodename in enumerate(control_nodes):
     f.set_guess(
         A=dict(value=5e-3, min=1e-4, max=1),
         omega=dict(
-            value=rf_frq,
-            min=rf_frq - 1e4,
-            max=rf_frq + 1e4,
+            value=control["nu_test"][j],
+            min=control["nu_test"][j] - 1e4,
+            max=control["nu_test"][j] + 1e4,
         ),
         phi=dict(value=0.75, min=-pi, max=pi),
     )
@@ -104,28 +158,26 @@ Pin_spline = control.spline_lambda()
 # }}}
 # {{{ Calculate dg
 with psd.figlist_var() as fl:
-    for j, nodename in enumerate(nu_test_nodes):
+    for j, nodename in enumerate(
+        get_nodenames(file2, data_dir)
+    ):
         d = psd.find_file(
             file2,
             exp_type=data_dir,
             expno=nodename,
         )
-        carrier = (
-            d.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
-        )  # $\nu_{RX,LO}$
         if j == 0:
-            # Allocate and array that's shaped like one of the datasets
-            # acquired (with 100 captures and a direct t dimension)
-            # but add axis to store the frequency of the test signal
-            rec_data = (
-                d.shape + ("nu_test", len(nu_test))
-            ).alloc()
-            rec_data.setaxis("t", d.getaxis("t")).set_units(
-                "t", "s"
+            # Make nddata in shape of original dataset but with additional
+            # dimension to store the frequency of the test signal in
+            nu_test, rec_data = make_ndData(
+                d,
+                nodenames=get_nodenames(file2, data_dir),
+                nodes_in_kHz=False,
             )
-            rec_data.setaxis("nu_test", nu_test).set_units(
-                "nu_test", "Hz"
-            )
+        carrier = (
+            d.get_prop("acq_params")["carrierFreq_MHz"]
+            * 1e6
+        )  # $\nu_{RX,LO}$
         rec_data["nu_test", j] = d
         SW = str(
             d.get_prop("acq_params")["SW_kHz"]
@@ -137,29 +189,38 @@ with psd.figlist_var() as fl:
     acq_time = np.diff(rec_data["t"][r_[0, -1]]).item()
     # {{{ Calculate PSD for each frequency (we will calculate power from the A
     #     of the convolved test signal)
-    rec_data.run(np.conj)  # Empirically needed to give offset that increases with
+    rec_data.run(
+        np.conj
+    )  # Empirically needed to give offset that increases with
     #                        field
     rec_data.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
     rec_data = abs(rec_data) ** 2  # $dg^{2}*s/Hz$
     rec_data.mean("capture")
     rec_data /= acq_time  # $dg^{2}/Hz$
     # Convolve using $\lambda_{G}$ specified above
-    rec_data.convolve("t", lambda_G, enforce_causality=False)
+    rec_data.convolve(
+        "t", lambda_G, enforce_causality=False
+    )
     # }}}
     # {{{ Calculate power of test signal (Eq. S3)
     rec_data *= (
         lambda_G / (2 * np.sqrt(np.log(2)))
     ) * np.sqrt(pi)
-    rec_data.run(np.sqrt) # dg
-    # {{{ Plot 2D pcolor
+    rec_data.run(np.sqrt)  # dg
     # center data at 0 MHz thus converting to $\Delta\nu$ rather than
     # $\nu_{test}$
     rec_data["nu_test"] = rec_data["nu_test"] - carrier
-    rec_data.rename("nu_test",Dnu_name)
-    rec_data.rename("t",nu_direct)
+    rec_data.rename("nu_test", Dnu_name)
+    rec_data.rename("t", nu_direct)
+    # {{{ Plot 2D pcolor
     fig = plt.figure()
     fl.next("2D plot", fig=fig)
-    the_2D = rec_data.C.run(np.real).pcolor(cmap = 'BuPu', fig=fig, scale_independently=True)
+    the_2D = rec_data.C.run(np.real).pcolor(
+        cmap="BuPu", fig=fig, scale_independently=True
+    )
+    plt.title(
+        r"2D plot of PSDs as a function of $\Delta\nu$"
+    )
     # }}}
     rec_data.run(
         np.max, nu_direct
@@ -168,7 +229,6 @@ with psd.figlist_var() as fl:
     # }}}
     # {{{ Calculate receiver response as function of frequencies
     # Make axis of finely spaced frequencies to feed to spline
-    #rec_data.rename("nu_test", Dnu_name)
     Dnu = np.linspace(
         (carrier) - (rec_data.getaxis(Dnu_name)[-1] / 2),
         (carrier) + (rec_data.getaxis(Dnu_name)[-1] / 2),
@@ -188,7 +248,9 @@ with psd.figlist_var() as fl:
     )
     f = psd.lmfitdata(dig_filter)
     f.functional_form = A * abs(
-        sp.sinc((2 * pi * (Dnu_name - omega)) / (delta_nu))
+        sp.sinc(
+            (2 * pi * (Dnu_name - omega)) / (delta_nu)
+        )
     )
     f.set_guess(
         A=dict(value=400, min=1, max=9e3),
