@@ -23,9 +23,17 @@ from sympy import symbols
 import sympy as sp
 import re
 
+Dnu_name = r"$\Delta\nu$"
+nu_direct = r"$\nu_{direct}$"
+lambda_G = 0.4e3  # Width for Gaussian convolution
+data_dir = "ODNP_NMR_comp/noise_tests"
+file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
+file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
 
-# {{{ Functions
-def make_ndData(thisfile, file_loc, nodes_in_kHz=True):
+
+# {{{ Function to return the nodenames, test signal frequencies, and an
+#     empty nddata to drop calculated dg and V into
+def make_ndData(thisfile, nodes_in_kHz=True):
     """Create an empty NDData in the shape of the acquired data
     with an extra dimension 'nu_test' that in the shape of the number of
     frequencies output by the AFG source.
@@ -35,8 +43,6 @@ def make_ndData(thisfile, file_loc, nodes_in_kHz=True):
     thisfile: str
         Name of file that has nodes containing test signal at varying
         frequencies.
-    file_loc: str
-        Location of file.
     nodes_in_kHz: bool
         Typically the nodenames are saved with the signal frequency
         in kHz. However, in older files the nodenames are saved with
@@ -57,7 +63,7 @@ def make_ndData(thisfile, file_loc, nodes_in_kHz=True):
     nodenames = sorted(
         psd.find_file(
             re.escape(thisfile),
-            exp_type=file_loc,
+            exp_type=data_dir,
             return_list=True,
         ),
         key=lambda x: int(x.split("_")[1]),
@@ -78,7 +84,7 @@ def make_ndData(thisfile, file_loc, nodes_in_kHz=True):
     # receiver with the intention to convert to a PSD in which case we will
     # just pull the shape of one of the datasets and copy its shape first
     og_data = psd.find_file(
-        thisfile, expno=nodenames[0], exp_type=file_loc
+        thisfile, expno=nodenames[0], exp_type=data_dir
     )
     if "nScans" in og_data.dimlabels:
         ret_data = (
@@ -98,13 +104,6 @@ def make_ndData(thisfile, file_loc, nodes_in_kHz=True):
 
 
 # }}}
-
-Dnu_name = r"$\Delta\nu$"
-nu_direct = r"$\nu_{direct}$"
-lambda_G = 0.4e3  # Width for Gaussian convolution
-data_dir = "ODNP_NMR_comp/noise_tests"
-file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
-file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
 control_nodenames, control_frqs, control = make_ndData(
     file1, data_dir
 )
