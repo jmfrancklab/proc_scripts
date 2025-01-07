@@ -26,10 +26,6 @@ import re
 def for_plot(thisdata):
     """Converts :math:`dg^{2}/V^{2}` to :math:`dg/\\mu V`
     and sets labels accordingly for plotting"""
-    # Take sqrt for units of $dg/V$
-    #thisdata.data = np.sqrt(thisdata.data)
-    # Units of $dg/\mu V$
-    thisdata /= 1e6
     thisdata.rename("nu_test", r"$\Delta \nu$")
     thisdata.name(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
     return thisdata
@@ -85,12 +81,9 @@ for j, nodename in enumerate(file1_nodes):
     fit = f.eval()
     # }}}
     V_amp = f.output("A")
-    control["nu_test", j] = V_amp * 1e6#**2
+    control["nu_test", j] = V_amp * 1e6 # 
 # {{{ make spline for power going into RX box
 control.sort("nu_test")
-with psd.figlist_var() as fl:
-    fl.next("P in uV")
-    fl.plot(control)
 Pin_spline = control.spline_lambda()
 # }}}
 # }}}
