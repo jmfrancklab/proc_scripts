@@ -24,9 +24,8 @@ from sympy import symbols
 import sympy as sp
 import re
 
-attenuator_dB = 40.021  # Exact (measured) attenuation of
-#                         attenuation assembly between
-#                         source and receiver chain
+attenuator_dB = 40.021  # Exact (measured) attenuation of attenuation assembly
+#                         between source and receiver chain
 data_dir = "ODNP_NMR_comp/noise_tests"
 file1 = "240123_power_in_analytic.h5"
 file2 = "240123_power_out_analytic.h5"
@@ -40,29 +39,37 @@ all_node_names = sorted(
     key=lambda x: int(x.split("_")[1]),
 )
 # Frequency of signal saved in each nodename in kHz
-frq_kHz = np.array([int(j.split("_")[1]) for j in all_node_names])
-# {{{ Allocate an nddata that's big enough to just
-#     store the data for all frequencies
+frq_kHz = np.array(
+    [int(j.split("_")[1]) for j in all_node_names]
+)
+# {{{ Allocate an nddata that's big enough to just store the data for all
+#     frequencies
 input_data = (
-    psd.ndshape([len(all_node_names)], ["nu"]).alloc().set_units("nu", "Hz")
+    psd.ndshape([len(all_node_names)], ["nu"])
+    .alloc()
+    .set_units("nu", "Hz")
 )
 input_data["nu"] = frq_kHz * 1e3
-input_data.rename("nu", r"$\nu$").name("Input Power").set_units("W")
+input_data.rename("nu", r"$\nu$").name(
+    "Input Power"
+).set_units("W")
 # Copy shape of data but rename for output power
 output_data = input_data.C
 output_data.name("Output Power").set_units("W")
 # }}}
 # {{{ Set symbols and function for fits
 A, omega, phi, t = symbols("A omega phi t", real=True)
-fit_function = A * sp.exp(1j * 2 * np.pi * omega * t + 1j * phi)
+fit_function = A * sp.exp(
+    1j * 2 * np.pi * omega * t + 1j * phi
+)
 # }}}
 with psd.figlist_var() as fl:
-    # {{{ Calculate Power Going into Receiver Chain as Function
-    #     of Frequency
+    # {{{ Calculate Power Going into Receiver Chain as Function of Frequency
     for j, nodename in enumerate(all_node_names):
-        d = psd.nddata_hdf5(
-            file1 + "/" + "%s" % nodename,
-            directory=psd.getDATADIR(exp_type=data_dir),
+        d = psd.find_file(
+            file1,
+            expno=nodename,
+            exp_type=data_dir,
         )
         # {{{ Fit to complex
         d = psd.lmfitdata(d)
@@ -79,9 +86,11 @@ with psd.figlist_var() as fl:
         d.fit(use_jacobian=False)
         d.eval()
         # }}}
-        # Calculate (cycle averaged) power from amplitude of the
-        # analytic signal:
-        input_data[r"$\nu$", j] = abs(d.output("A")) ** 2 / 2 / 50
+        # Calculate (cycle averaged) power from amplitude of the analytic
+        # signal:
+        input_data[r"$\nu$", j] = (
+            abs(d.output("A")) ** 2 / 2 / 50
+        )
     input_data.sort(r"$\nu$")
     # {{{ Plot P at input of Receiver Chain
     fl.next("Power Input to Receiver Chain")
@@ -97,12 +106,12 @@ with psd.figlist_var() as fl:
     fl.plot(input_data, "o")
     # }}}
     # }}}
-    # {{{ Calculate Power exiting the Receiver Chain as Function
-    #     of Frequency
+    # {{{ Calculate Power exiting the Receiver Chain as Function of Frequency
     for j, nodename in enumerate(all_node_names):
-        d = psd.nddata_hdf5(
-            file2 + "/" + "%s" % nodename,
-            directory=psd.getDATADIR(exp_type=data_dir),
+        d = psd.find_file(
+            file2,
+            expno=nodename,
+            exp_type=data_dir,
         )
         # {{{ Fit to complex
         d = psd.lmfitdata(d)
@@ -119,9 +128,11 @@ with psd.figlist_var() as fl:
         d.fit(use_jacobian=False)
         d.eval()
         # }}}
-        # Calculate (cycle averages) power from amplitude of the
-        # analytic signal
-        output_data[r"$\nu$", j] = abs(d.output("A")) ** 2 / 2 / 50
+        # Calculate (cycle averages) power from amplitude of the analytic
+        # signal
+        output_data[r"$\nu$", j] = (
+            abs(d.output("A")) ** 2 / 2 / 50
+        )
     output_data.sort(r"$\nu$")
     # {{{ Plot P at output of Receiver Chain
     fl.next("Power Output by Receiver Chain")
@@ -133,7 +144,10 @@ with psd.figlist_var() as fl:
     # }}}
     # }}}
     # {{{ Calculate and plot gain
-    gain_dB = 10 * np.log10(output_data / input_data) + attenuator_dB
+    gain_dB = (
+        10 * np.log10(output_data / input_data)
+        + attenuator_dB
+    )
     gain_dB.name("Gain").set_units("dB")
     gain_dB.set_plot_color("purple")
     gain_dB.human_units(scale_data=True)
