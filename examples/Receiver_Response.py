@@ -17,6 +17,7 @@ Two files are required for the following example:
     the square of the data with the fit.
 """
 import numpy as np
+from numpy import r_, pi
 import pyspecdata as psd
 from sympy import symbols
 import sympy as sp
@@ -67,7 +68,7 @@ for j, nodename in enumerate(file1_nodes):
     # {{{ fit signal in t domain to complex exponential
     A, omega, phi, t = symbols("A omega phi t", real=True)
     f = psd.lmfitdata(d)
-    f.functional_form = A * sp.exp(1j * 2 * np.pi * omega * t + 1j * phi)
+    f.functional_form = A * sp.exp(1j * 2 * pi * omega * t + 1j * phi)
     f.set_guess(
         A=dict(value=5e-3, min=1e-4, max=1),
         omega=dict(
@@ -75,7 +76,7 @@ for j, nodename in enumerate(file1_nodes):
             min=rf_frq - 1e4,
             max=rf_frq + 1e4,
         ),
-        phi=dict(value=0.75, min=-np.pi, max=np.pi),
+        phi=dict(value=0.75, min=-pi, max=pi),
     )
     f.fit(use_jacobian=False)
     f.eval()
@@ -110,7 +111,7 @@ rec_data.sort("nu_test")
 rec_data.rename("nScans", "capture")  # To be more consistent with the
 #                                        oscilloscope data rename the nScans
 #                                        dimension
-acq_time = np.diff(rec_data.getaxis("t")[np.r_[0, -1]]).item()
+acq_time = np.diff(rec_data["t"][r_[0, -1]]).item()
 # {{{ Calculate PSD for each frequency (we will calculate power from the A
 #     of the convolved test signal)
 rec_data.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
@@ -127,7 +128,7 @@ rec_data.ft("t")
 # {{{ Calculate power of test signal (Eq. S3)
 rec_data["t"] += carrier
 rec_data.run(np.max, "t") # $dg^{2}$
-rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(np.pi)
+rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(pi)
 rec_data.run(np.sqrt) # dg
 # }}}
 # }}}
@@ -144,7 +145,7 @@ dig_filter = rec_data / P_in # dg/μV
 # }}}
 # {{{ Fit receiver response
 A, omega, delta_nu, nu_test = symbols("A omega delta_nu nu_test", real=True)
-func_form = A * abs(sp.sinc((2 * np.pi * (nu_test - omega)) / (delta_nu)))
+func_form = A * abs(sp.sinc((2 * pi * (nu_test - omega)) / (delta_nu)))
 f = psd.lmfitdata(dig_filter)
 f.functional_form = func_form
 f.set_guess(
