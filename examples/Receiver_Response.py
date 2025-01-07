@@ -6,15 +6,14 @@ Two files are required for the following example:
     File1 contains the analytic signal acquired on the GDS oscilloscope
     directly output from the AFG output. Each node pertains to signal with a
     different frequency (in kHz) which are fit to a complex function to extract
-    the power (in :math:`V^{2}`).
+    the :math:`V_{pp}` (in :math:`\mu\\text{V}`).
     File2 contains the quadrature signal acquired on the receiver when the same
     signal of File1 is injected into it. Each node pertains to signal with a
-    different frequency (in kHz) which are converted to a PSD. The power (in
-    :math:`dg^{2}`) is calculated from the peak of the convolved PSD.
+    different frequency (in kHz) which are converted to a PSD. The amplitude (in
+    dg) is calculated from the peak of the convolved PSD.
 
-    The receiver response is then the ratio of :math:`dg^{2}(\\nu)` to
-    :math:`V^{2}(\\nu)` which is fit to a sinc function. The final plot shows
-    the square of the data with the fit.
+    The receiver response is then the ratio of :math:`dg(\\nu)` to
+    :math:`V(\\nu)` which is fit to an absolute sinc function.
 """
 import numpy as np
 from numpy import r_, pi
@@ -30,19 +29,13 @@ file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
 file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
 # There are less nodes acquired for the control case (since we assume it's
 # relatively flat) so I need to separately define them
-file1_nodes = psd.find_file(
-    re.escape(file1),
-    exp_type=data_dir,
-    return_list=True,
-)
-control_frqs = np.array([int(j.split("_")[1]) for j in file1_nodes])*1e3
-file2_nodes = psd.find_file(
-    re.escape(file2),
-    exp_type=data_dir,
-    return_list=True,
-)
+control_nodes = sorted(psd.find_file( re.escape(file1), exp_type=data_dir,
+    return_list=True), key=lambda x: int(x.split("_")[1]))
+control_frqs = np.array([int(j.split("_")[1]) for j in control_nodes])*1e3
+nu_test_nodes = sorted(psd.find_file(re.escape(file2), exp_type=data_dir,
+    return_list=True), key = lambda x: int(x.split("_")[1]))
 # $\nu_{test}$
-nu_test = np.array([int(j.split("_")[1]) for j in file2_nodes])
+nu_test = np.array([int(j.split("_")[1]) for j in nu_test_nodes])
 # {{{ Calculate input V (acquired on Oscilloscope)
 # {{{ Make empty nddata to drop the calculated V into with corresponding
 #     frequency ($\nu$) output by AFG source, and set the frequencies based on
@@ -50,7 +43,7 @@ nu_test = np.array([int(j.split("_")[1]) for j in file2_nodes])
 control = psd.ndshape([len(control_frqs)], ["nu_test"]).alloc()
 control.setaxis("nu_test", control_frqs).set_units("nu_test", "Hz")
 # }}}
-for j, nodename in enumerate(file1_nodes):
+for j, nodename in enumerate(control_nodes):
     rf_frq = control["nu_test"][j]
     d = psd.find_file(
         file1,
@@ -76,14 +69,13 @@ for j, nodename in enumerate(file1_nodes):
     V_amp = f.output("A")
     control["nu_test", j] = abs(V_amp) * 1e6 # μV
 # {{{ make spline for power going into RX box
-control.sort("nu_test")
 control.rename("nu_test",Dnu_name) # since we will be applying $\Delta\nu$
 #                                    axis to spline
 Pin_spline = control.spline_lambda()
 # }}}
 # }}}
 # {{{ Calculate dg
-for j, nodename in enumerate(file2_nodes):
+for j, nodename in enumerate(nu_test_nodes):
     d = psd.find_file(
         file2,
         exp_type=data_dir,
@@ -101,7 +93,6 @@ for j, nodename in enumerate(file2_nodes):
         rec_data.setaxis("nu_test", nu_test).set_units("nu_test", "Hz")
     rec_data["nu_test", j] = d
     SW = str(d.get_prop("acq_params")["SW_kHz"]) # For labeling final plot
-rec_data.sort("nu_test")
 rec_data.rename("nScans", "capture")  # To be more consistent with the
 #                                        oscilloscope data rename the nScans
 #                                        dimension
