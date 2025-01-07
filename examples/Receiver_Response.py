@@ -61,6 +61,7 @@ def get_freqs(thisfile):
 
 
 # }}}
+# {{{ set up empty nddata to store input V
 control_nodenames, control_frqs = get_freqs(file1)
 control_frqs *= 1e3  # kHz to Hz
 control = (
@@ -69,6 +70,8 @@ control = (
     .setaxis("nu_test", control_frqs)
     .set_units("nu_test", "Hz")
 )
+# }}}
+# Get nodenames and frequencies recorded on receiver
 rec_nodenames, rec_frqs = get_freqs(file2)
 # {{{ Calculate input V (acquired on Oscilloscope)
 for j, nodename in enumerate(control_nodenames):
@@ -106,6 +109,9 @@ with psd.figlist_var() as fl:
     for j, nodename in enumerate(rec_nodenames):
         d = psd.find_file(file2, exp_type=data_dir, expno=nodename)
         if j == 0:
+            # Allocate an nddata with the same shape as a single frequency
+            # node but with an additional "nu_test" dimension so we can
+            # store all PSDs together for a 2D plot
             rec_data = (
                 (d.shape + ("nu_test", len(rec_frqs)))
                 .alloc()
@@ -124,10 +130,10 @@ with psd.figlist_var() as fl:
     )  # To be more consistent with the oscilloscope data rename the nScans
     #    dimension
     acq_time = np.diff(rec_data["t"][r_[0, -1]]).item()
-    # {{{ Calculate PSD for each frequency (we will calculate power from the A
-    #     of the convolved test signal)
     rec_data.run(np.conj)  # Empirically needed to give offset that increases
     #                        with field
+    # {{{ Calculate PSD for each frequency (we will calculate power from the A
+    #     of the convolved test signal)
     rec_data.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
     rec_data = abs(rec_data) ** 2  # $dg^{2}*s/Hz$
     rec_data.mean("capture")
@@ -156,8 +162,7 @@ with psd.figlist_var() as fl:
     # }}}
     # {{{ Calculate receiver response as function of frequencies
     # Make axis of $\Delta\nu$ that is evenly spaced and matches
-    # width/frequencies acquired on the receiver for calculating the input
-    # power over the range that the receiver acquired
+    # range of frequencies acquired on the receiver
     Dnu = np.linspace(
         (carrier) - (rec_data.getaxis(Dnu_name)[-1] / 2),
         (carrier) + (rec_data.getaxis(Dnu_name)[-1] / 2),
@@ -172,6 +177,7 @@ with psd.figlist_var() as fl:
         r"A omega delta_nu $\Delta\nu$", real=True
     )
     f = psd.lmfitdata(dig_filter)
+    # Fit to absolute sinc function
     f.functional_form = A * abs(
         sp.sinc((2 * pi * (Dnu_name - omega)) / (delta_nu))
     )
