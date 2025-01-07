@@ -144,7 +144,6 @@ rec_data /= acq_time  # $dg^{2}/Hz$
 rec_data.convolve("t", lambda_G, enforce_causality=False)
 # }}}
 # {{{ Calculate power of test signal (Eq. S3)
-rec_data["t"] += carrier
 rec_data.run(
     np.max, "t"
 )  # Takes maximum of PSD $\rightarrow dg^{2}$
