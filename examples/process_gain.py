@@ -95,6 +95,7 @@ def determine_power_from_fit(filename, guessamp, guessph):
             phi=dict(value=guessph, min=-pi, max=pi),
         )
         d.fit(use_jacobian=False)
+        d.eval()
         # }}}
         # Calculate (cycle averaged) power from amplitude of the analytic
         # signal:
