@@ -144,8 +144,7 @@ with psd.figlist_var() as fl:
     #     of the convolved test signal)
     rec_data.run(
         np.conj
-    )  # Empirically needed to give offset that increases with
-    #                        field
+    )  # Empirically needed to give offset that increases with field
     rec_data.ft("t", shift=True)  # $dg\sqrt{s/Hz}$
     rec_data = abs(rec_data) ** 2  # $dg^{2}*s/Hz$
     rec_data.mean("capture")
