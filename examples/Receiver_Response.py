@@ -24,7 +24,7 @@ import sympy as sp
 import re
 
 Dnu_name = r"$\Delta\nu$"
-nu_direct = r"$\nu_{direct}$"
+nu_direct_name = r"$\nu_{direct}$"
 lambda_G = 0.4e3  # Width for Gaussian convolution
 data_dir = "ODNP_NMR_comp/noise_tests"
 file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
@@ -191,7 +191,7 @@ with psd.figlist_var() as fl:
     # $\nu_{test}$
     rec_data["nu_test"] = rec_data["nu_test"] - carrier
     rec_data.rename("nu_test", Dnu_name)
-    rec_data.rename("t", nu_direct)
+    rec_data.rename("t", nu_direct_name)
     # {{{ Plot 2D pcolor
     fig = plt.figure()
     fl.next("2D plot", fig=fig)
@@ -203,7 +203,7 @@ with psd.figlist_var() as fl:
     )
     # }}}
     rec_data.run(
-        np.max, nu_direct
+        np.max, nu_direct_name
     )  # Takes maximum of PSD
     # }}}
     # }}}
