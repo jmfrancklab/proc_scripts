@@ -36,8 +36,8 @@ file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
 def make_ndData(thisfile, nodes_in_kHz=True):
     """Determine the nodenames of the file and sort them according to the
     frequency of the test signal. Based on these nodenames a list of the
-    frequencies as integers are made. Anempty NDData in the shape of the 
-    acquired data is created with an extra dimension 'nu_test' that 
+    frequencies as integers are made. Anempty NDData in the shape of the
+    acquired data is created with an extra dimension 'nu_test' that
     the sorted frequencies are placed inside that dimension.
 
     Parameters
@@ -110,7 +110,7 @@ control_nodenames, control_frqs, control = make_ndData(
     file1
 )
 rec_nodenames, nu_test, rec_data = make_ndData(
-    thisfile = file2, nodes_in_kHz=False
+    thisfile=file2, nodes_in_kHz=False
 )
 # {{{ Calculate input V (acquired on Oscilloscope)
 for j, nodename in enumerate(control_nodenames):
@@ -208,7 +208,9 @@ with psd.figlist_var() as fl:
     # }}}
     # }}}
     # {{{ Calculate receiver response as function of frequencies
-    # Make axis of finely spaced frequencies to feed to spline
+    # Make axis of $\Delta\nu$ that is evenly spaced and matches
+    # width/frequencies acquired on the receiver for calculating the input
+    # power over the range that the receiver acquired
     Dnu = np.linspace(
         (carrier) - (rec_data.getaxis(Dnu_name)[-1] / 2),
         (carrier) + (rec_data.getaxis(Dnu_name)[-1] / 2),
