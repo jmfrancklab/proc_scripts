@@ -101,7 +101,7 @@ for j, nodename in enumerate(control_nodenames):
 # {{{ make spline for power going into RX box
 control.rename("nu_test", Dnu_name)  # since we will be applying $\Delta\nu$
 #                                      axis to spline
-Pin_spline = control.spline_lambda()
+control_spline = control.spline_lambda()
 # }}}
 # }}}
 # {{{ Calculate dg
@@ -168,7 +168,7 @@ with psd.figlist_var() as fl:
         (carrier) + (rec_data.getaxis(Dnu_name)[-1] / 2),
         len(rec_data.getaxis(Dnu_name)),
     )
-    control = Pin_spline(Dnu)  # Generate spline of input powers
+    control = control_spline(Dnu)  # Generate spline of input powers
     dig_filter = rec_data / control  # dg/μV
     dig_filter.name(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
     # }}}
