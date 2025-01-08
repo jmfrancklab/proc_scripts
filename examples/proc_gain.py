@@ -40,7 +40,8 @@ def determine_power_from_fit(filename, guessamp, guessph):
     Parameters
     ==========
     filename: str
-        Name of HDF5 file --- contains multiple nodes, named according to frequency
+        Name of HDF5 file --- contains multiple nodes, named according to
+        frequency
     guessamp: float
         Approximate guess for the amplitude of the test signal in V
     guessph: float
