@@ -123,6 +123,9 @@ with psd.figlist_var() as fl:
     fl.plot(output_power, "o")
     fl.plot(output_spline(nu_fine))
     fl.next("Gain")
-    gain_dB = 10 * np.log10(output_spline(nu_fine) / input_spline(nu_fine)) + attenuator_dB
+    gain_dB = (
+        10 * np.log10(output_spline(nu_fine) / input_spline(nu_fine))
+        + attenuator_dB
+    )
     gain_dB.name("Gain").set_units("dB").set_plot_color("purple")
     fl.plot(gain_dB)
