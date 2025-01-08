@@ -3,18 +3,22 @@
 
 Two files are required for the following example:
 
-    File1 contains the analytic signal acquired on the GDS oscilloscope
-    directly output from the AFG output. Each node pertains to signal with a
-    different frequency (in kHz) which are fit to a complex function to extract
-    the :math:`V_{p}` (in μV).
-    File2 contains the quadrature signal acquired on the receiver when the same
+file1
+    contains the analytic signal acquired on the (GW Instek GDS) oscilloscope
+    directly captured from the rf source (GW Instek AFG). Each node pertains to
+    signal with a different frequency (in kHz) which are fit to a complex
+    function to extract the :math:`V_{p}` (in μV).
+
+file2
+    contains the quadrature signal acquired on the receiver when the same
     signal of File1 is injected into it. Each node pertains to signal with a
     different frequency (in Hz) which are converted to a PSD. The amplitude (in
     dg) is calculated from the peak of the convolved PSD.
 
-    The receiver response is then the ratio of :math:`dg(\\nu)` to
-    :math:`μV(\\nu)` which is fit to an absolute sinc function.
+The receiver response is then the ratio of :math:`dg(\\nu)` to
+:math:`μV(\\nu)` which is fit to an absolute sinc function.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import r_, pi
@@ -23,12 +27,15 @@ from sympy import symbols
 import sympy as sp
 import re
 
-Dnu_name = r"$\Delta\nu$"
-nu_direct_name = r"$\nu_{direct}$"
 lambda_G = 0.4e3  # Width for Gaussian convolution
 data_dir = "ODNP_NMR_comp/noise_tests"
 file1 = "240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5"
 file2 = "240117_afg_sc_10mV_3p9kHz_zoom.h5"
+# {{{ various symbols/names used throughout
+Dnu_name = r"$\Delta\nu$"
+nu_direct_name = r"$\nu_{direct}$"
+A, nu, phi, t, W, Dnu_symb = symbols("A nu phi t W " + Dnu_name, real=True)
+# }}}
 
 
 # {{{ Function to return the nodenames, and test signal frequencies
@@ -50,13 +57,14 @@ def get_freqs(thisfile):
     these_frqs: array
         Array of sorted signal frequencies as integers
     """
+    frq_extract_fn = lambda x: float(x.split("_")[1])
     nodenames = sorted(
         psd.find_file(
             re.escape(thisfile), exp_type=data_dir, return_list=True
         ),
-        key=lambda x: float(x.split("_")[1]),
+        key=frq_extract_fn,
     )
-    these_frqs = np.array([float(j.split("_")[1]) for j in nodenames])
+    these_frqs = np.array([frq_extract_fn(j) for j in nodenames])
     return nodenames, these_frqs
 
 
@@ -71,8 +79,6 @@ control = (
     .set_units("nu_test", "Hz")
 )
 # }}}
-# Get nodenames and frequencies recorded on receiver
-rec_nodenames, rec_frqs = get_freqs(file2)
 # {{{ Calculate input V (acquired on Oscilloscope)
 for j, nodename in enumerate(control_nodenames):
     d = psd.find_file(
@@ -81,20 +87,18 @@ for j, nodename in enumerate(control_nodenames):
         exp_type=data_dir,
     )
     # {{{ fit signal in t domain to complex exponential
-    A, omega, phi, t = symbols("A omega phi t", real=True)
     f = psd.lmfitdata(d)
-    f.functional_form = A * sp.exp(1j * 2 * pi * omega * t + 1j * phi)
+    f.functional_form = A * sp.exp(1j * 2 * pi * nu * t + 1j * phi)
     f.set_guess(
         A=dict(value=5e-3, min=1e-4, max=1),
-        omega=dict(
+        nu=dict(
             value=control["nu_test"][j],
             min=control["nu_test"][j] - 1e4,
             max=control["nu_test"][j] + 1e4,
         ),
         phi=dict(value=0.75, min=-pi, max=pi),
     )
-    f.fit(use_jacobian=False)
-    f.eval()
+    f.fit()
     # }}}
     V_amp = f.output("A")
     control["nu_test", j] = abs(V_amp) * 1e6  # μV
@@ -105,6 +109,8 @@ control_spline = control.spline_lambda()
 # }}}
 # }}}
 # {{{ Calculate dg
+# Get nodenames and frequencies recorded on receiver
+rec_nodenames, rec_frqs = get_freqs(file2)
 with psd.figlist_var() as fl:
     for j, nodename in enumerate(rec_nodenames):
         d = psd.find_file(file2, exp_type=data_dir, expno=nodename)
@@ -173,22 +179,16 @@ with psd.figlist_var() as fl:
     dig_filter.name(r"$\mathrm{dg_{%s\ \mathrm{kHz}}}/ \mu V$" % SW)
     # }}}
     # {{{ Fit receiver response
-    A, omega, delta_nu, Dnu_name = symbols(
-        r"A omega delta_nu $\Delta\nu$", real=True
-    )
     f = psd.lmfitdata(dig_filter)
     # Fit to absolute sinc function
-    f.functional_form = A * abs(
-        sp.sinc((2 * pi * (Dnu_name - omega)) / (delta_nu))
-    )
+    f.functional_form = A * abs(sp.sinc((2 * pi * (Dnu_symb - nu)) / W))
     f.set_guess(
         A=dict(value=400, min=1, max=9e3),
-        omega=dict(value=1, min=-100, max=100),
-        delta_nu=dict(value=9e3, min=3, max=1e4),
+        nu=dict(value=1, min=-100, max=100),
+        W=dict(value=9e3, min=3, max=1e4),
     )
     f.fit()
-    fit = f.eval()
     # }}}
     fl.next("Receiver Response")
     fl.plot(dig_filter, "o")
-    fl.plot(fit, color="red", alpha=0.5)
+    fl.plot(f.eval(), color="red", alpha=0.5)
