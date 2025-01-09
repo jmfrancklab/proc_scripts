@@ -53,7 +53,7 @@ def determine_power_from_fit(filename, guessamp, guessph):
         nddata containing the test signal frequencies and corresponding
         amplitudes from fits
     """
-    A, omega, phi, t = symbols("A omega phi t", real=True)
+    A, nu, phi, t = symbols("A nu phi t", real=True)
     # {{{ Even though node names for both files should match, determine the
     #     node names and resulting frequency coordinates separate for both
     #     files.
@@ -68,11 +68,10 @@ def determine_power_from_fit(filename, guessamp, guessph):
     frq_kHz = np.array([float(j.split("_")[1]) for j in all_node_names])
     # }}}
     p = (
-        psd.ndshape([len(frq_kHz)], ["nu"])
+        psd.ndshape([len(frq_kHz)], [nu_name])
         .alloc()
-        .set_units("nu", "Hz")
-        .setaxis("nu", frq_kHz * 1e3)
-        .rename("nu", nu_name)
+        .set_units(nu_name, "Hz")
+        .setaxis(nu_name, frq_kHz * 1e3)
         .set_units("W")
     )
     for j, nodename in enumerate(all_node_names):
@@ -83,10 +82,10 @@ def determine_power_from_fit(filename, guessamp, guessph):
         )
         # {{{ Fit to complex
         d = psd.lmfitdata(d)
-        d.functional_form = A * sp.exp(1j * 2 * pi * omega * t + 1j * phi)
+        d.functional_form = A * sp.exp(1j * 2 * pi * nu * t + 1j * phi)
         d.set_guess(
             A=dict(value=guessamp, min=1e-4, max=1),
-            omega=dict(
+            nu=dict(
                 value=p[nu_name][j],
                 min=p[nu_name][j] - 1e4,
                 max=p[nu_name][j] + 1e4,
