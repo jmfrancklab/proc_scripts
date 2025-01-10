@@ -191,4 +191,5 @@ with psd.figlist_var() as fl:
     # }}}
     fl.next("Receiver Response")
     fl.plot(dig_filter, "o")
+    flake
     fl.plot(f.eval(), color="red", alpha=0.5)
