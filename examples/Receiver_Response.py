@@ -147,6 +147,11 @@ with psd.figlist_var() as fl:
     # Convolve using $\lambda_{G}$ specified above
     rec_data.convolve("t", lambda_G, enforce_causality=False)
     # }}}
+    # {{{ center data at 0 MHz thus converting to
+    #     $\Delta\nu$ rather than $\nu_{test}$
+    rec_data["nu_test"] -= carrier
+    rec_data.rename("nu_test", Dnu_name)
+    # }}}
     # {{{ Plot 2D pcolor
     rec_data.rename("t", nu_direct_name)
     fig = plt.figure()
@@ -160,10 +165,6 @@ with psd.figlist_var() as fl:
     rec_data.run(np.max, nu_direct_name)  # Takes maximum of PSD
     rec_data *= (lambda_G / (2 * np.sqrt(np.log(2)))) * np.sqrt(pi)
     rec_data.run(np.sqrt)  # dg
-    # center data at 0 MHz thus converting to $\Delta\nu$ rather than
-    # $\nu_{test}$
-    rec_data["nu_test"] -= carrier
-    rec_data.rename("nu_test", Dnu_name)
     # }}}
     # }}}
     # {{{ Calculate receiver response as function of frequencies
