@@ -43,5 +43,5 @@ with figlist_var() as fl:
         alpha=0.3,
         plottype="semilogy",
     )
-    ylim(5e-17, 1e-12)  # set y limits
+    ylim(1e-18, 1e-13)  # set y limits
     ylabel("${S(\\nu)}$ / (W/Hz)")
