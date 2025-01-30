@@ -6,7 +6,10 @@ from numpy import sqrt
 
 default_Q = float(pyspec_config.get_setting("default Q", default=4700))
 # note that this will fail if you don't have "QESR Conversion" set in your pyspecdata file
-dint_conversion = float(pyspec_config.get_setting("QESR Conversion"))
+
+dint_conversion = pyspec_config.get_setting("QESR Conversion")
+if dint_conversion is not None:
+    dint_conversion = float(dint_conversion)
 
 ureg = UnitRegistry(
     system="mks",
@@ -18,6 +21,8 @@ Q_ = ureg.Quantity
 
 def QESR_scalefactor(d):
     "determine the scaling factor for QESR"
+    if dint_conversion is None:
+        raise ValueError("you need to set the parameter 'QESR Conversion' in you pyspecdata config file")
     # {{{ determine the signal denominator from the parameters of interest
     G_R = Q_(*d.get_prop("Gain"))
     C_t = Q_(*d.get_prop("ConvTime"))

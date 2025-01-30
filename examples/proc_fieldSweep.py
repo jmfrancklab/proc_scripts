@@ -54,7 +54,7 @@ with psd.figlist_var() as fl:
     )
     # {{{ use analytic differentiation to find the max of the polynomial
     c_poly = s.polyfit("indirect", 4)
-    psd.plot(s.eval_poly(c_poly, "indirect", npts=100), label="fit", ax=ax4)
+    psd.plot(s.eval_poly(c_poly, "indirect", pts=100), label="fit", ax=ax4)
     theroots = np.roots(
         (c_poly[1:] * r_[1 : len(c_poly)])[  # differentiate the polynomial
             ::-1
