@@ -8,6 +8,7 @@ from .phasing import (
 )
 from .first_level.fake_data import fake_data
 from .third_level.rough_table_of_integrals import rough_table_of_integrals
+from .third_level.align_esr import align_esr
 from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
@@ -26,17 +27,19 @@ from .apod_matched_filter import apod_matched_filter
 from .envelope import L2G, fit_envelope
 from .first_level.QESR_rescale import QESR_scalefactor
 from .convert_to_power import convert_to_power
-
+from .clock_correct import clock_correct
 
 __all__ = [
     "DCCT",
     "L2G",
     "QESR_scalefactor",
     "Vpp2power",
+    "align_esr",
     "active_propagation",
     "apod_matched_filter",
     "calc_baseline",
     "center_echo",
+    "clock_correct",
     "convert_to_power",
     "correl_align",
     "dBm2power",

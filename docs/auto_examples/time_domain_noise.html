@@ -1,95 +1,54 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&lt;no title&gt; &mdash; pyspecProcScripts 0.9 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-binder.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-dataframe.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery-rendered-html.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/gallery_custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script src="../_static/js/theme.js"></script>
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Time-Domain Noise &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=0838f141" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Check NMR/ESR resonance ratio using a field sweep" href="proc_fieldSweep.html" />
-    <link rel="prev" title="Align data with significant frequency drift" href="correlation_alignment_example.html" /> 
-</head>
+    <link rel="next" title="Check Integration" href="integration_with_error.html" />
+    <link rel="prev" title="Check integral error calculation" href="check_integration_error.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> pyspecProcScripts
-          </a>
-              <div class="version">
-                0.9
-              </div>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">Lowest level</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#first-level-in-this-repo">First level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#second-level-in-this-repo">Second level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html#top-level">Top level</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a></li>
-</ul>
+  
+  
 
-        </div>
-      </div>
-    </nav>
+  </head><body>
+  
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">pyspecProcScripts</a>
-      </nav>
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
 
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">ProcScripts Example Gallery</a></li>
-      <li class="breadcrumb-item active">&lt;no title&gt;</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/auto_examples/time_domain_noise.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+          <div class="body" role="main">
+            
   <div class="sphx-glr-download-link-note admonition note">
 <p class="admonition-title">Note</p>
 <p><a class="reference internal" href="#sphx-glr-download-auto-examples-time-domain-noise-py"><span class="std std-ref">Go to the end</span></a>
 to download the full example code</p>
 </div>
-<p class="sphx-glr-example-title" id="sphx-glr-auto-examples-time-domain-noise-py">Here, we want to calculate the time-domain variance to use in error propagation.
+<section class="sphx-glr-example-title" id="time-domain-noise">
+<span id="sphx-glr-auto-examples-time-domain-noise-py"></span><h1>Time-Domain Noise<a class="headerlink" href="#time-domain-noise" title="Link to this heading">¶</a></h1>
+<p>Here, we want to calculate the time-domain variance to use in error propagation.
 But, to make sure we calculate only noise, we want to mask out portions of the frequency
 domain.
 We propose that if we use a unitary transform,
@@ -101,16 +60,16 @@ To confirm this, we construct a “spectrum” of pure noise
 and generate a frequency-masked noise,
 and show that is the same as the
 unmasked time-domain.</p>
-<img src="../_images/sphx_glr_time_domain_noise_001.png" srcset="../_images/sphx_glr_time_domain_noise_001.png" alt="show the mask in white" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>If we apply just FT as we normally would the std in the frequency domain is: array([0.03110269, 0.03141953, 0.03124237, 0.03138313, 0.03191445,
-       0.0310009 , 0.03150092, 0.03088979, 0.03101383, 0.0312048 ,
-       0.03093617, 0.03170989, 0.03127526, 0.03096498, 0.03161221,
-       0.03091046, 0.03112274, 0.03156729, 0.03130397, 0.03106142,
-       0.03148928, 0.03139256, 0.03113826, 0.03103778, 0.03156736,
-       0.03116447, 0.03124702, 0.03089305, 0.03131717, 0.03108165,
-       0.03169669, 0.03130007, 0.0314899 , 0.03120612, 0.03122567,
-       0.03134097, 0.0311235 , 0.0313996 , 0.03138327, 0.03135404,
-       0.03140354, 0.03123559, 0.03135412, 0.03107807, 0.03093551,
-       0.03117801, 0.0315777 , 0.03137022, 0.03190737, 0.03124813])
+<img src="../_images/sphx_glr_time_domain_noise_001.png" srcset="../_images/sphx_glr_time_domain_noise_001.png" alt="show the mask in white" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>If we apply just FT as we normally would the std in the frequency domain is: array([0.03133493, 0.0310249 , 0.03087452, 0.03153816, 0.03131391,
+       0.03096058, 0.03160122, 0.03117801, 0.03126264, 0.03076478,
+       0.03088133, 0.03103172, 0.03112032, 0.03136118, 0.03158249,
+       0.03082116, 0.03087223, 0.0311701 , 0.0313617 , 0.03084312,
+       0.03140348, 0.03140812, 0.03147682, 0.0314111 , 0.03162665,
+       0.03113172, 0.03115235, 0.0311152 , 0.03142608, 0.03146255,
+       0.03131619, 0.03134668, 0.03131779, 0.03099557, 0.03135103,
+       0.03127095, 0.03112738, 0.03150568, 0.03130068, 0.03121569,
+       0.03128878, 0.03144053, 0.03136608, 0.03161975, 0.03089907,
+       0.03176012, 0.03131556, 0.03136479, 0.03108606, 0.03149692])
                 +/-None
         dimlabels=[&#39;repeats&#39;]
         axes={`repeats&#39;:array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
@@ -119,16 +78,16 @@ unmasked time-domain.</p>
                         +/-None}
 
 These values are NOT the same so we need a unitary FT for this to work
-When we apply a unitary FT the std over all the frequency domain is: array([0.99431413, 1.00444313, 0.99877942, 1.00327931, 1.02026523,
-       0.99105999, 1.00704505, 0.98750812, 0.9914734 , 0.99757848,
-       0.98899065, 1.01372567, 0.99983101, 0.98991162, 1.01060293,
-       0.98816874, 0.99495519, 1.00916667, 1.00074891, 0.99299467,
-       1.00667289, 1.00358106, 0.99545115, 0.99223911, 1.009169  ,
-       0.9962891 , 0.99892803, 0.98761227, 1.00117092, 0.99364149,
-       1.01330352, 1.00062397, 1.0066926 , 0.99762054, 0.9982456 ,
-       1.00193159, 0.99497939, 1.00380612, 1.00328393, 1.0023495 ,
-       1.00393189, 0.99856261, 1.00235203, 0.99352693, 0.98896947,
-       0.99672209, 1.00949951, 1.00286682, 1.02003873, 0.99896369])
+When we apply a unitary FT the std over all the frequency domain is: array([1.00173849, 0.99182734, 0.98701987, 1.00823557, 1.00106652,
+       0.989771  , 1.01025153, 0.99672207, 0.99942747, 0.98351153,
+       0.98723756, 0.99204514, 0.99487786, 1.00257757, 1.00965265,
+       0.98531386, 0.98694674, 0.99646927, 1.00259427, 0.98601599,
+       1.00393005, 1.00407837, 1.00627466, 1.00417353, 1.01106454,
+       0.99524206, 0.9959016 , 0.99471398, 1.00465262, 1.0058185 ,
+       1.00113949, 1.00211427, 1.00119074, 0.9908895 , 1.00225328,
+       0.99969313, 0.99510333, 1.00719706, 1.00064366, 0.99792673,
+       1.00026323, 1.00511447, 1.00273429, 1.01084399, 0.98780474,
+       1.01533137, 1.00111916, 1.00269298, 0.99378239, 1.00691723])
                 +/-None
         dimlabels=[&#39;repeats&#39;]
         axes={`repeats&#39;:array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
@@ -137,22 +96,24 @@ When we apply a unitary FT the std over all the frequency domain is: array([0.99
                         +/-None}
 
 Because we have no signal, this again corresponds to our noise.
-C:\ProgramData\Anaconda3\lib\site-packages\numpy\core\fromnumeric.py:3715: RuntimeWarning: Degrees of freedom &lt;= 0 for slice
+1: show the mask in white |||(None, None)
+
+/home/jmfranck/base/lib/python3.11/site-packages/numpy/core/fromnumeric.py:3787: RuntimeWarning: Degrees of freedom &lt;= 0 for slice
   return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-C:\ProgramData\Anaconda3\lib\site-packages\numpy\core\_methods.py:223: RuntimeWarning: invalid value encountered in divide
-  arrmean = um.true_divide(arrmean, div, out=arrmean, casting=&#39;unsafe&#39;,
-C:\ProgramData\Anaconda3\lib\site-packages\numpy\core\_methods.py:257: RuntimeWarning: invalid value encountered in double_scalars
+/home/jmfranck/base/lib/python3.11/site-packages/numpy/core/_methods.py:163: RuntimeWarning: invalid value encountered in divide
+  arrmean = um.true_divide(arrmean, div, out=arrmean,
+/home/jmfranck/base/lib/python3.11/site-packages/numpy/core/_methods.py:198: RuntimeWarning: invalid value encountered in scalar divide
   ret = ret.dtype.type(ret / rcount)
-The std when using the mask on unitary data is: array([0.99572367, 1.01802365, 1.01112763, 1.00320848, 1.0240335 ,
-       0.98646335, 1.00676658, 0.97879036, 0.98945348, 1.00231799,
-       0.98956111, 1.01902333, 1.00031137, 0.98133542, 1.01798634,
-       0.98750545, 0.9957167 , 1.00589839, 1.00187195, 0.99637814,
-       1.00645834, 1.00284278, 0.99873947, 0.99983828, 1.01064928,
-       0.99563495, 1.00211186, 0.99070747, 1.00756485, 1.00282074,
-       1.01015422, 0.9937559 , 1.00353017, 1.00143408, 1.01332396,
-       1.00416266, 0.98741817, 1.00945454, 1.0193718 , 1.00911919,
-       1.00128964, 0.99794642, 1.00389442, 0.99465532, 1.00138835,
-       0.98032461, 1.00909571, 1.00886425, 1.01151984, 1.00498438])
+The std when using the mask on unitary data is: array([0.98993434, 1.00085091, 0.98313161, 1.00818705, 0.99758744,
+       0.98960387, 1.00969641, 0.99388606, 0.99319969, 0.98895011,
+       0.99828855, 0.98790134, 0.99655692, 1.00998001, 1.00569159,
+       0.97099462, 0.99955595, 1.00269788, 1.0102701 , 0.98713458,
+       1.00421123, 1.00629517, 1.00671573, 1.01306883, 1.0086519 ,
+       0.99513845, 1.00149426, 1.00092035, 1.01551376, 1.00895013,
+       0.99727754, 0.99891376, 0.99659213, 0.98923538, 0.9984164 ,
+       0.9980498 , 0.99789894, 1.00615097, 1.00834723, 0.99443605,
+       1.01354014, 1.02519006, 1.00213205, 1.01778102, 0.98497144,
+       1.00780609, 0.98811374, 0.99560624, 0.99601896, 1.00558236])
                 +/-None
         dimlabels=[&#39;repeats&#39;]
         axes={`repeats&#39;:array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
@@ -163,16 +124,16 @@ The std when using the mask on unitary data is: array([0.99572367, 1.01802365, 1
 Because we can use the mask in the DCCT domain to exclude signal, that is the number we will want, in general.
 However, here we know that all of our data is noise, and so we should make sure that this matches the naive, direct time-domain calculation.
 If it does, all the following numbers will be about 1.0:
-array([1.00150211, 1.01331206, 1.01198826, 1.00026364, 1.00396419,
-       0.99486957, 0.99932522, 0.99063489, 0.99779088, 1.00453936,
-       1.00037144, 1.00540729, 1.00052376, 0.99198932, 1.00701639,
-       0.99876675, 1.00109776, 0.99705611, 1.00124116, 1.00328963,
-       0.99923694, 0.99936364, 1.003875  , 1.00752643, 1.00165517,
-       0.99985669, 1.00311587, 1.00264212, 1.00649033, 1.0090507 ,
-       0.99725572, 0.99318053, 0.9978855 , 1.00385377, 1.01521015,
-       1.00219712, 0.9926945 , 1.00581161, 1.01610488, 1.00663116,
-       0.99749227, 0.99924116, 1.00137412, 1.00098888, 1.01307615,
-       0.98361926, 0.99983551, 1.00561585, 0.99210244, 1.0060859 ])
+array([0.98775915, 1.00947173, 0.99606845, 0.99935323, 0.9966833 ,
+       0.9999185 , 0.99950514, 0.99657521, 0.99319529, 1.00530952,
+       1.01121127, 0.99539303, 1.00205525, 1.0075366 , 0.99588587,
+       0.98549159, 1.0123384 , 1.00606177, 1.00747714, 1.000892  ,
+       1.00004356, 1.00219001, 1.00034167, 1.00916587, 0.99764565,
+       0.99975116, 1.00522464, 1.00620426, 1.01129103, 1.00285814,
+       0.99662417, 0.99671768, 0.99562997, 0.99826647, 0.99611734,
+       0.99848401, 1.00280985, 0.99922003, 1.00829592, 0.99655859,
+       1.01348139, 1.01963677, 0.99939527, 1.00772439, 0.99724153,
+       0.99259741, 0.98700995, 0.9928987 , 1.00186831, 0.99861617])
                 +/-None
         dimlabels=[&#39;repeats&#39;]
         axes={`repeats&#39;:array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
@@ -184,56 +145,75 @@ array([1.00150211, 1.01331206, 1.01198826, 1.00026364, 1.00396419,
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">r_</span>
 <span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="o">*</span>
+
 <span class="n">N</span> <span class="o">=</span> <span class="mi">1024</span>
 <span class="n">n_repeats</span> <span class="o">=</span> <span class="mi">50</span>
-<span class="n">signal_window</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">200</span><span class="p">)</span> <span class="c1"># wherever my &quot;peak&quot; shows up</span>
+<span class="n">signal_window</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>  <span class="c1"># wherever my &quot;peak&quot; shows up</span>
+
+
 <span class="c1"># {{{ we know how to write a masked mean or std only along 1 dimension, so</span>
 <span class="c1">#     use numpy apply_along_axis to make it a function that works along 1</span>
 <span class="c1">#     dimension of multidimensional data</span>
 <span class="k">def</span> <span class="nf">masked_mean_multi</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="s2">&quot;Calculates the mean of nan-masked data on a 1D axis&quot;</span>
     <span class="k">assert</span> <span class="n">axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
     <span class="k">def</span> <span class="nf">masked_mean</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="s2">&quot;this only works for 1D data&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)])</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">masked_mean</span><span class="p">,</span><span class="n">axis</span><span class="p">,</span><span class="n">x</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">masked_var_multi</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">var_has_imag</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">masked_mean</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">masked_var_multi</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">var_has_imag</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="s2">&quot;calculates the variance of nan-masked data along a 1D axis&quot;</span>
     <span class="k">assert</span> <span class="n">axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
     <span class="k">def</span> <span class="nf">masked_var</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="s2">&quot;this only works for 1D data&quot;</span>
-        <span class="k">if</span> <span class="n">var_has_imag</span><span class="p">:</span> <span class="c1"># take average of variance along real and image</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+        <span class="k">if</span> <span class="n">var_has_imag</span><span class="p">:</span>  <span class="c1"># take average of variance along real and image</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">masked_var</span><span class="p">,</span><span class="n">axis</span><span class="p">,</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">masked_var</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+
 <span class="c1"># }}}</span>
-<span class="c1">#{{ {generate data with just noise with a phase cycling dimension and repeats dimension</span>
-<span class="n">signal_pathway</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ph&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
-<span class="n">example_data</span> <span class="o">=</span> <span class="n">nddata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="n">n_repeats</span><span class="o">*</span><span class="n">N</span><span class="p">)</span>
-        <span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="n">n_repeats</span><span class="o">*</span><span class="n">N</span><span class="p">),</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="n">n_repeats</span><span class="p">,</span><span class="n">N</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;ph&#39;</span><span class="p">,</span><span class="s1">&#39;repeats&#39;</span><span class="p">,</span><span class="s1">&#39;t&#39;</span><span class="p">])</span>
-<span class="n">example_data</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s1">&#39;ph&#39;</span><span class="p">,</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span>
-<span class="n">example_data</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s1">&#39;repeats&#39;</span><span class="p">,</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n_repeats</span><span class="p">])</span>
-<span class="n">example_data</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">N</span><span class="p">])</span>
-<span class="c1">#}}}</span>
+<span class="c1"># {{ {generate data with just noise with a phase cycling dimension and repeats dimension</span>
+<span class="n">signal_pathway</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ph&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+<span class="n">example_data</span> <span class="o">=</span> <span class="n">nddata</span><span class="p">(</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">4</span> <span class="o">*</span> <span class="n">n_repeats</span> <span class="o">*</span> <span class="n">N</span><span class="p">)</span>
+    <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">4</span> <span class="o">*</span> <span class="n">n_repeats</span> <span class="o">*</span> <span class="n">N</span><span class="p">),</span>
+    <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_repeats</span><span class="p">,</span> <span class="n">N</span><span class="p">],</span>
+    <span class="p">[</span><span class="s2">&quot;ph&quot;</span><span class="p">,</span> <span class="s2">&quot;repeats&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">example_data</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;ph&quot;</span><span class="p">,</span> <span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">example_data</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;repeats&quot;</span><span class="p">,</span> <span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n_repeats</span><span class="p">])</span>
+<span class="n">example_data</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">r_</span><span class="p">[</span><span class="mi">0</span> <span class="p">:</span> <span class="mi">1</span> <span class="p">:</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">N</span><span class="p">])</span>
+<span class="c1"># }}}</span>
 <span class="c1"># calculate the variance directly in the time domain.</span>
 <span class="c1"># Because the data has no signal, know that this actually corresponds to the noise level:</span>
-<span class="n">direct_t_dom_std</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">example_data</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">,</span><span class="s1">&#39;t&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;ph&#39;</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">direct_t_dom_std</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">example_data</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s2">&quot;ph&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 <span class="c1"># the way that we do FT is parseval preserved?</span>
-<span class="n">temp</span> <span class="o">=</span> <span class="n">example_data</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;If we apply just FT as we normally would the std in the frequency domain is:&quot;</span><span class="p">,</span>
-        <span class="n">sqrt</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">,</span><span class="s1">&#39;t&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;ph&#39;</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">temp</span> <span class="o">=</span> <span class="n">example_data</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">&quot;If we apply just FT as we normally would the std in the frequency domain is:&quot;</span><span class="p">,</span>
+    <span class="n">sqrt</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s2">&quot;ph&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+<span class="p">)</span>
 <span class="c1"># it&#39;s not!  I need to use a unitary FT for this to work</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;These values are NOT the same so we need a unitary FT for this to work&quot;</span><span class="p">)</span>
-<span class="n">example_data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unitary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">example_data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s1">&#39;ph&#39;</span><span class="p">,</span> <span class="n">unitary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">freq_dom_std</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">example_data</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">,</span><span class="s1">&#39;t&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;ph&#39;</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;When we apply a unitary FT the std over all the frequency domain is:&quot;</span><span class="p">,</span>
-        <span class="n">freq_dom_std</span><span class="p">)</span>
+<span class="n">example_data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unitary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">example_data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;ph&quot;</span><span class="p">,</span> <span class="n">unitary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">freq_dom_std</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">example_data</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s2">&quot;ph&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">&quot;When we apply a unitary FT the std over all the frequency domain is:&quot;</span><span class="p">,</span>
+    <span class="n">freq_dom_std</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Because we have no signal, this again corresponds to our noise.&quot;</span><span class="p">)</span>
 <span class="c1"># now, I can just calculate the &quot;time domain&quot; noise variance in the</span>
 <span class="c1"># frequency domain, where it&#39;s easier to mask out regions of the coherence</span>
@@ -244,73 +224,153 @@ array([1.00150211, 1.01331206, 1.01198826, 1.00026364, 1.00396419,
 <span class="c1">#     is assuming that I have signal that I&#39;m not interested in including in</span>
 <span class="c1">#     the calculation.</span>
 <span class="n">temp</span> <span class="o">=</span> <span class="n">select_pathway</span><span class="p">(</span><span class="n">example_data</span><span class="p">,</span> <span class="n">signal_pathway</span><span class="p">)</span>
-<span class="n">temp</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">nan</span> <span class="c1"># note how I am NOT acting on a copy -- I am trying to</span>
+<span class="n">temp</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">nan</span>  <span class="c1"># note how I am NOT acting on a copy -- I am trying to</span>
 <span class="c1">#                    manipulate the data at its original memory position!</span>
 <span class="c1"># for the most complicated case I&#39;ll also say I want to exclude phase cycling</span>
 <span class="c1"># noise -- so also exclude everything from the signal bandwidth</span>
 <span class="c1"># this will give a conservative (small) estimate of the noise</span>
-<span class="n">temp</span> <span class="o">=</span> <span class="n">example_data</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">:</span><span class="n">signal_window</span><span class="p">]</span>
+<span class="n">temp</span> <span class="o">=</span> <span class="n">example_data</span><span class="p">[</span><span class="s2">&quot;t&quot;</span><span class="p">:</span><span class="n">signal_window</span><span class="p">]</span>
 <span class="n">temp</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">nan</span>
-<span class="c1">#}}}</span>
+<span class="c1"># }}}</span>
 <span class="k">with</span> <span class="n">figlist_var</span><span class="p">(</span><span class="n">black</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
-    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s1">&#39;show the mask in white&#39;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;show the mask in white&quot;</span><span class="p">)</span>
     <span class="n">forplot</span> <span class="o">=</span> <span class="n">example_data</span><span class="o">.</span><span class="n">C</span>
     <span class="c1"># in pyspecdata, nan shows up as the opposite (black vs. white) color vs. 0</span>
     <span class="n">fl</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">forplot</span><span class="p">)</span>
-<span class="c1">#{{{ Calculate the variance using new functions</span>
+<span class="c1"># {{{ Calculate the variance using new functions</span>
 <span class="c1">#    now, I can do this:</span>
-<span class="n">example_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">masked_var_multi</span><span class="p">,</span> <span class="s1">&#39;t&#39;</span><span class="p">)</span>
-<span class="n">example_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">masked_mean_multi</span><span class="p">,</span><span class="s1">&#39;ph&#39;</span><span class="p">)</span>
-<span class="n">example_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="c1"># convert variance to std for subsequent comparison</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The std when using the mask on unitary data is:&quot;</span><span class="p">,</span>
-        <span class="n">example_data</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Because we can use the mask in the DCCT domain to exclude signal, that is the number we will want, in general.&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;However, here we know that all of our data is noise, and so we should make sure that this matches the naive, direct time-domain calculation.&quot;</span><span class="p">)</span>
+<span class="n">example_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">masked_var_multi</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">)</span>
+<span class="n">example_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">masked_mean_multi</span><span class="p">,</span> <span class="s2">&quot;ph&quot;</span><span class="p">)</span>
+<span class="n">example_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="p">)</span>  <span class="c1"># convert variance to std for subsequent comparison</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The std when using the mask on unitary data is:&quot;</span><span class="p">,</span> <span class="n">example_data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">&quot;Because we can use the mask in the DCCT domain to exclude signal, that is the number we will want, in general.&quot;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">&quot;However, here we know that all of our data is noise, and so we should make sure that this matches the naive, direct time-domain calculation.&quot;</span>
+<span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;If it does, all the following numbers will be about 1.0:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">example_data</span><span class="o">/</span><span class="n">direct_t_dom_std</span><span class="p">)</span>
-<span class="c1">#}}}</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">example_data</span> <span class="o">/</span> <span class="n">direct_t_dom_std</span><span class="p">)</span>
+<span class="c1"># }}}</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  0.250 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.428 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-time-domain-noise-py">
-<div class="sphx-glr-download sphx-glr-download-python docutils container">
-<p><a class="reference download internal" download="" href="../_downloads/4a9af39812d84c4d838a9e493f6d4195/time_domain_noise.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">time_domain_noise.py</span></code></a></p>
-</div>
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/71ffdacba7c3ec69d03240a6309e7b73/time_domain_noise.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">time_domain_noise.ipynb</span></code></a></p>
 </div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/4a9af39812d84c4d838a9e493f6d4195/time_domain_noise.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">time_domain_noise.py</span></code></a></p>
+</div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
 
 
-           </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="correlation_alignment_example.html" class="btn btn-neutral float-left" title="Align data with significant frequency drift" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="proc_fieldSweep.html" class="btn btn-neutral float-right" title="Check NMR/ESR resonance ratio using a field sweep" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2021, John M. Franck group.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
+          
         </div>
       </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
 
-</body>
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Time-Domain Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="check_integration_error.html" title="previous chapter">Check integral error calculation</a></li>
+      <li>Next: <a href="integration_with_error.html" title="next chapter">Check Integration</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/time_domain_noise.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
 </html>

@@ -1,4 +1,5 @@
-"""Convert 2D to Integrals with Errors
+"""
+Convert 2D to Integrals with Errors
 ===================================
 
 Take a 2D dataset and convert it to a table of integrals with errors, utilizing
@@ -71,7 +72,9 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        data = fake_data(expression, OrderedDict(variable_defs), signal_pathway)
+        data = fake_data(
+            expression, OrderedDict(variable_defs), signal_pathway
+        )
         data.ft("t2")
         # {{{ make data unitary again
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")

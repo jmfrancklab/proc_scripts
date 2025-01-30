@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Calculating β from individual pulse capture &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=0838f141" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Align data with significant frequency drift" href="correlation_alignment_example.html" />
+    <link rel="prev" title="Process FIR experiment" href="proc_FIR.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-proc-gds-capture-int-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="calculating-from-individual-pulse-capture">
+<span id="sphx-glr-auto-examples-proc-gds-capture-int-py"></span><h1>Calculating β from individual pulse capture<a class="headerlink" href="#calculating-from-individual-pulse-capture" title="Link to this heading">¶</a></h1>
+<p>Assuming a single pulse was acquired via simple_onepulse_capture.py
+in the FLInst repo using the GDS oscilloscope, this script plots the absolute analytic
+along with the frequency filtered absolute of the analytic before
+integrating to calculate :math:<a href="#id1"><span class="problematic" id="id2">`</span></a>beta = frac{1}{sqrt{2}}int{V(t)dt}’.</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_proc_GDS_capture_int_001.png" srcset="../_images/sphx_glr_proc_GDS_capture_int_001.png" alt="amplitude = 0.05, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$   $\sqrt{P_{analytic}}$ vs $t_{pulse}$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_GDS_capture_int_002.png" srcset="../_images/sphx_glr_proc_GDS_capture_int_002.png" alt="amplitude = 0.05, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$   Frequency Domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_GDS_capture_int_003.png" srcset="../_images/sphx_glr_proc_GDS_capture_int_003.png" alt="amplitude = 0.1, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$   $\sqrt{P_{analytic}}$ vs $t_{pulse}$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_GDS_capture_int_004.png" srcset="../_images/sphx_glr_proc_GDS_capture_int_004.png" alt="amplitude = 0.1, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$   Frequency Domain" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_GDS_capture_int_005.png" srcset="../_images/sphx_glr_proc_GDS_capture_int_005.png" alt="amplitude = 0.2, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$   $\sqrt{P_{analytic}}$ vs $t_{pulse}$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_GDS_capture_int_006.png" srcset="../_images/sphx_glr_proc_GDS_capture_int_006.png" alt="amplitude = 0.2, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$   Frequency Domain" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>1: amplitude = 0.05, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$
+ $\sqrt{P_{analytic}}$ vs $t_{pulse}$ |||μs
+2: amplitude = 0.05, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$
+ Frequency Domain |||MHz
+3: amplitude = 0.1, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$
+ $\sqrt{P_{analytic}}$ vs $t_{pulse}$ |||μs
+4: amplitude = 0.1, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$
+ Frequency Domain |||MHz
+5: amplitude = 0.2, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$
+ $\sqrt{P_{analytic}}$ vs $t_{pulse}$ |||μs
+6: amplitude = 0.2, ${\beta}$ = 250.00000000000003 ${\mathrm{\mu s \sqrt{W}}}$
+ Frequency Domain |||MHz
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyspecdata</span> <span class="k">as</span> <span class="nn">psd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">cycle</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.find_apparent_anal_freq" title="pyspecProcScripts.find_apparent_anal_freq" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">find_apparent_anal_freq</span></a>
+
+<span class="n">colorcyc_list</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.prop_cycle&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">by_key</span><span class="p">()[</span><span class="s2">&quot;color&quot;</span><span class="p">][:</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">color_cycle</span> <span class="o">=</span> <span class="n">cycle</span><span class="p">(</span><span class="n">colorcyc_list</span><span class="p">)</span>
+
+<span class="n">V_atten_ratio</span> <span class="o">=</span> <span class="mf">102.2</span>  <span class="c1"># attenutation ratio</span>
+<span class="n">HH_width</span> <span class="o">=</span> <span class="mf">2e6</span>
+<span class="n">Delta_nu</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="mf">15.19e6</span> <span class="o">-</span> <span class="mf">14.61e6</span>
+<span class="p">)</span>  <span class="c1"># width of reflection at -3dB - specific to large probe</span>
+
+<span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">nodename</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;240819_amp0p05_beta_max_pulse_capture.h5&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pulse_capture_9&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;240819_amp0p1_beta_max_pulse_capture.h5&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pulse_capture_6&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;240819_amp0p2_beta_max_pulse_capture.h5&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pulse_capture_2&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
+            <span class="n">filename</span><span class="p">,</span> <span class="n">expno</span><span class="o">=</span><span class="n">nodename</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;ODNP_NMR_comp/test_equipment&quot;</span>
+        <span class="p">)</span>
+        <span class="c1"># {{{ define basename</span>
+        <span class="n">amplitude</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">]</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">basename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;amplitude = </span><span class="si">{</span><span class="n">amplitude</span><span class="si">}</span><span class="s2">, $</span><span class="se">{{\\</span><span class="s2">beta</span><span class="se">}}</span><span class="s2">$ = </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s1">&#39;acq_params&#39;</span><span class="p">)[</span><span class="s1">&#39;beta_90_s_sqrtW&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e-6</span><span class="si">}</span><span class="s2"> $</span><span class="se">{{\\</span><span class="s2">mathrm</span><span class="se">{{\\</span><span class="s2">mu s </span><span class="se">\\</span><span class="s2">sqrt</span><span class="se">{{</span><span class="s2">W</span><span class="se">}}}}}}</span><span class="s2">$ </span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="c1"># }}}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">get_units</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;s&quot;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;units weren&#39;t set for the t axis or else I can&#39;t read them from the hdf5 file!&quot;</span>
+            <span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">*=</span> <span class="n">V_atten_ratio</span>  <span class="c1"># attenutation ratio</span>
+        <span class="n">s</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>  <span class="c1"># V/sqrt(R) = sqrt(P)</span>
+        <span class="c1"># {{{ plot absolute analytic</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\sqrt{P_</span><span class="si">{analytic}</span><span class="s2">}$ vs $t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span><span class="p">)</span>
+        <span class="n">thiscolor</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">color_cycle</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;abs(analytic)&quot;</span><span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ apply frequency filter</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">nu_a</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.find_apparent_anal_freq" title="pyspecProcScripts.find_apparent_anal_freq" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">find_apparent_anal_freq</span></a><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">nu_a</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">HH_width</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">nu_a</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">HH_width</span>
+        <span class="p">),</span> <span class="s2">&quot;unfortunately the region I want to filter includes DC -- this is probably not good, and means you should pick a different timescale for your scope so this doesn&#39;t happen&quot;</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+        <span class="c1"># {{{ Display frequency domain</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Frequency Domain&quot;</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;abs(analytic)&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">s</span><span class="o">=</span><span class="sa">rf</span><span class="s2">&quot;$\nu_a=</span><span class="si">{</span><span class="n">nu_a</span><span class="o">/</span><span class="mf">1e6</span><span class="si">:</span><span class="s2">0.2f</span><span class="si">}</span><span class="s2">$ MHz&quot;</span><span class="p">,</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ lorentzian filter</span>
+        <span class="n">Lorentzian_filtered</span> <span class="o">=</span> <span class="n">s</span> <span class="o">/</span> <span class="p">(</span>
+            <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fromaxis</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">nu_a</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">Delta_nu</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ heaviside hat functions</span>
+        <span class="n">s</span><span class="p">[</span><span class="s2">&quot;t&quot;</span> <span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">nu_a</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">HH_width</span><span class="p">)]</span> <span class="o">*=</span> <span class="mi">0</span>
+        <span class="n">s</span><span class="p">[</span><span class="s2">&quot;t&quot;</span> <span class="p">:</span> <span class="p">(</span><span class="n">nu_a</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">HH_width</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span> <span class="o">*=</span> <span class="mi">0</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># }}}</span>
+        <span class="c1"># {{{ plot application of all filters</span>
+        <span class="k">for</span> <span class="n">filtered_data</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">ax_place</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;Heaviside hat&quot;</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">Lorentzian_filtered</span><span class="p">,</span> <span class="s2">&quot;Lorentzian&quot;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+        <span class="p">]:</span>
+            <span class="n">thiscolor</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">color_cycle</span><span class="p">)</span>
+            <span class="n">filtered_data</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\sqrt{P_</span><span class="si">{analytic}</span><span class="s2">}$ vs $t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">),</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">label</span> <span class="o">+</span> <span class="s2">&quot; filter&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">filtered_data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Frequency Domain&quot;</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span>
+            <span class="p">)</span>
+            <span class="n">filtered_data</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+            <span class="n">beta</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">)</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\sqrt{P_</span><span class="si">{analytic}</span><span class="s2">}$ vs $t_</span><span class="si">{pulse}</span><span class="s2">$&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                <span class="mf">0.5</span><span class="p">,</span>
+                <span class="n">ax_place</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s2">&quot;$\beta_{</span><span class="si">%s</span><span class="s2">} = </span><span class="si">%f</span><span class="s2"> \mu s \sqrt</span><span class="si">{W}</span><span class="s2">$&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">beta</span> <span class="o">/</span> <span class="mf">1e-6</span><span class="p">),</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">thiscolor</span><span class="p">,</span>
+                <span class="n">transform</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\sqrt</span><span class="si">{P}</span><span class="s2">$ / $\mathrm{\sqrt</span><span class="si">{W}</span><span class="s2">}$&quot;</span><span class="p">)</span>
+        <span class="c1"># }}}</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 7.945 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-gds-capture-int-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/c6a026660ab6e946e0034e68582bb671/proc_GDS_capture_int.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_GDS_capture_int.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/3d585c9170ba3403ab37c7fd6db5308b/proc_GDS_capture_int.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">proc_GDS_capture_int.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Calculating β from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="proc_FIR.html" title="previous chapter">Process FIR experiment</a></li>
+      <li>Next: <a href="correlation_alignment_example.html" title="next chapter">Align data with significant frequency drift</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/proc_GDS_capture_int.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

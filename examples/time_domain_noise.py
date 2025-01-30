@@ -1,4 +1,8 @@
-"""Here, we want to calculate the time-domain variance to use in error propagation.
+"""
+Time-Domain Noise
+=================
+
+Here, we want to calculate the time-domain variance to use in error propagation.
 But, to make sure we calculate only noise, we want to mask out portions of the frequency 
 domain.
 We propose that if we use a unitary transform,

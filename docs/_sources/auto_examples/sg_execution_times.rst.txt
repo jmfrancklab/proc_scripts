@@ -6,40 +6,110 @@
 
 Computation times
 =================
-**00:02.717** total execution time for **auto_examples** files:
+**00:02.679** total execution time for 27 files **from auto_examples**:
 
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_test_error.py` (``test_error.py``)                                                     | 00:02.717 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_Hermitian_Phasing.py` (``Hermitian_Phasing.py``)                                       | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_Hermitian_Phasing_Actual_Challenging.py` (``Hermitian_Phasing_Actual_Challenging.py``) | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_Hermitian_Phasing_Actual_var_tau.py` (``Hermitian_Phasing_Actual_var_tau.py``)         | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_L2G.py` (``L2G.py``)                                                                   | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_check_integration_error.py` (``check_integration_error.py``)                           | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_correlation_alignment_example.py` (``correlation_alignment_example.py``)               | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_generate_integrals.py` (``generate_integrals.py``)                                     | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_generate_integrals_RealData.py` (``generate_integrals_RealData.py``)                   | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_integrate_limits.py` (``integrate_limits.py``)                                         | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_integrate_limits_realData.py` (``integrate_limits_realData.py``)                       | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_integration_with_error.py` (``integration_with_error.py``)                             | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_proc_capture_nutation.py` (``proc_capture_nutation.py``)                               | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_proc_fieldSweep.py` (``proc_fieldSweep.py``)                                           | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_proc_square_refl.py` (``proc_square_refl.py``)                                         | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_proc_var_tau.py` (``proc_var_tau.py``)                                                 | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_time_domain_noise.py` (``time_domain_noise.py``)                                       | 00:00.000 | 0.0 MB |
-+---------------------------------------------------------------------------------------------------------------------+-----------+--------+
+.. container::
+
+  .. raw:: html
+
+    <style scoped>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+    </style>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" class="init">
+    $(document).ready( function () {
+        $('table.sg-datatable').DataTable({order: [[1, 'desc']]});
+    } );
+    </script>
+
+  .. list-table::
+   :header-rows: 1
+   :class: table table-striped sg-datatable
+
+   * - Example
+     - Time
+     - Mem (MB)
+   * - :ref:`sphx_glr_auto_examples_epr_overlay.py` (``epr_overlay.py``)
+     - 00:02.679
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py` (``FIDtoEcho_Actual.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual_Challenging.py` (``FIDtoEcho_Actual_Challenging.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_Hermitian_Phasing.py` (``Hermitian_Phasing.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_append_conc_to_h5file.py` (``append_conc_to_h5file.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_calibrate_tsqrtP.py` (``calibrate_tsqrtP.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_check_integration_error.py` (``check_integration_error.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_compare_CPMG_echo.py` (``compare_CPMG_echo.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_correlation_alignment_example.py` (``correlation_alignment_example.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_integrate_limits.py` (``integrate_limits.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_integrate_limits_realData.py` (``integrate_limits_realData.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_integration_with_error.py` (``integration_with_error.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_phaseCycNoise_example.py` (``phaseCycNoise_example.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_CPMG.py` (``proc_CPMG.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_Ep.py` (``proc_Ep.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_FID_nutation.py` (``proc_FID_nutation.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_FIR.py` (``proc_FIR.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_GDS_capture_int.py` (``proc_GDS_capture_int.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_capture_nutation.py` (``proc_capture_nutation.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_fieldSweep.py` (``proc_fieldSweep.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_nutation.py` (``proc_nutation.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_raw.py` (``proc_raw.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_square_refl.py` (``proc_square_refl.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_tune_capture.py` (``proc_tune_capture.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_read_log.py` (``read_log.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_time_domain_noise.py` (``time_domain_noise.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_verify_tsqrtP_calibration.py` (``verify_tsqrtP_calibration.py``)
+     - 00:00.000
+     - 0.0

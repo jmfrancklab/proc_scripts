@@ -299,13 +299,15 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 def proc_spincore_SE_v1(s, fl=None):
     s = proc_spincore_generalproc_v1(s, fl=fl)
-    s *= s.shape["nScans"]
+    if "nScans" in s.shape:
+        s *= s.shape["nScans"]
     return s
 
 
 def proc_spincore_diffph_SE_v1(s, fl=None):
     s = proc_spincore_diffph_SE_v2(s, fl=fl)
-    s *= s.shape["nScans"]
+    if "nScans" in s.dimlabels:
+        s *= s.shape["nScans"]
     return s
 
 
@@ -325,6 +327,8 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
 
 def proc_Hahn_echoph(s, fl=None):
     logging.debug("loading pre-processing for Hahn_echoph")
+    if "nScans" in s.dimlabels:
+        nScans = s.shape["nScans"]
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
@@ -380,6 +384,14 @@ def proc_spincore_IR_v2(s, fl=None):
     if fl is not None:
         fl.next("frequency domain (all $\\Delta p$)")
         fl.image(s.C.setaxis("vd", "#").set_units("vd", "scan #"), black=False)
+    return s
+
+
+def hack_spincore_IR_v3(s, fl=None):
+    "v3 has an incorrectly stored coherence pathway"
+    proc_spincore_generalproc_v1(s, fl=fl)
+    s.set_prop("coherence_pathway", {"ph1": 0, "ph2": +1})
+    s.set_units("vd", "s")
     return s
 
 
@@ -693,6 +705,7 @@ def proc_spincore_generalproc_v1(
         #            this
     # {{{ always put the phase cycling dimensions on the outside
     neworder = [j for j in s.dimlabels if j.startswith("ph")]
+    neworder.sort()  # it's confusing if the pulses don't come in order
     # }}}
     # {{{ reorder the rest based on size
     nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
@@ -873,7 +886,8 @@ lookup_table = {
     ),
     "spincore_IR_v1": proc_spincore_IR,  # for 4 x 2 phase cycle
     "spincore_IR_v2": proc_spincore_IR_v2,  # for 4 x 4 phase cycle data
-    "spincore_IR_v3": proc_spincore_generalproc_v1,
+    "spincore_IR_v3": hack_spincore_IR_v3,
+    "spincore_IR_v4": proc_spincore_generalproc_v1,
     "spincore_nutation_v1": proc_nutation,
     "spincore_nutation_v2": proc_nutation_v2,
     "spincore_nutation_amp": proc_nutation_amp,

@@ -22,6 +22,7 @@ def rough_table_of_integrals(
     direct="t2",
     expansion=2,
     peak_lower_thresh=0.1,
+    inc_plot_color=True,
 ):
     """manipulate s to generate a table of integrals
     (with only rough alignment)
@@ -64,6 +65,9 @@ def rough_table_of_integrals(
         Expand peakrange about its center by this much.
     peak_lower_thresh: float
         passed to :func:`find_peakrange`
+    inc_plot_color: boolean
+        assume that we are processing multiple datasets, and want to increment
+        the color counter with every run of this function.
 
     Returns
     =======
@@ -91,8 +95,6 @@ def rough_table_of_integrals(
     assert fl is not None, "for now, fl can't be None"
     # {{{ set up subplots
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-    fig.set_figwidth(15)
-    fig.set_figheight(6)
     fig.suptitle(title)
     fl.next("Raw Data with averaged scans", fig=fig)
     fl.skip_units_check()
@@ -120,8 +122,9 @@ def rough_table_of_integrals(
     fl.image(
         s,
         ax=ax1,
+        interpolation="auto",
     )
-    ax1.set_title("Signal pathway / ph0")
+    ax1.set_title("extract signal pathway")
     # }}}
     # {{{ Check phase variation along indirect
     #     I don't want the data aligned to do this,  in case there is
@@ -134,8 +137,9 @@ def rough_table_of_integrals(
     fl.image(
         s,
         ax=ax2,
+        interpolation="auto",
     )
-    ax2.set_title("Check phase variation along indirect")
+    ax2.set_title("check phase variation\nalong indirect")
     # }}}
     if echo_like:
         signal_pathway = {}
@@ -156,16 +160,24 @@ def rough_table_of_integrals(
     s.ift(direct)
     s *= np.exp(-1j * 2 * pi * (shift - center_of_range) * s.fromaxis(direct))
     s.ft(direct)
-    fl.image(s, ax=ax3)
+    fl.image(s, ax=ax3,
+        interpolation="auto",
+             )
     ax3.set_title(
         "FID sliced" + (", phased," if echo_like else "") + " and aligned"
     )
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
-    s.human_units() # because the units aren't under the control of the figure
-    #                 list, we're going to convert to "human" units here
-    psd.plot(s, "-o", ax=ax4)
-    psd.gridandtick(plt.gca())
+    if inc_plot_color:
+        s.set_plot_color_next()
+    if "nScans" in s.dimlabels:
+        s.mean("nScans")
+    if s.get_units(s.dimlabels[-1]) != "s":
+        s.human_units()  # because the units aren't under the control of
+        #                  the figure list, we're going to convert to
+        #                  "human" units here
+    psd.plot(s, "o", ax=ax4, alpha=0.5)
     ax4.set_title("table of integrals")
+    psd.gridandtick(ax4)
     # }}}
     return s, ax4
