@@ -6,12 +6,15 @@ Takes a 2D data set and applies proper phasing corrections followed by
 aligning the data through a correlation routine.
 """
 
-from pyspecdata import *
-from pyspecProcScripts import *
-from pylab import *
+import pyspecdata as psd
+from pyspecdata import r_
+import numpy as np
+import pyspecProcScripts as psdpr
+from pylab import rcParams
+import matplotlib.pyplot as plt
 import sympy as s
 from collections import OrderedDict
-from numpy.random import normal, seed
+from numpy.random import seed
 
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
@@ -22,7 +25,7 @@ t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
 
-with figlist_var() as fl:
+with psd.figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label in [
         (
             (
@@ -31,10 +34,10 @@ with figlist_var() as fl:
                 * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
             ),
             [
-                ("vd", nddata(r_[0:1:40j], "vd")),
-                ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                ("ph2", nddata(r_[0, 2] / 4.0, "ph2")),
-                ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+                ("vd", psd.nddata(r_[0:1:40j], "vd")),
+                ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
+                ("ph2", psd.nddata(r_[0, 2] / 4.0, "ph2")),
+                ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
             ],
             {"ph1": 0, "ph2": 1},
             "vd",
@@ -47,9 +50,9 @@ with figlist_var() as fl:
                 * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
             ),
             [
-                ("power", nddata(r_[0:4:25j], "power")),
-                ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+                ("power", psd.nddata(r_[0:4:25j], "power")),
+                ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
+                ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
             ],
             {"ph1": 1},
             "power",
@@ -63,18 +66,22 @@ with figlist_var() as fl:
         # }}}
         fig.suptitle(fl.basename)
         fl.next("Data Processing", fig=fig)
-        data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
+        data = psd.fake_data(
+            expression, OrderedDict(orderedDict), signal_pathway
+        )
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
-        data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
+        data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
         fl.DCCT(data, bbox=gs[0], title="Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
-        data /= zeroth_order_ph(select_pathway(data, signal_pathway))
+        data /= psdpr.zeroth_order_ph(
+            psdpr.select_pathway(data, signal_pathway)
+        )
         # }}}
         # {{{ Applying the phase corrections
-        best_shift = hermitian_function_test(
-            select_pathway(data.C.mean(indirect), signal_pathway)
+        best_shift = psdpr.hermitian_function_test(
+            psdpr.select_pathway(data.C.mean(indirect), signal_pathway)
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
@@ -82,13 +89,15 @@ with figlist_var() as fl:
         # }}}
         # {{{ Applying Correlation Routine to Align Data
         mysgn = (
-            select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
+            psdpr.select_pathway(data, signal_pathway)
+            .C.real.sum("t2")
+            .run(np.sign)
         )
         #    this is the sign of the signal -- note how on the next line,
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
         data.ift(list(signal_pathway.keys()))
-        opt_shift, sigma, mask_func = correl_align(
+        opt_shift, sigma, mask_func = psdpr.correl_align(
             data * mysgn,
             indirect_dim=indirect,
             signal_pathway=signal_pathway,
@@ -101,7 +110,7 @@ with figlist_var() as fl:
         )
         # removed display of the mask (I think that's what it was)
         data.ift("t2")
-        data *= np.exp(-1j * 2 * pi * opt_shift * data.fromaxis("t2"))
+        data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
         data.ft(list(signal_pathway.keys()))
         data.ft("t2")
         fl.DCCT(data, bbox=gs[2], title="Aligned Data (v)")
