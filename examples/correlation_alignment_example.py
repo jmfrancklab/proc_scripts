@@ -5,12 +5,15 @@ Align data with significant frequency drift
 Takes a 2D data set and applies proper phasing corrections followed by 
 aligning the data through a correlation routine.
 """
+
 from pyspecdata import *
 from pyspecProcScripts import *
 from pylab import *
 import sympy as s
 from collections import OrderedDict
 from numpy.random import normal, seed
+
+init_logging(level="debug")
 
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
@@ -57,7 +60,7 @@ with figlist_var() as fl:
     ]:
         fl.basename = "(%s)" % label
         # {{{ equivalent of subplot
-        fig = plt.figure(figsize=(9, 7))
+        fig = plt.figure(figsize=(11, 7))
         gs = plt.GridSpec(1, 4, figure=fig, wspace=0.4)
         # }}}
         fig.suptitle(fl.basename)

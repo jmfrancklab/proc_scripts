@@ -170,7 +170,8 @@ def correl_align(
                     ax=ax_list[1],
                 )
                 ax_list[1].set_title("correlation function (t), \nafter apod")
-        correl.ft_clear_startpoints(direct)
+        correl.ft_new_startpoint(direct, "freq")
+        correl.ft_new_startpoint(direct, "time")
         correl.ft(direct, shift=True, pad=2**14)
         for k, v in signal_pathway.items():
             correl.ft(["Delta%s" % k.capitalize()])
