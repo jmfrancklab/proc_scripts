@@ -13,8 +13,6 @@ import sympy as s
 from collections import OrderedDict
 from numpy.random import normal, seed
 
-init_logging(level="debug")
-
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
