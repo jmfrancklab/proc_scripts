@@ -59,7 +59,6 @@ with figlist_var() as fl:
         # {{{ equivalent of subplot
         fig = plt.figure(figsize=(7, 7))
         gs = plt.GridSpec(1, 4, figure=fig)
-        ax_list = [fig.add_subplot(gs[0, i]) for i in range(4)]
         # }}}
         fig.suptitle(fl.basename)
         fl.next("Data Processing", fig=fig)
@@ -67,7 +66,7 @@ with figlist_var() as fl:
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        fl.image(data, ax=ax_list[0], human_units=False)
+        fl.DCCT(data, bbox=gs[0])
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
@@ -79,7 +78,7 @@ with figlist_var() as fl:
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
-        fl.image(data, ax=ax_list[1])
+        fl.DCCT(data, bbox=gs[1])
         ax_list[1].set_title("Phased and \n Centered")
         # }}}
         # {{{ Applying Correlation Routine to Align Data
@@ -106,10 +105,10 @@ with figlist_var() as fl:
         data *= np.exp(-1j * 2 * pi * opt_shift * data.fromaxis("t2"))
         data.ft(list(signal_pathway.keys()))
         data.ft("t2")
-        fl.image(data, ax=ax_list[2], human_units=False)
+        fl.DCCT(data, bbox=gs[2])
         ax_list[2].set_title("Aligned Data (v)")
         data.ift("t2")
-        fl.image(data, ax=ax_list[3], human_units=False)
+        fl.DCCT(data, bbox=gs[3])
         ax_list[3].set_title("Aligned Data (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
         # }}}
