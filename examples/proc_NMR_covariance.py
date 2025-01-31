@@ -6,7 +6,7 @@ around in frequency space -- the phase of the time domain points is not fixed.
 As the phase varies, the real and imaginary components of the signal 
 *change together* - covariance.
 """
-
+write
 import pyspecdata as psd
 import numpy as np
 import pyspecProcScripts as psdpr
