@@ -56,7 +56,11 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig, ax_list = subplots(1, 4, figsize=(7, 7))
+        # {{{ equivalent of subplot
+        fig = plt.figure(figsize=(7, 7))
+        gs = plt.GridSpec(1, 4, figure=fig)
+        ax_list = [fig.add_subplot(gs[0, i]) for i in range(4)]
+        # }}}
         fig.suptitle(fl.basename)
         fl.next("Data Processing", fig=fig)
         data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
