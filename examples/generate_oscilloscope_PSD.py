@@ -1,3 +1,10 @@
+"""
+Generate a PSD from Oscilloscope Data
+=====================================
+Here, data containing the noise signal acquired on the oscilloscope is
+converted to a power spectral density and convolved to display a smooth
+spectra illustrating the noise power.
+"""
 from numpy import r_
 from pyspecdata import figlist_var, find_file
 from pylab import diff, sqrt, ylim, ylabel
@@ -17,9 +24,9 @@ with figlist_var() as fl:
     acq_time = diff(s.getaxis("t")[r_[0, -1]])[0]
     s.ft("t")  # $\frac{V_{p}\sqrt{s}}{\sqrt{Hz}}$
     # Instantaneous $\frac{V_{p}\sqrt{s}}{\sqrt{Hz}} \rightarrow \frac{V_{rms}\sqrt{s}}{\sqrt{Hz}}$
-    s /= sqrt(2)     
+    s /= sqrt(2)
     # {{{ equation 21
-    s = abs(s) ** 2  # Take mod squared to convert to energy 
+    s = abs(s) ** 2  # Take mod squared to convert to energy
     #                  $\frac{V_{rms}^{2} \cdot s}{Hz}$
     s.mean("capture")  # Average over all captures
     s /= acq_time  # Convert to power $\frac{V_{rms}^2}{Hz} = W$
