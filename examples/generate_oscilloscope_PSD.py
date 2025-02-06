@@ -12,7 +12,7 @@ import re
 
 lambda_G = 0.1e6  # Width for Gaussian convolution
 filename = "240328_RX_GDS_2mV_analytic.h5"
-nodename = "/accumulated_240328"
+nodename = "accumulated_240328"
 with figlist_var() as fl:
     # Load data according to the filename and nodename
     s = find_file(
