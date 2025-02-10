@@ -7,6 +7,7 @@ from .phasing import (
     find_peakrange,
 )
 from .third_level.rough_table_of_integrals import rough_table_of_integrals
+from .third_level.align_esr import align_esr
 from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
@@ -35,6 +36,7 @@ __all__ = [
     "L2G",
     "QESR_scalefactor",
     "Vpp2power",
+    "align_esr",
     "active_propagation",
     "apod_matched_filter",
     "calc_baseline",

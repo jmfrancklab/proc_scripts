@@ -83,6 +83,23 @@ various functions.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="While we can align by microwave frequency and normalize according to peak-to-peak amplitude, it...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_epr_overlay_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_epr_overlay.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">EPR correlation alignment</div>
+    </div>
+
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Here we load in low SNR Hahn echo data and demonstrate that we can find reasonable and accurate...">
 
 .. only:: html
@@ -440,23 +457,6 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="While we can align by microwave frequency and normalize according to peak-to-peak amplitude, it...">
-
-.. only:: html
-
-  .. image:: /auto_examples/images/thumb/sphx_glr_epr_overlay_thumb.png
-    :alt:
-
-  :ref:`sphx_glr_auto_examples_epr_overlay.py`
-
-.. raw:: html
-
-      <div class="sphx-glr-thumbnail-title">EPR correlation alignment</div>
-    </div>
-
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="Calculate actual beta as a function of pulse length">
 
 .. only:: html
@@ -484,6 +484,7 @@ various functions.
    /auto_examples/proc_square_refl
    /auto_examples/FIDtoEcho_Actual
    /auto_examples/phaseCycNoise_example
+   /auto_examples/epr_overlay
    /auto_examples/integrate_limits_realData
    /auto_examples/proc_CPMG
    /auto_examples/proc_Ep
@@ -505,7 +506,6 @@ various functions.
    /auto_examples/integration_with_error
    /auto_examples/verify_tsqrtP_calibration
    /auto_examples/compare_CPMG_echo
-   /auto_examples/epr_overlay
    /auto_examples/calibrate_tsqrtP
 
 

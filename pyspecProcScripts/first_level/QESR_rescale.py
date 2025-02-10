@@ -46,13 +46,6 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     we get a concentration of spins
     rather than the total number of spins). 
 
-    All of these except :math:`c` are parameters that we might change during
-    an experiment that would change the double integral.
-    By dividing the double integral by this,
-    we get a number that is proportionate to the concentration of spins.
-    The diameter, Q, and proportionality 
-    constants are all pulled from the pyspecdata config file.
-
     The constant :math:`c_{propfactor}` is determined by the calibration name.
     Note that a larger :math:`c_{propfactor}` corresponds to a higher concentration
     for the same recorded spectrum.

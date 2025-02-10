@@ -59,7 +59,7 @@ with psd.figlist_var(black=False) as fl:
         # {{{ use analytic differentiation to find the max of the polynomial
         c_poly = s.polyfit("indirect", 4)
         print(s.get_plot_color())
-        forplot = s.eval_poly(c_poly, "indirect", npts=100)
+        forplot = s.eval_poly(c_poly, "indirect", pts=100)
         print(forplot.get_plot_color())
         psd.plot(forplot, label="fit", ax=ax4)
         theroots = np.roots(
