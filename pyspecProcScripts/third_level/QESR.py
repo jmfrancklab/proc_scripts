@@ -3,7 +3,7 @@ from numpy import r_
 import os
 from matplotlib.pyplot import axvline, gca
 import matplotlib.pyplot as plt
-from pyspecdata import find_file, gammabar_e, ndshape
+from pyspecdata import find_file, gammabar_e, ndshape, gridandtick
 from scipy.interpolate import UnivariateSpline
 from ..first_level.QESR_rescale import QESR_scalefactor
 import pickle
@@ -115,9 +115,8 @@ def QESR(file_name,
     fl.text(r'\par')
     fl.next(f"{which_plot} baseline diagnostic")
     gca().set_title("zoomed-in baseline diagnostic\nshowing only baseline\n(data and fit)")
-    ax = thisfig.add_subplot(gs[3,0])
-    fl.next("dblint", ax=ax, fig=thisfig)
-    ax.set_title(r"$\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow %s)$"%calibration_name)
+    ax_dblint = thisfig.add_subplot(gs[3,0])
+    ax_dblint.set_title(r"$\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow %s)$"%calibration_name)
     # }}}
     if color is None:
         color = next(colors)["color"]
@@ -160,15 +159,15 @@ def QESR(file_name,
     fl.plot(polybaseline, alpha=0.5, label="spline/poly baseline\n(integrate between this and other curve)", lw=1)
     d_abs -= polybaseline #background subtraction
     d_abs.integrate(fieldaxis, cumulative=True)
-    fl.next("dblint")
     d_abs /= QESR_scalefactor(d, calibration_name=calibration_name,
             diameter_name=diameter_name)
     final_conc = (
         d_abs[fieldaxis : (generous_limits[-1], None)].mean(fieldaxis).item()
     ).real
     d_abs.name("conc").set_units("μM")
-    fl.plot(d_abs, alpha=0.5, label=f"{label}, %0.4f μM" % final_conc)
-    fl.grid()
+    fl.plot(d_abs, alpha=0.5, label=f"{label}, %0.4f μM" % final_conc,
+            ax=ax_dblint)
+    gridandtick(ax_dblint) 
     if pickle_file is not None:
         pickle_vars[label] = final_conc
         with open(pickle_file, "wb") as fp:

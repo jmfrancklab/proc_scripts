@@ -1,7 +1,7 @@
 from pyspecdata.datadir import pyspec_config  # piggyback on _pyspecdata
 from pint import UnitRegistry
 from numpy import sqrt
-from pyspecdata import init_logging
+from pyspecdata import init_logging, strm
 import logging
 
 logger = logging.getLogger("pySpecProcScripts.first_level.QESR_rescale")
@@ -15,6 +15,9 @@ class calib_info(object):
         self.current_diam_name = None
 
     def use_calibration(self, calibration_name):
+        "if diameter_name is None, default to the calibration name given by default calibration"
+        if calibration_name is None:
+            calibration_name = pyspec_config.get_setting(f"default calibration")
         if calibration_name != self.current_calib_name:
             assert (
                 type(calibration_name) is str
@@ -43,6 +46,9 @@ class calib_info(object):
             self.current_calib_name = calibration_name
 
     def use_diameter(self, diameter_name):
+        "if diameter_name is None, default to the calibration name given by default calibration"
+        if diameter_name is None:
+            diameter_name = pyspec_config.get_setting(f"default diameter")
         if diameter_name != self.current_diam_name:
             assert (
                 type(diameter_name) is str
