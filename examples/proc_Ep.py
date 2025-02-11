@@ -20,7 +20,7 @@ plt.rcParams.update({
     "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
     "savefig.bbox": "tight",
     "savefig.dpi": 300,
-    "figure.figsize": (6, 2),
+    "figure.figsize": (6, 5),
 })
 
 

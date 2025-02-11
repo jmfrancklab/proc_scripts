@@ -2,6 +2,11 @@ r"""
 EPR correlation alignment
 =========================
 
+**Important note:**
+In order to run this script, you need to set the
+default calibration values in your pyspecdata config,
+as detailed by the QESR example.
+
 While we can align by microwave frequency and normalize
 according to peak-to-peak amplitude, it scan still be
 hard to identify subtle differences between ESR
