@@ -1,10 +1,75 @@
 import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
+import pyspecProcScripts as psdpr
 import logging
 import numpy as np
+from numpy import r_
 
-
+def masked_mean_multi(x, axis=None):
+    "Calculates the mean on a 1D axis"
+    assert axis is not None
+    def masked_mean(x):
+        "this only works for 1D data"
+        return np.mean(x[np.isfinite(x)])
+    return np.apply_along_axis(masked_mean,axis,x)
+def masked_var_multi(x, var_has_imag=False, axis=None):
+    "calculates the variance along a 1D axis"
+    assert axis is not None
+    def masked_var(x):
+        "this only works for 1D data"
+        if var_has_imag:
+            return np.var(x[np.isfinite(x)], ddof=1) / 2
+        else:
+            return np.var(x[np.isfinite(x)],ddof=1)
+    return np.apply_along_axis(masked_var, axis, x)
+# {{{ integration and propagation in time domain
+def integration_sinc(full_spec, t_slice, frq_slice, direct="t2"):
+    """ Makes a symmetric sinc fn that is 1 at t=0 and also 1 in the frequency
+    domain over the specified integration bounds"""
+    assert not full_spec.get_ft_prop(direct), "Data needs to be in the time domain!!"
+    intwidth = frq_slice[1]-frq_slice[0]
+    centerfrq = (frq_slice[1] + frq_slice[0]) / 2
+    t = full_spec.fromaxis(direct)
+    mysinc = t.C.run(lambda x: np.sinc(intwidth * x))
+    mysinc *= np.exp(-1j * 2 * np.pi * centerfrq * t)
+    mysinc *= intwidth
+    return mysinc
+def t_integrate(og_data, nonzero_data, padded_data, apo_fn, frq_slice,direct="t2",indirect = "nScans",
+        signal_pathway={"ph1":1}):
+    dt = np.diff(nonzero_data.real.C.getaxis(direct)[r_[0,1]]).item()
+    t_lims = nonzero_data.C.getaxis(direct)[-1]
+    t_range = (-t_lims,t_lims)
+    mysinc = integration_sinc(padded_data,t_slice = t_range, frq_slice = frq_slice)
+    mysinc_s = padded_data.C * mysinc.C
+    t_ints = psp.ndshape(og_data.C.fromaxis(indirect)).alloc().setaxis(indirect,og_data[indirect])
+    for j in range(len(og_data[indirect])):
+        that_data = mysinc_s[indirect,j]
+        integral_from_t_domain = psdpr.select_pathway(
+                that_data.C.real, signal_pathway).integrate(direct)
+        t_ints[indirect,j] = integral_from_t_domain.real.item()
+    # Calculate error
+    mysinc_s *= apo_fn
+    integral_mult_fn = (abs(mysinc_s).C.run(lambda x: x**2).real.integrate(direct))
+    assert not og_data.get_ft_prop(
+            direct
+            ), "get in the t domain so I can unitarily transform!"
+    og_data.set_ft_prop(direct,"unitary",None)
+    og_data.ft("t2",unitary=True)
+    t_var = og_data.C
+    fl = psp.figlist_var()
+    t_var[direct:frq_slice] = np.nan
+    temp = psdpr.select_pathway(t_var,signal_pathway)
+    temp.data[:] = np.nan
+    t_var.run(masked_var_multi, "t2")
+    t_var.run(masked_mean_multi,"ph1")
+    t_var /= 4 # there's a difference of a factor of 4 when comparing the causal to real
+    t_err = t_var.real.data * dt * integral_mult_fn.data
+    print(t_err)
+    print(t_ints)
+    t_ints.set_error(t_err)
+    return t_ints
+# }}}
 def integral_w_errors(
     s,
     sig_path,

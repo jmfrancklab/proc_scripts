@@ -22,7 +22,7 @@ from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
 from .simple_functions import select_pathway, logobj, find_apparent_anal_freq
 from .DCCT_func import DCCT
-from .integral_w_error import integral_w_errors, active_propagation
+from .integral_w_error import integral_w_errors, active_propagation, integration_sinc, t_integrate
 from .apod_matched_filter import apod_matched_filter
 from .envelope import L2G, fit_envelope
 from .first_level.QESR_rescale import QESR_scalefactor
@@ -58,6 +58,8 @@ __all__ = [
     "hermitian_function_test",
     "integral_w_errors",
     "integrate_limits",
+    "integration_sinc",
+    "t_integrate",
     "logobj",
     "lookup_table",
     "ph1_real_Abs",
