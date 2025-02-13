@@ -73,7 +73,6 @@ s_int, returned_frq_slice = integral_w_errors(
 )
 fl.next("compare manual vs. automatic", legend=True)
 fl.plot(s_int, ".", label="fully auto: real", capsize=6)
-fl.show();quit()
 fl.plot(s_int.imag, ".", label="fully auto: imaginary", capsize=6)
 # }}}
 logger.debug(
