@@ -20,30 +20,42 @@ import numpy as np
 from numpy import r_
 from pyspecProcScripts import integral_w_errors, select_pathway
 from pylab import rcParams
+import sympy as s
+from collections import OrderedDict
 
 rcParams["image.aspect"] = "auto"  # for sphinx gallery
 # sphinx_gallery_thumbnail_number = 1
 
-t2 = psd.nddata(r_[0:1:1024j], "t2")
-vd = psd.nddata(r_[0:1:40j], "vd")
-ph1 = psd.nddata(r_[0, 2] / 4.0, "ph1")
-ph2 = psd.nddata(r_[0:4] / 4.0, "ph2")
+t2, vd, ph1, ph2 = s.symbols("t2 vd ph1 ph2")
 n_repeats = 10
 noise_bounds = (0, 200)  # seem reasonable to me
 signal_pathway = {"ph1": 0, "ph2": 1}
 # {{{ Generate fake IR dataset with multiple repeats
 # This generates fake clean_data w/ a T₂ of 0.2s amplitude of 21, just to pick
 # a random amplitude offset of 300 Hz, FWHM 10 Hz
-clean_data = (
+expression = (
     21
-    * (1 - 2 * np.exp(-vd / 0.2))
-    * np.exp(+1j * 2 * np.pi * 100 * t2 - t2 * 10 * np.pi)
+    * (1 - 2 * s.exp(-vd / 0.2))
+    * s.exp(+1j * 2 * s.pi * 100 * t2 - t2 * 10 * s.pi)
 )
-clean_data *= np.exp(signal_pathway["ph1"] * 1j * 2 * np.pi * ph1)
-clean_data *= np.exp(signal_pathway["ph2"] * 1j * 2 * np.pi * ph2)
+orderedDict = [
+    ("vd", psd.nddata(r_[0:1:40j], "vd")),
+    ("ph1", psd.nddata(r_[0, 2] / 4.0, "ph1")),
+    ("ph2", psd.nddata(r_[0:4] / 4.0, "ph2")),
+    ("t2", psd.nddata(r_[0:1:1024j], "t2")),
+]
+clean_data = psd.fake_data(
+    expression, OrderedDict(orderedDict), signal_pathway, scale=0
+)
+clean_data.reorder(["vd", "t2"], first=False)
 clean_data["t2":0] *= 0.5
 fake_data_noise_std = 2.0
 clean_data.reorder(["ph1", "ph2", "vd"])
+# Unitary FT concentrates signal into a single index/position along coherence
+# transfer pathway while preserve the vector norm so divide by sqrt(N_ph)
+clean_data /= np.sqrt(
+    psd.ndshape(clean_data)["ph1"] * psd.ndshape(clean_data)["ph2"]
+)
 # }}}
 # Allocate nddata to place the calculated integrals with error into
 all_results = psd.ndshape(clean_data) + (n_repeats, "repeats")
@@ -56,21 +68,20 @@ with psd.figlist_var() as fl:
         #                                     repeat
         # at this point, the fake data has been generated
         # {{{ Normalization
-        data.ft(["ph1", "ph2"])
-        data /= 0.5 * 0.25
-        data /= np.sqrt(psd.ndshape(data)["ph1"] * psd.ndshape(data)["ph2"])
+        # data /= np.sqrt(0.5 * 0.25)
         # }}}
-        data.ft("t2", shift=True)
+        data.ft("t2")  # , shift=True)
         dt = data.get_ft_prop("t2", "dt")
         # {{{ Vector-normalize the FT
         data /= np.sqrt(psd.ndshape(data)["t2"]) * dt
         # }}}
-        s_int, frq_slice = integral_w_errors(
-            data,
-            signal_pathway,
-            fl=fl,
-            return_frq_slice=True,
-        )
+        if j == 0:
+            s_int, frq_slice = integral_w_errors(
+                data,
+                signal_pathway,
+                fl=fl,
+                return_frq_slice=True,
+            )
         manual_bounds = select_pathway(data["t2":frq_slice], signal_pathway)
         N = psd.ndshape(manual_bounds)["t2"]
         df = manual_bounds.get_ft_prop("t2", "df")
