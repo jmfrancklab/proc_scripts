@@ -70,7 +70,7 @@ with psd.figlist_var() as fl:
         # {{{ Normalization
         # data /= np.sqrt(0.5 * 0.25)
         # }}}
-        data.ft("t2")  # , shift=True)
+        data.ft("t2")
         dt = data.get_ft_prop("t2", "dt")
         # {{{ Vector-normalize the FT
         data /= np.sqrt(psd.ndshape(data)["t2"]) * dt
