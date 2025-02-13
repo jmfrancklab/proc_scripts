@@ -70,7 +70,8 @@ def integral_w_errors(
         select_pathway(s, sig_path),
         convolve_method=convolve_method,
         cutoff=cutoff,
-        fl=fl)
+        fl=fl
+    )
     logging.debug(psp.strm("frq_slice is", frq_slice))
     f = s.getaxis(direct)
     df = f[1] - f[0]
@@ -79,7 +80,7 @@ def integral_w_errors(
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
     if len(extra_dims) > 0:
         raise ValueError(
-                "You have extra (non-phase cycling, non-indirect) dimensions: "
+            "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
     noise = s.C
