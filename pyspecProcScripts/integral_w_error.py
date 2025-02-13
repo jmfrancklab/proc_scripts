@@ -1,46 +1,63 @@
 import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
+import pyspecProcScripts as psdpr
 import logging
 import numpy as np
+
+
+def masked_mean_multi(x, axis=None):
+    "Calculates the mean on a 1D axis"
+    assert axis is not None
+
+    def masked_mean(x):
+        return np.mean(x[np.isfinite(x)])
+
+    return np.apply_along_axis(masked_mean, axis, x)
+
+
+def masked_var_multi(x, var_has_imag=False, axis=None):
+    assert axis is not None
+
+    def masked_var(x):
+        if var_has_imag:
+            return np.var(x[np.isfinite(x)], ddof=1) / 2
+        else:
+            return np.var(x[np.isfinite(x)], ddof=1)
+
+    return np.apply_along_axis(masked_var, axis, x)
 
 
 def integral_w_errors(
     s,
     sig_path,
-    error_path,
     cutoff=0.1,
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
     fl=None,
     return_frq_slice=False,
+    has_imag=True,
 ):
     """Calculates the propagation of error for the given signal and returns
     signal with the error associated.
 
-    Before declaring the error_path,
-    look at an examples such as integration_w_error.py to see how to decide which
-    excluded pathways to take the error over.
-
     Parameters
     ==========
     sig_path:   dict
-                Dictionary of the path of the desired signal.
-    error_path: dict
-                Dictionary of all coherence pathways that are
-                not the signal pathway.
-
-                Before declaring the error_path,
-                look at an examples such as integration_w_error.py to see how to decide which
-                excluded pathways to take the error over.
+        Dictionary of the path of the desired signal.
     convolve_method: str
-                method of convolution used in integrating limits
-                passed on to :func:`integrate_limits`
+        method of convolution used in integrating limits passed on to
+        :func:`integrate_limits`
     indirect:   str
-                Indirect axis.
+        Indirect axis.
     direct:     str
-                Direct axis.
+        Direct axis.
+    return_frq_slice: bool
+        If true a tuple of the calculated frequency slice will be returned
+    has_imag: bool
+        When calculating the variance, we must account for whether ther is an
+        imaginary component to the data. If true, the variance is divided by 2.
 
     Returns
     =======
@@ -49,10 +66,6 @@ def integral_w_errors(
              not included in the signal pathway.
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
-    if convolve_method is not None:
-        kwargs = {"convolve_method": convolve_method}
-    else:
-        kwargs = {}
     frq_slice = integrate_limits(
         select_pathway(s, sig_path),
         convolve_method=convolve_method,
@@ -60,10 +73,8 @@ def integral_w_errors(
         fl=fl,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
-    s = s[direct:frq_slice]
     f = s.getaxis(direct)
     df = f[1] - f[0]
-    errors = []
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
@@ -72,37 +83,23 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    collected_variance = psp.ndshape(
-        [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
-    ).alloc()
-    avg_error = []
-    for j in range(len(error_path)):
-        # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
-        # where N₂ is the number of points in the indirect dimension
-        s_forerror = select_pathway(s, error_path[j])
-        # previous line wipes everything out and starts over -- why not use
-        # collected_variance above, as I had originally set up --> part of
-        # issue #44
-        if j == 0:
-            N2 = psp.ndshape(s_forerror)[direct]
-        # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
-        # mean sums all elements (there are N₁N₂ elements)
-        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(
-            direct
-        )
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but(
-            [direct, indirect]
-        ).mean(direct)
-        s_forerror *= df**2  # Δf
-        s_forerror *= N2
-        avg_error.append(s_forerror)
-    avg_error = sum(avg_error) / len(avg_error)
-    # {{{ variance calculation for debug
-    # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
-    # print("automatically calculated integral error:",sqrt(collected_variance.data))
-    # }}}
-    s = select_pathway(s, sig_path)
-    retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
+    noise = s.C
+    noise[direct:frq_slice] = np.nan
+    temp = psdpr.select_pathway(noise, sig_path)
+    temp.data[:] = np.nan
+    if fl is not None:
+        fl.next("frequency noise masked")
+        fl.image(noise)
+    noise.run(masked_var_multi, direct, has_imag)
+    for j in [k for k in s.dimlabels if k.startswith("ph")]:
+        noise.run(masked_mean_multi, j)
+    s_int = psdpr.select_pathway(s, sig_path)[direct:frq_slice]
+    N = psp.ndshape(s_int)[direct]
+    s_forerror = noise.data * df**2
+    s_forerror *= N
+    retval = s_int.integrate(direct).set_error(
+        psp.sqrt(noise.data * df**2 * N)
+    )
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
