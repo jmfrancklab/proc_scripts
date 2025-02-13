@@ -22,15 +22,15 @@ with figlist_var() as fl:
     )
     # Calculate $t_{acq}$
     acq_time = diff(s.getaxis("t")[r_[0, -1]])[0]
-    s.ft("t")  # $\frac{V_{p}\sqrt{s}}{\sqrt{Hz}}$
-    # Instantaneous $\frac{V_{p}\sqrt{s}}{\sqrt{Hz}} \rightarrow \frac{V_{rms}\sqrt{s}}{\sqrt{Hz}}$
+    s.ft("t")  # V_p√s/√Hz
+    # Instantaneous V_p*√s/√Hz -> V_rms√s/√Hz
     s /= sqrt(2)
     # {{{ equation 21
     s = abs(s) ** 2  # Take mod squared to convert to energy
-    #                  $\frac{V_{rms}^{2} \cdot s}{Hz}$
+    #                  V_rms^2 s/Hz
     s.mean("capture")  # Average over all captures
-    s /= acq_time  # Convert to power $\frac{V_{rms}^2}{Hz} = W$
-    s /= 50  # Divide by impedance $\rightarrow$ W/Hz
+    s /= acq_time  # Convert to power V_rms^2/Hz = W
+    s /= 50  # Divide by impedance -> W/Hz
     # }}}
     s.set_units("t", "Hz")
     # Plot unconvolved PSD on a semilog plot
@@ -41,7 +41,7 @@ with figlist_var() as fl:
         alpha=0.1,
         plottype="semilogy",
     )
-    # Convolve using the $\lambda_{G}$ specified above
+    # Convolve using the lambda_G specified above
     s.convolve("t", lambda_G, enforce_causality=False)
     # Plot the convolved PSD on the semilog plot with the unconvolved
     fl.plot(
