@@ -70,7 +70,7 @@ def integral_w_errors(
         select_pathway(s, sig_path),
         convolve_method=convolve_method,
         cutoff=cutoff,
-        fl=fl
+        fl=fl,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
     f = s.getaxis(direct)
