@@ -1,10 +1,28 @@
 import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
+import pyspecProcScripts as psdpr
 import logging
 import numpy as np
+from numpy import r_
 
-
+def masked_mean_multi(x, axis=None):
+    "Calculates the mean on a 1D axis"
+    assert axis is not None
+    def masked_mean(x):
+        "this only works for 1D data"
+        return np.mean(x[np.isfinite(x)])
+    return np.apply_along_axis(masked_mean,axis,x)
+def masked_var_multi(x, var_has_imag=False, axis=None):
+    "calculates the variance along a 1D axis"
+    assert axis is not None
+    def masked_var(x):
+        "this only works for 1D data"
+        if var_has_imag:
+            return np.var(x[np.isfinite(x)], ddof=1) / 2
+        else:
+            return np.var(x[np.isfinite(x)],ddof=1)
+    return np.apply_along_axis(masked_var, axis, x)
 def integral_w_errors(
     s,
     sig_path,
@@ -60,49 +78,20 @@ def integral_w_errors(
         fl=fl,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
-    s = s[direct:frq_slice]
-    f = s.getaxis(direct)
-    df = f[1] - f[0]
-    errors = []
-    all_labels = set(s.dimlabels)
-    all_labels -= set([indirect, direct])
-    extra_dims = [j for j in all_labels if not j.startswith("ph")]
-    if len(extra_dims) > 0:
-        raise ValueError(
-            "You have extra (non-phase cycling, non-indirect) dimensions: "
-            + str(extra_dims)
-        )
-    collected_variance = psp.ndshape(
-        [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
-    ).alloc()
-    avg_error = []
-    for j in range(len(error_path)):
-        # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
-        # where N₂ is the number of points in the indirect dimension
-        s_forerror = select_pathway(s, error_path[j])
-        # previous line wipes everything out and starts over -- why not use
-        # collected_variance above, as I had originally set up --> part of
-        # issue #44
-        if j == 0:
-            N2 = psp.ndshape(s_forerror)[direct]
-        # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
-        # mean sums all elements (there are N₁N₂ elements)
-        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(
-            direct
-        )
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but(
-            [direct, indirect]
-        ).mean(direct)
-        s_forerror *= df**2  # Δf
-        s_forerror *= N2
-        avg_error.append(s_forerror)
-    avg_error = sum(avg_error) / len(avg_error)
-    # {{{ variance calculation for debug
-    # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
-    # print("automatically calculated integral error:",sqrt(collected_variance.data))
-    # }}}
-    s = select_pathway(s, sig_path)
-    retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
+    noise = s.C
+    noise[direct:frq_slice] = np.nan
+    temp = psdpr.select_pathway(noise, sig_path)
+    temp.data[:] = np.nan
+    if fl is not None:
+        fl.next("frequency noise masked")
+        fl.image(noise)
+    noise.run(masked_var_multi, direct)
+    for j in [k for k in s.dimlabels if k.startswith("ph")]:
+        noise.run(masked_mean_multi,j)
+    s_int = psdpr.select_pathway(s,sig_path)[direct:frq_slice]    
+    df = s_int.get_ft_prop(direct,"df")
+    N = psp.ndshape(s)[direct]
+    retval = s_int.integrate(direct).set_error(psp.sqrt(noise.data * df**2 * N))
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
