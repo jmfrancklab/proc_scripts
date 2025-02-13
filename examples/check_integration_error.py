@@ -27,7 +27,7 @@ rcParams["image.aspect"] = "auto"  # for sphinx gallery
 # sphinx_gallery_thumbnail_number = 1
 
 t2, vd, ph1, ph2 = s.symbols("t2 vd ph1 ph2")
-n_repeats = 10
+n_repeats = 100
 noise_bounds = (0, 200)  # seem reasonable to me
 signal_pathway = {"ph1": 0, "ph2": 1}
 # {{{ Generate fake IR dataset with multiple repeats
@@ -67,9 +67,6 @@ with psd.figlist_var() as fl:
         data.add_noise(fake_data_noise_std)  # add noise to each individual
         #                                     repeat
         # at this point, the fake data has been generated
-        # {{{ Normalization
-        # data /= np.sqrt(0.5 * 0.25)
-        # }}}
         data.ft("t2")
         dt = data.get_ft_prop("t2", "dt")
         # {{{ Vector-normalize the FT
