@@ -58,7 +58,7 @@ with psd.figlist_var() as fl:
     s, ax_last = prscr.rough_table_of_integrals(
         s, signal_range, fl=fl, title=sys.argv[2], echo_like=True
     )
-    prefactor_scaling = s.div_units("beta", "s√W")
+    prefactor_scaling = 10 ** psd.det_unit_prefactor(s.get_units("beta"))
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
     s = psd.lmfitdata(s)
     s.functional_form = (
