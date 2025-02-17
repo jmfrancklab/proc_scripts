@@ -26,7 +26,7 @@ signal_pathway = {"ph1": 0, "ph2": 1}
 manual_slice = (60, 140)  # manually chosen integration bounds
 # {{{ Generate fake IR dataset
 # This generates fake data w/ a T₂ of 0.2s amplitude of 21, just to pick a
-# random amplitude offset of 300 Hz, FWHM 10 Hz
+# random amplitude offset of 100 Hz, FWHM 10 Hz
 data_expression = (
     21
     * (1 - 2 * s.exp(-vd / 0.2))
@@ -66,7 +66,7 @@ with psd.figlist_var() as fl:
     fl.plot(s_int.imag, ".", label="fully auto: imaginary", capsize=6)
     # }}}
     print("check the std after FT", np.std(data["ph1", 0]["ph2", 0].data.real))
-    fl.next("compare manual vs. automatic")
+    fl.next("Compare Manual vs. Automatic")
     # Run a controlled comparison between manually chosen integration bounds
     # and compare against automatically generated
     # Leave this as a loop so user can experiment with different bounds
@@ -75,6 +75,7 @@ with psd.figlist_var() as fl:
         (manual_slice, "manual bounds"),
         (tuple(returned_frq_slice), "auto bounds"),
     ]:
+        # {{{ Calculate error of off-coherence pathway manually
         manual_bounds = select_pathway(data["t2":bounds], signal_pathway)
         assert manual_bounds.get_ft_prop("t2")
         # Check that the noise in an off coherence pathway correctly matches
@@ -94,7 +95,8 @@ with psd.figlist_var() as fl:
             fake_data_noise_std,
             "?",
         )
-        # Manually calculate variance of data with manually set bounds
+        # }}}
+        # {{{ Manually calculate variance of data with manually set bounds
         N = psd.ndshape(manual_bounds)["t2"]
         df = manual_bounds.get_ft_prop("t2", "df")
         manual_bounds.integrate("t2")
@@ -122,3 +124,4 @@ with psd.figlist_var() as fl:
             % ((thislabel,) + bounds),
             alpha=0.5,
         )
+        # }}}
