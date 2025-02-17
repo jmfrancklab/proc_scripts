@@ -56,8 +56,9 @@ def integral_w_errors(
     return_frq_slice: bool
         If true a tuple of the calculated frequency slice will be returned
     has_imag: bool
-        When calculating the variance, we must account for whether ther is an
-        imaginary component to the data. If true, the variance is divided by 2.
+        When calculating the variance, we must account for whether there is an
+        imaginary component to the data. If False (default), the variance is
+        divided by 2.
 
     Returns
     =======
