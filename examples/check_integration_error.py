@@ -73,20 +73,12 @@ with psd.figlist_var() as fl:
         # {{{ Vector-normalize the FT
         data /= np.sqrt(psd.ndshape(data)["t2"]) * dt
         # }}}
-        if j == 0:
-            s_int, frq_slice = integral_w_errors(
-                data,
-                signal_pathway,
-                fl=fl,
-                return_frq_slice=True,
-            )
-        else:
-            s_int, frq_slice = integral_w_errors(
-                data,
-                signal_pathway,
-                fl=None,
-                return_frq_slice=True,
-            )
+        s_int, frq_slice = integral_w_errors(
+            data,
+            signal_pathway,
+            fl=fl if j == 0 else None,
+            return_frq_slice=True,
+        )
         manual_bounds = select_pathway(data["t2":frq_slice], signal_pathway)
         N = psd.ndshape(manual_bounds)["t2"]
         df = manual_bounds.get_ft_prop("t2", "df")
