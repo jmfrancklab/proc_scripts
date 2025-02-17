@@ -27,12 +27,12 @@ rcParams["image.aspect"] = "auto"  # for sphinx gallery
 # sphinx_gallery_thumbnail_number = 1
 
 t2, vd, ph1, ph2 = s.symbols("t2 vd ph1 ph2")
-n_repeats = 100
+n_repeats = 200
 noise_bounds = (0, 200)  # seem reasonable to me
 signal_pathway = {"ph1": 0, "ph2": 1}
 # {{{ Generate fake IR dataset with multiple repeats
 # This generates fake clean_data w/ a T₂ of 0.2s amplitude of 21, just to pick
-# a random amplitude offset of 300 Hz, FWHM 10 Hz
+# a random amplitude offset of 100 Hz, FWHM 10 Hz
 expression = (
     21
     * (1 - 2 * s.exp(-vd / 0.2))
@@ -79,6 +79,7 @@ with psd.figlist_var() as fl:
             fl=fl if j == 0 else None,
             return_frq_slice=True,
         )
+        # {{{ Manually calculate the integrals and error
         manual_bounds = select_pathway(data["t2":frq_slice], signal_pathway)
         N = psd.ndshape(manual_bounds)["t2"]
         df = manual_bounds.get_ft_prop("t2", "df")
@@ -104,8 +105,15 @@ with psd.figlist_var() as fl:
     )
     propagated_variance_from_inactive = N * df**2 * std_off_pathway**2
     propagated_variance = N * df**2 * fake_data_noise_std**2
-    fl.next("different types of error")
-    fl.plot(s_int, ".", capsize=6, label="std from int w err", alpha=0.5)
+    # }}}
+    fl.next("Compare Calculations of Error")
+    fl.plot(
+        s_int,
+        ".",
+        capsize=6,
+        label="propagated from integral_w_error fn",
+        alpha=0.5,
+    )
     manual_bounds.set_error(np.sqrt(propagated_variance))
     fl.plot(
         manual_bounds,
