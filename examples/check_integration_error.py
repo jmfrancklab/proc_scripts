@@ -63,9 +63,10 @@ all_results.pop("t2").pop("ph1").pop("ph2")
 all_results = all_results.alloc().setaxis("vd", clean_data.getaxis("vd"))
 with psd.figlist_var() as fl:
     for j in range(n_repeats):
-        data = clean_data.C  # need a copy since we are looping
+        data = clean_data.C  # need a copy so that each repeat is independent
+        #                      and has it's own noise
         data.add_noise(fake_data_noise_std)  # add noise to each individual
-        #                                     repeat
+        #                                      repeat
         # at this point, the fake data has been generated
         data.ft("t2")
         dt = data.get_ft_prop("t2", "dt")
