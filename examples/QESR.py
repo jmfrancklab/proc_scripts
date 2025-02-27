@@ -25,14 +25,14 @@ should have the following values under General:
 Note that the diameter is given in units of mm.
 """
 
-from pyspecdata import *
-from pyspecProcScripts import *
-from pyspecProcScripts import QESR_scalefactor
+from pyspecProcScripts import QESR
+from pyspecdata import figlist_var, find_file
 import pickle
 
 # sphinx_gallery_thumbnail_number = 1
 
-pickle_file = "TEMPOL_rerun_conc.pickle" # when complete, the concentration is stored here
+pickle_file = "TEMPOL_rerun_conc.pickle" # when complete, the
+#                                          concentration is stored here
 with figlist_var() as fl:
     c = QESR(
         "220804_rasI36_MTSL.DSC",  # filename
