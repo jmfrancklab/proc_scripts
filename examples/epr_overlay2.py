@@ -15,9 +15,7 @@ case b/c:
 
 from pyspecdata import find_file, figlist_var
 from pyspecProcScripts import align_esr
-from itertools import cycle
 import matplotlib.pyplot as plt
-import numpy as np
 
 d = {}
 d["250130 data: initial sample at 293K"] = find_file(
