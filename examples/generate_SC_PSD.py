@@ -47,9 +47,6 @@ with psd.figlist_var() as fl:
     s /= 50  # Divide by impedance $\rightarrow$ W/Hz
     # }}}
     # Plot unconvolved PSD on a semilog plot
-    # TODO ☐: copy the following change into manuscript repo, and generate new
-    #         tex file (do this in one commit and add a PR comment to this PR
-    #         with manuscript hash number)
     s.name(r"$S(\nu)$").set_units("W/Hz")
     fl.next("PSD acquired on SpinCore")
     fl.plot(s, color="blue", alpha=0.1, plottype="semilogy")
