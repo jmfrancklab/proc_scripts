@@ -7,7 +7,6 @@ dataset including generating a table of integrals
 
 import pyspecProcScripts as prscr
 import pyspecdata as psd
-import os
 import datetime
 import matplotlib.pyplot as plt
 
