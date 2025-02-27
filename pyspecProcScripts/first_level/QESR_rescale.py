@@ -1,7 +1,7 @@
 from pyspecdata.datadir import pyspec_config  # piggyback on _pyspecdata
 from pint import UnitRegistry
 from numpy import sqrt
-from pyspecdata import init_logging, strm
+from pyspecdata import strm
 import logging
 
 logger = logging.getLogger("pySpecProcScripts.first_level.QESR_rescale")
@@ -15,9 +15,10 @@ class calib_info(object):
         self.current_diam_name = None
 
     def use_calibration(self, calibration_name):
-        "if diameter_name is None, default to the calibration name given by default calibration"
+        """if diameter_name is None, default to the calibration name given
+        by default calibration"""
         if calibration_name is None:
-            calibration_name = pyspec_config.get_setting(f"default calibration")
+            calibration_name = pyspec_config.get_setting("default calibration")
         if calibration_name != self.current_calib_name:
             assert (
                 type(calibration_name) is str
@@ -27,7 +28,9 @@ class calib_info(object):
                 " `[calibration_name] q` and `[calibration_name] propFactor`"
                 " in your _pyspecdata file!"
             )
-            # note that this will fail if you don't have "[calibration_name] propFactor" and "[calibration_name] q" set in your pyspecdata file
+            # note that this will fail if you don't have
+            # "[calibration_name] propFactor" and "[calibration_name] q"
+            # set in your pyspecdata file
             try:
                 self.default_Q = float(
                     pyspec_config.get_setting(f"{calibration_name} Q")
@@ -35,20 +38,22 @@ class calib_info(object):
                 self.dint_propFactor = float(
                     pyspec_config.get_setting(f"{calibration_name} propFactor")
                 )
-            except:
+            except Exception:
                 raise RuntimeError(
                     "I expect a line in the [General] block of your"
                     " pyspecdata config file (in your home directory) that"
                     " sets the value of the following"
-                    f" variables:\n{calibration_name} q\n{calibration_name} propFactor\n\n(I"
+                    f" variables:\n{calibration_name} q\n{calibration_name} "
+                    "propFactor\n\n(I"
                     " can't run without these)"
                 )
             self.current_calib_name = calibration_name
 
     def use_diameter(self, diameter_name):
-        "if diameter_name is None, default to the calibration name given by default calibration"
+        """if diameter_name is None, default to the calibration name given
+        by default calibration"""
         if diameter_name is None:
-            diameter_name = pyspec_config.get_setting(f"default diameter")
+            diameter_name = pyspec_config.get_setting("default diameter")
         if diameter_name != self.current_diam_name:
             assert (
                 type(diameter_name) is str
@@ -62,7 +67,7 @@ class calib_info(object):
                 self.d = float(
                     pyspec_config.get_setting(f"{diameter_name} diameter")
                 )
-            except:
+            except Exception:
                 raise RuntimeError(
                     "(note this the second in a similar pair of errors) I"
                     " expect a line in the [General] block of your pyspecdata"
@@ -83,10 +88,12 @@ Q_ = ureg.Quantity
 
 
 def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
-    """Divide the ESR spectrum by this number so that the double integral should be equal to concentration in μM.
+    """Divide the ESR spectrum by this number so that the double integral
+    should be equal to concentration in μM.
 
     We specifically calculate
-    :math:`d^{2} G_{R}  C_{t}  \\sqrt{P}  B_{m}  Q  n_{B}  S  (S + 1) / c_{propfactor}`
+    :math:`d^{2} G_{R}  C_{t}  \\sqrt{P}  B_{m}  Q  n_{B}  S  (S + 1) /
+    c_{propfactor}`
     (the denominator of equation 2-17 in the E500
     manual with :math:`d^2` (diameter squared) added in,
     so that after dividing by this term,
@@ -94,23 +101,27 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     rather than the total number of spins).
 
     The constant :math:`c_{propfactor}` is determined by the calibration name.
-    Note that a larger :math:`c_{propfactor}` corresponds to a higher concentration
+    Note that a larger :math:`c_{propfactor}` corresponds to a higher
+    concentration
     for the same recorded spectrum.
 
     Parameters
     ==========
     calibration_name:   str
-                        The key corresponding to the appropriate proportionality constant
+                        The key corresponding to the appropriate
+                        proportionality constant
                         in your pyspecdata config file.
                         Typically this is one value that doesn't need changing
     diameter_name:      str
-                        The key corresponding to the diameter of the capillary tube
-                        used in the ESR experiment. This enables us to calculate a
-                        reliable concentration regardless of which capillary was used.
+                        The key corresponding to the diameter of the
+                        capillary tube used in the ESR experiment. This
+                        enables us to calculate a reliable concentration
+                        regardless of which capillary was used.
+
     Returns
     =======
-    Denominator of equation 2-17 divided by the proportionality constant. Also includes a
-    factor of 1e-6 to convert Molar to micromolar.
+    Denominator of equation 2-17 divided by the proportionality constant.
+    Also includes a factor of 1e-6 to convert Molar to micromolar.
     """
     calibcache.use_calibration(calibration_name)
     calibcache.use_diameter(diameter_name)
@@ -132,19 +143,20 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     )
     # }}}
     logger.debug(
-            strm(
-                f"$G_R={G_R:~P}$\n"
-                f"$C_t={C_t:~P}$\n"
-                f"$power={power:~P}$\n"
-                f"$B_m={B_m:~P}$\n"
-                f"$Q={Q:~P} $\n"
-                f"$n_B={n_B:~P} $\n"
-                f"$S={S:~P} $\n"
-                f"$c={c:~P} $\n"
-                f"$d={d:~P} $\n"
-                f"signal denom$={signal_denom:~P}$"
-                f"doubleint propFactor$={calibcache.dint_propFactor}$"
-                )
-            )
-    # normally, we divide by signal_denom.magnitude and multiply by calibcache.dint_propFactor and divide by 1e-6
+        strm(
+            f"$G_R={G_R:~P}$\n"
+            f"$C_t={C_t:~P}$\n"
+            f"$power={power:~P}$\n"
+            f"$B_m={B_m:~P}$\n"
+            f"$Q={Q:~P} $\n"
+            f"$n_B={n_B:~P} $\n"
+            f"$S={S:~P} $\n"
+            f"$c={c:~P} $\n"
+            f"$d={d:~P} $\n"
+            f"signal denom$={signal_denom:~P}$"
+            f"doubleint propFactor$={calibcache.dint_propFactor}$"
+        )
+    )
+    # normally, we divide by signal_denom.magnitude and multiply by
+    # calibcache.dint_propFactor and divide by 1e-6
     return signal_denom.magnitude / calibcache.dint_propFactor * 1e-6
