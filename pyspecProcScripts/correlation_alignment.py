@@ -154,10 +154,7 @@ def correl_align(
                 s_copy["Delta%s" % k.capitalize(), ph_index] = s_copy[
                     "Delta%s" % k.capitalize(), ph_index
                 ].run(lambda x, axis=None: np.roll(x, ph_index, axis=axis), k)
-        for j in range(1, N):
-            correl += s_copy2 * s_copy.C.run(
-                lambda x, axis=None: np.roll(x, j, axis=axis), indirect_dim
-            ).run(np.conj)
+        correl = s_copy.mean(indirect_dim).run(np.conj) * s_copy2
         correl.reorder([indirect_dim, direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
