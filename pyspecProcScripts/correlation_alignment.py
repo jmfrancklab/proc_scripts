@@ -85,21 +85,16 @@ def correl_align(
         phcycdims = [j for j in s_jk.dimlabels if j.startswith("ph")]
         indirect = set(s_jk.dimlabels) - set(phcycdims) - set([direct])
         indirect = [j for j in s_jk.dimlabels if j in indirect]
-        avg_dim_len = len(s_jk.getaxis(avg_dim))
         s_jk.smoosh(indirect)
-    for unk_key in signal_pathway.keys():
-        assert not s_jk.get_ft_prop(unk_key), (
-            str(unk_key) + " must not be in the coherence domain"
+    for phnames in signal_pathway.keys():
+        assert not s_jk.get_ft_prop(phnames), (
+            str(phnames) + " must not be in the coherence domain"
         )
-    # {{{ Determine names and values of CT pathways and indirect    
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len_dict = {j: psd.ndshape(s_jk)[j] for j in signal_pathway.keys()}
     N = psd.ndshape(s_jk)[indirect_dim]
-    # }}}
-    # energy of unaligned signal
     sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
-    # {{{ Diagnostic plot for unaligned
     if fl:
         fl.push_marker()
         fig_forlist, ax_list = plt.subplots(1, 5, figsize=(25, 10))
@@ -119,7 +114,6 @@ def correl_align(
             human_units=False,
         )
         ax_list[0].set_title("before correlation\nsig. energy=%g" % sig_energy)
-    # }}}    
     energy_diff = 1.0
     i = 0
     energy_vals = []
@@ -136,15 +130,11 @@ def correl_align(
     logging.debug(psd.strm("Center frequency", nu_center))
     for my_iter in range(100):
         i += 1
-        print("HEY",i)
         logging.debug(psd.strm("*** *** ***"))
         logging.debug(psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", i))
         logging.debug(psd.strm("*** *** ***"))
         s_jk.ift(direct)
-        # s_mn will become the 3 dimensional signal with the additional
-        # Delta ph# dimension. This corresponds to the signal s_mn in the
-        # DCCT paper. But because we need the original unaligned later for
-        # diagnonstics we make a copy
+        # s_mn will become the signal with the additional Delta ph# dimension.
         s_mn = s_jk.C
         if align_phases:
             ph0 = s_jk.C.sum(direct)
@@ -158,19 +148,23 @@ def correl_align(
         s_mn *= this_mask
         # }}}
         s_mn.ift(direct)
-        # {{{ Make extra dimension for s_mn for the 
+        # {{{ Make extra dimension ($\Delta \varphi_n$) for s_mn
         for ph_name, ph_len in ph_len_dict.items():
             ph = np.ones(ph_len)
             s_mn *= psd.nddata(ph, "Delta" + ph_name.capitalize())
             s_mn.setaxis("Delta" + ph_name.capitalize(), "#")
+        # }}}
         correl = s_mn * 0
         # {{{ phase correction term in eq 29 in DCCT paper
         for ph_name, ph_len in ph_len_dict.items():
             for ph_index in range(ph_len):
                 s_mn["Delta%s" % ph_name.capitalize(), ph_index] = s_mn[
                     "Delta%s" % ph_name.capitalize(), ph_index
-                ].run(lambda x, axis=None: np.roll(x, ph_index, axis=axis), ph_name)
-        # }}}        
+                ].run(
+                    lambda x, axis=None: np.roll(x, ph_index, axis=axis),
+                    ph_name,
+                )
+        # }}}
         correl = s_mn.mean(indirect_dim).run(np.conj) * s_jk
         correl.reorder([indirect_dim, direct], first=False)
         if my_iter == 0:
@@ -184,7 +178,8 @@ def correl_align(
                     ax=ax_list[1],
                 )
                 ax_list[1].set_title("correlation function (t), \nafter apod")
-        # we want Δnu centered at 0 and don't care about the previous window selection
+        # we want Δnu centered at 0 and don't care about the previous window
+        # selection
         correl.ft_new_startpoint(direct, "freq")
         correl.ft_new_startpoint(direct, "time")
         # Part of convolution is multiplying in t domain and then zero-filling
@@ -210,7 +205,7 @@ def correl_align(
                     human_units=False,
                 )
                 ax_list[2].set_title("correlation function (v), \nafter apod")
-        # Find optimal f shift based on max of correlation function        
+        # Find optimal f shift based on max of correlation function
         if shift_bounds:
             f_shift = (
                 correl[direct:(-max_shift, max_shift)]
@@ -219,16 +214,18 @@ def correl_align(
             )
         else:
             f_shift = correl.run(np.real).argmax(direct)
-        s_copy = s_jk
-        s_copy *= np.exp(-1j * 2 * np.pi * f_shift * s_copy.fromaxis(direct))
+        # Calculate energy with shift applied
+        for_Ecalc = s_jk * np.exp(
+            -1j * 2 * np.pi * f_shift * s_jk.fromaxis(direct)
+        )
         s_jk.ft(direct)
-        s_copy.ft(direct)
+        for_Ecalc.ft(direct)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
-                s_copy.reorder([direct], first=False)
+                for_Ecalc.reorder([direct], first=False)
                 fl.image(
-                    s_copy.C.setaxis(indirect_dim, "#").set_units(
+                    for_Ecalc.C.setaxis(indirect_dim, "#").set_units(
                         indirect_dim, "scan #"
                     ),
                     ax=ax_list[3],
@@ -239,12 +236,13 @@ def correl_align(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(s_copy**2).data.sum().item() / N),
+                (abs(for_Ecalc**2).data.sum().item() / N),
             )
         )
-
+        # {{{ Calculate energy difference from last shift to see if
+        #     there is any further gain to keep reiterating
         this_E = (
-            abs(s_copy.C.sum(indirect_dim)) ** 2
+            abs(for_Ecalc.C.sum(indirect_dim)) ** 2
         ).data.sum().item() / N**2
         energy_vals.append(this_E / sig_energy)
         logging.debug(
@@ -255,15 +253,15 @@ def correl_align(
             logging.debug(psd.strm(energy_diff))
             if abs(energy_diff) < tol and my_iter > 4:
                 break
+        # }}}
         last_E = this_E
-        print(f_shift)
     if fl is not None:
         fl.next("correlation convergence")
         fl.plot(np.array(energy_vals), "x")
         plt.gca().yaxis.set_major_formatter(to_percent)
     if fl is not None:
         fl.image(
-            s_copy.C.setaxis(indirect_dim, "#").set_units(
+            for_Ecalc.C.setaxis(indirect_dim, "#").set_units(
                 indirect_dim, "scan #"
             ),
             ax=ax_list[4],
