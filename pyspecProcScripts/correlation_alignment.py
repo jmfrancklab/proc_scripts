@@ -143,7 +143,7 @@ def correl_align(
         )
         s_copy *= this_mask
         s_copy.ift(direct)
-        s_copy2 = s_orig.C # s_data2? S_j? S_jk?
+        s_jk = s_orig.C # s_data2? S_j? S_jk?
         for key, value in ph_len.items():
             ph = np.ones(value)
             s_copy *= psd.nddata(ph, "Delta" + key.capitalize())
@@ -154,7 +154,7 @@ def correl_align(
                 s_copy["Delta%s" % key.capitalize(), ph_index] = s_copy[
                     "Delta%s" % key.capitalize(), ph_index
                 ].run(lambda x, axis=None: np.roll(x, ph_index, axis=axis), key)
-        correl = s_copy.mean(indirect_dim).run(np.conj) * s_copy2
+        correl = s_copy.mean(indirect_dim).run(np.conj) * s_jk
         correl.reorder([indirect_dim, direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
