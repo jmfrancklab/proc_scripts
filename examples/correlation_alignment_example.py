@@ -43,21 +43,21 @@ with psd.figlist_var() as fl:
             "vd",
             "IR",
         ),
-        #(
-        #    (
-        #        23
-        #        * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
-        #        * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
-        #    ),
-        #    [
-        #        ("power", psd.nddata(r_[0:4:25j], "power")),
-        #        ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
-        #        ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
-        #    ],
-        #    {"ph1": 1},
-        #    "power",
-        #    "enhancement",
-        #),
+        (
+            (
+                23
+                * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
+                * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
+            ),
+            [
+                ("power", psd.nddata(r_[0:4:25j], "power")),
+                ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
+                ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
+            ],
+            {"ph1": 1},
+            "power",
+            "enhancement",
+        ),
     ]:
         fl.basename = "(%s)" % label
         # {{{ equivalent of subplot
