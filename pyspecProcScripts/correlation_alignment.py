@@ -15,7 +15,7 @@ def to_percent(y, position):
 
 
 def correl_align(
-    s_orig,
+    s_jk,
     align_phases=False,
     tol=1e-4,
     indirect_dim="indirect",
@@ -36,9 +36,10 @@ def correl_align(
 
     Parameters
     ==========
-    s_orig:  psd.nddata
+    s_jk:  psd.nddata
         A psd.nddata object which contains phase cycle dimensions and an
-        indirect dimension.
+        indirect dimension. This data corresponds to the s_jk signal in the
+        correlation equations in the DCCT paper
     align_phases:   boolean
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
@@ -81,20 +82,24 @@ def correl_align(
 
     logging.debug(psd.strm("Applying the correlation routine"))
     if avg_dim:
-        phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
-        indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
-        indirect = [j for j in s_orig.dimlabels if j in indirect]
-        avg_dim_len = len(s_orig.getaxis(avg_dim))
-        s_orig.smoosh(indirect)
+        phcycdims = [j for j in s_jk.dimlabels if j.startswith("ph")]
+        indirect = set(s_jk.dimlabels) - set(phcycdims) - set([direct])
+        indirect = [j for j in s_jk.dimlabels if j in indirect]
+        avg_dim_len = len(s_jk.getaxis(avg_dim))
+        s_jk.smoosh(indirect)
     for unk_key in signal_pathway.keys():
-        assert not s_orig.get_ft_prop(unk_key), (
+        assert not s_jk.get_ft_prop(unk_key), (
             str(unk_key) + " must not be in the coherence domain"
         )
+    # {{{ Determine names and values of CT pathways and indirect    
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
-    ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
-    N = psd.ndshape(s_orig)[indirect_dim]
-    sig_energy = (abs(s_orig) ** 2).data.sum().item() / N
+    ph_len_dict = {j: psd.ndshape(s_jk)[j] for j in signal_pathway.keys()}
+    N = psd.ndshape(s_jk)[indirect_dim]
+    # }}}
+    # energy of unaligned signal
+    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
+    # {{{ Diagnostic plot for unaligned
     if fl:
         fl.push_marker()
         fig_forlist, ax_list = plt.subplots(1, 5, figsize=(25, 10))
@@ -105,56 +110,68 @@ def correl_align(
                 + [j for j in [fl.basename] if j is not None]
             )
         )
-        s_orig.reorder([direct], first=False)
+        s_jk.reorder([direct], first=False)
         fl.image(
-            s_orig.C.setaxis(indirect_dim, "#").set_units(
+            s_jk.C.setaxis(indirect_dim, "#").set_units(
                 indirect_dim, "scan #"
             ),
             ax=ax_list[0],
             human_units=False,
         )
         ax_list[0].set_title("before correlation\nsig. energy=%g" % sig_energy)
+    # }}}    
     energy_diff = 1.0
     i = 0
     energy_vals = []
-    this_E = (abs(s_orig.C.sum(indirect_dim)) ** 2).data.sum().item() / N**2
+    this_E = (abs(s_jk.C.sum(indirect_dim)) ** 2).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
-    for_nu_center = s_orig.C
+    # {{{ find center frequency to see where to center the mask
+    for_nu_center = s_jk.C
     for_nu_center.ft(list(signal_pathway))
     for x in range(len(signal_keys)):
         for_nu_center = for_nu_center[signal_keys[x], signal_values[x]]
     nu_center = for_nu_center.mean(indirect_dim).C.argmax(direct)
+    # }}}
     logging.debug(psd.strm("Center frequency", nu_center))
     for my_iter in range(100):
         i += 1
+        print("HEY",i)
         logging.debug(psd.strm("*** *** ***"))
         logging.debug(psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", i))
         logging.debug(psd.strm("*** *** ***"))
-        s_orig.ift(direct)
-        s_copy = s_orig.C # s_data1? S_m? S_mn?
+        s_jk.ift(direct)
+        # s_mn will become the 3 dimensional signal with the additional
+        # Delta ph# dimension. This corresponds to the signal s_mn in the
+        # DCCT paper. But because we need the original unaligned later for
+        # diagnonstics we make a copy
+        s_mn = s_jk.C
         if align_phases:
-            ph0 = s_orig.C.sum(direct)
+            ph0 = s_jk.C.sum(direct)
             ph0 /= abs(ph0)
-            s_copy /= ph0
-        s_copy.ft(direct)
+            s_mn /= ph0
+        # {{{ Apply mask around center of signal in nu domain
+        s_mn.ft(direct)
         this_mask = np.exp(
-            -((s_copy.fromaxis(direct) - nu_center) ** 2) / (2 * sigma**2)
+            -((s_mn.fromaxis(direct) - nu_center) ** 2) / (2 * sigma**2)
         )
-        s_copy *= this_mask
-        s_copy.ift(direct)
-        s_jk = s_orig.C # s_data2? S_j? S_jk?
-        for key, value in ph_len.items():
-            ph = np.ones(value)
-            s_copy *= psd.nddata(ph, "Delta" + key.capitalize())
-            s_copy.setaxis("Delta" + key.capitalize(), "#")
-        correl = s_copy * 0
-        for key, value in ph_len.items():
-            for ph_index in range(value):
-                s_copy["Delta%s" % key.capitalize(), ph_index] = s_copy[
-                    "Delta%s" % key.capitalize(), ph_index
-                ].run(lambda x, axis=None: np.roll(x, ph_index, axis=axis), key)
-        correl = s_copy.mean(indirect_dim).run(np.conj) * s_jk
+        s_mn *= this_mask
+        # }}}
+        s_mn.ift(direct)
+        # {{{ Make extra dimension for s_mn for the 
+        for ph_name, ph_len in ph_len_dict.items():
+            ph = np.ones(ph_len)
+            s_mn *= psd.nddata(ph, "Delta" + ph_name.capitalize())
+            s_mn.setaxis("Delta" + ph_name.capitalize(), "#")
+        correl = s_mn * 0
+        # {{{ phase correction term in eq 29 in DCCT paper
+        for ph_name, ph_len in ph_len_dict.items():
+            for ph_index in range(ph_len):
+                s_mn["Delta%s" % ph_name.capitalize(), ph_index] = s_mn[
+                    "Delta%s" % ph_name.capitalize(), ph_index
+                ].run(lambda x, axis=None: np.roll(x, ph_index, axis=axis), ph_name)
+        # }}}        
+        correl = s_mn.mean(indirect_dim).run(np.conj) * s_jk
         correl.reorder([indirect_dim, direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -167,15 +184,20 @@ def correl_align(
                     ax=ax_list[1],
                 )
                 ax_list[1].set_title("correlation function (t), \nafter apod")
+        # we want Δnu centered at 0 and don't care about the previous window selection
         correl.ft_new_startpoint(direct, "freq")
         correl.ft_new_startpoint(direct, "time")
+        # Part of convolution is multiplying in t domain and then zero-filling
+        # before re-FT
         correl.ft(direct, shift=True, pad=2**14)
-        for index, val in signal_pathway.items():
-            correl.ft(["Delta%s" % index.capitalize()])
+        # {{{ Isolate the correlation function for the signal pathway
+        for sig_pathname, sig_pathval in signal_pathway.items():
+            correl.ft(["Delta%s" % sig_pathname.capitalize()])
             correl = (
-                correl["Delta" + index.capitalize(), val]
-                + correl["Delta" + index.capitalize(), 0]
+                correl["Delta" + sig_pathname.capitalize(), sig_pathval]
+                + correl["Delta" + sig_pathname.capitalize(), 0]
             )
+        # }}}
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
@@ -188,6 +210,7 @@ def correl_align(
                     human_units=False,
                 )
                 ax_list[2].set_title("correlation function (v), \nafter apod")
+        # Find optimal f shift based on max of correlation function        
         if shift_bounds:
             f_shift = (
                 correl[direct:(-max_shift, max_shift)]
@@ -196,9 +219,9 @@ def correl_align(
             )
         else:
             f_shift = correl.run(np.real).argmax(direct)
-        s_copy = s_orig.C # Is this a new s_copy? why have the same name?
+        s_copy = s_jk
         s_copy *= np.exp(-1j * 2 * np.pi * f_shift * s_copy.fromaxis(direct))
-        s_orig.ft(direct)
+        s_jk.ft(direct)
         s_copy.ft(direct)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -233,6 +256,7 @@ def correl_align(
             if abs(energy_diff) < tol and my_iter > 4:
                 break
         last_E = this_E
+        print(f_shift)
     if fl is not None:
         fl.next("correlation convergence")
         fl.plot(np.array(energy_vals), "x")
@@ -248,7 +272,4 @@ def correl_align(
             "after correlation\nph0 restored \nsig. energy=%g" % sig_energy
         )
         fl.pop_marker()
-    if avg_dim:
-        s_orig.chunk(avg_dim, [avg_dim, "power"], [avg_dim_len, -1])
-        s_orig.reorder(["ph1", avg_dim, "power", direct])
     return f_shift, sigma, this_mask
