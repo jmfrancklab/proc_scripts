@@ -128,12 +128,12 @@ def correl_align(
     nu_center = for_nu_center.mean(indirect_dim).C.argmax(direct)
     # }}}
     logging.debug(psd.strm("Center frequency", nu_center))
+    s_jk.ift(direct)
     for my_iter in range(100):
         i += 1
         logging.debug(psd.strm("*** *** ***"))
         logging.debug(psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", i))
         logging.debug(psd.strm("*** *** ***"))
-        s_jk.ift(direct)
         # s_mn will become the signal with the additional Delta ph# dimension.
         s_mn = s_jk.C
         if align_phases:
@@ -218,7 +218,6 @@ def correl_align(
         for_Ecalc = s_jk * np.exp(
             -1j * 2 * np.pi * f_shift * s_jk.fromaxis(direct)
         )
-        s_jk.ft(direct)
         for_Ecalc.ft(direct)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
