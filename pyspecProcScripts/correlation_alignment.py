@@ -86,9 +86,9 @@ def correl_align(
         indirect = [j for j in s_orig.dimlabels if j in indirect]
         avg_dim_len = len(s_orig.getaxis(avg_dim))
         s_orig.smoosh(indirect)
-    for j in signal_pathway.keys():
-        assert not s_orig.get_ft_prop(j), (
-            str(j) + " must not be in the coherence domain"
+    for unk_key in signal_pathway.keys():
+        assert not s_orig.get_ft_prop(unk_key), (
+            str(unk_key) + " must not be in the coherence domain"
         )
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
@@ -132,7 +132,7 @@ def correl_align(
         logging.debug(psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", i))
         logging.debug(psd.strm("*** *** ***"))
         s_orig.ift(direct)
-        s_copy = s_orig.C
+        s_copy = s_orig.C # s_data1? S_m? S_mn?
         if align_phases:
             ph0 = s_orig.C.sum(direct)
             ph0 /= abs(ph0)
@@ -143,17 +143,17 @@ def correl_align(
         )
         s_copy *= this_mask
         s_copy.ift(direct)
-        s_copy2 = s_orig.C
-        for k, v in ph_len.items():
-            ph = np.ones(v)
-            s_copy *= psd.nddata(ph, "Delta" + k.capitalize())
-            s_copy.setaxis("Delta" + k.capitalize(), "#")
+        s_copy2 = s_orig.C # s_data2? S_j? S_jk?
+        for key, value in ph_len.items():
+            ph = np.ones(value)
+            s_copy *= psd.nddata(ph, "Delta" + key.capitalize())
+            s_copy.setaxis("Delta" + key.capitalize(), "#")
         correl = s_copy * 0
-        for k, v in ph_len.items():
-            for ph_index in range(v):
-                s_copy["Delta%s" % k.capitalize(), ph_index] = s_copy[
-                    "Delta%s" % k.capitalize(), ph_index
-                ].run(lambda x, axis=None: np.roll(x, ph_index, axis=axis), k)
+        for key, value in ph_len.items():
+            for ph_index in range(value):
+                s_copy["Delta%s" % key.capitalize(), ph_index] = s_copy[
+                    "Delta%s" % key.capitalize(), ph_index
+                ].run(lambda x, axis=None: np.roll(x, ph_index, axis=axis), key)
         correl = s_copy.mean(indirect_dim).run(np.conj) * s_copy2
         correl.reorder([indirect_dim, direct], first=False)
         if my_iter == 0:
@@ -170,11 +170,11 @@ def correl_align(
         correl.ft_new_startpoint(direct, "freq")
         correl.ft_new_startpoint(direct, "time")
         correl.ft(direct, shift=True, pad=2**14)
-        for k, v in signal_pathway.items():
-            correl.ft(["Delta%s" % k.capitalize()])
+        for index, val in signal_pathway.items():
+            correl.ft(["Delta%s" % index.capitalize()])
             correl = (
-                correl["Delta" + k.capitalize(), v]
-                + correl["Delta" + k.capitalize(), 0]
+                correl["Delta" + index.capitalize(), val]
+                + correl["Delta" + index.capitalize(), 0]
             )
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -196,7 +196,7 @@ def correl_align(
             )
         else:
             f_shift = correl.run(np.real).argmax(direct)
-        s_copy = s_orig.C
+        s_copy = s_orig.C # Is this a new s_copy? why have the same name?
         s_copy *= np.exp(-1j * 2 * np.pi * f_shift * s_copy.fromaxis(direct))
         s_orig.ft(direct)
         s_copy.ft(direct)
