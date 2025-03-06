@@ -79,7 +79,6 @@ def correl_align(
                 The width of the Gaussian function used to frequency filter
                 the data in the calculation of the correlation function.
     """
-    s_orig_orig = s_orig.C
     logging.debug(psd.strm("Applying the correlation routine"))
     if avg_dim:
         phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
@@ -285,5 +284,4 @@ def correl_align(
             "after correlation\nph0 restored \nsig. energy=%g" % sig_energy
         )
         fl.pop_marker()
-    print(s_orig == s_orig_orig)
     return f_shift, sigma, this_mask
