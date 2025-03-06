@@ -17,8 +17,8 @@
 
 .. _sphx_glr_auto_examples_QESR.py:
 
-Quantify the Double Integral of an ESR spectra
-=================================================
+Quantify the Double Integral of an ESR spectra (QESR)
+========================================================
 Calculate the concentration of spin label present in
 a sample based on the double integral of an ESR spectra.
 
@@ -43,7 +43,7 @@ should have the following values under General:
 
 Note that the diameter is given in units of mm.
 
-.. GENERATED FROM PYTHON SOURCE LINES 27-54
+.. GENERATED FROM PYTHON SOURCE LINES 27-56
 
 
 
@@ -100,11 +100,13 @@ Note that the diameter is given in units of mm.
 .. code-block:: Python
 
 
+    from matplotlib.pyplot import rcParams
     from pyspecProcScripts import QESR
     from pyspecdata import figlist_var, find_file
     import pickle
 
-    # sphinx_gallery_thumbnail_number = 1
+    # sphinx_gallery_thumbnail_number = 2
+    rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
     pickle_file = "TEMPOL_rerun_conc.pickle" # when complete, the
     #                                          concentration is stored here
@@ -130,7 +132,7 @@ Note that the diameter is given in units of mm.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.116 seconds)
+   **Total running time of the script:** (0 minutes 2.129 seconds)
 
 
 .. _sphx_glr_download_auto_examples_QESR.py:

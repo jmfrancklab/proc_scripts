@@ -1,5 +1,5 @@
-"""Quantify the Double Integral of an ESR spectra
-=================================================
+"""Quantify the Double Integral of an ESR spectra (QESR)
+========================================================
 Calculate the concentration of spin label present in
 a sample based on the double integral of an ESR spectra.
 
@@ -25,11 +25,13 @@ should have the following values under General:
 Note that the diameter is given in units of mm.
 """
 
+from matplotlib.pyplot import rcParams
 from pyspecProcScripts import QESR
 from pyspecdata import figlist_var, find_file
 import pickle
 
-# sphinx_gallery_thumbnail_number = 1
+# sphinx_gallery_thumbnail_number = 2
+rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 pickle_file = "TEMPOL_rerun_conc.pickle" # when complete, the
 #                                          concentration is stored here

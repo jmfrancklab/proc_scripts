@@ -32,23 +32,6 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="An ESR spectra should be collected for both the  sample of interest as well as a &quot;background&quot;  ...">
-
-.. only:: html
-
-  .. image:: /auto_examples/images/thumb/sphx_glr_QESR_thumb.png
-    :alt:
-
-  :ref:`sphx_glr_auto_examples_QESR.py`
-
-.. raw:: html
-
-      <div class="sphx-glr-thumbnail-title">Quantify the Double Integral of an ESR spectra</div>
-    </div>
-
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="Processes a square wave reflection in order to calculate the  Q of a NMR probe. Optional to sho...">
 
 .. only:: html
@@ -61,6 +44,23 @@ various functions.
 .. raw:: html
 
       <div class="sphx-glr-thumbnail-title">Process a square wave reflection</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="An ESR spectra should be collected for both the  sample of interest as well as a &quot;background&quot;  ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_QESR_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_QESR.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Quantify the Double Integral of an ESR spectra (QESR)</div>
     </div>
 
 
@@ -583,8 +583,8 @@ various functions.
    :hidden:
 
    /auto_examples/append_conc_to_h5file
-   /auto_examples/QESR
    /auto_examples/proc_square_refl
+   /auto_examples/QESR
    /auto_examples/FIDtoEcho_Actual
    /auto_examples/phaseCycNoise_example
    /auto_examples/epr_overlay2
