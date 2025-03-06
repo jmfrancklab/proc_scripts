@@ -111,6 +111,9 @@ def QESR(
     background = background.interp(fieldaxis, d.getaxis(fieldaxis))
     # {{{ configure all the plots -- I like to do this in one place so I
     #     can easily control placement in the PDF
+    fl.next(
+        f"{which_plot} baseline diagnostic"
+    )  # I want this plot to come first
     thisfig = plt.figure()
     gs = plt.GridSpec(4, 1, figure=thisfig)
     fl.text(r"\textbf{\texttt{%s}}\par" % file_name)
@@ -186,14 +189,15 @@ def QESR(
     d_abs /= QESR_scalefactor(
         d, calibration_name=calibration_name, diameter_name=diameter_name
     )
+    d_abs.name("conc").set_units("μM")
     final_conc = (
         d_abs[fieldaxis : (generous_limits[-1], None)].mean(fieldaxis).item()
     ).real
-    d_abs.name("conc").set_units("μM")
     fl.plot(
-        d_abs, alpha=0.5, label=f"{label}, %0.4f μM" % final_conc, ax=ax_dblint
+        d_abs, alpha=0.5, label=f"{label}, ${final_conc:0.4~L}$", ax=ax_dblint
     )
     gridandtick(ax_dblint)
+    ax_dblint.legend(loc="lower left", bbox_to_anchor=[0.98, -0.1])
     if pickle_file is not None:
         pickle_vars[label] = final_conc
         with open(pickle_file, "wb") as fp:
