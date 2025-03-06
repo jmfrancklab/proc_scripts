@@ -24,10 +24,10 @@ def QESR(
     pickle_file=None,
     background=None,
     exp_type=None,
-    which_plot=None,
     calibration_name=None,
     diameter_name=None,
     color=None,
+    plot_derivative=False,
     fl=None,
 ):
     """Converts a raw ESR spectra to the double integral and calculates the
@@ -53,9 +53,6 @@ def QESR(
         The background spectrum that should already be loaded
     exp_type: str
         Where the file of interest is
-    which_plot: str
-        Name that will be used in titles of plots. This is useful when you
-        are plotting more than 1 dataset
     calibration_name:  str
         Name of the value in your pyspecdata config file that points to
         the proportionality constant
@@ -66,6 +63,8 @@ def QESR(
             String of the desired color for the plot. This is especially
             useful when trying to coordinate color matching with other
             plots
+    plot_derivative: boolean (default False)
+        If you want to see the (rescaled, background subtracted) spectrum.
     fl: figure list
         required!
     """
@@ -73,8 +72,6 @@ def QESR(
         raise ValueError(
             "You must specify the location of the file with exp_type!"
         )
-    if which_plot is None:
-        which_plot = file_name
     if fl is None:
         raise ValueError("for now, you just have to pass a figure list")
     if pickle_file is not None:
@@ -95,6 +92,9 @@ def QESR(
         d = d["harmonic", 0]
     d -= d[fieldaxis, -100:].data.mean()
     d.setaxis(fieldaxis, lambda x: x - d.get_prop("MWFQ") / gammabar_e * 1e4)
+    d /= QESR_scalefactor(
+        d, calibration_name=calibration_name, diameter_name=diameter_name
+    )
     # }}}
     if background is None:
         background = ndshape(d).alloc()  # zeros -- keep life easy!
@@ -107,25 +107,38 @@ def QESR(
             fieldaxis,
             lambda x: x - background.get_prop("MWFQ") / gammabar_e * 1e4,
         )
+        background /= QESR_scalefactor(
+            background,
+            calibration_name=calibration_name,
+            diameter_name=diameter_name,
+        )
         # }}}
     background = background.interp(fieldaxis, d.getaxis(fieldaxis))
     # {{{ configure all the plots -- I like to do this in one place so I
     #     can easily control placement in the PDF
-    fl.next(
-        f"{which_plot} baseline diagnostic"
-    )  # I want this plot to come first
-    thisfig = plt.figure()
-    gs = plt.GridSpec(4, 1, figure=thisfig)
+    fl.next("baseline diagnostic")  # I want this plot to come first
     fl.text(r"\textbf{\texttt{%s}}\par" % file_name)
-    ax = thisfig.add_subplot(gs[:3, 0])
-    fl.next(f"{which_plot} absorption, bg. no bl.", ax=ax, fig=thisfig)
+    # {{{ make the complicated figure if we haven't done so yet
+    if (
+        "absorption, bg. no bl."
+        if fl.basename is None
+        else fl.basename + " absorption, bg. no bl."
+    ) not in fl.figurelist:
+        thisfig = plt.figure()
+        gs = plt.GridSpec(4, 1, figure=thisfig)
+        ax = thisfig.add_subplot(gs[:3, 0])
+        fl.next("absorption, bg. no bl.", ax=ax, fig=thisfig, legend=True)
+        ax_dblint = thisfig.add_subplot(gs[3, 0])
+    else:
+        thisfig = fl.next("absorption, bg. no bl.")
+        ax, ax_dblint = thisfig.get_axes()
+    # }}}
     ax.set_title("abs mode:\nbackground subtracted, show baseline")
     fl.text(r"\par")
-    fl.next(f"{which_plot} baseline diagnostic")
+    fl.next("baseline diagnostic")
     gca().set_title(
         "zoomed-in baseline diagnostic\nshowing only baseline\n(data and fit)"
     )
-    ax_dblint = thisfig.add_subplot(gs[3, 0])
     ax_dblint.set_title(
         r"$\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow %s)$"
         % calibration_name
@@ -134,13 +147,19 @@ def QESR(
     if color is None:
         color = next(colors)["color"]
     d.set_plot_color(color)
-    fl.next(f"{which_plot} absorption, bg. no bl.")
+    fl.next("absorption, bg. no bl.")
     forplot = d.C.integrate(fieldaxis, cumulative=True)
     # show the same thing on the main plot as a faint line
     fl.plot(
-        forplot, alpha=0.2, label="%s - no background spec. subtracted" % label
+        forplot,
+        alpha=0.2,
+        label="%s \n↑(no background spec. subtracted)" % label,
     )
     d -= background  # subtract background in derivative mode
+    if plot_derivative:
+        fl.next("derivative", legend=True)
+        fl.plot(d, label=label)
+        fl.next("absorption, bg. no bl.")
     d_abs = d.C.integrate(fieldaxis, cumulative=True)
     fl.plot(d_abs, alpha=0.5, label=label)
     # for a protein, we assume we have 1 broad peak that's always over
@@ -169,7 +188,7 @@ def QESR(
             x < generous_limits[0], x > generous_limits[1]
         ),
     ]
-    fl.next(f"{which_plot} baseline diagnostic")
+    fl.next("baseline diagnostic")
     fl.plot(d_baseline, ".", alpha=0.3, label=label, human_units=False)
     # {{{ we don't have a spline in pyspecdata yet, so just hack it
     spl = UnivariateSpline(d_baseline.getaxis(fieldaxis), d_baseline.data.real)
@@ -177,7 +196,7 @@ def QESR(
     polybaseline.data = spl(d.getaxis(fieldaxis))
     # }}}
     fl.plot(polybaseline, alpha=0.5, human_units=False)
-    fl.next(f"{which_plot} absorption, bg. no bl.")
+    fl.next("absorption, bg. no bl.")
     fl.plot(
         polybaseline,
         alpha=0.5,
@@ -186,15 +205,12 @@ def QESR(
     )
     d_abs -= polybaseline  # background subtraction
     d_abs.integrate(fieldaxis, cumulative=True)
-    d_abs /= QESR_scalefactor(
-        d, calibration_name=calibration_name, diameter_name=diameter_name
-    )
-    d_abs.name("conc").set_units("μM")
+    d_abs.name("conc").set_units("micromolar")
     final_conc = (
         d_abs[fieldaxis : (generous_limits[-1], None)].mean(fieldaxis).item()
-    ).real
+    ).real.to_compact()
     fl.plot(
-        d_abs, alpha=0.5, label=f"{label}, ${final_conc:0.4~L}$", ax=ax_dblint
+        d_abs, alpha=0.5, label=f"{label}, ${final_conc:g~L}$", ax=ax_dblint
     )
     gridandtick(ax_dblint)
     ax_dblint.legend(loc="lower left", bbox_to_anchor=[0.98, -0.1])
