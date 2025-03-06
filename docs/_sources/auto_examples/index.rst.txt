@@ -32,6 +32,23 @@ various functions.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="An ESR spectra should be collected for both the  sample of interest as well as a &quot;background&quot;  ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_QESR_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_QESR.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Quantify the Double Integral of an ESR spectra</div>
+    </div>
+
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Processes a square wave reflection in order to calculate the  Q of a NMR probe. Optional to sho...">
 
 .. only:: html
@@ -83,7 +100,41 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="While we can align by microwave frequency and normalize according to peak-to-peak amplitude, it...">
+    <div class="sphx-glr-thumbcontainer" tooltip="However, this EPR alignment represents a more challenging case b/c:">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_epr_overlay2_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_epr_overlay2.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Another EPR Alignment</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Generate a PSD from Oscilloscope Data">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_generate_oscilloscope_PSD_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_generate_oscilloscope_PSD.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Generate a PSD from Oscilloscope Data</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Important note: In order to run this script, you need to set the default calibration values in ...">
 
 .. only:: html
 
@@ -112,6 +163,23 @@ various functions.
 .. raw:: html
 
       <div class="sphx-glr-thumbnail-title">Demonstrate Integrate Limits on Experimental Data</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="PSD from SpinCore">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_generate_SC_PSD_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_generate_SC_PSD.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">PSD from SpinCore</div>
     </div>
 
 
@@ -321,6 +389,23 @@ various functions.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Two files are required for the following example:">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_gain_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_gain.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">"</div>
+    </div>
+
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Process FIR experiment">
 
 .. only:: html
@@ -355,23 +440,6 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Takes a 2D data set and applies proper phasing corrections followed by  aligning the data throu...">
-
-.. only:: html
-
-  .. image:: /auto_examples/images/thumb/sphx_glr_correlation_alignment_example_thumb.png
-    :alt:
-
-  :ref:`sphx_glr_auto_examples_correlation_alignment_example.py`
-
-.. raw:: html
-
-      <div class="sphx-glr-thumbnail-title">Align data with significant frequency drift</div>
-    </div>
-
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="Generate a fake dataset of an inversion recovery with multiple repeats (φ × t2 × vd × repeats) ...">
 
 .. only:: html
@@ -384,6 +452,23 @@ various functions.
 .. raw:: html
 
       <div class="sphx-glr-thumbnail-title">Check integral error calculation</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Takes a 2D data set and applies proper phasing corrections followed by  aligning the data throu...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_correlation_alignment_example_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_correlation_alignment_example.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Align data with significant frequency drift</div>
     </div>
 
 
@@ -457,6 +542,23 @@ various functions.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Two files are required for the following example:">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_proc_rec_response_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_proc_rec_response.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Calculate and Fit Receiver Response to Sinc</div>
+    </div>
+
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Calculate actual beta as a function of pulse length">
 
 .. only:: html
@@ -481,11 +583,15 @@ various functions.
    :hidden:
 
    /auto_examples/append_conc_to_h5file
+   /auto_examples/QESR
    /auto_examples/proc_square_refl
    /auto_examples/FIDtoEcho_Actual
    /auto_examples/phaseCycNoise_example
+   /auto_examples/epr_overlay2
+   /auto_examples/generate_oscilloscope_PSD
    /auto_examples/epr_overlay
    /auto_examples/integrate_limits_realData
+   /auto_examples/generate_SC_PSD
    /auto_examples/proc_CPMG
    /auto_examples/proc_Ep
    /auto_examples/FIDtoEcho_Actual_Challenging
@@ -498,14 +604,16 @@ various functions.
    /auto_examples/proc_capture_nutation
    /auto_examples/proc_tune_capture
    /auto_examples/proc_raw
+   /auto_examples/proc_gain
    /auto_examples/proc_FIR
    /auto_examples/proc_GDS_capture_int
-   /auto_examples/correlation_alignment_example
    /auto_examples/check_integration_error
+   /auto_examples/correlation_alignment_example
    /auto_examples/time_domain_noise
    /auto_examples/integration_with_error
    /auto_examples/verify_tsqrtP_calibration
    /auto_examples/compare_CPMG_echo
+   /auto_examples/proc_rec_response
    /auto_examples/calibrate_tsqrtP
 
 

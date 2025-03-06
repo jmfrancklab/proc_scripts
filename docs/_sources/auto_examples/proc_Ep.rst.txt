@@ -23,7 +23,7 @@ Process Enhancement experiment
 Opens .h5 results file, uses rough_table_of_integrals() to roughly process
 dataset including generating a table of integrals
 
-.. GENERATED FROM PYTHON SOURCE LINES 7-67
+.. GENERATED FROM PYTHON SOURCE LINES 7-66
 
 
 
@@ -61,29 +61,22 @@ dataset including generating a table of integrals
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_Ep_005.png
-         :alt: residual after shift
+         :alt: normalized $E(p(t))$
          :srcset: /auto_examples/images/sphx_glr_proc_Ep_005.png
          :class: sphx-glr-multi-img
 
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_Ep_006.png
-         :alt: normalized $E(p(t))$
+         :alt: power log
          :srcset: /auto_examples/images/sphx_glr_proc_Ep_006.png
          :class: sphx-glr-multi-img
 
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_Ep_007.png
-         :alt: power log
-         :srcset: /auto_examples/images/sphx_glr_proc_Ep_007.png
-         :class: sphx-glr-multi-img
-
-    *
-
-      .. image-sg:: /auto_examples/images/sphx_glr_proc_Ep_008.png
          :alt: normalized $E(p)$
-         :srcset: /auto_examples/images/sphx_glr_proc_Ep_008.png
+         :srcset: /auto_examples/images/sphx_glr_proc_Ep_007.png
          :class: sphx-glr-multi-img
 
 
@@ -92,14 +85,15 @@ dataset including generating a table of integrals
  .. code-block:: none
 
     You didn't set units for indirect before saving the data!!!
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:8693: RuntimeWarning: invalid value encountered in sqrt
+      return np.sqrt(arg)
     1: autoslicing!
     2: Raw Data with averaged scans
     3: power terms |||ms
     4: check covariance test
-    5: residual after shift |||('Hz', 's')
-    6: normalized $E(p(t))$ |||s
-    7: power log
-    8: normalized $E(p)$ |||mW
+    5: normalized $E(p(t))$ |||s
+    6: power log
+    7: normalized $E(p)$ |||mW
 
 
 
@@ -114,7 +108,6 @@ dataset including generating a table of integrals
 
     import pyspecProcScripts as prscr
     import pyspecdata as psd
-    import os
     import datetime
     import matplotlib.pyplot as plt
 
@@ -127,7 +120,7 @@ dataset including generating a table of integrals
         "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
         "savefig.bbox": "tight",
         "savefig.dpi": 300,
-        "figure.figsize": (6, 2),
+        "figure.figsize": (6, 5),
     })
 
 
@@ -175,7 +168,7 @@ dataset including generating a table of integrals
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 6.252 seconds)
+   **Total running time of the script:** (0 minutes 5.166 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_Ep.py:

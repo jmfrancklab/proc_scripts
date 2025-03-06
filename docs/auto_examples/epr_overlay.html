@@ -23,7 +23,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Demonstrate Integrate Limits on Experimental Data" href="integrate_limits_realData.html" />
-    <link rel="prev" title="Phase Cycling Noise" href="phaseCycNoise_example.html" />
+    <link rel="prev" title="Generate a PSD from Oscilloscope Data" href="generate_oscilloscope_PSD.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -48,6 +48,10 @@ to download the full example code</p>
 </div>
 <section class="sphx-glr-example-title" id="epr-correlation-alignment">
 <span id="sphx-glr-auto-examples-epr-overlay-py"></span><h1>EPR correlation alignment<a class="headerlink" href="#epr-correlation-alignment" title="Link to this heading">¶</a></h1>
+<p><strong>Important note:</strong>
+In order to run this script, you need to set the
+default calibration values in your pyspecdata config,
+as detailed by the QESR example.</p>
 <p>While we can align by microwave frequency and normalize
 according to peak-to-peak amplitude, it scan still be
 hard to identify subtle differences between ESR
@@ -169,9 +173,6 @@ for the alignment function, I pass the function the figure list object
 6: after centering -- ift |||kcyc · (T)$^{-1}$
 7: aligned, autoscaled |||mT
 8: centered spectra
-
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:733: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
-  plt.gcf().tight_layout()
 </pre></div>
 </div>
 <p>Note that the ÷ in the legend above indicates what the (QESR rescaled)
@@ -180,7 +181,7 @@ Thus, if the spectra line up well, this gives a <strong>very</strong> accurate m
 <em>relative</em> concentration.
 This can be useful, since it doesn’t depend on baseline correction, etc, as a
 full-blown QESR does.</p>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.679 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.570 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-epr-overlay-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/bb26ee652291dfe5ef7c3d1ac4959ca5/epr_overlay.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">epr_overlay.ipynb</span></code></a></p>
@@ -218,11 +219,15 @@ full-blown QESR does.</p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">PSD from SpinCore</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
@@ -237,12 +242,13 @@ full-blown QESR does.</p>
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_rec_response.html">Calculate and Fit Receiver Response to Sinc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
 </ul>
 </li>
@@ -253,7 +259,7 @@ full-blown QESR does.</p>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">ProcScripts Example Gallery</a><ul>
-      <li>Previous: <a href="phaseCycNoise_example.html" title="previous chapter">Phase Cycling Noise</a></li>
+      <li>Previous: <a href="generate_oscilloscope_PSD.html" title="previous chapter">Generate a PSD from Oscilloscope Data</a></li>
       <li>Next: <a href="integrate_limits_realData.html" title="next chapter">Demonstrate Integrate Limits on Experimental Data</a></li>
   </ul></li>
   </ul></li>

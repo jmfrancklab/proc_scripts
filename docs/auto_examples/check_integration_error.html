@@ -21,8 +21,8 @@
     <link rel="icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Time-Domain Noise" href="time_domain_noise.html" />
-    <link rel="prev" title="Align data with significant frequency drift" href="correlation_alignment_example.html" />
+    <link rel="next" title="Align data with significant frequency drift" href="correlation_alignment_example.html" />
+    <link rel="prev" title="Calculating β from individual pulse capture" href="proc_GDS_capture_int.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -51,7 +51,8 @@ to download the full example code</p>
 × t2 × vd × repeats) w/ normally distributed random noise.
 Check that the following match:</p>
 <ul class="simple">
-<li><p>integral w/ error (the canned routine <a class="reference internal" href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.integral_w_errors" title="pyspecProcScripts.integral_w_errors"><code class="xref py py-func docutils literal notranslate"><span class="pre">integral_w_errors()</span></code></a>)</p></li>
+<li><p>integral w/ error (the canned routine
+<a class="reference internal" href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.integral_w_errors" title="pyspecProcScripts.integral_w_errors"><code class="xref py py-func docutils literal notranslate"><span class="pre">integral_w_errors()</span></code></a>)</p></li>
 <li><p>propagate error based off the programmed σ of the normal distribution</p></li>
 <li><p>set the error bars based on the standard deviation (along the repeats
 dimension) of the <em>real</em> part of the integral</p></li>
@@ -167,15 +168,14 @@ shape of all results [(40, &#39;vd&#39;), (100, &#39;repeats&#39;)]
 #97
 #98
 #99
-off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.93060944,
-       2.13206575, 2.00872919, 2.04905229, 2.01021424, 2.01588764,
-       1.98313971, 1.96105098, 1.95551733, 1.9781281 , 2.00131382,
-       2.00442813, 1.92045567, 2.06495041, 2.00317676, 2.03198956,
-       2.00544709, 2.03250792, 1.93447913, 1.89214692, 2.06743386,
-       2.03373086, 2.02808928, 2.0162576 , 2.08907512, 2.02007657,
-       1.87751444, 1.89320537, 2.06079152, 1.96778088, 1.96253323,
-       2.02773125, 2.16292245, 1.88744034, 2.03248251, 2.07482991])
-                +/-None
+off-pathway std array([1.97220022, 1.92375672, 1.97689265, 1.98747806, 1.90421805,
+       2.10511932, 2.04874192, 1.97321004, 1.88565543, 2.04797383,
+       2.00818674, 2.06696218, 2.02617466, 2.02800179, 1.8381604 ,
+       1.9537043 , 2.09145914, 1.98115531, 1.94782724, 1.96258195,
+       1.85835747, 1.94830219, 2.03456705, 2.05711269, 2.05529398,
+       1.94220362, 1.94225146, 2.09010836, 2.00995428, 2.10428952,
+       2.02011849, 1.98634654, 1.9664804 , 1.92916986, 2.00990651,
+       2.0238763 , 1.86914168, 1.92370829, 2.02447457, 1.99875205])
         dimlabels=[&#39;vd&#39;]
         axes={`vd&#39;:array([0.        , 0.02564103, 0.05128205, 0.07692308, 0.1025641 ,
        0.12820513, 0.15384615, 0.17948718, 0.20512821, 0.23076923,
@@ -187,16 +187,16 @@ off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.9306094
        0.8974359 , 0.92307692, 0.94871795, 0.97435897, 1.        ])
                         +/-None}
  programmed std 2.0
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all axes decorations.
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:782: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all axes decorations.
   plt.gcf().tight_layout()
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="n">integrate_limits</span><span class="p">,</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.integral_w_errors" title="pyspecProcScripts.integral_w_errors" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">integral_w_errors</span></a>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">diff</span><span class="p">,</span> <span class="n">r_</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="n">ndshape</span><span class="p">,</span> <span class="n">nddata</span><span class="p">,</span> <span class="n">init_logging</span><span class="p">,</span> <span class="n">figlist_var</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.integral_w_errors" title="pyspecProcScripts.integral_w_errors" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">integral_w_errors</span></a>
 
 <span class="c1"># sphinx_gallery_thumbnail_number = 1</span>
 
@@ -241,13 +241,11 @@ off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.9306094
     <span class="c1"># {{{</span>
     <span class="n">data</span> <span class="o">/=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">ndshape</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="s2">&quot;t2&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="n">dt</span>
     <span class="n">error_pathway</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="nb">set</span><span class="p">(</span>
-            <span class="p">(</span>
-                <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndshape</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="s2">&quot;ph1&quot;</span><span class="p">])</span>
-                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndshape</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="s2">&quot;ph2&quot;</span><span class="p">])</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
+        <span class="nb">set</span><span class="p">((</span>
+            <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndshape</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="s2">&quot;ph1&quot;</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndshape</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="s2">&quot;ph2&quot;</span><span class="p">])</span>
+        <span class="p">))</span>
         <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">excluded_pathways</span><span class="p">)</span>
         <span class="o">-</span> <span class="nb">set</span><span class="p">([(</span><span class="n">signal_pathway</span><span class="p">[</span><span class="s2">&quot;ph1&quot;</span><span class="p">],</span> <span class="n">signal_pathway</span><span class="p">[</span><span class="s2">&quot;ph2&quot;</span><span class="p">])])</span>
     <span class="p">)</span>
@@ -265,7 +263,8 @@ off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.9306094
     <span class="n">N</span> <span class="o">=</span> <span class="n">ndshape</span><span class="p">(</span><span class="n">manual_bounds</span><span class="p">)[</span><span class="s2">&quot;t2&quot;</span><span class="p">]</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">diff</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)[</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="n">manual_bounds</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
-    <span class="c1"># N terms that have variance given by fake_data_noise_std**2 each multiplied by df</span>
+    <span class="c1"># N terms that have variance given by fake_data_noise_std**2 each</span>
+    <span class="c1"># multiplied by df</span>
     <span class="n">all_results</span><span class="p">[</span><span class="s2">&quot;repeats&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">manual_bounds</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;#</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">j</span><span class="p">)</span>
 <span class="n">std_off_pathway</span> <span class="o">=</span> <span class="p">(</span>
@@ -292,7 +291,8 @@ off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.9306094
     <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">all_results</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">real</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s2">&quot;repeats&quot;</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="c1"># by itself, that would give error bars, but the data would be averaged -- better to put the data in the same position</span>
+<span class="c1"># by itself, that would give error bars, but the data would be</span>
+<span class="c1"># averaged -- better to put the data in the same position</span>
 <span class="n">manual_bounds</span><span class="o">.</span><span class="n">set_error</span><span class="p">(</span><span class="n">all_results</span><span class="o">.</span><span class="n">get_error</span><span class="p">())</span>
 <span class="c1"># the fact that this matches the previous shows that my sample size is</span>
 <span class="c1"># large enough to give good statistics</span>
@@ -308,7 +308,7 @@ off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.9306094
 <span class="n">fl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (1 minutes 15.959 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 50.853 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-check-integration-error-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/89ba9e337d732e9970521eca4e4fa858/check_integration_error.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">check_integration_error.ipynb</span></code></a></p>
@@ -346,11 +346,15 @@ off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.9306094
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">PSD from SpinCore</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
@@ -365,12 +369,13 @@ off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.9306094
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_rec_response.html">Calculate and Fit Receiver Response to Sinc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
 </ul>
 </li>
@@ -381,8 +386,8 @@ off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.9306094
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">ProcScripts Example Gallery</a><ul>
-      <li>Previous: <a href="correlation_alignment_example.html" title="previous chapter">Align data with significant frequency drift</a></li>
-      <li>Next: <a href="time_domain_noise.html" title="next chapter">Time-Domain Noise</a></li>
+      <li>Previous: <a href="proc_GDS_capture_int.html" title="previous chapter">Calculating β from individual pulse capture</a></li>
+      <li>Next: <a href="correlation_alignment_example.html" title="next chapter">Align data with significant frequency drift</a></li>
   </ul></li>
   </ul></li>
 </ul>

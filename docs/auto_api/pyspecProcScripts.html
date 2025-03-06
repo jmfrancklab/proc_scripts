@@ -459,8 +459,8 @@ directions that are not direct, indirect, or phase cycling.</p></li>
 <dd><p>Calculates the propagation of error for the given signal and returns
 signal with the error associated.</p>
 <p>Before declaring the error_path,
-look at an examples such as integration_w_error.py to see how to decide which
-excluded pathways to take the error over.</p>
+look at an examples such as integration_w_error.py to see how to
+decide which excluded pathways to take the error over.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -468,8 +468,9 @@ excluded pathways to take the error over.</p>
 <li><p><strong>error_path</strong> (<em>dict</em>) – <p>Dictionary of all coherence pathways that are
 not the signal pathway.</p>
 <p>Before declaring the error_path,
-look at an examples such as integration_w_error.py to see how to decide which
-excluded pathways to take the error over.</p>
+look at an examples such as integration_w_error.py to
+see how to decide which excluded pathways to take the
+error over.</p>
 </p></li>
 <li><p><strong>convolve_method</strong> (<em>str</em>) – method of convolution used in integrating limits
 passed on to <code class="xref py py-func docutils literal notranslate"><span class="pre">integrate_limits()</span></code></p></li>
@@ -988,7 +989,8 @@ returns the x axis limits for plotting</p>
 <dd><p>Switch to the figure given by input_name, which is used not only as
 a string-based name for the figure, but also as a default title and as
 a base name for resulting figure files.</p>
-<p><strong>In the future, we actually want this to track the appropriate axis object!</strong></p>
+<p><strong>In the future, we actually want this to track the appropriate axis
+object!</strong></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -996,9 +998,9 @@ a base name for resulting figure files.</p>
 <li><p><strong>twinx</strong> (<em>{0</em><em>,</em><em>1}</em>) – <dl class="field-list simple">
 <dt class="field-odd">1<span class="colon">:</span></dt>
 <dd class="field-odd"><p>plots on an overlayed axis (the matplotlib twinx) whose y axis
-is labeled on the right when you set this for the first time, you
-can also set a <cite>color</cite> kwarg that controls the coloring of the
-right axis.</p>
+is labeled on the right when you set this for the first time,
+you can also set a <cite>color</cite> kwarg that controls the coloring of
+the right axis.</p>
 </dd>
 <dt class="field-even">0<span class="colon">:</span></dt>
 <dd class="field-even"><p>used to switch back to the left (default) axis</p>
@@ -1184,9 +1186,77 @@ factor</p></li>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="pyspecProcScripts.QESR">
+<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">QESR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pushout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.QESR" title="Link to this definition">¶</a></dt>
+<dd><p>Converts a raw ESR spectra to the double integral and calculates the
+appropriate concentration of spins present.</p>
+<p>If a background spectra is provided, background subtraction is applied to
+the loaded ESR spectra. The double integral is finally rescaled and
+multiplied by a proportionality constant associated with the matching value
+in your pyspecdata config file.  The resulting plot shows the double
+integral with the calculated concentration in micromolar in the legend.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pushout</strong> (<em>float</em>) – Adjusts the “generous limits” factor which is added
+to the integration area surrounding the peaks</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – Used in defining the integration limits (threshold*max)</p></li>
+<li><p><strong>pickle_file</strong> (<em>str</em>) – Name of pickle file you want to append the concentration to.
+(Concentration is stored in μM)</p></li>
+<li><p><strong>background</strong> (<em>nddata</em>) – The background spectrum that should already be loaded</p></li>
+<li><p><strong>exp_type</strong> (<em>str</em>) – Where the file of interest is</p></li>
+<li><p><strong>calibration_name</strong> (<em>str</em>) – Name of the value in your pyspecdata config file that points to
+the proportionality constant</p></li>
+<li><p><strong>diameter_name</strong> (<em>str</em>) – Name of the value in your pyspecdata config file that points to
+the diameter of the capillary being used</p></li>
+<li><p><strong>color</strong> (<em>str</em>) – String of the desired color for the plot. This is especially
+useful when trying to coordinate color matching with other
+plots</p></li>
+<li><p><strong>plot_derivative</strong> (<em>boolean</em><em> (</em><em>default False</em><em>)</em>) – If you want to see the (rescaled, background subtracted) spectrum.</p></li>
+<li><p><strong>fl</strong> (<em>figure list</em>) – required!</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="pyspecProcScripts.QESR_scalefactor">
-<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">QESR_scalefactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.QESR_scalefactor" title="Link to this definition">¶</a></dt>
-<dd><p>determine the scaling factor for QESR</p>
+<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">QESR_scalefactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.QESR_scalefactor" title="Link to this definition">¶</a></dt>
+<dd><p>Divide the ESR spectrum by this number so that the double integral
+should be equal to concentration in μM.</p>
+<p>We specifically calculate
+<span class="math notranslate nohighlight">\(d^{2} G_{R}  C_{t}  \sqrt{P}  B_{m}  Q  n_{B}  S  (S + 1) /
+c_{propfactor}\)</span>
+(the denominator of equation 2-17 in the E500
+manual with <span class="math notranslate nohighlight">\(d^2\)</span> (diameter squared) added in,
+so that after dividing by this term,
+we get a concentration of spins
+rather than the total number of spins).</p>
+<p>The constant <span class="math notranslate nohighlight">\(c_{propfactor}\)</span> is determined by the calibration name.
+Note that a larger <span class="math notranslate nohighlight">\(c_{propfactor}\)</span> corresponds to a higher
+concentration
+for the same recorded spectrum.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>calibration_name</strong> (<em>str</em>) – The key corresponding to the appropriate
+proportionality constant
+in your pyspecdata config file.
+Typically this is one value that doesn’t need changing</p></li>
+<li><p><strong>diameter_name</strong> (<em>str</em>) – The key corresponding to the diameter of the
+capillary tube used in the ESR experiment. This
+enables us to calculate a reliable concentration
+regardless of which capillary was used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>Denominator of equation 2-17 divided by the proportionality constant.</em></p></li>
+<li><p><em>Also includes a factor of 1e-6 to convert Molar to micromolar.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -1568,42 +1638,6 @@ returns the x axis limits for plotting</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="pyspecProcScripts.fake_data">
-<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">fake_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">expression,</span> <span class="pre">axis_coords,</span> <span class="pre">signal_pathway,</span> <span class="pre">direct='t2',</span> <span class="pre">SD_sigma=[0.05,</span> <span class="pre">0.003],</span> <span class="pre">SD_amp=[1,</span> <span class="pre">5],</span> <span class="pre">scale=100,</span> <span class="pre">fake_data_noise_std=1.0,</span> <span class="pre">fl=&lt;class</span> <span class="pre">'pyspecProcScripts.first_level.fl_dummy.fl_dummy_class'&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.fake_data" title="Link to this definition">¶</a></dt>
-<dd><p>Generate fake data subject to noise and frequency variation.
-:param expression: Gives the functional form of the data.
-:type expression: sympy expression
-:param axis_coords: Gives nddata objects providing all the axis coordinates.</p>
-<blockquote>
-<div><p><strong>Very importantly</strong>, these must be listed in the loop nesting order
-(outside in) in which they occur in the pulse program,
-or the frequency drift will not be modeled correctly.</p>
-<p>To enable <em>simulating echo-like data</em>, you can specify a direct axis
-that starts at a negative number.
-If you do this, the beginning of the axis will be re-set to 0 before returning.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>SD_sigma</strong> (<em>list</em><em> of </em><em>floats</em>) – <p>Gives the Gaussian σ for the spectral density of the
-frequency variation.
-Typically, there are more than one gaussian terms used to
-create the spectral density.</p>
-<p>A small σ gives rise to slow fluctuations while a large σ
-gives rise to fast fluctuations.
-The units of σ are in cycles per scan.</p>
-</p></li>
-<li><p><strong>SD_amp</strong> (<em>list</em><em> of </em><em>floats</em>) – Amplitudes associated with SD_sigma terms – must be the
-same length.</p></li>
-<li><p><strong>signal_pathway</strong> (<em>dict</em>) – Gives the signal pathway, with keys being phase cycling dimensions, and
-values being the corresponding Δp.</p></li>
-<li><p><strong>scale</strong> (<em>float</em><em> (</em><em>default 100</em><em>)</em>) – amplitude of frequency variation</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="pyspecProcScripts.fid_from_echo">
 <span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">fid_from_echo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_pathway</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_rising</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'t2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_rising</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slice_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_lower_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_hermitian_sign_flipped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_shifted_residuals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frq_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frq_half</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.fid_from_echo" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -1723,7 +1757,8 @@ Given in this way, so you can easily do
 <dd><p>Switch to the figure given by input_name, which is used not only as
 a string-based name for the figure, but also as a default title and as
 a base name for resulting figure files.</p>
-<p><strong>In the future, we actually want this to track the appropriate axis object!</strong></p>
+<p><strong>In the future, we actually want this to track the appropriate axis
+object!</strong></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1731,9 +1766,9 @@ a base name for resulting figure files.</p>
 <li><p><strong>twinx</strong> (<em>{0</em><em>,</em><em>1}</em>) – <dl class="field-list simple">
 <dt class="field-odd">1<span class="colon">:</span></dt>
 <dd class="field-odd"><p>plots on an overlayed axis (the matplotlib twinx) whose y axis
-is labeled on the right when you set this for the first time, you
-can also set a <cite>color</cite> kwarg that controls the coloring of the
-right axis.</p>
+is labeled on the right when you set this for the first time,
+you can also set a <cite>color</cite> kwarg that controls the coloring of
+the right axis.</p>
 </dd>
 <dt class="field-even">0<span class="colon">:</span></dt>
 <dd class="field-even"><p>used to switch back to the left (default) axis</p>
@@ -1879,8 +1914,8 @@ always appear to be the lowest.</p></li>
 <dd><p>Calculates the propagation of error for the given signal and returns
 signal with the error associated.</p>
 <p>Before declaring the error_path,
-look at an examples such as integration_w_error.py to see how to decide which
-excluded pathways to take the error over.</p>
+look at an examples such as integration_w_error.py to see how to
+decide which excluded pathways to take the error over.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1888,8 +1923,9 @@ excluded pathways to take the error over.</p>
 <li><p><strong>error_path</strong> (<em>dict</em>) – <p>Dictionary of all coherence pathways that are
 not the signal pathway.</p>
 <p>Before declaring the error_path,
-look at an examples such as integration_w_error.py to see how to decide which
-excluded pathways to take the error over.</p>
+look at an examples such as integration_w_error.py to
+see how to decide which excluded pathways to take the
+error over.</p>
 </p></li>
 <li><p><strong>convolve_method</strong> (<em>str</em>) – method of convolution used in integrating limits
 passed on to <a class="reference internal" href="#pyspecProcScripts.integrate_limits" title="pyspecProcScripts.integrate_limits"><code class="xref py py-func docutils literal notranslate"><span class="pre">integrate_limits()</span></code></a></p></li>

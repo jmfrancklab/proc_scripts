@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Calculate and Fit Receiver Response to Sinc &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=0838f141" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Calculate actual beta as a function of pulse length" href="calibrate_tsqrtP.html" />
+    <link rel="prev" title="compare CPMG echo" href="compare_CPMG_echo.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-proc-rec-response-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="calculate-and-fit-receiver-response-to-sinc">
+<span id="sphx-glr-auto-examples-proc-rec-response-py"></span><h1>Calculate and Fit Receiver Response to Sinc<a class="headerlink" href="#calculate-and-fit-receiver-response-to-sinc" title="Link to this heading">¶</a></h1>
+<p>Two files are required for the following example:</p>
+<dl class="simple">
+<dt>file1</dt><dd><p>contains the analytic signal acquired on the (GW Instek GDS) oscilloscope
+directly captured from the rf source (GW Instek AFG). Each node pertains to
+signal with a different frequency (in kHz) which are fit to a complex
+function to extract the <span class="math notranslate nohighlight">\(V_{p}\)</span> (in μV).</p>
+</dd>
+<dt>file2</dt><dd><p>contains the quadrature signal acquired on the receiver when the same
+signal of File1 is injected into it. Each node pertains to signal with a
+different frequency (in Hz) which are converted to a PSD. The amplitude (in
+dg) is calculated from the peak of the convolved PSD.</p>
+</dd>
+</dl>
+<p>The receiver response is then the ratio of <span class="math notranslate nohighlight">\(dg(\nu)\)</span> to
+<span class="math notranslate nohighlight">\(μV(\nu)\)</span> which is fit to an absolute sinc function.</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_proc_rec_response_001.png" srcset="../_images/sphx_glr_proc_rec_response_001.png" alt="2D plot of PSDs as a function of $\Delta\nu$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_rec_response_002.png" srcset="../_images/sphx_glr_proc_rec_response_002.png" alt="Receiver Response" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>using return-list -- this should be deprecated in favor of stub loading soon!
+using return-list -- this should be deprecated in favor of stub loading soon!
+1: 2D plot
+2: Receiver Response |||kHz
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">r_</span><span class="p">,</span> <span class="n">pi</span>
+<span class="kn">import</span> <span class="nn">pyspecdata</span> <span class="k">as</span> <span class="nn">psd</span>
+<span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="n">symbols</span>
+<span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">lambda_G</span> <span class="o">=</span> <span class="mf">0.4e3</span>  <span class="c1"># Width for Gaussian convolution</span>
+<span class="n">data_dir</span> <span class="o">=</span> <span class="s2">&quot;ODNP_NMR_comp/noise_tests&quot;</span>
+<span class="n">file1</span> <span class="o">=</span> <span class="s2">&quot;240123_10mV_AFG_GDS_5mV_100MSPS_analytic.h5&quot;</span>
+<span class="n">file2</span> <span class="o">=</span> <span class="s2">&quot;240117_afg_sc_10mV_3p9kHz_zoom.h5&quot;</span>
+<span class="c1"># {{{ various symbols/names used throughout</span>
+<span class="n">Dnu_name</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\Delta\nu$&quot;</span>
+<span class="n">nu_direct_name</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;$\nu_</span><span class="si">{direct}</span><span class="s2">$&quot;</span>
+<span class="n">A</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">Dnu_symb</span> <span class="o">=</span> <span class="n">symbols</span><span class="p">(</span><span class="s2">&quot;A nu phi t W &quot;</span> <span class="o">+</span> <span class="n">Dnu_name</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># }}}</span>
+
+
+<span class="c1"># {{{ Function to return the nodenames, and test signal frequencies</span>
+<span class="k">def</span> <span class="nf">get_freqs</span><span class="p">(</span><span class="n">thisfile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine the nodenames of the file and put them in an ordered list.</span>
+<span class="sd">    From the list produce an array containing the ordered frequencies as</span>
+<span class="sd">    floats.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ==========</span>
+<span class="sd">    thisfile: str</span>
+<span class="sd">        Name of file that has nodes containing test signal at varying</span>
+<span class="sd">        frequencies.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    =======</span>
+<span class="sd">    nodenames: list</span>
+<span class="sd">        List of strings of the nodenames sorted by the test signal frequency.</span>
+<span class="sd">    these_frqs: array</span>
+<span class="sd">        Array of sorted signal frequencies as integers</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">frq_extract_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">nodenames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">thisfile</span><span class="p">),</span> <span class="n">exp_type</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">return_list</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+        <span class="n">key</span><span class="o">=</span><span class="n">frq_extract_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">these_frqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">frq_extract_fn</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">nodenames</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">nodenames</span><span class="p">,</span> <span class="n">these_frqs</span>
+
+
+<span class="c1"># }}}</span>
+<span class="c1"># {{{ set up empty nddata to store input V</span>
+<span class="n">control_nodenames</span><span class="p">,</span> <span class="n">control_frqs</span> <span class="o">=</span> <span class="n">get_freqs</span><span class="p">(</span><span class="n">file1</span><span class="p">)</span>
+<span class="n">control_frqs</span> <span class="o">*=</span> <span class="mf">1e3</span>  <span class="c1"># kHz to Hz</span>
+<span class="n">control</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">psd</span><span class="o">.</span><span class="n">ndshape</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">control_frqs</span><span class="p">)],</span> <span class="p">[</span><span class="s2">&quot;nu_test&quot;</span><span class="p">])</span>
+    <span class="o">.</span><span class="n">alloc</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="n">control_frqs</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="s2">&quot;Hz&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="c1"># }}}</span>
+<span class="c1"># {{{ Calculate input V (acquired on Oscilloscope)</span>
+<span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">nodename</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">control_nodenames</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
+        <span class="n">file1</span><span class="p">,</span>
+        <span class="n">expno</span><span class="o">=</span><span class="n">nodename</span><span class="p">,</span>
+        <span class="n">exp_type</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># {{{ fit signal in t domain to complex exponential</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">lmfitdata</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">functional_form</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="n">sp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">set_guess</span><span class="p">(</span>
+        <span class="n">A</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">5e-3</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">nu</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">control</span><span class="p">[</span><span class="s2">&quot;nu_test&quot;</span><span class="p">][</span><span class="n">j</span><span class="p">],</span>
+            <span class="nb">min</span><span class="o">=</span><span class="n">control</span><span class="p">[</span><span class="s2">&quot;nu_test&quot;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e4</span><span class="p">,</span>
+            <span class="nb">max</span><span class="o">=</span><span class="n">control</span><span class="p">[</span><span class="s2">&quot;nu_test&quot;</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e4</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">phi</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="n">pi</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">pi</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+    <span class="c1"># }}}</span>
+    <span class="n">V_amp</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
+    <span class="n">control</span><span class="p">[</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">V_amp</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e6</span>  <span class="c1"># μV</span>
+<span class="c1"># {{{ make spline for power going into RX box</span>
+<span class="n">control</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="n">Dnu_name</span><span class="p">)</span>  <span class="c1"># since we will be applying $\Delta\nu$</span>
+<span class="c1">#                                      axis to spline</span>
+<span class="n">control_spline</span> <span class="o">=</span> <span class="n">control</span><span class="o">.</span><span class="n">spline_lambda</span><span class="p">()</span>
+<span class="c1"># }}}</span>
+<span class="c1"># }}}</span>
+<span class="c1"># {{{ Calculate dg</span>
+<span class="c1"># Get nodenames and frequencies recorded on receiver</span>
+<span class="n">rec_nodenames</span><span class="p">,</span> <span class="n">rec_frqs</span> <span class="o">=</span> <span class="n">get_freqs</span><span class="p">(</span><span class="n">file2</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">nodename</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rec_nodenames</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span><span class="n">file2</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">expno</span><span class="o">=</span><span class="n">nodename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Allocate an nddata with the same shape as a single frequency</span>
+            <span class="c1"># node but with an additional &quot;nu_test&quot; dimension so we can</span>
+            <span class="c1"># store all PSDs together for a 2D plot</span>
+            <span class="n">rec_data</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rec_frqs</span><span class="p">)))</span>
+                <span class="o">.</span><span class="n">alloc</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="n">rec_frqs</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="s2">&quot;Hz&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">carrier</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;carrierFreq_MHz&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e6</span>
+        <span class="p">)</span>  <span class="c1"># $\nu_{RX,LO}$</span>
+        <span class="n">rec_data</span><span class="p">[</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="n">SW</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;acq_params&quot;</span><span class="p">)[</span><span class="s2">&quot;SW_kHz&quot;</span><span class="p">])</span>  <span class="c1"># For labeling final plot</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+        <span class="s2">&quot;nScans&quot;</span><span class="p">,</span> <span class="s2">&quot;capture&quot;</span>
+    <span class="p">)</span>  <span class="c1"># To be more consistent with the oscilloscope data rename the nScans</span>
+    <span class="c1">#    dimension</span>
+    <span class="n">acq_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">rec_data</span><span class="p">[</span><span class="s2">&quot;t&quot;</span><span class="p">][</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]])</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">)</span>  <span class="c1"># Empirically needed to give offset that increases</span>
+    <span class="c1">#                        with field</span>
+    <span class="c1"># {{{ Calculate PSD for each frequency (we will calculate power from the A</span>
+    <span class="c1">#     of the convolved test signal)</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># $dg\sqrt{s/Hz}$</span>
+    <span class="n">rec_data</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rec_data</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>  <span class="c1"># $dg^{2}*s/Hz$</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s2">&quot;capture&quot;</span><span class="p">)</span>
+    <span class="n">rec_data</span> <span class="o">/=</span> <span class="n">acq_time</span>  <span class="c1"># $dg^{2}/Hz$</span>
+    <span class="c1"># Convolve using $\lambda_{G}$ specified above</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">lambda_G</span><span class="p">,</span> <span class="n">enforce_causality</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ center data at 0 MHz thus converting to</span>
+    <span class="c1">#     $\Delta\nu$ rather than $\nu_{test}$</span>
+    <span class="n">rec_data</span><span class="p">[</span><span class="s2">&quot;nu_test&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="n">carrier</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;nu_test&quot;</span><span class="p">,</span> <span class="n">Dnu_name</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ Plot 2D pcolor</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">nu_direct_name</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;2D plot&quot;</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">)</span>
+    <span class="n">the_2D</span> <span class="o">=</span> <span class="n">rec_data</span><span class="o">.</span><span class="n">C</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">)</span><span class="o">.</span><span class="n">pcolor</span><span class="p">(</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;BuPu&quot;</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">scale_independently</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;2D plot of PSDs as a function of $\Delta\nu$&quot;</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ Calculate power of test signal (Eq. S3)</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="n">nu_direct_name</span><span class="p">)</span>  <span class="c1"># Takes maximum of PSD</span>
+    <span class="n">rec_data</span> <span class="o">*=</span> <span class="p">(</span><span class="n">lambda_G</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">))))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">rec_data</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">)</span>  <span class="c1"># dg</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ Calculate receiver response as function of frequencies</span>
+    <span class="c1"># Make axis of $\Delta\nu$ that is evenly spaced and matches</span>
+    <span class="c1"># range of frequencies acquired on the receiver</span>
+    <span class="n">Dnu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">carrier</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">rec_data</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">Dnu_name</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">carrier</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">rec_data</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">Dnu_name</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">rec_data</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">Dnu_name</span><span class="p">)),</span>
+    <span class="p">)</span>
+    <span class="n">control</span> <span class="o">=</span> <span class="n">control_spline</span><span class="p">(</span><span class="n">Dnu</span><span class="p">)</span>  <span class="c1"># Generate spline of input powers</span>
+    <span class="n">dig_filter</span> <span class="o">=</span> <span class="n">rec_data</span> <span class="o">/</span> <span class="n">control</span>  <span class="c1"># dg/μV</span>
+    <span class="n">dig_filter</span><span class="o">.</span><span class="n">name</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\mathrm{dg_{</span><span class="si">%s</span><span class="s2">\ \mathrm</span><span class="si">{kHz}</span><span class="s2">}}/ \mu V$&quot;</span> <span class="o">%</span> <span class="n">SW</span><span class="p">)</span>
+    <span class="c1"># }}}</span>
+    <span class="c1"># {{{ Fit receiver response</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">lmfitdata</span><span class="p">(</span><span class="n">dig_filter</span><span class="p">)</span>
+    <span class="c1"># Fit to absolute sinc function</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">functional_form</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">sinc</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">Dnu_symb</span> <span class="o">-</span> <span class="n">nu</span><span class="p">))</span> <span class="o">/</span> <span class="n">W</span><span class="p">))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">set_guess</span><span class="p">(</span>
+        <span class="n">A</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">9e3</span><span class="p">),</span>
+        <span class="n">nu</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="mi">100</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
+        <span class="n">W</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">9e3</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1e4</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+    <span class="c1"># }}}</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Receiver Response&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dig_filter</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">eval</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 23.383 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-rec-response-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/c2629e0e3165562715f238ab39900ad3/proc_rec_response.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_rec_response.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/3f239e7bcd9f1635f6e010ee0311feea/proc_rec_response.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">proc_rec_response.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">PSD from SpinCore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Calculate and Fit Receiver Response to Sinc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="compare_CPMG_echo.html" title="previous chapter">compare CPMG echo</a></li>
+      <li>Next: <a href="calibrate_tsqrtP.html" title="next chapter">Calculate actual beta as a function of pulse length</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/proc_rec_response.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

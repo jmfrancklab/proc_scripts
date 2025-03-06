@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:02.679** total execution time for 27 files **from auto_examples**:
+**03:41.098** total execution time for 33 files **from auto_examples**:
 
 .. container::
 
@@ -32,8 +32,23 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_auto_examples_epr_overlay.py` (``epr_overlay.py``)
-     - 00:02.679
+   * - :ref:`sphx_glr_auto_examples_correlation_alignment_example.py` (``correlation_alignment_example.py``)
+     - 02:05.633
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_check_integration_error.py` (``check_integration_error.py``)
+     - 00:50.853
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_rec_response.py` (``proc_rec_response.py``)
+     - 00:23.383
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_gain.py` (``proc_gain.py``)
+     - 00:17.330
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_integration_with_error.py` (``integration_with_error.py``)
+     - 00:02.523
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_generate_SC_PSD.py` (``generate_SC_PSD.py``)
+     - 00:01.376
      - 0.0
    * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py` (``FIDtoEcho_Actual.py``)
      - 00:00.000
@@ -44,28 +59,31 @@ Computation times
    * - :ref:`sphx_glr_auto_examples_Hermitian_Phasing.py` (``Hermitian_Phasing.py``)
      - 00:00.000
      - 0.0
+   * - :ref:`sphx_glr_auto_examples_QESR.py` (``QESR.py``)
+     - 00:00.000
+     - 0.0
    * - :ref:`sphx_glr_auto_examples_append_conc_to_h5file.py` (``append_conc_to_h5file.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_calibrate_tsqrtP.py` (``calibrate_tsqrtP.py``)
      - 00:00.000
      - 0.0
-   * - :ref:`sphx_glr_auto_examples_check_integration_error.py` (``check_integration_error.py``)
-     - 00:00.000
-     - 0.0
    * - :ref:`sphx_glr_auto_examples_compare_CPMG_echo.py` (``compare_CPMG_echo.py``)
      - 00:00.000
      - 0.0
-   * - :ref:`sphx_glr_auto_examples_correlation_alignment_example.py` (``correlation_alignment_example.py``)
+   * - :ref:`sphx_glr_auto_examples_epr_overlay.py` (``epr_overlay.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_epr_overlay2.py` (``epr_overlay2.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_generate_oscilloscope_PSD.py` (``generate_oscilloscope_PSD.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_integrate_limits.py` (``integrate_limits.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_integrate_limits_realData.py` (``integrate_limits_realData.py``)
-     - 00:00.000
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_integration_with_error.py` (``integration_with_error.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_phaseCycNoise_example.py` (``phaseCycNoise_example.py``)
