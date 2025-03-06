@@ -110,8 +110,9 @@ def correl_align(
                 + [j for j in [fl.basename] if j is not None]
             )
         )
-        # For the diagnostics we want s_jk where the indirect
-        # is smooshed
+        # We don't want to apply a reorder to the original data so 
+        # since s_jk is a copy and already smooshed we will use that
+        # for the diagnostic here.
         s_jk.reorder([direct], first=False)
         fl.image(
             s_jk.C.setaxis(indirect_dim, "#").set_units(
