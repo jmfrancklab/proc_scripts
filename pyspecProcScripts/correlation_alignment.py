@@ -230,14 +230,6 @@ def correl_align(
             logging.debug(psd.strm("holder"))
             if fl:
                 s_orig.reorder([direct], first=False)
-                # s_aligned.reorder([direct], first=False)
-                # fl.image(
-                #     s_aligned.C.setaxis(indirect_dim, "#").set_units(
-                #         indirect_dim, "scan #"
-                #     ),
-                #     ax=ax_list[3],
-                #     human_units=False,
-                # )
                 fl.image(
                     s_orig.C.setaxis(indirect_dim, "#").set_units(
                         indirect_dim, "scan #"
