@@ -24,7 +24,7 @@ Align data with significant frequency drift
 Takes a 2D data set and applies proper phasing corrections followed by 
 aligning the data through a correlation routine.
 
-.. GENERATED FROM PYTHON SOURCE LINES 8-112
+.. GENERATED FROM PYTHON SOURCE LINES 8-121
 
 
 
@@ -34,7 +34,7 @@ aligning the data through a correlation routine.
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_correlation_alignment_example_001.png
-         :alt: (IR), Raw Data, Phased and   Centered, Aligned Data (v), Aligned Data (t)
+         :alt: (IR), (IR) Data Processing, (IR) Data Processing, (IR) Data Processing, (IR) Data Processing
          :srcset: /auto_examples/images/sphx_glr_correlation_alignment_example_001.png
          :class: sphx-glr-multi-img
 
@@ -55,7 +55,7 @@ aligning the data through a correlation routine.
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_correlation_alignment_example_004.png
-         :alt: (enhancement), Raw Data, Phased and   Centered, Aligned Data (v), Aligned Data (t)
+         :alt: (enhancement), (enhancement) Data Processing, (enhancement) Data Processing, (enhancement) Data Processing, (enhancement) Data Processing
          :srcset: /auto_examples/images/sphx_glr_correlation_alignment_example_004.png
          :class: sphx-glr-multi-img
 
@@ -78,13 +78,25 @@ aligning the data through a correlation routine.
 
  .. code-block:: none
 
-    1: (IR) Data Processing |||('Hz', None)
+    nddata
+    nddata
+    nddata
+    nddata
+    /home/jmfranck/git_repos/proc_scripts/examples/correlation_alignment_example.py:119: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+      fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    nddata
+    nddata
+    nddata
+    nddata
+    1: (IR) Data Processing
     2: (IR) Correlation Diagnostics |||('ms', None)
     3: (IR) correlation convergence |||('Hz', None)
-    4: (enhancement) Data Processing |||('Hz', None)
+    4: (enhancement) Data Processing
     5: (enhancement) Correlation Diagnostics |||('ms', None)
     6: (enhancement) correlation convergence |||('Hz', None)
 
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:782: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+      plt.gcf().tight_layout()
 
 
 
@@ -95,12 +107,16 @@ aligning the data through a correlation routine.
 
 .. code-block:: Python
 
-    from pyspecdata import *
-    from pyspecProcScripts import *
-    from pylab import *
+
+    import pyspecdata as psd
+    from pyspecdata import r_
+    import numpy as np
+    import pyspecProcScripts as psdpr
+    from pylab import rcParams
+    import matplotlib.pyplot as plt
     import sympy as s
     from collections import OrderedDict
-    from numpy.random import normal, seed
+    from numpy.random import seed
 
     seed(2021)
     rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
@@ -111,7 +127,7 @@ aligning the data through a correlation routine.
     echo_time = 10e-3
     f_range = (-400, 400)
 
-    with figlist_var() as fl:
+    with psd.figlist_var() as fl:
         for expression, orderedDict, signal_pathway, indirect, label in [
             (
                 (
@@ -120,10 +136,10 @@ aligning the data through a correlation routine.
                     * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
                 ),
                 [
-                    ("vd", nddata(r_[0:1:40j], "vd")),
-                    ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                    ("ph2", nddata(r_[0, 2] / 4.0, "ph2")),
-                    ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+                    ("vd", psd.nddata(r_[0:1:40j], "vd")),
+                    ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
+                    ("ph2", psd.nddata(r_[0, 2] / 4.0, "ph2")),
+                    ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
                 ],
                 {"ph1": 0, "ph2": 1},
                 "vd",
@@ -136,9 +152,9 @@ aligning the data through a correlation routine.
                     * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
                 ),
                 [
-                    ("power", nddata(r_[0:4:25j], "power")),
-                    ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                    ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+                    ("power", psd.nddata(r_[0:4:25j], "power")),
+                    ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
+                    ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
                 ],
                 {"ph1": 1},
                 "power",
@@ -146,37 +162,44 @@ aligning the data through a correlation routine.
             ),
         ]:
             fl.basename = "(%s)" % label
-            fig, ax_list = subplots(1, 4, figsize=(7, 7))
+            # {{{ equivalent of subplot
+            fig = plt.figure(figsize=(11, 7))
+            gs = plt.GridSpec(1, 4, figure=fig, wspace=0.4)
+            # }}}
             fig.suptitle(fl.basename)
             fl.next("Data Processing", fig=fig)
-            data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
+            data = psd.fake_data(
+                expression, OrderedDict(orderedDict), signal_pathway
+            )
             data.reorder([indirect, "t2"], first=False)
             data.ft("t2")
-            data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-            fl.image(data, ax=ax_list[0], human_units=False)
-            ax_list[0].set_title("Raw Data")
+            data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
+            fl.DCCT(data, bbox=gs[0], title="Raw Data")
             data = data["t2":f_range]
             data.ift("t2")
-            data /= zeroth_order_ph(select_pathway(data, signal_pathway))
+            data /= psdpr.zeroth_order_ph(
+                psdpr.select_pathway(data, signal_pathway)
+            )
             # }}}
             # {{{ Applying the phase corrections
-            best_shift = hermitian_function_test(
-                select_pathway(data.C.mean(indirect), signal_pathway)
+            best_shift = psdpr.hermitian_function_test(
+                psdpr.select_pathway(data.C.mean(indirect), signal_pathway)
             )
             data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
             data.ft("t2")
-            fl.image(data, ax=ax_list[1])
-            ax_list[1].set_title("Phased and \n Centered")
+            fl.DCCT(data, bbox=gs[1], title="Phased and \n Centered")
             # }}}
             # {{{ Applying Correlation Routine to Align Data
             mysgn = (
-                select_pathway(data, signal_pathway).C.real.sum("t2").run(np.sign)
+                psdpr.select_pathway(data, signal_pathway)
+                .C.real.sum("t2")
+                .run(np.sign)
             )
             #    this is the sign of the signal -- note how on the next line,
             #    I pass sign-flipped data, so that we don't need to worry about
             #    messing with the original signal
             data.ift(list(signal_pathway.keys()))
-            opt_shift, sigma, mask_func = correl_align(
+            opt_shift, sigma, mask_func = psdpr.correl_align(
                 data * mysgn,
                 indirect_dim=indirect,
                 signal_pathway=signal_pathway,
@@ -189,21 +212,19 @@ aligning the data through a correlation routine.
             )
             # removed display of the mask (I think that's what it was)
             data.ift("t2")
-            data *= np.exp(-1j * 2 * pi * opt_shift * data.fromaxis("t2"))
+            data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
             data.ft(list(signal_pathway.keys()))
             data.ft("t2")
-            fl.image(data, ax=ax_list[2], human_units=False)
-            ax_list[2].set_title("Aligned Data (v)")
+            fl.DCCT(data, bbox=gs[2], title="Aligned Data (v)")
             data.ift("t2")
-            fl.image(data, ax=ax_list[3], human_units=False)
-            ax_list[3].set_title("Aligned Data (t)")
+            fl.DCCT(data, bbox=gs[3], title="Aligned Data (t)")
             fig.tight_layout(rect=[0, 0.03, 1, 0.95])
             # }}}
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (2 minutes 32.497 seconds)
+   **Total running time of the script:** (2 minutes 5.633 seconds)
 
 
 .. _sphx_glr_download_auto_examples_correlation_alignment_example.py:

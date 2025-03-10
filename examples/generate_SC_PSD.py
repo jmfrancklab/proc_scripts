@@ -36,8 +36,8 @@ with psd.figlist_var() as fl:
     acq_time = diff(s.getaxis("t")[r_[0, -1]])[0]
     s /= sqrt(
         2
-    )  # Instantaneous $\frac{V_{p}\sqrt{s}}{\sqrt{Hz}}$ to
-    #    \frac{V_{rms}\sqrt{s}}{\sqrt{Hz}}$
+    )  # Instantaneous Vₚ√s / √Hz to
+    #    Vᵣₘₛ√s / √Hz 
     # {{{ equation 21
     s = abs(s) ** 2  # Take mod squared to convert to
     #                   energy $\frac{V_{rms}^{2} \cdot s}{Hz}$

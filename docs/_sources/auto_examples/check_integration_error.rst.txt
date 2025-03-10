@@ -25,7 +25,8 @@ Generate a fake dataset of an inversion recovery with multiple repeats (φ
 × t2 × vd × repeats) w/ normally distributed random noise.
 Check that the following match:
 
-- integral w/ error (the canned routine :func:`~pyspecProcScripts.integral_w_errors`)
+- integral w/ error (the canned routine
+  :func:`~pyspecProcScripts.integral_w_errors`)
 - propagate error based off the programmed σ of the normal distribution
 - set the error bars based on the standard deviation (along the repeats
   dimension) of the *real* part of the integral
@@ -33,7 +34,7 @@ Check that the following match:
   coherence channels (do this manually inside this script -- should mimic
   what :func:`~pyspecProcScripts.integral_w_errors` does)
 
-.. GENERATED FROM PYTHON SOURCE LINES 17-129
+.. GENERATED FROM PYTHON SOURCE LINES 18-131
 
 
 
@@ -175,15 +176,14 @@ Check that the following match:
     #97
     #98
     #99
-    off-pathway std array([1.86639429, 2.13532026, 1.95773501, 1.94246111, 1.93060944,
-           2.13206575, 2.00872919, 2.04905229, 2.01021424, 2.01588764,
-           1.98313971, 1.96105098, 1.95551733, 1.9781281 , 2.00131382,
-           2.00442813, 1.92045567, 2.06495041, 2.00317676, 2.03198956,
-           2.00544709, 2.03250792, 1.93447913, 1.89214692, 2.06743386,
-           2.03373086, 2.02808928, 2.0162576 , 2.08907512, 2.02007657,
-           1.87751444, 1.89320537, 2.06079152, 1.96778088, 1.96253323,
-           2.02773125, 2.16292245, 1.88744034, 2.03248251, 2.07482991])
-                    +/-None
+    off-pathway std array([1.97220022, 1.92375672, 1.97689265, 1.98747806, 1.90421805,
+           2.10511932, 2.04874192, 1.97321004, 1.88565543, 2.04797383,
+           2.00818674, 2.06696218, 2.02617466, 2.02800179, 1.8381604 ,
+           1.9537043 , 2.09145914, 1.98115531, 1.94782724, 1.96258195,
+           1.85835747, 1.94830219, 2.03456705, 2.05711269, 2.05529398,
+           1.94220362, 1.94225146, 2.09010836, 2.00995428, 2.10428952,
+           2.02011849, 1.98634654, 1.9664804 , 1.92916986, 2.00990651,
+           2.0238763 , 1.86914168, 1.92370829, 2.02447457, 1.99875205])
             dimlabels=['vd']
             axes={`vd':array([0.        , 0.02564103, 0.05128205, 0.07692308, 0.1025641 ,
            0.12820513, 0.15384615, 0.17948718, 0.20512821, 0.23076923,
@@ -195,7 +195,7 @@ Check that the following match:
            0.8974359 , 0.92307692, 0.94871795, 0.97435897, 1.        ])
                             +/-None}
      programmed std 2.0
-    /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all axes decorations.
+    /home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:782: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all axes decorations.
       plt.gcf().tight_layout()
 
 
@@ -207,9 +207,10 @@ Check that the following match:
 
 .. code-block:: Python
 
-    from pylab import *
-    from pyspecdata import *
-    from pyspecProcScripts import integrate_limits, integral_w_errors
+
+    from numpy import diff, r_, sqrt, real, exp, pi
+    from pyspecdata import ndshape, nddata, init_logging, figlist_var
+    from pyspecProcScripts import integral_w_errors
 
     # sphinx_gallery_thumbnail_number = 1
 
@@ -254,13 +255,11 @@ Check that the following match:
         # {{{
         data /= sqrt(ndshape(data)["t2"]) * dt
         error_pathway = (
-            set(
-                (
-                    (j, k)
-                    for j in range(ndshape(data)["ph1"])
-                    for k in range(ndshape(data)["ph2"])
-                )
-            )
+            set((
+                (j, k)
+                for j in range(ndshape(data)["ph1"])
+                for k in range(ndshape(data)["ph2"])
+            ))
             - set(excluded_pathways)
             - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
         )
@@ -278,7 +277,8 @@ Check that the following match:
         N = ndshape(manual_bounds)["t2"]
         df = diff(data.getaxis("t2")[r_[0, 1]]).item()
         manual_bounds.integrate("t2")
-        # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
+        # N terms that have variance given by fake_data_noise_std**2 each
+        # multiplied by df
         all_results["repeats", j] = manual_bounds
         print("#%d" % j)
     std_off_pathway = (
@@ -305,7 +305,8 @@ Check that the following match:
         alpha=0.5,
     )
     all_results.run(real).mean("repeats", std=True)
-    # by itself, that would give error bars, but the data would be averaged -- better to put the data in the same position
+    # by itself, that would give error bars, but the data would be
+    # averaged -- better to put the data in the same position
     manual_bounds.set_error(all_results.get_error())
     # the fact that this matches the previous shows that my sample size is
     # large enough to give good statistics
@@ -323,7 +324,7 @@ Check that the following match:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (1 minutes 15.959 seconds)
+   **Total running time of the script:** (0 minutes 50.853 seconds)
 
 
 .. _sphx_glr_download_auto_examples_check_integration_error.py:
