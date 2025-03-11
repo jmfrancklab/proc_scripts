@@ -92,6 +92,12 @@ def QESR(
         d = d["harmonic", 0]
     d -= d[fieldaxis, -100:].data.mean()
     d.setaxis(fieldaxis, lambda x: x - d.get_prop("MWFQ") / gammabar_e * 1e4)
+    if plot_derivative:
+        fl.push_marker()
+        fl.next("completely raw", legend=True)
+        fl.plot(d, label=label)
+        gca().set_title("completely raw\n(no power, mod, conversion scaling)")
+        fl.pop_marker()
     d /= QESR_scalefactor(
         d, calibration_name=calibration_name, diameter_name=diameter_name
     )
