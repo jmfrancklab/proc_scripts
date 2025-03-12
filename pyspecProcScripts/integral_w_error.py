@@ -20,8 +20,8 @@ def integral_w_errors(
     signal with the error associated.
 
     Before declaring the error_path,
-    look at an examples such as integration_w_error.py to see how to decide which
-    excluded pathways to take the error over.
+    look at an examples such as integration_w_error.py to see how to
+    decide which excluded pathways to take the error over.
 
     Parameters
     ==========
@@ -32,8 +32,9 @@ def integral_w_errors(
                 not the signal pathway.
 
                 Before declaring the error_path,
-                look at an examples such as integration_w_error.py to see how to decide which
-                excluded pathways to take the error over.
+                look at an examples such as integration_w_error.py to
+                see how to decide which excluded pathways to take the
+                error over.
     convolve_method: str
                 method of convolution used in integrating limits
                 passed on to :func:`integrate_limits`
@@ -55,15 +56,14 @@ def integral_w_errors(
         kwargs = {}
     frq_slice = integrate_limits(
         select_pathway(s, sig_path),
-        convolve_method=convolve_method,
         cutoff=cutoff,
         fl=fl,
+        **kwargs,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
     s = s[direct:frq_slice]
     f = s.getaxis(direct)
     df = f[1] - f[0]
-    errors = []
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
@@ -77,8 +77,9 @@ def integral_w_errors(
     ).alloc()
     avg_error = []
     for j in range(len(error_path)):
-        # calculate N₂ Δf² σ², which is the variance of the integral (by error propagation)
-        # where N₂ is the number of points in the indirect dimension
+        # calculate N₂ Δf² σ², which is the variance of the integral
+        # (by error propagation) where N₂ is the number of points in
+        # the indirect dimension
         s_forerror = select_pathway(s, error_path[j])
         # previous line wipes everything out and starts over -- why not use
         # collected_variance above, as I had originally set up --> part of
@@ -98,8 +99,16 @@ def integral_w_errors(
         avg_error.append(s_forerror)
     avg_error = sum(avg_error) / len(avg_error)
     # {{{ variance calculation for debug
-    # print("(inside automatic routine) the stdev seems to be",sqrt(collected_variance/(df*N2)))
-    # print("automatically calculated integral error:",sqrt(collected_variance.data))
+    variance_debug = False
+    if variance_debug:
+        print(
+            "(inside automatic routine) the stdev seems to be",
+            np.sqrt(collected_variance / (df * N2)),
+        )
+        print(
+            "automatically calculated integral error:",
+            np.sqrt(collected_variance.data),
+        )
     # }}}
     s = select_pathway(s, sig_path)
     retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))

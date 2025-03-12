@@ -6,7 +6,8 @@ Generate a fake dataset of an inversion recovery with multiple repeats (φ
 × t2 × vd × repeats) w/ normally distributed random noise.
 Check that the following match:
 
-- integral w/ error (the canned routine :func:`~pyspecProcScripts.integral_w_errors`)
+- integral w/ error (the canned routine
+  :func:`~pyspecProcScripts.integral_w_errors`)
 - propagate error based off the programmed σ of the normal distribution
 - set the error bars based on the standard deviation (along the repeats
   dimension) of the *real* part of the integral
@@ -14,9 +15,10 @@ Check that the following match:
   coherence channels (do this manually inside this script -- should mimic
   what :func:`~pyspecProcScripts.integral_w_errors` does)
 """
-from pylab import *
-from pyspecdata import *
-from pyspecProcScripts import integrate_limits, integral_w_errors
+
+from numpy import diff, r_, sqrt, real, exp, pi
+from pyspecdata import ndshape, nddata, init_logging, figlist_var
+from pyspecProcScripts import integral_w_errors
 
 # sphinx_gallery_thumbnail_number = 1
 
@@ -61,13 +63,11 @@ for j in range(n_repeats):
     # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
     error_pathway = (
-        set(
-            (
-                (j, k)
-                for j in range(ndshape(data)["ph1"])
-                for k in range(ndshape(data)["ph2"])
-            )
-        )
+        set((
+            (j, k)
+            for j in range(ndshape(data)["ph1"])
+            for k in range(ndshape(data)["ph2"])
+        ))
         - set(excluded_pathways)
         - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
     )
@@ -85,7 +85,8 @@ for j in range(n_repeats):
     N = ndshape(manual_bounds)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
     manual_bounds.integrate("t2")
-    # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
+    # N terms that have variance given by fake_data_noise_std**2 each
+    # multiplied by df
     all_results["repeats", j] = manual_bounds
     print("#%d" % j)
 std_off_pathway = (
@@ -112,7 +113,8 @@ fl.plot(
     alpha=0.5,
 )
 all_results.run(real).mean("repeats", std=True)
-# by itself, that would give error bars, but the data would be averaged -- better to put the data in the same position
+# by itself, that would give error bars, but the data would be
+# averaged -- better to put the data in the same position
 manual_bounds.set_error(all_results.get_error())
 # the fact that this matches the previous shows that my sample size is
 # large enough to give good statistics

@@ -131,16 +131,16 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     power = Q_(*d.get_prop("Power"))
     B_m = Q_(*d.get_prop("ModAmp"))
     Q = Q_(calibcache.default_Q, "dimensionless")  # hard set Q value
-    d = Q_(calibcache.d, "mm")  # hard set diameter
+    d = Q_(calibcache.d, "mm")  # diameter
     n_B = Q_(1, "dimensionless")  # calculate this
     S = Q_(0.5, "dimensionless")
     c = Q_(
         1, "dimensionless"
     )  # the first fraction on eq 2-17 -- in bruker E500 manual
-    signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q * d**2
-    signal_denom = signal_denom.to(
-        Q_("G") * sqrt(Q_("W")) * Q_("s") * Q_("m") ** 2
-    )
+    c_propfactor = Q_(calibcache.dint_propFactor, "m**2")
+    dint_conversion = (c_propfactor / d**2).to("").magnitude
+    signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q
+    signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s"))
     # }}}
     logger.debug(
         strm(
@@ -153,10 +153,11 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
             f"$S={S:~P} $\n"
             f"$c={c:~P} $\n"
             f"$d={d:~P} $\n"
-            f"signal denom$={signal_denom:~P}$"
-            f"doubleint propFactor$={calibcache.dint_propFactor}$"
+            f"signal denom$={signal_denom:~P}$\n"
+            f"doubleint propFactor$={calibcache.dint_propFactor}$\n"
+            f"doubleint conversion$={dint_conversion}$\n"
         )
     )
     # normally, we divide by signal_denom.magnitude and multiply by
     # calibcache.dint_propFactor and divide by 1e-6
-    return signal_denom.magnitude / calibcache.dint_propFactor * 1e-6
+    return signal_denom.magnitude / dint_conversion * 1e-6
