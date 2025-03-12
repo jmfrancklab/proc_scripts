@@ -1,4 +1,5 @@
 import pyspecdata as psd
+from pyspecdata import strm
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
@@ -83,19 +84,39 @@ def correl_align(
                 The width of the Gaussian function used to frequency filter
                 the data in the calculation of the correlation function.
     """
-    logging.debug(psd.strm("Applying the correlation routine"))
-    # TODO ☐: I think we want to remove avg_dim, but let's wait and see.
-    # TODO ☐: I think that we want to just allow the following to
-    #         determine the indirect dimensions.
-    # TODO ☐: I think we want to rename and throw errors for the kwargs
-    #         "indirect_dim" and "avg_dim", and rather use kwargs that
-    #         clearly specify which indirect dimensions are *used for
-    #         alignment* and which are not.
-    #         For example, in an inversion recovery or E(p) we typically
-    #         want to align along the indirect dimension, but only AFTER
-    #         we have made it safe to do so by flipping the signs.
-    #         As another example, we almost *always* want to align along
-    #         nScans.
+    logging.debug("Applying the correlation routine")
+    # TODO ☐: I think we want to rename and throw
+    #         errors for the kwargs "indirect_dim"
+    #         and "avg_dim", and rather use kwargs
+    #         that clearly specify which indirect
+    #         dimensions are *used for alignment*
+    #         (let's call this "repeated") and
+    #         which are not.
+    #         For example, in an inversion
+    #         recovery or E(p) we typically want
+    #         to align along the indirect
+    #         dimension (power or vd is the
+    #         `repeat_dim`), but only AFTER we have
+    #         made it safe to do so by flipping
+    #         the signs.
+    #         As another example, we almost
+    #         *always* want to align along nScans
+    #         (so we would smoosh the indirect
+    #         dimension and `nScans` to make
+    #         `repeat_dim`).
+    #         Most likely, we want to specify a
+    #         list of dimensions that are "safe"
+    #         to smoosh together as `repeat_dim`,
+    #         assuming that `nScans` is *always*
+    #         safe.
+    # TODO ☐: Furthermore, we want to specify
+    #         `non_repeat_dims`, then use a set
+    #         expression like below to find the
+    #         indirect dimension (not phase
+    #         cycling and not direct) and to make
+    #         sure that they are all either (1)
+    #         nScans (2) specified as safe or (3)
+    #         listed in `non_repeat_dims`
     if avg_dim:
         phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
         indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
@@ -112,7 +133,9 @@ def correl_align(
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
         )
-    assert s_orig.get_ft_prop(direct), "direct dimension must be in the frequency domain"
+    assert s_orig.get_ft_prop(
+        direct
+    ), "direct dimension must be in the frequency domain"
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
@@ -153,45 +176,82 @@ def correl_align(
     nu_center = for_nu_center.mean(indirect_dim).C.argmax(direct)
     logging.debug(psd.strm("Center frequency", nu_center))
     # }}}
-    # {{{ Apply mask around center of signal in frequency domain.
-    #     This will become the expression in the left brackets, where
-    #     s_mn is at this stage equal to s_jk.
-    this_mask = np.exp(
-        -((s_jk.fromaxis(direct) - nu_center) ** 2) / (2 * sigma**2)
-    )
-    s_leftbracket = this_mask * s_jk
-    # }}}
-    s_leftbracket.ift(direct)
     s_jk.ift(direct)
     for my_iter in range(100):
+        # Note that both s_jk and s_leftbracket
+        # change every iteration, because the
+        # *data* is updated with every iteration
         i += 1
         logging.debug(psd.strm("*** *** ***"))
         logging.debug(psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", i))
         logging.debug(psd.strm("*** *** ***"))
         # {{{ optionally make the phases of all the different phase
-        #     cycle steps the same
+        #     cycle steps the same (this is just
+        #     for plotting/diagnostics)
         if align_phases:
             ph0 = s_jk.C.sum(direct)
             ph0 /= abs(ph0)
             s_jk /= ph0
         # }}}
-        # {{{ Make extra dimension (Δφ) for s_leftbracket
+        # {{{ construct the expression in the left square brackets of
+        #     eq. 29.
+        # {{{ Apply mask around center of signal
+        #     in frequency domain.
+        #     At this stage, s_mn is equal to
+        #     s_jk.
+        #
+        #     Note that is seems expensive, but
+        #     the masked data does genuinely
+        #     change with every iteration, because
+        #     the signal frequency is moving
+        #     relative to the mask.
+        s_jk.ft(direct)
+        this_mask = np.exp(
+            -((s_jk.fromaxis(direct) - nu_center) ** 2) / (2 * sigma**2)
+        )
+        s_leftbracket = this_mask * s_jk
+        s_jk.ift(direct)
+        s_leftbracket.ift(direct)
+        # }}}
+        # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
+        #     start by simply replicating the data along the new
+        #     dimension.
         for phname, phlen in ph_len.items():
-            ph = np.ones(phlen)
-            s_leftbracket *= psd.nddata(ph, "Delta" + phname.capitalize())
+            ph_ones = np.ones(phlen)
+            s_leftbracket *= psd.nddata(ph_ones, "Delta" + phname.capitalize())
             s_leftbracket.setaxis("Delta" + phname.capitalize(), "#")
         # }}}
-        correl = s_leftbracket * 0
-        # {{{ phase correction term in eq 29 in DCCT paper
+        # {{{ Currently, we have a Δφ_n dimension, but we've just
+        #     copied/replicated the data, so the phases are like this:
+        #
+        #     Δφ_n →
+        # φ_k 0 0 0 0
+        #  ↓  1 1 1 1
+        #     2 2 2 2
+        #     3 3 3 3
+        #     For this to actually correspond to a phase difference
+        #     (Δφ_n), we need to roll the data for each "column" of
+        #     Δφ_n by an increasing amount, so it looks like this
+        #
+        #     Δφ_n →
+        # φ_k 0 4 3 2
+        #  ↓  1 0 4 3
+        #     2 1 0 4
+        #     3 2 1 0
         for phname, phlen in ph_len.items():
             for ph_index in range(phlen):
-                s_leftbracket["Delta%s" % phname.capitalize(), ph_index] = s_leftbracket[
+                s_leftbracket[
+                    "Delta%s" % phname.capitalize(), ph_index
+                ] = s_leftbracket[
                     "Delta%s" % phname.capitalize(), ph_index
                 ].run(
                     lambda x, axis=None: np.roll(x, ph_index, axis=axis),
                     phname,
                 )
         # }}}
+        # }}}
+        # the sum over m in eq. 29 only applies to the left bracket,
+        # so we just do it here
         correl = s_leftbracket.mean(indirect_dim).run(np.conj) * s_jk
         correl.reorder([indirect_dim, direct], first=False)
         if my_iter == 0:
