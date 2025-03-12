@@ -1,5 +1,4 @@
 import pyspecdata as psd
-from pyspecdata import strm
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
@@ -332,7 +331,8 @@ def correl_align(
                     human_units=False,
                 )
                 ax_list[2].set_title(
-                    "correlation function (v)\n(includes mask and sum along $\\Delta p_l$)"
+                    "correlation function (v)\n(includes mask and sum along"
+                    " $\\Delta p_l$)"
                 )
         # Find optimal f shift based on max of correlation function
         if max_shift is not None:
@@ -350,7 +350,8 @@ def correl_align(
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
         # TODO ☐: this is incorrect, because the mask has not been
-        #         applied! (this is not a problem w/ AG changes -- it's pre-existing)
+        #         applied! (this is not a problem w/ AG changes -- it's
+        #         pre-existing)
         #         (Note that once we have masking
         #         functions, we would mod square our
         #         data, and then apply the mask to

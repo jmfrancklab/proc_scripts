@@ -72,8 +72,12 @@ with psd.figlist_var() as fl:
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the individual figures
-            data, bbox=gs[0], fig=fig, title="Raw Data"
+        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the individual
+            #        figures
+            data,
+            bbox=gs[0],
+            fig=fig,
+            title="Raw Data",
         )
         data = data["t2":f_range]
         data.ift("t2")
