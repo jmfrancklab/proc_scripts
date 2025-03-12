@@ -104,9 +104,6 @@ with psd.figlist_var() as fl:
             indirect_dim=indirect,
             signal_pathway=signal_pathway,
             sigma=3000 / 2.355,
-            # TODO ☐: it's not clear what shift_bounds does, and why
-            #         it's needed in order to set max_bounds
-            shift_bounds=True,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
