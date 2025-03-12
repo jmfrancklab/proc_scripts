@@ -34,12 +34,16 @@ def correl_align(
     transients and repeat alignment until the calculated signal energy remains
     constant to within a given tolerance level.
 
+    This implements Eq 29 in the DCCT paper (Beaton et al JCP 2022),
+    remembering that the FT of the cross-correlation is the product
+    of the two functions, with the *first* on complex conjugate.
+
     Parameters
     ==========
     s_orig:  psd.nddata
         A psd.nddata object which contains phase cycle dimensions and an
-        indirect dimension. This data corresponds to the s_jk signal in the
-        correlation equations in the DCCT paper
+        indirect dimension.
+        This data is not modified.
     align_phases:   boolean
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
@@ -80,13 +84,26 @@ def correl_align(
                 the data in the calculation of the correlation function.
     """
     logging.debug(psd.strm("Applying the correlation routine"))
+    # TODO ☐: I think we want to remove avg_dim, but let's wait and see.
+    # TODO ☐: I think that we want to just allow the following to
+    #         determine the indirect dimensions.
+    # TODO ☐: I think we want to rename and throw errors for the kwargs
+    #         "indirect_dim" and "avg_dim", and rather use kwargs that
+    #         clearly specify which indirect dimensions are *used for
+    #         alignment* and which are not.
+    #         For example, in an inversion recovery or E(p) we typically
+    #         want to align along the indirect dimension, but only AFTER
+    #         we have made it safe to do so by flipping the signs.
+    #         As another example, we almost *always* want to align along
+    #         nScans.
     if avg_dim:
         phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
         indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
         indirect = [j for j in s_orig.dimlabels if j in indirect]
-        s_jk = s_orig.C.smoosh(indirect)  # so that s_orig remains unmodified
-        #                                  make a copy for what is called s_jk
-        #                                  in the DCCT paper
+        s_jk = s_orig.C.smoosh(indirect)  # this version ends up with
+        #                                   three dimensions
+        #                                   (j=align_dim, k=phcyc, and
+        #                                   direct nu) and is NOT conj
     else:
         s_jk = s_orig.C  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
@@ -95,6 +112,7 @@ def correl_align(
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
         )
+    assert s_orig.get_ft_prop(direct), "direct dimension must be in the frequency domain"
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
@@ -110,14 +128,10 @@ def correl_align(
                 + [j for j in [fl.basename] if j is not None]
             )
         )
-        # We don't want to apply a reorder to the original data so 
-        # since s_jk is a copy and already smooshed we will use that
-        # for the diagnostic here.
         s_jk.reorder([direct], first=False)
+        # TODO ☐: why isn't this a DCCT?
         fl.image(
-            s_jk.C.setaxis(indirect_dim, "#").set_units(
-                indirect_dim, "scan #"
-            ),
+            s_jk,
             ax=ax_list[0],
             human_units=False,
         )
@@ -128,51 +142,57 @@ def correl_align(
     this_E = (abs(s_orig.C.sum(indirect_dim)) ** 2).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
+    # TODO ☐: the mask needs to be separated into a different function
     # {{{ find center frequency to see where to center the mask
+    # TODO ☐: this copy is undesirable, but not dealing with it, since
+    #         we need to separate the mask anyways
     for_nu_center = s_jk.C
     for_nu_center.ft(list(signal_pathway))
     for x in range(len(signal_keys)):
         for_nu_center = for_nu_center[signal_keys[x], signal_values[x]]
     nu_center = for_nu_center.mean(indirect_dim).C.argmax(direct)
-    # }}}
     logging.debug(psd.strm("Center frequency", nu_center))
+    # }}}
+    # {{{ Apply mask around center of signal in frequency domain.
+    #     This will become the expression in the left brackets, where
+    #     s_mn is at this stage equal to s_jk.
+    this_mask = np.exp(
+        -((s_jk.fromaxis(direct) - nu_center) ** 2) / (2 * sigma**2)
+    )
+    s_leftbracket = this_mask * s_jk
+    # }}}
+    s_leftbracket.ift(direct)
     s_jk.ift(direct)
     for my_iter in range(100):
         i += 1
         logging.debug(psd.strm("*** *** ***"))
         logging.debug(psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", i))
         logging.debug(psd.strm("*** *** ***"))
+        # {{{ optionally make the phases of all the different phase
+        #     cycle steps the same
         if align_phases:
             ph0 = s_jk.C.sum(direct)
             ph0 /= abs(ph0)
             s_jk /= ph0
-        # {{{ Apply mask around center of signal in nu domain
-        s_jk.ft(direct)
-        this_mask = np.exp(
-            -((s_jk.fromaxis(direct) - nu_center) ** 2) / (2 * sigma**2)
-        )
-        s_mn = this_mask * s_jk
         # }}}
-        s_jk.ift(direct)
-        s_mn.ift(direct)
-        # {{{ Make extra dimension (Δφ) for s_mn
+        # {{{ Make extra dimension (Δφ) for s_leftbracket
         for phname, phlen in ph_len.items():
             ph = np.ones(phlen)
-            s_mn *= psd.nddata(ph, "Delta" + phname.capitalize())
-            s_mn.setaxis("Delta" + phname.capitalize(), "#")
+            s_leftbracket *= psd.nddata(ph, "Delta" + phname.capitalize())
+            s_leftbracket.setaxis("Delta" + phname.capitalize(), "#")
         # }}}
-        correl = s_mn * 0
+        correl = s_leftbracket * 0
         # {{{ phase correction term in eq 29 in DCCT paper
         for phname, phlen in ph_len.items():
             for ph_index in range(phlen):
-                s_mn["Delta%s" % phname.capitalize(), ph_index] = s_mn[
+                s_leftbracket["Delta%s" % phname.capitalize(), ph_index] = s_leftbracket[
                     "Delta%s" % phname.capitalize(), ph_index
                 ].run(
                     lambda x, axis=None: np.roll(x, ph_index, axis=axis),
                     phname,
                 )
         # }}}
-        correl = s_mn.mean(indirect_dim).run(np.conj) * s_jk
+        correl = s_leftbracket.mean(indirect_dim).run(np.conj) * s_jk
         correl.reorder([indirect_dim, direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
