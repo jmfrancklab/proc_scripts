@@ -17,7 +17,6 @@ def to_percent(y, position):
 
 def correl_align(
     s_orig,
-    align_phases=False,
     tol=1e-4,
     indirect_dim="indirect",
     fig_title="correlation alignment",
@@ -44,7 +43,6 @@ def correl_align(
         A psd.nddata object which contains phase cycle dimensions and an
         indirect dimension.
         This data is not modified.
-    align_phases:   boolean
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
     indirect_dim:   str
@@ -135,10 +133,11 @@ def correl_align(
     signal_values = list(signal_pathway.values())
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = psd.ndshape(s_orig)[indirect_dim]
+    # TODO ☐: as noted below, this doesn't include the mask!
     sig_energy = (abs(s_orig) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
-        fig_forlist, ax_list = plt.subplots(1, 5, figsize=(25, 10))
+        fig_forlist, ax_list = plt.subplots(1, 4, figsize=(25, 10))
         fl.next("Correlation Diagnostics")
         fig_forlist.suptitle(
             " ".join(
@@ -182,14 +181,6 @@ def correl_align(
         logging.debug(psd.strm("*** *** ***"))
         logging.debug(psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", i))
         logging.debug(psd.strm("*** *** ***"))
-        # {{{ optionally make the phases of all the different phase
-        #     cycle steps the same (this is just
-        #     for plotting/diagnostics)
-        if align_phases and my_iter == 0:
-            ph0 = s_jk.C.sum(direct)
-            ph0 /= abs(ph0)
-            s_jk /= ph0
-        # }}}
         # {{{ construct the expression in the left square brackets of
         #     eq. 29.
         # {{{ Apply mask around center of signal
@@ -256,12 +247,12 @@ def correl_align(
             if fl:
                 correl.reorder([direct], first=False)
                 fl.image(
-                    correl.C.setaxis(indirect_dim, "#").set_units(
-                        indirect_dim, "scan #"
-                    ),
+                    correl,
                     ax=ax_list[1],
                 )
-                ax_list[1].set_title("correlation function (t), \nafter apod")
+                ax_list[1].set_title(
+                    "correlation function (t)\n(includes ν mask)"
+                )
         # {{{ FT the correlation function so that we can determine the
         #     relative shift needed to line each transient up with the
         #     average:
@@ -304,7 +295,9 @@ def correl_align(
                     ax=ax_list[2],
                     human_units=False,
                 )
-                ax_list[2].set_title("correlation function (v), \nafter apod")
+                ax_list[2].set_title(
+                    "correlation function (v)\n(includes mask and sum along $\\Delta p_l$)"
+                )
         # Find optimal f shift based on max of correlation function
         if max_shift is not None:
             delta_f_shift = (
@@ -322,19 +315,17 @@ def correl_align(
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
-        if my_iter == 0:
-            logging.debug("holder")
-            if fl:
-                fl.image(
-                    s_orig,
-                    ax=ax_list[3],
-                    human_units=False,
-                )
-                ax_list[3].set_title("after correlation\nbefore ph0 restore")
         # TODO ☐: this is incorrect, because the mask has not been
         #         applied! (this is not a problem w/ AG changes -- it's pre-existing)
-        s_aligned = s_jk.C # it's probably cheaper to make a copy than to ift
+        s_aligned = s_jk.C  # it's probably cheaper to make a copy than to ift
         s_aligned.ft(direct)
+        if fl and my_iter == 0:
+            fl.image(
+                s_aligned,
+                ax=ax_list[3],
+                human_units=False,
+            )
+            ax_list[3].set_title("after correlation")
         logging.debug(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
@@ -344,7 +335,9 @@ def correl_align(
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        this_E = (abs(s_aligned.C.sum(indirect_dim)) ** 2).data.sum().item() / N**2
+        this_E = (
+            abs(s_aligned.C.sum(indirect_dim)) ** 2
+        ).data.sum().item() / N**2
         energy_vals.append(this_E / sig_energy)
         logging.debug(
             psd.strm("averaged signal energy (per transient):", this_E)
@@ -361,12 +354,5 @@ def correl_align(
         fl.plot(np.array(energy_vals), "x")
         plt.gca().yaxis.set_major_formatter(to_percent)
     if fl is not None:
-        fl.image(
-            s_aligned,
-            ax=ax_list[4],
-        )
-        ax_list[4].set_title(
-            "after correlation\nph0 restored \nsig. energy=%g" % sig_energy
-        )
         fl.pop_marker()
     return f_shift, sigma, this_mask
