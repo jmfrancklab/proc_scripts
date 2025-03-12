@@ -102,17 +102,33 @@ def correl_align(
     #         to smoosh together as `repeat_dim`,
     #         assuming that `nScans` is *always*
     #         safe.
+    #         I think that right now, what you
+    #         call `indirect_dim` will be part of
+    #         `repeat_dims`.
     # TODO ☐: Furthermore, we want to specify
-    #         `non_repeat_dims`, then use a set
+    #         `non_repeat_dims`.  These are also
+    #         indirect dimension, but they are
+    #         one that we are not OK to align
+    #         (e.g. the indirect dimension of a 2D
+    #         COSY experiment).
+    #         With both `repeat_dims` and
+    #         `non_repeat_dims` defined, we can use a set
     #         expression like below to find the
     #         indirect dimension (not phase
     #         cycling and not direct) and to make
     #         sure that they are all either (1)
     #         nScans (2) specified as safe or (3)
     #         listed in `non_repeat_dims`
+    #         Currently, I don't think you have
+    #         any `non_repeat_dims`
     if avg_dim:
         phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
         indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
+        # TODO ☐: see todo above -- you need to
+        #         first make repeat_dims and
+        #         non_repeat_dims lists of length
+        #         1 if they are given as strings
+        # assert len(indirect - set(repeat_dims) - set(non_repeat_dims)) = 0
         indirect = [j for j in s_orig.dimlabels if j in indirect]
         s_jk = s_orig.C.smoosh(indirect)  # this version ends up with
         #                                   three dimensions
@@ -160,10 +176,22 @@ def correl_align(
     this_E = (abs(s_orig.C.sum(indirect_dim)) ** 2).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
-    # TODO ☐: the mask needs to be separated into a different function
+    # TODO ☐: the mask needs to be separated into
+    #         two functions:
+    #         One (f_mask) takes in s_jk and returns a copy
+    #         with the *frequency* mask applied.
+    #         Another (Delta_p_mask) takes in
+    #         s_leftbracket, and returns the
+    #         result of applying the mask along
+    #         Δp_l
     # {{{ find center frequency to see where to center the mask
     # TODO ☐: this copy is undesirable, but not dealing with it, since
-    #         we need to separate the mask anyways
+    #         we need to separate the mask
+    #         anyways.  Likely, in the final
+    #         version, when we supply the mask
+    #         function, this will be determined
+    #         from the same code that applies the
+    #         frequency bounds.
     for_nu_center = s_jk.C
     for_nu_center.ft(list(signal_pathway))
     for x in range(len(signal_keys)):
@@ -269,9 +297,17 @@ def correl_align(
         # TODO ☐: only the left square bracket term depends on Δp_l,
         #         so the following should be done on the left square
         #         bracket term before multiplication
-        # TODO ☐: then, the following is actually part of the masking
-        #         procedure, so it should be move into the masking
-        #         function.
+        # TODO ☐: then, the following sum is
+        #         actually part of the masking
+        #         procedure, so it should be moved
+        #         into the Delta_p_mask that is
+        #         supplied here.
+        #         The point of this is that right
+        #         now, we are ALWAYS maximizing
+        #         signal in both the coherence
+        #         pathway of interest and the 0,0
+        #         pathway → we would like to
+        #         control that.
         # {{{ this applies the Fourier transform from Δφ to Δp_l
         #     that is found inside the left square bracket of eq. 29.
         #     Then, it performs a sum that is equivalent to applying a
@@ -307,8 +343,6 @@ def correl_align(
             )
         else:
             delta_f_shift = correl.run(np.real).argmax(direct)
-        # TODO ☐: we shouldn't need a copy here -- we should just modify
-        #         in place
         # Take s_jk, which is the raw data that has potentially be
         # smooshed, and apply the shift
         s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
@@ -317,6 +351,17 @@ def correl_align(
         )
         # TODO ☐: this is incorrect, because the mask has not been
         #         applied! (this is not a problem w/ AG changes -- it's pre-existing)
+        #         (Note that once we have masking
+        #         functions, we would mod square our
+        #         data, and then apply the mask to
+        #         the mod squared data -- because
+        #         the mask is always real, this is
+        #         equivalent to multiplying one
+        #         copy of the function by the
+        #         mask, then multiplying by an
+        #         unmasked copy of the data in
+        #         order to calculate our masked
+        #         square)
         s_aligned = s_jk.C  # it's probably cheaper to make a copy than to ift
         s_aligned.ft(direct)
         if fl and my_iter == 0:
