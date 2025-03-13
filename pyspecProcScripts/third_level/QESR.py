@@ -144,9 +144,10 @@ def QESR(
         % calibration_name
     )
     # }}}
-    if color is None:
-        color = next(colors)["color"]
-    d.set_plot_color(color)
+    if color is not None:
+        d.set_plot_color(color)
+    elif d.get_plot_color() is None:
+        d.set_plot_color_next()
     fl.next("absorption, bg. no bl.")
     forplot = d.C.integrate(fieldaxis, cumulative=True)
     # show the same thing on the main plot as a faint line
