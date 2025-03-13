@@ -20,12 +20,17 @@ for two purposes:
 *   they are plugged in, as raw numbers, as part of the nonlinear expression
     that is used to fit the :math:`M_0 E(p)` (*i.e.* the raw integral) values.
 """
+import os
+from matplotlib.pyplot import *
 import pyspecdata as psd
 from sympy import symbols, Symbol, latex, lambdify
 from scipy.io import loadmat
 import matplotlib.pylab as plt
 import numpy as np
 from numpy import r_
+import pyspecProcScripts as psdpr
+
+psd.register_proc_lookup(psdpr.lookup_table)
 
 # {{{ This block changes when the data changes -- everything else should be
 # left alone for most circumstances
@@ -39,7 +44,7 @@ T_1w_info = dict(
     data_dir="AG_processed_data",
 )
 # }}}
-functional = False
+functional = True
 
 if functional:
 
