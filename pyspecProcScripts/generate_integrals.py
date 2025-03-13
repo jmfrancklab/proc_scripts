@@ -118,45 +118,51 @@ def generate_integrals(
     # }}}
     if fl:
         this_fig = figure(figsize=(20, 10))
-        DCCT(
-            raw_s,
-            this_fig,
-            total_spacing=0.1,
-            RHS_pad=0.76,
-            allow_for_text_default=5,
-            allow_for_ticks_default=50,
-            text_height=50,
-            custom_scaling=True,
-            scaling_factor=scale_factor,
-            plot_title="Raw Data \n for %s" % searchstr,
-        )
-        DCCT(
-            ph_corr_s,
-            this_fig,
-            total_spacing=0.1,
-            LHS_pad=0.25,
-            RHS_pad=0.51,
-            allow_for_text_default=5,
-            allow_for_ticks_default=50,
-            text_height=50,
-            custom_scaling=True,
-            scaling_factor=scale_factor,
-            plot_title="Phased Data \nfor %s" % searchstr,
-        )
+        fl.next("1")
+        fl.image(raw_s)
+        #DCCT(
+        #    raw_s,
+        #    this_fig,
+        #    total_spacing=0.1,
+        #    RHS_pad=0.76,
+        #    allow_for_text_default=5,
+        #    allow_for_ticks_default=50,
+        #    text_height=50,
+        #    custom_scaling=True,
+        #    scaling_factor=scale_factor,
+        #    plot_title="Raw Data \n for %s" % searchstr,
+        #)
+        fl.next("phased")
+        fl.image(ph_corr_s)
+        #DCCT(
+        #    ph_corr_s,
+        #    this_fig,
+        #    total_spacing=0.1,
+        #    LHS_pad=0.25,
+        #    RHS_pad=0.51,
+        #    allow_for_text_default=5,
+        #    allow_for_ticks_default=50,
+        #    text_height=50,
+        #    custom_scaling=True,
+        #    scaling_factor=scale_factor,
+        #    plot_title="Phased Data \nfor %s" % searchstr,
+        #)
         if correlate:
-            DCCT(
-                s,
-                this_fig,
-                total_spacing=0.1,
-                custom_scaling=True,
-                allow_for_text_default=5,
-                allow_for_ticks_default=50,
-                LHS_pad=0.5,
-                RHS_pad=0.27,
-                scaling_factor=scale_factor,
-                text_height=50,
-                plot_title="Aligned Data \nfor %s" % searchstr,
-            )
+            fl.next("aligned")
+            fl.image(s)
+            #DCCT(
+            #    s,
+            #    this_fig,
+            #    total_spacing=0.1,
+            #    custom_scaling=True,
+            #    allow_for_text_default=5,
+            #    allow_for_ticks_default=50,
+            #    LHS_pad=0.5,
+            #    RHS_pad=0.27,
+            #    scaling_factor=scale_factor,
+            #    text_height=50,
+            #    plot_title="Aligned Data \nfor %s" % searchstr,
+            #)
     s.ift(direct)
     if clock_correction:
         # {{{clock correction
@@ -183,18 +189,20 @@ def generate_integrals(
     s_after[direct, 0] *= 0.5
     s_after.ft(direct)
     if fl:
-        DCCT(
-            s_after,
-            this_fig,
-            custom_scaling=True,
-            total_spacing=0.2,
-            allow_for_text_default=5,
-            allow_for_ticks_default=50,
-            LHS_pad=0.74,
-            scaling_factor=scale_factor,
-            text_height=50,
-            plot_title="FID \nfor %s" % searchstr,
-        )
+        fl.next("FID")
+        fl.image(s_after)
+        #DCCT(
+        #    s_after,
+        #    this_fig,
+        #    custom_scaling=True,
+        #    total_spacing=0.2,
+        #    allow_for_text_default=5,
+        #    allow_for_ticks_default=50,
+        #    LHS_pad=0.74,
+        #    scaling_factor=scale_factor,
+        #    text_height=50,
+        #    plot_title="FID \nfor %s" % searchstr,
+        #)
     if "ph2" in s.dimlabels:
         logger.info(strm("PH2 IS PRESENT"))
         error_path = (
@@ -251,8 +259,8 @@ def generate_integrals(
                 nbins="auto", steps=[1, 2, 2.5, 5, 10]
             )
             minorLocator = lambda: mticker.AutoMinorLocator(n=5)
-            ax1.xaxis.set_major_locator(majorLocator())
-            ax1.xaxis.set_minor_locator(minorLocator())
+            #ax1.xaxis.set_major_locator(majorLocator())
+            #ax1.xaxis.set_minor_locator(minorLocator())
             ax1.set_ylabel(None)
             fl.image(
                 select_pathway(s_after.real.run(complex128), signal_pathway),

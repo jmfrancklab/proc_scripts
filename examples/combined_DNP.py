@@ -136,7 +136,8 @@ for (nodename, clock_correction, label) in [
     fit /= Mi
     fl.plot(fit,
             color=thiscolor,
-            alpha=0.5, label = '%s fit'%label)
+            alpha=0.5, label = '%s fit'%label,
+            human_units = False)
     ax=plt.gca()
     plt.xlabel('vd/s')
     #}}}
@@ -164,7 +165,6 @@ for (nodename, clock_correction, label) in [
         power_W = (10**((power_dB+coupler_atten)/10+3))/1e6
         power_list.append(power_W)
     #}}}
-fl.show();quit()    
 #{{{ process enhancement dataset
 for nodename,postproc in [
         ('enhancement','spincore_ODNP_v3')
@@ -216,7 +216,7 @@ for nodename,postproc in [
             f_range = (-500,500),
             indirect = 'power',
             alias_slop = 0,
-            clock_correction = False,
+            clock_correction = True,
             fl=fl)
 #}}}
 #{{{make k_rho_inv and R1p
