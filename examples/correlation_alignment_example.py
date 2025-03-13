@@ -119,7 +119,6 @@ with psd.figlist_var() as fl:
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
         data.ft(list(signal_pathway.keys()))
         data.ft("t2")
-        print(psd.ndshape(data))
         psd.DCCT(data, bbox=gs[2], fig=fig, title=r"Aligned Data ($\nu$)")
         data.ift("t2")
         psd.DCCT(data, bbox=gs[3], fig=fig, title=r"Aligned Data ($t$)")

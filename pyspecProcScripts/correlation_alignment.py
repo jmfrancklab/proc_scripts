@@ -18,11 +18,11 @@ def correl_align(
     s_orig,
     tol=1e-4,
     indirect_dim=None,
-    avg_dim=None,
     repeat_dims=["indirect"],
     non_repeat_dims=[""],
     fig_title="correlation alignment",
     signal_pathway={"ph1": 0, "ph2": 1},
+    avg_dim=None,
     max_shift=100.0,
     sigma=20.0,
     direct="t2",
@@ -47,11 +47,11 @@ def correl_align(
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
     repeat_dims:   list
-                    list of names of the dimensions along which you seek to
+                    List of names of the dimensions along which you seek to
                     align.
-    nonrepeat_dims:   list
-                   These are indirect dimensions that we are not OK to align
-                   (e.g. the indirect dimension of a 2D COSY experiment).
+    nonrepeat_dims: list
+                    These are indirect dimensions that we are not OK to align
+                    (e.g. the indirect dimension of a 2D COSY experiment).
     fig_title:      str
                     Title for the figures generated.
     signal_pathway: dict
@@ -79,19 +79,29 @@ def correl_align(
                 the data in the calculation of the correlation function.
     """
     logging.debug("Applying the correlation routine")
-    assert indirect_dim is None, "We updated the correlation function to no longer take indirect_dim as a kwarg!"
-    assert avg_dim is None, "We updated the correlation function to no longer take avg_dim as a kwarg!"
+    assert indirect_dim is None, (
+        "We updated the correlation function to no longer take indirect_dim as"
+        " a kwarg!"
+    )
+    assert avg_dim is None, (
+        "We updated the correlation function to no longer take avg_dim as a"
+        " kwarg!"
+    )
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
     indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
     assert len(indirect - set(repeat_dims) - set(non_repeat_dims)) == 0
     indirect = [j for j in s_orig.dimlabels if j in indirect]
     if len(indirect) > 1:
-        s_jk = s_orig.C.smoosh(indirect,"repeats")  # this version ends up with
+        s_jk = s_orig.C.smoosh(
+            indirect, "repeats"
+        )  # this version ends up with
         #                                   three dimensions
         #                                   (j=align_dim, k=phcyc, and
         #                                   direct nu) and is NOT conj
     else:
-        s_jk = s_orig.C.rename(indirect[0],"repeats")  # even if there isn't an indirect to smoosh we will
+        s_jk = s_orig.C.rename(
+            indirect[0], "repeats"
+        )  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
         #                 want applied to s_orig
     for phnames in signal_pathway.keys():
@@ -158,7 +168,6 @@ def correl_align(
     s_jk.ift(direct)
     f_shift = 0
     for my_iter in range(100):
-        print(my_iter)
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
         # *data* is updated with every iteration
@@ -359,9 +368,12 @@ def correl_align(
         plt.gca().yaxis.set_major_formatter(to_percent)
     if fl is not None:
         fl.pop_marker()
-    if len(indirect)>1:
-        f_shift.chunk('repeats',indirect)
+    # {{{ Make sure returned f_shift is the same ndshape that the
+    #     data was originally fed in - meaning we must chunk it back
+    #     into the original repeat_dims or rename back to the original
+    #     indirect name
+    if len(indirect) > 1:
+        f_shift.chunk("repeats", indirect)
     else:
-        f_shift.rename("repeats",indirect[0])
-    print(psd.ndshape(f_shift))    
+        f_shift.rename("repeats", indirect[0])
     return f_shift, sigma, this_mask
