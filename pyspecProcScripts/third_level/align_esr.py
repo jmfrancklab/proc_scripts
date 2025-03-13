@@ -5,7 +5,12 @@ from numpy import r_, pi
 import matplotlib.pyplot as plt
 
 
-def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
+def align_esr(
+    data_dict,
+    correlation_slice=None,
+    on_crossing=False,
+    fl=None,
+):
     r"""open and correlation align ESR spectra.
     Store the shifts and scalefactors as
     properties of the nddata, which are returned
@@ -80,7 +85,11 @@ def align_esr(data_dict, correlation_slice=None, on_crossing=False, fl=None):
     for label_str, d in data_dict.items():
         # {{{ load, rescale
         d.setaxis(Bname, lambda x: x / 1e4).set_units(Bname, "T")
-        d /= QESR_scalefactor(d)
+        d /= QESR_scalefactor(
+            d,
+            calibration_name=d.get_prop("calibration_name"),
+            diameter_name=d.get_prop("diameter_name"),
+        )
         if "harmonic" in d.dimlabels:
             d = d["harmonic", 0]
         # set up so that we FT into a symmetric time domain
