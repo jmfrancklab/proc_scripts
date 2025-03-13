@@ -105,7 +105,7 @@ with psd.figlist_var() as fl:
         data.ift(list(signal_pathway.keys()))
         opt_shift, sigma, mask_func = psdpr.correl_align(
             data * mysgn,
-            indirect_dim=indirect,
+            repeat_dims=[indirect],
             signal_pathway=signal_pathway,
             sigma=3000 / 2.355,
             max_shift=300,  # this makes the Gaussian mask 3
@@ -119,6 +119,7 @@ with psd.figlist_var() as fl:
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
         data.ft(list(signal_pathway.keys()))
         data.ft("t2")
+        print(psd.ndshape(data))
         psd.DCCT(data, bbox=gs[2], fig=fig, title=r"Aligned Data ($\nu$)")
         data.ift("t2")
         psd.DCCT(data, bbox=gs[3], fig=fig, title=r"Aligned Data ($t$)")

@@ -17,10 +17,12 @@ def to_percent(y, position):
 def correl_align(
     s_orig,
     tol=1e-4,
-    indirect_dim="indirect",
+    indirect_dim=None,
+    avg_dim=None,
+    repeat_dims=["indirect"],
+    non_repeat_dims=[""],
     fig_title="correlation alignment",
     signal_pathway={"ph1": 0, "ph2": 1},
-    avg_dim=None,
     max_shift=100.0,
     sigma=20.0,
     direct="t2",
@@ -44,16 +46,16 @@ def correl_align(
         This data is not modified.
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
-    indirect_dim:   str
-                    Name of the indirect dimension along which you seek to
-                    align
-                    the transients.
+    repeat_dims:   list
+                    list of names of the dimensions along which you seek to
+                    align.
+    nonrepeat_dims:   list
+                   These are indirect dimensions that we are not OK to align
+                   (e.g. the indirect dimension of a 2D COSY experiment).
     fig_title:      str
                     Title for the figures generated.
     signal_pathway: dict
                     Dictionary containing the signal pathway.
-    avg_dim:        str
-                    Dimension along which the data is being averaged.
     max_shift:      float
                     Specifies the upper and lower bounds to the range over
                     which f_shift will be taken from the correlation function.
@@ -77,64 +79,19 @@ def correl_align(
                 the data in the calculation of the correlation function.
     """
     logging.debug("Applying the correlation routine")
-    # TODO ☐: I think we want to rename and throw
-    #         errors for the kwargs "indirect_dim"
-    #         and "avg_dim", and rather use kwargs
-    #         that clearly specify which indirect
-    #         dimensions are *used for alignment*
-    #         (let's call this "repeated") and
-    #         which are not.
-    #         For example, in an inversion
-    #         recovery or E(p) we typically want
-    #         to align along the indirect
-    #         dimension (power or vd is the
-    #         `repeat_dim`), but only AFTER we have
-    #         made it safe to do so by flipping
-    #         the signs.
-    #         As another example, we almost
-    #         *always* want to align along nScans
-    #         (so we would smoosh the indirect
-    #         dimension and `nScans` to make
-    #         `repeat_dim`).
-    #         Most likely, we want to specify a
-    #         list of dimensions that are "safe"
-    #         to smoosh together as `repeat_dim`,
-    #         assuming that `nScans` is *always*
-    #         safe.
-    #         I think that right now, what you
-    #         call `indirect_dim` will be part of
-    #         `repeat_dims`.
-    # TODO ☐: Furthermore, we want to specify
-    #         `non_repeat_dims`.  These are also
-    #         indirect dimension, but they are
-    #         one that we are not OK to align
-    #         (e.g. the indirect dimension of a 2D
-    #         COSY experiment).
-    #         With both `repeat_dims` and
-    #         `non_repeat_dims` defined, we can use a set
-    #         expression like below to find the
-    #         indirect dimension (not phase
-    #         cycling and not direct) and to make
-    #         sure that they are all either (1)
-    #         nScans (2) specified as safe or (3)
-    #         listed in `non_repeat_dims`
-    #         Currently, I don't think you have
-    #         any `non_repeat_dims`
-    if avg_dim:
-        phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
-        indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
-        # TODO ☐: see todo above -- you need to
-        #         first make repeat_dims and
-        #         non_repeat_dims lists of length
-        #         1 if they are given as strings
-        # assert len(indirect - set(repeat_dims) - set(non_repeat_dims)) = 0
-        indirect = [j for j in s_orig.dimlabels if j in indirect]
-        s_jk = s_orig.C.smoosh(indirect)  # this version ends up with
+    assert indirect_dim is None, "We updated the correlation function to no longer take indirect_dim as a kwarg!"
+    assert avg_dim is None, "We updated the correlation function to no longer take avg_dim as a kwarg!"
+    phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
+    indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
+    assert len(indirect - set(repeat_dims) - set(non_repeat_dims)) == 0
+    indirect = [j for j in s_orig.dimlabels if j in indirect]
+    if len(indirect) > 1:
+        s_jk = s_orig.C.smoosh(indirect,"repeats")  # this version ends up with
         #                                   three dimensions
         #                                   (j=align_dim, k=phcyc, and
         #                                   direct nu) and is NOT conj
     else:
-        s_jk = s_orig.C  # even if there isn't an indirect to smoosh we will
+        s_jk = s_orig.C.rename(indirect[0],"repeats")  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
         #                 want applied to s_orig
     for phnames in signal_pathway.keys():
@@ -147,9 +104,9 @@ def correl_align(
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
-    N = psd.ndshape(s_orig)[indirect_dim]
+    N = psd.ndshape(s_jk)["repeats"]
     # TODO ☐: as noted below, this doesn't include the mask!
-    sig_energy = (abs(s_orig) ** 2).data.sum().item() / N
+    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
         fig_forlist, ax_list = plt.subplots(1, 4, figsize=(25, 10))
@@ -172,7 +129,7 @@ def correl_align(
     energy_diff = 1.0
     i = 0
     energy_vals = []
-    this_E = (abs(s_orig.C.sum(indirect_dim)) ** 2).data.sum().item() / N**2
+    this_E = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
     # TODO ☐: the mask needs to be separated into
@@ -195,12 +152,13 @@ def correl_align(
     for_nu_center.ft(list(signal_pathway))
     for x in range(len(signal_keys)):
         for_nu_center = for_nu_center[signal_keys[x], signal_values[x]]
-    nu_center = for_nu_center.mean(indirect_dim).C.argmax(direct)
+    nu_center = for_nu_center.mean("repeats").C.argmax(direct)
     logging.debug(psd.strm("Center frequency", nu_center))
     # }}}
     s_jk.ift(direct)
     f_shift = 0
     for my_iter in range(100):
+        print(my_iter)
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
         # *data* is updated with every iteration
@@ -267,8 +225,8 @@ def correl_align(
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        correl = s_leftbracket.mean(indirect_dim).run(np.conj) * s_jk
-        correl.reorder([indirect_dim, direct], first=False)
+        correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
+        correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
@@ -382,7 +340,7 @@ def correl_align(
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
         this_E = (
-            abs(s_aligned.C.sum(indirect_dim)) ** 2
+            abs(s_aligned.C.sum("repeats")) ** 2
         ).data.sum().item() / N**2
         energy_vals.append(this_E / sig_energy)
         logging.debug(
@@ -401,4 +359,9 @@ def correl_align(
         plt.gca().yaxis.set_major_formatter(to_percent)
     if fl is not None:
         fl.pop_marker()
+    if len(indirect)>1:
+        f_shift.chunk('repeats',indirect)
+    else:
+        f_shift.rename("repeats",indirect[0])
+    print(psd.ndshape(f_shift))    
     return f_shift, sigma, this_mask
