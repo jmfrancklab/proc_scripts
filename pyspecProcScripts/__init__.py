@@ -15,7 +15,7 @@ from .slice_FID_from_echo import slice_FID_from_echo
 from .baseline import calc_baseline
 from .Utility import dBm2power, Vpp2power, power2dBm
 from .CPMG_phasing import center_echo
-from .first_level.QESR_rescale import QESR_scalefactor
+from .first_level.QESR_rescale import QESR_apply_scalefactor
 from .first_level.show_pickle_table import show_pickle_table
 from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
@@ -27,17 +27,17 @@ from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
 from .third_level.QESR import QESR
 from .envelope import L2G, fit_envelope
-from .first_level.QESR_rescale import QESR_scalefactor
 from .convert_to_power import convert_to_power
 from .clock_correct import clock_correct
 
 __all__ = [
     "DCCT",
     "L2G",
-    "QESR_scalefactor",
+    "QESR",
+    "QESR_apply_scalefactor",
     "Vpp2power",
-    "align_esr",
     "active_propagation",
+    "align_esr",
     "apod_matched_filter",
     "calc_baseline",
     "center_echo",
@@ -63,8 +63,6 @@ __all__ = [
     "lookup_table",
     "ph1_real_Abs",
     "power2dBm",
-    "QESR",
-    "QESR_scalefactor",
     "recovery",
     "rough_table_of_integrals",
     "select_pathway",

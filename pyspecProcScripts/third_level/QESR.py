@@ -5,7 +5,7 @@ from matplotlib.pyplot import axvline, gca
 import matplotlib.pyplot as plt
 from pyspecdata import find_file, gammabar_e, ndshape, gridandtick
 from scipy.interpolate import UnivariateSpline
-from ..first_level.QESR_rescale import QESR_scalefactor
+from ..first_level.QESR_rescale import QESR_apply_scalefactor
 import pickle
 
 # {{{ all basic info
@@ -92,9 +92,11 @@ def QESR(
         d = d["harmonic", 0]
     d -= d[fieldaxis, -100:].data.mean()
     d.setaxis(fieldaxis, lambda x: x - d.get_prop("MWFQ") / gammabar_e * 1e4)
-    d /= QESR_scalefactor(
-        d, calibration_name=calibration_name, diameter_name=diameter_name
-    )
+    if calibration_name is not None:
+        d.set_prop("calibration_name", calibration_name)
+    if diameter_name is not None:
+        d.set_prop("diameter_name", diameter_name)
+    d = QESR_apply_scalefactor(d)
     # }}}
     if background is None:
         background = ndshape(d).alloc()  # zeros -- keep life easy!
@@ -107,11 +109,11 @@ def QESR(
             fieldaxis,
             lambda x: x - background.get_prop("MWFQ") / gammabar_e * 1e4,
         )
-        background /= QESR_scalefactor(
-            background,
-            calibration_name=calibration_name,
-            diameter_name=diameter_name,
-        )
+        if calibration_name is not None:
+            background.set_prop("calibration_name", calibration_name)
+        if diameter_name is not None:
+            background.set_prop("diameter_name", diameter_name)
+        background = QESR_apply_scalefactor(background)
         # }}}
     background = background.interp(fieldaxis, d.getaxis(fieldaxis))
     # {{{ configure all the plots -- I like to do this in one place so I

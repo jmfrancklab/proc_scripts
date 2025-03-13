@@ -87,7 +87,7 @@ ureg = UnitRegistry(
 Q_ = ureg.Quantity
 
 
-def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
+def QESR_apply_scalefactor(d):
     """Divide the ESR spectrum by this number so that the double integral
     should be equal to concentration in μM.
 
@@ -107,38 +107,45 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
 
     Parameters
     ==========
-    calibration_name:   str
-                        The key corresponding to the appropriate
-                        proportionality constant
-                        in your pyspecdata config file.
-                        Typically this is one value that doesn't need changing
-    diameter_name:      str
-                        The key corresponding to the diameter of the
-                        capillary tube used in the ESR experiment. This
-                        enables us to calculate a reliable concentration
-                        regardless of which capillary was used.
+    d : nddata
+        has these properties:
+
+        calibration_name:   str
+                            The key corresponding to the appropriate
+                            proportionality constant
+                            in your pyspecdata config file.
+                            Typically this is one value that doesn't need changing
+        diameter_name:      str
+                            The key corresponding to the diameter of the
+                            capillary tube used in the ESR experiment. This
+                            enables us to calculate a reliable concentration
+                            regardless of which capillary was used.
 
     Returns
     =======
     Denominator of equation 2-17 divided by the proportionality constant.
     Also includes a factor of 1e-6 to convert Molar to micromolar.
     """
-    calibcache.use_calibration(calibration_name)
-    calibcache.use_diameter(diameter_name)
+    if d.get_prop("has_been_calibrated"):
+        raise ValueError("this spectrum has already been calibrated!!")
+    else:
+        d.set_prop('has_been_calibrated',True)
+    calibcache.use_calibration(d.get_prop("calibration_name"))
+    calibcache.use_diameter(d.get_prop("diameter_name"))
     # {{{ determine the signal denominator from the parameters of interest
     G_R = Q_(*d.get_prop("Gain"))
     C_t = Q_(*d.get_prop("ConvTime"))
     power = Q_(*d.get_prop("Power"))
     B_m = Q_(*d.get_prop("ModAmp"))
     Q = Q_(calibcache.default_Q, "dimensionless")  # hard set Q value
-    d = Q_(calibcache.d, "mm")  # diameter
+    diameter = Q_(calibcache.d, "mm")  # diameter
     n_B = Q_(1, "dimensionless")  # calculate this
     S = Q_(0.5, "dimensionless")
     c = Q_(
         1, "dimensionless"
     )  # the first fraction on eq 2-17 -- in bruker E500 manual
     c_propfactor = Q_(calibcache.dint_propFactor, "m**2")
-    dint_conversion = (c_propfactor / d**2).to("").magnitude
+    dint_conversion = (c_propfactor / diameter**2).to("").magnitude
     signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s"))
     # }}}
@@ -152,7 +159,7 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
             f"$n_B={n_B:~P} $\n"
             f"$S={S:~P} $\n"
             f"$c={c:~P} $\n"
-            f"$d={d:~P} $\n"
+            f"$d={diameter:~P} $\n"
             f"signal denom$={signal_denom:~P}$\n"
             f"doubleint propFactor$={calibcache.dint_propFactor}$\n"
             f"doubleint conversion$={dint_conversion}$\n"
@@ -160,4 +167,5 @@ def QESR_scalefactor(d, calibration_name=None, diameter_name=None):
     )
     # normally, we divide by signal_denom.magnitude and multiply by
     # calibcache.dint_propFactor and divide by 1e-6
-    return signal_denom.magnitude / dint_conversion * 1e-6
+    d *= dint_conversion / signal_denom.magnitude / 1e-6
+    return d

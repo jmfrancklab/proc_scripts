@@ -1,4 +1,4 @@
-from ..first_level.QESR_rescale import QESR_scalefactor
+from ..first_level.QESR_rescale import QESR_apply_scalefactor
 from collections import OrderedDict
 import numpy as np
 from numpy import r_, pi
@@ -85,11 +85,7 @@ def align_esr(
     for label_str, d in data_dict.items():
         # {{{ load, rescale
         d.setaxis(Bname, lambda x: x / 1e4).set_units(Bname, "T")
-        d /= QESR_scalefactor(
-            d,
-            calibration_name=d.get_prop("calibration_name"),
-            diameter_name=d.get_prop("diameter_name"),
-        )
+        d = QESR_apply_scalefactor(d)
         if "harmonic" in d.dimlabels:
             d = d["harmonic", 0]
         # set up so that we FT into a symmetric time domain
