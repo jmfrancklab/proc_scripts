@@ -33,6 +33,8 @@ class NodeAsDict:
         self.node = node
 
     def __getitem__(self, key):
+        print("entered getitem for", key, type(key))
+        print("trying to find", key, "in", self.node.attrs)
         if key in self.node.attrs:
             value = self.node.attrs[key]
             if isinstance(value, bytes):
@@ -41,6 +43,7 @@ class NodeAsDict:
                 )  # Decode byte string to UTF-8 string
             return value
         elif key in self.node:
+            print("preparing to return node object")
             return NodeAsDict(
                 self.node[key]
             )  # Return a group as another NodeAsDict instance
@@ -48,6 +51,7 @@ class NodeAsDict:
             return None
 
     def __setitem__(self, key, value):
+        print("entered setitem for", key)
         if isinstance(value, (int, float)):  # Numbers stored as attributes
             self.node.attrs[key] = value
         elif isinstance(
@@ -153,14 +157,34 @@ class EditAcqParams(QWidget):
         if self.nodename in self.hdf_file:
             self.node = self.hdf_file[self.nodename]
         else:
+
+            def recurse_names(thisnode, indent):
+                if isinstance(thisnode, h5py.Group) and not isinstance(
+                    thisnode, h5py.Dataset
+                ):
+                    retval = "\t" * indent + str(thisnode) + "\n"
+                    for j in thisnode:
+                        if indent < 3:
+                            try:
+                                retval += recurse_names(
+                                    thisnode[j], indent + 1
+                                )
+                            except Exception:
+                                pass
+                    return retval
+                else:
+                    return "\t" * indent + str(thisnode) + "\n"
+
             raise ValueError(
-                f"Expno '{self.nodename}' not found in the HDF5 file."
+                f"Expno '{self.nodename}' not found in the HDF5 file:\n"
+                + recurse_names(self.hdf_file, 0)
             )
         self.read_other_info()
         self.init_ui()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        print("exit has been called!!")
         # Close the HDF5 file when exiting
         if self.hdf_file:
             self.hdf_file.close()
@@ -181,6 +205,7 @@ class EditAcqParams(QWidget):
         # Store input fields for easy access later
         self.input_fields = {}
 
+        print("node info on init", self.node)
         # Dynamically create labeled text fields
         for prop_name, label_text in zip(
             self.property_names, self.property_labels
@@ -218,25 +243,26 @@ class EditAcqParams(QWidget):
         self.show()
 
     def save_changes(self):
-        try:
-            # Update the HDF5 file with new values from the text fields
-            for prop_name in self.property_names:
-                value = self.input_fields[prop_name].text()
-                # Convert string values to byte
-                # strings if they are not already
-                if isinstance(value, str):
-                    value = value.encode("utf-8")
-                dictref = self.other_info
-                dictkeys = prop_name.split("/")
-                for thiskey in dictkeys[:-1]:
-                    dictref = dictref[thiskey]
-                dictref[dictkeys[-1]] = value  # Set the value using NodeAsDict
+        print("node info", self.node)
+        # Update the HDF5 file with new values from the text fields
+        for prop_name in self.property_names:
+            dictref = self.other_info
+            dictkeys = prop_name.split("/")
+            breakout = False
+            for thiskey in dictkeys[:-1]:
+                dictref = dictref[thiskey]
+                if dictref is None:
+                    breakout = True
+                    break
+            if breakout:
+                print(prop_name, "not found in this file, continuing")
+                continue
+            value = self.input_fields[prop_name].text()
+            print("found value", value, "for", prop_name)
+            dictref[dictkeys[-1]] = value  # Set the value using NodeAsDict
+            print("set!", dictref)
 
-            QMessageBox.information(
-                self, "Success", "Values saved successfully!"
-            )
-        except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+        QMessageBox.information(self, "Success", "Values saved successfully!")
 
 
 def main():
@@ -253,10 +279,8 @@ def main():
     nodename = sys.argv[1]
 
     app = QApplication(sys.argv)
-    with EditAcqParams(hdf_filename, nodename) as editor:
-        print(editor)
-        pass
-    sys.exit(app.exec_())
+    with EditAcqParams(hdf_filename, nodename) as _:
+        sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
