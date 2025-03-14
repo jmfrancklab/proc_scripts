@@ -17,6 +17,7 @@ class calib_info(object):
     def use_calibration(self, calibration_name):
         """if diameter_name is None, default to the calibration name given
         by default calibration"""
+        calibration_name_setting = calibration_name
         if calibration_name is None:
             calibration_name = pyspec_config.get_setting("default calibration")
         if calibration_name != self.current_calib_name:
@@ -40,11 +41,13 @@ class calib_info(object):
                 )
             except Exception:
                 raise RuntimeError(
-                    "I expect a line in the [General] block of your"
-                    " pyspecdata config file (in your home directory) that"
-                    " sets the value of the following"
-                    f" variables:\n{calibration_name} q\n{calibration_name} "
-                    "propFactor\n\n(I"
+                    "You set calibration_name to"
+                    f' "{calibration_name_setting}"\nSo, I expect a line in'
+                    " the [General] block of your pyspecdata config file (in"
+                    " your home directory) that sets the value of the"
+                    " following"
+                    f" variables:\n{calibration_name} q\n"
+                    f"{calibration_name} propFactor\n\n(I"
                     " can't run without these)"
                 )
             self.current_calib_name = calibration_name
@@ -114,7 +117,8 @@ def QESR_apply_scalefactor(d):
                             The key corresponding to the appropriate
                             proportionality constant
                             in your pyspecdata config file.
-                            Typically this is one value that doesn't need changing
+                            Typically this is one value that doesn't need
+                            changing
         diameter_name:      str
                             The key corresponding to the diameter of the
                             capillary tube used in the ESR experiment. This
@@ -129,7 +133,7 @@ def QESR_apply_scalefactor(d):
     if d.get_prop("has_been_calibrated"):
         raise ValueError("this spectrum has already been calibrated!!")
     else:
-        d.set_prop('has_been_calibrated',True)
+        d.set_prop("has_been_calibrated", True)
     calibcache.use_calibration(d.get_prop("calibration_name"))
     calibcache.use_diameter(d.get_prop("diameter_name"))
     # {{{ determine the signal denominator from the parameters of interest

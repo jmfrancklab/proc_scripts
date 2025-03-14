@@ -120,7 +120,6 @@ def QESR(
     # {{{ configure all the plots -- I like to do this in one place so I
     #     can easily control placement in the PDF
     fl.next("baseline diagnostic")  # I want this plot to come first
-    fl.text(r"\textbf{\texttt{%s}}\par" % file_name)
     # {{{ make the complicated figure if we haven't done so yet
     if (
         "absorption, bg. no bl."
@@ -130,11 +129,13 @@ def QESR(
         thisfig = plt.figure()
         gs = plt.GridSpec(4, 1, figure=thisfig)
         ax = thisfig.add_subplot(gs[:3, 0])
+        fl.setprops(width=0.9)
         fl.next("absorption, bg. no bl.", ax=ax, fig=thisfig, legend=True)
         ax_dblint = thisfig.add_subplot(gs[3, 0])
     else:
         thisfig = fl.next("absorption, bg. no bl.")
         ax, ax_dblint = thisfig.get_axes()
+    fl.text(r"\textbf{\texttt{%s}}\par" % file_name)
     # }}}
     ax.set_title("abs mode:\nbackground subtracted, show baseline")
     fl.text(r"\par")
