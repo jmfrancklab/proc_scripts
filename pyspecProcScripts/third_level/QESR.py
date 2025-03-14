@@ -129,6 +129,7 @@ def QESR(
         thisfig = plt.figure()
         gs = plt.GridSpec(4, 1, figure=thisfig)
         ax = thisfig.add_subplot(gs[:3, 0])
+        fl.text(r"\par")
         fl.setprops(width=0.9)
         fl.next("absorption, bg. no bl.", ax=ax, fig=thisfig, legend=True)
         ax_dblint = thisfig.add_subplot(gs[3, 0])
