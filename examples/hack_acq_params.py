@@ -12,6 +12,7 @@ that were actually sent to the spectrometer.
 The GPT conversation is `here
 <https://chatgpt.com/c/66f5aef7-8f68-800b-8a13-0b133ede1ca5>`_.
 """
+
 import sys
 import h5py
 from PyQt5.QtWidgets import (
@@ -59,9 +60,9 @@ class NodeAsDict:
             group = self.node[key]
             node_dict = NodeAsDict(group)
             for subkey, subvalue in value.items():
-                node_dict[
-                    subkey
-                ] = subvalue  # Recursively assign subkeys and values
+                node_dict[subkey] = (
+                    subvalue  # Recursively assign subkeys and values
+                )
         else:
             raise TypeError(
                 f"Unsupported value type for key '{key}': {type(value)}"
@@ -127,14 +128,15 @@ class EditAcqParams(QWidget):
         self.nodename = nodename
         self.hdf_file = None
         self.node = None
-        self.acq_params = None
+        self.other_info = None
+        self.postproc_type = None
 
         # Define property names and labels
         self.property_names = [
-            "date",
-            "coherence_pathway",
-            "chemical",
-            "concentration",
+            "acq_params/date",
+            "acq_params/coherence_pathway",
+            "acq_params/chemical",
+            "acq_params/concentration",
             "postproc_type",
         ]
         self.property_labels = [
@@ -154,7 +156,7 @@ class EditAcqParams(QWidget):
             raise ValueError(
                 f"Expno '{self.nodename}' not found in the HDF5 file."
             )
-        self.read_acq_params()
+        self.read_other_info()
         self.init_ui()
         return self
 
@@ -163,20 +165,15 @@ class EditAcqParams(QWidget):
         if self.hdf_file:
             self.hdf_file.close()
 
-    def read_acq_params(self):
-        if (
-            "other_info" in self.node
-            and "acq_params" in self.node["other_info"]
-        ):
-            # Set acq_params as a NodeAsDict object
-            self.acq_params = NodeAsDict(self.node["other_info"]["acq_params"])
-            print("The string attributes will appear here:")
-            for k, v in self.acq_params.items():
-                print(k, v)
+    def read_other_info(self):
+        if "other_info" in self.node:
+            self.other_info = NodeAsDict(self.node["other_info"])
+            print(self.other_info)
         else:
-            raise ValueError(
-                f"acq_params not found in '{self.nodename}/other_info'."
-            )
+            print(self.node)
+            print("keys", self.node.keys())
+            print("attrs", self.node.attrs.keys())
+            raise ValueError("this node has no other_info!")
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -188,11 +185,21 @@ class EditAcqParams(QWidget):
         for prop_name, label_text in zip(
             self.property_names, self.property_labels
         ):
+            dictref = self.other_info
+            dictkeys = prop_name.split("/")
+            breakout = False
+            for thiskey in dictkeys[:-1]:
+                dictref = dictref[thiskey]
+                if dictref is None:
+                    breakout = True
+                    break
+            if breakout:
+                print(prop_name, "not found in this file, continuing")
+                continue
+            # Retrieve the existing value from NodeAsDict with default handling
             h_layout = QHBoxLayout()
             label = QLabel(label_text)
-
-            # Retrieve the existing value from NodeAsDict with default handling
-            v = self.acq_params.get(prop_name, "")
+            v = dictref.get(dictkeys[-1], "")
             print("attempting", prop_name, "which is", v)
             text_field = QLineEdit(str(v))
 
@@ -211,21 +218,19 @@ class EditAcqParams(QWidget):
         self.show()
 
     def save_changes(self):
-        self.hdf_file = h5py.File(self.hdf_filename, "r+")
-        if self.nodename in self.hdf_file:
-            self.node = self.hdf_file[self.nodename]
-        else:
-            raise ValueError(
-                f"Expno '{self.nodename}' not found in the HDF5 file."
-            )
-        self.read_acq_params()
         try:
             # Update the HDF5 file with new values from the text fields
             for prop_name in self.property_names:
                 value = self.input_fields[prop_name].text()
-                self.acq_params[
-                    prop_name
-                ] = value  # Set the value using NodeAsDict
+                # Convert string values to byte
+                # strings if they are not already
+                if isinstance(value, str):
+                    value = value.encode("utf-8")
+                dictref = self.other_info
+                dictkeys = prop_name.split("/")
+                for thiskey in dictkeys[:-1]:
+                    dictref = dictref[thiskey]
+                dictref[dictkeys[-1]] = value  # Set the value using NodeAsDict
 
             QMessageBox.information(
                 self, "Success", "Values saved successfully!"
