@@ -56,8 +56,8 @@ class NodeAsDict:
             self.node.attrs[key] = value
         elif isinstance(
             value, str
-        ):  # Strings stored as byte strings (UTF-8 encoded)
-            self.node.attrs[key] = value.encode("utf-8")
+        ):
+            self.node.attrs[key] = value
         elif isinstance(value, dict):  # Dictionaries stored as groups
             if key not in self.node:
                 self.node.create_group(key)  # Create group if it doesn't exist
