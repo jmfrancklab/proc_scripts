@@ -4,6 +4,12 @@ The T1(p) and E(p) integrals are generated
 using the example, `generate_integrals.py`
 (as of 11/8/23 the `generate_integrals` is not
 updated), and stored in an HDF5 file.
+The `postproc_type` for the datasets in this file
+must be `"none"`.
+Note that for **older data** you can use the
+`hack_acq_params.py` example in `examples_silent`
+to accomplish this.
+
 We then calculate
 :math:`(k_\rho(p) + R_{1,HH}/C_{SL})^{-1}  =
 \frac{(\Delta T_{1,w} p + T_{1,w}(0))C_{SL}}{
@@ -20,8 +26,9 @@ for two purposes:
 *   they are plugged in, as raw numbers, as part of the nonlinear expression
     that is used to fit the :math:`M_0 E(p)` (*i.e.* the raw integral) values.
 """
+
 import os
-from matplotlib.pyplot import *
+import re
 import pyspecdata as psd
 from sympy import symbols, Symbol, latex, lambdify
 from scipy.io import loadmat
@@ -101,14 +108,15 @@ with psd.figlist_var() as fl:
     )["a"][0, :]
     R10_p = 1 / (R1p.fromaxis("power").eval_poly(T10_p, "power"))
     powers_fine = psd.nddata(r_[0 : R1p.getaxis("power")[-1] : 300j], "p")
-    krho_inv = integral_vs_p.get_prop("acq_params")["concentration"] / (
-        R1p - R10_p
-    )
+    conc = integral_vs_p.get_prop("acq_params")["concentration"]
+    if isinstance(conc, str):
+        print("Warning!!!, the concentration is stored as a string!!")
+        conc = float(conc)
+    krho_inv = conc / (R1p - R10_p)
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     R1p_expr = (T10_p[0] + T10_p[1] * p) ** -1 + (
-        integral_vs_p.get_prop("acq_params")["concentration"]
-        / (krho_inv_coeff[0] + krho_inv_coeff[1] * p)
+        conc / (krho_inv_coeff[0] + krho_inv_coeff[1] * p)
     )
     R1p_fit = lambdify(p, R1p_expr)(powers_fine)
     fl.plot(
@@ -162,7 +170,7 @@ with psd.figlist_var() as fl:
         * 1e-3  # the experimental ppt overwrites the guess for our
         # final ODNP experiment. Though the key is labeled
         # guessed, it is the ppt returned with a field sweep
-    ) / integral_vs_p.get_prop("acq_params")["concentration"]
+    ) / conc 
     ax = plt.gca()
     plt.text(
         0.5,
