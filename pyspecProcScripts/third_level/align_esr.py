@@ -122,6 +122,7 @@ def align_esr(
         fl.par_break()
         fl.next("aligned, autoscaled", legend=True)
         fl.par_break()
+        fl.setprops(width=0.98)
         fl.next("centered spectra", legend=True)
     # }}}
     # {{{ pull the reference (largest) up front
