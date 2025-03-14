@@ -15,7 +15,7 @@ from .slice_FID_from_echo import slice_FID_from_echo
 from .baseline import calc_baseline
 from .Utility import dBm2power, Vpp2power, power2dBm
 from .CPMG_phasing import center_echo
-from .first_level.QESR_rescale import QESR_apply_scalefactor
+from .first_level.QESR_rescale import QESR_apply_scalefactor, QESR_scalefactor
 from .first_level.show_pickle_table import show_pickle_table
 from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
@@ -35,6 +35,7 @@ __all__ = [
     "L2G",
     "QESR",
     "QESR_apply_scalefactor",
+    "QESR_scalefactor",
     "Vpp2power",
     "active_propagation",
     "align_esr",
@@ -66,6 +67,7 @@ __all__ = [
     "recovery",
     "rough_table_of_integrals",
     "select_pathway",
+    "show_pickle_table",
     "slice_FID_from_echo",
     "zeroth_order_ph",
 ]

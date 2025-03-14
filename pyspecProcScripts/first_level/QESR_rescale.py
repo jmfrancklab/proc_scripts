@@ -17,6 +17,15 @@ class calib_info(object):
     def use_calibration(self, calibration_name):
         """if diameter_name is None, default to the calibration name given
         by default calibration"""
+        if calibration_name == "default":
+            raise ValueError(
+                "you may not use a calibration named 'default' -- that is"
+                " just too confusing!!!\nGive your calibration a meaningful"
+                ' name, and then set "default calibration" which gives the'
+                " name that is used for the propFactor and for the Q factor as"
+                ' well as "default diameter" which gives the name that is used'
+                " for the diameter"
+            )
         calibration_name_setting = calibration_name
         if calibration_name is None:
             calibration_name = pyspec_config.get_setting("default calibration")
@@ -88,6 +97,28 @@ ureg = UnitRegistry(
     auto_reduce_dimensions=True,
 )
 Q_ = ureg.Quantity
+
+
+def QESR_scalefactor(d, **kwargs):
+    raise ValueError("""QESR_scalefactor no longer exists
+    replace
+
+    d /= QESR_scalefactor(d)
+
+    with 
+
+    d = QESR_apply_scalefactor(d)
+
+    and set the keyword arguments (calibration_name, diameter_name) as
+    properties of the data:
+
+    d.set_prop("calibration_name","blabla")
+    d = QESR_apply_scalefactor(d)
+
+    We are doing this because QESR_apply_scalefactor makes sure the scalefactor
+    isn't applied more than once, and the properties are also used by
+    align_ESR.
+                     """)
 
 
 def QESR_apply_scalefactor(d):
