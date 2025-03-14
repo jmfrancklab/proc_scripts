@@ -21,3 +21,5 @@ pyspecProcScripts.egg-info/
 examples/data_files.csv
 examples/missing_data_files.csv
 doc_src/sg_execution_times.rst
+doc_src/gen_modules/
+data_files.csv

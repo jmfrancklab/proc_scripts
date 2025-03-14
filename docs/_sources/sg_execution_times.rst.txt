@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:02.679** total execution time for 27 files **from all galleries**:
+**00:02.129** total execution time for 33 files **from all galleries**:
 
 .. container::
 
@@ -32,8 +32,8 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_auto_examples_epr_overlay.py` (``../examples/epr_overlay.py``)
-     - 00:02.679
+   * - :ref:`sphx_glr_auto_examples_QESR.py` (``../examples/QESR.py``)
+     - 00:02.129
      - 0.0
    * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py` (``../examples/FIDtoEcho_Actual.py``)
      - 00:00.000
@@ -57,6 +57,18 @@ Computation times
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_correlation_alignment_example.py` (``../examples/correlation_alignment_example.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_epr_overlay.py` (``../examples/epr_overlay.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_epr_overlay2.py` (``../examples/epr_overlay2.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_generate_SC_PSD.py` (``../examples/generate_SC_PSD.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_generate_oscilloscope_PSD.py` (``../examples/generate_oscilloscope_PSD.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_integrate_limits.py` (``../examples/integrate_limits.py``)
@@ -92,10 +104,16 @@ Computation times
    * - :ref:`sphx_glr_auto_examples_proc_fieldSweep.py` (``../examples/proc_fieldSweep.py``)
      - 00:00.000
      - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_gain.py` (``../examples/proc_gain.py``)
+     - 00:00.000
+     - 0.0
    * - :ref:`sphx_glr_auto_examples_proc_nutation.py` (``../examples/proc_nutation.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_proc_raw.py` (``../examples/proc_raw.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_rec_response.py` (``../examples/proc_rec_response.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_proc_square_refl.py` (``../examples/proc_square_refl.py``)

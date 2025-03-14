@@ -5,9 +5,10 @@ Check Integration
 Makes sure that automatically chosen integral bounds perform similar to or
 better than what you would choose by hand.
 """
-from pylab import *
-from pyspecdata import *
-from pyspecProcScripts import integrate_limits, integral_w_errors
+from numpy import sqrt, std, r_, pi, exp
+from matplotlib.pyplot import rcParams
+from pyspecdata import strm, ndshape, nddata, figlist_var, init_logging
+from pyspecProcScripts import integral_w_errors
 from numpy.random import seed
 
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
@@ -16,7 +17,7 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 seed(
     2021
 )  # so the same random result is generated every time -- 2021 is meaningless
-init_logging(level="debug")
+logger = init_logging(level="debug")
 fl = figlist_var()
 t2 = nddata(r_[0:1:1024j], "t2")
 vd = nddata(r_[0:1:40j], "vd")
@@ -121,7 +122,8 @@ for bounds, thislabel in [
         strm(ndshape(manual_bounds), "df is", df, "N is", N, "N*df is", N * df)
     )
     manual_bounds.integrate("t2")
-    # N terms that have variance given by fake_data_noise_std**2 each multiplied by df
+    # N terms that have variance given by fake_data_noise_std**2 each
+    # multiplied by df
     # the 2 has to do w/ real/imag/abs -- see check_integration_error
     propagated_variance = N * df**2 * fake_data_noise_std**2
     propagated_variance_from_inactive = N * df**2 * std_from_00**2

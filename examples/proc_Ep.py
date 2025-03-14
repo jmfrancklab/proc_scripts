@@ -7,7 +7,6 @@ dataset including generating a table of integrals
 
 import pyspecProcScripts as prscr
 import pyspecdata as psd
-import os
 import datetime
 import matplotlib.pyplot as plt
 
@@ -20,7 +19,7 @@ plt.rcParams.update({
     "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
     "savefig.bbox": "tight",
     "savefig.dpi": 300,
-    "figure.figsize": (6, 2),
+    "figure.figsize": (6, 5),
 })
 
 

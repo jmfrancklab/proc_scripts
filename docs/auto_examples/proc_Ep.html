@@ -54,20 +54,20 @@ dataset including generating a table of integrals</p>
 <li><img src="../_images/sphx_glr_proc_Ep_002.png" srcset="../_images/sphx_glr_proc_Ep_002.png" alt=", extract signal pathway, check phase variation along indirect, FID sliced, phased, and aligned, table of integrals" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_Ep_003.png" srcset="../_images/sphx_glr_proc_Ep_003.png" alt="power terms" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_proc_Ep_004.png" srcset="../_images/sphx_glr_proc_Ep_004.png" alt="check covariance test" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_Ep_005.png" srcset="../_images/sphx_glr_proc_Ep_005.png" alt="residual after shift" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_Ep_006.png" srcset="../_images/sphx_glr_proc_Ep_006.png" alt="normalized $E(p(t))$" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_Ep_007.png" srcset="../_images/sphx_glr_proc_Ep_007.png" alt="power log" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_Ep_008.png" srcset="../_images/sphx_glr_proc_Ep_008.png" alt="normalized $E(p)$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_Ep_005.png" srcset="../_images/sphx_glr_proc_Ep_005.png" alt="normalized $E(p(t))$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_Ep_006.png" srcset="../_images/sphx_glr_proc_Ep_006.png" alt="power log" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_Ep_007.png" srcset="../_images/sphx_glr_proc_Ep_007.png" alt="normalized $E(p)$" class = "sphx-glr-multi-img"/></li>
 </ul>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>You didn&#39;t set units for indirect before saving the data!!!
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/core.py:8693: RuntimeWarning: invalid value encountered in sqrt
+  return np.sqrt(arg)
 1: autoslicing!
 2: Raw Data with averaged scans
 3: power terms |||ms
 4: check covariance test
-5: residual after shift |||(&#39;Hz&#39;, &#39;s&#39;)
-6: normalized $E(p(t))$ |||s
-7: power log
-8: normalized $E(p)$ |||mW
+5: normalized $E(p(t))$ |||s
+6: power log
+7: normalized $E(p)$ |||mW
 </pre></div>
 </div>
 <div class="line-block">
@@ -75,7 +75,6 @@ dataset including generating a table of integrals</p>
 </div>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyspecProcScripts</span> <span class="k">as</span> <span class="nn">prscr</span>
 <span class="kn">import</span> <span class="nn">pyspecdata</span> <span class="k">as</span> <span class="nn">psd</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
@@ -88,7 +87,7 @@ dataset including generating a table of integrals</p>
     <span class="s2">&quot;savefig.facecolor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>  <span class="c1"># clear</span>
     <span class="s2">&quot;savefig.bbox&quot;</span><span class="p">:</span> <span class="s2">&quot;tight&quot;</span><span class="p">,</span>
     <span class="s2">&quot;savefig.dpi&quot;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
-    <span class="s2">&quot;figure.figsize&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="s2">&quot;figure.figsize&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
 <span class="p">})</span>
 
 
@@ -134,7 +133,7 @@ dataset including generating a table of integrals</p>
     <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 6.252 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 5.166 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-ep-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/fd6cb069a0053051356bdf961d0cf641/proc_Ep.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_Ep.ipynb</span></code></a></p>
@@ -173,10 +172,14 @@ dataset including generating a table of integrals</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra (QESR)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">PSD from SpinCore</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Process Enhancement experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
@@ -191,12 +194,13 @@ dataset including generating a table of integrals</p>
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_rec_response.html">Calculate and Fit Receiver Response to Sinc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
 </ul>
 </li>

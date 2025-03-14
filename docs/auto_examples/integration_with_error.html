@@ -59,16 +59,15 @@ better than what you would choose by hand.</p>
 <li><img src="../_images/sphx_glr_integration_with_error_007.png" srcset="../_images/sphx_glr_integration_with_error_007.png" alt="real part of raw data" class = "sphx-glr-multi-img"/></li>
 </ul>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:735: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
-  plt.gcf().tight_layout()
 </pre></div>
 </div>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="n">integrate_limits</span><span class="p">,</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.integral_w_errors" title="pyspecProcScripts.integral_w_errors" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">integral_w_errors</span></a>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">r_</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">exp</span>
+<span class="kn">from</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">import</span> <span class="n">rcParams</span>
+<span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="n">strm</span><span class="p">,</span> <span class="n">ndshape</span><span class="p">,</span> <span class="n">nddata</span><span class="p">,</span> <span class="n">figlist_var</span><span class="p">,</span> <span class="n">init_logging</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.integral_w_errors" title="pyspecProcScripts.integral_w_errors" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">integral_w_errors</span></a>
 <span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <span class="n">seed</span>
 
 <span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;image.aspect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>  <span class="c1"># needed for sphinx gallery</span>
@@ -77,7 +76,7 @@ better than what you would choose by hand.</p>
 <span class="n">seed</span><span class="p">(</span>
     <span class="mi">2021</span>
 <span class="p">)</span>  <span class="c1"># so the same random result is generated every time -- 2021 is meaningless</span>
-<span class="n">init_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">init_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
 <span class="n">fl</span> <span class="o">=</span> <span class="n">figlist_var</span><span class="p">()</span>
 <span class="n">t2</span> <span class="o">=</span> <span class="n">nddata</span><span class="p">(</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mi">1024</span><span class="n">j</span><span class="p">],</span> <span class="s2">&quot;t2&quot;</span><span class="p">)</span>
 <span class="n">vd</span> <span class="o">=</span> <span class="n">nddata</span><span class="p">(</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mi">40</span><span class="n">j</span><span class="p">],</span> <span class="s2">&quot;vd&quot;</span><span class="p">)</span>
@@ -182,7 +181,8 @@ better than what you would choose by hand.</p>
         <span class="n">strm</span><span class="p">(</span><span class="n">ndshape</span><span class="p">(</span><span class="n">manual_bounds</span><span class="p">),</span> <span class="s2">&quot;df is&quot;</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="s2">&quot;N is&quot;</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="s2">&quot;N*df is&quot;</span><span class="p">,</span> <span class="n">N</span> <span class="o">*</span> <span class="n">df</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">manual_bounds</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
-    <span class="c1"># N terms that have variance given by fake_data_noise_std**2 each multiplied by df</span>
+    <span class="c1"># N terms that have variance given by fake_data_noise_std**2 each</span>
+    <span class="c1"># multiplied by df</span>
     <span class="c1"># the 2 has to do w/ real/imag/abs -- see check_integration_error</span>
     <span class="n">propagated_variance</span> <span class="o">=</span> <span class="n">N</span> <span class="o">*</span> <span class="n">df</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">fake_data_noise_std</span><span class="o">**</span><span class="mi">2</span>
     <span class="n">propagated_variance_from_inactive</span> <span class="o">=</span> <span class="n">N</span> <span class="o">*</span> <span class="n">df</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">std_from_00</span><span class="o">**</span><span class="mi">2</span>
@@ -212,7 +212,7 @@ better than what you would choose by hand.</p>
 <span class="n">fl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 8.140 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.523 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-integration-with-error-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/fe95bf32e3a002b4a98002a2562fa4b8/integration_with_error.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">integration_with_error.ipynb</span></code></a></p>
@@ -251,10 +251,14 @@ better than what you would choose by hand.</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra (QESR)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">PSD from SpinCore</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
@@ -269,12 +273,13 @@ better than what you would choose by hand.</p>
 <li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Check Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_rec_response.html">Calculate and Fit Receiver Response to Sinc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
 </ul>
 </li>
