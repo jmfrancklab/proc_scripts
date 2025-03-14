@@ -7,6 +7,7 @@ from pyspecdata import find_file, gammabar_e, ndshape, gridandtick
 from scipy.interpolate import UnivariateSpline
 from ..first_level.QESR_rescale import QESR_apply_scalefactor
 import pickle
+import logging
 
 # {{{ all basic info
 colors = plt.rcParams[
@@ -176,9 +177,17 @@ def QESR(
     # pull the furthest left and furthest right boundaries of any peaks that we
     # find
     specrange = (peaklist.ravel().min(), peaklist.ravel().max())
+    logging.debug(f"specrange {specrange} out of {d_abs[fieldaxis][r_[0,-1]]}")
     generous_limits = (
         specrange + np.diff(specrange).item() * r_[-pushout, +pushout]
     )
+    # {{{ if the limits extend to the end, then pull back
+    if generous_limits[-1] > d_abs[fieldaxis][-100]:
+        generous_limits[-1] = d_abs[fieldaxis][-100]
+    if generous_limits[0] < d_abs[fieldaxis][100]:
+        generous_limits[0] = d_abs[fieldaxis][100]
+    # }}}
+    logging.debug(f"expanded to {generous_limits}")
     for j in r_[np.array(specrange)]:
         # show where the peaks were identified
         axvline(x=j, alpha=0.5, color=d.get_plot_color(), ls=":")
@@ -209,6 +218,7 @@ def QESR(
     d_abs -= polybaseline  # background subtraction
     d_abs.integrate(fieldaxis, cumulative=True)
     d_abs.name("conc").set_units("micromolar")
+    logging.debug(f"trying to slice by {generous_limits[-1]} to right")
     final_conc = (
         d_abs[fieldaxis : (generous_limits[-1], None)].mean(fieldaxis).item()
     ).real.to_compact()
