@@ -33,7 +33,7 @@ def calc_error(
     s,
     frq_slice,
     signal_pathway,
-    error_path,
+    excluded_pathways = None,
     direct="t2",
     indirect="nScans",
     use_mask=False,
@@ -54,14 +54,9 @@ def calc_error(
         Frequency range over which the signal resides.
     signal_pathway:   dict
                 Dictionary of the path of the desired signal.
-    error_path: dict
-                Dictionary of all coherence pathways that are
-                not the signal pathway.
-
-                Before declaring the error_path,
-                look at an examples such as integration_w_error.py to
-                see how to decide which excluded pathways to take the
-                error over.
+    excluded_pathways: list
+                List of tuples containing the coherence pathways that are
+                to be masked out when calculating the error.
     direct:     str
                 Direct axis.
     indirect:   str
@@ -79,27 +74,49 @@ def calc_error(
              The error associated with coherence pathways not included in the
              signal pathway.
     """
-
-    s = s[direct:frq_slice]
     df = s.get_ft_prop(direct, "df")
     N = len(s[direct])
-    collected_variance = (
-        psd.ndshape(
-            [psd.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
+    if excluded_pathways is not None:
+        # {{{ Define the pathways used for calculating the error
+        phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
+        if len(phcycdims) >1:
+            error_path = (
+                    set(
+                        (
+                            (j,k) 
+                            for j in range(psd.ndshape(s)[phcycdims[0]])
+                            for k in range(psd.ndshape(s)[phcycdims[1]])
+                            )
+                        )
+                    -set(excluded_pathways)
+                    -set([(signal_pathway[phcycdims[0]],signal_pathway[phcycdims[1]])])
+                    )
+            error_paths = [{phcycdims[0]:j, phcycdims[1]:k} for j,k in error_path]    
+        else:
+            error_path = (
+                    set(
+                        (
+                            (j) 
+                            for j in range(psd.ndshape(s)[phcycdims[0]])
+                            )
+                        )
+                    -set(excluded_pathways)
+                    -set([(signal_pathway[phcycdims[0]])])
+                    )
+            error_paths = [{phcycdims[0]:j} for j in error_path]    
+        print(error_path)    
+        collected_variance = (
+            psd.ndshape(
+                [psd.ndshape(s)[indirect], len(error_paths)], [indirect, "pathways"]
+            )
+            .alloc()
+            .setaxis("pathways", error_paths)
         )
-        .alloc()
-        .setaxis("pathways", error_path)
-    )
-    if use_mask is False:
-        assert error_path is not None, (
-            "If you don't want to use the mask you need to tell me what"
-            " pathways to use for calculating the noise!"
-        )
-        for j in range(len(error_path)):
+        for j in range(len(error_paths)):
             # calculate N₂ Δf² σ², which is the variance of the integral
             # (by error propagation) where N₂ is the number of points in
             # the indirect dimension
-            s_forerror = select_pathway(s, error_path[j])
+            s_forerror = select_pathway(s, error_paths[j])
             if j == 0:
                 Nshape = psd.ndshape(s_forerror)[direct]
             # mean divides by N₁ (indirect), integrate multiplies by Δf, and
@@ -113,9 +130,7 @@ def calc_error(
             s_forerror *= df**2  # Δf
             s_forerror *= Nshape
             collected_variance["pathways", j] = s_forerror
-        collected_variance = psd.sqrt(
-            collected_variance.sum("pathways") / len(error_path)
-        )
+        collected_variance = collected_variance.sum("pathways") / len(error_paths)
     else:
         collected_variance = s.C  # so we don't alter s
         collected_variance[direct:frq_slice] = np.nan
@@ -127,5 +142,5 @@ def calc_error(
         collected_variance.run(masked_var_multi, direct)
         for j in [k for k in s.dimlabels if k.startswith("ph")]:
             collected_variance.run(masked_mean_multi, j)
-        collected_variance = psd.sqrt(collected_variance * df**2 * N)
+        collected_variance = collected_variance * df**2 * N
     return collected_variance

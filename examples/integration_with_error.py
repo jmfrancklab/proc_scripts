@@ -71,7 +71,7 @@ error_pathway = (
 )
 error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
 s_int, returned_frq_slice = integral_w_errors(
-    data, signal_pathway, error_pathway, fl=fl, return_frq_slice=True
+    data, signal_pathway, excluded_pathways, fl=fl, return_frq_slice=True
 )
 fl.plot(s_int, ".", label="fully auto: real", capsize=6)
 fl.plot(s_int.imag, ".", label="fully auto: imaginary", capsize=6)

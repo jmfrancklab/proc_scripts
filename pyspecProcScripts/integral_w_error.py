@@ -9,7 +9,7 @@ import numpy as np
 def integral_w_errors(
     s,
     sig_path,
-    error_path,
+    excluded_pathways,
     cutoff=0.1,
     convolve_method="Gaussian",
     indirect="vd",
@@ -29,14 +29,9 @@ def integral_w_errors(
     ==========
     sig_path:   dict
                 Dictionary of the path of the desired signal.
-    error_path: dict
-                Dictionary of all coherence pathways that are
-                not the signal pathway.
-
-                Before declaring the error_path,
-                look at an examples such as integration_w_error.py to
-                see how to decide which excluded pathways to take the
-                error over.
+    excluded_pathways: list
+                List of tuples containing all coherence pathways that are
+                to be masked out when calculating the error.
     convolve_method: str
                 method of convolution used in integrating limits
                 passed on to :func:`integrate_limits`
@@ -77,12 +72,12 @@ def integral_w_errors(
         frq_slice,
         sig_path,
         indirect=indirect,
-        error_path=error_path,
+        excluded_pathways = excluded_pathways,
         use_mask=use_mask,
         fl=fl,
     )
     retval = (
-        select_pathway(s, sig_path).integrate(direct).set_error(variance.data)
+        select_pathway(s, sig_path).integrate(direct).set_error(psp.sqrt(variance.data))
     )
     if not return_frq_slice:
         return retval
