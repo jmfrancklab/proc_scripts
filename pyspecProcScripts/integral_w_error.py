@@ -1,6 +1,7 @@
 import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
+from .calc_error import calc_error
 import logging
 import numpy as np
 
@@ -62,6 +63,7 @@ def integral_w_errors(
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
     s = s[direct:frq_slice]
+    variance = calc_error(s,frq_slice, sig_path, indirect = indirect, error_path = error_path)
     f = s.getaxis(direct)
     df = f[1] - f[0]
     all_labels = set(s.dimlabels)
@@ -111,7 +113,7 @@ def integral_w_errors(
         )
     # }}}
     s = select_pathway(s, sig_path)
-    retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
+    retval = s.integrate(direct).set_error(variance.data)
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
