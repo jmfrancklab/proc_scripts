@@ -29,14 +29,13 @@ def masked_var_multi(x, var_has_imag=False, axis=None):
 
 
 # }}}
-def calc_error(
+def calc_masked_error(
     s,
     frq_slice,
     signal_pathway,
     excluded_pathways = None,
     direct="t2",
     indirect="nScans",
-    use_mask=False,
     fl=None,
 ):
     """Calculates the propagation of error for the given signal.
@@ -57,17 +56,13 @@ def calc_error(
     excluded_pathways: list
                 List of tuples containing the coherence pathways that are
                 to be masked out when calculating the error.
+                If no excluded_pathways are fed, the function will apply a mask
+                over the signal pathway as well as over the integraion slice in
+                all other coherence transfer pathways.
     direct:     str
                 Direct axis.
     indirect:   str
                 Indirect axis.
-    use_mask: boolean
-        If you would rather calculate the error excluding all the phase cycling
-        noise this should be set to true. Specifically this will apply a mask
-        over the signal pathway as well as over the integration slice in all
-        other pathways. When False, the error will only be calculated for the
-        pathways in error_path.
-
     Returns
     =======
     collected_variance:       nddata
@@ -80,31 +75,21 @@ def calc_error(
         # {{{ Define the pathways used for calculating the error
         phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
         if len(phcycdims) >1:
-            error_path = (
-                    set(
-                        (
-                            (j,k) 
-                            for j in range(psd.ndshape(s)[phcycdims[0]])
-                            for k in range(psd.ndshape(s)[phcycdims[1]])
-                            )
+            error_path = {
+                    tuple(idx)
+                    for idx in (
+                        [j,k] for j in range(psd.ndshape(s)[phcycdims[0]])
+                        for k in range(psd.ndshape(s)[phcycdims[1]])
                         )
-                    -set(excluded_pathways)
-                    -set([(signal_pathway[phcycdims[0]],signal_pathway[phcycdims[1]])])
-                    )
-            error_paths = [{phcycdims[0]:j, phcycdims[1]:k} for j,k in error_path]    
+                    }
+            error_path -= {tuple(signal_pathway[dim] for dim in phcycdims)}
         else:
-            error_path = (
-                    set(
-                        (
-                            (j) 
-                            for j in range(psd.ndshape(s)[phcycdims[0]])
-                            )
-                        )
-                    -set(excluded_pathways)
-                    -set([(signal_pathway[phcycdims[0]])])
-                    )
-            error_paths = [{phcycdims[0]:j} for j in error_path]    
-        print(error_path)    
+            error_path = {
+                    (j,) for j in range(psd.ndshape(s)[phcycdims[0]])
+                    }
+            error_path -= {(signal_pathway[phcycdims[0]],)}
+        error_path -= set(excluded_pathways)
+        error_paths = [{phcycdims[i]: path[i] for i in range(len(phcycdims))} for path in error_path]
         collected_variance = (
             psd.ndshape(
                 [psd.ndshape(s)[indirect], len(error_paths)], [indirect, "pathways"]
@@ -113,14 +98,9 @@ def calc_error(
             .setaxis("pathways", error_paths)
         )
         for j in range(len(error_paths)):
-            # calculate N₂ Δf² σ², which is the variance of the integral
-            # (by error propagation) where N₂ is the number of points in
-            # the indirect dimension
             s_forerror = select_pathway(s, error_paths[j])
             if j == 0:
                 Nshape = psd.ndshape(s_forerror)[direct]
-            # mean divides by N₁ (indirect), integrate multiplies by Δf, and
-            # the mean sums all elements (there are N₁N₂ elements)
             s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(
                 direct
             )

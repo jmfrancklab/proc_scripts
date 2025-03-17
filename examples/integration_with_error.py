@@ -58,18 +58,6 @@ data /= sqrt(ndshape(data)["t2"]) * dt
 # {{{ First, run the code that automatically chooses integration bounds
 # and also assigns error
 fl.next("compare manual vs. automatic", legend=True)
-error_pathway = (
-    set(
-        (
-            (j, k)
-            for j in range(ndshape(data)["ph1"])
-            for k in range(ndshape(data)["ph2"])
-        )
-    )
-    - set(excluded_pathways)
-    - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
-)
-error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
 s_int, returned_frq_slice = integral_w_errors(
     data, signal_pathway, excluded_pathways, fl=fl, return_frq_slice=True
 )

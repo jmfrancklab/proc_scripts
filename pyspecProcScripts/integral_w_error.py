@@ -1,7 +1,7 @@
 import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
-from .calc_error import calc_error
+from .calc_error import calc_masked_error
 import logging
 import numpy as np
 
@@ -9,12 +9,11 @@ import numpy as np
 def integral_w_errors(
     s,
     sig_path,
-    excluded_pathways,
+    excluded_pathways=None,
     cutoff=0.1,
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
-    use_mask=False,
     fl=None,
     return_frq_slice=False,
 ):
@@ -67,13 +66,12 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    variance = calc_error(
+    variance = calc_masked_error(
         s,
         frq_slice,
         sig_path,
         indirect=indirect,
         excluded_pathways = excluded_pathways,
-        use_mask=use_mask,
         fl=fl,
     )
     retval = (
