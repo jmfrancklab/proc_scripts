@@ -16,7 +16,9 @@ def _masked_mean_multi(x, axis=None):
 
 
 def _masked_var_multi(x, var_has_imag=False, axis=None):
-    "Calculates the variance along a 1D axis"
+    "Calculates the variance along a 1D axis.
+    If the data is complex you must assign var_has_imag as true.
+    By default it calculates the variance of the real of the data"
     assert axis is not None
 
     def masked_var(x):
