@@ -5,7 +5,7 @@ import numpy as np
 
 # {{{ Functions to calculate var and mean of nan-masked data
 #     Pulled from time_domain_noise.py example
-def masked_mean_multi(x, axis=None):
+def _masked_mean_multi(x, axis=None):
     "Calculate the mean of nan-masked data on a 1D axis"
     assert axis is not None
 
@@ -15,7 +15,7 @@ def masked_mean_multi(x, axis=None):
     return np.apply_along_axis(masked_mean, axis, x)
 
 
-def masked_var_multi(x, var_has_imag=False, axis=None):
+def _masked_var_multi(x, var_has_imag=False, axis=None):
     "Calculates the variance along a 1D axis"
     assert axis is not None
 
@@ -119,8 +119,8 @@ def calc_masked_error(
         if fl is not None:
             fl.next("Frequency Noise")
             fl.image(collected_variance)
-        collected_variance.run(masked_var_multi, direct)
+        collected_variance.run(_masked_var_multi, direct)
         for j in [k for k in s.dimlabels if k.startswith("ph")]:
-            collected_variance.run(masked_mean_multi, j)
+            collected_variance.run(_masked_mean_multi, j)
         collected_variance = collected_variance * df**2 * N
     return collected_variance
