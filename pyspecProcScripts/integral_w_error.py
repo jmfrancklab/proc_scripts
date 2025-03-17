@@ -14,6 +14,7 @@ def integral_w_errors(
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
+    use_mask = False,
     fl=None,
     return_frq_slice=False,
 ):
@@ -47,7 +48,7 @@ def integral_w_errors(
     Returns
     =======
     s:       nddata
-             Data with error associated with coherence pathways
+             Integrated data with error associated with coherence pathways
              not included in the signal pathway.
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
@@ -63,9 +64,6 @@ def integral_w_errors(
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
     s = s[direct:frq_slice]
-    variance = calc_error(s,frq_slice, sig_path, indirect = indirect, error_path = error_path)
-    f = s.getaxis(direct)
-    df = f[1] - f[0]
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
@@ -74,46 +72,19 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    collected_variance = psp.ndshape(
-        [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
-    ).alloc()
-    avg_error = []
-    for j in range(len(error_path)):
-        # calculate N₂ Δf² σ², which is the variance of the integral
-        # (by error propagation) where N₂ is the number of points in
-        # the indirect dimension
-        s_forerror = select_pathway(s, error_path[j])
-        # previous line wipes everything out and starts over -- why not use
-        # collected_variance above, as I had originally set up --> part of
-        # issue #44
-        if j == 0:
-            N2 = psp.ndshape(s_forerror)[direct]
-        # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
-        # mean sums all elements (there are N₁N₂ elements)
-        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(
-            direct
+        
+    collected_variance = (
+        psp.ndshape(
+            [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
         )
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but(
-            [direct, indirect]
-        ).mean(direct)
-        s_forerror *= df**2  # Δf
-        s_forerror *= N2
-        avg_error.append(s_forerror)
-    avg_error = sum(avg_error) / len(avg_error)
-    # {{{ variance calculation for debug
-    variance_debug = False
-    if variance_debug:
-        print(
-            "(inside automatic routine) the stdev seems to be",
-            np.sqrt(collected_variance / (df * N2)),
-        )
-        print(
-            "automatically calculated integral error:",
-            np.sqrt(collected_variance.data),
-        )
-    # }}}
-    s = select_pathway(s, sig_path)
-    retval = s.integrate(direct).set_error(variance.data)
+        .alloc()
+        .setaxis("pathways", error_path)
+    )
+    variance = calc_error(
+        s, frq_slice, sig_path, indirect=indirect, error_path=error_path, use_mask = use_mask,
+        fl = fl
+    )
+    retval = select_pathway(s, sig_path).integrate(direct).set_error(variance.data)
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
@@ -152,7 +123,6 @@ def active_propagation(
     s = s[direct : ((frq_slice[-1] + offset), None)]  # grab all data more than
     #                                             offset to the right of the
     #                                             peak
-    df = s.get_ft_prop(direct, "df")
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
