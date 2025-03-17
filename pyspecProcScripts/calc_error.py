@@ -73,7 +73,6 @@ def calc_masked_error(
     """
     df = s.get_ft_prop(direct, "df")
     N = len(s[direct])
-    #if excluded_pathways is not None:
     # {{{ Define the pathways used for calculating the error
     collected_variance = s.C  # so we don't alter s
     phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
