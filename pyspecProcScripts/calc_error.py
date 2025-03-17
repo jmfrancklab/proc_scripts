@@ -71,8 +71,8 @@ def calc_masked_error(
              The error associated with coherence pathways not included in the
              signal pathway.
     """
-    df = s.get_ft_prop(direct, "df")
-    N = len(s[direct])
+    print(dtype(s))
+    quit()
     # {{{ Define the pathways used for calculating the error
     collected_variance = s.C  # so we don't alter s
     phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
@@ -93,5 +93,4 @@ def calc_masked_error(
     collected_variance.run(_masked_var_multi, direct)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         collected_variance.run(_masked_mean_multi, j)
-    collected_variance = collected_variance * df**2 * N
     return collected_variance
