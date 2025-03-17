@@ -16,9 +16,9 @@ def _masked_mean_multi(x, axis=None):
 
 
 def _masked_var_multi(x, var_has_imag=False, axis=None):
-    "Calculates the variance along a 1D axis.
+    """Calculates the variance along a 1D axis.
     If the data is complex you must assign var_has_imag as true.
-    By default it calculates the variance of the real of the data"
+    By default it calculates the variance of the real of the data"""
     assert axis is not None
 
     def masked_var(x):
@@ -73,56 +73,26 @@ def calc_masked_error(
     """
     df = s.get_ft_prop(direct, "df")
     N = len(s[direct])
+    #if excluded_pathways is not None:
+    # {{{ Define the pathways used for calculating the error
+    collected_variance = s.C  # so we don't alter s
+    phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
+    temp = select_pathway(collected_variance, signal_pathway)
+    temp.data[:] = np.nan
     if excluded_pathways is not None:
-        # {{{ Define the pathways used for calculating the error
-        phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
-        if len(phcycdims) >1:
-            error_path = {
-                    tuple(idx)
-                    for idx in (
-                        [j,k] for j in range(psd.ndshape(s)[phcycdims[0]])
-                        for k in range(psd.ndshape(s)[phcycdims[1]])
-                        )
-                    }
-            error_path -= {tuple(signal_pathway[dim] for dim in phcycdims)}
-        else:
-            error_path = {
-                    (j,) for j in range(psd.ndshape(s)[phcycdims[0]])
-                    }
-            error_path -= {(signal_pathway[phcycdims[0]],)}
-        error_path -= set(excluded_pathways)
-        error_paths = [{phcycdims[i]: path[i] for i in range(len(phcycdims))} for path in error_path]
-        collected_variance = (
-            psd.ndshape(
-                [psd.ndshape(s)[indirect], len(error_paths)], [indirect, "pathways"]
-            )
-            .alloc()
-            .setaxis("pathways", error_paths)
-        )
+        error_paths = [{phcycdims[i]: path[i] for i in range(len(phcycdims))} for
+                path in excluded_pathways]
         for j in range(len(error_paths)):
-            s_forerror = select_pathway(s, error_paths[j])
-            if j == 0:
-                Nshape = psd.ndshape(s_forerror)[direct]
-            s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(
-                direct
-            )
-            s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but(
-                [direct, indirect]
-            ).mean(direct)
-            s_forerror *= df**2  # Δf
-            s_forerror *= Nshape
-            collected_variance["pathways", j] = s_forerror
-        collected_variance = collected_variance.sum("pathways") / len(error_paths)
+            temp = select_pathway(collected_variance,error_paths[j])
+            temp.data[:] = np.nan
     else:
-        collected_variance = s.C  # so we don't alter s
-        collected_variance[direct:frq_slice] = np.nan
-        temp = select_pathway(collected_variance, signal_pathway)
+        temp = collected_variance[direct:frq_slice]
         temp.data[:] = np.nan
-        if fl is not None:
-            fl.next("Frequency Noise")
-            fl.image(collected_variance)
-        collected_variance.run(_masked_var_multi, direct)
-        for j in [k for k in s.dimlabels if k.startswith("ph")]:
-            collected_variance.run(_masked_mean_multi, j)
-        collected_variance = collected_variance * df**2 * N
+    if fl is not None:
+        fl.next("Frequency Noise")
+        fl.image(collected_variance)
+    collected_variance.run(_masked_var_multi, direct)
+    for j in [k for k in s.dimlabels if k.startswith("ph")]:
+        collected_variance.run(_masked_mean_multi, j)
+    collected_variance = collected_variance * df**2 * N
     return collected_variance
