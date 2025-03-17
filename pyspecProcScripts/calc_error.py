@@ -1,5 +1,4 @@
 import pyspecdata as psd
-import numpy as np
 from .simple_functions import select_pathway
 
 
@@ -11,7 +10,7 @@ def calc_error(
     direct="t2",
     indirect="nScans",
     use_mask=False,
-    fl = None,
+    fl=None,
 ):
     """Calculates the propagation of error for the given signal.
 
@@ -55,7 +54,7 @@ def calc_error(
     """
 
     s = s[direct:frq_slice]
-    df = s.get_ft_prop(direct,"df")
+    df = s.get_ft_prop(direct, "df")
     collected_variance = (
         psd.ndshape(
             [psd.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
@@ -63,7 +62,7 @@ def calc_error(
         .alloc()
         .setaxis("pathways", error_path)
     )
-    if use_mask == False:
+    if use_mask is False:
         assert error_path is not None, (
             "If you don't want to use the mask you need to tell me what"
             " pathways to use for calculating the noise!"
@@ -78,8 +77,8 @@ def calc_error(
             # issue #44
             if j == 0:
                 N2 = psd.ndshape(s_forerror)[direct]
-            # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
-            # mean sums all elements (there are N₁N₂ elements)
+            # mean divides by N₁ (indirect), integrate multiplies by Δf, and
+            # the mean sums all elements (there are N₁N₂ elements)
             s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(
                 direct
             )

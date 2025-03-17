@@ -14,7 +14,7 @@ def integral_w_errors(
     convolve_method="Gaussian",
     indirect="vd",
     direct="t2",
-    use_mask = False,
+    use_mask=False,
     fl=None,
     return_frq_slice=False,
 ):
@@ -72,19 +72,18 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-        
-    collected_variance = (
-        psp.ndshape(
-            [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
-        )
-        .alloc()
-        .setaxis("pathways", error_path)
-    )
     variance = calc_error(
-        s, frq_slice, sig_path, indirect=indirect, error_path=error_path, use_mask = use_mask,
-        fl = fl
+        s,
+        frq_slice,
+        sig_path,
+        indirect=indirect,
+        error_path=error_path,
+        use_mask=use_mask,
+        fl=fl,
     )
-    retval = select_pathway(s, sig_path).integrate(direct).set_error(variance.data)
+    retval = (
+        select_pathway(s, sig_path).integrate(direct).set_error(variance.data)
+    )
     if not return_frq_slice:
         return retval
     elif return_frq_slice:
@@ -123,6 +122,7 @@ def active_propagation(
     s = s[direct : ((frq_slice[-1] + offset), None)]  # grab all data more than
     #                                             offset to the right of the
     #                                             peak
+    df = s.get_ft_prop(direct, "df")
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
