@@ -667,8 +667,10 @@ def hermitian_function_test(
     #     out
     t_dwos = s_ext.get_ft_prop(direct, "dt")  # oversampled dwell
     min_echo = aliasing_slop * t_dw
+    logging.debug(strm("aliasing slop is", aliasing_slop, "t_dw is", t_dw, "(SW of", 1/t_dw/1e3, "kHz) min echo is", min_echo))
     min_echo_idx = int(min_echo / t_dwos + 0.5)
     min_echo = min_echo_idx * t_dwos
+    logging.debug(strm("t_dwos is", t_dwos, "and rounding to the nearest oversampled dwell, min echo is",min_echo))
     if fl is not None:
         fl.push_marker()
         if show_extended:
