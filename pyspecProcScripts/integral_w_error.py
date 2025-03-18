@@ -58,7 +58,6 @@ def integral_w_errors(
         **kwargs,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
-    # We will be calculating the error over the signal slice
     s = s[direct:frq_slice]
     # {{{ variables in calculating error over slice
     N = len(s[direct])  # number of pts within the slice
