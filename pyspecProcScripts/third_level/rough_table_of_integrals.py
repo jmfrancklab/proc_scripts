@@ -95,8 +95,8 @@ def rough_table_of_integrals(
     assert fl is not None, "for now, fl can't be None"
     # {{{ set up subplots
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-    fig.suptitle(title)
     fl.next("Raw Data with averaged scans", fig=fig)
+    fig.suptitle(title)
     fl.skip_units_check()
     # }}}
     # To handle both older data where the coherence pathway was not set as a
@@ -161,11 +161,11 @@ def rough_table_of_integrals(
     s *= np.exp(-1j * 2 * pi * (shift - center_of_range) * s.fromaxis(direct))
     s.ft(direct)
     fl.image(s, ax=ax3,
-        interpolation="auto",
+             interpolation="auto",
              )
     ax3.set_title(
-        "FID sliced" + (", phased," if echo_like else "") + " and aligned"
-    )
+            "FID sliced" + (", phased," if echo_like else "") + " and aligned"
+            )
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
     if inc_plot_color:
