@@ -31,7 +31,7 @@ def integral_w_errors(
     excluded_pathways: list
                 List of tuples containing all coherence pathways that are
                 to be masked out when calculating the error.
-                By default the function will mask out the frequency slice of 
+                By default the function will mask out the frequency slice of
                 all coherence pathways and the entire signal pathway.
     convolve_method: str
                 method of convolution used in integrating limits
@@ -62,7 +62,7 @@ def integral_w_errors(
     # We will be calculating the error over the signal slice
     s = s[direct:frq_slice]
     # {{{ variables in calculating error over slice
-    N = len(s[direct]) # number of pts within the slice
+    N = len(s[direct])  # number of pts within the slice
     df = s.get_ft_prop(direct, "df")
     # }}}
     all_labels = set(s.dimlabels)
@@ -78,10 +78,10 @@ def integral_w_errors(
         frq_slice,
         sig_path,
         indirect=indirect,
-        excluded_pathways = excluded_pathways,
+        excluded_pathways=excluded_pathways,
         fl=fl,
     )
-    std_error = psp.sqrt(variance*df**2 * N)
+    std_error = psp.sqrt(variance * df**2 * N)
     retval = (
         select_pathway(s, sig_path).integrate(direct).set_error(std_error.data)
     )

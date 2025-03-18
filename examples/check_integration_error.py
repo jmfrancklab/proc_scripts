@@ -62,16 +62,6 @@ for j in range(n_repeats):
     data.ft("t2", shift=True)
     # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
-    error_pathway = (
-        set((
-            (j, k)
-            for j in range(ndshape(data)["ph1"])
-            for k in range(ndshape(data)["ph2"])
-        ))
-        - set(excluded_pathways)
-        - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
-    )
-    error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
     s_int, frq_slice = integral_w_errors(
         data,
         signal_pathway,
