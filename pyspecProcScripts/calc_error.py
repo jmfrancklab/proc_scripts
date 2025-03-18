@@ -71,6 +71,8 @@ def calc_masked_error(
              The error associated with coherence pathways not included in the
              signal pathway.
     """
+    df = s.get_ft_prop(direct, "df")
+    N = len(s[direct])
     # {{{ Define the pathways used for calculating the error
     collected_variance = s.C  # so we don't alter s
     phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
@@ -83,6 +85,8 @@ def calc_masked_error(
             temp = select_pathway(collected_variance,error_paths[j])
             temp.data[:] = np.nan
     else:
+        # if excluded pathways are not given just set the frq slice in all ct 
+        # pathways to nan to ensure any ph cycling noise is excluded
         temp = collected_variance[direct:frq_slice]
         temp.data[:] = np.nan
     if fl is not None:

@@ -75,7 +75,7 @@ for j in range(n_repeats):
     s_int, frq_slice = integral_w_errors(
         data,
         signal_pathway,
-        #excluded_pathways,
+        excluded_pathways,
         indirect="vd",
         fl=fl,
         return_frq_slice=True,

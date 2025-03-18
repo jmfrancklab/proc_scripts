@@ -47,8 +47,6 @@ def integral_w_errors(
              Integrated data with error associated with coherence pathways
              not included in the signal pathway.
     """
-    df = s.get_ft_prop(direct, "df")
-    N = len(s[direct])
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     if convolve_method is not None:
         kwargs = {"convolve_method": convolve_method}
@@ -61,6 +59,12 @@ def integral_w_errors(
         **kwargs,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
+    # We will be calculating the error over the signal slice
+    s = s[direct:frq_slice]
+    # {{{ variables in calculating error over slice
+    N = len(s[direct]) # number of pts within the slice
+    df = s.get_ft_prop(direct, "df")
+    # }}}
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
@@ -77,7 +81,6 @@ def integral_w_errors(
         excluded_pathways = excluded_pathways,
         fl=fl,
     )
-    s = s[direct:frq_slice]
     std_error = psp.sqrt(variance*df**2 * N)
     retval = (
         select_pathway(s, sig_path).integrate(direct).set_error(std_error.data)
