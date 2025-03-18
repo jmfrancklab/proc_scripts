@@ -31,8 +31,7 @@ def integral_w_errors(
     excluded_pathways: list
                 List of tuples containing all coherence pathways that are
                 to be masked out when calculating the error.
-                By default the function will mask out the frequency slice of
-                all coherence pathways and the entire signal pathway.
+                By default the function will mask out the signal pathway.
     convolve_method: str
                 method of convolution used in integrating limits
                 passed on to :func:`integrate_limits`
