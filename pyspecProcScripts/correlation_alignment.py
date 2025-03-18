@@ -102,13 +102,13 @@ def correl_align(
     assert len(repeats - set(repeat_dims) - set(non_repeat_dims)) == 0
     repeat_dims = [j for j in s_orig.dimlabels if j in repeats]
     if len(repeat_dims) > 1:
-        s_jk = s_orig.C.smoosh(repeats, "repeats")  # this version ends up with
+        s_jk = s_orig.C.smoosh(repeat_dims, "repeats")  # this version ends up with
         #                                   three dimensions
         #                                   (j=align_dim, k=phcyc, and
         #                                   direct nu) and is NOT conj
     else:
         s_jk = s_orig.C.rename(
-            repeat_dims, "repeats"
+            repeat_dims[0], "repeats"
         )  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
         #                 want applied to s_orig
@@ -385,8 +385,8 @@ def correl_align(
     #     into the original repeat_dims or rename back to the original
     #     indirect name
     if len(repeats) > 1:
-        f_shift.chunk("repeats", repeats)
+        f_shift.chunk("repeats", repeat_dims)
     else:
-        f_shift.rename("repeats", repeats[0])
+        f_shift.rename("repeats", repeat_dims[0])
     # }}}
     return f_shift, sigma, this_mask
