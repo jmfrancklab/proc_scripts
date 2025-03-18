@@ -72,9 +72,16 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
+    # Determine smaller slice within signal bounds where ph cycling noise most
+    # likely resides
+    frq_filter_push = (frq_slice[1] - frq_slice[0]) / 3
+    frq_filter_bounds = (
+        frq_slice[0] + frq_filter_push,
+        frq_slice[-1] - frq_filter_push,
+    )
     variance = calc_masked_error(
         s,
-        frq_slice,
+        frq_filter_bounds,
         sig_path,
         indirect=indirect,
         excluded_pathways=excluded_pathways,

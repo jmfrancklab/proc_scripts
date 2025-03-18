@@ -52,7 +52,9 @@ def calc_masked_error(
         Full nddata set in the frequency domain for which the error is being
         propagated.
     frq_slice: tuple
-        Frequency range over which the signal resides.
+        Frequency range that will be filtered out in calculating the error - it
+        is assumed this region in all coherence transfer pathways contains some
+        amount of phase cycling noise.
     signal_pathway:   dict
                 Dictionary of the path of the desired signal.
     excluded_pathways: list
@@ -75,9 +77,9 @@ def calc_masked_error(
     if np.iscomplex(s):
         var_has_imag = True
     # }}}
-    # {{{ Define the pathways used for calculating the error
-    collected_variance = s.C  # so we don't alter s
     phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
+    collected_variance = s.C  # so we don't alter s
+    # {{{ filter out signal pathway and excluded error pathways
     temp = select_pathway(collected_variance, signal_pathway)
     temp.data[:] = np.nan
     if excluded_pathways is not None:
@@ -88,6 +90,9 @@ def calc_masked_error(
         for j in range(len(error_paths)):
             temp = select_pathway(collected_variance, error_paths[j])
             temp.data[:] = np.nan
+    # }}}
+    # Filter out frq_slice where ph noise resides        
+    collected_variance[direct:frq_slice].data[:] = np.nan        
     if fl is not None:
         fl.next("Frequency Noise")
         fl.image(collected_variance)
