@@ -38,6 +38,11 @@ def correl_align(
     remembering that the FT of the cross-correlation is the product
     of the two functions, with the *first* on complex conjugate.
 
+    With both repeat_dims and non_repeat_dims defined, we can use a set
+    expression to find the indirect dimension (not phas cycling and not direct)
+    and to make sure they are either (1) nScans (2) specified as safe or (3)
+    listed in the 'non_repeat_dims'. 
+
     Parameters
     ==========
     s_orig:  psd.nddata
@@ -48,11 +53,11 @@ def correl_align(
                     Sets the tolerance limit for the alignment procedure.
     repeat_dims:   list (default [])
                     List of the dimensions along which the signal is
-                    essentially repeated and therefore can be aligned.
-                    If there is an nScans or repeats dimension this must
-                    be included! By default, this list is empty. Note: prior to
-                    calling this function it is a common strategy to flip the
-                    sign so all transients are the same sign.
+                    essentially repeated and therefore can be aligned.  If
+                    there is an nScans or repeats dimension this must be
+                    included! Note: prior to calling this function it is a
+                    common strategy to flip the sign so all transients are the
+                    same sign.
     nonrepeat_dims: list (default [])
                     These are indirect dimensions that we are not OK to align
                     (e.g. the indirect dimension of a 2D COSY experiment).
@@ -98,14 +103,17 @@ def correl_align(
         len(repeat_dims) > 0
     ), "You must tell me which dimension contains the repeats!"
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
-    repeats = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
-    assert len(repeats - set(repeat_dims) - set(non_repeat_dims)) == 0
-    repeat_dims = [j for j in s_orig.dimlabels if j in repeats]
+    # Make sure the repeat_dims are appropriate and that there are no extra
+    # remaining dims
+    safe_repeat_dims = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
+    assert len(safe_repeat_dims - set(repeat_dims) - set(non_repeat_dims)) == 0
+    # After passing the assert we can now define the repeat dims
+    repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
+    # s_jk below ends up with three dimensions (j = align_dim, k = phcyc and
+    # direct nu) and is NOT conj
     if len(repeat_dims) > 1:
-        s_jk = s_orig.C.smoosh(repeat_dims, "repeats")  # this version ends up with
-        #                                   three dimensions
-        #                                   (j=align_dim, k=phcyc, and
-        #                                   direct nu) and is NOT conj
+        # If there is more than one repeat dim, smoosh into one dimension
+        s_jk = s_orig.C.smoosh(repeat_dims, "repeats")
     else:
         s_jk = s_orig.C.rename(
             repeat_dims[0], "repeats"
@@ -384,7 +392,7 @@ def correl_align(
     #     data was originally fed in - meaning we must chunk it back
     #     into the original repeat_dims or rename back to the original
     #     indirect name
-    if len(repeats) > 1:
+    if len(repeat_dims) > 1:
         f_shift.chunk("repeats", repeat_dims)
     else:
         f_shift.rename("repeats", repeat_dims[0])
