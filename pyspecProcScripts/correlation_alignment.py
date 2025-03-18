@@ -18,8 +18,8 @@ def correl_align(
     s_orig,
     tol=1e-4,
     indirect_dim=None,
-    repeat_dims=["indirect"],
-    non_repeat_dims=[""],
+    repeat_dims=[],
+    non_repeat_dims=[],
     fig_title="correlation alignment",
     signal_pathway={"ph1": 0, "ph2": 1},
     avg_dim=None,
@@ -46,10 +46,14 @@ def correl_align(
         This data is not modified.
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
-    repeat_dims:   list
-                    List of names of the dimensions along which you seek to
-                    align.
-    nonrepeat_dims: list
+    repeat_dims:   list (default [])
+                    List of the dimensions along which the signal is
+                    essentially repeated and therefore can be aligned.
+                    If there is an nScans or repeats dimension this must
+                    be included! By default, this list is empty. Note: prior to
+                    calling this function it is a common strategy to flip the
+                    sign so all transients are the same sign.
+    nonrepeat_dims: list (default [])
                     These are indirect dimensions that we are not OK to align
                     (e.g. the indirect dimension of a 2D COSY experiment).
     fig_title:      str
@@ -81,26 +85,30 @@ def correl_align(
     logging.debug("Applying the correlation routine")
     assert indirect_dim is None, (
         "We updated the correlation function to no longer take indirect_dim as"
-        " a kwarg!"
+        " a kwarg! Now indirect_dim roughly corresponds to repeat_dims"
     )
     assert avg_dim is None, (
         "We updated the correlation function to no longer take avg_dim as a"
         " kwarg!"
     )
+    assert (
+        type(repeat_dims) == list
+    ), "the repeat_dims kwarg needs to be a list of strings"
+    assert (
+        len(repeat_dims) > 0
+    ), "You must tell me which dimension contains the repeats!"
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
-    indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
-    assert len(indirect - set(repeat_dims) - set(non_repeat_dims)) == 0
-    indirect = [j for j in s_orig.dimlabels if j in indirect]
-    if len(indirect) > 1:
-        s_jk = s_orig.C.smoosh(
-            indirect, "repeats"
-        )  # this version ends up with
+    repeats = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
+    assert len(repeats - set(repeat_dims) - set(non_repeat_dims)) == 0
+    repeat_dims = [j for j in s_orig.dimlabels if j in repeats]
+    if len(repeat_dims) > 1:
+        s_jk = s_orig.C.smoosh(repeats, "repeats")  # this version ends up with
         #                                   three dimensions
         #                                   (j=align_dim, k=phcyc, and
         #                                   direct nu) and is NOT conj
     else:
         s_jk = s_orig.C.rename(
-            indirect[0], "repeats"
+            repeat_dims, "repeats"
         )  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
         #                 want applied to s_orig
@@ -139,6 +147,10 @@ def correl_align(
     energy_diff = 1.0
     i = 0
     energy_vals = []
+    # below we divide by an extra N because if the signals along the repeats
+    # are the same, then the energy of the resulting sum should increase by N
+    # (vs taking the square and summing which is what we do for calculating the
+    # sig_energy above)
     this_E = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
@@ -372,8 +384,9 @@ def correl_align(
     #     data was originally fed in - meaning we must chunk it back
     #     into the original repeat_dims or rename back to the original
     #     indirect name
-    if len(indirect) > 1:
-        f_shift.chunk("repeats", indirect)
+    if len(repeats) > 1:
+        f_shift.chunk("repeats", repeats)
     else:
-        f_shift.rename("repeats", indirect[0])
+        f_shift.rename("repeats", repeats[0])
+    # }}}
     return f_shift, sigma, this_mask
