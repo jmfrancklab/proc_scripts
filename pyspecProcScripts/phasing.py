@@ -281,21 +281,6 @@ def fid_from_echo(
         )
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
-        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
-        axvline(
-            x=frq_center - frq_half,
-            color="k",
-            ls=":",
-            alpha=0.25,
-            label="half width",
-        )
-        axvline(
-            x=frq_center + frq_half,
-            color="k",
-            ls=":",
-            alpha=0.25,
-            label="half width",
-        )
         axvline(
             x=frq_center - slice_multiplier * frq_half,
             color="k",
@@ -539,6 +524,23 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     frq_center = np.mean(peakrange).item()
     frq_half = np.diff(peakrange).item() / 2
     d.set_prop("peakrange", peakrange)
+    if fl is not None:
+        fl.next("autoslicing!")
+        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
+        axvline(
+            x=frq_center - frq_half,
+            color="k",
+            ls=":",
+            alpha=0.25,
+            label="half width",
+        )
+        axvline(
+            x=frq_center + frq_half,
+            color="k",
+            ls=":",
+            alpha=0.25,
+            label="half width",
+        )
     return frq_center, frq_half
 
 
