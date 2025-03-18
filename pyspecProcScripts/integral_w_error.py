@@ -61,7 +61,6 @@ def integral_w_errors(
         **kwargs,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
-    s = s[direct:frq_slice]
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
@@ -78,6 +77,7 @@ def integral_w_errors(
         excluded_pathways = excluded_pathways,
         fl=fl,
     )
+    s = s[direct:frq_slice]
     std_error = psp.sqrt(variance*df**2 * N)
     retval = (
         select_pathway(s, sig_path).integrate(direct).set_error(std_error.data)

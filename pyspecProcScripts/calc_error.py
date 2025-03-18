@@ -71,8 +71,6 @@ def calc_masked_error(
              The error associated with coherence pathways not included in the
              signal pathway.
     """
-    print(dtype(s))
-    quit()
     # {{{ Define the pathways used for calculating the error
     collected_variance = s.C  # so we don't alter s
     phcycdims = [j for j in s.dimlabels if j.startswith("ph")]

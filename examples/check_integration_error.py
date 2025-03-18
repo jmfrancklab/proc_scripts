@@ -62,27 +62,28 @@ for j in range(n_repeats):
     data.ft("t2", shift=True)
     # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
-    #error_pathway = (
-    #    set((
-    #        (j, k)
-    #        for j in range(ndshape(data)["ph1"])
-    #        for k in range(ndshape(data)["ph2"])
-    #    ))
-    #    - set(excluded_pathways)
-    #    - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
-    #)
-    #error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
+    error_pathway = (
+        set((
+            (j, k)
+            for j in range(ndshape(data)["ph1"])
+            for k in range(ndshape(data)["ph2"])
+        ))
+        - set(excluded_pathways)
+        - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
+    )
+    error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
     s_int, frq_slice = integral_w_errors(
         data,
         signal_pathway,
-        excluded_pathways,
+        #excluded_pathways,
         indirect="vd",
+        fl=fl,
         return_frq_slice=True,
     )
     # }}}
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
     N = ndshape(manual_bounds)["t2"]
-    df = manual_bounds.get_ft_prop("t2","df")#diff(data.getaxis("t2")[r_[0, 1]]).item()
+    df = diff(data.getaxis("t2")[r_[0, 1]]).item()
     manual_bounds.integrate("t2")
     # N terms that have variance given by fake_data_noise_std**2 each
     # multiplied by df
