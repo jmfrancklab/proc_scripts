@@ -1,4 +1,5 @@
 """This module includes routines for phasing NMR spectra."""
+
 from pyspecdata import nddata, ndshape, strm
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
@@ -432,9 +433,18 @@ def fid_from_echo(
     return d
 
 
-def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
+def find_peakrange(
+    d,
+    direct="t2",
+    peak_lower_thresh=0.1,
+    peak_lowest_thresh=0.03,
+    width_guess=50.0,
+    max_echo=20e-3,
+    fl=None,
+):
     """find the range of frequencies over which the signal occurs, so that we
-    can autoslice
+    can autoslice.
+    Always assume that the signal is symmetric about zero and confined to the central 1/2 of the spectrum.
 
     Parameters
     ==========
@@ -445,6 +455,10 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     peak_lower_thresh: float
         Fraction of the signal intensity used in calculating the
         frequency slice. The smaller the value, the wider the slice.
+    width_guess: float
+        Guess of the signal width, in Hz.
+    max_echo: float
+        Echo can be away from zero by this much (in s).
     fl : figlist (default None)
         If you want to see diagnostic plots, feed the figure list.
 
@@ -460,10 +474,31 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     # {{{ autodetermine slice range
     freq_envelope = d.C
     freq_envelope.ift(direct)
+    # {{{ estimate the echo center by scrolling a filter that we think is matched across the data, and find where it gives max energy
+    thisoffset = max_echo
+    while thisoffset >= 1e-3:
+        filter_alignment = (
+            abs(
+                np.exp(
+                    -abs(
+                        freq_envelope.fromaxis(direct)
+                        - nddata(r_[-thisoffset:thisoffset:25j], "echo_offset")
+                    )
+                    * pi
+                    * width_guess
+                )
+                * freq_envelope
+            )
+            ** 2
+        ).mean_all_but(direct)
+        freq_envelope[direct] -= filter_alignment.argmax(direct).item()
+        thisoffset /= 20
+    # }}}
     freq_envelope = freq_envelope[
         direct:(0, None)
     ]  # slice out rising echo estimate according to experimental tau in order
     #   to limit oscillations
+    freq_envelope[direct, 0] *= 0.5
     freq_envelope.ft(direct)
     freq_envelope.mean_all_but(direct).run(abs)
     if fl is not None:
@@ -471,11 +506,14 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
         fl.plot(freq_envelope, human_units=False, label="signal energy")
     freq_envelope.convolve(
         direct,
-        freq_envelope.get_ft_prop(direct, "df") * 5,
+        width_guess,
         enforce_causality=False,
     )
+    SW = 1 / freq_envelope.get_ft_prop(direct, "dt")
+    # baseline, assuming we're constrained to the middle 1/3 of the SW
     freq_envelope -= (
-        freq_envelope[direct, -1].item() + freq_envelope[direct, 0].item()
+        freq_envelope[direct : tuple(-r_[0.165, 0.18] * SW)].mean().item()
+        + freq_envelope[direct : tuple(r_[0.165, 0.18] * SW)].mean().item()
     ) / 2
     if fl is not None:
         fl.next("autoslicing!")
@@ -488,6 +526,9 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     wide_ranges = freq_envelope.contiguous(
         lambda x: x > peak_lower_thresh * x.data.max()
     )
+    widest_ranges = freq_envelope.contiguous(
+        lambda x: x > peak_lowest_thresh * x.data.max()
+    )
 
     def filter_ranges(B, A):
         """where A and B are lists of ranges (given as tuple pairs), filter B
@@ -499,6 +540,7 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
         ]
 
     peakrange = filter_ranges(wide_ranges, narrow_ranges)
+    peakrange = filter_ranges(widest_ranges, peakrange)
     if len(peakrange) > 1:
         max_range_width = max(
             [thisrange[1] - thisrange[0] for thisrange in peakrange]
@@ -657,9 +699,9 @@ def hermitian_function_test(
             )
         ),
     )
-    s_ext[
-        direct : (orig_bounds[-1], None)
-    ] = 0  # explicitly zero, in case there are aliased negative times!
+    s_ext[direct : (orig_bounds[-1], None)] = (
+        0  # explicitly zero, in case there are aliased negative times!
+    )
     # }}}
     # {{{ now I need to throw out the initial, aliased
     #     portion of the signal -- do this manually by
@@ -669,10 +711,28 @@ def hermitian_function_test(
     #     out
     t_dwos = s_ext.get_ft_prop(direct, "dt")  # oversampled dwell
     min_echo = aliasing_slop * t_dw
-    logging.debug(strm("aliasing slop is", aliasing_slop, "t_dw is", t_dw, "(SW of", 1/t_dw/1e3, "kHz) min echo is", min_echo))
+    logging.debug(
+        strm(
+            "aliasing slop is",
+            aliasing_slop,
+            "t_dw is",
+            t_dw,
+            "(SW of",
+            1 / t_dw / 1e3,
+            "kHz) min echo is",
+            min_echo,
+        )
+    )
     min_echo_idx = int(min_echo / t_dwos + 0.5)
     min_echo = min_echo_idx * t_dwos
-    logging.debug(strm("t_dwos is", t_dwos, "and rounding to the nearest oversampled dwell, min echo is",min_echo))
+    logging.debug(
+        strm(
+            "t_dwos is",
+            t_dwos,
+            "and rounding to the nearest oversampled dwell, min echo is",
+            min_echo,
+        )
+    )
     if fl is not None:
         fl.push_marker()
         if show_extended:
