@@ -81,7 +81,6 @@ def integral_w_errors(
     variance = calc_masked_error(
         s,
         frq_filter_bounds,
-        sig_path,
         indirect=indirect,
         excluded_pathways=excluded_pathways,
         fl=fl,

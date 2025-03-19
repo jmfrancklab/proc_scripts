@@ -37,7 +37,6 @@ def _masked_var_multi(x, axis=None):
 def calc_masked_error(
     s,
     frq_slice,
-    signal_pathway,
     excluded_pathways=None,
     direct="t2",
     indirect="nScans",
@@ -75,8 +74,6 @@ def calc_masked_error(
     """
     collected_variance = s.C  # so we don't alter s
     # {{{ filter out signal pathway and excluded error pathways
-    temp = select_pathway(collected_variance, signal_pathway)
-    temp.data[:] = np.nan
     if type(excluded_pathways) == dict:
         raise ValueError(
             "excluded_pathways should be a list of dicts."
