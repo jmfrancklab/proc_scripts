@@ -27,28 +27,31 @@ def integral_w_errors(
 
     Parameters
     ==========
-    sig_path:   dict
-                Dictionary of the path of the desired signal.
+    sig_path: dict
+        Dictionary of the path of the desired signal.
     excluded_frqs: list
         List of tuples containing frequencies to be filtered out when
         calculating the variance.
     excluded_pathways: list
-                List of dictionaries containing all coherence pathways that are
-                to be masked out when calculating the error.
-                By default the function will mask out the signal pathway.
+        List of dictionaries containing all coherence pathways that are to be
+        masked out when calculating the error. This should include the signal
+        pathway!
+    cutoff: float
+        Multiplier used in determining the integral bounds. Higher values will
+        produce smaller integrals.
     convolve_method: str
-                method of convolution used in integrating limits
-                passed on to :func:`integrate_limits`
-    indirect:   str
-                Indirect axis.
-    direct:     str
-                Direct axis.
+        method of convolution used in integrating limits passed on to
+        :func:`integrate_limits`
+    indirect: str
+        Indirect axis.
+    direct: str
+        Direct axis.
 
     Returns
     =======
-    s:       nddata
-             Integrated data with error associated with coherence pathways
-             not included in the signal pathway.
+    s: nddata
+        Integrated data with error associated with coherence pathways not
+        included in the signal pathway.
     """
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     if convolve_method is not None:
