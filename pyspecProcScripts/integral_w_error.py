@@ -58,9 +58,16 @@ def integral_w_errors(
         **kwargs,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
+    variance = calc_masked_error(
+        s,
+        frq_slice,
+        indirect=indirect,
+        excluded_pathways=excluded_pathways,
+        fl=fl,
+    )
     s = s[direct:frq_slice]
     # {{{ variables in calculating error over slice
-    N = len(s[direct])  # number of pts within the slice
+    N = s.shape[direct]  # number of pts within the slice
     df = s.get_ft_prop(direct, "df")
     # }}}
     all_labels = set(s.dimlabels)
@@ -71,20 +78,6 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    # Determine smaller slice within signal bounds where ph cycling noise most
-    # likely resides
-    frq_filter_push = (frq_slice[1] - frq_slice[0]) / 3
-    frq_filter_bounds = (
-        frq_slice[0] + frq_filter_push,
-        frq_slice[-1] - frq_filter_push,
-    )
-    variance = calc_masked_error(
-        s,
-        frq_filter_bounds,
-        indirect=indirect,
-        excluded_pathways=excluded_pathways,
-        fl=fl,
-    )
     std_error = psp.sqrt(variance * df**2 * N)
     retval = (
         select_pathway(s, sig_path).integrate(direct).set_error(std_error.data)
