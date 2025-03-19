@@ -15,11 +15,8 @@ def _masked_mean_multi(x, axis=None):
 
 
 def _masked_var_multi(x, axis=None):
-    """Calculates the variance along a 1D axis.
-    - If the data claims to be complex but has a negligible imag part, raise an
-      error
-    - If the data is real, calculates the variance normally.
-    - Otherwise, raise an error for complex data."""
+    """Calculates the variance along a 1D axis if an axis is fed or returns a 
+    single float for the variance. The data must real"""
 
     def masked_var(x):
         if np.iscomplex(axis) and sum(abs(np.imag(axis))) > 1e-7:
