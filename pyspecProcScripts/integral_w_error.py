@@ -55,7 +55,7 @@ def integral_w_errors(
         fraction of the maximum signal intensity to determine the limits.
         Errors are determined by error propagation in the frequency domain,
         with the noise associated with the spectral datapoints determined from
-        the masked variance of the DCCT.
+        the masked variance of the DCCT data.
     """
     signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
