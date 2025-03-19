@@ -19,15 +19,18 @@ def _masked_var_multi(x, axis=None):
     If the data is complex you must assign var_has_imag as true
     so that the calculated variance is divided by 2.
     By default it calculates the variance of the real of the data"""
-    assert axis is not None
+
     def masked_var(x):
-        if np.iscomplex(axis) and sum(abs(np.imag(axis)))>1e-7:
+        if np.iscomplex(axis) and sum(abs(np.imag(axis))) > 1e-7:
             # take average of variance along real and imag
             return np.var(x[np.isfinite(x)], ddov=1) / 2
         else:
             return np.var(x[np.isfinite(x)], ddof=1)
 
-    return np.apply_along_axis(masked_var, axis, x)
+    if axis is not None:
+        return np.apply_along_axis(masked_var, axis, x)
+    else:
+        return masked_var(x)
 
 
 # }}}
@@ -55,8 +58,6 @@ def calc_masked_error(
         Frequency range that will be filtered out in calculating the error - it
         is assumed this region in all coherence transfer pathways contains some
         amount of phase cycling noise.
-    signal_pathway:   dict
-                Dictionary of the path of the desired signal.
     excluded_pathways: list
                 List of dictionaries containing the coherence pathways that are
                 to be masked out when calculating the error.
@@ -76,17 +77,22 @@ def calc_masked_error(
     # {{{ filter out signal pathway and excluded error pathways
     temp = select_pathway(collected_variance, signal_pathway)
     temp.data[:] = np.nan
-    if excluded_pathways is not None:
+    if type(excluded_pathways) == dict:
+        raise ValueError(
+            "excluded_pathways should be a list of dicts."
+            "If you really mean to exclude only one pathway, pass a "
+            "list with a single dict inside"
+        )
+    if excluded_pathways is not None and len(excluded_pathways) > 0:
         for j in range(len(excluded_pathways)):
             temp = select_pathway(collected_variance, excluded_pathways[j])
             temp.data[:] = np.nan
     # }}}
-    # Filter out frq_slice where ph noise resides        
-    collected_variance[direct:frq_slice].data[:] = np.nan        
+    # Filter out frq_slice where ph noise resides
+    collected_variance[direct:frq_slice].data[:] = np.nan
     if fl is not None:
         fl.next("Frequency Noise")
         fl.image(collected_variance)
-    collected_variance.run(_masked_var_multi, direct)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         collected_variance.run(_masked_mean_multi, j)
-    return collected_variance
+    return _masked_var_multi(collected_variance.data).item()
