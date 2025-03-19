@@ -117,4 +117,5 @@ def calc_masked_error(
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         collected_variance.run(_masked_mean_multi, j)
     # }}}
+    # calculate variance along the indirect dimension
     return collected_variance.run(_masked_var_multi, direct)
