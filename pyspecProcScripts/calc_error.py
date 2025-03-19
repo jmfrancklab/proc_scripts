@@ -58,22 +58,21 @@ def calc_masked_error(
         error - it is assumed this region in all coherence transfer pathways
         contains some amount of phase cycling noise.
     excluded_pathways: list
-                List of dictionaries containing the coherence pathways that are
-                to be masked out when calculating the error.
-                If no excluded_pathways are fed, the function will apply a mask
-                over just the signal pathway.
-    direct:     str
-                Direct axis.
-    indirect:   str
-                Indirect axis.
+        List of dictionaries containing the coherence pathways that are
+        to be masked out when calculating the error.
+        If no excluded_pathways are fed, the function will apply a mask
+        over just the signal pathway.
+    direct: str
+        Direct axis.
+    indirect: str
+        Indirect axis.
     Returns
     =======
-    collected_variance:       nddata
-             The error associated with coherence pathways not included in the
-             signal pathway.
+    collected_variance: float
+        The variance of the spectral datapoints.
     """
-    collected_variance = s.C  # so we don't alter s
-    # {{{ filter out signal pathway and excluded error pathways
+    collected_variance = s.C  # so we don't alter s when we apply the mask
+    # {{{ filter out excluded error pathways
     if isinstance(excluded_pathways,dict):
         raise ValueError(
             "excluded_pathways should be a list of dicts."
@@ -85,13 +84,22 @@ def calc_masked_error(
             temp = select_pathway(collected_variance, excluded_pathways[j])
             temp.data[:] = np.nan
     # }}}
-    # Filter out frq_slice where ph noise resides
+    # {{{ Filter out frq_slice where ph noise resides
+    if isinstance(excluded_frqs,tuple):
+        raise ValueError(
+            "excluded_frqs should be a list of tuples."
+            "If you really mean to exclude only one slice, pass a "
+            "list with a single tuple inside"
+        )
     if excluded_frqs is not None and len(excluded_frqs) > 0:
         for j in range(len(excluded_frqs)):
             collected_variance[direct : excluded_frqs[j]].data[:] = np.nan
+    # }}}        
     if fl is not None:
         fl.next("Frequency Noise")
         fl.image(collected_variance)
+    # {{{ Average over remaining ct pathways    
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         collected_variance.run(_masked_mean_multi, j)
+    # }}}
     return _masked_var_multi(collected_variance.data).item()
