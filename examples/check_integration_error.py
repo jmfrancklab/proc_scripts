@@ -29,7 +29,11 @@ vd = nddata(r_[0:1:40j], "vd")
 ph1 = nddata(r_[0, 2] / 4.0, "ph1")
 ph2 = nddata(r_[0:4] / 4.0, "ph2")
 signal_pathway = {"ph1": 0, "ph2": 1}
-excluded_pathways = [(0, 0), (0, 3)]
+excluded_pathways = [
+    signal_pathway,
+    {"ph1": 0, "ph2": 0},
+    {"ph1": 0, "ph2": 3},
+]
 # this generates fake clean_data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
 # offset of 300 Hz, FWHM 10 Hz
@@ -62,20 +66,11 @@ for j in range(n_repeats):
     data.ft("t2", shift=True)
     # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
-    error_pathway = (
-        set((
-            (j, k)
-            for j in range(ndshape(data)["ph1"])
-            for k in range(ndshape(data)["ph2"])
-        ))
-        - set(excluded_pathways)
-        - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
-    )
-    error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
     s_int, frq_slice = integral_w_errors(
         data,
-        signal_pathway,
-        error_pathway,
+        signal_pathway=signal_pathway,
+        excluded_pathways=excluded_pathways,
+        excluded_frqs=[bounds],
         indirect="vd",
         fl=fl,
         return_frq_slice=True,
