@@ -9,6 +9,7 @@ import numpy as np
 def integral_w_errors(
     s,
     sig_path,
+    excluded_frqs=None,
     excluded_pathways=None,
     cutoff=0.1,
     convolve_method="Gaussian",
@@ -28,6 +29,9 @@ def integral_w_errors(
     ==========
     sig_path:   dict
                 Dictionary of the path of the desired signal.
+    excluded_frqs: list
+        List of tuples containing frequencies to be filtered out when
+        calculating the variance.
     excluded_pathways: list
                 List of dictionaries containing all coherence pathways that are
                 to be masked out when calculating the error.
@@ -60,7 +64,7 @@ def integral_w_errors(
     logging.debug(psp.strm("frq_slice is", frq_slice))
     variance = calc_masked_error(
         s,
-        excluded_frqs = [frq_slice],
+        excluded_frqs=excluded_frqs,
         indirect=indirect,
         excluded_pathways=excluded_pathways,
         fl=fl,

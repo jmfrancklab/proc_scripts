@@ -24,7 +24,11 @@ vd = nddata(r_[0:1:40j], "vd")
 ph1 = nddata(r_[0, 2] / 4.0, "ph1")
 ph2 = nddata(r_[0:4] / 4.0, "ph2")
 signal_pathway = {"ph1": 0, "ph2": 1}
-excluded_pathways = [signal_pathway,{"ph1":0, "ph2":0}, {"ph1":0, "ph2":3}]
+excluded_pathways = [
+    signal_pathway,
+    {"ph1": 0, "ph2": 0},
+    {"ph1": 0, "ph2": 3},
+]
 manual_slice = (60, 140)  # manually chosen integration bounds
 # this generates fake data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
@@ -58,7 +62,12 @@ data /= sqrt(ndshape(data)["t2"]) * dt
 # {{{ First, run the code that automatically chooses integration bounds
 # and also assigns error
 s_int, returned_frq_slice = integral_w_errors(
-    data, signal_pathway, excluded_pathways, fl=fl, return_frq_slice=True
+    data,
+    signal_pathway,
+    [manual_slice],
+    excluded_pathways,
+    fl=fl,
+    return_frq_slice=True,
 )
 fl.next("compare manual vs. automatic", legend=True)
 fl.plot(s_int, ".", label="fully auto: real", capsize=6)
