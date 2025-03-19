@@ -112,7 +112,8 @@ def calc_masked_error(
     if fl is not None:
         fl.next("Masked Frequency Noise")
         fl.image(collected_variance)
-    # {{{ Average over remaining ct pathways
+    # {{{ Average over remaining ct pathways so the returned nddata has one
+    #     dimension
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         collected_variance.run(_masked_mean_multi, j)
     # }}}
