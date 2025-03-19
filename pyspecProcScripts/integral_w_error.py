@@ -60,7 +60,7 @@ def integral_w_errors(
     logging.debug(psp.strm("frq_slice is", frq_slice))
     variance = calc_masked_error(
         s,
-        frq_slice,
+        excluded_frqs = [frq_slice],
         indirect=indirect,
         excluded_pathways=excluded_pathways,
         fl=fl,

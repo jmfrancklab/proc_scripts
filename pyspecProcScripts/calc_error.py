@@ -36,7 +36,7 @@ def _masked_var_multi(x, axis=None):
 # }}}
 def calc_masked_error(
     s,
-    frq_slice,
+    excluded_frqs=None,
     excluded_pathways=None,
     direct="t2",
     indirect="nScans",
@@ -53,10 +53,10 @@ def calc_masked_error(
     s: nddata
         Full nddata set in the frequency domain for which the error is being
         propagated.
-    frq_slice: tuple
-        Frequency range that will be filtered out in calculating the error - it
-        is assumed this region in all coherence transfer pathways contains some
-        amount of phase cycling noise.
+    excluded_frqs: list
+        list of frequency ranges that will be filtered out in calculating the
+        error - it is assumed this region in all coherence transfer pathways
+        contains some amount of phase cycling noise.
     excluded_pathways: list
                 List of dictionaries containing the coherence pathways that are
                 to be masked out when calculating the error.
@@ -86,7 +86,9 @@ def calc_masked_error(
             temp.data[:] = np.nan
     # }}}
     # Filter out frq_slice where ph noise resides
-    collected_variance[direct:frq_slice].data[:] = np.nan
+    if excluded_frqs is not None and len(excluded_frqs) > 0:
+        for j in range(len(excluded_frqs)):
+            collected_variance[direct : excluded_frqs[j]].data[:] = np.nan
     if fl is not None:
         fl.next("Frequency Noise")
         fl.image(collected_variance)
