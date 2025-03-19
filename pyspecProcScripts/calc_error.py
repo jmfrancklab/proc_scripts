@@ -74,7 +74,7 @@ def calc_masked_error(
     """
     collected_variance = s.C  # so we don't alter s
     # {{{ filter out signal pathway and excluded error pathways
-    if type(excluded_pathways) == dict:
+    if isinstance(excluded_pathways,dict):
         raise ValueError(
             "excluded_pathways should be a list of dicts."
             "If you really mean to exclude only one pathway, pass a "
