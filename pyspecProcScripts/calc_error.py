@@ -16,14 +16,13 @@ def _masked_mean_multi(x, axis=None):
 
 def _masked_var_multi(x, axis=None):
     """Calculates the variance along a 1D axis.
-    If the data is complex you must assign var_has_imag as true
-    so that the calculated variance is divided by 2.
-    By default it calculates the variance of the real of the data"""
+    Note, it calculates the variance of the real of the data"""
 
     def masked_var(x):
         if np.iscomplex(axis) and sum(abs(np.imag(axis))) > 1e-7:
-            # take average of variance along real and imag
-            return np.var(x[np.isfinite(x)], ddov=1) / 2
+            raise ValueError(
+                "Data claims to be complex but has a negligible imaginary part"
+            )
         else:
             return np.var(x[np.isfinite(x)], ddof=1)
 
@@ -73,7 +72,7 @@ def calc_masked_error(
     """
     collected_variance = s.C  # so we don't alter s when we apply the mask
     # {{{ filter out excluded error pathways
-    if isinstance(excluded_pathways,dict):
+    if isinstance(excluded_pathways, dict):
         raise ValueError(
             "excluded_pathways should be a list of dicts."
             "If you really mean to exclude only one pathway, pass a "
@@ -85,7 +84,7 @@ def calc_masked_error(
             temp.data[:] = np.nan
     # }}}
     # {{{ Filter out frq_slice where ph noise resides
-    if isinstance(excluded_frqs,tuple):
+    if isinstance(excluded_frqs, tuple):
         raise ValueError(
             "excluded_frqs should be a list of tuples."
             "If you really mean to exclude only one slice, pass a "
@@ -94,11 +93,11 @@ def calc_masked_error(
     if excluded_frqs is not None and len(excluded_frqs) > 0:
         for j in range(len(excluded_frqs)):
             collected_variance[direct : excluded_frqs[j]].data[:] = np.nan
-    # }}}        
+    # }}}
     if fl is not None:
         fl.next("Frequency Noise")
         fl.image(collected_variance)
-    # {{{ Average over remaining ct pathways    
+    # {{{ Average over remaining ct pathways
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         collected_variance.run(_masked_mean_multi, j)
     # }}}
