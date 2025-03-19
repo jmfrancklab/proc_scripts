@@ -44,9 +44,9 @@ def calc_masked_error(
 ):
     """Calculates the propagation of error for the given signal.
 
-    Before declaring the error_path,
+    Before declaring the excluded_pathways or excluded_frqs,
     look at an examples such as integration_w_error.py to see how to
-    decide which excluded pathways to take the error over.
+    decide which excluded pathways to mask out.
 
     Parameters
     ==========
