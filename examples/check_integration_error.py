@@ -68,7 +68,7 @@ for j in range(n_repeats):
     data /= sqrt(ndshape(data)["t2"]) * dt
     s_int, frq_slice = integral_w_errors(
         data,
-        sig_path=signal_pathway,
+        signal_pathway=signal_pathway,
         excluded_pathways=excluded_pathways,
         excluded_frqs=[bounds],
         indirect="vd",

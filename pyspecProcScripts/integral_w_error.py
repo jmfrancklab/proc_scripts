@@ -8,7 +8,7 @@ import numpy as np
 
 def integral_w_errors(
     s,
-    sig_path,
+    signal_pathway=None,
     excluded_frqs=None,
     excluded_pathways=None,
     cutoff=0.1,
@@ -27,7 +27,7 @@ def integral_w_errors(
 
     Parameters
     ==========
-    sig_path: dict
+    signal_pathway: dict
         Dictionary of the path of the desired signal.
     excluded_frqs: list
         List of tuples containing frequencies to be filtered out when
@@ -50,16 +50,21 @@ def integral_w_errors(
     Returns
     =======
     s: nddata
-        Integrated data with error associated with coherence pathways not
-        included in the signal pathway.
+        Data sampled at the indicated coherence pathway, and integrated over
+        bounds found by applying a matched filter and using the "cutoff" as a
+        fraction of the maximum signal intensity to determine the limits.
+        Errors are determined by error propagation in the frequency domain,
+        with the noise associated with the spectral datapoints determined from
+        the masked variance of the DCCT.
     """
+    signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     if convolve_method is not None:
         kwargs = {"convolve_method": convolve_method}
     else:
         kwargs = {}
     frq_slice = integrate_limits(
-        select_pathway(s, sig_path),
+        select_pathway(s, signal_pathway),
         cutoff=cutoff,
         fl=fl,
         **kwargs,
@@ -85,9 +90,10 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    std_error = psp.sqrt(variance * df**2 * N)
     retval = (
-        select_pathway(s, sig_path).integrate(direct).set_error(std_error.data)
+        select_pathway(s, signal_pathway)
+        .integrate(direct)
+        .set_error(psp.sqrt(variance.data * df**2 * N))
     )
     if not return_frq_slice:
         return retval

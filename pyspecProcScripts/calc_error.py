@@ -16,15 +16,23 @@ def _masked_mean_multi(x, axis=None):
 
 def _masked_var_multi(x, axis=None):
     """Calculates the variance along a 1D axis.
-    Note, it calculates the variance of the real of the data"""
+    - If the data claims to be complex but has a negligible imag part, raise an
+      error
+    - If the data is real, calculates the variance normally.
+    - Otherwise, raise an error for complex data."""
 
     def masked_var(x):
         if np.iscomplex(axis) and sum(abs(np.imag(axis))) > 1e-7:
             raise ValueError(
                 "Data claims to be complex but has a negligible imaginary part"
             )
-        else:
+        elif not np.iscomplex(axis):
             return np.var(x[np.isfinite(x)], ddof=1)
+        else:
+            raise ValueError(
+                "You're giving me complex data but I only calculate the"
+                " variance of real data!"
+            )
 
     if axis is not None:
         return np.apply_along_axis(masked_var, axis, x)
@@ -38,7 +46,7 @@ def calc_masked_error(
     excluded_frqs=None,
     excluded_pathways=None,
     direct="t2",
-    indirect="nScans",
+    indirect="vd",
     fl=None,
 ):
     """Calculates the propagation of error for the given signal.
@@ -67,8 +75,9 @@ def calc_masked_error(
         Indirect axis.
     Returns
     =======
-    collected_variance: float
-        The variance of the spectral datapoints.
+    collected_variance: nddata
+        The variance of the spectral datapoints with the only dimension being
+        the indirect.
     """
     collected_variance = s.C  # so we don't alter s when we apply the mask
     # {{{ filter out excluded error pathways
@@ -78,6 +87,15 @@ def calc_masked_error(
             "If you really mean to exclude only one pathway, pass a "
             "list with a single dict inside"
         )
+    if excluded_pathways is None:
+        try:
+            excluded_pathways = [s.get_prop("coherence_pathway")]
+        except Exception:
+            assert excluded_pathways is not None, (
+                "You need to at least give"
+                " me the signal pathway to mask out, and your data does "
+                "not have a property called coherence_pathway!"
+            )
     if excluded_pathways is not None and len(excluded_pathways) > 0:
         for j in range(len(excluded_pathways)):
             temp = select_pathway(collected_variance, excluded_pathways[j])
@@ -95,10 +113,10 @@ def calc_masked_error(
             collected_variance[direct : excluded_frqs[j]].data[:] = np.nan
     # }}}
     if fl is not None:
-        fl.next("Frequency Noise")
+        fl.next("Masked Frequency Noise")
         fl.image(collected_variance)
     # {{{ Average over remaining ct pathways
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         collected_variance.run(_masked_mean_multi, j)
     # }}}
-    return _masked_var_multi(collected_variance.data).item()
+    return collected_variance.run(_masked_var_multi, direct)
