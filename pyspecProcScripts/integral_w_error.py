@@ -29,7 +29,7 @@ def integral_w_errors(
     sig_path:   dict
                 Dictionary of the path of the desired signal.
     excluded_pathways: list
-                List of tuples containing all coherence pathways that are
+                List of dictionaries containing all coherence pathways that are
                 to be masked out when calculating the error.
                 By default the function will mask out the signal pathway.
     convolve_method: str

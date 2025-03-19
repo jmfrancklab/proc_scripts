@@ -14,15 +14,15 @@ def _masked_mean_multi(x, axis=None):
     return np.apply_along_axis(masked_mean, axis, x)
 
 
-def _masked_var_multi(x, var_has_imag=False, axis=None):
+def _masked_var_multi(x, axis=None):
     """Calculates the variance along a 1D axis.
     If the data is complex you must assign var_has_imag as true
     so that the calculated variance is divided by 2.
     By default it calculates the variance of the real of the data"""
     assert axis is not None
-
     def masked_var(x):
-        if var_has_imag:  # take average of variance along real and imag
+        if np.iscomplex(axis) and sum(abs(np.imag(axis)))>1e-7:
+            # take average of variance along real and imag
             return np.var(x[np.isfinite(x)], ddov=1) / 2
         else:
             return np.var(x[np.isfinite(x)], ddof=1)
@@ -58,7 +58,7 @@ def calc_masked_error(
     signal_pathway:   dict
                 Dictionary of the path of the desired signal.
     excluded_pathways: list
-                List of tuples containing the coherence pathways that are
+                List of dictionaries containing the coherence pathways that are
                 to be masked out when calculating the error.
                 If no excluded_pathways are fed, the function will apply a mask
                 over just the signal pathway.
@@ -72,23 +72,13 @@ def calc_masked_error(
              The error associated with coherence pathways not included in the
              signal pathway.
     """
-    # {{{ Determine if the data has an imaginary component
-    var_has_imag = False
-    if np.iscomplex(s):
-        var_has_imag = True
-    # }}}
-    phcycdims = [j for j in s.dimlabels if j.startswith("ph")]
     collected_variance = s.C  # so we don't alter s
     # {{{ filter out signal pathway and excluded error pathways
     temp = select_pathway(collected_variance, signal_pathway)
     temp.data[:] = np.nan
     if excluded_pathways is not None:
-        error_paths = [
-            {phcycdims[i]: path[i] for i in range(len(phcycdims))}
-            for path in excluded_pathways
-        ]
-        for j in range(len(error_paths)):
-            temp = select_pathway(collected_variance, error_paths[j])
+        for j in range(len(excluded_pathways)):
+            temp = select_pathway(collected_variance, excluded_pathways[j])
             temp.data[:] = np.nan
     # }}}
     # Filter out frq_slice where ph noise resides        
@@ -96,7 +86,7 @@ def calc_masked_error(
     if fl is not None:
         fl.next("Frequency Noise")
         fl.image(collected_variance)
-    collected_variance.run(_masked_var_multi, direct, var_has_imag)
+    collected_variance.run(_masked_var_multi, direct)
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
-        collected_variance.run(_masked_mean_multi, j, var_has_imag)
+        collected_variance.run(_masked_mean_multi, j)
     return collected_variance
