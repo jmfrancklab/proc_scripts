@@ -474,6 +474,40 @@ def find_peakrange(
     # {{{ autodetermine slice range
     freq_envelope = d.C
     freq_envelope.ift(direct)
+    time_envelope = abs(freq_envelope.mean_all_but(direct))  # |s(t)|
+    time_envelope[direct] -= time_envelope[direct][
+        0
+    ]  # just call the start of the time axis t=0
+    time_envelope.ft(
+        direct,
+        pad=time_envelope.shape[direct] * 20,  # high-res frequency domain
+    ).ft_new_startpoint(
+        direct, "time"
+    )  # we're going to want an ift for time domain
+    fl.next("peak finder", legend=True)
+    fl.plot(time_envelope, label="time envelope")
+    exp_decay = np.exp(
+        -abs(time_envelope.C.ift(direct).fromaxis(direct)) * pi * width_guess
+    )
+    hat_func = exp_decay.copy(data=False)
+    hat_func.data = np.zeros_like(exp_decay.data)
+    hat_func[direct: (0, None)] = 1
+    hat_func[direct: 0] = 0.5
+    exp_decay.ft(direct)
+    hat_func.ft(direct)
+    hat_func.run(np.conj)
+    time_envelope.run(np.conj)
+    thiscorrel = (
+        time_envelope * exp_decay
+    )  # FT(|s(t)|★|e(t)|) ← sqrt energy of overlap
+    energy_denom = (
+        hat_func * exp_decay
+    )  # FT(h(t)★e(t)) ← sqrt energy possible from
+    thiscorrel.ift(direct, shift=True)
+    energy_denom.ift(direct, shift=True)
+    fl.plot(abs(thiscorrel) ** 2, label="correl")
+    fl.plot(abs(energy_denom) ** 2, label="denom")
+    fl.plot(abs(thiscorrel / energy_denom) ** 2, label="ratio")
     # {{{ estimate the echo center by scrolling a filter that we think is matched across the data, and find where it gives max energy
     thisoffset = max_echo
     while thisoffset >= 1e-3:
