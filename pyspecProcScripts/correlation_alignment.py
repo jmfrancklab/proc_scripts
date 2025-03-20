@@ -120,6 +120,7 @@ def correl_align(
         )  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
         #                 want applied to s_orig
+    assert repeat_dims is not None, "you need to tell me what the repeated dimension is!"    
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
