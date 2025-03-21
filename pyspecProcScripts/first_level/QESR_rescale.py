@@ -181,7 +181,9 @@ def QESR_apply_scalefactor(d):
     )  # the first fraction on eq 2-17 -- in bruker E500 manual
     c_propfactor = Q_(calibcache.dint_propFactor, "m**2")
     dint_conversion = (c_propfactor / diameter**2).to("").magnitude
-    signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q
+    signal_denom = (
+        G_R * Q_(4, "ms") * sqrt(power) * B_m * n_B * S * (S + 1) * Q
+    )
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s"))
     # }}}
     logger.debug(
