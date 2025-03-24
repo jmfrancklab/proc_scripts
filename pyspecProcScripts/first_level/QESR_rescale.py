@@ -182,14 +182,21 @@ def QESR_apply_scalefactor(d):
     c_propfactor = Q_(calibcache.dint_propFactor, "m**2")
     dint_conversion = (c_propfactor / diameter**2).to("").magnitude
     signal_denom = (
-        G_R * Q_(4, "ms") * sqrt(power) * B_m * n_B * S * (S + 1) * Q
+        Q_(81, "dB")  # gain in AG param set
+        * Q_(4.0, "ms")  # conversion time in AG param set
+        * sqrt(power)
+        * B_m
+        * n_B
+        * S
+        * (S + 1)
+        * Q
     )
     signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s"))
     # }}}
     logger.debug(
         strm(
-            f"$G_R={G_R:~P}$\n"
-            f"$C_t={C_t:~P}$\n"
+            f"$G_R={G_R:~P}$ (ignored)\n"
+            f"$C_t={C_t:~P}$ (ignored)\n"
             f"$power={power:~P}$\n"
             f"$B_m={B_m:~P}$\n"
             f"$Q={Q:~P} $\n"
