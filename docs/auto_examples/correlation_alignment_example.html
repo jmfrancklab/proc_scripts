@@ -21,8 +21,6 @@
     <link rel="icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Time-Domain Noise" href="time_domain_noise.html" />
-    <link rel="prev" title="Check integral error calculation" href="check_integration_error.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -49,33 +47,17 @@ to download the full example code</p>
 <span id="sphx-glr-auto-examples-correlation-alignment-example-py"></span><h1>Align data with significant frequency drift<a class="headerlink" href="#align-data-with-significant-frequency-drift" title="Link to this heading">¶</a></h1>
 <p>Takes a 2D data set and applies proper phasing corrections followed by
 aligning the data through a correlation routine.</p>
-<ul class="sphx-glr-horizontal">
-<li><img src="../_images/sphx_glr_correlation_alignment_example_001.png" srcset="../_images/sphx_glr_correlation_alignment_example_001.png" alt="(IR), (IR) Data Processing, (IR) Data Processing, (IR) Data Processing, (IR) Data Processing" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_correlation_alignment_example_002.png" srcset="../_images/sphx_glr_correlation_alignment_example_002.png" alt="Correlation Diagnostic (IR), before correlation sig. energy=23238.3, correlation function (t),  after apod, correlation function (v),  after apod, after correlation before ph0 restore, after correlation ph0 restored  sig. energy=23238.3" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_correlation_alignment_example_003.png" srcset="../_images/sphx_glr_correlation_alignment_example_003.png" alt="(IR) correlation convergence" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_correlation_alignment_example_004.png" srcset="../_images/sphx_glr_correlation_alignment_example_004.png" alt="(enhancement), (enhancement) Data Processing, (enhancement) Data Processing, (enhancement) Data Processing, (enhancement) Data Processing" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_correlation_alignment_example_005.png" srcset="../_images/sphx_glr_correlation_alignment_example_005.png" alt="Correlation Diagnostic (enhancement), before correlation sig. energy=49135.6, correlation function (t),  after apod, correlation function (v),  after apod, after correlation before ph0 restore, after correlation ph0 restored  sig. energy=49135.6" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_correlation_alignment_example_006.png" srcset="../_images/sphx_glr_correlation_alignment_example_006.png" alt="(enhancement) correlation convergence" class = "sphx-glr-multi-img"/></li>
-</ul>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>nddata
-nddata
-nddata
-nddata
-/home/jmfranck/git_repos/proc_scripts/examples/correlation_alignment_example.py:119: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
-  fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-nddata
-nddata
-nddata
-nddata
-1: (IR) Data Processing
-2: (IR) Correlation Diagnostics |||(&#39;ms&#39;, None)
-3: (IR) correlation convergence |||(&#39;Hz&#39;, None)
-4: (enhancement) Data Processing
-5: (enhancement) Correlation Diagnostics |||(&#39;ms&#39;, None)
-6: (enhancement) correlation convergence |||(&#39;Hz&#39;, None)
-
-/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:782: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
-  plt.gcf().tight_layout()
+<div class="sphx-glr-script-out highlight-pytb notranslate"><div class="highlight"><pre><span></span><span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;/home/jmfranck/git_repos/proc_scripts/examples/correlation_alignment_example.py&quot;</span>, line <span class="m">89</span>, in <span class="n">&lt;module&gt;</span>
+<span class="w">    </span><span class="n">best_shift</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.hermitian_function_test" title="pyspecProcScripts.hermitian_function_test" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">psdpr</span><span class="o">.</span><span class="n">hermitian_function_test</span></a><span class="p">(</span>
+<span class="w">                 </span><span class="pm">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>
+  File <span class="nb">&quot;/home/jmfranck/git_repos/proc_scripts/pyspecProcScripts/phasing.py&quot;</span>, line <span class="m">620</span>, in <span class="n">hermitian_function_test</span>
+<span class="w">    </span><span class="n">s_timedom</span><span class="o">.</span><span class="n">getaxis</span><span class="p">(</span><span class="n">direct</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.0</span>
+<span class="gr">AssertionError</span>: <span class="n">In order to</span>
+<span class="x">    calculate the signal energy term correctly, the</span>
+<span class="x">    signal must start at t=0  so set the start of the</span>
+<span class="x">    acquisition in the *non-aliased* time domain to 0 (something like</span>
+<span class="x">    data[&#39;t2&#39;] -= acqstart) to avoid confusion</span>
 </pre></div>
 </div>
 <div class="line-block">
@@ -147,7 +129,13 @@ nddata
         <span class="n">data</span><span class="o">.</span><span class="n">reorder</span><span class="p">([</span><span class="n">indirect</span><span class="p">,</span> <span class="s2">&quot;t2&quot;</span><span class="p">],</span> <span class="n">first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">psd</span><span class="o">.</span><span class="n">ndshape</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="s2">&quot;t2&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">get_ft_prop</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">,</span> <span class="s2">&quot;dt&quot;</span><span class="p">)</span>
-        <span class="n">fl</span><span class="o">.</span><span class="n">DCCT</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Raw Data&quot;</span><span class="p">)</span>
+        <span class="n">psd</span><span class="o">.</span><span class="n">DCCT</span><span class="p">(</span>  <span class="c1"># note that fl.DCCT doesn&#39;t allow us to title the individual</span>
+            <span class="c1">#        figures</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Raw Data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;t2&quot;</span><span class="p">:</span><span class="n">f_range</span><span class="p">]</span>
         <span class="n">data</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">/=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.zeroth_order_ph" title="pyspecProcScripts.zeroth_order_ph" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">psdpr</span><span class="o">.</span><span class="n">zeroth_order_ph</span></a><span class="p">(</span>
@@ -160,7 +148,7 @@ nddata
         <span class="p">)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">setaxis</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">-</span> <span class="n">best_shift</span><span class="p">)</span><span class="o">.</span><span class="n">register_axis</span><span class="p">({</span><span class="s2">&quot;t2&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
         <span class="n">data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
-        <span class="n">fl</span><span class="o">.</span><span class="n">DCCT</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Phased and </span><span class="se">\n</span><span class="s2"> Centered&quot;</span><span class="p">)</span>
+        <span class="n">psd</span><span class="o">.</span><span class="n">DCCT</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Phased and </span><span class="se">\n</span><span class="s2"> Centered&quot;</span><span class="p">)</span>
         <span class="c1"># }}}</span>
         <span class="c1"># {{{ Applying Correlation Routine to Align Data</span>
         <span class="n">mysgn</span> <span class="o">=</span> <span class="p">(</span>
@@ -188,14 +176,14 @@ nddata
         <span class="n">data</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">opt_shift</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">fromaxis</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">))</span>
         <span class="n">data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">signal_pathway</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
         <span class="n">data</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
-        <span class="n">fl</span><span class="o">.</span><span class="n">DCCT</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Aligned Data (v)&quot;</span><span class="p">)</span>
+        <span class="n">psd</span><span class="o">.</span><span class="n">DCCT</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;Aligned Data ($\nu$)&quot;</span><span class="p">)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">ift</span><span class="p">(</span><span class="s2">&quot;t2&quot;</span><span class="p">)</span>
-        <span class="n">fl</span><span class="o">.</span><span class="n">DCCT</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Aligned Data (t)&quot;</span><span class="p">)</span>
+        <span class="n">psd</span><span class="o">.</span><span class="n">DCCT</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;Aligned Data ($t$)&quot;</span><span class="p">)</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">rect</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">])</span>
         <span class="c1"># }}}</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (2 minutes 5.633 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.146 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-correlation-alignment-example-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/0f058efc7db9d267ec48ccd183846321/correlation_alignment_example.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">correlation_alignment_example.ipynb</span></code></a></p>
@@ -230,52 +218,14 @@ nddata
 
 <h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra (QESR)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
-<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
-<li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">PSD from SpinCore</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Align data with significant frequency drift</a></li>
-<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="proc_rec_response.html">Calculate and Fit Receiver Response to Sinc</a></li>
-<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
-</ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
-      <li>Previous: <a href="check_integration_error.html" title="previous chapter">Check integral error calculation</a></li>
-      <li>Next: <a href="time_domain_noise.html" title="next chapter">Time-Domain Noise</a></li>
-  </ul></li>
   </ul></li>
 </ul>
 </div>
