@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:04.930** total execution time for 33 files **from all galleries**:
+**00:04.881** total execution time for 33 files **from all galleries**:
 
 .. container::
 
@@ -33,7 +33,7 @@ Computation times
      - Time
      - Mem (MB)
    * - :ref:`sphx_glr_auto_examples_QESR_samesample.py` (``../examples/QESR_samesample.py``)
-     - 00:04.930
+     - 00:04.881
      - 0.0
    * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py` (``../examples/FIDtoEcho_Actual.py``)
      - 00:00.000

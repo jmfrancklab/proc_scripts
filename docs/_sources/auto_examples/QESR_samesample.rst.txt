@@ -42,7 +42,7 @@ few percent.
 See the `QESR.py` example for information about setting your pyspecdata
 config so that this works correctly!
 
-.. GENERATED FROM PYTHON SOURCE LINES 26-69
+.. GENERATED FROM PYTHON SOURCE LINES 26-73
 
 
 
@@ -296,10 +296,14 @@ config so that this works correctly!
 .. code-block:: Python
 
 
-    from matplotlib.pyplot import title
+    from matplotlib.pyplot import title, rcParams
     from pyspecdata import find_file, figlist_var
     from pyspecProcScripts import QESR, align_esr
     from collections import OrderedDict
+
+    rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
+
+    # sphinx_gallery_thumbnail_number = 9
 
     fieldaxis = "$B_0$"
     plot_rescaled = False
@@ -342,7 +346,7 @@ config so that this works correctly!
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 4.930 seconds)
+   **Total running time of the script:** (0 minutes 4.881 seconds)
 
 
 .. _sphx_glr_download_auto_examples_QESR_samesample.py:

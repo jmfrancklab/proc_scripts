@@ -24,10 +24,14 @@ See the `QESR.py` example for information about setting your pyspecdata
 config so that this works correctly!
 """
 
-from matplotlib.pyplot import title
+from matplotlib.pyplot import title, rcParams
 from pyspecdata import find_file, figlist_var
 from pyspecProcScripts import QESR, align_esr
 from collections import OrderedDict
+
+rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
+
+# sphinx_gallery_thumbnail_number = 9
 
 fieldaxis = "$B_0$"
 plot_rescaled = False

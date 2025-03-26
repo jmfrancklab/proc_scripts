@@ -83,23 +83,6 @@ various functions.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Here, we sit and acquire the same sample with different acquisition parameters, and make sure w...">
-
-.. only:: html
-
-  .. image:: /auto_examples/images/thumb/sphx_glr_QESR_samesample_thumb.png
-    :alt:
-
-  :ref:`sphx_glr_auto_examples_QESR_samesample.py`
-
-.. raw:: html
-
-      <div class="sphx-glr-thumbnail-title">QESR of same sample</div>
-    </div>
-
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="However, this EPR alignment represents a more challenging case b/c:">
 
 .. only:: html
@@ -129,6 +112,23 @@ various functions.
 .. raw:: html
 
       <div class="sphx-glr-thumbnail-title">Generate a PSD from Oscilloscope Data</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Here, we sit and acquire the same sample with different acquisition parameters, and make sure w...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_QESR_samesample_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_QESR_samesample.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">QESR of same sample</div>
     </div>
 
 
@@ -586,9 +586,9 @@ various functions.
    /auto_examples/proc_square_refl
    /auto_examples/FIDtoEcho_Actual
    /auto_examples/phaseCycNoise_example
-   /auto_examples/QESR_samesample
    /auto_examples/epr_overlay2
    /auto_examples/generate_oscilloscope_PSD
+   /auto_examples/QESR_samesample
    /auto_examples/QESR
    /auto_examples/epr_overlay
    /auto_examples/integrate_limits_realData
