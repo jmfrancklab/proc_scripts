@@ -13,7 +13,7 @@ import pyspecProcScripts as pypcs
 import matplotlib.pyplot as plt
 from pyspecProcScripts.load_data import lookup_table
 
-psd.init_logging(level="debug")
+psd.init_logging(level="info")
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 1
 

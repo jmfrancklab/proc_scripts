@@ -164,12 +164,14 @@ def rough_table_of_integrals(
     s.ift(direct)
     s *= np.exp(-1j * 2 * pi * (shift - center_of_range) * s.fromaxis(direct))
     s.ft(direct)
-    fl.image(s, ax=ax3,
-             interpolation="auto",
-             )
+    fl.image(
+        s,
+        ax=ax3,
+        interpolation="auto",
+    )
     ax3.set_title(
-            "FID sliced" + (", phased," if echo_like else "") + " and aligned"
-            )
+        "FID sliced" + (", phased," if echo_like else "") + " and aligned"
+    )
     # }}}
     s = s[direct:signal_range].real.integrate(direct).set_error(None)
     if inc_plot_color:
