@@ -60,9 +60,9 @@ dimension.</p>
 <p><code class="docutils literal notranslate"><span class="pre">py</span> <span class="pre">proc_raw.py</span> <span class="pre">ODNP</span> <span class="pre">K42.*A1_kRasbatch240814</span> <span class="pre">ODNP_NMR_comp/ODNP</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">py</span> <span class="pre">proc_raw.py</span> <span class="pre">FIR_34dBm</span> <span class="pre">K42.*A1_kRasbatch240814</span> <span class="pre">ODNP_NMR_comp/ODNP</span></code></p>
 <ul class="sphx-glr-horizontal">
-<li><img src="../_images/sphx_glr_proc_raw_001.png" srcset="../_images/sphx_glr_proc_raw_001.png" alt="raw data" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_raw_002.png" srcset="../_images/sphx_glr_proc_raw_002.png" alt="sum of abs of all coherence pathways (for comparison)" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_proc_raw_003.png" srcset="../_images/sphx_glr_proc_raw_003.png" alt="select {'ph1': 1}" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_raw_001.png" srcset="../_images/sphx_glr_proc_raw_001.png" alt="(real), (imag)" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_raw_002.png" srcset="../_images/sphx_glr_proc_raw_002.png" alt="(real)" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_proc_raw_003.png" srcset="../_images/sphx_glr_proc_raw_003.png" alt="select {'ph1': 1}, with coherence pathway selected" class = "sphx-glr-multi-img"/></li>
 </ul>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>----------  logging output to /home/jmfranck/pyspecdata.0.log  ----------
 postproc_type: spincore_SE_v1
@@ -119,7 +119,10 @@ postproc_type: spincore_SE_v1
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">cycle</span>
 <span class="kn">import</span> <span class="nn">pyspecdata</span> <span class="k">as</span> <span class="nn">psd</span>
 
-<span class="k">if</span> <span class="s2">&quot;SPHINX_GALLERY_RUNNING&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SPHINX_GALLERY_RUNNING&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">:</span>
+<span class="k">if</span> <span class="p">(</span>
+    <span class="s2">&quot;SPHINX_GALLERY_RUNNING&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+    <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SPHINX_GALLERY_RUNNING&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;True&quot;</span>
+<span class="p">):</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
         <span class="s2">&quot;echo_6&quot;</span><span class="p">,</span>
@@ -134,8 +137,10 @@ postproc_type: spincore_SE_v1
 
 <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span>
 <span class="n">d</span> <span class="o">=</span> <span class="n">psd</span><span class="o">.</span><span class="n">find_file</span><span class="p">(</span>
-    <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">exp_type</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">expno</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-    <span class="n">lookup</span><span class="o">=</span><span class="n">prscr</span><span class="o">.</span><span class="n">lookup_table</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+    <span class="n">exp_type</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+    <span class="n">expno</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+    <span class="n">lookup</span><span class="o">=</span><span class="n">prscr</span><span class="o">.</span><span class="n">lookup_table</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;postproc_type:&quot;</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;postproc_type&quot;</span><span class="p">))</span>
 <span class="k">with</span> <span class="n">psd</span><span class="o">.</span><span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
@@ -151,7 +156,7 @@ postproc_type: spincore_SE_v1
             <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">dimlabels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">iterdim</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">iterdim</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">iterdim</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
                 <span class="c1"># so that we can do pcolor, if the indirect is a structured</span>
                 <span class="c1"># array, just pull the first field</span>
                 <span class="k">if</span> <span class="n">d</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">dimlabels</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -208,11 +213,11 @@ postproc_type: spincore_SE_v1
         <span class="n">image_or_plot</span><span class="p">(</span><span class="n">forplot</span><span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <a href="../auto_api/pyspecProcScripts.html#pyspecProcScripts.select_pathway" title="pyspecProcScripts.select_pathway" class="sphx-glr-backref-module-pyspecProcScripts sphx-glr-backref-type-py-function"><span class="n">prscr</span><span class="o">.</span><span class="n">select_pathway</span></a><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;coherence_pathway&quot;</span><span class="p">))</span>
         <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;with coherence pathway selected&quot;</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;select &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;coherence_pathway&quot;</span><span class="p">)))</span>
         <span class="n">image_or_plot</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;select &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get_prop</span><span class="p">(</span><span class="s2">&quot;coherence_pathway&quot;</span><span class="p">)))</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 3.767 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.492 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-proc-raw-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/c14bb3b1260032af0743234a3d1f7368/proc_raw.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">proc_raw.ipynb</span></code></a></p>
@@ -251,14 +256,15 @@ postproc_type: spincore_SE_v1
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra (QESR)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR_samesample.html">QESR of same sample</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra (QESR)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">PSD from SpinCore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">Generate a PSD from SpinCore Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
@@ -274,7 +280,6 @@ postproc_type: spincore_SE_v1
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>

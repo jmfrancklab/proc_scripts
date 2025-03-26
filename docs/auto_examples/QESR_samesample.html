@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>QESR of same sample &#8212; pyspecProcScripts 0.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=832af5b0" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery_custom.css?v=0838f141" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2b30a6e6" />
+    <script src="../_static/documentation_options.js?v=049aceee"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Another EPR Alignment" href="epr_overlay2.html" />
+    <link rel="prev" title="Phase Cycling Noise" href="phaseCycNoise_example.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-qesr-samesample-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="qesr-of-same-sample">
+<span id="sphx-glr-auto-examples-qesr-samesample-py"></span><h1>QESR of same sample<a class="headerlink" href="#qesr-of-same-sample" title="Link to this heading">¶</a></h1>
+<p>Here, we sit and acquire the same sample with different acquisition
+parameters, and make sure we get the same QESR.</p>
+<p>We do this b/c the data is not stored by XEPR in a way that we would
+expect.</p>
+<p>Note that some of these datasets are not great b/c we didn’t capture
+enough of the baseline to either side (and we see here why this is a
+problem).
+However, both with the single integral (absorption) plot and more
+precisely with the ESR alignment we conduct at the end,
+we see that we have properly scaled the spectra.</p>
+<p>See the <cite>QESR.py</cite> example for information about setting your pyspecdata
+config so that this works correctly!</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_QESR_samesample_001.png" srcset="../_images/sphx_glr_QESR_samesample_001.png" alt="Raw and unscaled" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_002.png" srcset="../_images/sphx_glr_QESR_samesample_002.png" alt="zoomed-in baseline diagnostic showing only baseline (data and fit)" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_003.png" srcset="../_images/sphx_glr_QESR_samesample_003.png" alt="abs mode: background subtracted, show baseline, $\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow None)$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_004.png" srcset="../_images/sphx_glr_QESR_samesample_004.png" alt="Raw" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_005.png" srcset="../_images/sphx_glr_QESR_samesample_005.png" alt="correlation" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_006.png" srcset="../_images/sphx_glr_QESR_samesample_006.png" alt="find center" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_007.png" srcset="../_images/sphx_glr_QESR_samesample_007.png" alt="before centering -- ift" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_008.png" srcset="../_images/sphx_glr_QESR_samesample_008.png" alt="after centering -- ift" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_009.png" srcset="../_images/sphx_glr_QESR_samesample_009.png" alt="aligned, autoscaled" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_samesample_010.png" srcset="../_images/sphx_glr_QESR_samesample_010.png" alt="This plot shows we know how to scale the amplitude correctly for a range of different experimental parameters" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>122.54129577330296 µM
+122.63159081503636 µM
+121.01885133606305 µM
+85.85711532617417 µM
+103.46665273851991 µM
+123.48150086226747 µM
+1: Raw and unscaled |||kG
+2: baseline diagnostic
+{&#39;print_string&#39;: &#39;\\par&#39;}
+{&#39;width&#39;: 0.9}
+3: absorption, bg. no bl. |||G
+{&#39;print_string&#39;: &quot;\\textbf{\\texttt{array([-0.66800288, -0.65361027, -0.64696326, ..., -0.63123704,\n       -0.6245511 , -0.62821853], dtype=&#39;&gt;f8&#39;)\n\tdimlabels=[&#39;$B_0$&#39;]\n\taxes={`$B_0$&#39;:array([3446.35      , 3446.42431641, 3446.49863281, ..., 3522.22705119,\n       3522.30136759, 3522.375684  ])\n\t\t\t+/-None}\n}}\\par&quot;}
+{&#39;print_string&#39;: &#39;\\par&#39;}
+{&#39;print_string&#39;: &quot;\\textbf{\\texttt{array([-0.84621271, -0.84798547, -0.85663472, ..., -0.92580633,\n       -0.93721423, -0.94834255], dtype=&#39;&gt;f8&#39;)\n\tdimlabels=[&#39;$B_0$&#39;]\n\taxes={`$B_0$&#39;:array([3446.35      , 3446.42431641, 3446.49863281, ..., 3522.22705119,\n       3522.30136759, 3522.375684  ])\n\t\t\t+/-None}\n}}\\par&quot;}
+{&#39;print_string&#39;: &#39;\\par&#39;}
+{&#39;print_string&#39;: &quot;\\textbf{\\texttt{array([-0.65345155, -0.66422002, -0.668981  , ..., -0.66078097,\n       -0.66666975, -0.68187683], dtype=&#39;&gt;f8&#39;)\n\tdimlabels=[&#39;$B_0$&#39;]\n\taxes={`$B_0$&#39;:array([3446.35      , 3446.42431641, 3446.49863281, ..., 3522.22705119,\n       3522.30136759, 3522.375684  ])\n\t\t\t+/-None}\n}}\\par&quot;}
+{&#39;print_string&#39;: &#39;\\par&#39;}
+{&#39;print_string&#39;: &quot;\\textbf{\\texttt{array([-0.14620168, -0.15906198, -0.16895391, ..., -0.15180505,\n       -0.15562279, -0.15686577], dtype=&#39;&gt;f8&#39;)\n\tdimlabels=[&#39;$B_0$&#39;]\n\taxes={`$B_0$&#39;:array([3457.1       , 3457.15332031, 3457.20664063, ..., 3511.54003937,\n       3511.59335969, 3511.64668   ])\n\t\t\t+/-None}\n}}\\par&quot;}
+{&#39;print_string&#39;: &#39;\\par&#39;}
+{&#39;print_string&#39;: &quot;\\textbf{\\texttt{array([-0.15020269, -0.15608694, -0.16756175, ..., -0.16405414,\n       -0.16407345, -0.15961655], dtype=&#39;&gt;f8&#39;)\n\tdimlabels=[&#39;$B_0$&#39;]\n\taxes={`$B_0$&#39;:array([3457.1       , 3457.12666016, 3457.15332031, ..., 3511.62001969,\n       3511.64667984, 3511.67334   ])\n\t\t\t+/-None}\n}}\\par&quot;}
+{&#39;print_string&#39;: &#39;\\par&#39;}
+{&#39;print_string&#39;: &quot;\\textbf{\\texttt{array([-0.15980043, -0.15991529, -0.14795795, ..., -0.17369751,\n       -0.16198296, -0.14956213], dtype=&#39;&gt;f8&#39;)\n\tdimlabels=[&#39;$B_0$&#39;]\n\taxes={`$B_0$&#39;:array([3457.1       , 3457.12666016, 3457.15332031, ..., 3511.62001969,\n       3511.64667984, 3511.67334   ])\n\t\t\t+/-None}\n}}\\par&quot;}
+{&#39;print_string&#39;: &#39;\\par&#39;}
+4: Raw |||mT
+5: correlation |||mT
+6: find center |||mT
+7: before centering -- ift |||kcyc · (T)$^{-1}$
+8: after centering -- ift |||kcyc · (T)$^{-1}$
+9: aligned, autoscaled |||mT
+{&#39;width&#39;: 0.98}
+10: centered spectra
+
+
+
+
+\par
+
+
+
+
+
+
+\textbf{\texttt{array([-0.66800288, -0.65361027, -0.64696326, ..., -0.63123704,
+       -0.6245511 , -0.62821853], dtype=&#39;&gt;f8&#39;)
+        dimlabels=[&#39;$B_0$&#39;]
+        axes={`$B_0$&#39;:array([3446.35      , 3446.42431641, 3446.49863281, ..., 3522.22705119,
+       3522.30136759, 3522.375684  ])
+                        +/-None}
+}}\par
+
+
+
+
+
+
+\par
+
+
+
+
+
+
+\textbf{\texttt{array([-0.84621271, -0.84798547, -0.85663472, ..., -0.92580633,
+       -0.93721423, -0.94834255], dtype=&#39;&gt;f8&#39;)
+        dimlabels=[&#39;$B_0$&#39;]
+        axes={`$B_0$&#39;:array([3446.35      , 3446.42431641, 3446.49863281, ..., 3522.22705119,
+       3522.30136759, 3522.375684  ])
+                        +/-None}
+}}\par
+
+
+
+
+
+
+\par
+
+
+
+
+
+
+\textbf{\texttt{array([-0.65345155, -0.66422002, -0.668981  , ..., -0.66078097,
+       -0.66666975, -0.68187683], dtype=&#39;&gt;f8&#39;)
+        dimlabels=[&#39;$B_0$&#39;]
+        axes={`$B_0$&#39;:array([3446.35      , 3446.42431641, 3446.49863281, ..., 3522.22705119,
+       3522.30136759, 3522.375684  ])
+                        +/-None}
+}}\par
+
+
+
+
+
+
+\par
+
+
+
+
+
+
+\textbf{\texttt{array([-0.14620168, -0.15906198, -0.16895391, ..., -0.15180505,
+       -0.15562279, -0.15686577], dtype=&#39;&gt;f8&#39;)
+        dimlabels=[&#39;$B_0$&#39;]
+        axes={`$B_0$&#39;:array([3457.1       , 3457.15332031, 3457.20664063, ..., 3511.54003937,
+       3511.59335969, 3511.64668   ])
+                        +/-None}
+}}\par
+
+
+
+
+
+
+\par
+
+
+
+
+
+
+\textbf{\texttt{array([-0.15020269, -0.15608694, -0.16756175, ..., -0.16405414,
+       -0.16407345, -0.15961655], dtype=&#39;&gt;f8&#39;)
+        dimlabels=[&#39;$B_0$&#39;]
+        axes={`$B_0$&#39;:array([3457.1       , 3457.12666016, 3457.15332031, ..., 3511.62001969,
+       3511.64667984, 3511.67334   ])
+                        +/-None}
+}}\par
+
+
+
+
+
+
+\par
+
+
+
+
+
+
+\textbf{\texttt{array([-0.15980043, -0.15991529, -0.14795795, ..., -0.17369751,
+       -0.16198296, -0.14956213], dtype=&#39;&gt;f8&#39;)
+        dimlabels=[&#39;$B_0$&#39;]
+        axes={`$B_0$&#39;:array([3457.1       , 3457.12666016, 3457.15332031, ..., 3511.62001969,
+       3511.64667984, 3511.67334   ])
+                        +/-None}
+}}\par
+
+
+
+
+
+
+\par
+
+
+
+/home/jmfranck/git_repos/pyspecdata/pyspecdata/figlist.py:772: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  plt.gcf().tight_layout()
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">import</span> <span class="n">title</span>
+<span class="kn">from</span> <span class="nn">pyspecdata</span> <span class="kn">import</span> <span class="n">find_file</span><span class="p">,</span> <span class="n">figlist_var</span>
+<span class="kn">from</span> <span class="nn">pyspecProcScripts</span> <span class="kn">import</span> <span class="n">QESR</span><span class="p">,</span> <span class="n">align_esr</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="n">fieldaxis</span> <span class="o">=</span> <span class="s2">&quot;$B_0$&quot;</span>
+<span class="n">plot_rescaled</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">water_nddata</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span><span class="s2">&quot;230511_water.DSC&quot;</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;francklab_esr/romana&quot;</span><span class="p">)[</span>
+    <span class="s2">&quot;harmonic&quot;</span><span class="p">,</span> <span class="mi">0</span>
+<span class="p">]</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">file_searchstring</span><span class="p">,</span> <span class="n">thislabel</span><span class="p">,</span> <span class="n">exp_type</span> <span class="ow">in</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">&quot;250321_OHT_control&quot;</span><span class="p">,</span> <span class="s2">&quot;control&quot;</span><span class="p">,</span> <span class="s2">&quot;francklab_esr/Warren&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;250321_OHT_gaindown&quot;</span><span class="p">,</span> <span class="s2">&quot;lower gain&quot;</span><span class="p">,</span> <span class="s2">&quot;francklab_esr/Warren&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;250321_OHT_moddown&quot;</span><span class="p">,</span> <span class="s2">&quot;lower mod&quot;</span><span class="p">,</span> <span class="s2">&quot;francklab_esr/Warren&quot;</span><span class="p">),</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;250321_OHT_followmodrule&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lowest (good) mod&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;francklab_esr/Warren&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;250321_OHT_morepoint&quot;</span><span class="p">,</span> <span class="s2">&quot;more points&quot;</span><span class="p">,</span> <span class="s2">&quot;francklab_esr/Warren&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;250321_OHT_lowpower&quot;</span><span class="p">,</span> <span class="s2">&quot;low power&quot;</span><span class="p">,</span> <span class="s2">&quot;francklab_esr/Warren&quot;</span><span class="p">),</span>
+<span class="p">]:</span>
+    <span class="n">d</span><span class="p">[</span><span class="n">thislabel</span><span class="p">]</span> <span class="o">=</span> <span class="n">find_file</span><span class="p">(</span><span class="n">file_searchstring</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="n">exp_type</span><span class="p">)</span><span class="o">.</span><span class="n">chunk_auto</span><span class="p">(</span>
+        <span class="s2">&quot;harmonic&quot;</span>
+    <span class="p">)[</span><span class="s2">&quot;harmonic&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">][</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="k">with</span> <span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="s2">&quot;Raw and unscaled&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">QESR</span><span class="p">(</span>
+            <span class="n">v</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="si">:</span><span class="s2">~P</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">align_esr</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">)</span>
+    <span class="n">title</span><span class="p">(</span>
+        <span class="s2">&quot;This plot shows we know how to scale the amplitude</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;correctly for a range of different experimental parameters&quot;</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 5.881 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-qesr-samesample-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/dcfa8e0f987d2ea00eddc4271865f28a/QESR_samesample.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">QESR_samesample.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/ded0dcef95ba16a05091cc3347854ca0/QESR_samesample.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">QESR_samesample.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo" />
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Example Gallery</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">QESR of same sample</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR.html">Quantify the Double Integral of an ESR spectra (QESR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">Generate a PSD from SpinCore Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_nutation.html">Process nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integrate_limits.html">Demonstrate Integrate Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FID_nutation.html">Process FID nutation data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="read_log.html">Read Instrument Log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Hermitian_Phasing.html">Phasing and Timing Correction With Fake Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_fieldSweep.html">Check NMR/ESR resonance ratio using a field sweep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_capture_nutation.html">Captured Nutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_tune_capture.html">Processing the Captured Tuning Curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_raw.html">Show data with postproc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_CPMG_echo.html">compare CPMG echo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proc_rec_response.html">Calculate and Fit Receiver Response to Sinc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibrate_tsqrtP.html">Calculate actual beta as a function of pulse length</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ProcScripts Example Gallery</a><ul>
+      <li>Previous: <a href="phaseCycNoise_example.html" title="previous chapter">Phase Cycling Noise</a></li>
+      <li>Next: <a href="epr_overlay2.html" title="next chapter">Another EPR Alignment</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2021, John M. Franck group.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/auto_examples/QESR_samesample.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
