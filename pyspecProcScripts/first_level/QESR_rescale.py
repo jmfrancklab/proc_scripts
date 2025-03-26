@@ -139,6 +139,9 @@ def QESR_apply_scalefactor(d):
     concentration
     for the same recorded spectrum.
 
+    See the `QESR.py` example for currently recommended settings
+    for the example data.
+
     Parameters
     ==========
     d : nddata
@@ -182,16 +185,14 @@ def QESR_apply_scalefactor(d):
     c_propfactor = Q_(calibcache.dint_propFactor, "m**2")
     dint_conversion = (c_propfactor / diameter**2).to("").magnitude
     signal_denom = (
-        Q_(81, "dB")  # gain in AG param set
-        * Q_(4.0, "ms")  # conversion time in AG param set
-        * sqrt(power)
+        sqrt(power)
         * B_m
         * n_B
         * S
         * (S + 1)
         * Q
     )
-    signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s"))
+    signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")))
     # }}}
     logger.debug(
         strm(
