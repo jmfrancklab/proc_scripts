@@ -9,10 +9,16 @@ expect.
 
 Note that some of these datasets are not great b/c we didn't capture
 enough of the baseline to either side (and we see here why this is a
-problem).
+problem), and so the QESR doesn't do great.
+
 However, both with the single integral (absorption) plot and more
 precisely with the ESR alignment we conduct at the end,
 we see that we have properly scaled the spectra.
+Note this doesn't mean they are equal -- we are able to
+see subtle (or not so subtle) differences in the
+scaling because of overmodulation -- if the spectra are
+not overmodulated, they match in scaling to within a
+few percent.
 
 See the `QESR.py` example for information about setting your pyspecdata
 config so that this works correctly!
