@@ -3,7 +3,7 @@ from numpy import r_
 import os
 from matplotlib.pyplot import axvline, gca
 import matplotlib.pyplot as plt
-from pyspecdata import find_file, gammabar_e, ndshape, gridandtick
+from pyspecdata import find_file, gammabar_e, ndshape, gridandtick, nddata
 from scipy.interpolate import UnivariateSpline
 from ..first_level.QESR_rescale import QESR_apply_scalefactor
 import pickle
@@ -18,7 +18,7 @@ fieldaxis = "$B_0$"
 
 
 def QESR(
-    file_name,
+    data_or_filename,
     label,
     pushout=0.5,
     threshold=0.05,
@@ -42,6 +42,8 @@ def QESR(
 
     Parameters
     ==========
+    data_or_filename: nddata or string
+        Either the data or the filename.
     pushout: float
         Adjusts the "generous limits" factor which is added
         to the integration area surrounding the peaks
@@ -69,10 +71,6 @@ def QESR(
     fl: figure list
         required!
     """
-    if exp_type is None:
-        raise ValueError(
-            "You must specify the location of the file with exp_type!"
-        )
     if fl is None:
         raise ValueError("for now, you just have to pass a figure list")
     if pickle_file is not None:
@@ -88,9 +86,14 @@ def QESR(
             pickle_vars = {}
         # }}}
     # {{{ load the file of interest, and get set up
-    d = find_file(file_name, exp_type=exp_type)
-    if "harmonic" in d.dimlabels:
-        d = d["harmonic", 0]
+    if type(data_or_filename) is str:
+        d = find_file(data_or_filename, exp_type=exp_type)
+        if "harmonic" in d.dimlabels:
+            d = d["harmonic", 0]
+    elif type(data_or_filename) is nddata:
+        d = data_or_filename
+    else:
+        raise ValueError("not sure what type the file is!")
     d -= d[fieldaxis, -100:].data.mean()
     d.setaxis(fieldaxis, lambda x: x - d.get_prop("MWFQ") / gammabar_e * 1e4)
     if calibration_name is not None:
@@ -136,7 +139,7 @@ def QESR(
     else:
         thisfig = fl.next("absorption, bg. no bl.")
         ax, ax_dblint = thisfig.get_axes()
-    fl.text(r"\textbf{\texttt{%s}}\par" % file_name)
+    fl.text(r"\textbf{\texttt{%s}}\par" % data_or_filename)
     # }}}
     ax.set_title("abs mode:\nbackground subtracted, show baseline")
     fl.text(r"\par")
