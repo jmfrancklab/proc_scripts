@@ -28,15 +28,21 @@ expect.
 
 Note that some of these datasets are not great b/c we didn't capture
 enough of the baseline to either side (and we see here why this is a
-problem).
+problem), and so the QESR doesn't do great.
+
 However, both with the single integral (absorption) plot and more
 precisely with the ESR alignment we conduct at the end,
 we see that we have properly scaled the spectra.
+Note this doesn't mean they are equal -- we are able to
+see subtle (or not so subtle) differences in the
+scaling because of overmodulation -- if the spectra are
+not overmodulated, they match in scaling to within a
+few percent.
 
 See the `QESR.py` example for information about setting your pyspecdata
 config so that this works correctly!
 
-.. GENERATED FROM PYTHON SOURCE LINES 20-63
+.. GENERATED FROM PYTHON SOURCE LINES 26-69
 
 
 
@@ -336,7 +342,7 @@ config so that this works correctly!
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 5.881 seconds)
+   **Total running time of the script:** (0 minutes 4.930 seconds)
 
 
 .. _sphx_glr_download_auto_examples_QESR_samesample.py:

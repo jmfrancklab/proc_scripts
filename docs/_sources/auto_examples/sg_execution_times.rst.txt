@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:11.477** total execution time for 34 files **from auto_examples**:
+**00:04.930** total execution time for 33 files **from auto_examples**:
 
 .. container::
 
@@ -33,19 +33,7 @@ Computation times
      - Time
      - Mem (MB)
    * - :ref:`sphx_glr_auto_examples_QESR_samesample.py` (``QESR_samesample.py``)
-     - 00:05.881
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_QESR.py` (``QESR.py``)
-     - 00:02.328
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_proc_raw.py` (``proc_raw.py``)
-     - 00:01.492
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_correlation_alignment_example.py` (``correlation_alignment_example.py``)
-     - 00:01.146
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_generate_SC_PSD.py` (``generate_SC_PSD.py``)
-     - 00:00.631
+     - 00:04.930
      - 0.0
    * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py` (``FIDtoEcho_Actual.py``)
      - 00:00.000
@@ -54,6 +42,9 @@ Computation times
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_Hermitian_Phasing.py` (``Hermitian_Phasing.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_QESR.py` (``QESR.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_append_conc_to_h5file.py` (``append_conc_to_h5file.py``)
@@ -72,6 +63,9 @@ Computation times
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_epr_overlay2.py` (``epr_overlay2.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_generate_SC_PSD.py` (``generate_SC_PSD.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_generate_oscilloscope_PSD.py` (``generate_oscilloscope_PSD.py``)
@@ -114,6 +108,9 @@ Computation times
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_proc_nutation.py` (``proc_nutation.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_proc_raw.py` (``proc_raw.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_proc_rec_response.py` (``proc_rec_response.py``)
