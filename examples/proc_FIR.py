@@ -11,6 +11,8 @@ import pyspecdata as psd
 import sympy
 import matplotlib.pyplot as plt
 import numpy as np
+import re
+import h5py
 
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 2
@@ -24,10 +26,13 @@ thisfile, exptype, post_proc, lookup = (
     "spincore_IR_v3",
     prscr.lookup_table,
 )
-R1nodenames = [
-    "FIR_noPower",
-    "FIR_34dBm",
-]
+filename = psd.search_filename(
+    re.escape(thisfile),
+    exp_type=exptype,
+    unique=True,
+)
+with h5py.File(filename, mode='r') as fp:
+    R1nodenames = [j for j in fp.keys() if 'FIR' in j]
 # Because we are going ot want to get both R1 fit values as well as the
 # associated errors, we collect the results in an nddata rather than
 # just e.g. a list
@@ -51,61 +56,61 @@ with psd.figlist_var() as fl:
             s = prscr.clock_correct(s)
         s = s.squeeze()
         s, ax_last = prscr.rough_table_of_integrals(s, fl=fl)
-        # Included signal averaging in rough_table_of_integrals
-        Mi, R1, vd = sympy.symbols("M_inf R_1 vd", real=True)
-        psd.logger.debug(psd.strm("acq keys", s.get_prop("acq_params")))
-        W = (
-            s.get_prop("acq_params")["FIR_rep"] * 1e-6
-            + s.get_prop("acq_params")["acq_time_ms"] * 1e-3
-        )
-        s = psd.lmfitdata(s)
-        s.functional_form = Mi * (
-            1 - (2 - sympy.exp(-W * R1)) * sympy.exp(-vd * R1)
-        )
-        prefactor_scaling = 10 ** psd.det_unit_prefactor(s.get_units("vd"))
-        s.set_guess(
-            M_inf=dict(
-                value=s.max().item(),
-                min=0.1 * s.max().item(),
-                max=1.5 * s.max().item(),
-            ),
-            R_1=dict(
-                value=0.8 * prefactor_scaling,
-                min=0.01 * prefactor_scaling,
-                max=100 * prefactor_scaling,
-            ),
-        )
-        s.fit()
-        s_fit = s.eval(200)
-        psd.plot(s_fit, ax=ax_last, alpha=0.5)  # here, we plot the fit
-        #                                         together with the
-        #                                         table of integrals.
-        ax_last.text(
-            0.5,
-            0.5,
-            f"{nodename} RESULT: %s" % s.latex(),
-            ha="center",
-            va="center",
-            color=s_fit.get_plot_color(),
-            transform=ax_last.transAxes,
-        )
-        if plot_fit:  # JF has not reviewed this -- needs to be re-written
-            #       consistently w/ above.  Stuff that's not used can
-            #       just be removed
-            R1data["power", j] = s.output("R_1")
-            Mi = s.output("M_inf")
-            fit = s.eval(100)
-            fit.set_plot_color(s_fit.get_plot_color())
-            fl.basename = None  # because we want the following plot to
-            #                    show up together
-            fl.next("IR fit - normalized")
-            fl.plot(s / Mi, "o", label=nodename)
-            fl.plot(
-                fit / Mi,
-                ls="-",
-                alpha=0.5,
-                label="fit for %s" % nodename,
-            )
-            ax = plt.gca()
+        ## Included signal averaging in rough_table_of_integrals
+        #Mi, R1, vd = sympy.symbols("M_inf R_1 vd", real=True)
+        #psd.logger.debug(psd.strm("acq keys", s.get_prop("acq_params")))
+        #W = (
+        #    s.get_prop("acq_params")["FIR_rep"] * 1e-6
+        #    + s.get_prop("acq_params")["acq_time_ms"] * 1e-3
+        #)
+        #s = psd.lmfitdata(s)
+        #s.functional_form = Mi * (
+        #    1 - (2 - sympy.exp(-W * R1)) * sympy.exp(-vd * R1)
+        #)
+        #prefactor_scaling = 10 ** psd.det_unit_prefactor(s.get_units("vd"))
+        #s.set_guess(
+        #    M_inf=dict(
+        #        value=s.max().item(),
+        #        min=0.1 * s.max().item(),
+        #        max=1.5 * s.max().item(),
+        #    ),
+        #    R_1=dict(
+        #        value=0.8 * prefactor_scaling,
+        #        min=0.01 * prefactor_scaling,
+        #        max=100 * prefactor_scaling,
+        #    ),
+        #)
+        #s.fit()
+        #s_fit = s.eval(200)
+        #psd.plot(s_fit, ax=ax_last, alpha=0.5)  # here, we plot the fit
+        ##                                         together with the
+        ##                                         table of integrals.
+        #ax_last.text(
+        #    0.5,
+        #    0.5,
+        #    f"{nodename} RESULT: %s" % s.latex(),
+        #    ha="center",
+        #    va="center",
+        #    color=s_fit.get_plot_color(),
+        #    transform=ax_last.transAxes,
+        #)
+        #if plot_fit:  # JF has not reviewed this -- needs to be re-written
+        #    #       consistently w/ above.  Stuff that's not used can
+        #    #       just be removed
+        #    R1data["power", j] = s.output("R_1")
+        #    Mi = s.output("M_inf")
+        #    fit = s.eval(100)
+        #    fit.set_plot_color(s_fit.get_plot_color())
+        #    fl.basename = None  # because we want the following plot to
+        #    #                    show up together
+        #    fl.next("IR fit - normalized")
+        #    fl.plot(s / Mi, "o", label=nodename)
+        #    fl.plot(
+        #        fit / Mi,
+        #        ls="-",
+        #        alpha=0.5,
+        #        label="fit for %s" % nodename,
+        #    )
+        #    ax = plt.gca()
 # I'm not printing anything for 'T1 = ?' as desired in the list of goals, what
 # should I be printing? T1 at s.max()?
