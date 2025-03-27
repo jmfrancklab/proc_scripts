@@ -4,7 +4,6 @@ from ..phasing import (
     fid_from_echo,
     find_peakrange,
 )
-from ..envelope import fit_envelope
 from ..simple_functions import select_pathway
 import matplotlib.pyplot as plt
 import numpy as np
@@ -90,9 +89,6 @@ def rough_table_of_integrals(
             signal_range = s.get_prop("peakrange")
         center_of_range = np.mean(signal_range)
         half_range = 0.5 * np.diff(signal_range).item()
-    s.ift(direct)
-    fit_envelope(s, fl=fl)
-    s.ft(direct)
     signal_range_expanded = (
         center_of_range + expansion * r_[-1, 1] * half_range
     )
