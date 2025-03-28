@@ -80,9 +80,13 @@ def rough_table_of_integrals(
         you want to add a fit!
     """
     if signal_range is None:
-        center_of_range, half_range = find_peakrange(
-            s, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
-        )
+        try:
+            center_of_range, half_range = find_peakrange(
+                s, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
+            )
+        except:
+            print("problem finding peak range!!")
+            return None, None
         signal_range = s.get_prop("peakrange")
     else:
         if signal_range == "peakrange":
