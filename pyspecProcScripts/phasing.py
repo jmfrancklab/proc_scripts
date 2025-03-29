@@ -282,19 +282,21 @@ def fid_from_echo(
         )
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
+        left_x = frq_center - slice_multiplier * frq_half
         axvline(
-            x=frq_center - slice_multiplier * frq_half,
+            x=left_x,
             color="k",
             ls="--",
             alpha=0.5,
-            label="final slice",
+            label=f"final slice ({left_x})",
         )
+        right_x = frq_center + slice_multiplier * frq_half
         axvline(
             x=frq_center + slice_multiplier * frq_half,
             color="k",
             ls="--",
             alpha=0.5,
-            label="final slice",
+            label=f"final slice ({right_x})",
         )
         legend()
     slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
@@ -554,14 +556,14 @@ def find_peakrange(
             color="k",
             ls=":",
             alpha=0.25,
-            label="half width",
+            label=f"{peak_lowest_thresh*100:g} threshold",
         )
         axvline(
             x=frq_center + frq_half,
             color="k",
             ls=":",
             alpha=0.25,
-            label="half width",
+            label=f"{peak_lowest_thresh*100:g} threshold",
         )
     return frq_center, frq_half
 
