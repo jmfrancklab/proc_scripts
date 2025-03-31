@@ -300,6 +300,7 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 def proc_spincore_SE_v1(s, fl=None):
     s = hack_oldproc(s, fl=fl)
+    s = proc_spincore_generalproc_v1(s, fl=fl)
     s.set_prop("coherence_pathway", {"ph1": 1})
     if "nScans" in s.shape:
         s *= s.shape["nScans"]
@@ -671,54 +672,10 @@ def proc_spincore_ODNP_v4(s, fl=None):
 def hack_oldproc(s, direct="t2", fl=None):
     """this is for things that are so old that they don't even have
     acq_params set"""
-    s.run(np.conj)  # SC flips data in a weird way, this
-    #                 corrects for that
-    s.ft(direct, shift=True)
-    for j in [k for k in s.dimlabels if k.startswith("ph")]:
-        dph = s[j][1] - s[j][0]
-        Dph = s[j][-1] + dph - s[j][0]
-        if Dph == 1:
-            s[j] = (-s[j] + 1) % 1  # when we take the complex
-            #                          conjugate, that changes the phase
-            #                          of the phase cycle, as well, so
-            #                          we have to re-label the axis
-            #                          coordinates for the phase cycle
-            #                          to the negative of what they were
-            #                          before.  To keep things sane, we
-            #                          also apply phase wrapping to get
-            #                          positive numbers.
-        elif Dph == 4:  # uses units of quarter cycle
-            s[j] = (-s[j] + 4) % 4
-        else:
-            raise ValueError(
-                "the phase cycling dimension "
-                + j
-                + " appears not to go all the way around the circle!"
-            )
-        s.sort(j)
-        s.ft([j])  # if we have used cycles for the axis
-        #            coordinates, signal in the coherence dimension will match
-        #            the amplitude of signal in a single transient if we do
-        #            this
-    # {{{ always put the phase cycling dimensions on the outside
-    neworder = [j for j in s.dimlabels if j.startswith("ph")]
-    neworder.sort()  # it's confusing if the pulses don't come in order
-    # }}}
-    # {{{ reorder the rest based on size
-    nonphdims = [j for j in s.dimlabels if not j.startswith("ph")]
-    if len(nonphdims) > 1:
-        sizeidx = np.argsort([s.shape[j] for j in nonphdims])
-        neworder += [nonphdims[j] for j in sizeidx]
-    # }}}
-    s.reorder(neworder)
-    # {{{ put ph_overall outside, if it exists, since there
-    #     should be nothing outside that
-    if "ph_overall" in s.dimlabels:
-        s.reorder("ph_overall")
-    # }}}
-    s.squeeze()
-    SW_kHz = 1 / s.get_ft_prop("t2", "dt") / 1e3
-    s.set_prop("acq_params", {"SW_kHz": SW_kHz})
+    s.set_prop(
+        "acq_params", {"SW_kHz": 1 / np.diff(s[direct][r_[0, 1]]).item() / 1e3}
+    )
+    s.set_units(direct, "s")
     return s
 
 
