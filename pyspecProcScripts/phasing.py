@@ -282,19 +282,21 @@ def fid_from_echo(
         )
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
+        left_x = frq_center - slice_multiplier * frq_half
         axvline(
-            x=frq_center - slice_multiplier * frq_half,
+            x=left_x,
             color="k",
             ls="--",
             alpha=0.5,
-            label="final slice",
+            label=f"final slice ({left_x})",
         )
+        right_x = frq_center + slice_multiplier * frq_half
         axvline(
             x=frq_center + slice_multiplier * frq_half,
             color="k",
             ls="--",
             alpha=0.5,
-            label="final slice",
+            label=f"final slice ({right_x})",
         )
         legend()
     slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
@@ -473,7 +475,17 @@ def find_peakrange(
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
+    # {{{ if there was a digital filter applied,
+    #     get rid of it, so that the noise is
+    #     flat.
+    dig_filter = d.get_prop("dig_filter")
+    if dig_filter is not None:
+        freq_envelope *= dig_filter 
+    # }}}
     freq_envelope.ift(direct)
+    # {{{ estimate the echo center by scrolling a filter that we think
+    #     is matched across the data, and find where it gives max energy
+    #     -- using fourier math
     time_envelope = abs(freq_envelope.mean_all_but(direct))  # |s(t)|
     time_envelope[direct] -= time_envelope[direct][
         0
@@ -508,7 +520,10 @@ def find_peakrange(
     fl.plot(abs(thiscorrel) ** 2, label="correl")
     fl.plot(abs(energy_denom) ** 2, label="denom")
     fl.plot(abs(thiscorrel / energy_denom) ** 2, label="ratio")
-    # {{{ estimate the echo center by scrolling a filter that we think is matched across the data, and find where it gives max energy
+    # }}}
+    # {{{ estimate the echo center by scrolling a filter that we think
+    #     is matched across the data, and find where it gives max energy
+    #     -- inefficient method
     thisoffset = max_echo
     while thisoffset >= 1e-3:
         filter_alignment = (
@@ -544,10 +559,10 @@ def find_peakrange(
         enforce_causality=False,
     )
     SW = 1 / freq_envelope.get_ft_prop(direct, "dt")
-    # baseline, assuming we're constrained to the middle 1/3 of the SW
+    # baseline using the left and right quarter
     freq_envelope -= (
-        freq_envelope[direct : tuple(-r_[0.165, 0.18] * SW)].mean().item()
-        + freq_envelope[direct : tuple(r_[0.165, 0.18] * SW)].mean().item()
+        freq_envelope[direct : tuple(-r_[0.5,0.25] * SW)].mean().item()
+        + freq_envelope[direct : tuple(r_[0.25,0.5] * SW)].mean().item()
     ) / 2
     if fl is not None:
         fl.next("autoslicing!")
@@ -608,14 +623,14 @@ def find_peakrange(
             color="k",
             ls=":",
             alpha=0.25,
-            label="half width",
+            label=f"{peak_lowest_thresh*100:g}% threshold",
         )
         axvline(
             x=frq_center + frq_half,
             color="k",
             ls=":",
             alpha=0.25,
-            label="half width",
+            label=f"{peak_lowest_thresh*100:g}% threshold",
         )
     return frq_center, frq_half
 

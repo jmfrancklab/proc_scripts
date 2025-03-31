@@ -8,6 +8,7 @@ and demonstrate how we can automatically find the zeroth order phase and the
 center of the echo in order to get data that's purely real in the frequency
 domain.
 """
+
 from pyspecdata import *
 from pyspecProcScripts import *
 from pylab import *
@@ -74,6 +75,13 @@ with figlist_var() as fl:
         fl.image(data, ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Zeroth Order \n Phase Corrected")
         fl.basename = "(%s)" % label
+        data["t2"] -= data["t2"][0]  # to run the hermitian test, we
+        #                              need to feed an axis that starts
+        #                              with zero → Typically,
+        #                              we use fid_from_echo, which does
+        #                              this for us. But, since we are
+        #                              using hermitian_function_test
+        #                              by itself here, we need to do it.
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway), fl=fl
         )
