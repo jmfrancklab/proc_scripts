@@ -475,6 +475,13 @@ def find_peakrange(
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
+    # {{{ if there was a digital filter applied,
+    #     get rid of it, so that the noise is
+    #     flat.
+    dig_filter = d.get_prop("dig_filter")
+    if dig_filter is not None:
+        freq_envelope *= dig_filter 
+    # }}}
     freq_envelope.ift(direct)
     freq_envelope = freq_envelope[
         direct:(0, None)
@@ -492,10 +499,10 @@ def find_peakrange(
         enforce_causality=False,
     )
     SW = 1 / freq_envelope.get_ft_prop(direct, "dt")
-    # baseline, assuming we're constrained to the middle 1/3 of the SW
+    # baseline using the left and right quarter
     freq_envelope -= (
-        freq_envelope[direct : tuple(-r_[0.165, 0.18] * SW)].mean().item()
-        + freq_envelope[direct : tuple(r_[0.165, 0.18] * SW)].mean().item()
+        freq_envelope[direct : tuple(-r_[0.5,0.25] * SW)].mean().item()
+        + freq_envelope[direct : tuple(r_[0.25,0.5] * SW)].mean().item()
     ) / 2
     if fl is not None:
         fl.next("autoslicing!")
