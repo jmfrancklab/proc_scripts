@@ -77,8 +77,11 @@ with figlist_var() as fl:
         fl.basename = "(%s)" % label
         data["t2"] -= data["t2"][0]  # to run the hermitian test, we
         #                              need to feed an axis that starts
-        #                              with zero -- fid_from_echo does
-        #                              this for us
+        #                              with zero → Typically,
+        #                              we use fid_from_echo, which does
+        #                              this for us. But, since we are
+        #                              using hermitian_function_test
+        #                              by itself here, we need to do it.
         best_shift = hermitian_function_test(
             select_pathway(data.C.mean(indirect), signal_pathway), fl=fl
         )

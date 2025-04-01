@@ -563,14 +563,14 @@ def find_peakrange(
             color="k",
             ls=":",
             alpha=0.25,
-            label=f"{peak_lowest_thresh*100:g} threshold",
+            label=f"{peak_lowest_thresh*100:g}% threshold",
         )
         axvline(
             x=frq_center + frq_half,
             color="k",
             ls=":",
             alpha=0.25,
-            label=f"{peak_lowest_thresh*100:g} threshold",
+            label=f"{peak_lowest_thresh*100:g}% threshold",
         )
     return frq_center, frq_half
 
