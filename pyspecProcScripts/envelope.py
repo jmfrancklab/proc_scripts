@@ -15,6 +15,7 @@ def fit_envelope(
     min_l=10,
     threshold=0.10,
     full_width=8.434,
+    mult_two=False,
     direct="t2",
     plot_name="envelope",
     show_expanding_envelope=False,
@@ -22,6 +23,8 @@ def fit_envelope(
 ):
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
     envelope = abs(s[direct:(0, None)]).mean_all_but(direct)
+    if mult_two:
+        envelope[direct, 0] *= 2
     envelope = psp.lmfitdata(envelope)
     # {{{ copy/paste code for envelope
     A, lL, sigma, t = sp.symbols("A lambda_L sigma t2")
@@ -116,6 +119,12 @@ def fit_envelope(
         fl.plot(
             L2G(env_out["lambda_L"], criterion="energy")(s.fromaxis(direct))
         )
+        my_xlims = list(gca().get_xlim())
+        if my_xlims[1] > env_out["lambda_L"] * 3:
+            my_xlims[1] = env_out["lambda_L"] * 3
+        if my_xlims[0] < -my_xlims[1]:
+            my_xlims[0] = -my_xlims[1]
+        gca().set_xlim(my_xlims)
         fl.pop_marker()
     return env_out["lambda_L"]
 
@@ -133,7 +142,5 @@ def L2G(
     elif criterion == "width":
         # equal linewidth
         return lambda t2: np.exp(
-            pi
-            * lambda_L
-            * (-pi * lambda_L * t2**2 / 4 / np.log(2) + abs(t2))
+            pi * lambda_L * (-pi * lambda_L * t2**2 / 4 / np.log(2) + abs(t2))
         )
