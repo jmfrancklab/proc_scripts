@@ -33,7 +33,7 @@ def det_devisor(fl):
     return divisor
 
 
-def zeroth_order_ph(d, fl=None):
+def zeroth_order_ph(d, fl=None, weighted=True):
     r"""determine the moment of inertial of the datapoints
     in complex plane, and use to phase the
     zeroth-order even if the data is both negative
@@ -59,8 +59,13 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     """
-    realvector = d.data.real.ravel()
-    imvector = d.data.imag.ravel()
+    if weighted:
+        weights = abs(d.data.ravel())
+        weights /= sum(weights)
+    else:
+        weights = 1
+    realvector = d.data.real.ravel() * weights
+    imvector = d.data.imag.ravel() * weights
     R2 = np.mean(realvector**2)
     I2 = np.mean(imvector**2)
     C = np.mean(
@@ -89,8 +94,8 @@ def zeroth_order_ph(d, fl=None):
         d_forplot = d.C
         fl.next("check covariance test")
         fl.plot(
-            d_forplot.data.ravel().real,
-            d_forplot.data.ravel().imag,
+            d_forplot.data.ravel().real * weights,
+            d_forplot.data.ravel().imag * weights,
             ".",
             alpha=0.25,
             label="before",
@@ -99,8 +104,8 @@ def zeroth_order_ph(d, fl=None):
         plt.ylabel("imag")
         d_forplot /= np.exp(1j * ph0)
         fl.plot(
-            d_forplot.data.ravel().real,
-            d_forplot.data.ravel().imag,
+            d_forplot.data.ravel().real * weights,
+            d_forplot.data.ravel().imag * weights,
             ".",
             alpha=0.25,
             label="after",
