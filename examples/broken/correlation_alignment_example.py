@@ -105,7 +105,7 @@ with psd.figlist_var() as fl:
         data.ift(list(signal_pathway.keys()))
         opt_shift, sigma, mask_func = psdpr.correl_align(
             data * mysgn,
-            indirect_dim=indirect,
+            repeat_dims=[indirect],
             signal_pathway=signal_pathway,
             sigma=3000 / 2.355,
             max_shift=300,  # this makes the Gaussian mask 3
