@@ -33,7 +33,7 @@ def det_devisor(fl):
     return divisor
 
 
-def zeroth_order_ph(d, fl=None):
+def zeroth_order_ph(d, fl=None, weighted=True):
     r"""determine the moment of inertial of the datapoints
     in complex plane, and use to phase the
     zeroth-order even if the data is both negative
@@ -59,8 +59,13 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     """
-    realvector = d.data.real.ravel()
-    imvector = d.data.imag.ravel()
+    if weighted:
+        weights = abs(d.data.ravel())
+        weights /= sum(weights)
+    else:
+        weights = 1
+    realvector = d.data.real.ravel() * weights
+    imvector = d.data.imag.ravel() * weights
     R2 = np.mean(realvector**2)
     I2 = np.mean(imvector**2)
     C = np.mean(
@@ -89,8 +94,8 @@ def zeroth_order_ph(d, fl=None):
         d_forplot = d.C
         fl.next("check covariance test")
         fl.plot(
-            d_forplot.data.ravel().real,
-            d_forplot.data.ravel().imag,
+            d_forplot.data.ravel().real * weights,
+            d_forplot.data.ravel().imag * weights,
             ".",
             alpha=0.25,
             label="before",
@@ -99,8 +104,8 @@ def zeroth_order_ph(d, fl=None):
         plt.ylabel("imag")
         d_forplot /= np.exp(1j * ph0)
         fl.plot(
-            d_forplot.data.ravel().real,
-            d_forplot.data.ravel().imag,
+            d_forplot.data.ravel().real * weights,
+            d_forplot.data.ravel().imag * weights,
             ".",
             alpha=0.25,
             label="after",
@@ -446,7 +451,8 @@ def find_peakrange(
 ):
     """find the range of frequencies over which the signal occurs, so that we
     can autoslice.
-    Always assume that the signal is symmetric about zero and confined to the central 1/2 of the spectrum.
+    Always assume that the signal is symmetric about zero and confined to the
+    central 1/2 of the spectrum.
 
     Parameters
     ==========
@@ -480,7 +486,7 @@ def find_peakrange(
     #     flat.
     dig_filter = d.get_prop("dig_filter")
     if dig_filter is not None:
-        freq_envelope *= dig_filter 
+        freq_envelope *= dig_filter
     # }}}
     freq_envelope.ift(direct)
     # {{{ estimate the echo center by scrolling a filter that we think
@@ -503,8 +509,8 @@ def find_peakrange(
     )
     hat_func = exp_decay.copy(data=False)
     hat_func.data = np.zeros_like(exp_decay.data)
-    hat_func[direct: (0, None)] = 1
-    hat_func[direct: 0] = 0.5
+    hat_func[direct:(0, None)] = 1
+    hat_func[direct:0] = 0.5
     exp_decay.ft(direct)
     hat_func.ft(direct)
     hat_func.run(np.conj)
@@ -561,8 +567,8 @@ def find_peakrange(
     SW = 1 / freq_envelope.get_ft_prop(direct, "dt")
     # baseline using the left and right quarter
     freq_envelope -= (
-        freq_envelope[direct : tuple(-r_[0.5,0.25] * SW)].mean().item()
-        + freq_envelope[direct : tuple(r_[0.25,0.5] * SW)].mean().item()
+        freq_envelope[direct : tuple(-r_[0.5, 0.25] * SW)].mean().item()
+        + freq_envelope[direct : tuple(r_[0.25, 0.5] * SW)].mean().item()
     ) / 2
     if fl is not None:
         fl.next("autoslicing!")
