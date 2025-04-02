@@ -451,7 +451,8 @@ def find_peakrange(
 ):
     """find the range of frequencies over which the signal occurs, so that we
     can autoslice.
-    Always assume that the signal is symmetric about zero and confined to the central 1/2 of the spectrum.
+    Always assume that the signal is symmetric about zero and confined to the
+    central 1/2 of the spectrum.
 
     Parameters
     ==========
@@ -485,7 +486,7 @@ def find_peakrange(
     #     flat.
     dig_filter = d.get_prop("dig_filter")
     if dig_filter is not None:
-        freq_envelope *= dig_filter 
+        freq_envelope *= dig_filter
     # }}}
     freq_envelope.ift(direct)
     freq_envelope = freq_envelope[
@@ -506,8 +507,8 @@ def find_peakrange(
     SW = 1 / freq_envelope.get_ft_prop(direct, "dt")
     # baseline using the left and right quarter
     freq_envelope -= (
-        freq_envelope[direct : tuple(-r_[0.5,0.25] * SW)].mean().item()
-        + freq_envelope[direct : tuple(r_[0.25,0.5] * SW)].mean().item()
+        freq_envelope[direct : tuple(-r_[0.5, 0.25] * SW)].mean().item()
+        + freq_envelope[direct : tuple(r_[0.25, 0.5] * SW)].mean().item()
     ) / 2
     if fl is not None:
         fl.next("autoslicing!")
