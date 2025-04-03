@@ -445,7 +445,7 @@ def find_peakrange(
     direct="t2",
     peak_lower_thresh=0.1,
     peak_lowest_thresh=0.03,
-    width_guess=50.0,
+    width_guess=200.0,
     max_echo=20e-3,
     fl=None,
 ):
@@ -496,6 +496,9 @@ def find_peakrange(
     time_envelope[direct] -= time_envelope[direct][
         0
     ]  # just call the start of the time axis t=0
+    time_envelope /= abs(time_envelope).max()
+    fl.next("peak finder, time domain correlation")
+    fl.plot(time_envelope, color='k', alpha=0.1)
     time_envelope.ft(
         direct,
         pad=time_envelope.shape[direct]
@@ -507,10 +510,10 @@ def find_peakrange(
     time_envelope.ift(
         direct, shift=True
     )
-    time_envelope /= abs(time_envelope).max()
     fl.plot(time_envelope, label="signal envelope")
     # {{{ construct exp and hat in time domain
     exp_decay = np.exp(-abs(time_envelope.fromaxis(direct)) * pi * width_guess)
+    exp_decay_sq = exp_decay**2
     hat_func = exp_decay.copy(data=False)
     hat_func.data = np.zeros_like(exp_decay.data)
     hat_func[direct:(0, None)] = 1
@@ -522,9 +525,11 @@ def find_peakrange(
     # {{{ prepare for correlation calculation
     time_envelope.ft(direct)
     exp_decay.ft(direct)
+    exp_decay_sq.ft(direct)
     hat_func.ft(direct)
     exp_decay.run(np.conj) # below, only e comes first in correlations,
     #                        and first one is the one starred in f-domain
+    exp_decay_sq.run(np.conj)
     # }}}
     fl.plot(time_envelope, label="signal envelope")
     fl.plot(exp_decay, label="exp decay")
@@ -534,9 +539,9 @@ def find_peakrange(
     )  # FT(e(t)★|s(t)|) ← sqrt energy of overlap. In correlation, first
     #    function is shifted to the right
     energy_denom = (
-        exp_decay * hat_func
-    )  # FT(e(t)★h(t)) ← sqrt energy possible from exp positioned at this
-    #    point, given that there is no signal to the left of 0
+        exp_decay_sq * hat_func
+    )  # FT(e²(t)★h(t)) ← sqrt energy possible: comes from e overlapped
+    #    with e, but cut off at t=0
     fl.plot(energy_denom, label="energy denom")
     fl.plot(thiscorrel, label="correlation function")
     fl.next("peak finder, time domain")
