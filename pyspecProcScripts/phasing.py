@@ -498,21 +498,28 @@ def find_peakrange(
     ]  # just call the start of the time axis t=0
     time_envelope.ft(
         direct,
-        pad=time_envelope.shape[direct] * 20,  # high-res frequency domain
+        pad=time_envelope.shape[direct]
+        * 2,  # we need to fill with zeros in the time domain, so we're not looking at aliased overlap
     ).ft_new_startpoint(
         direct, "time"
-    )  # we're going to want an ift for time domain
-    fl.next("peak finder", legend=True)
-    fl.plot(time_envelope, label="time envelope")
-    exp_decay = np.exp(
-        -abs(time_envelope.C.ift(direct).fromaxis(direct)) * pi * width_guess
-    )
+    )  # because we're going to want a symmetric ift
+    fl.next("peak finder, freq domain", legend=True)
+    fl.plot(time_envelope, label="signal envelope")
+    time_envelope.ift(direct, shift=True)
+    fl.next("peak finder, time domain", legend=True)
+    fl.plot(abs(time_envelope), label="signal envelope")
+    exp_decay = np.exp(-abs(time_envelope.fromaxis(direct)) * pi * width_guess)
     hat_func = exp_decay.copy(data=False)
     hat_func.data = np.zeros_like(exp_decay.data)
     hat_func[direct:(0, None)] = 1
     hat_func[direct:0] = 0.5
+    fl.plot(exp_decay, label="hat function")
+    fl.plot(hat_func, label="hat function")
+    fl.next("peak finder, freq domain")
     exp_decay.ft(direct)
     hat_func.ft(direct)
+    fl.plot(abs(exp_decay), label="exp decay")
+    fl.plot(abs(hat_func), label="hat function")
     hat_func.run(np.conj)
     time_envelope.run(np.conj)
     thiscorrel = (
@@ -521,34 +528,20 @@ def find_peakrange(
     energy_denom = (
         hat_func * exp_decay
     )  # FT(h(t)★e(t)) ← sqrt energy possible from
-    thiscorrel.ift(direct, shift=True)
-    energy_denom.ift(direct, shift=True)
+    fl.next("peak finder, time domain")
+    fl.plot(abs(energy_denom), label="energy denom")
+    thiscorrel.ift(
+        direct, shift=True, pad=thiscorrel.shape[direct] * 20
+    )  # we want high resolution
+    energy_denom.ift(
+        direct, shift=True, pad=thiscorrel.shape[direct] * 20
+    )  # we want high resolution
     fl.plot(abs(thiscorrel) ** 2, label="correl")
     fl.plot(abs(energy_denom) ** 2, label="denom")
     fl.plot(abs(thiscorrel / energy_denom) ** 2, label="ratio")
     # }}}
-    # {{{ estimate the echo center by scrolling a filter that we think
-    #     is matched across the data, and find where it gives max energy
-    #     -- inefficient method
-    thisoffset = max_echo
-    while thisoffset >= 1e-3:
-        filter_alignment = (
-            abs(
-                np.exp(
-                    -abs(
-                        freq_envelope.fromaxis(direct)
-                        - nddata(r_[-thisoffset:thisoffset:25j], "echo_offset")
-                    )
-                    * pi
-                    * width_guess
-                )
-                * freq_envelope
-            )
-            ** 2
-        ).mean_all_but(direct)
-        freq_envelope[direct] -= filter_alignment.argmax(direct).item()
-        thisoffset /= 20
-    # }}}
+    # {{{ now that we have an estimate of the start point, take an FID
+    #     slice and move into the freq domain
     freq_envelope = freq_envelope[
         direct:(0, None)
     ]  # slice out rising echo estimate according to experimental tau in order
@@ -556,6 +549,7 @@ def find_peakrange(
     freq_envelope[direct, 0] *= 0.5
     freq_envelope.ft(direct)
     freq_envelope.mean_all_but(direct).run(abs)
+    # }}}
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(freq_envelope, human_units=False, label="signal energy")
@@ -584,6 +578,7 @@ def find_peakrange(
     widest_ranges = freq_envelope.contiguous(
         lambda x: x > peak_lowest_thresh * x.data.max()
     )
+    # TODO ☐: if we really want the inhomogenous width, this should be contracted by the convolution width
 
     def filter_ranges(B, A):
         """where A and B are lists of ranges (given as tuple pairs), filter B

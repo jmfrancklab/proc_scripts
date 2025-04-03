@@ -119,12 +119,14 @@ def fit_envelope(
         fl.plot(
             L2G(env_out["lambda_L"], criterion="energy")(s.fromaxis(direct))
         )
+        # {{{ reset x limits to focus on the decay better
         my_xlims = list(gca().get_xlim())
         if my_xlims[1] > env_out["lambda_L"] * 3:
             my_xlims[1] = env_out["lambda_L"] * 3
         if my_xlims[0] < -my_xlims[1]:
             my_xlims[0] = -my_xlims[1]
         gca().set_xlim(my_xlims)
+        # }}}
         fl.pop_marker()
     return env_out["lambda_L"]
 
