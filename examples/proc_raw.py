@@ -71,7 +71,21 @@ def get_first_field_if_structured(d):
                     arr.dtype.names,
                     " that you want to use, but I'm just picking the first",
                 )
-                d[j] = arr[arr.dtype.names[0]]
+                retval = arr[arr.dtype.names[0]]
+                if "time" in arr.dtype.names[0].lower():
+                    print(
+                        "this is called 'time', so I'm assuming it has units"
+                        " of seconds"
+                    )
+                    d.set_units(j, "s")
+                if retval[1] / abs(retval[1] - retval[0]) > 10:
+                    # there is a large offset to all the numbers
+                    retval -= retval[0]
+                    print(
+                        "I'm also making this axis relative, because it has a"
+                        " large offset (it's probably a time axis)"
+                    )
+                d[j] = retval
     return d
 
 
@@ -80,7 +94,6 @@ with psd.figlist_var() as fl:
     print("=" * 13 + "ACQ PARAMS" + "=" * 13)
     for k, v in d.get_prop("acq_params").items():
         print(f"{k:>25s} : {v}")
-    fl.next("raw data")
     print("=" * 36)
 
     def image_or_plot(d):
@@ -119,8 +132,9 @@ with psd.figlist_var() as fl:
                 )
         else:
             d = get_first_field_if_structured(d)
-            psd.DCCT(d)
+            fl.DCCT(d)
 
+    fl.next("raw data")
     print("about to image or plot", d.shape)
     image_or_plot(d)
     if "nScans" in d.dimlabels:
