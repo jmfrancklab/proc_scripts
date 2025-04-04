@@ -58,6 +58,24 @@ d = psd.find_file(
     lookup=prscr.lookup_table,
 )
 print("postproc_type:", d.get_prop("postproc_type"))
+
+
+def get_first_field_if_structured(d):
+    for j in d.dimlabels:
+        arr = d[j]
+        if arr is not None:
+            if arr.dtype.names:  # True if structured array
+                print(
+                    "for the '",
+                    j,
+                    "' dimension, you will want to select the field ",
+                    arr.dtype.names,
+                    " that you want to use, but I'm just picking the first",
+                )
+                d[j] = arr[arr.dtype.names[0]]
+    return d
+
+
 with psd.figlist_var() as fl:
     d.squeeze()
     print("=" * 13 + "ACQ PARAMS" + "=" * 13)
@@ -102,11 +120,14 @@ with psd.figlist_var() as fl:
                 )
         else:
             rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
-            if rows < 500:
-                fl.image(d)
+            if rows > 500:
+                interpolation = "bilinear"
             else:
-                fl.image(d, interpolation="bilinear")
+                interpolation = "nearest"
+            d = get_first_field_if_structured(d)
+            psd.DCCT(d)
 
+    print("about to image or plot", d.shape)
     image_or_plot(d)
     if "nScans" in d.dimlabels:
         d.mean("nScans")
