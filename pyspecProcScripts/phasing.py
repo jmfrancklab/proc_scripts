@@ -543,7 +543,7 @@ def find_peakrange(
     exp_decay_sq.run(np.conj)
     # }}}
     fdomain_view = (-5 * inh_guess, 5 * inh_guess)
-    fl.plot(time_envelope[direct:fdomain_view], label="signal envelope")
+    fl.plot(abs(time_envelope[direct:fdomain_view]), label="signal envelope")
     fl.plot(exp_decay[direct:fdomain_view], label="exp decay")
     thiscorrel = (
         exp_decay * time_envelope
