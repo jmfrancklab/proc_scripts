@@ -28,7 +28,6 @@ ODNP_NMR_comp/field_dependent``
 """
 
 import pyspecProcScripts as prscr
-import numpy as np
 import sys, os
 import matplotlib.pyplot as plt
 from itertools import cycle
@@ -119,11 +118,6 @@ with psd.figlist_var() as fl:
                     human_units=False,
                 )
         else:
-            rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
-            if rows > 500:
-                interpolation = "bilinear"
-            else:
-                interpolation = "nearest"
             d = get_first_field_if_structured(d)
             psd.DCCT(d)
 
