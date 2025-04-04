@@ -28,7 +28,6 @@ ODNP_NMR_comp/field_dependent``
 """
 
 import pyspecProcScripts as prscr
-import numpy as np
 import sys, os
 import matplotlib.pyplot as plt
 from itertools import cycle
@@ -58,12 +57,43 @@ d = psd.find_file(
     lookup=prscr.lookup_table,
 )
 print("postproc_type:", d.get_prop("postproc_type"))
+
+
+def get_first_field_if_structured(d):
+    for j in d.dimlabels:
+        arr = d[j]
+        if arr is not None:
+            if arr.dtype.names:  # True if structured array
+                print(
+                    "for the '",
+                    j,
+                    "' dimension, you will want to select the field ",
+                    arr.dtype.names,
+                    " that you want to use, but I'm just picking the first",
+                )
+                retval = arr[arr.dtype.names[0]]
+                if "time" in arr.dtype.names[0].lower():
+                    print(
+                        "this is called 'time', so I'm assuming it has units"
+                        " of seconds"
+                    )
+                    d.set_units(j, "s")
+                if retval[1] / abs(retval[1] - retval[0]) > 10:
+                    # there is a large offset to all the numbers
+                    retval -= retval[0]
+                    print(
+                        "I'm also making this axis relative, because it has a"
+                        " large offset (it's probably a time axis)"
+                    )
+                d[j] = retval
+    return d
+
+
 with psd.figlist_var() as fl:
     d.squeeze()
     print("=" * 13 + "ACQ PARAMS" + "=" * 13)
     for k, v in d.get_prop("acq_params").items():
         print(f"{k:>25s} : {v}")
-    fl.next("raw data")
     print("=" * 36)
 
     def image_or_plot(d):
@@ -101,12 +131,11 @@ with psd.figlist_var() as fl:
                     human_units=False,
                 )
         else:
-            rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
-            if rows < 500:
-                fl.image(d)
-            else:
-                fl.image(d, interpolation="bilinear")
+            d = get_first_field_if_structured(d)
+            fl.DCCT(d)
 
+    fl.next("raw data")
+    print("about to image or plot", d.shape)
     image_or_plot(d)
     if "nScans" in d.dimlabels:
         d.mean("nScans")
