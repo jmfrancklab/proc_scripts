@@ -41,7 +41,7 @@ def correl_align(
     With both repeat_dims and non_repeat_dims defined, we can use a set
     expression to find the indirect dimension (not phas cycling and not direct)
     and to make sure they are either (1) nScans (2) specified as safe or (3)
-    listed in the 'non_repeat_dims'. 
+    listed in the 'non_repeat_dims'.
 
     Parameters
     ==========
@@ -97,7 +97,7 @@ def correl_align(
         " kwarg!"
     )
     assert (
-        type(repeat_dims) == list
+        type(repeat_dims) is list
     ), "the repeat_dims kwarg needs to be a list of strings"
     assert (
         len(repeat_dims) > 0
@@ -120,7 +120,9 @@ def correl_align(
         )  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
         #                 want applied to s_orig
-    assert repeat_dims is not None, "you need to tell me what the repeated dimension is!"    
+    assert (
+        repeat_dims is not None
+    ), "you need to tell me what the repeated dimension is!"
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
