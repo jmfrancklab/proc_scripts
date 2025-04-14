@@ -86,6 +86,7 @@ with psd.figlist_var() as fl:
         )
         # }}}
         # {{{ Applying the phase corrections
+        data["t2"] -= data.getaxis("t2")[0] # needed for Hermitian Function
         best_shift = psdpr.hermitian_function_test(
             psdpr.select_pathway(data.C.mean(indirect), signal_pathway)
         )

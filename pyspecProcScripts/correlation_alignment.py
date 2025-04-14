@@ -39,9 +39,9 @@ def correl_align(
     of the two functions, with the *first* on complex conjugate.
 
     With both repeat_dims and non_repeat_dims defined, we can use a set
-    expression to find the indirect dimension (not phas cycling and not direct)
-    and to make sure they are either (1) nScans (2) specified as safe or (3)
-    listed in the 'non_repeat_dims'.
+    expression to find the indirect dimension (not phase cycling and not
+    direct) and to make sure they are either (1) nScans (2) specified as safe
+    or (3) listed in the 'non_repeat_dims'.
 
     Parameters
     ==========
@@ -109,6 +109,8 @@ def correl_align(
     assert len(safe_repeat_dims - set(repeat_dims) - set(non_repeat_dims)) == 0
     # After passing the assert we can now define the repeat dims
     repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
+    if ("nScans" in s_orig.dimlabels) and ("nScans" not in repeat_dims):
+        repeat_dims.append("nScans")
     # s_jk below ends up with three dimensions (j = align_dim, k = phcyc and
     # direct nu) and is NOT conj
     if len(repeat_dims) > 1:
