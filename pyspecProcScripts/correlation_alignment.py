@@ -53,9 +53,9 @@ def correl_align(
                     Sets the tolerance limit for the alignment procedure.
     repeat_dims:   list (default [])
                     List of the dimensions along which the signal is
-                    essentially repeated and therefore can be aligned.  If
-                    there is an nScans or repeats dimension this must be
-                    included! Note: prior to calling this function it is a
+                    essentially repeated and therefore can be aligned. The
+                    nScans dimension is automatically added to this list if it
+                    exists. Note: prior to calling this function it is a
                     common strategy to flip the sign so all transients are the
                     same sign.
     nonrepeat_dims: list (default [])
