@@ -8,6 +8,7 @@ cycles also FTed (coherence domain).
 Data is not sliced or manipulated in any other way that would reduce
 information content.
 """
+
 import pyspecdata as psd
 import logging
 import numpy as np
@@ -298,7 +299,9 @@ def proc_bruker_CPMG_v1(s, fl=None):
 
 
 def proc_spincore_SE_v1(s, fl=None):
+    s = hack_oldproc(s, fl=fl)
     s = proc_spincore_generalproc_v1(s, fl=fl)
+    s.set_prop("coherence_pathway", {"ph1": 1})
     if "nScans" in s.shape:
         s *= s.shape["nScans"]
     return s
@@ -327,8 +330,6 @@ def proc_spincore_diffph_SE_v2(s, fl=None):
 
 def proc_Hahn_echoph(s, fl=None):
     logging.debug("loading pre-processing for Hahn_echoph")
-    if "nScans" in s.dimlabels:
-        nScans = s.shape["nScans"]
     s.reorder("t", first=True)
     s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
     s.labels({"ph2": r_[0.0, 2.0] / 4, "ph1": r_[0.0, 1.0, 2.0, 3.0] / 4})
@@ -668,6 +669,16 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 
+def hack_oldproc(s, direct="t2", fl=None):
+    """this is for things that are so old that they don't even have
+    acq_params set"""
+    s.set_prop(
+        "acq_params", {"SW_kHz": 1 / np.diff(s[direct][r_[0, 1]]).item() / 1e3}
+    )
+    s.set_units(direct, "s")
+    return s
+
+
 def proc_spincore_generalproc_v1(
     s, direct="t2", include_tau_sub=True, fl=None
 ):
@@ -754,13 +765,11 @@ def proc_DOSY_CPMG(s, fl=None):
     logging.debug(psd.strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.debug(
-        psd.strm(
-            [
-                (j, s.get_prop("acq")[j])
-                for j in s.get_prop("acq").keys()
-                if "de" in j.lower()
-            ]
-        )
+        psd.strm([
+            (j, s.get_prop("acq")[j])
+            for j in s.get_prop("acq").keys()
+            if "de" in j.lower()
+        ])
     )
     # I actually can't find depa
     # }}}
@@ -829,11 +838,9 @@ def proc_ESR(s):
 
 
 def proc_field_sweep_v1(s):
-    logging.debug(
-        """WARNING WARNING, you are using the wrong version of the
+    logging.debug("""WARNING WARNING, you are using the wrong version of the
         field sweep code -- should be chunked when data is saved, not
-        on loading!"""
-    )
+        on loading!""")
     logging.debug("loading preprocessing for fieldsweep")
     s.reorder("t", first=True)
     s.chunk("t", ["ph1", "t2"], [4, -1])
