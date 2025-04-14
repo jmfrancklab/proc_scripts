@@ -17,16 +17,16 @@ def to_percent(y, position):
 def correl_align(
     s_orig,
     tol=1e-4,
-    indirect_dim=None,
     repeat_dims=[],
     non_repeat_dims=[],
     fig_title="correlation alignment",
     signal_pathway={"ph1": 0, "ph2": 1},
-    avg_dim=None,
     max_shift=100.0,
     sigma=20.0,
     direct="t2",
     fl=None,
+    indirect_dim=None,  # no longer used
+    avg_dim=None,  # no longer used
 ):
     """
     Align transients collected with chunked phase cycling dimensions along an
@@ -40,8 +40,10 @@ def correl_align(
 
     With both repeat_dims and non_repeat_dims defined, we can use a set
     expression to find the indirect dimension (not phase cycling and not
-    direct) and to make sure they are either (1) nScans (2) specified as safe
-    or (3) listed in the 'non_repeat_dims'.
+    direct) and to make sure all dimensions are either
+    (1) nScans
+    (2) specified as safe to align along (by being listed in `repeat_dims`)
+    or (3) listed in the `non_repeat_dims`.
 
     Parameters
     ==========
@@ -51,31 +53,33 @@ def correl_align(
         This data is not modified.
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
-    repeat_dims:   list (default [])
-                    List of the dimensions along which the signal is
-                    essentially repeated and therefore can be aligned. The
-                    nScans dimension is automatically added to this list if it
-                    exists. Note: prior to calling this function it is a
-                    common strategy to flip the sign so all transients are the
-                    same sign.
-    nonrepeat_dims: list (default [])
-                    These are indirect dimensions that we are not OK to align
-                    (e.g. the indirect dimension of a 2D COSY experiment).
-    fig_title:      str
-                    Title for the figures generated.
-    signal_pathway: dict
-                    Dictionary containing the signal pathway.
-    max_shift:      float
-                    Specifies the upper and lower bounds to the range over
-                    which f_shift will be taken from the correlation function.
-                    Shift_bounds must be True.
-                    If it's set to None, then no bounds are applied.
-    sigma:          int
-                    Sigma value for the Gaussian mask. Related to the line
-                    width of the given data.
-    fl:             boolean
-                    fl=fl to show the plots and figures produced by this
-                    function otherwise, fl=None.
+    repeat_dims : list (default [])
+        List of the dimensions along which the signal is
+        essentially repeated and therefore can be aligned.
+        The nScans dimension is automatically added to this list if it exists.
+        **Important**: the signal along a dimension of repeats must be the same
+        sign.
+        Therefore, *e.g.*, if it's derived from inversion recovery data,
+        you need to flip the sign →
+        That's what :meth:`pyspecProcScripts.phasing.determine_sign` is for.
+    nonrepeat_dims : list (default [])
+        These are indirect dimensions that we are not OK to align
+        (e.g. the indirect dimension of a 2D COSY experiment).
+    fig_title : str
+        Title for the figures generated.
+    signal_pathway : dict
+        Dictionary containing the signal pathway.
+    max_shift : float
+        Specifies the upper and lower bounds to the range over
+        which f_shift will be taken from the correlation function.
+        Shift_bounds must be True.
+        If it's set to None, then no bounds are applied.
+    sigma : int
+        Sigma value for the Gaussian mask. Related to the line
+        width of the given data.
+    fl : boolean
+        fl=fl to show the plots and figures produced by this
+        function otherwise, fl=None.
 
     Returns
     =======
@@ -88,6 +92,7 @@ def correl_align(
                 the data in the calculation of the correlation function.
     """
     logging.debug("Applying the correlation routine")
+    # {{{ explicitly check for old arguments
     assert indirect_dim is None, (
         "We updated the correlation function to no longer take indirect_dim as"
         " a kwarg! Now indirect_dim roughly corresponds to repeat_dims"
@@ -96,21 +101,44 @@ def correl_align(
         "We updated the correlation function to no longer take avg_dim as a"
         " kwarg!"
     )
+    # }}}
+    # TODO ☐: (you had deleted w/out taking care of):
+    #         you need to
+    #         first make repeat_dims and
+    #         non_repeat_dims lists of length
+    #         1 if they are given as strings
     assert (
         type(repeat_dims) is list
     ), "the repeat_dims kwarg needs to be a list of strings"
     assert (
         len(repeat_dims) > 0
     ), "You must tell me which dimension contains the repeats!"
+    temp = set(repeat_dims) - set(s_orig.dimlabels)
+    assert len(temp) == 0, (
+        f"{temp} were not found in the data dimensions, but were specified in"
+        " `repeat_dims`"
+    )
+    temp = set(nonrepeat_dims) - set(s_orig.dimlabels)
+    assert len(temp) == 0, (
+        f"{temp} were not found in the data dimensions, but were specified in"
+        " `nonrepeat_dims`"
+    )
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
-    # Make sure the repeat_dims are appropriate and that there are no extra
-    # remaining dims
-    safe_repeat_dims = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
-    assert len(safe_repeat_dims - set(repeat_dims) - set(non_repeat_dims)) == 0
-    # After passing the assert we can now define the repeat dims
-    repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
+    # TODO ☐: check my modifications -- the following was incorrectly called
+    # safe_repeat_dims rather than indirect (what it was called before, and a more accurate name)
+    indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
     if ("nScans" in s_orig.dimlabels) and ("nScans" not in repeat_dims):
         repeat_dims.append("nScans")
+    # Make sure the ordering of the repeat_dims matches their order in the
+    # original data (this makes smoosh and chunk easier)
+    repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
+    temp = indirect - set(repeat_dims) - set(non_repeat_dims)
+    assert len(temp) == 0, (
+        "Aside from the dimension called nScans, the direct dimension"
+        f" {direct}, and dimensions called ph... (for phase cycling), you need"
+        " to acccount for all your indirect dimensions!  The following are"
+        f" unaccounted for: {temp}"
+    )
     # s_jk below ends up with three dimensions (j = align_dim, k = phcyc and
     # direct nu) and is NOT conj
     if len(repeat_dims) > 1:
@@ -122,9 +150,6 @@ def correl_align(
         )  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
         #                 want applied to s_orig
-    assert (
-        repeat_dims is not None
-    ), "you need to tell me what the repeated dimension is!"
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
@@ -135,7 +160,7 @@ def correl_align(
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
-    N = psd.ndshape(s_jk)["repeats"]
+    N = s_jk.shape["repeats"]
     # TODO ☐: as noted below, this doesn't include the mask!
     sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     if fl:

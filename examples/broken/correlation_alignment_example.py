@@ -6,6 +6,8 @@ Takes a 2D data set and applies proper phasing corrections followed by
 aligning the data through a correlation routine.
 """
 
+# TODO ☐: you need to make sure this is fixed so that it can be moved out of
+#         the "broken" directory.
 import pyspecdata as psd
 from pyspecdata import r_
 import numpy as np
@@ -87,6 +89,8 @@ with psd.figlist_var() as fl:
         # }}}
         # {{{ Applying the phase corrections
         data["t2"] -= data.getaxis("t2")[0] # needed for Hermitian Function
+        #                                     (fid_from_echo does this
+        #                                     automatically)
         best_shift = psdpr.hermitian_function_test(
             psdpr.select_pathway(data.C.mean(indirect), signal_pathway)
         )
@@ -106,6 +110,8 @@ with psd.figlist_var() as fl:
         data.ift(list(signal_pathway.keys()))
         opt_shift, sigma, mask_func = psdpr.correl_align(
             data * mysgn,
+            # TODO ☐: the following should not be needed -- if it sees a
+            # string, it should convert it
             repeat_dims=[indirect],
             signal_pathway=signal_pathway,
             sigma=3000 / 2.355,
