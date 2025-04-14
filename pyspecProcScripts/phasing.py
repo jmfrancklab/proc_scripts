@@ -440,14 +440,15 @@ def fid_from_echo(
     return d
 
 
-def find_peakrange(
+def find_peakrange(*args, **kwargs):
+    raise ValueError("find_peakrange is obsolete now. Use det_inh_bounds (which has slightly different options) instead!")
+
+def det_inh_bounds(
     d,
+    peak_lowest_thresh,
     direct="t2",
-    peak_lower_thresh=0.1,
-    peak_lowest_thresh=0.03,
     inh_guess=250.0,
     hom_guess=30.0,
-    max_echo=20e-3,
     fl=None,
 ):
     """find the range of frequencies over which the signal occurs, so that we
@@ -461,9 +462,13 @@ def find_peakrange(
         Data in the frequency domain -- will not be altered.
     direct : str (default "t2")
         The name of the direct dimension
-    peak_lower_thresh: float
+    peak_lowest_thresh: float
         Fraction of the signal intensity used in calculating the
         frequency slice. The smaller the value, the wider the slice.
+
+        This is not a keyword argument b/c whatever is calling this needs
+        to know what was used for peak_lowest_thresh, so that it knows
+        how far to push out the bounds of interest.
     inh_guess: float
         Guess the extent of the signal, in Hz.
         This is used to help find the echo center.
@@ -634,13 +639,9 @@ def find_peakrange(
            label="signal energy\nconv + baselined",
        )
     narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
-    wide_ranges = freq_envelope.contiguous(
-       lambda x: x > peak_lower_thresh * x.data.max()
-    )
     widest_ranges = freq_envelope.contiguous(
        lambda x: x > peak_lowest_thresh * x.data.max()
     )
-    #TODO ☐: if we really want the inhomogenous width, this should be contracted by the convolution width
 
     def filter_ranges(B, A):
        """where A and B are lists of ranges (given as tuple pairs), filter B
@@ -651,7 +652,6 @@ def find_peakrange(
            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
        ]
 
-    peakrange = filter_ranges(wide_ranges, narrow_ranges)
     peakrange = filter_ranges(widest_ranges, peakrange)
     if len(peakrange) > 1:
        max_range_width = max(
@@ -676,8 +676,10 @@ def find_peakrange(
     peakrange = peakrange[0]
     #}}}
     frq_center = np.mean(peakrange).item()
-    frq_half = np.diff(peakrange).item() / 2
-    d.set_prop("peakrange", peakrange)
+    # contract the full width by the convolution width (b/c we broadened
+    # the peak by hom_guess above when we convolved
+    frq_half = (np.diff(peakrange).item() - hom_guess) / 2
+    d.set_prop("inh_bounds", frq_center + r_[-1,1] * frq_half)
     if fl is not None:
        fl.next("autoslicing!")
        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
