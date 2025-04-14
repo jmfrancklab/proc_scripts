@@ -21,7 +21,7 @@ from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
-from .simple_functions import select_pathway, logobj, find_apparent_anal_freq
+from .simple_functions import select_pathway, logobj, find_apparent_anal_freq, frq_mask
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
@@ -55,6 +55,7 @@ __all__ = [
     "find_peakrange",
     "fit_envelope",
     "fl_mod",
+    "frq_mask",
     "fwhm_calculator",
     "generate_integrals",
     "hermitian_function_test",

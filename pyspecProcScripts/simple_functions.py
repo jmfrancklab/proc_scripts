@@ -146,3 +146,40 @@ def find_apparent_anal_freq(s):
             # (after filtering and up-conversion) will be flipped
             isflipped = True
     return s, nu_a, isflipped
+
+def frq_mask(s,signal_pathway, direct="t2", indirect = "repeats", sigma = 20.0):
+    assert s.get_ft_prop(direct), "You must be in the frequency domain!" 
+    for phnames in signal_pathway.keys():
+        assert not s.get_ft_prop( phnames), (
+            str(phnames) + "must NOT be in coherence domain!"
+        )
+    signal_keys = list(signal_pathway)
+    signal_values = list(signal_pathway.values())
+    s.ft(list(signal_pathway))
+    # {{{ find center frequency
+    for j in range(len(signal_keys)):
+        signal = s[signal_keys[j], signal_values[j]].C
+    nu_center = signal.mean(indirect).C.argmax(direct)
+    # }}}
+    # {{{ center and mask using sigma
+    frq_mask = np.exp(
+            -((s.fromaxis(direct)-nu_center)**2) / (2* sigma**2)
+            )
+    # }}} 
+    s.ift(list(signal_pathway))
+    masked_s = s*frq_mask
+    return masked_s, frq_mask 
+
+def Delta_p_mask(s, signal_pathway, off_pathways=None):
+    if isinstance(off_pathways, dict):
+        raise ValueError(
+                "off_pathways should be a list of dicts."
+                "If you really mean to only user on pathway, pass"
+                " a list with a single dict inside"
+                )
+    Delta_off_pathways = [{f"DeltaPH{key[2:]}":value for key, value in paths.items()} for paths in off_pathways]    
+    for ph_name,ph_val in signal_pathway.items():
+        s.ft(["Delta%s"%ph_name.capitalize()])
+        new_s = (s["Delta" + ph_name.capitalize,ph_val]
+                + s[Delta_off_pathways[j]] for j in Delta_off_pathways)
+    return s       
