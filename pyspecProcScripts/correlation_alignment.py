@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
 import logging
+from .simple_functions import frq_mask
 
 
 @FuncFormatter
@@ -214,12 +215,6 @@ def correl_align(
     #         function, this will be determined
     #         from the same code that applies the
     #         frequency bounds.
-    for_nu_center = s_jk.C
-    for_nu_center.ft(list(signal_pathway))
-    for x in range(len(signal_keys)):
-        for_nu_center = for_nu_center[signal_keys[x], signal_values[x]]
-    nu_center = for_nu_center.mean("repeats").C.argmax(direct)
-    logging.debug(psd.strm("Center frequency", nu_center))
     # }}}
     s_jk.ift(direct)
     f_shift = 0
@@ -244,10 +239,8 @@ def correl_align(
         #     the signal frequency is moving
         #     relative to the mask.
         s_jk.ft(direct)
-        this_mask = np.exp(
-            -((s_jk.fromaxis(direct) - nu_center) ** 2) / (2 * sigma**2)
-        )
-        s_leftbracket = this_mask * s_jk
+        s_leftbracket,this_mask = frq_mask(s_jk,signal_pathway,direct=direct,indirect="repeats",
+                sigma=sigma)
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
         # }}}
