@@ -42,16 +42,10 @@ def frq_mask(s, signal_pathway, direct="t2", indirect="repeats"):
     """
     # Just for consistency we will start with the frequency domain in the phase
     # cycling dimension
-    assert s.get_ft_prop(direct), "You must be in the frequency domain!"
-    for phnames in signal_pathway.keys():
-        assert not s.get_ft_prop(phnames), (
-            str(phnames) + "must NOT be in coherence domain!"
-        )
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     # we want to leave the original s unchanged and return a copy
     for_mask = s.C
-    for_mask.ft(list(signal_pathway))
     # {{{ The following is all pulled directly from the correlation alignment
     #     function
     # {{{ find center frequency
