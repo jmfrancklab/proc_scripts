@@ -162,6 +162,14 @@ def correl_align(
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
     # TODO ☐: as noted below, this doesn't include the mask!
+    # TODO ☐: 4/16 after commenting on PR -- note that this is where you would
+    #         multiply by the square root of your frequency domain mask, and
+    #         also select the parts that you want along the coherence
+    #         domain.  Importantly, s_leftbracket (s_mn) should be
+    #         copied before the mask is multiplied, so before here.
+    #         Because s_jk gets an ift on line 226 below, this means
+    #         that you are probably in the frequency domain here, making
+    #         mask application easy.
     sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
