@@ -184,9 +184,7 @@ def correl_align(
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
     s_jk.ft(list(signal_pathway))
-    for_sig_E = frq_mask_fn(
-        s_jk, signal_pathway, direct=direct, indirect="repeats"
-    )
+    for_sig_E = frq_mask_fn(s_jk)
     s_jk.ift(list(signal_pathway))
     sig_energy = (abs(for_sig_E) ** 2).data.sum().item() / N
     if fl:
@@ -242,7 +240,7 @@ def correl_align(
         #     relative to the mask.
         s_jk.ft(direct)
         s_jk.ft(list(signal_pathway))
-        s_leftbracket = frq_mask_fn(s_jk, signal_pathway, indirect="repeats")
+        s_leftbracket = frq_mask_fn(s_jk)
         s_jk.ift(list(signal_pathway))
         s_jk.ift(direct)
         s_leftbracket.ift(direct)

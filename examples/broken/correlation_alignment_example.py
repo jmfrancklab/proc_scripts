@@ -20,47 +20,31 @@ from numpy.random import seed
 
 
 # {{{ Define the frequency mask function and the ph cyc mask
-def frq_mask(s, signal_pathway, direct="t2", indirect="repeats"):
+def frq_mask(s):
     """Generates a mask that is nonzero along frequencies only over the
     bandwidth of the signal
         Parameteres
         ===========
         s: nddata
             data that the mask is applied to
-        signal_pathway: dict
-            This is the default pathway that will be nonzero since this is
-            where your signal is.
-        direct: str
-            Direct dimension
-        indirect: str
-            The indirect dimension (does not include phase cycling dimensions)
 
     Returns
         =======
         s: nddata
             copy of data with the mask applied
     """
-    # Just for consistency we will start with the frequency domain in the phase
-    # cycling dimension
-    signal_keys = list(signal_pathway)
-    signal_values = list(signal_pathway.values())
     # we want to leave the original s unchanged and return a copy
     for_mask = s.C
-    # {{{ The following is all pulled directly from the correlation alignment
-    #     function
     # {{{ find center frequency
-    for j in range(len(signal_keys)):
-        signal = for_mask[signal_keys[j], signal_values[j]].C
-    nu_center = signal.mean(indirect).C.argmax(direct)
+    nu_center = psdpr.select_pathway(s.C.mean("repeats"),signal_pathway).C.argmax("t2")
     # }}}
     # {{{ Make mask using the center frequency and sigma (whose estimate here
     #     is 20)
     frq_mask = np.exp(
-        -((for_mask.fromaxis(direct) - nu_center) ** 2) / (2 * 20.0**2)
+        -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * 20.0**2)
     )
     # }}}
     for_mask.ift(list(signal_pathway))
-    # }}}
     return for_mask * frq_mask
 
 
