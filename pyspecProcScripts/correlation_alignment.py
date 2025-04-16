@@ -16,6 +16,8 @@ def to_percent(y, position):
 
 def correl_align(
     s_orig,
+    frq_mask_fn,
+    Delta_p_mask_fn,
     tol=1e-4,
     repeat_dims=[],
     non_repeat_dims=[],
@@ -24,8 +26,6 @@ def correl_align(
     max_shift=100.0,
     sigma=20.0,
     direct="t2",
-    frq_mask_fn=None,
-    ph_mask_fn=None,
     fl=None,
     indirect_dim=None,  # no longer used
     avg_dim=None,  # no longer used
@@ -83,6 +83,7 @@ def correl_align(
         A function which takes nddata and returns a copy with a frequency
         mask applied that only leaves a bandwidth surrounding the signal as
         nonzero.
+    # TODO ☐: Delta_p not ph
     ph_mask_fn : func
         A function which takes the 3D data which we call leftbracket (and
         pertains to s_{m,n} in the DCCT paper) and filters the selected
@@ -132,12 +133,6 @@ def correl_align(
         f"{temp} were not found in the data dimensions, but were specified in"
         " `nonrepeat_dims`"
     )
-    assert frq_mask_fn is not None, (
-        "You need to give me a function that will frequency filter the "
-        "signal! It should take the arguments: s, signal_pathway, direct"
-        " and indirect"
-    )
-
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
     # TODO ✓: check my modifications -- the following was incorrectly called
     # safe_repeat_dims rather than indirect (what it was called before, and a
@@ -189,7 +184,7 @@ def correl_align(
     #         also select the parts that you want along the coherence
     #         domain.  Importantly, s_leftbracket (s_mn) should be
     #         copied before the mask is multiplied, so before here.
-    #         Because s_jk gets an ift on line 231 below, this means
+    #         Because s_jk gets an ift on line 225 below, this means
     #         that you are probably in the frequency domain here, making
     #         mask application easy. Because I
     #         made this comment in parallel
@@ -250,6 +245,8 @@ def correl_align(
         #     the signal frequency is moving
         #     relative to the mask.
         s_jk.ft(direct)
+        # TODO ☐: see comments above -- you should do this in the right
+        #         place, so you don't need to ft and then ift back
         s_jk.ft(list(signal_pathway))
         s_leftbracket = frq_mask_fn(s_jk)
         s_jk.ift(list(signal_pathway))
@@ -293,13 +290,15 @@ def correl_align(
                 )
         # }}}
         # }}}
-        # {{{ this applies the Fourier transform from Δφ to Δp_l
+        # {{{ this applies the Fourier transform from Δφ to Δpₗ
         #     that is found inside the left square bracket of eq. 29.
-        #     Then, it performs a sum that is equivalent to applying a
-        #     mask along the Δp_l dimension and then summing along the
-        #     Δp_l dimension.
-        #     Note that the paper implies a sum along Δp_l terms as in
-        #     eq. 29, but doesn't actually show them.
+        #     The paper implies a sum along Δpₗ terms as in eq. 28, but
+        #     doesn't actually show them. (Simultaneously maximize all
+        #     coherence pathways that are not masked)
+        #     Note that because only the left square bracket depends on
+        #     Δpₗ, we can apply the coherence mask here, before
+        #     multiplication, in order to decrease the dimensionality of
+        #     the correlation function.
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
         s_leftbracket = ph_mask_fn(s_leftbracket)

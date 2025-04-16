@@ -19,6 +19,7 @@ from collections import OrderedDict
 from numpy.random import seed
 
 
+# TODO ☐: see comment on github
 # {{{ Define the frequency mask function and the ph cyc mask
 def frq_mask(s):
     """Generates a mask that is nonzero along frequencies only over the
@@ -50,6 +51,7 @@ def frq_mask(s):
     return for_mask * frq_mask
 
 
+# TODO ☐: see comment on github
 def Delta_p_mask(s):
     """Filters out all but the signal pathway and the "ph1":0 or
     {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
@@ -156,6 +158,9 @@ with psd.figlist_var() as fl:
         data.ift(list(signal_pathway.keys()))
         opt_shift, sigma = psdpr.correl_align(
             data * mysgn,
+            frq_mask_fn=frq_mask,
+            # TODO ☐: Delta_p mask -- you're not masking the phase
+            ph_mask_fn=Delta_p_mask,
             repeat_dims=indirect,
             signal_pathway=signal_pathway,
             sigma=3000 / 2.355,
@@ -163,8 +168,6 @@ with psd.figlist_var() as fl:
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
             #                 accommodate the drift in signal
-            frq_mask_fn=frq_mask,
-            ph_mask_fn=Delta_p_mask,
             fl=fl,
         )
         # removed display of the mask (I think that's what it was)

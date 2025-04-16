@@ -146,5 +146,3 @@ def find_apparent_anal_freq(s):
             # (after filtering and up-conversion) will be flipped
             isflipped = True
     return s, nu_a, isflipped
-
-
