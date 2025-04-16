@@ -18,6 +18,49 @@ import sympy as s
 from collections import OrderedDict
 from numpy.random import seed
 
+
+# {{{ Define the frequency mask function and the ph cyc mask
+def frq_mask(s):
+    """Generates a mask that is nonzero along frequencies only over the
+    bandwidth of the signal
+        Parameteres
+        ===========
+        s: nddata
+            data that the mask is applied to
+
+    Returns
+        =======
+        s: nddata
+            copy of data with the mask applied
+    """
+    # we want to leave the original s unchanged and return a copy
+    for_mask = s.C
+    # {{{ find center frequency
+    nu_center = psdpr.select_pathway(s.C.mean("repeats"),signal_pathway).C.argmax("t2")
+    # }}}
+    # {{{ Make mask using the center frequency and sigma (whose estimate here
+    #     is 20)
+    frq_mask = np.exp(
+        -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * 20.0**2)
+    )
+    # }}}
+    for_mask.ift(list(signal_pathway))
+    return for_mask * frq_mask
+
+
+def Delta_p_mask(s, signal_pathway):
+    """ Filters out all but the signal pathway and the "ph1":0 or
+    {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
+    Note this serves as an example function and other filter functions could
+    alternatively be used"""
+    for ph_name, ph_val in signal_pathway.items():
+        s.ft(["Delta%s" % ph_name.capitalize()])
+        s = (
+            s["Delta" + ph_name.capitalize(), ph_val]
+            + s["Delta" + ph_name.capitalize(), 0]
+        )
+    return s
+# }}}
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
@@ -88,7 +131,7 @@ with psd.figlist_var() as fl:
         )
         # }}}
         # {{{ Applying the phase corrections
-        data["t2"] -= data.getaxis("t2")[0] # needed for Hermitian Function
+        data["t2"] -= data.getaxis("t2")[0]  # needed for Hermitian Function
         #                                     (fid_from_echo does this
         #                                     automatically)
         best_shift = psdpr.hermitian_function_test(
@@ -108,17 +151,17 @@ with psd.figlist_var() as fl:
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
         data.ift(list(signal_pathway.keys()))
-        opt_shift, sigma, mask_func = psdpr.correl_align(
+        opt_shift, sigma = psdpr.correl_align(
             data * mysgn,
-            # TODO ☐: the following should not be needed -- if it sees a
-            # string, it should convert it
-            repeat_dims=[indirect],
+            repeat_dims=indirect,
             signal_pathway=signal_pathway,
             sigma=3000 / 2.355,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
             #                 accommodate the drift in signal
+            frq_mask_fn=frq_mask,
+            ph_mask_fn=Delta_p_mask,
             fl=fl,
         )
         # removed display of the mask (I think that's what it was)
