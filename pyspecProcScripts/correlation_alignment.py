@@ -24,8 +24,8 @@ def correl_align(
     max_shift=100.0,
     sigma=20.0,
     direct="t2",
-    frq_mask_fn = None,
-    ph_mask_fn = None,
+    frq_mask_fn=None,
+    ph_mask_fn=None,
     fl=None,
     indirect_dim=None,  # no longer used
     avg_dim=None,  # no longer used
@@ -80,7 +80,7 @@ def correl_align(
         Sigma value for the Gaussian mask. Related to the line
         width of the given data.
     frq_mask_fn : function
-        A function which takes nddata and returns a copy with a frequency 
+        A function which takes nddata and returns a copy with a frequency
         mask applied that only leaves a bandwidth surrounding the signal as
         nonzero
     fl : boolean
@@ -108,9 +108,9 @@ def correl_align(
         " kwarg!"
     )
     # }}}
-    if isinstance(non_repeat_dims,str):
+    if isinstance(non_repeat_dims, str):
         non_repeat_dims = [non_repeat_dims]
-    if isinstance(repeat_dims,str):
+    if isinstance(repeat_dims, str):
         repeat_dims = [repeat_dims]
     assert (
         type(repeat_dims) is list
@@ -128,23 +128,31 @@ def correl_align(
         f"{temp} were not found in the data dimensions, but were specified in"
         " `nonrepeat_dims`"
     )
-    assert frq_mask_fn is not None,(
-            "You need to give me a function that will frequency filter the "
-            "signal! It should take the arguments: s, signal_pathway, direct"
-            " and indirect")
+    assert frq_mask_fn is not None, (
+        "You need to give me a function that will frequency filter the "
+        "signal! It should take the arguments: s, signal_pathway, direct"
+        " and indirect"
+    )
 
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
     # TODO ✓: check my modifications -- the following was incorrectly called
-    # safe_repeat_dims rather than indirect (what it was called before, and a more accurate name)
-    # see https://github.com/jmfrancklab/proc_scripts/pull/141#discussion_r2042969536
+    # safe_repeat_dims rather than indirect (what it was called before, and a
+    # more accurate name) see
+    # https://github.com/jmfrancklab/proc_scripts/pull/141#discussion_r2042969536
     if ("nScans" in s_orig.dimlabels) and ("nScans" not in repeat_dims):
         repeat_dims.append("nScans")
     # Make sure the ordering of the repeat_dims matches their order in the
     # original data (this makes smoosh and chunk easier)
     repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
-    # Check there are no left over dimensions unaccounted for by the direct, phase cycling
-    # and declared repeat dimensions
-    temp = set(s_orig.dimlabels) - set(phcycdims) - set([direct]) - set(repeat_dims) - set(non_repeat_dims)
+    # Check there are no left over dimensions unaccounted for by the direct,
+    # phase cycling and declared repeat dimensions
+    temp = (
+        set(s_orig.dimlabels)
+        - set(phcycdims)
+        - set([direct])
+        - set(repeat_dims)
+        - set(non_repeat_dims)
+    )
     assert len(temp) == 0, (
         "Aside from the dimension called nScans, the direct dimension"
         f" {direct}, and dimensions called ph... (for phase cycling), you need"
@@ -169,12 +177,11 @@ def correl_align(
     assert s_orig.get_ft_prop(
         direct
     ), "direct dimension must be in the frequency domain"
-    signal_keys = list(signal_pathway)
-    signal_values = list(signal_pathway.values())
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
-    # TODO ☐: as noted below, this doesn't include the mask!
-    for_sig_E = frq_mask_fn(s_jk,signal_pathway,direct=direct,indirect="repeats")
+    for_sig_E = frq_mask_fn(
+        s_jk, signal_pathway, direct=direct, indirect="repeats"
+    )
     sig_energy = (abs(for_sig_E) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
@@ -205,14 +212,6 @@ def correl_align(
     this_E = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
-    # TODO ☐: the mask needs to be separated into
-    #         two functions:
-    #         One (f_mask) takes in s_jk and returns a copy
-    #         with the *frequency* mask applied.
-    #         Another (Delta_p_mask) takes in
-    #         s_leftbracket, and returns the
-    #         result of applying the mask along
-    #         Δp_l
     s_jk.ift(direct)
     f_shift = 0
     for my_iter in range(100):
@@ -236,7 +235,7 @@ def correl_align(
         #     the signal frequency is moving
         #     relative to the mask.
         s_jk.ft(direct)
-        s_leftbracket = frq_mask_fn(s_jk,signal_pathway,indirect="repeats")
+        s_leftbracket = frq_mask_fn(s_jk, signal_pathway, indirect="repeats")
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
         # }}}
@@ -277,9 +276,17 @@ def correl_align(
                 )
         # }}}
         # }}}
+        # {{{ this applies the Fourier transform from Δφ to Δp_l
+        #     that is found inside the left square bracket of eq. 29.
+        #     Then, it performs a sum that is equivalent to applying a
+        #     mask along the Δp_l dimension and then summing along the
+        #     Δp_l dimension.
+        #     Note that the paper implies a sum along Δp_l terms as in
+        #     eq. 29, but doesn't actually show them.
+        s_leftbracket = ph_mask_fn(s_leftbracket, signal_pathway)
+        # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        #s_leftbracket = ph_mask_fn(s_leftbracket,signal_pathway)
         correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
@@ -306,35 +313,6 @@ def correl_align(
         correl.ft_new_startpoint(direct, "time")
         correl.ft(direct, shift=True, pad=2**14)
         # }}}
-        # TODO ☐: only the left square bracket term depends on Δp_l,
-        #         so the following should be done on the left square
-        #         bracket term before multiplication
-        # TODO ☐: then, the following sum is
-        #         actually part of the masking
-        #         procedure, so it should be moved
-        #         into the Delta_p_mask that is
-        #         supplied here.
-        #         The point of this is that right
-        #         now, we are ALWAYS maximizing
-        #         signal in both the coherence
-        #         pathway of interest and the 0,0
-        #         pathway → we would like to
-        #         control that.
-        # {{{ this applies the Fourier transform from Δφ to Δp_l
-        #     that is found inside the left square bracket of eq. 29.
-        #     Then, it performs a sum that is equivalent to applying a
-        #     mask along the Δp_l dimension and then summing along the
-        #     Δp_l dimension.
-        #     Note that the paper implies a sum along Δp_l terms as in
-        #     eq. 29, but doesn't actually show them.
-        if ph_mask_fn is not None:
-            correl = ph_mask_fn(correl,signal_pathway)
-        else:
-            for ph_name,ph_val in signal_pathway.items():
-                correl.ft(["Delta%s"%ph_name.capitalize()])
-                correl = correl["Delta"+ph_name.capitalize(),ph_val]
-        # }}}
-        #correl.ft(list(signal_pathway))
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
