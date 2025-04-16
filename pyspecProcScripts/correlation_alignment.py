@@ -107,6 +107,10 @@ def correl_align(
     #         first make repeat_dims and
     #         non_repeat_dims lists of length
     #         1 if they are given as strings
+    if isinstance(non_repeat_dims,str):
+        non_repeat_dims = [non_repeat_dims]
+    if isinstance(repeat_dims,str):
+        repeat_dims = [repeat_dims]
     assert (
         type(repeat_dims) is list
     ), "the repeat_dims kwarg needs to be a list of strings"
@@ -118,21 +122,23 @@ def correl_align(
         f"{temp} were not found in the data dimensions, but were specified in"
         " `repeat_dims`"
     )
-    temp = set(nonrepeat_dims) - set(s_orig.dimlabels)
+    temp = set(non_repeat_dims) - set(s_orig.dimlabels)
     assert len(temp) == 0, (
         f"{temp} were not found in the data dimensions, but were specified in"
         " `nonrepeat_dims`"
     )
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
-    # TODO ☐: check my modifications -- the following was incorrectly called
+    # TODO ✓: check my modifications -- the following was incorrectly called
     # safe_repeat_dims rather than indirect (what it was called before, and a more accurate name)
-    indirect = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
+    # see https://github.com/jmfrancklab/proc_scripts/pull/141#discussion_r2042969536
     if ("nScans" in s_orig.dimlabels) and ("nScans" not in repeat_dims):
         repeat_dims.append("nScans")
     # Make sure the ordering of the repeat_dims matches their order in the
     # original data (this makes smoosh and chunk easier)
     repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
-    temp = indirect - set(repeat_dims) - set(non_repeat_dims)
+    # Check there are no left over dimensions unaccounted for by the direct, phase cycling
+    # and declared repeat dimensions
+    temp = set(s_orig.dimlabels) - set(phcycdims) - set([direct]) - set(repeat_dims) - set(non_repeat_dims)
     assert len(temp) == 0, (
         "Aside from the dimension called nScans, the direct dimension"
         f" {direct}, and dimensions called ph... (for phase cycling), you need"
