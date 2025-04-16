@@ -83,8 +83,7 @@ def correl_align(
         A function which takes nddata and returns a copy with a frequency
         mask applied that only leaves a bandwidth surrounding the signal as
         nonzero.
-    # TODO ☐: Delta_p not ph
-    ph_mask_fn : func
+    Delta_p_mask_fn : func
         A function which takes the 3D data which we call leftbracket (and
         pertains to s_{m,n} in the DCCT paper) and filters the selected
         pathwaysover which to sum.
@@ -178,21 +177,11 @@ def correl_align(
     ), "direct dimension must be in the frequency domain"
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
-    # TODO ☐: as noted below, this doesn't include the mask!
     # TODO ☐: 4/16 after commenting on PR -- note that this is where you would
     #         multiply by the square root of your frequency domain mask, and
     #         also select the parts that you want along the coherence
-    #         domain.  Importantly, s_leftbracket (s_mn) should be
-    #         copied before the mask is multiplied, so before here.
-    #         Because s_jk gets an ift on line 225 below, this means
-    #         that you are probably in the frequency domain here, making
-    #         mask application easy. Because I
-    #         made this comment in parallel
-    #         with your changes, I show on the
-    #         next line how I think this should
-    #         go (none of the extra junk!)
-    s_jk = frq_mask_fn(s_jk)
-    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
+    #         domain.
+    sig_energy = (abs(frq_mask_fn(s_jk)) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
         fig_forlist, ax_list = plt.subplots(1, 4, figsize=(25, 10))
@@ -219,7 +208,7 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    this_E = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
+    this_E = (abs(frq_mask_fn(s_jk).sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
     s_jk.ift(direct)
@@ -234,25 +223,11 @@ def correl_align(
         logging.debug(psd.strm("*** *** ***"))
         # {{{ construct the expression in the left square brackets of
         #     eq. 29.
-        # {{{ Apply mask around center of signal
-        #     in frequency domain.
         #     At this stage, s_mn is equal to
         #     s_jk.
-        #
-        #     Note that is seems expensive, but
-        #     the masked data does genuinely
-        #     change with every iteration, because
-        #     the signal frequency is moving
-        #     relative to the mask.
-        s_jk.ft(direct)
-        # TODO ☐: see comments above -- you should do this in the right
-        #         place, so you don't need to ft and then ift back
-        s_jk.ft(list(signal_pathway))
-        s_leftbracket = frq_mask_fn(s_jk)
-        s_jk.ift(list(signal_pathway))
-        s_jk.ift(direct)
-        s_leftbracket.ift(direct)
-        # }}}
+        #    This must be done before multiplying by s_jk and without
+        #    the mask applied
+        s_leftbracket = s_jk.C
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
         #     dimension.
@@ -301,7 +276,7 @@ def correl_align(
         #     the correlation function.
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
-        s_leftbracket = ph_mask_fn(s_leftbracket)
+        s_leftbracket = Delta_p_mask_fn(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
@@ -373,7 +348,7 @@ def correl_align(
         #         unmasked copy of the data in
         #         order to calculate our masked
         #         square)
-        s_aligned = s_jk.C  # it's probably cheaper to make a copy than to ift
+        s_aligned = frq_mask_fn(s_jk)  # it's probably cheaper to make a copy than to ift
         s_aligned.ft(direct)
         if fl and my_iter == 0:
             fl.image(

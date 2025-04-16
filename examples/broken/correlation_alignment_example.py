@@ -47,7 +47,6 @@ def frq_mask(s):
         -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * 20.0**2)
     )
     # }}}
-    for_mask.ift(list(signal_pathway))
     return for_mask * frq_mask
 
 
@@ -160,7 +159,7 @@ with psd.figlist_var() as fl:
             data * mysgn,
             frq_mask_fn=frq_mask,
             # TODO ☐: Delta_p mask -- you're not masking the phase
-            ph_mask_fn=Delta_p_mask,
+            Delta_p_mask_fn=Delta_p_mask,
             repeat_dims=indirect,
             signal_pathway=signal_pathway,
             sigma=3000 / 2.355,
