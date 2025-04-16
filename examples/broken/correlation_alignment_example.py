@@ -110,7 +110,7 @@ with psd.figlist_var() as fl:
             "vd",
             "IR",
         ),
-         (
+        (
             (
                 23
                 * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
@@ -124,7 +124,7 @@ with psd.figlist_var() as fl:
             {"ph1": 1},
             "power",
             "enhancement",
-         ),
+        ),
     ]:
         fl.basename = "(%s)" % label
         # {{{ equivalent of subplot

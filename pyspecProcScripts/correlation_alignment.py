@@ -79,10 +79,14 @@ def correl_align(
     sigma : int
         Sigma value for the Gaussian mask. Related to the line
         width of the given data.
-    frq_mask_fn : function
+    frq_mask_fn : func
         A function which takes nddata and returns a copy with a frequency
         mask applied that only leaves a bandwidth surrounding the signal as
-        nonzero
+        nonzero.
+    ph_mask_fn : func 
+        A function which takes the 3D data which we call leftbracket (and
+        pertains to s_{m,n} in the DCCT paper) and filters the selected
+        pathwaysover which to sum.
     fl : boolean
         fl=fl to show the plots and figures produced by this
         function otherwise, fl=None.
