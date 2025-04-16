@@ -83,7 +83,7 @@ def correl_align(
         A function which takes nddata and returns a copy with a frequency
         mask applied that only leaves a bandwidth surrounding the signal as
         nonzero.
-    ph_mask_fn : func 
+    ph_mask_fn : func
         A function which takes the 3D data which we call leftbracket (and
         pertains to s_{m,n} in the DCCT paper) and filters the selected
         pathwaysover which to sum.
@@ -300,7 +300,9 @@ def correl_align(
         #     Δp_l dimension.
         #     Note that the paper implies a sum along Δp_l terms as in
         #     eq. 29, but doesn't actually show them.
-        s_leftbracket = ph_mask_fn(s_leftbracket, signal_pathway)
+        for ph_name, ph_val in signal_pathway.items():
+            s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
+        s_leftbracket = ph_mask_fn(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here

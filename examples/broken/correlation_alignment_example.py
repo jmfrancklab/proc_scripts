@@ -36,7 +36,9 @@ def frq_mask(s):
     # we want to leave the original s unchanged and return a copy
     for_mask = s.C
     # {{{ find center frequency
-    nu_center = psdpr.select_pathway(s.C.mean("repeats"),signal_pathway).C.argmax("t2")
+    nu_center = psdpr.select_pathway(
+        s.C.mean("repeats"), signal_pathway
+    ).C.argmax("t2")
     # }}}
     # {{{ Make mask using the center frequency and sigma (whose estimate here
     #     is 20)
@@ -48,18 +50,19 @@ def frq_mask(s):
     return for_mask * frq_mask
 
 
-def Delta_p_mask(s, signal_pathway):
-    """ Filters out all but the signal pathway and the "ph1":0 or
+def Delta_p_mask(s):
+    """Filters out all but the signal pathway and the "ph1":0 or
     {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
     Note this serves as an example function and other filter functions could
     alternatively be used"""
     for ph_name, ph_val in signal_pathway.items():
-        s.ft(["Delta%s" % ph_name.capitalize()])
         s = (
             s["Delta" + ph_name.capitalize(), ph_val]
             + s["Delta" + ph_name.capitalize(), 0]
         )
     return s
+
+
 # }}}
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
