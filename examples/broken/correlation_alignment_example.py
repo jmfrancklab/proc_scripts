@@ -17,7 +17,59 @@ import matplotlib.pyplot as plt
 import sympy as s
 from collections import OrderedDict
 from numpy.random import seed
+# {{{ Define the frequency mask function and the ph cyc mask
+def frq_mask(s,signal_pathway, direct="t2", indirect = "repeats"):
+    """ Generates a mask that is nonzero along frequencies only over the bandwidth of the signal
+    Parameteres
+    ===========
+    s: nddata
+        data that the mask is applied to
+    signal_pathway: dict
+        This is the default pathway that will be nonzero since this is where your signal is.
+    direct: str
+        Direct dimension
+    indirect: str 
+        The indirect dimension (does not include phase cycling dimensions)
 
+Returns
+    =======
+    s: nddata
+        copy of data with the mask applied
+    """    
+    # Just for consistency we will start with the frequency domain in the phase cycling dimension
+    assert s.get_ft_prop(direct), "You must be in the frequency domain!" 
+    for phnames in signal_pathway.keys():
+        assert not s.get_ft_prop( phnames), (
+            str(phnames) + "must NOT be in coherence domain!"
+        )
+    signal_keys = list(signal_pathway)
+    signal_values = list(signal_pathway.values())
+    for_mask = s.C #we want to leave the original s unchanged and return a copy
+    for_mask.ft(list(signal_pathway))
+    # {{{ The following is all pulled directly from the correlation alignment function
+    # {{{ find center frequency
+    for j in range(len(signal_keys)):
+        signal = for_mask[signal_keys[j], signal_values[j]].C
+    nu_center = signal.mean(indirect).C.argmax(direct)
+    # }}}
+    # {{{ Make mask using the center frequency and sigma (whose estimateis 20
+    frq_mask = np.exp(
+            -((for_mask.fromaxis(direct)-nu_center)**2) / (2* 20.0**2)
+            )
+    # }}} 
+    for_mask.ift(list(signal_pathway))
+    # }}}
+    return for_mask*frq_mask 
+
+def Delta_p_mask(s, signal_pathway):
+    for ph_name,ph_val in signal_pathway.items():
+        s.ft(["Delta%s"%ph_name.capitalize()])
+        s = (
+                s["Delta" + ph_name.capitalize(),ph_val]
+                + s["Delta" + ph_name.capitalize(),0]
+                )
+    return s       
+# }}}
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
@@ -45,21 +97,21 @@ with psd.figlist_var() as fl:
             "vd",
             "IR",
         ),
-        (
-            (
-                23
-                * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
-                * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
-            ),
-            [
-                ("power", psd.nddata(r_[0:4:25j], "power")),
-                ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
-                ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
-            ],
-            {"ph1": 1},
-            "power",
-            "enhancement",
-        ),
+        #(
+        #    (
+        #        23
+        #        * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
+        #        * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
+        #    ),
+        #    [
+        #        ("power", psd.nddata(r_[0:4:25j], "power")),
+        #        ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
+        #        ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
+        #    ],
+        #    {"ph1": 1},
+        #    "power",
+        #    "enhancement",
+        #),
     ]:
         fl.basename = "(%s)" % label
         # {{{ equivalent of subplot
@@ -108,17 +160,17 @@ with psd.figlist_var() as fl:
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
         data.ift(list(signal_pathway.keys()))
-        opt_shift, sigma, mask_func = psdpr.correl_align(
+        opt_shift, sigma = psdpr.correl_align(
             data * mysgn,
-            # TODO ☐: the following should not be needed -- if it sees a
-            # string, it should convert it
-            repeat_dims=[indirect],
+            repeat_dims=indirect,
             signal_pathway=signal_pathway,
             sigma=3000 / 2.355,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
             #                 accommodate the drift in signal
+            frq_mask_fn = frq_mask,
+            ph_mask_fn = Delta_p_mask,
             fl=fl,
         )
         # removed display of the mask (I think that's what it was)

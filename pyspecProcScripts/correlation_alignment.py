@@ -3,7 +3,6 @@ import numpy as np
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
 import logging
-from .simple_functions import frq_mask
 
 
 @FuncFormatter
@@ -25,6 +24,8 @@ def correl_align(
     max_shift=100.0,
     sigma=20.0,
     direct="t2",
+    frq_mask_fn = None,
+    ph_mask_fn = None,
     fl=None,
     indirect_dim=None,  # no longer used
     avg_dim=None,  # no longer used
@@ -78,6 +79,10 @@ def correl_align(
     sigma : int
         Sigma value for the Gaussian mask. Related to the line
         width of the given data.
+    frq_mask_fn : function
+        A function which takes nddata and returns a copy with a frequency 
+        mask applied that only leaves a bandwidth surrounding the signal as
+        nonzero
     fl : boolean
         fl=fl to show the plots and figures produced by this
         function otherwise, fl=None.
@@ -103,11 +108,6 @@ def correl_align(
         " kwarg!"
     )
     # }}}
-    # TODO ☐: (you had deleted w/out taking care of):
-    #         you need to
-    #         first make repeat_dims and
-    #         non_repeat_dims lists of length
-    #         1 if they are given as strings
     if isinstance(non_repeat_dims,str):
         non_repeat_dims = [non_repeat_dims]
     if isinstance(repeat_dims,str):
@@ -128,6 +128,11 @@ def correl_align(
         f"{temp} were not found in the data dimensions, but were specified in"
         " `nonrepeat_dims`"
     )
+    assert frq_mask_fn is not None,(
+            "You need to give me a function that will frequency filter the "
+            "signal! It should take the arguments: s, signal_pathway, direct"
+            " and indirect")
+
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
     # TODO ✓: check my modifications -- the following was incorrectly called
     # safe_repeat_dims rather than indirect (what it was called before, and a more accurate name)
@@ -169,7 +174,8 @@ def correl_align(
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
     # TODO ☐: as noted below, this doesn't include the mask!
-    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
+    for_sig_E = frq_mask_fn(s_jk,signal_pathway,direct=direct,indirect="repeats")
+    sig_energy = (abs(for_sig_E) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
         fig_forlist, ax_list = plt.subplots(1, 4, figsize=(25, 10))
@@ -207,15 +213,6 @@ def correl_align(
     #         s_leftbracket, and returns the
     #         result of applying the mask along
     #         Δp_l
-    # {{{ find center frequency to see where to center the mask
-    # TODO ☐: this copy is undesirable, but not dealing with it, since
-    #         we need to separate the mask
-    #         anyways.  Likely, in the final
-    #         version, when we supply the mask
-    #         function, this will be determined
-    #         from the same code that applies the
-    #         frequency bounds.
-    # }}}
     s_jk.ift(direct)
     f_shift = 0
     for my_iter in range(100):
@@ -239,8 +236,7 @@ def correl_align(
         #     the signal frequency is moving
         #     relative to the mask.
         s_jk.ft(direct)
-        s_leftbracket,this_mask = frq_mask(s_jk,signal_pathway,direct=direct,indirect="repeats",
-                sigma=sigma)
+        s_leftbracket = frq_mask_fn(s_jk,signal_pathway,indirect="repeats")
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
         # }}}
@@ -283,6 +279,7 @@ def correl_align(
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
+        #s_leftbracket = ph_mask_fn(s_leftbracket,signal_pathway)
         correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
@@ -330,13 +327,14 @@ def correl_align(
         #     Δp_l dimension.
         #     Note that the paper implies a sum along Δp_l terms as in
         #     eq. 29, but doesn't actually show them.
-        for ph_name, ph_val in signal_pathway.items():
-            correl.ft(["Delta%s" % ph_name.capitalize()])
-            correl = (
-                correl["Delta" + ph_name.capitalize(), ph_val]
-                + correl["Delta" + ph_name.capitalize(), 0]
-            )
+        if ph_mask_fn is not None:
+            correl = ph_mask_fn(correl,signal_pathway)
+        else:
+            for ph_name,ph_val in signal_pathway.items():
+                correl.ft(["Delta%s"%ph_name.capitalize()])
+                correl = correl["Delta"+ph_name.capitalize(),ph_val]
         # }}}
+        #correl.ft(list(signal_pathway))
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
@@ -426,4 +424,4 @@ def correl_align(
     else:
         f_shift.rename("repeats", repeat_dims[0])
     # }}}
-    return f_shift, sigma, this_mask
+    return f_shift, sigma
