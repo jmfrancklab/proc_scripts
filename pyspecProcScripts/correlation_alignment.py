@@ -348,7 +348,7 @@ def correl_align(
         #         unmasked copy of the data in
         #         order to calculate our masked
         #         square)
-        s_aligned = frq_mask_fn(s_jk)  # it's probably cheaper to make a copy than to ift
+        s_aligned = frq_mask_fn(s_jk)
         s_aligned.ft(direct)
         if fl and my_iter == 0:
             fl.image(
