@@ -177,10 +177,6 @@ def correl_align(
     ), "direct dimension must be in the frequency domain"
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
-    # TODO ☐: 4/16 after commenting on PR -- note that this is where you would
-    #         multiply by the square root of your frequency domain mask, and
-    #         also select the parts that you want along the coherence
-    #         domain.
     sig_energy = (abs(frq_mask_fn(s_jk)) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
@@ -274,13 +270,13 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
-        #for ph_name, ph_val in signal_pathway.items():
-        #    s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
-        #s_leftbracket = Delta_p_mask_fn(s_leftbracket)
+        for ph_name, ph_val in signal_pathway.items():
+            s_leftbracket.run(np.conj).ft(["Delta%s" % ph_name.capitalize()])
+        s_leftbracket = Delta_p_mask_fn(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
+        correl = s_leftbracket.mean("repeats") * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -306,9 +302,6 @@ def correl_align(
         correl.ft_new_startpoint(direct, "time")
         correl.ft(direct, shift=True, pad=2**14)
         # }}}
-        for ph_name, ph_val in signal_pathway.items():
-            correl.ft(["Delta%s" % ph_name.capitalize()])
-        correl = Delta_p_mask_fn(correl)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
@@ -337,22 +330,7 @@ def correl_align(
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
-        # TODO ☐: this is incorrect, because the mask has not been
-        #         applied! (this is not a problem w/ AG changes -- it's
-        #         pre-existing)
-        #         (Note that once we have masking
-        #         functions, we would mod square our
-        #         data, and then apply the mask to
-        #         the mod squared data -- because
-        #         the mask is always real, this is
-        #         equivalent to multiplying one
-        #         copy of the function by the
-        #         mask, then multiplying by an
-        #         unmasked copy of the data in
-        #         order to calculate our masked
-        #         square)
-        s_aligned = s_jk.C
-        #s_aligned = frq_mask_fn(s_jk)
+        s_aligned = frq_mask_fn(s_jk)
         s_aligned.ft(direct)
         if fl and my_iter == 0:
             fl.image(
