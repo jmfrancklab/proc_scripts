@@ -25,7 +25,6 @@ def correl_align(
     fig_title="correlation alignment",
     signal_pathway={"ph1": 0, "ph2": 1},
     max_shift=100.0,
-    sigma=20.0,
     direct="t2",
     fl=None,
     indirect_dim=None,  # no longer used
@@ -77,9 +76,6 @@ def correl_align(
         which f_shift will be taken from the correlation function.
         Shift_bounds must be True.
         If it's set to None, then no bounds are applied.
-    sigma : int
-        Sigma value for the Gaussian mask. Related to the line
-        width of the given data.
     frq_mask_fn : func
         A function which takes nddata and returns a copy with a frequency
         mask applied that only leaves a bandwidth surrounding the signal as
@@ -98,9 +94,6 @@ def correl_align(
                 The optimized frequency shifts for each transient which will
                 maximize their correlation amongst each other, thereby aligning
                 them.
-    sigma:      float
-                The width of the Gaussian function used to frequency filter
-                the data in the calculation of the correlation function.
     """
     logging.debug("Applying the correlation routine")
     # {{{ explicitly check for old arguments
@@ -117,9 +110,6 @@ def correl_align(
         non_repeat_dims = [non_repeat_dims]
     if isinstance(repeat_dims, str):
         repeat_dims = [repeat_dims]
-    assert (
-        type(repeat_dims) is list
-    ), "the repeat_dims kwarg needs to be a list of strings"
     assert (
         len(repeat_dims) > 0
     ), "You must tell me which dimension contains the repeats!"
@@ -372,4 +362,4 @@ def correl_align(
     else:
         f_shift.rename("repeats", repeat_dims[0])
     # }}}
-    return f_shift, sigma
+    return f_shift

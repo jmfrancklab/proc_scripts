@@ -149,13 +149,12 @@ with psd.figlist_var() as fl:
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
         data.ift(list(signal_pathway.keys()))
-        opt_shift, sigma = psdpr.correl_align(
+        opt_shift = psdpr.correl_align(
             data * mysgn,
             frq_mask_fn=frq_mask,
             Delta_p_mask_fn=Delta_p_mask,
             repeat_dims=indirect,
             signal_pathway=signal_pathway,
-            sigma=3000 / 2.355,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
