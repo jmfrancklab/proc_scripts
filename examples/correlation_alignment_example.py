@@ -6,8 +6,6 @@ Takes a 2D data set and applies proper phasing corrections followed by
 aligning the data through a correlation routine.
 """
 
-# TODO ☐: you need to make sure this is fixed so that it can be moved out of
-#         the "broken" directory.
 import pyspecdata as psd
 from pyspecdata import r_
 import numpy as np
@@ -19,7 +17,6 @@ from collections import OrderedDict
 from numpy.random import seed
 
 
-# TODO ☐: see comment on github
 # {{{ Define the frequency mask function and the ph cyc mask
 def frq_mask(s):
     """Generates a mask that is nonzero along frequencies only over the region
