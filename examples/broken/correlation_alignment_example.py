@@ -22,8 +22,8 @@ from numpy.random import seed
 # TODO ☐: see comment on github
 # {{{ Define the frequency mask function and the ph cyc mask
 def frq_mask(s):
-    """Generates a mask that is nonzero along frequencies only over the
-    bandwidth of the signal
+    """Generates a mask that is nonzero along frequencies only over the region
+    with signal and applies it to a copy.
         Parameteres
         ===========
         s: nddata
@@ -41,8 +41,7 @@ def frq_mask(s):
         s.C.mean("repeats"), signal_pathway
     ).C.argmax("t2")
     # }}}
-    # {{{ Make mask using the center frequency and sigma (whose estimate here
-    #     is 20)
+    # {{{ Make mask using the center frequency and sigma
     frq_mask = np.exp(
         -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * 20.0**2)
     )
@@ -50,7 +49,6 @@ def frq_mask(s):
     return for_mask * frq_mask
 
 
-# TODO ☐: see comment on github
 def Delta_p_mask(s):
     """Filters out all but the signal pathway and the "ph1":0 or
     {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
@@ -121,8 +119,7 @@ with psd.figlist_var() as fl:
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the individual
-            #        figures
+        psd.DCCT(
             data,
             bbox=gs[0],
             fig=fig,
@@ -158,7 +155,6 @@ with psd.figlist_var() as fl:
         opt_shift, sigma = psdpr.correl_align(
             data * mysgn,
             frq_mask_fn=frq_mask,
-            # TODO ☐: Delta_p mask -- you're not masking the phase
             Delta_p_mask_fn=Delta_p_mask,
             repeat_dims=indirect,
             signal_pathway=signal_pathway,
@@ -169,7 +165,6 @@ with psd.figlist_var() as fl:
             #                 accommodate the drift in signal
             fl=fl,
         )
-        # removed display of the mask (I think that's what it was)
         data.ift("t2")
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
         data.ft(list(signal_pathway.keys()))

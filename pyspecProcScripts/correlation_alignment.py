@@ -2,6 +2,7 @@ import pyspecdata as psd
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 import logging
 
 
@@ -180,23 +181,21 @@ def correl_align(
     sig_energy = (abs(frq_mask_fn(s_jk)) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
-        fig_forlist, ax_list = plt.subplots(1, 4, figsize=(25, 10))
-        fl.next("Correlation Diagnostics")
-        fig_forlist.suptitle(
-            " ".join(
+        fig = fl.next(
+            "".join(
                 ["Correlation Diagnostic"]
                 + [j for j in [fl.basename] if j is not None]
-            )
+            ),
+            figsize=(25, 10),
         )
+        gs = GridSpec(1, 4, figure=fig, left=0.05, right=0.95)
         s_jk.reorder([direct], first=False)
-        # TODO ☐: why isn't this a DCCT? (and other calls to image in
-        #         this function)
-        fl.image(
+        psd.DCCT(
             s_jk,
-            ax=ax_list[0],
-            human_units=False,
+            fig,
+            title="Before correlation\n sig. energy=%g" % sig_energy,
+            bbox=gs[0, 0],
         )
-        ax_list[0].set_title("before correlation\nsig. energy=%g" % sig_energy)
     energy_diff = 1.0
     i = 0
     energy_vals = []
@@ -284,12 +283,11 @@ def correl_align(
             logging.debug(psd.strm("holder"))
             if fl:
                 correl.reorder([direct], first=False)
-                fl.image(
+                psd.DCCT(
                     correl,
-                    ax=ax_list[1],
-                )
-                ax_list[1].set_title(
-                    "correlation function (t)\n(includes ν mask)"
+                    fig,
+                    title="Correlation function(t)\n (includes ν mask)",
+                    bbox=gs[0, 1],
                 )
         # {{{ FT the correlation function so that we can determine the
         #     relative shift needed to line each transient up with the
@@ -308,14 +306,14 @@ def correl_align(
             logging.debug(psd.strm("holder"))
             if fl:
                 correl.reorder([direct], first=False)
-                fl.image(
+                psd.DCCT(
                     correl,
-                    ax=ax_list[2],
-                    human_units=False,
-                )
-                ax_list[2].set_title(
-                    "correlation function (v)\n(includes mask and sum along"
-                    " $\\Delta p_l$)"
+                    fig,
+                    title=(
+                        "Correlation function (v)\n(includes mask and"
+                        " sum along $\\Delta p_l$)"
+                    ),
+                    bbox=gs[0, 2],
                 )
         # Find optimal f shift based on max of correlation function
         if max_shift is not None:
@@ -335,12 +333,7 @@ def correl_align(
         s_aligned = frq_mask_fn(s_jk)
         s_aligned.ft(direct)
         if fl and my_iter == 0:
-            fl.image(
-                s_aligned,
-                ax=ax_list[3],
-                human_units=False,
-            )
-            ax_list[3].set_title("after correlation")
+            psd.DCCT(s_aligned, fig, title="After correlation", bbox=gs[0, 3])
         logging.debug(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
