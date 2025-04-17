@@ -204,7 +204,9 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    this_E = (abs(frq_mask_fn(s_jk).sum("repeats")) ** 2).data.sum().item() / N**2
+    this_E = (
+        abs(frq_mask_fn(s_jk).sum("repeats")) ** 2
+    ).data.sum().item() / N**2
     energy_vals.append(this_E / sig_energy)
     last_E = None
     s_jk.ift(direct)
