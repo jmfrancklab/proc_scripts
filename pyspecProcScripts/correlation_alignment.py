@@ -227,7 +227,7 @@ def correl_align(
         #     s_jk.
         #    This must be done before multiplying by s_jk and without
         #    the mask applied
-        s_leftbracket = s_jk.C
+        s_leftbracket = frq_mask_fn(s_jk)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
         #     dimension.
@@ -274,9 +274,9 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
-        for ph_name, ph_val in signal_pathway.items():
-            s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
-        s_leftbracket = Delta_p_mask_fn(s_leftbracket)
+        #for ph_name, ph_val in signal_pathway.items():
+        #    s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
+        #s_leftbracket = Delta_p_mask_fn(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
@@ -306,6 +306,9 @@ def correl_align(
         correl.ft_new_startpoint(direct, "time")
         correl.ft(direct, shift=True, pad=2**14)
         # }}}
+        for ph_name, ph_val in signal_pathway.items():
+            correl.ft(["Delta%s" % ph_name.capitalize()])
+        correl = Delta_p_mask_fn(correl)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
@@ -348,7 +351,8 @@ def correl_align(
         #         unmasked copy of the data in
         #         order to calculate our masked
         #         square)
-        s_aligned = frq_mask_fn(s_jk)
+        s_aligned = s_jk.C
+        #s_aligned = frq_mask_fn(s_jk)
         s_aligned.ft(direct)
         if fl and my_iter == 0:
             fl.image(
