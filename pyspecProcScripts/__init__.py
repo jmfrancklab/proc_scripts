@@ -4,7 +4,7 @@ from .phasing import (
     ph1_real_Abs,
     determine_sign,
     fid_from_echo,
-    find_peakrange,
+    det_inh_bounds,
 )
 from .third_level.rough_table_of_integrals import rough_table_of_integrals
 from .third_level.align_esr import align_esr
@@ -47,12 +47,12 @@ __all__ = [
     "correl_align",
     "dBm2power",
     "decay",
+    "det_inh_bounds",
     "determine_sign",
     "draw_limits",
     "expand_limits",
     "fid_from_echo",
     "find_apparent_anal_freq",
-    "find_peakrange",
     "fit_envelope",
     "fl_mod",
     "fwhm_calculator",

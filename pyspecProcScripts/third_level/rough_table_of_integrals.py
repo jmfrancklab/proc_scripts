@@ -2,7 +2,7 @@ from ..phasing import (
     zeroth_order_ph,
     determine_sign,
     fid_from_echo,
-    find_peakrange,
+    det_inh_bounds,
 )
 from ..envelope import fit_envelope
 from ..simple_functions import select_pathway
@@ -22,7 +22,7 @@ def rough_table_of_integrals(
     title="",
     direct="t2",
     expansion=2,
-    peak_lower_thresh=0.1,
+    peak_lowest_thresh=0.1,
     inc_plot_color=True,
 ):
     """manipulate s to generate a table of integrals
@@ -35,17 +35,17 @@ def rough_table_of_integrals(
         of the integral over all the data.
     signal_range : tuple (default None)
         Narrow slice range where signal resides.
-        You probably want to get this from `find_peakrange` rather than trying
+        You probably want to get this from `det_inh_bounds` rather than trying
         to specify manually!
         (And expand the range that it gives you slightly)
 
         If this is set to the string `'peakrange'`,
-        it assumes a previous call to `find_peakrange`
+        it assumes a previous call to `det_inh_bounds`
         has set the
         `'peakrange'` property, and it uses that.
 
         If this is set to None, then it assume you want to call
-        `find_peakrange`
+        `det_inh_bounds`
     signal_pathway : dict (default None)
         If None, the function will go into the properties of the data looking
         for the "coherence_pathway" property.
@@ -65,7 +65,7 @@ def rough_table_of_integrals(
     expansion : float (default 2)
         Expand peakrange about its center by this much.
     peak_lower_thresh: float
-        passed to :func:`find_peakrange`
+        passed to :func:`det_inh_bounds`
     inc_plot_color: boolean
         assume that we are processing multiple datasets, and want to increment
         the color counter with every run of this function.
@@ -81,8 +81,8 @@ def rough_table_of_integrals(
         you want to add a fit!
     """
     if signal_range is None:
-        center_of_range, half_range = find_peakrange(
-            s, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
+        center_of_range, half_range, echo_max = det_inh_bounds(
+            s, peak_lowest_thresh, fl=fl, direct=direct,
         )
         signal_range = s.get_prop("peakrange")
     else:

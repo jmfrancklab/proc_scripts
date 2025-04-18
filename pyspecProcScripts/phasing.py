@@ -225,7 +225,7 @@ def fid_from_echo(
     show_hermitian_sign_flipped=False,
     show_shifted_residuals=False,
     frq_center=None,
-    frq_half=None,
+    half_range=None,
 ):
     """
 
@@ -266,14 +266,14 @@ def fid_from_echo(
     frq_center: float (default None)
         The center of the peak.
         This only exists so that we don't end up calling
-        `find_peakrange` redundantly,
-        and it should come from a previous call to `find_peakrange` if
+        `det_inh_bounds` redundantly,
+        and it should come from a previous call to `det_inh_bounds` if
         it's used.
-    frq_half: float (default None)
+    half_range: float (default None)
         The half-width of the peak.
         This only exists so that we don't end up calling
-        `find_peakrange` redundantly,
-        and it should come from a previous call to `find_peakrange` if
+        `det_inh_bounds` redundantly,
+        and it should come from a previous call to `det_inh_bounds` if
         it's used.
 
     Returns
@@ -282,12 +282,12 @@ def fid_from_echo(
         FID of properly sliced and phased signal
     """
     if frq_center is None:
-        frq_center, frq_half = find_peakrange(
-            d, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
+        frq_center, half_range, echo_max = det_inh_bounds(
+            d, peak_lower_thresh, fl=fl, direct=direct,
         )
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
-        left_x = frq_center - slice_multiplier * frq_half
+        left_x = frq_center - slice_multiplier * half_range
         axvline(
             x=left_x,
             color="k",
@@ -295,17 +295,17 @@ def fid_from_echo(
             alpha=0.5,
             label=f"final slice ({left_x})",
         )
-        right_x = frq_center + slice_multiplier * frq_half
+        right_x = frq_center + slice_multiplier * half_range
         axvline(
-            x=frq_center + slice_multiplier * frq_half,
+            x=frq_center + slice_multiplier * half_range,
             color="k",
             ls="--",
             alpha=0.5,
             label=f"final slice ({right_x})",
         )
         legend()
-    slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
-    reduced_slice_range = r_[-1, 1] * 2 * frq_half + frq_center
+    slice_range = r_[-1, 1] * slice_multiplier * half_range + frq_center
+    reduced_slice_range = r_[-1, 1] * 2 * half_range + frq_center
     # }}}
     d = d[direct:slice_range]
     d.ift(direct)
@@ -475,8 +475,6 @@ def det_inh_bounds(
     hom_guess: float
         Guess the homogeneous width of the signal, in Hz.
         This is used to smooth the signal.
-    max_echo: float
-        Echo can be away from zero by this much (in s).
     fl : figlist (default None)
         If you want to see diagnostic plots, feed the figure list.
 
@@ -484,10 +482,14 @@ def det_inh_bounds(
     =======
     frq_center : float
         The midpoint of the frequency slice.
-    frq_half : float
+    half_range : float
         Half the width of the frequency slice.
         Given in this way, so you can easily do
-        >>> newslice = r_[-expansino,expansion]*frq_half+frq_center
+        >>> newslice = r_[-expansino,expansion]*half_range+frq_center
+    echo_max : float
+        Maximum of the echo, in seconds,
+        determined from finding the correlation between a symmetric
+        decaying exp and the signal.
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
@@ -590,7 +592,7 @@ def det_inh_bounds(
     else:
         raise ValueError(
             "Your inh_guess is set too narrow, and I'm not able to find an"
-            " echo max that's longer than 5 ms"
+            " echo max that's longer than 0.5 ms"
         )
     right_lim /= fl.div_units("s")
     left_lim = -2 / inh_guess / fl.div_units("s")
@@ -604,7 +606,7 @@ def det_inh_bounds(
     # }}}
     # {{{ actually center at 0 based on above
     freq_envelope[direct] -= freq_envelope[direct][0]
-    freq_envelope[direct] -= max_echo # so that max echo occurs at 0
+    freq_envelope[direct] -= echo_max # so that max echo occurs at 0
     freq_envelope.register_axis({direct:0})
     # }}}
     #{{{ now that we have an estimate of the start point, take an FID
@@ -678,26 +680,26 @@ def det_inh_bounds(
     frq_center = np.mean(peakrange).item()
     # contract the full width by the convolution width (b/c we broadened
     # the peak by hom_guess above when we convolved
-    frq_half = (np.diff(peakrange).item() - hom_guess) / 2
-    d.set_prop("inh_bounds", frq_center + r_[-1,1] * frq_half)
+    half_range = (np.diff(peakrange).item() - hom_guess) / 2
+    d.set_prop("inh_bounds", frq_center + r_[-1,1] * half_range)
     if fl is not None:
        fl.next("autoslicing!")
        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
        axvline(
-           x=frq_center - frq_half,
+           x=frq_center - half_range,
            color="k",
            ls=":",
            alpha=0.25,
            label=f"{peak_lowest_thresh*100:g}% threshold",
        )
        axvline(
-           x=frq_center + frq_half,
+           x=frq_center + half_range,
            color="k",
            ls=":",
            alpha=0.25,
            label=f"{peak_lowest_thresh*100:g}% threshold",
        )
-    return frq_center, frq_half
+    return frq_center, half_range, echo_max
 
 
 def hermitian_function_test(
