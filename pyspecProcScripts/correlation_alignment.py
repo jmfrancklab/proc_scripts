@@ -23,6 +23,8 @@ def correl_align(
     repeat_dims=[],
     non_repeat_dims=[],
     fig_title="correlation alignment",
+    # TODO ☐: signal pathway default should be None, which results in
+    #         pulling the coherence pathway property
     signal_pathway={"ph1": 0, "ph2": 1},
     max_shift=100.0,
     direct="t2",
@@ -77,13 +79,14 @@ def correl_align(
         Shift_bounds must be True.
         If it's set to None, then no bounds are applied.
     frq_mask_fn : func
-        A function which takes nddata and returns a copy with a frequency
-        mask applied that only leaves a bandwidth surrounding the signal as
-        nonzero.
+        A function which takes nddata and returns a copy that has been
+        multiplied by the square root of the frequency-domain mask (see
+        DCCT paper).
     Delta_p_mask_fn : func
-        A function which takes the 3D data which we call leftbracket (and
-        pertains to s_{m,n} in the DCCT paper) and filters the selected
-        pathwaysover which to sum.
+        A function which takes the 3D data which we call leftbracket
+        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over
+        the :math:`\Delta p` (coherence transfer) dimension,
+        as well as a sum over :math:`\Delta p`.
     fl : boolean
         fl=fl to show the plots and figures produced by this
         function otherwise, fl=None.
@@ -111,6 +114,8 @@ def correl_align(
     if isinstance(repeat_dims, str):
         repeat_dims = [repeat_dims]
     assert (
+        type(repeat_dims) is list
+        and
         len(repeat_dims) > 0
     ), "You must tell me which dimension contains the repeats!"
     temp = set(repeat_dims) - set(s_orig.dimlabels)
@@ -159,6 +164,7 @@ def correl_align(
         )  # even if there isn't an indirect to smoosh we will
         #                 later be applying modifications to s_jk that we don't
         #                 want applied to s_orig
+    s_jk.reorder([direct], first=False)
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
@@ -171,15 +177,16 @@ def correl_align(
     sig_energy = (abs(frq_mask_fn(s_jk)) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
-        fig = fl.next(
-            "".join(
+        # TODO ☐: JF rolled back weird change -- check that this still
+        #         works as expected.
+        fig = fl.next("Correlation Diagnostics")
+        fig.suptitle(
+            " ".join(
                 ["Correlation Diagnostic"]
                 + [j for j in [fl.basename] if j is not None]
-            ),
-            figsize=(25, 10),
+            )
         )
         gs = GridSpec(1, 4, figure=fig, left=0.05, right=0.95)
-        s_jk.reorder([direct], first=False)
         psd.DCCT(
             s_jk,
             fig,
@@ -189,14 +196,17 @@ def correl_align(
     energy_diff = 1.0
     i = 0
     energy_vals = []
-    # below we divide by an extra N because if the signals along the repeats
+    # E_of_avg is the energy calculated from the averaged signal
+    # (vs. sig_energy above, which is the energy of the *un*averaged
+    # signal.
+    # We divide by an extra N because if the signals along the repeats
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    this_E = (
+    E_of_avg = (
         abs(frq_mask_fn(s_jk).sum("repeats")) ** 2
     ).data.sum().item() / N**2
-    energy_vals.append(this_E / sig_energy)
+    energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     s_jk.ift(direct)
     f_shift = 0
@@ -214,6 +224,13 @@ def correl_align(
         #     s_jk.
         #    This must be done before multiplying by s_jk and without
         #    the mask applied
+        # TODO ☐: the following is incorrect b/c s_jk is in the time
+        #         domain here.  You probably need to move around the ft
+        #         and ift functions so that you are in the frequency
+        #         domain at the start of the loop, and move to the time
+        #         domain to calculate the correlation function.  Just
+        #         check that you're  not going back and forth more times
+        #         than needed.
         s_leftbracket = frq_mask_fn(s_jk)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
@@ -262,12 +279,15 @@ def correl_align(
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
         for ph_name, ph_val in signal_pathway.items():
-            s_leftbracket.run(np.conj).ft(["Delta%s" % ph_name.capitalize()])
+            # TODO ☐: I rolled back np.conj that was acting on
+            #         s_leftbracket here (and changing it in place!!!)
+            #         Make sure the code still works.
+            s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
         s_leftbracket = Delta_p_mask_fn(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        correl = s_leftbracket.mean("repeats") * s_jk
+        correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -320,6 +340,9 @@ def correl_align(
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
+        # TODO ☐: it seems like you are applying the mask to s_jk over
+        #         and over again.  Shouldn't it be possible to just
+        #         apply it once, when it's created?
         s_aligned = frq_mask_fn(s_jk)
         s_aligned.ft(direct)
         if fl and my_iter == 0:
@@ -333,20 +356,20 @@ def correl_align(
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        this_E = (
+        E_of_avg = (
             abs(s_aligned.C.sum("repeats")) ** 2
         ).data.sum().item() / N**2
-        energy_vals.append(this_E / sig_energy)
+        energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
-            psd.strm("averaged signal energy (per transient):", this_E)
+            psd.strm("averaged signal energy (per transient):", E_of_avg)
         )
         if last_E is not None:
-            energy_diff = (this_E - last_E) / sig_energy
+            energy_diff = (E_of_avg - last_E) / sig_energy
             logging.debug(psd.strm(energy_diff))
             if abs(energy_diff) < tol and my_iter > 4:
                 break
         # }}}
-        last_E = this_E
+        last_E = E_of_avg
     if fl is not None:
         fl.next("correlation convergence")
         fl.plot(np.array(energy_vals), "x")

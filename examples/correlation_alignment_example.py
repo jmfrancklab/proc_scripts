@@ -18,29 +18,31 @@ from numpy.random import seed
 
 
 # {{{ Define the frequency mask function and the ph cyc mask
-def frq_mask(s):
-    """Generates a mask that is nonzero along frequencies only over the region
-    with signal and applies it to a copy.
-        Parameteres
-        ===========
-        s: nddata
-            data that the mask is applied to
+def frq_mask(s, sigma=20.0):
+    """Generates a mask that is nonzero along frequencies only over the
+    region with signal and applies it to a copy.
+
+    Parameteres
+    ===========
+    s: nddata
+        data that the mask is applied to
 
     Returns
-        =======
-        s: nddata
-            copy of data with the mask applied
+    =======
+    s: nddata
+        copy of data with the mask applied
     """
     # we want to leave the original s unchanged and return a copy
     for_mask = s.C
     # {{{ find center frequency
+    # TODO ☐: how does it know what the signal pathway is here?
     nu_center = psdpr.select_pathway(
         s.C.mean("repeats"), signal_pathway
     ).argmax("t2")
     # }}}
     # {{{ Make mask using the center frequency and sigma
     frq_mask = np.exp(
-        -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * 20.0**2)
+        -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * sigma**2)
     )
     # }}}
     return for_mask * frq_mask
@@ -116,7 +118,8 @@ with psd.figlist_var() as fl:
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        psd.DCCT(
+        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the
+            #        individual figures
             data,
             bbox=gs[0],
             fig=fig,
