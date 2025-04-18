@@ -232,7 +232,7 @@ def correl_align(
         #         order to calculate the correlation function and shift (and
         #         then you have to go back again for the start of the loop)
         # Make fresh copy of the original data
-        s_leftbracket = frq_mask_fn(s_jk)
+        s_leftbracket = s_jk
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
         #     dimension.
@@ -289,8 +289,8 @@ def correl_align(
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        s_jk.ift(direct)
         s_leftbracket.ift(direct)
+        s_jk.ift(direct)
         correl = s_leftbracket.mean("repeats") * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
@@ -348,20 +348,19 @@ def correl_align(
         #         and over again.  Shouldn't it be possible to just
         #         apply it once, when it's created?
         s_jk.ft(direct)
-        s_aligned = frq_mask_fn(s_jk)
         if fl and my_iter == 0:
-            psd.DCCT(s_aligned, fig, title="After correlation", bbox=gs[0, 3])
+            psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])
         logging.debug(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(s_aligned**2).data.sum().item() / N),
+                (abs(frq_mask_fn(s_jk)**2).data.sum().item() / N),
             )
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
         E_of_avg = (
-            abs(s_aligned.C.sum("repeats")) ** 2
+            abs(frq_mask_fn(s_jk).C.sum("repeats")) ** 2
         ).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
