@@ -16,6 +16,38 @@ import sympy as s
 from collections import OrderedDict
 from numpy.random import seed
 
+
+# {{{ Define the frequency mask function and the ph cyc mask
+def frq_mask(s, sigma=20.0):
+    """Note that we assume that our mask is a product of a frequency-domain and
+    a coherence-domain function.  This multiplies by the square root of the
+    frequency-domain part"""
+    # we want to leave the original s unchanged and return a copy
+    for_mask = s.C
+    # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
+    #     2σ² in the denominator -- the extra 2 is for sqrt.
+    frq_mask = np.exp(
+        -((for_mask.fromaxis("t2") - s.get_prop("nu_center")) ** 2)
+        / (4 * sigma**2)
+    )
+    # }}}
+    return for_mask * frq_mask
+
+
+def Delta_p_mask(s):
+    """Filters out all but the signal pathway and the "ph1":0 or
+    {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
+    Note this serves as an example function and other filter functions could
+    alternatively be used"""
+    for ph_name, ph_val in signal_pathway.items():
+        s = (
+            s["Delta" + ph_name.capitalize(), ph_val]
+            + s["Delta" + ph_name.capitalize(), 0]
+        )
+    return s
+
+
+# }}}
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
@@ -69,11 +101,12 @@ with psd.figlist_var() as fl:
         data = psd.fake_data(
             expression, OrderedDict(orderedDict), signal_pathway
         )
+        data.set_prop("coherence_pathway", signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the individual
-            #        figures
+        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the
+            #        individual figures
             data,
             bbox=gs[0],
             fig=fig,
@@ -86,6 +119,9 @@ with psd.figlist_var() as fl:
         )
         # }}}
         # {{{ Applying the phase corrections
+        data["t2"] -= data.getaxis("t2")[0]  # needed for Hermitian Function
+        #                                     (fid_from_echo does this
+        #                                     automatically)
         best_shift = psdpr.hermitian_function_test(
             psdpr.select_pathway(data.C.mean(indirect), signal_pathway)
         )
@@ -102,19 +138,25 @@ with psd.figlist_var() as fl:
         #    this is the sign of the signal -- note how on the next line,
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
+        data.set_prop(
+            "nu_center",
+            psdpr.select_pathway(
+                data.C.mean(indirect), data.get_prop("coherence_pathway")
+            ).argmax("t2"),
+        )
         data.ift(list(signal_pathway.keys()))
-        opt_shift, sigma, mask_func = psdpr.correl_align(
+        opt_shift = psdpr.correl_align(
             data * mysgn,
-            indirect_dim=indirect,
+            frq_mask_fn=frq_mask,
+            Delta_p_mask_fn=Delta_p_mask,
+            repeat_dims=indirect,
             signal_pathway=signal_pathway,
-            sigma=3000 / 2.355,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
             #                 accommodate the drift in signal
             fl=fl,
         )
-        # removed display of the mask (I think that's what it was)
         data.ift("t2")
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
         data.ft(list(signal_pathway.keys()))
