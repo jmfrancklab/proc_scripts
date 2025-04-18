@@ -283,7 +283,10 @@ def fid_from_echo(
     """
     if frq_center is None:
         frq_center, half_range, echo_max = det_inh_bounds(
-            d, peak_lower_thresh, fl=fl, direct=direct,
+            d,
+            peak_lower_thresh,
+            fl=fl,
+            direct=direct,
         )
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
@@ -441,14 +444,19 @@ def fid_from_echo(
 
 
 def find_peakrange(*args, **kwargs):
-    raise ValueError("find_peakrange is obsolete now. Use det_inh_bounds (which has slightly different options) instead!")
+    raise ValueError(
+        "find_peakrange is obsolete now. Use det_inh_bounds (which has"
+        " slightly different options) instead!"
+    )
+
 
 def det_inh_bounds(
     d,
-    peak_lowest_thresh,
+    peak_lower_thresh,
     direct="t2",
     inh_guess=250.0,
     hom_guess=30.0,
+    echo_like=True,
     fl=None,
 ):
     """find the range of frequencies over which the signal occurs, so that we
@@ -462,12 +470,12 @@ def det_inh_bounds(
         Data in the frequency domain -- will not be altered.
     direct : str (default "t2")
         The name of the direct dimension
-    peak_lowest_thresh: float
+    peak_lower_thresh: float
         Fraction of the signal intensity used in calculating the
         frequency slice. The smaller the value, the wider the slice.
 
         This is not a keyword argument b/c whatever is calling this needs
-        to know what was used for peak_lowest_thresh, so that it knows
+        to know what was used for peak_lower_thresh, so that it knows
         how far to push out the bounds of interest.
     inh_guess: float
         Guess the extent of the signal, in Hz.
@@ -475,6 +483,9 @@ def det_inh_bounds(
     hom_guess: float
         Guess the homogeneous width of the signal, in Hz.
         This is used to smooth the signal.
+    echo_like : boolean (default True)
+        Assume signal is echo-like, and we need to find a decent guess for the
+        peak of the echo and then slice the FID.
     fl : figlist (default None)
         If you want to see diagnostic plots, feed the figure list.
 
@@ -485,11 +496,15 @@ def det_inh_bounds(
     half_range : float
         Half the width of the frequency slice.
         Given in this way, so you can easily do
+
         >>> newslice = r_[-expansino,expansion]*half_range+frq_center
+
     echo_max : float
         Maximum of the echo, in seconds,
         determined from finding the correlation between a symmetric
         decaying exp and the signal.
+
+        Only returned if `echo_like`
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
@@ -501,205 +516,213 @@ def det_inh_bounds(
         freq_envelope *= dig_filter
     # }}}
     freq_envelope.ift(direct)
-    # {{{ estimate the echo center by scrolling a filter that we think
-    #     is matched across the data, and find where it gives max energy
-    #     -- using fourier math
-    time_envelope = abs(freq_envelope.mean_all_but(direct))  # |s(t)|
-    time_envelope[direct] -= time_envelope[direct][
-        0
-    ]  # just call the start of the time axis t=0
-    time_envelope /= abs(time_envelope).max()
-    fl.next("peak finder, time domain correlation")
-    view_range_time = (-2 / inh_guess, 100e-3)
-    fl.plot(time_envelope[direct:view_range_time], color="k", alpha=0.1)
-    time_envelope.ft(
-        direct,
-        pad=time_envelope.shape[direct]
-        * 2,  # we need to fill with zeros in the time domain, so we're not looking at aliased overlap
-    ).ft_new_startpoint(
-        direct, "time"
-    )  # because we're going to want a symmetric ift
-    fl.next("peak finder, time domain", legend=True)
-    time_envelope.ift(direct, shift=True)
-    fl.plot(time_envelope, label="signal envelope")
-    # {{{ construct exp and hat in time domain
-    exp_decay = np.exp(-abs(time_envelope.fromaxis(direct)) * pi * inh_guess)
-    exp_decay_sq = exp_decay**2
-    hat_func = exp_decay.copy(data=False)
-    hat_func.data = np.zeros_like(exp_decay.data)
-    hat_func[direct:(0, None)] = 1
-    hat_func[direct:0] = 0.5
-    fl.plot(exp_decay, label="exp func (based on inh_guess)")
-    fl.push_marker()
-    fl.next("peak finder, time domain correlation")
-    fl.plot(
-        exp_decay[direct:view_range_time],
-        label="exp func (based on inh_guess)",
-    )
-    fl.pop_marker()
-    fl.plot(hat_func, label="hat function")
-    # }}}
-    fl.next("peak finder, freq domain", legend=True)
-    # {{{ prepare for correlation calculation
-    time_envelope.ft(direct)
-    exp_decay.ft(direct)
-    exp_decay_sq.ft(direct)
-    hat_func.ft(direct)
-    exp_decay.run(np.conj)  # below, only e comes first in correlations,
-    #                        and first one is the one starred in f-domain
-    exp_decay_sq.run(np.conj)
-    # }}}
-    fdomain_view = (-5 * inh_guess, 5 * inh_guess)
-    fl.plot(abs(time_envelope[direct:fdomain_view]), label="signal envelope")
-    fl.plot(exp_decay[direct:fdomain_view], label="exp decay")
-    thiscorrel = (
-        exp_decay * time_envelope
-    )  # FT(e(t)★|s(t)|) ← sqrt energy of overlap. In correlation, first
-    #    function is shifted to the right
-    energy_denom = (
-        exp_decay_sq * hat_func
-    )  # FT(e²(t)★h(t)) ← sqrt energy possible: comes from e overlapped
-    #    with e, but cut off at t=0
-    fl.next("peak finder, time domain")
-    thiscorrel.ift(
-        direct, pad=thiscorrel.shape[direct] * 20
-    )  # we want high resolution
-    energy_denom.ift(
-        direct, pad=energy_denom.shape[direct] * 20
-    )  # we want high resolution
-    fl.next("peak finder, time domain correlation")
-    # possible energy needs to be large enough
-    correl_range = energy_denom.contiguous(lambda x: x > 0.01 * x.max())[0]
-    correl_range[0] = 0  # doesn't make sense to have echo to left
-    thiscorrel = thiscorrel[direct:correl_range]
-    energy_denom = energy_denom[direct:correl_range]
-    ratio = thiscorrel / energy_denom
-    # {{{ position of max not affected by normalizing both, but plot is
-    #     nicer!
-    thiscorrel /= abs(thiscorrel).max()
-    energy_denom /= abs(energy_denom).max()
-    ratio /= abs(ratio).max()
-    # }}}
-    fl.plot(thiscorrel[direct:view_range_time], label="correl")
-    fl.plot(energy_denom[direct:view_range_time], label="denom")
-    fl.plot(ratio[direct:view_range_time], label="ratio")
-    # }}}
-    echo_max = ratio[direct:view_range_time].argmax(direct).item()
-    # {{{ use this to set the xlims for the plots
-    right_lim = 2 / inh_guess
-    if echo_max > 0.5e-3:
-        right_lim += echo_max
-    else:
-        raise ValueError(
-            "Your inh_guess is set too narrow, and I'm not able to find an"
-            " echo max that's longer than 0.5 ms"
+    if echo_like:
+        # {{{ estimate the echo center by scrolling a filter that we think
+        #     is matched across the data, and find where it gives max energy
+        #     -- using fourier math
+        time_envelope = abs(freq_envelope.mean_all_but(direct))  # |s(t)|
+        time_envelope[direct] -= time_envelope[direct][
+            0
+        ]  # just call the start of the time axis t=0
+        time_envelope /= abs(time_envelope).max()
+        fl.next("peak finder, time domain correlation")
+        view_range_time = (-2 / inh_guess, 100e-3)
+        fl.plot(time_envelope[direct:view_range_time], color="k", alpha=0.1)
+        time_envelope.ft(
+            direct,
+            pad=time_envelope.shape[direct]
+            * 2,  # we need to fill with zeros in the time domain, so we're not looking at aliased overlap
+        ).ft_new_startpoint(
+            direct, "time"
+        )  # because we're going to want a symmetric ift
+        fl.next("peak finder, time domain", legend=True)
+        time_envelope.ift(direct, shift=True)
+        fl.plot(time_envelope, label="signal envelope")
+        # {{{ construct exp and hat in time domain
+        exp_decay = np.exp(
+            -abs(time_envelope.fromaxis(direct)) * pi * inh_guess
         )
-    right_lim /= fl.div_units("s")
-    left_lim = -2 / inh_guess / fl.div_units("s")
-    for j in [
-        "peak finder, time domain correlation",
-        "peak finder, time domain",
-    ]:
-        fl.next(j)
-        plt.gca().set_xlim(left_lim, right_lim)
-        plt.gca().axvline(echo_max / fl.div_units("s"), color="r", ls=":")
-    # }}}
-    # {{{ actually center at 0 based on above
-    freq_envelope[direct] -= freq_envelope[direct][0]
-    freq_envelope[direct] -= echo_max # so that max echo occurs at 0
-    freq_envelope.register_axis({direct:0})
-    # }}}
-    #{{{ now that we have an estimate of the start point, take an FID
+        exp_decay_sq = exp_decay**2
+        hat_func = exp_decay.copy(data=False)
+        hat_func.data = np.zeros_like(exp_decay.data)
+        hat_func[direct:(0, None)] = 1
+        hat_func[direct:0] = 0.5
+        fl.plot(exp_decay, label="exp func (based on inh_guess)")
+        fl.push_marker()
+        fl.next("peak finder, time domain correlation")
+        fl.plot(
+            exp_decay[direct:view_range_time],
+            label="exp func (based on inh_guess)",
+        )
+        fl.pop_marker()
+        fl.plot(hat_func, label="hat function")
+        # }}}
+        fl.next("peak finder, freq domain", legend=True)
+        # {{{ prepare for correlation calculation
+        time_envelope.ft(direct)
+        exp_decay.ft(direct)
+        exp_decay_sq.ft(direct)
+        hat_func.ft(direct)
+        exp_decay.run(np.conj)  # below, only e comes first in correlations,
+        #                        and first one is the one starred in f-domain
+        exp_decay_sq.run(np.conj)
+        # }}}
+        fdomain_view = (-5 * inh_guess, 5 * inh_guess)
+        fl.plot(
+            abs(time_envelope[direct:fdomain_view]), label="signal envelope"
+        )
+        fl.plot(exp_decay[direct:fdomain_view], label="exp decay")
+        thiscorrel = (
+            exp_decay * time_envelope
+        )  # FT(e(t)★|s(t)|) ← sqrt energy of overlap. In correlation, first
+        #    function is shifted to the right
+        energy_denom = (
+            exp_decay_sq * hat_func
+        )  # FT(e²(t)★h(t)) ← sqrt energy possible: comes from e overlapped
+        #    with e, but cut off at t=0
+        fl.next("peak finder, time domain")
+        thiscorrel.ift(
+            direct, pad=thiscorrel.shape[direct] * 20
+        )  # we want high resolution
+        energy_denom.ift(
+            direct, pad=energy_denom.shape[direct] * 20
+        )  # we want high resolution
+        fl.next("peak finder, time domain correlation")
+        # possible energy needs to be large enough
+        correl_range = energy_denom.contiguous(lambda x: x > 0.01 * x.max())[0]
+        correl_range[0] = 0  # doesn't make sense to have echo to left
+        thiscorrel = thiscorrel[direct:correl_range]
+        energy_denom = energy_denom[direct:correl_range]
+        ratio = thiscorrel / energy_denom
+        # {{{ position of max not affected by normalizing both, but plot is
+        #     nicer!
+        thiscorrel /= abs(thiscorrel).max()
+        energy_denom /= abs(energy_denom).max()
+        ratio /= abs(ratio).max()
+        # }}}
+        fl.plot(thiscorrel[direct:view_range_time], label="correl")
+        fl.plot(energy_denom[direct:view_range_time], label="denom")
+        fl.plot(ratio[direct:view_range_time], label="ratio")
+        # }}}
+        echo_max = ratio[direct:view_range_time].argmax(direct).item()
+        # {{{ use this to set the xlims for the plots
+        right_lim = 2 / inh_guess
+        if echo_max > 0.5e-3:
+            right_lim += echo_max
+        else:
+            raise ValueError(
+                "Your inh_guess is set too narrow, and I'm not able to find an"
+                " echo max that's longer than 0.5 ms"
+            )
+        right_lim /= fl.div_units("s")
+        left_lim = -2 / inh_guess / fl.div_units("s")
+        for j in [
+            "peak finder, time domain correlation",
+            "peak finder, time domain",
+        ]:
+            fl.next(j)
+            plt.gca().set_xlim(left_lim, right_lim)
+            plt.gca().axvline(echo_max / fl.div_units("s"), color="r", ls=":")
+        # }}}
+        # {{{ actually center at 0 based on above
+        freq_envelope[direct] -= freq_envelope[direct][0]
+        freq_envelope[direct] -= echo_max  # so that max echo occurs at 0
+        freq_envelope.register_axis({direct: 0})
+        # }}}
+    # {{{ now that we have an estimate of the start point, take an FID
     #    slice and move into the freq domain
     freq_envelope = freq_envelope[
-       direct:(0, None)
+        direct:(0, None)
     ]  # slice out rising echo estimate according to experimental tau in order
     #    to limit oscillations
     freq_envelope[direct, 0] *= 0.5
     freq_envelope.ft(direct)
     freq_envelope.mean_all_but(direct).run(abs)
-    #}}}
+    # }}}
     if fl is not None:
-       fl.next("autoslicing!")
-       fl.plot(freq_envelope, human_units=False, label="signal energy")
+        fl.next("autoslicing!")
+        fl.plot(freq_envelope, human_units=False, label="signal energy")
     freq_envelope.convolve(
-       direct,
-       hom_guess,
-       enforce_causality=False,
+        direct,
+        hom_guess,
+        enforce_causality=False,
     )
     SW = 1 / freq_envelope.get_ft_prop(direct, "dt")
-    #baseline using the left and right quarter
+    # baseline using the left and right quarter
     freq_envelope -= (
-       freq_envelope[direct : tuple(-r_[0.5, 0.25] * SW)].mean().item()
-       + freq_envelope[direct : tuple(r_[0.25, 0.5] * SW)].mean().item()
+        freq_envelope[direct : tuple(-r_[0.5, 0.25] * SW)].mean().item()
+        + freq_envelope[direct : tuple(r_[0.25, 0.5] * SW)].mean().item()
     ) / 2
     if fl is not None:
-       fl.next("autoslicing!")
-       fl.plot(
-           freq_envelope,
-           human_units=False,
-           label="signal energy\nconv + baselined",
-       )
+        fl.next("autoslicing!")
+        fl.plot(
+            freq_envelope,
+            human_units=False,
+            label="signal energy\nconv + baselined",
+        )
     narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
-    widest_ranges = freq_envelope.contiguous(
-       lambda x: x > peak_lowest_thresh * x.data.max()
+    wide_ranges = freq_envelope.contiguous(
+        lambda x: x > peak_lower_thresh * x.data.max()
     )
 
     def filter_ranges(B, A):
-       """where A and B are lists of ranges (given as tuple pairs), filter B
-       to only return ranges that include ranges given in A"""
-       return [
-           np.array(b)
-           for b in B
-           if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
-       ]
+        """where A and B are lists of ranges (given as tuple pairs), filter B
+        to only return ranges that include ranges given in A"""
+        return [
+            np.array(b)
+            for b in B
+            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
+        ]
 
-    peakrange = filter_ranges(widest_ranges, peakrange)
+    peakrange = filter_ranges(wide_ranges, peakrange)
     if len(peakrange) > 1:
-       max_range_width = max(
-           [thisrange[1] - thisrange[0] for thisrange in peakrange]
-       )
-       range_gaps = [
-           peakrange[j + 1][0] - peakrange[j][1]
-           for j in range(len(peakrange) - 1)
-       ]
-       # {{{ if the gaps are all smaller than the max peak that was found, we
-       #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
-       if any(np.array(range_gaps) > max_range_width):
-           if fl is not None:
-               fl.next("debug filter ranges")
-               fl.plot(freq_envelope, human_units=False)
-               for thisrange in peakrange:
-                   fl.plot(freq_envelope[direct:thisrange], human_units=False)
-           raise ValueError("finding more than one peak!")
-       else:
-           peakrange = [(peakrange[0][0], peakrange[-1][1])]
+        max_range_width = max(
+            [thisrange[1] - thisrange[0] for thisrange in peakrange]
+        )
+        range_gaps = [
+            peakrange[j + 1][0] - peakrange[j][1]
+            for j in range(len(peakrange) - 1)
+        ]
+        # {{{ if the gaps are all smaller than the max peak that was found, we
+        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
+        if any(np.array(range_gaps) > max_range_width):
+            if fl is not None:
+                fl.next("debug filter ranges")
+                fl.plot(freq_envelope, human_units=False)
+                for thisrange in peakrange:
+                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
+            raise ValueError("finding more than one peak!")
+        else:
+            peakrange = [(peakrange[0][0], peakrange[-1][1])]
     assert len(peakrange) == 1
     peakrange = peakrange[0]
-    #}}}
+    # }}}
     frq_center = np.mean(peakrange).item()
     # contract the full width by the convolution width (b/c we broadened
     # the peak by hom_guess above when we convolved
     half_range = (np.diff(peakrange).item() - hom_guess) / 2
-    d.set_prop("inh_bounds", frq_center + r_[-1,1] * half_range)
+    d.set_prop("inh_bounds", frq_center + r_[-1, 1] * half_range)
     if fl is not None:
-       fl.next("autoslicing!")
-       axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
-       axvline(
-           x=frq_center - half_range,
-           color="k",
-           ls=":",
-           alpha=0.25,
-           label=f"{peak_lowest_thresh*100:g}% threshold",
-       )
-       axvline(
-           x=frq_center + half_range,
-           color="k",
-           ls=":",
-           alpha=0.25,
-           label=f"{peak_lowest_thresh*100:g}% threshold",
-       )
-    return frq_center, half_range, echo_max
+        fl.next("autoslicing!")
+        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
+        axvline(
+            x=frq_center - half_range,
+            color="k",
+            ls=":",
+            alpha=0.25,
+            label=f"{peak_lower_thresh*100:g}% threshold",
+        )
+        axvline(
+            x=frq_center + half_range,
+            color="k",
+            ls=":",
+            alpha=0.25,
+            label=f"{peak_lower_thresh*100:g}% threshold",
+        )
+    if echo_like:
+        return frq_center, half_range, echo_max
+    else:
+        return frq_center, half_range
 
 
 def hermitian_function_test(
