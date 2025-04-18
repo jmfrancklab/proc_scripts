@@ -19,30 +19,23 @@ from numpy.random import seed
 
 # {{{ Define the frequency mask function and the ph cyc mask
 def frq_mask(s, sigma=20.0):
-    """Generates a mask that is nonzero along frequencies only over the
-    region with signal and applies it to a copy.
-
-    Parameteres
-    ===========
-    s: nddata
-        data that the mask is applied to
-
-    Returns
-    =======
-    s: nddata
-        copy of data with the mask applied
-    """
+    """Note that we assume that our mask is a product of a frequency-domain and
+    a coherence-domain function.  This multiplies by the square root of the
+    frequency-domain part"""
     # we want to leave the original s unchanged and return a copy
     for_mask = s.C
     # {{{ find center frequency
-    # TODO ☐: how does it know what the signal pathway is here?
+    # TODO ☐: how does it know what the signal pathway is here?  You probably
+    #         want to pull from the property.  I'm actually confused how this
+    #         even runs.
     nu_center = psdpr.select_pathway(
         s.C.mean("repeats"), signal_pathway
     ).argmax("t2")
     # }}}
-    # {{{ Make mask using the center frequency and sigma
+    # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
+    #     2σ² in the denominator -- the extra 2 is for sqrt.
     frq_mask = np.exp(
-        -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * sigma**2)
+        -((for_mask.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2)
     )
     # }}}
     return for_mask * frq_mask
