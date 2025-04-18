@@ -38,6 +38,6 @@ with psd.figlist_var(file_name="tempdata220922final.pdf") as fl:
         fl.next("final phased spectrum")
         fl.image(d)
         # in the following, I assume the units are auto-scaled to kHz
-        print("peakrange", d.get_prop("peakrange"))
-        plt.axvline(x=d.get_prop("peakrange")[0] / 1e3, color="w", ls=":")
-        plt.axvline(x=d.get_prop("peakrange")[1] / 1e3, color="w", ls=":")
+        print("inh_bounds", d.get_prop("inh_bounds"))
+        plt.axvline(x=d.get_prop("inh_bounds")[0] / 1e3, color="w", ls=":")
+        plt.axvline(x=d.get_prop("inh_bounds")[1] / 1e3, color="w", ls=":")

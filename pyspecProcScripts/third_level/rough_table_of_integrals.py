@@ -39,10 +39,10 @@ def rough_table_of_integrals(
         to specify manually!
         (And expand the range that it gives you slightly)
 
-        If this is set to the string `'peakrange'`,
+        If this is set to the string `'inh_bounds'`,
         it assumes a previous call to `det_inh_bounds`
         has set the
-        `'peakrange'` property, and it uses that.
+        `'inh_bounds'` property, and it uses that.
 
         If this is set to None, then it assume you want to call
         `det_inh_bounds`
@@ -63,7 +63,7 @@ def rough_table_of_integrals(
     direct : str (default "t2")
         Name of direct dimension.
     expansion : float (default 2)
-        Expand peakrange about its center by this much.
+        Expand inh_bounds about its center by this much.
     peak_lower_thresh: float
         passed to :func:`det_inh_bounds`
     inc_plot_color: boolean
@@ -84,10 +84,10 @@ def rough_table_of_integrals(
         center_of_range, half_range, echo_max = det_inh_bounds(
             s, peak_lowest_thresh, fl=fl, direct=direct,
         )
-        signal_range = s.get_prop("peakrange")
+        signal_range = s.get_prop("inh_bounds")
     else:
-        if signal_range == "peakrange":
-            signal_range = s.get_prop("peakrange")
+        if signal_range == "inh_bounds":
+            signal_range = s.get_prop("inh_bounds")
         center_of_range = np.mean(signal_range)
         half_range = 0.5 * np.diff(signal_range).item()
     s.ift(direct)

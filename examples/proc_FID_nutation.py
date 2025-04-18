@@ -41,8 +41,8 @@ s = psd.find_file(
 )
 print("using postproc type", s.get_prop("postproc_type"))
 with psd.figlist_var() as fl:
-    frq_center, frq_half = prscr.find_peakrange(s, fl=fl)
-    signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
+    frq_center, half_bounds, _ = prscr.det_inh_bounds(s, 0.1, fl=fl)
+    signal_range = tuple(slice_expansion * r_[-1, 1] * half_bounds + frq_center)
     if "nScans" in s.dimlabels:
         s.mean("nScans")
     s.set_plot_color(
