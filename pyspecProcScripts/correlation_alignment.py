@@ -226,6 +226,12 @@ def correl_align(
         #         domain to calculate the correlation function.  Just
         #         check that you're  not going back and forth more times
         #         than needed.
+        #         To be clear, I would do /ft(direct so that you can see it
+        #         moving back and forth between the domains.  I think the trick
+        #         is that you leave it in the frequency domain at the start of
+        #         the loop, and then move to the time domain towards the end in
+        #         order to calculate the correlation function and shift (and
+        #         then you have to go back again for the start of the loop)
         s_leftbracket = frq_mask_fn(s_jk)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
