@@ -36,7 +36,7 @@ def frq_mask(s):
     # {{{ find center frequency
     nu_center = psdpr.select_pathway(
         s.C.mean("repeats"), signal_pathway
-    ).C.argmax("t2")
+    ).argmax("t2")
     # }}}
     # {{{ Make mask using the center frequency and sigma
     frq_mask = np.exp(
