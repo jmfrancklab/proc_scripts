@@ -25,11 +25,13 @@ def frq_mask(s, sigma=20.0):
     # we want to leave the original s unchanged and return a copy
     for_mask = s.C
     # {{{ find center frequency
-    # TODO ☐: how does it know what the signal pathway is here?  You probably
+    # TODO ✓: how does it know what the signal pathway is here?  You probably
     #         want to pull from the property.  I'm actually confused how this
     #         even runs.
+    # was working because signal_pathway was defined prior to this function
+    # being called
     nu_center = psdpr.select_pathway(
-        s.C.mean("repeats"), signal_pathway
+        s.C.mean("repeats"), s.get_prop("coherence_pathway")
     ).argmax("t2")
     # }}}
     # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
@@ -108,6 +110,7 @@ with psd.figlist_var() as fl:
         data = psd.fake_data(
             expression, OrderedDict(orderedDict), signal_pathway
         )
+        data.set_prop("coherence_pathway",signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")

@@ -23,9 +23,7 @@ def correl_align(
     repeat_dims=[],
     non_repeat_dims=[],
     fig_title="correlation alignment",
-    # TODO ☐: signal pathway default should be None, which results in
-    #         pulling the coherence pathway property
-    signal_pathway={"ph1": 0, "ph2": 1},
+    signal_pathway=None,
     max_shift=100.0,
     direct="t2",
     fl=None,
@@ -108,6 +106,10 @@ def correl_align(
         "We updated the correlation function to no longer take avg_dim as a"
         " kwarg!"
     )
+    if s_orig.get_prop("coherence_pathway") is not None:
+        signal_pathway = s_orig.get_prop("coherence_pathway")
+    else:
+        assert signal_pathway is not None, "You need to tell me what the signal pathway is since your data doesn't have this property set - this is a problem!!"
     if isinstance(non_repeat_dims, str):
         non_repeat_dims = [non_repeat_dims]
     if isinstance(repeat_dims, str):
@@ -172,8 +174,6 @@ def correl_align(
     sig_energy = (abs(frq_mask_fn(s_jk)) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
-        # TODO ☐: JF rolled back weird change -- check that this still
-        #         works as expected.
         fig = fl.next("Correlation Diagnostics")
         fig.suptitle(
             " ".join(
@@ -203,7 +203,6 @@ def correl_align(
     ).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
-    s_jk.ift(direct)
     f_shift = 0
     for my_iter in range(100):
         # Note that both s_jk and s_leftbracket
@@ -232,6 +231,7 @@ def correl_align(
         #         the loop, and then move to the time domain towards the end in
         #         order to calculate the correlation function and shift (and
         #         then you have to go back again for the start of the loop)
+        # Make fresh copy of the original data
         s_leftbracket = frq_mask_fn(s_jk)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
@@ -279,6 +279,7 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
+        s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             # TODO ☐: I rolled back np.conj that was acting on
             #         s_leftbracket here (and changing it in place!!!)
@@ -288,7 +289,9 @@ def correl_align(
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
+        s_jk.ift(direct)
+        s_leftbracket.ift(direct)
+        correl = s_leftbracket.mean("repeats") * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -344,8 +347,8 @@ def correl_align(
         # TODO ☐: it seems like you are applying the mask to s_jk over
         #         and over again.  Shouldn't it be possible to just
         #         apply it once, when it's created?
+        s_jk.ft(direct)
         s_aligned = frq_mask_fn(s_jk)
-        s_aligned.ft(direct)
         if fl and my_iter == 0:
             psd.DCCT(s_aligned, fig, title="After correlation", bbox=gs[0, 3])
         logging.debug(
