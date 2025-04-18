@@ -82,9 +82,9 @@ def correl_align(
         DCCT paper).
     Delta_p_mask_fn : func
         A function which takes the 3D data which we call leftbracket
-        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over
-        the :math:`\Delta p` (coherence transfer) dimension,
-        as well as a sum over :math:`\Delta p`.
+        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over the
+        :math:`\\Delta p` (coherence transfer) dimension, as well as a sum over
+        :math:`\\Delta p`.
     fl : boolean
         fl=fl to show the plots and figures produced by this
         function otherwise, fl=None.
@@ -109,7 +109,10 @@ def correl_align(
     if s_orig.get_prop("coherence_pathway") is not None:
         signal_pathway = s_orig.get_prop("coherence_pathway")
     else:
-        assert signal_pathway is not None, "You need to tell me what the signal pathway is since your data doesn't have this property set - this is a problem!!"
+        assert signal_pathway is not None, (
+            "You need to tell me what the signal pathway is since your data"
+            " doesn't have this property set - this is a problem!!"
+        )
     if isinstance(non_repeat_dims, str):
         non_repeat_dims = [non_repeat_dims]
     if isinstance(repeat_dims, str):
@@ -216,23 +219,7 @@ def correl_align(
         #     eq. 29.
         #     At this stage, s_mn is equal to
         #     s_jk.
-        #    This must be done before multiplying by s_jk and without
-        #    the mask applied
-        # TODO ☐: the following is incorrect b/c s_jk is in the time
-        #         domain here.  You probably need to move around the ft
-        #         and ift functions so that you are in the frequency
-        #         domain at the start of the loop, and move to the time
-        #         domain to calculate the correlation function.  Just
-        #         check that you're  not going back and forth more times
-        #         than needed.
-        #         To be clear, I would do /ft(direct so that you can see it
-        #         moving back and forth between the domains.  I think the trick
-        #         is that you leave it in the frequency domain at the start of
-        #         the loop, and then move to the time domain towards the end in
-        #         order to calculate the correlation function and shift (and
-        #         then you have to go back again for the start of the loop)
-        # Make fresh copy of the original data
-        s_leftbracket = s_jk
+        s_leftbracket = frq_mask_fn(s_jk)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
         #     dimension.
@@ -281,9 +268,6 @@ def correl_align(
         #     the correlation function.
         s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
-            # TODO ☐: I rolled back np.conj that was acting on
-            #         s_leftbracket here (and changing it in place!!!)
-            #         Make sure the code still works.
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
         s_leftbracket = Delta_p_mask_fn(s_leftbracket)
         # }}}
@@ -344,9 +328,13 @@ def correl_align(
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
-        # TODO ☐: it seems like you are applying the mask to s_jk over
+        # TODO ✓: it seems like you are applying the mask to s_jk over
         #         and over again.  Shouldn't it be possible to just
         #         apply it once, when it's created?
+        # Having the function make a copy is crucial to the loop where
+        # s_leftbracket is a copy and thus s_jk does not get modified when the
+        # extra dimension is added to s_leftbracket. So I really think leaving
+        # it as a copy is the way to go
         s_jk.ft(direct)
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])
@@ -354,7 +342,7 @@ def correl_align(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(frq_mask_fn(s_jk)**2).data.sum().item() / N),
+                (abs(frq_mask_fn(s_jk) ** 2).data.sum().item() / N),
             )
         )
         # {{{ Calculate energy difference from last shift to see if
