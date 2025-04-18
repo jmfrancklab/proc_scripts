@@ -98,8 +98,8 @@ def correl_align(
                 maximize their correlation amongst each other, thereby aligning
                 them.
     """
-    logging.debug("Applying the correlation routine")
-    # {{{ explicitly check for old arguments
+    # {{{ explicitly check for old arguments, and be generous with format of
+    #     input arguments.  Then throw errors for stuff we don't like.
     assert indirect_dim is None, (
         "We updated the correlation function to no longer take indirect_dim as"
         " a kwarg! Now indirect_dim roughly corresponds to repeat_dims"
@@ -108,15 +108,12 @@ def correl_align(
         "We updated the correlation function to no longer take avg_dim as a"
         " kwarg!"
     )
-    # }}}
     if isinstance(non_repeat_dims, str):
         non_repeat_dims = [non_repeat_dims]
     if isinstance(repeat_dims, str):
         repeat_dims = [repeat_dims]
     assert (
-        type(repeat_dims) is list
-        and
-        len(repeat_dims) > 0
+        type(repeat_dims) is list and len(repeat_dims) > 0
     ), "You must tell me which dimension contains the repeats!"
     temp = set(repeat_dims) - set(s_orig.dimlabels)
     assert len(temp) == 0, (
@@ -128,18 +125,15 @@ def correl_align(
         f"{temp} were not found in the data dimensions, but were specified in"
         " `nonrepeat_dims`"
     )
+    # }}}
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
-    # TODO ✓: check my modifications -- the following was incorrectly called
-    # safe_repeat_dims rather than indirect (what it was called before, and a
-    # more accurate name) see
-    # https://github.com/jmfrancklab/proc_scripts/pull/141#discussion_r2042969536
     if ("nScans" in s_orig.dimlabels) and ("nScans" not in repeat_dims):
         repeat_dims.append("nScans")
     # Make sure the ordering of the repeat_dims matches their order in the
     # original data (this makes smoosh and chunk easier)
     repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
-    # Check there are no left over dimensions unaccounted for by the direct,
-    # phase cycling and declared repeat dimensions
+    # {{{ Check there are no left over dimensions unaccounted for by the
+    #     direct, phase cycling and declared repeat dimensions
     temp = (
         set(s_orig.dimlabels)
         - set(phcycdims)
@@ -153,6 +147,7 @@ def correl_align(
         " to acccount for all your indirect dimensions!  The following are"
         f" unaccounted for: {temp}"
     )
+    # }}}
     # s_jk below ends up with three dimensions (j = align_dim, k = phcyc and
     # direct nu) and is NOT conj
     if len(repeat_dims) > 1:
@@ -161,9 +156,9 @@ def correl_align(
     else:
         s_jk = s_orig.C.rename(
             repeat_dims[0], "repeats"
-        )  # even if there isn't an indirect to smoosh we will
-        #                 later be applying modifications to s_jk that we don't
-        #                 want applied to s_orig
+        )  # even if there isn't an indirect to smoosh we will later be
+        #    applying modifications to s_jk that we don't want applied to
+        #    s_orig
     s_jk.reorder([direct], first=False)
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
