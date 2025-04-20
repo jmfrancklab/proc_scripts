@@ -82,9 +82,9 @@ def correl_align(
         DCCT paper).
     Delta_p_mask_fn : func
         A function which takes the 3D data which we call leftbracket
-        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over the
-        :math:`\\Delta p` (coherence transfer) dimension, as well as a sum over
-        :math:`\\Delta p`.
+        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over
+        the :math:`\\Delta p` (coherence transfer) dimension,
+        as well as a sum over :math:`\\Delta p`.
     fl : boolean
         fl=fl to show the plots and figures produced by this
         function otherwise, fl=None.
@@ -109,7 +109,7 @@ def correl_align(
     if s_orig.get_prop("coherence_pathway") is not None:
         signal_pathway = s_orig.get_prop("coherence_pathway")
     else:
-        assert signal_pathway is not None, (
+        raise ValueError(
             "You need to tell me what the signal pathway is since your data"
             " doesn't have this property set - this is a problem!!"
         )
@@ -219,6 +219,8 @@ def correl_align(
         #     eq. 29.
         #     At this stage, s_mn is equal to
         #     s_jk.
+        #    This must be done before multiplying by s_jk and without
+        #    the mask applied
         s_leftbracket = frq_mask_fn(s_jk)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
@@ -266,7 +268,6 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
-        s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
         s_leftbracket = Delta_p_mask_fn(s_leftbracket)
@@ -275,7 +276,10 @@ def correl_align(
         # so we just do it here
         s_leftbracket.ift(direct)
         s_jk.ift(direct)
-        correl = s_leftbracket.mean("repeats") * s_jk
+        # TODO ☐: you had taken the complex conjugate in the frequency
+        #         domain, which is incorrect (doesn't match convolution
+        #         theorem). Check that this still works.
+        correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -322,19 +326,33 @@ def correl_align(
             )
         else:
             delta_f_shift = correl.run(np.real).argmax(direct)
+        # TODO ☐: as discussed in person, you are getting into trouble
+        #         here with the previous strategy, which was to
+        #         accumulate the shifts, and keep modifying the data.
+        #         But, if you are arguing that you need to re-apply the
+        #         mask each time, rather than multiplyin in-place to
+        #         shift, you need to rather replace s_jk with the
+        #         original data, multiplied by the *total* shift, which
+        #         is f_shift.  This ties in with the next comment, as
+        #         well, where you should think about where you can apply
+        #         the mask strategically in just one or two locations
         # Take s_jk, which is the raw data that has potentially be
         # smooshed, and apply the shift
         s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
-        # TODO ✓: it seems like you are applying the mask to s_jk over
+        # TODO ☐: it seems like you are applying the mask to s_jk over
         #         and over again.  Shouldn't it be possible to just
         #         apply it once, when it's created?
         # Having the function make a copy is crucial to the loop where
         # s_leftbracket is a copy and thus s_jk does not get modified when the
         # extra dimension is added to s_leftbracket. So I really think leaving
         # it as a copy is the way to go
+        # JF response -- that doesn't answer my question.  I agree with
+        # what you are saying, but that would amount to one *line of
+        # code* inside the loop that applies the mask.  Instead, here
+        # there are 5 lines of code where the function is called
         s_jk.ft(direct)
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])

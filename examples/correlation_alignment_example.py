@@ -24,11 +24,19 @@ def frq_mask(s, sigma=20.0):
     frequency-domain part"""
     # we want to leave the original s unchanged and return a copy
     for_mask = s.C
-    # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
-    #     2σ² in the denominator -- the extra 2 is for sqrt.
+    # {{{ find center frequency
+    # TODO ☐: how does it know what the signal pathway is here? -- you
+    #         should use the coherence_pathway property.
+    #         Note that I rolled this back, because you were relying on
+    #         a nu_center property stored elsewhere, which didn't make
+    #         sense.
+    nu_center = psdpr.select_pathway(
+        s.C.mean("repeats"), signal_pathway
+    ).argmax("t2")
+    # }}}
+    # {{{ Make mask using the center frequency and sigma
     frq_mask = np.exp(
-        -((for_mask.fromaxis("t2") - s.get_prop("nu_center")) ** 2)
-        / (4 * sigma**2)
+        -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * sigma**2)
     )
     # }}}
     return for_mask * frq_mask
@@ -100,8 +108,7 @@ with psd.figlist_var() as fl:
         fl.next("Data Processing", fig=fig)
         data = psd.fake_data(
             expression, OrderedDict(orderedDict), signal_pathway
-        )
-        data.set_prop("coherence_pathway", signal_pathway)
+        ).set_prop("coherence_pathway", signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
@@ -138,12 +145,6 @@ with psd.figlist_var() as fl:
         #    this is the sign of the signal -- note how on the next line,
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
-        data.set_prop(
-            "nu_center",
-            psdpr.select_pathway(
-                data.C.mean(indirect), data.get_prop("coherence_pathway")
-            ).argmax("t2"),
-        )
         data.ift(list(signal_pathway.keys()))
         opt_shift = psdpr.correl_align(
             data * mysgn,
