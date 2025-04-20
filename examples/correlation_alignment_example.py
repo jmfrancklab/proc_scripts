@@ -18,28 +18,22 @@ from numpy.random import seed
 
 
 # {{{ Define the frequency mask function and the ph cyc mask
-def frq_mask(s, sigma=20.0):
+def frq_mask(s, sigma=120.0):
     """Note that we assume that our mask is a product of a frequency-domain and
     a coherence-domain function.  This multiplies by the square root of the
     frequency-domain part"""
-    # we want to leave the original s unchanged and return a copy
-    for_mask = s.C
     # {{{ find center frequency
-    # TODO ☐: how does it know what the signal pathway is here? -- you
-    #         should use the coherence_pathway property.
-    #         Note that I rolled this back, because you were relying on
-    #         a nu_center property stored elsewhere, which didn't make
-    #         sense.
     nu_center = psdpr.select_pathway(
-        s.C.mean("repeats"), signal_pathway
+        s.C.mean("repeats"), s.get_prop("coherence_pathway")
     ).argmax("t2")
     # }}}
-    # {{{ Make mask using the center frequency and sigma
+    # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
+    #     2σ² in the denominator -- the extra 2 is for sqrt.
     frq_mask = np.exp(
-        -((for_mask.fromaxis("t2") - nu_center) ** 2) / (2 * sigma**2)
+        -((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2)
     )
     # }}}
-    return for_mask * frq_mask
+    return s*frq_mask
 
 
 def Delta_p_mask(s):
@@ -137,15 +131,15 @@ with psd.figlist_var() as fl:
         psd.DCCT(data, bbox=gs[1], fig=fig, title="Phased and \n Centered")
         # }}}
         # {{{ Applying Correlation Routine to Align Data
+        #    this is the sign of the signal -- note how on the next line,
+        #    I pass sign-flipped data, so that we don't need to worry about
+        #    messing with the original signal
+        data.ift(list(signal_pathway.keys()))
         mysgn = (
             psdpr.select_pathway(data, signal_pathway)
             .C.real.sum("t2")
             .run(np.sign)
         )
-        #    this is the sign of the signal -- note how on the next line,
-        #    I pass sign-flipped data, so that we don't need to worry about
-        #    messing with the original signal
-        data.ift(list(signal_pathway.keys()))
         opt_shift = psdpr.correl_align(
             data * mysgn,
             frq_mask_fn=frq_mask,

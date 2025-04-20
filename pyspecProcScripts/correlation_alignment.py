@@ -164,7 +164,13 @@ def correl_align(
         )  # even if there isn't an indirect to smoosh we will later be
         #    applying modifications to s_jk that we don't want applied to
         #    s_orig
+    # You need to re-apply the mask each time when we iterate you need to
+    # use the original data, multiplied by the *total* shift.
+    s_for_iter = s_jk.C
+    s_for_iter.ift(direct)
     s_jk.reorder([direct], first=False)
+    # Apply mask for calculations to s_jk
+    s_jk = frq_mask_fn(s_jk)
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
@@ -174,7 +180,7 @@ def correl_align(
     ), "direct dimension must be in the frequency domain"
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
-    sig_energy = (abs(frq_mask_fn(s_jk)) ** 2).data.sum().item() / N
+    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
         fig = fl.next("Correlation Diagnostics")
@@ -201,9 +207,7 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    E_of_avg = (
-        abs(frq_mask_fn(s_jk).sum("repeats")) ** 2
-    ).data.sum().item() / N**2
+    E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     f_shift = 0
@@ -219,9 +223,12 @@ def correl_align(
         #     eq. 29.
         #     At this stage, s_mn is equal to
         #     s_jk.
-        #    This must be done before multiplying by s_jk and without
-        #    the mask applied
-        s_leftbracket = frq_mask_fn(s_jk)
+        if my_iter == 1:
+            # During the first iteration a mask is already applied
+            s_leftbracket = s_jk.C
+        else:
+            # after the first iteration a fresh mask is applied
+            s_leftbracket = frq_mask_fn(s_jk).C
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
         #     dimension.
@@ -276,9 +283,6 @@ def correl_align(
         # so we just do it here
         s_leftbracket.ift(direct)
         s_jk.ift(direct)
-        # TODO ☐: you had taken the complex conjugate in the frequency
-        #         domain, which is incorrect (doesn't match convolution
-        #         theorem). Check that this still works.
         correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
@@ -326,33 +330,14 @@ def correl_align(
             )
         else:
             delta_f_shift = correl.run(np.real).argmax(direct)
-        # TODO ☐: as discussed in person, you are getting into trouble
-        #         here with the previous strategy, which was to
-        #         accumulate the shifts, and keep modifying the data.
-        #         But, if you are arguing that you need to re-apply the
-        #         mask each time, rather than multiplyin in-place to
-        #         shift, you need to rather replace s_jk with the
-        #         original data, multiplied by the *total* shift, which
-        #         is f_shift.  This ties in with the next comment, as
-        #         well, where you should think about where you can apply
-        #         the mask strategically in just one or two locations
-        # Take s_jk, which is the raw data that has potentially be
-        # smooshed, and apply the shift
-        s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
+        # You need to re-apply the mask each time when we iterate you need to
+        # use the original data, multiplied by the *total* shift.
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
-        # TODO ☐: it seems like you are applying the mask to s_jk over
-        #         and over again.  Shouldn't it be possible to just
-        #         apply it once, when it's created?
-        # Having the function make a copy is crucial to the loop where
-        # s_leftbracket is a copy and thus s_jk does not get modified when the
-        # extra dimension is added to s_leftbracket. So I really think leaving
-        # it as a copy is the way to go
-        # JF response -- that doesn't answer my question.  I agree with
-        # what you are saying, but that would amount to one *line of
-        # code* inside the loop that applies the mask.  Instead, here
-        # there are 5 lines of code where the function is called
+        s_jk = s_for_iter * np.exp(
+            -1j * 2 * np.pi * f_shift * s_for_iter.fromaxis(direct)
+        )
         s_jk.ft(direct)
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])
@@ -360,14 +345,12 @@ def correl_align(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(frq_mask_fn(s_jk) ** 2).data.sum().item() / N),
+                (abs(s_jk.C**2).data.sum().item() / N),
             )
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        E_of_avg = (
-            abs(frq_mask_fn(s_jk).C.sum("repeats")) ** 2
-        ).data.sum().item() / N**2
+        E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
             psd.strm("averaged signal energy (per transient):", E_of_avg)
