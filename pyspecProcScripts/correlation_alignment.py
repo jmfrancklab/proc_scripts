@@ -166,11 +166,11 @@ def correl_align(
         #    s_orig
     # You need to re-apply the mask each time when we iterate you need to
     # use the original data, multiplied by the *total* shift.
-    s_for_iter = s_jk.C
-    s_for_iter.ift(direct)
-    s_jk.reorder([direct], first=False)
+    #s_for_iter = s_jk.C
+    #s_for_iter.ift(direct)
+    #s_jk.reorder([direct], first=False)
     # Apply mask for calculations to s_jk
-    s_jk = frq_mask_fn(s_jk)
+    #s_jk = frq_mask_fn(s_jk)
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
@@ -211,6 +211,7 @@ def correl_align(
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     f_shift = 0
+    s_jk.ift(direct)
     for my_iter in range(100):
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
@@ -223,12 +224,10 @@ def correl_align(
         #     eq. 29.
         #     At this stage, s_mn is equal to
         #     s_jk.
-        if my_iter == 1:
-            # During the first iteration a mask is already applied
-            s_leftbracket = s_jk.C
-        else:
-            # after the first iteration a fresh mask is applied
-            s_leftbracket = frq_mask_fn(s_jk).C
+        s_jk.ft(direct)
+        s_leftbracket = frq_mask_fn(s_jk.C)
+        s_jk.ift(direct)
+        s_leftbracket.ift(direct)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
         #     dimension.
@@ -281,8 +280,6 @@ def correl_align(
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        s_leftbracket.ift(direct)
-        s_jk.ift(direct)
         correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
@@ -332,11 +329,9 @@ def correl_align(
             delta_f_shift = correl.run(np.real).argmax(direct)
         # You need to re-apply the mask each time when we iterate you need to
         # use the original data, multiplied by the *total* shift.
+        s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
-        )
-        s_jk = s_for_iter * np.exp(
-            -1j * 2 * np.pi * f_shift * s_for_iter.fromaxis(direct)
         )
         s_jk.ft(direct)
         if fl and my_iter == 0:
@@ -362,6 +357,7 @@ def correl_align(
                 break
         # }}}
         last_E = E_of_avg
+        s_jk.ift(direct)
     if fl is not None:
         fl.next("correlation convergence")
         fl.plot(np.array(energy_vals), "x")

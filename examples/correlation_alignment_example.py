@@ -18,14 +18,13 @@ from numpy.random import seed
 
 
 # {{{ Define the frequency mask function and the ph cyc mask
-def frq_mask(s, sigma=120.0):
+def frq_mask(s, sigma=1500):
     """Note that we assume that our mask is a product of a frequency-domain and
     a coherence-domain function.  This multiplies by the square root of the
     frequency-domain part"""
     # {{{ find center frequency
-    nu_center = psdpr.select_pathway(
-        s.C.mean("repeats"), s.get_prop("coherence_pathway")
-    ).argmax("t2")
+    nu_center = psdpr.select_pathway(s.C,
+            s.get_prop("coherence_pathway")).mean("repeats").argmax("t2")
     # }}}
     # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
     #     2σ² in the denominator -- the extra 2 is for sqrt.
@@ -33,7 +32,7 @@ def frq_mask(s, sigma=120.0):
         -((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2)
     )
     # }}}
-    return s*frq_mask
+    return s.C * frq_mask
 
 
 def Delta_p_mask(s):
@@ -44,7 +43,6 @@ def Delta_p_mask(s):
     for ph_name, ph_val in signal_pathway.items():
         s = (
             s["Delta" + ph_name.capitalize(), ph_val]
-            + s["Delta" + ph_name.capitalize(), 0]
         )
     return s
 
@@ -61,22 +59,22 @@ f_range = (-400, 400)
 
 with psd.figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label in [
-        (
-            (
-                23
-                * (1 - 2 * s.exp(-vd / 0.2))
-                * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
-            ),
-            [
-                ("vd", psd.nddata(r_[0:1:40j], "vd")),
-                ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
-                ("ph2", psd.nddata(r_[0, 2] / 4.0, "ph2")),
-                ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
-            ],
-            {"ph1": 0, "ph2": 1},
-            "vd",
-            "IR",
-        ),
+        #(
+        #    (
+        #        23
+        #        * (1 - 2 * s.exp(-vd / 0.2))
+        #        * s.exp(+1j * 2 * s.pi * 100 * (t2) - abs(t2) * 50 * s.pi)
+        #    ),
+        #    [
+        #        ("vd", psd.nddata(r_[0:1:40j], "vd")),
+        #        ("ph1", psd.nddata(r_[0:4] / 4.0, "ph1")),
+        #        ("ph2", psd.nddata(r_[0, 2] / 4.0, "ph2")),
+        #        ("t2", psd.nddata(r_[0:0.2:256j] - echo_time, "t2")),
+        #    ],
+        #    {"ph1": 0, "ph2": 1},
+        #    "vd",
+        #    "IR",
+        #),
         (
             (
                 23
@@ -113,7 +111,7 @@ with psd.figlist_var() as fl:
             fig=fig,
             title="Raw Data",
         )
-        data = data["t2":f_range]
+        #data = data["t2":f_range]
         data.ift("t2")
         data /= psdpr.zeroth_order_ph(
             psdpr.select_pathway(data, signal_pathway)
@@ -134,12 +132,12 @@ with psd.figlist_var() as fl:
         #    this is the sign of the signal -- note how on the next line,
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
-        data.ift(list(signal_pathway.keys()))
         mysgn = (
             psdpr.select_pathway(data, signal_pathway)
             .C.real.sum("t2")
             .run(np.sign)
         )
+        data.ift(list(signal_pathway))
         opt_shift = psdpr.correl_align(
             data * mysgn,
             frq_mask_fn=frq_mask,
