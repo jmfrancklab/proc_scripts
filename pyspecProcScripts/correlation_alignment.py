@@ -175,7 +175,7 @@ def correl_align(
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
     s_jk = frq_mask_fn(s_jk)
-    sig_energy = (abs(frq_mask_fn(s_jk)) ** 2).data.sum().item() / N
+    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
         fig = fl.next("Correlation Diagnostics")
