@@ -24,6 +24,28 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
+def frq_mask(s,signal_pathway, direct="t2", indirect = "repeats", sigma = 20.0):
+    assert s.get_ft_prop(direct), "You must be in the frequency domain!" 
+    for phnames in signal_pathway.keys():
+        assert not s.get_ft_prop( phnames), (
+            str(phnames) + "must NOT be in coherence domain!"
+        )
+    signal_keys = list(signal_pathway)
+    signal_values = list(signal_pathway.values())
+    s.ft(list(signal_pathway))
+    # {{{ find center frequency
+    for j in range(len(signal_keys)):
+        signal = s[signal_keys[j], signal_values[j]].C
+    nu_center = signal.mean(indirect).C.argmax(direct)
+    # }}}
+    # {{{ center and mask using sigma
+    frq_mask = np.exp(
+            -((s.fromaxis(direct)-nu_center)**2) / (2* sigma**2)
+            )
+    # }}} 
+    s.ift(list(signal_pathway))
+    masked_s = s*frq_mask
+    return masked_s, frq_mask 
 
 with psd.figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label in [
@@ -69,6 +91,7 @@ with psd.figlist_var() as fl:
         data = psd.fake_data(
             expression, OrderedDict(orderedDict), signal_pathway
         )
+        data.set_prop("coherence_pathway",signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
@@ -104,15 +127,15 @@ with psd.figlist_var() as fl:
         #    I pass sign-flipped data, so that we don't need to worry about
         #    messing with the original signal
         data.ift(list(signal_pathway.keys()))
-        opt_shift, sigma, mask_func = psdpr.correl_align(
+        opt_shift = psdpr.correl_align(
             data * mysgn,
             repeat_dims=[indirect],
             signal_pathway=signal_pathway,
-            sigma=3000 / 2.355,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
             #                 accommodate the drift in signal
+            frq_mask_fn = frq_mask,
             fl=fl,
         )
         # removed display of the mask (I think that's what it was)

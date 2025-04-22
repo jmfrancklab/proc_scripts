@@ -147,29 +147,6 @@ def find_apparent_anal_freq(s):
             isflipped = True
     return s, nu_a, isflipped
 
-def frq_mask(s,signal_pathway, direct="t2", indirect = "repeats", sigma = 20.0):
-    assert s.get_ft_prop(direct), "You must be in the frequency domain!" 
-    for phnames in signal_pathway.keys():
-        assert not s.get_ft_prop( phnames), (
-            str(phnames) + "must NOT be in coherence domain!"
-        )
-    signal_keys = list(signal_pathway)
-    signal_values = list(signal_pathway.values())
-    s.ft(list(signal_pathway))
-    # {{{ find center frequency
-    for j in range(len(signal_keys)):
-        signal = s[signal_keys[j], signal_values[j]].C
-    nu_center = signal.mean(indirect).C.argmax(direct)
-    # }}}
-    # {{{ center and mask using sigma
-    frq_mask = np.exp(
-            -((s.fromaxis(direct)-nu_center)**2) / (2* sigma**2)
-            )
-    # }}} 
-    s.ift(list(signal_pathway))
-    masked_s = s*frq_mask
-    return masked_s, frq_mask 
-
 def Delta_p_mask(s, signal_pathway, off_pathways=None):
     if isinstance(off_pathways, dict):
         raise ValueError(

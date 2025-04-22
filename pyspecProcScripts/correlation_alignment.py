@@ -2,8 +2,8 @@ import pyspecdata as psd
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 import logging
-from .simple_functions import frq_mask
 
 
 @FuncFormatter
@@ -17,17 +17,17 @@ def to_percent(y, position):
 
 def correl_align(
     s_orig,
+    frq_mask_fn,
     tol=1e-4,
-    indirect_dim=None,
     repeat_dims=[],
     non_repeat_dims=[],
     fig_title="correlation alignment",
-    signal_pathway={"ph1": 0, "ph2": 1},
-    avg_dim=None,
+    signal_pathway=None,
     max_shift=100.0,
-    sigma=20.0,
     direct="t2",
     fl=None,
+    indirect_dim=None,  # no longer used
+    avg_dim=None,  # no longer used
 ):
     """
     Align transients collected with chunked phase cycling dimensions along an
@@ -41,8 +41,10 @@ def correl_align(
 
     With both repeat_dims and non_repeat_dims defined, we can use a set
     expression to find the indirect dimension (not phase cycling and not
-    direct) and to make sure they are either (1) nScans (2) specified as safe
-    or (3) listed in the 'non_repeat_dims'.
+    direct) and to make sure all dimensions are either
+    (1) nScans
+    (2) specified as safe to align along (by being listed in `repeat_dims`)
+    or (3) listed in the `non_repeat_dims`.
 
     Parameters
     ==========
@@ -52,31 +54,39 @@ def correl_align(
         This data is not modified.
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
-    repeat_dims:   list (default [])
-                    List of the dimensions along which the signal is
-                    essentially repeated and therefore can be aligned. The
-                    nScans dimension is automatically added to this list if it
-                    exists. Note: prior to calling this function it is a
-                    common strategy to flip the sign so all transients are the
-                    same sign.
-    nonrepeat_dims: list (default [])
-                    These are indirect dimensions that we are not OK to align
-                    (e.g. the indirect dimension of a 2D COSY experiment).
-    fig_title:      str
-                    Title for the figures generated.
-    signal_pathway: dict
-                    Dictionary containing the signal pathway.
-    max_shift:      float
-                    Specifies the upper and lower bounds to the range over
-                    which f_shift will be taken from the correlation function.
-                    Shift_bounds must be True.
-                    If it's set to None, then no bounds are applied.
-    sigma:          int
-                    Sigma value for the Gaussian mask. Related to the line
-                    width of the given data.
-    fl:             boolean
-                    fl=fl to show the plots and figures produced by this
-                    function otherwise, fl=None.
+    repeat_dims : list (default [])
+        List of the dimensions along which the signal is
+        essentially repeated and therefore can be aligned.
+        The nScans dimension is automatically added to this list if it exists.
+        **Important**: the signal along a dimension of repeats must be the same
+        sign.
+        Therefore, *e.g.*, if it's derived from inversion recovery data,
+        you need to flip the sign →
+        That's what :meth:`pyspecProcScripts.phasing.determine_sign` is for.
+    nonrepeat_dims : list (default [])
+        These are indirect dimensions that we are not OK to align
+        (e.g. the indirect dimension of a 2D COSY experiment).
+    fig_title : str
+        Title for the figures generated.
+    signal_pathway : dict
+        Dictionary containing the signal pathway.
+    max_shift : float
+        Specifies the upper and lower bounds to the range over
+        which f_shift will be taken from the correlation function.
+        Shift_bounds must be True.
+        If it's set to None, then no bounds are applied.
+    frq_mask_fn : func
+        A function which takes nddata and returns a copy that has been
+        multiplied by the square root of the frequency-domain mask (see
+        DCCT paper).
+    Delta_p_mask_fn : func
+        A function which takes the 3D data which we call leftbracket
+        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over
+        the :math:`\\Delta p` (coherence transfer) dimension,
+        as well as a sum over :math:`\\Delta p`.
+    fl : boolean
+        fl=fl to show the plots and figures produced by this
+        function otherwise, fl=None.
 
     Returns
     =======
@@ -84,11 +94,9 @@ def correl_align(
                 The optimized frequency shifts for each transient which will
                 maximize their correlation amongst each other, thereby aligning
                 them.
-    sigma:      float
-                The width of the Gaussian function used to frequency filter
-                the data in the calculation of the correlation function.
     """
-    logging.debug("Applying the correlation routine")
+    # {{{ explicitly check for old arguments, and be generous with format of
+    #     input arguments.  Then throw errors for stuff we don't like.
     assert indirect_dim is None, (
         "We updated the correlation function to no longer take indirect_dim as"
         " a kwarg! Now indirect_dim roughly corresponds to repeat_dims"
@@ -97,21 +105,53 @@ def correl_align(
         "We updated the correlation function to no longer take avg_dim as a"
         " kwarg!"
     )
+    if s_orig.get_prop("coherence_pathway") is not None:
+        signal_pathway = s_orig.get_prop("coherence_pathway")
+    else:
+        raise ValueError(
+            "You need to tell me what the signal pathway is since your data"
+            " doesn't have this property set - this is a problem!!"
+        )
+    if isinstance(non_repeat_dims, str):
+        non_repeat_dims = [non_repeat_dims]
+    if isinstance(repeat_dims, str):
+        repeat_dims = [repeat_dims]
     assert (
-        type(repeat_dims) is list
-    ), "the repeat_dims kwarg needs to be a list of strings"
-    assert (
-        len(repeat_dims) > 0
+        type(repeat_dims) is list and len(repeat_dims) > 0
     ), "You must tell me which dimension contains the repeats!"
+    temp = set(repeat_dims) - set(s_orig.dimlabels)
+    assert len(temp) == 0, (
+        f"{temp} were not found in the data dimensions, but were specified in"
+        " `repeat_dims`"
+    )
+    temp = set(non_repeat_dims) - set(s_orig.dimlabels)
+    assert len(temp) == 0, (
+        f"{temp} were not found in the data dimensions, but were specified in"
+        " `nonrepeat_dims`"
+    )
+    # }}}
     phcycdims = [j for j in s_orig.dimlabels if j.startswith("ph")]
-    # Make sure the repeat_dims are appropriate and that there are no extra
-    # remaining dims
-    safe_repeat_dims = set(s_orig.dimlabels) - set(phcycdims) - set([direct])
-    assert len(safe_repeat_dims - set(repeat_dims) - set(non_repeat_dims)) == 0
-    # After passing the assert we can now define the repeat dims
-    repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
     if ("nScans" in s_orig.dimlabels) and ("nScans" not in repeat_dims):
         repeat_dims.append("nScans")
+    # Make sure the ordering of the repeat_dims matches their order in the
+    # original data (this makes smoosh and chunk easier)
+    repeat_dims = [j for j in s_orig.dimlabels if j in repeat_dims]
+    # {{{ Check there are no left over dimensions unaccounted for by the
+    #     direct, phase cycling and declared repeat dimensions
+    temp = (
+        set(s_orig.dimlabels)
+        - set(phcycdims)
+        - set([direct])
+        - set(repeat_dims)
+        - set(non_repeat_dims)
+    )
+    assert len(temp) == 0, (
+        "Aside from the dimension called nScans, the direct dimension"
+        f" {direct}, and dimensions called ph... (for phase cycling), you need"
+        " to acccount for all your indirect dimensions!  The following are"
+        f" unaccounted for: {temp}"
+    )
+    # }}}
     # s_jk below ends up with three dimensions (j = align_dim, k = phcyc and
     # direct nu) and is NOT conj
     if len(repeat_dims) > 1:
@@ -120,12 +160,16 @@ def correl_align(
     else:
         s_jk = s_orig.C.rename(
             repeat_dims[0], "repeats"
-        )  # even if there isn't an indirect to smoosh we will
-        #                 later be applying modifications to s_jk that we don't
-        #                 want applied to s_orig
-    assert (
-        repeat_dims is not None
-    ), "you need to tell me what the repeated dimension is!"
+        )  # even if there isn't an indirect to smoosh we will later be
+        #    applying modifications to s_jk that we don't want applied to
+        #    s_orig
+    # You need to re-apply the mask each time when we iterate you need to
+    # use the original data, multiplied by the *total* shift.
+    #s_for_iter = s_jk.C
+    #s_for_iter.ift(direct)
+    #s_jk.reorder([direct], first=False)
+    # Apply mask for calculations to s_jk
+    #s_jk = frq_mask_fn(s_jk)
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
@@ -136,57 +180,40 @@ def correl_align(
     signal_keys = list(signal_pathway)
     signal_values = list(signal_pathway.values())
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
-    N = psd.ndshape(s_jk)["repeats"]
+    N = s_jk.shape["repeats"]
     # TODO ☐: as noted below, this doesn't include the mask!
     sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
-        fig_forlist, ax_list = plt.subplots(1, 4, figsize=(25, 10))
-        fl.next("Correlation Diagnostics")
-        fig_forlist.suptitle(
+        fig = fl.next("Correlation Diagnostics")
+        fig.suptitle(
             " ".join(
                 ["Correlation Diagnostic"]
                 + [j for j in [fl.basename] if j is not None]
             )
         )
-        s_jk.reorder([direct], first=False)
-        # TODO ☐: why isn't this a DCCT? (and other calls to image in
-        #         this function)
-        fl.image(
+        gs = GridSpec(1, 4, figure=fig, left=0.05, right=0.95)
+        psd.DCCT(
             s_jk,
-            ax=ax_list[0],
-            human_units=False,
+            fig,
+            title="Before correlation\n sig. energy=%g" % sig_energy,
+            bbox=gs[0, 0],
         )
-        ax_list[0].set_title("before correlation\nsig. energy=%g" % sig_energy)
     energy_diff = 1.0
     i = 0
     energy_vals = []
-    # below we divide by an extra N because if the signals along the repeats
+    # E_of_avg is the energy calculated from the averaged signal
+    # (vs. sig_energy above, which is the energy of the *un*averaged
+    # signal.
+    # We divide by an extra N because if the signals along the repeats
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    this_E = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
-    energy_vals.append(this_E / sig_energy)
+    E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
+    energy_vals.append(E_of_avg / sig_energy)
     last_E = None
-    # TODO ☐: the mask needs to be separated into
-    #         two functions:
-    #         One (f_mask) takes in s_jk and returns a copy
-    #         with the *frequency* mask applied.
-    #         Another (Delta_p_mask) takes in
-    #         s_leftbracket, and returns the
-    #         result of applying the mask along
-    #         Δp_l
-    # {{{ find center frequency to see where to center the mask
-    # TODO ☐: this copy is undesirable, but not dealing with it, since
-    #         we need to separate the mask
-    #         anyways.  Likely, in the final
-    #         version, when we supply the mask
-    #         function, this will be determined
-    #         from the same code that applies the
-    #         frequency bounds.
-    # }}}
-    s_jk.ift(direct)
     f_shift = 0
+    s_jk.ift(direct)
     for my_iter in range(100):
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
@@ -197,22 +224,12 @@ def correl_align(
         logging.debug(psd.strm("*** *** ***"))
         # {{{ construct the expression in the left square brackets of
         #     eq. 29.
-        # {{{ Apply mask around center of signal
-        #     in frequency domain.
         #     At this stage, s_mn is equal to
         #     s_jk.
-        #
-        #     Note that is seems expensive, but
-        #     the masked data does genuinely
-        #     change with every iteration, because
-        #     the signal frequency is moving
-        #     relative to the mask.
         s_jk.ft(direct)
-        s_leftbracket,this_mask = frq_mask(s_jk,signal_pathway,direct=direct,indirect="repeats",
-                sigma=sigma)
+        s_leftbracket,this_mask = frq_mask_fn(s_jk,signal_pathway,direct=direct,indirect="repeats")
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
-        # }}}
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
         #     dimension.
@@ -250,6 +267,16 @@ def correl_align(
                 )
         # }}}
         # }}}
+        # {{{ this applies the Fourier transform from Δφ to Δpₗ
+        #     that is found inside the left square bracket of eq. 29.
+        #     The paper implies a sum along Δpₗ terms as in eq. 28, but
+        #     doesn't actually show them. (Simultaneously maximize all
+        #     coherence pathways that are not masked)
+        #     Note that because only the left square bracket depends on
+        #     Δpₗ, we can apply the coherence mask here, before
+        #     multiplication, in order to decrease the dimensionality of
+        #     the correlation function.
+        # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
         correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
@@ -258,12 +285,11 @@ def correl_align(
             logging.debug(psd.strm("holder"))
             if fl:
                 correl.reorder([direct], first=False)
-                fl.image(
+                psd.DCCT(
                     correl,
-                    ax=ax_list[1],
-                )
-                ax_list[1].set_title(
-                    "correlation function (t)\n(includes ν mask)"
+                    fig,
+                    title="Correlation function(t)\n (includes ν mask)",
+                    bbox=gs[0, 1],
                 )
         # {{{ FT the correlation function so that we can determine the
         #     relative shift needed to line each transient up with the
@@ -278,20 +304,6 @@ def correl_align(
         correl.ft_new_startpoint(direct, "time")
         correl.ft(direct, shift=True, pad=2**14)
         # }}}
-        # TODO ☐: only the left square bracket term depends on Δp_l,
-        #         so the following should be done on the left square
-        #         bracket term before multiplication
-        # TODO ☐: then, the following sum is
-        #         actually part of the masking
-        #         procedure, so it should be moved
-        #         into the Delta_p_mask that is
-        #         supplied here.
-        #         The point of this is that right
-        #         now, we are ALWAYS maximizing
-        #         signal in both the coherence
-        #         pathway of interest and the 0,0
-        #         pathway → we would like to
-        #         control that.
         # {{{ this applies the Fourier transform from Δφ to Δp_l
         #     that is found inside the left square bracket of eq. 29.
         #     Then, it performs a sum that is equivalent to applying a
@@ -310,14 +322,14 @@ def correl_align(
             logging.debug(psd.strm("holder"))
             if fl:
                 correl.reorder([direct], first=False)
-                fl.image(
+                psd.DCCT(
                     correl,
-                    ax=ax_list[2],
-                    human_units=False,
-                )
-                ax_list[2].set_title(
-                    "correlation function (v)\n(includes mask and sum along"
-                    " $\\Delta p_l$)"
+                    fig,
+                    title=(
+                        "Correlation function (v)\n(includes mask and"
+                        " sum along $\\Delta p_l$)"
+                    ),
+                    bbox=gs[0, 2],
                 )
         # Find optimal f shift based on max of correlation function
         if max_shift is not None:
@@ -328,35 +340,16 @@ def correl_align(
             )
         else:
             delta_f_shift = correl.run(np.real).argmax(direct)
-        # Take s_jk, which is the raw data that has potentially be
-        # smooshed, and apply the shift
+        # You need to re-apply the mask each time when we iterate you need to
+        # use the original data, multiplied by the *total* shift.
         s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
-        # TODO ☐: this is incorrect, because the mask has not been
-        #         applied! (this is not a problem w/ AG changes -- it's
-        #         pre-existing)
-        #         (Note that once we have masking
-        #         functions, we would mod square our
-        #         data, and then apply the mask to
-        #         the mod squared data -- because
-        #         the mask is always real, this is
-        #         equivalent to multiplying one
-        #         copy of the function by the
-        #         mask, then multiplying by an
-        #         unmasked copy of the data in
-        #         order to calculate our masked
-        #         square)
         s_aligned = s_jk.C  # it's probably cheaper to make a copy than to ift
         s_aligned.ft(direct)
         if fl and my_iter == 0:
-            fl.image(
-                s_aligned,
-                ax=ax_list[3],
-                human_units=False,
-            )
-            ax_list[3].set_title("after correlation")
+            psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])
         logging.debug(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
@@ -366,20 +359,18 @@ def correl_align(
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        this_E = (
-            abs(s_aligned.C.sum("repeats")) ** 2
-        ).data.sum().item() / N**2
-        energy_vals.append(this_E / sig_energy)
+        E_of_avg = (abs(s_aligned.C.sum("repeats")) ** 2).data.sum().item() / N**2
+        energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
-            psd.strm("averaged signal energy (per transient):", this_E)
+            psd.strm("averaged signal energy (per transient):", E_of_avg)
         )
         if last_E is not None:
-            energy_diff = (this_E - last_E) / sig_energy
+            energy_diff = (E_of_avg - last_E) / sig_energy
             logging.debug(psd.strm(energy_diff))
             if abs(energy_diff) < tol and my_iter > 4:
                 break
         # }}}
-        last_E = this_E
+        last_E = E_of_avg
     if fl is not None:
         fl.next("correlation convergence")
         fl.plot(np.array(energy_vals), "x")
@@ -395,4 +386,4 @@ def correl_align(
     else:
         f_shift.rename("repeats", repeat_dims[0])
     # }}}
-    return f_shift, sigma, this_mask
+    return f_shift
