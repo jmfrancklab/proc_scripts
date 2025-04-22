@@ -18,7 +18,7 @@ from numpy.random import seed
 
 
 # {{{ Define the frequency mask function and the ph cyc mask
-def frq_mask(s, sigma=20.0):
+def frq_mask(s, sigma=150.0):
     """Note that we assume that our mask is a product of a frequency-domain and
     a coherence-domain function.  This multiplies by the square root of the
     frequency-domain part"""
