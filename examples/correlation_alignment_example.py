@@ -24,28 +24,22 @@ rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 echo_time = 10e-3
 f_range = (-400, 400)
-def frq_mask(s,signal_pathway, direct="t2", indirect = "repeats", sigma = 20.0):
-    assert s.get_ft_prop(direct), "You must be in the frequency domain!" 
-    for phnames in signal_pathway.keys():
-        assert not s.get_ft_prop( phnames), (
-            str(phnames) + "must NOT be in coherence domain!"
-        )
-    signal_keys = list(signal_pathway)
-    signal_values = list(signal_pathway.values())
-    s.ft(list(signal_pathway))
+def frq_mask(s, sigma = 20.0):
+    """Note that we assume that our mask is a product of a frequency-domain and
+    a coherence-domain function.  This multiplies by the square root of the
+    frequency-domain part"""
+    s.ft(list(s.get_prop("coherence_pathway")))
     # {{{ find center frequency
-    for j in range(len(signal_keys)):
-        signal = s[signal_keys[j], signal_values[j]].C
-    nu_center = signal.mean(indirect).C.argmax(direct)
+    nu_center = psdpr.select_pathway(s,s.get_prop("coherence_pathway")).mean("repeats").C.argmax("t2")
     # }}}
-    # {{{ center and mask using sigma
+    # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
+    #     2σ² in the denominator -- the extra 2 is for sqrt.
     frq_mask = np.exp(
-            -((s.fromaxis(direct)-nu_center)**2) / (2* sigma**2)
+            -((s.fromaxis("t2") - nu_center) ** 2) / (4* sigma**2)
             )
-    # }}} 
-    s.ift(list(signal_pathway))
-    masked_s = s*frq_mask
-    return masked_s, frq_mask 
+    # }}}
+    s.ift(list(s.get_prop("coherence_pathway")))
+    return s*frq_mask 
 
 with psd.figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label in [
@@ -141,7 +135,7 @@ with psd.figlist_var() as fl:
         # removed display of the mask (I think that's what it was)
         data.ift("t2")
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
-        data.ft(list(signal_pathway.keys()))
+        #data.ft(list(signal_pathway.keys()))
         data.ft("t2")
         psd.DCCT(data, bbox=gs[2], fig=fig, title=r"Aligned Data ($\nu$)")
         data.ift("t2")

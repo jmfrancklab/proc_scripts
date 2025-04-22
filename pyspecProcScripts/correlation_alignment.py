@@ -177,11 +177,8 @@ def correl_align(
     assert s_orig.get_ft_prop(
         direct
     ), "direct dimension must be in the frequency domain"
-    signal_keys = list(signal_pathway)
-    signal_values = list(signal_pathway.values())
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
-    # TODO ☐: as noted below, this doesn't include the mask!
     sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
@@ -227,7 +224,7 @@ def correl_align(
         #     At this stage, s_mn is equal to
         #     s_jk.
         s_jk.ft(direct)
-        s_leftbracket,this_mask = frq_mask_fn(s_jk,signal_pathway,direct=direct,indirect="repeats")
+        s_leftbracket = frq_mask_fn(s_jk)
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
@@ -304,20 +301,12 @@ def correl_align(
         correl.ft_new_startpoint(direct, "time")
         correl.ft(direct, shift=True, pad=2**14)
         # }}}
-        # {{{ this applies the Fourier transform from Δφ to Δp_l
-        #     that is found inside the left square bracket of eq. 29.
-        #     Then, it performs a sum that is equivalent to applying a
-        #     mask along the Δp_l dimension and then summing along the
-        #     Δp_l dimension.
-        #     Note that the paper implies a sum along Δp_l terms as in
-        #     eq. 29, but doesn't actually show them.
         for ph_name, ph_val in signal_pathway.items():
             correl.ft(["Delta%s" % ph_name.capitalize()])
             correl = (
                 correl["Delta" + ph_name.capitalize(), ph_val]
                 + correl["Delta" + ph_name.capitalize(), 0]
             )
-        # }}}
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
