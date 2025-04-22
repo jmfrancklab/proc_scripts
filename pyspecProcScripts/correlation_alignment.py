@@ -77,7 +77,7 @@ def correl_align(
         Shift_bounds must be True.
         If it's set to None, then no bounds are applied.
     frq_mask_fn : func
-        A function which takes nddata and returns a copy that has been
+        A function which takes nddata and returns data that has been
         multiplied by the square root of the frequency-domain mask (see
         DCCT paper).
     Delta_p_mask_fn : func
@@ -219,7 +219,7 @@ def correl_align(
         #     eq. 29.
         #     At this stage, s_mn is equal to
         #     s_jk.
-        s_leftbracket = frq_mask_fn(s_jk)
+        s_leftbracket = frq_mask_fn(s_jk.C)
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
