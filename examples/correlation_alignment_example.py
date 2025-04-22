@@ -24,8 +24,11 @@ def frq_mask(s, sigma=20.0):
     frequency-domain part"""
     s.ft(list(s.get_prop("coherence_pathway")))
     # {{{ find center frequency
-    nu_center = psdpr.select_pathway(s,
-            s.get_prop("coherence_pathway")).mean("repeats").C.argmax("t2")
+    nu_center = (
+        psdpr.select_pathway(s, s.get_prop("coherence_pathway"))
+        .mean("repeats")
+        .C.argmax("t2")
+    )
     # }}}
     # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
     #     2σ² in the denominator -- the extra 2 is for sqrt.
@@ -34,7 +37,8 @@ def frq_mask(s, sigma=20.0):
     )
     # }}}
     s.ift(list(s.get_prop("coherence_pathway")))
-    return s*frq_mask
+    return s * frq_mask
+
 
 def Delta_p_mask(s):
     """Filters out all but the signal pathway and the "ph1":0 or
