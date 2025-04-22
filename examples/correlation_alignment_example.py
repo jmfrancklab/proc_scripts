@@ -41,7 +41,7 @@ def Delta_p_mask(s):
     {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
     Note this serves as an example function and other filter functions could
     alternatively be used"""
-    for ph_name, ph_val in signal_pathway.items():
+    for ph_name, ph_val in s.get_prop("coherence_pathway").items():
         s = (
             s["Delta" + ph_name.capitalize(), ph_val]
             + s["Delta" + ph_name.capitalize(), 0]

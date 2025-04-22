@@ -202,7 +202,7 @@ def correl_align(
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
     E_of_avg = (
-        abs(frq_mask_fn(s_jk).C.sum("repeats")) ** 2
+        abs(s_jk.C.sum("repeats")) ** 2
     ).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
@@ -322,8 +322,6 @@ def correl_align(
             )
         else:
             delta_f_shift = correl.run(np.real).argmax(direct)
-        # You need to re-apply the mask each time when we iterate you need to
-        # use the original data, multiplied by the *total* shift.
         s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
@@ -335,13 +333,13 @@ def correl_align(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(frq_mask_fn(s_jk) ** 2).data.sum().item() / N),
+                (abs(s_jk ** 2).data.sum().item() / N),
             )
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
         E_of_avg = (
-            abs(frq_mask_fn(s_jk).C.sum("repeats")) ** 2
+            abs(s_jk.C.sum("repeats")) ** 2
         ).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
