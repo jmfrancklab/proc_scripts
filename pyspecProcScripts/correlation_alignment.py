@@ -164,13 +164,7 @@ def correl_align(
         )  # even if there isn't an indirect to smoosh we will later be
         #    applying modifications to s_jk that we don't want applied to
         #    s_orig
-    # You need to re-apply the mask each time when we iterate you need to
-    # use the original data, multiplied by the *total* shift.
-    #s_for_iter = s_jk.C
-    #s_for_iter.ift(direct)
-    #s_jk.reorder([direct], first=False)
-    # Apply mask for calculations to s_jk
-    #s_jk = frq_mask_fn(s_jk)
+    s_jk.reorder([direct], first=False)
     for phnames in signal_pathway.keys():
         assert not s_orig.get_ft_prop(phnames), (
             str(phnames) + " must not be in the coherence domain"
@@ -180,7 +174,7 @@ def correl_align(
     ), "direct dimension must be in the frequency domain"
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
-    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
+    sig_energy = (abs(frq_mask_fn(s_jk)) ** 2).data.sum().item() / N
     if fl:
         fl.push_marker()
         fig = fl.next("Correlation Diagnostics")
@@ -207,11 +201,12 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
+    E_of_avg = (
+        abs(frq_mask_fn(s_jk).C.sum("repeats")) ** 2
+    ).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     f_shift = 0
-    s_jk.ift(direct)
     for my_iter in range(100):
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
@@ -224,8 +219,7 @@ def correl_align(
         #     eq. 29.
         #     At this stage, s_mn is equal to
         #     s_jk.
-        s_jk.ft(direct)
-        s_leftbracket = frq_mask_fn(s_jk.C)
+        s_leftbracket = frq_mask_fn(s_jk)
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
@@ -274,13 +268,14 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
+        s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
         s_leftbracket = Delta_p_mask_fn(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
+        correl = s_leftbracket.mean("repeats") * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -340,12 +335,14 @@ def correl_align(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(s_jk.C**2).data.sum().item() / N),
+                (abs(frq_mask_fn(s_jk) ** 2).data.sum().item() / N),
             )
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
+        E_of_avg = (
+            abs(frq_mask_fn(s_jk).C.sum("repeats")) ** 2
+        ).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
             psd.strm("averaged signal energy (per transient):", E_of_avg)
@@ -357,7 +354,6 @@ def correl_align(
                 break
         # }}}
         last_E = E_of_avg
-        s_jk.ift(direct)
     if fl is not None:
         fl.next("correlation convergence")
         fl.plot(np.array(energy_vals), "x")
