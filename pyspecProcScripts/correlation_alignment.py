@@ -18,6 +18,7 @@ def to_percent(y, position):
 def correl_align(
     s_orig,
     frq_mask_fn,
+    Delta_p_mask_fn,
     tol=1e-4,
     repeat_dims=[],
     non_repeat_dims=[],
@@ -276,10 +277,7 @@ def correl_align(
         s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
-            s_leftbracket = (
-                s_leftbracket["Delta" + ph_name.capitalize(), ph_val]
-                + s_leftbracket["Delta" + ph_name.capitalize(), 0]
-            )
+        s_leftbracket = Delta_p_mask_fn(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
