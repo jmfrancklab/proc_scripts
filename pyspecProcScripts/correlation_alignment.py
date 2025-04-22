@@ -273,10 +273,17 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
+        s_leftbracket.run(np.conj)
+        for ph_name, ph_val in signal_pathway.items():
+            s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
+            s_leftbracket = (
+                s_leftbracket["Delta" + ph_name.capitalize(), ph_val]
+                + s_leftbracket["Delta" + ph_name.capitalize(), 0]
+            )
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
+        correl = s_leftbracket.mean("repeats") * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -301,12 +308,6 @@ def correl_align(
         correl.ft_new_startpoint(direct, "time")
         correl.ft(direct, shift=True, pad=2**14)
         # }}}
-        for ph_name, ph_val in signal_pathway.items():
-            correl.ft(["Delta%s" % ph_name.capitalize()])
-            correl = (
-                correl["Delta" + ph_name.capitalize(), ph_val]
-                + correl["Delta" + ph_name.capitalize(), 0]
-            )
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
             if fl:
@@ -335,20 +336,19 @@ def correl_align(
         f_shift += (
             delta_f_shift  # accumulate all the shifts applied to s_jk to date
         )
-        s_aligned = s_jk.C  # it's probably cheaper to make a copy than to ift
-        s_aligned.ft(direct)
+        s_jk.ft(direct)
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])
         logging.debug(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(s_aligned**2).data.sum().item() / N),
+                (abs(s_jk.C**2).data.sum().item() / N),
             )
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        E_of_avg = (abs(s_aligned.C.sum("repeats")) ** 2).data.sum().item() / N**2
+        E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
             psd.strm("averaged signal energy (per transient):", E_of_avg)
@@ -360,6 +360,7 @@ def correl_align(
                 break
         # }}}
         last_E = E_of_avg
+        s_jk.ift(direct)
     if fl is not None:
         fl.next("correlation convergence")
         fl.plot(np.array(energy_vals), "x")

@@ -135,7 +135,7 @@ with psd.figlist_var() as fl:
         # removed display of the mask (I think that's what it was)
         data.ift("t2")
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
-        #data.ft(list(signal_pathway.keys()))
+        data.ft(list(signal_pathway.keys()))
         data.ft("t2")
         psd.DCCT(data, bbox=gs[2], fig=fig, title=r"Aligned Data ($\nu$)")
         data.ift("t2")
