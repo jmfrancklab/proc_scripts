@@ -19,24 +19,25 @@ from numpy.random import seed
 
 # {{{ Define the frequency mask function and the ph cyc mask
 def frq_mask(s, sigma=150.0):
-    """Note that we assume that our mask is a product of a frequency-domain and
-    a coherence-domain function.  This multiplies by the square root of the
-    frequency-domain part"""
-    s.ft(list(s.get_prop("coherence_pathway")))
+    """Note that we assume that our mask is a product of a
+    frequency-domain and a coherence-domain function.
+    This returns a copy multiplied by the square root of the
+    frequency-domain part,
+    leaving the original data untouched."""
+    # TODO ☐: I assume that you are in the phase and frequency domains
+    #         here -- see comments in the correlation function, as well
     # {{{ find center frequency
     nu_center = (
         psdpr.select_pathway(s, s.get_prop("coherence_pathway"))
         .mean("repeats")
-        .C.argmax("t2")
+        .argmax("t2")
     )
     # }}}
-    # {{{ Make mask using the center frequency and sigma.  Standard gaussian is
-    #     2σ² in the denominator -- the extra 2 is for sqrt.
-    frq_mask = np.exp(
-        -((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2)
-    )
+    # {{{ Make mask using the center frequency and sigma.
+    #     Standard gaussian is 2σ² in the denominator -- the extra 2 is
+    #     for sqrt.
+    frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
     # }}}
-    s.ift(list(s.get_prop("coherence_pathway")))
     return s * frq_mask
 
 
@@ -46,11 +47,9 @@ def Delta_p_mask(s):
     Note this serves as an example function and other filter functions could
     alternatively be used"""
     for ph_name, ph_val in s.get_prop("coherence_pathway").items():
-        s = (
-            s["Delta" + ph_name.capitalize(), ph_val]
-            + s["Delta" + ph_name.capitalize(), 0]
-        )
-    return s
+        signal_path = s["Delta" + ph_name.capitalize(), ph_val]
+        zero_path = s["Delta" + ph_name.capitalize(), 0]
+    return signal_path + zero_path
 
 
 # }}}
@@ -135,10 +134,9 @@ with psd.figlist_var() as fl:
         psd.DCCT(data, bbox=gs[1], fig=fig, title="Phased and \n Centered")
         # }}}
         # {{{ Applying Correlation Routine to Align Data
-        #    this is the sign of the signal -- note how on the next line,
-        #    I pass sign-flipped data, so that we don't need to worry about
-        #    messing with the original signal
-        mysgn = (
+        mysgn = (  # this is the sign of the signal -- note how on the next
+            #        line, I pass sign-flipped data, so that we don't need to
+            #        worry about messing with the original signal
             psdpr.select_pathway(data, signal_pathway)
             .C.real.sum("t2")
             .run(np.sign)
