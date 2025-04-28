@@ -206,6 +206,14 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
+    # TODO ☐: this does not select the coherence pathway, which we want
+    #         to do. HOWEVER -- don't do that right now.  Make sure that
+    #         everything else works, leaving this todo in until the very
+    #         end.  Then, make a comment on github noting that this is
+    #         the only remaining todo.  (This can be solved by accepting
+    #         data that's in the frequency domain and the coherence
+    #         transfer domain, and then just ft/ift'ing both dimensions
+    #         together)
     E_of_avg = (abs(s_leftbracket.C.sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
@@ -232,8 +240,8 @@ def correl_align(
         #         the correlation function and shift (and then you have to
         #         go back again for the start of the loop)
         #         
-        #         **as I've edited it here the data is in the frequency
-        #         domain when we enter the loop, which is as it should be**
+        #         **note that I've now done this for you, but you do
+        #         need to troubleshoot**
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
         # *data* is updated with every iteration
