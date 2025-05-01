@@ -179,7 +179,7 @@ def correl_align(
     #     the left square brackets of eq. 29. in Beaton 2022
     #     At this stage, s_mn is equal to s_jk.
     s_leftbracket = frq_mask_fn(s_jk)
-    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
+    sig_energy = (abs(s_leftbracket) ** 2).data.sum().item() / N
     # }}}
     if fl:
         fl.push_marker()
@@ -214,7 +214,7 @@ def correl_align(
     #         data that's in the frequency domain and the coherence
     #         transfer domain, and then just ft/ift'ing both dimensions
     #         together)
-    E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
+    E_of_avg = (abs(s_leftbracket.C.sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     # TODO ☐: on the master branch (and in your previous version), this
@@ -381,12 +381,12 @@ def correl_align(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(s_jk**2).data.sum().item() / N),
+                (abs(s_leftbracket**2).data.sum().item() / N),
             )
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
+        E_of_avg = (abs(s_leftbracket.C.sum("repeats")) ** 2).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
             psd.strm("averaged signal energy (per transient):", E_of_avg)
