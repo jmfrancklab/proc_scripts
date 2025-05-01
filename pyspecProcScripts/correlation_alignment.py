@@ -178,8 +178,8 @@ def correl_align(
     #     s_leftbracket is called that because it becomes (below)
     #     the left square brackets of eq. 29. in Beaton 2022
     #     At this stage, s_mn is equal to s_jk.
-    s_leftbracket = frq_mask_fn(s_jk)
-    sig_energy = (abs(s_leftbracket) ** 2).data.sum().item() / N
+    s_jk = frq_mask_fn(s_jk)
+    sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     # }}}
     if fl:
         fl.push_marker()
@@ -214,7 +214,7 @@ def correl_align(
     #         data that's in the frequency domain and the coherence
     #         transfer domain, and then just ft/ift'ing both dimensions
     #         together)
-    E_of_avg = (abs(s_leftbracket.C.sum("repeats")) ** 2).data.sum().item() / N**2
+    E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     # TODO ☐: on the master branch (and in your previous version), this
@@ -251,7 +251,7 @@ def correl_align(
         # note that the frequency mask is applied either (for the first
         # iteration) in the code above or (for subsequent iterations) at
         # the bottom of the for loop
-        s_leftbracket = s_leftbracket
+        s_leftbracket = frq_mask_fn(s_jk.C)
         # {{{ move both the unmasked and masked data into the time domain
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
@@ -304,13 +304,16 @@ def correl_align(
         # TODO ☐: I rolled back np.conj that was acting on
         #         s_leftbracket here -- why not just do it below?
         #         Make sure the code still works.
+        # We need to apply the conjugate prior to applying the Delta p
+        # mask for the code to work so do that here
+        s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
         s_leftbracket = Delta_p_mask_fn(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
-        correl = s_leftbracket.mean("repeats").run(np.conj) * s_jk
+        correl = s_leftbracket.mean("repeats") * s_jk
         correl.reorder(["repeats", direct], first=False)
         if my_iter == 0:
             logging.debug(psd.strm("holder"))
@@ -371,20 +374,18 @@ def correl_align(
         # only used to calculate the energy at the end of the for block
         # here, but is also used once we return to the start of the
         # block
-        s_leftbracket = frq_mask_fn(s_jk)
-        # TODO ☐: the following is not after correlation, just the first iteration.
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])
         logging.debug(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"
                 " the same):",
-                (abs(s_leftbracket**2).data.sum().item() / N),
+                (abs(s_jk**2).data.sum().item() / N),
             )
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        E_of_avg = (abs(s_leftbracket.C.sum("repeats")) ** 2).data.sum().item() / N**2
+        E_of_avg = (abs(s_jk.C.sum("repeats")) ** 2).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
             psd.strm("averaged signal energy (per transient):", E_of_avg)

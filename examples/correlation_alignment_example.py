@@ -26,6 +26,7 @@ def frq_mask(s, sigma=150.0):
     leaving the original data untouched."""
     # TODO ☐: I assume that you are in the phase and frequency domains
     #         here -- see comments in the correlation function, as well
+    s.ft(list(s.get_prop("coherence_pathway")))
     # {{{ find center frequency
     nu_center = (
         psdpr.select_pathway(s, s.get_prop("coherence_pathway"))
@@ -38,6 +39,7 @@ def frq_mask(s, sigma=150.0):
     #     for sqrt.
     frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
     # }}}
+    s.ift(list(s.get_prop("coherence_pathway")))
     return s * frq_mask
 
 
@@ -46,9 +48,13 @@ def Delta_p_mask(s):
     {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
     Note this serves as an example function and other filter functions could
     alternatively be used"""
-    for ph_name, ph_val in s.get_prop("coherence_pathway").items():
-        signal_path = s["Delta" + ph_name.capitalize(), ph_val]
-        zero_path = s["Delta" + ph_name.capitalize(), 0]
+    for j,(ph_name, ph_val) in enumerate(s.get_prop("coherence_pathway").items()):
+        if j ==0:
+            signal_path = s["Delta" + ph_name.capitalize(), ph_val]
+            zero_path = s["Delta" + ph_name.capitalize(), 0]
+        else:
+            signal_path = signal_path["Delta" + ph_name.capitalize(), ph_val]
+            zero_path = zero_path["Delta" + ph_name.capitalize(), 0]
     return signal_path + zero_path
 
 
