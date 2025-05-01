@@ -178,7 +178,7 @@ def correl_align(
     #     s_leftbracket is called that because it becomes (below)
     #     the left square brackets of eq. 29. in Beaton 2022
     #     At this stage, s_mn is equal to s_jk.
-    s_jk = frq_mask_fn(s_jk)
+    s_leftbracket = frq_mask_fn(s_jk)
     sig_energy = (abs(s_jk) ** 2).data.sum().item() / N
     # }}}
     if fl:
@@ -251,7 +251,7 @@ def correl_align(
         # note that the frequency mask is applied either (for the first
         # iteration) in the code above or (for subsequent iterations) at
         # the bottom of the for loop
-        s_leftbracket = frq_mask_fn(s_jk.C)
+        s_leftbracket = s_leftbracket
         # {{{ move both the unmasked and masked data into the time domain
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
@@ -374,6 +374,7 @@ def correl_align(
         # only used to calculate the energy at the end of the for block
         # here, but is also used once we return to the start of the
         # block
+        s_leftbracket = frq_mask_fn(s_jk)
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])
         logging.debug(
