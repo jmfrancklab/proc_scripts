@@ -217,31 +217,14 @@ def correl_align(
     E_of_avg = (abs(s_leftbracket.C.sum("repeats")) ** 2).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
-    # TODO ☐: on the master branch (and in your previous version), this
+    # TODO ✓: on the master branch (and in your previous version), this
     #         is where the first ft/ift calls happen, and they imply
     #         that s_jk is in the frequency domain and in the phase
     #         domain.  I modify operating under this assumption.  Make
     #         sure this still works (without rolling back)!
+    # AG: I took this todo to mean "make sure this still works" and it does
     f_shift = 0
     for my_iter in range(100):
-        # TODO ☐: As I noted before:
-        #
-        #         You probably need to move around the ft
-        #         and ift functions so that you are in the frequency
-        #         domain at the start of the loop, and move to the time
-        #         domain to calculate the correlation function.  Just
-        #         check that you're  not going back and forth more times
-        #         than needed.
-        #         To be clear, I would do /ft(direct (vim command)
-        #         so that you can see it moving back and forth between the
-        #         domains.  I think the trick is that you leave it in the
-        #         frequency domain at the start of the loop, and then move
-        #         to the time domain towards the end in order to calculate
-        #         the correlation function and shift (and then you have to
-        #         go back again for the start of the loop)
-        #         
-        #         **note that I've now done this for you, but you do
-        #         need to troubleshoot**
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
         # *data* is updated with every iteration
@@ -251,7 +234,6 @@ def correl_align(
         # note that the frequency mask is applied either (for the first
         # iteration) in the code above or (for subsequent iterations) at
         # the bottom of the for loop
-        s_leftbracket = s_leftbracket
         # {{{ move both the unmasked and masked data into the time domain
         s_jk.ift(direct)
         s_leftbracket.ift(direct)
@@ -301,11 +283,15 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
-        # TODO ☐: I rolled back np.conj that was acting on
+        # TODO ✓: I rolled back np.conj that was acting on
         #         s_leftbracket here -- why not just do it below?
         #         Make sure the code still works.
-        # We need to apply the conjugate prior to applying the Delta p
-        # mask for the code to work so do that here
+        # AG: the function absolutely breaks when the conj is applied after the 
+        # mask, talking with chatgpt it gives the reason that the mask assumes
+        # phased data which requires the conjugate to be applied prior to the mask
+
+        # The conjugation is part of the left-hand factor before the transform
+        # and the mask so we need to conjugate here
         s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
@@ -376,7 +362,7 @@ def correl_align(
         # block
         s_leftbracket = frq_mask_fn(s_jk)
         if fl and my_iter == 0:
-            psd.DCCT(s_jk, fig, title="After correlation", bbox=gs[0, 3])
+            psd.DCCT(s_jk, fig, title="After First Iteration", bbox=gs[0, 3])
         logging.debug(
             psd.strm(
                 "signal energy per transient (recalc to check that it stays"

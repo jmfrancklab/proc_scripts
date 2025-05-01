@@ -24,12 +24,9 @@ def frq_mask(s, sigma=150.0):
     This returns a copy multiplied by the square root of the
     frequency-domain part,
     leaving the original data untouched."""
-    # TODO ☐: I assume that you are in the phase and frequency domains
-    #         here -- see comments in the correlation function, as well
-    s.ft(list(s.get_prop("coherence_pathway")))
     # {{{ find center frequency
     nu_center = (
-        psdpr.select_pathway(s, s.get_prop("coherence_pathway"))
+        psdpr.select_pathway(abs(s), s.get_prop("coherence_pathway"))
         .mean("repeats")
         .argmax("t2")
     )
@@ -39,8 +36,7 @@ def frq_mask(s, sigma=150.0):
     #     for sqrt.
     frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
     # }}}
-    s.ift(list(s.get_prop("coherence_pathway")))
-    return s * frq_mask
+    return s.C * frq_mask
 
 
 def Delta_p_mask(s):
