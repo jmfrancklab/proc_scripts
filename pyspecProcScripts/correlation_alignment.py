@@ -283,15 +283,9 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
-        # TODO ✓: I rolled back np.conj that was acting on
-        #         s_leftbracket here -- why not just do it below?
-        #         Make sure the code still works.
-        # AG: the function absolutely breaks when the conj is applied after the 
-        # mask, talking with chatgpt it gives the reason that the mask assumes
-        # phased data which requires the conjugate to be applied prior to the mask
-
         # The conjugation is part of the left-hand factor before the transform
         # and the mask so we need to conjugate here
+        # https://jmfrancklab.slack.com/archives/CV553TPRV/p1746447146407959?thread_ts=1746117118.076499&cid=CV553TPRV
         s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])

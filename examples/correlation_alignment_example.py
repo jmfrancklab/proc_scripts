@@ -21,12 +21,12 @@ from numpy.random import seed
 def frq_mask(s, sigma=150.0):
     """Note that we assume that our mask is a product of a
     frequency-domain and a coherence-domain function.
-    This returns a copy multiplied by the square root of the
+    This returns a COPY multiplied by the square root of the
     frequency-domain part,
     leaving the original data untouched."""
     # {{{ find center frequency
     nu_center = (
-        psdpr.select_pathway(abs(s), s.get_prop("coherence_pathway"))
+        psdpr.select_pathway(s, s.get_prop("coherence_pathway"))
         .mean("repeats")
         .argmax("t2")
     )
