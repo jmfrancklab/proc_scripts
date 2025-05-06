@@ -34,7 +34,9 @@ def frq_mask(s, sigma=150.0):
     # {{{ Make mask using the center frequency and sigma.
     #     Standard gaussian is 2σ² in the denominator -- the extra 2 is
     #     for sqrt.
-    frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
+    frq_mask = np.exp(
+        -((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2)
+    )
     # }}}
     return s.C * frq_mask
 
@@ -44,8 +46,10 @@ def Delta_p_mask(s):
     {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
     Note this serves as an example function and other filter functions could
     alternatively be used"""
-    for j,(ph_name, ph_val) in enumerate(s.get_prop("coherence_pathway").items()):
-        if j ==0:
+    for j, (ph_name, ph_val) in enumerate(
+        s.get_prop("coherence_pathway").items()
+    ):
+        if j == 0:
             signal_path = s["Delta" + ph_name.capitalize(), ph_val]
             zero_path = s["Delta" + ph_name.capitalize(), 0]
         else:

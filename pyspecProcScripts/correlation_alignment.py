@@ -214,7 +214,9 @@ def correl_align(
     #         data that's in the frequency domain and the coherence
     #         transfer domain, and then just ft/ift'ing both dimensions
     #         together)
-    E_of_avg = (abs(s_leftbracket.C.sum("repeats")) ** 2).data.sum().item() / N**2
+    E_of_avg = (
+        abs(s_leftbracket.C.sum("repeats")) ** 2
+    ).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     # TODO ✓: on the master branch (and in your previous version), this
@@ -229,7 +231,9 @@ def correl_align(
         # change every iteration, because the
         # *data* is updated with every iteration
         logging.debug(psd.strm("*** *** ***"))
-        logging.debug(psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", my_iter))
+        logging.debug(
+            psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", my_iter)
+        )
         logging.debug(psd.strm("*** *** ***"))
         # note that the frequency mask is applied either (for the first
         # iteration) in the code above or (for subsequent iterations) at
@@ -345,9 +349,7 @@ def correl_align(
         # shift for this iteration
         s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
         # we need to accumulate the total shift
-        f_shift += (
-            delta_f_shift
-        )
+        f_shift += delta_f_shift
         # move back into the frequency domain to analyze the result
         s_jk.ft(direct)
         # the frequency-masked signal (called s_leftbracket here) is not
@@ -366,7 +368,9 @@ def correl_align(
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        E_of_avg = (abs(s_leftbracket.C.sum("repeats")) ** 2).data.sum().item() / N**2
+        E_of_avg = (
+            abs(s_leftbracket.C.sum("repeats")) ** 2
+        ).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
             psd.strm("averaged signal energy (per transient):", E_of_avg)
