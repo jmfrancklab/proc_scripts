@@ -21,9 +21,20 @@ from numpy.random import seed
 def frq_mask(s, sigma=150.0):
     """Note that we assume that our mask is a product of a
     frequency-domain and a coherence-domain function.
-    This returns a COPY multiplied by the square root of the
+    This returns a copy multiplied by the square root of the
     frequency-domain part,
-    leaving the original data untouched."""
+    leaving the original data untouched.
+
+    Parameters
+    ==========
+    s : nddata
+        Signal, given in the frequency domain and coherence transfer
+        (*vs.* phase) domain.
+        The property `coherence_pathway` must be set.
+    """
+    # TODO ☐: make sure this still runs
+    assert s.get_ft_prop("t2")
+    assert s.get_ft_prop(list(s.get_prop("coherence_pathway").keys())[0])
     # {{{ find center frequency
     nu_center = (
         psdpr.select_pathway(s, s.get_prop("coherence_pathway"))
@@ -34,11 +45,10 @@ def frq_mask(s, sigma=150.0):
     # {{{ Make mask using the center frequency and sigma.
     #     Standard gaussian is 2σ² in the denominator -- the extra 2 is
     #     for sqrt.
-    frq_mask = np.exp(
-        -((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2)
-    )
+    frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
     # }}}
-    return s.C * frq_mask
+    # note that when we multiply, we automatically generate a copy
+    return s * frq_mask
 
 
 def Delta_p_mask(s):
@@ -49,6 +59,15 @@ def Delta_p_mask(s):
     for j, (ph_name, ph_val) in enumerate(
         s.get_prop("coherence_pathway").items()
     ):
+        # TODO ☐ (later): leave for JF after all other todo's resolved and
+        #         example runs:
+        #
+        #         Rather than actually applying the slice, return a
+        #         boolean numpy array that can be used to slice the
+        #         smooshed Δp dimension.
+        #         This allows us to not only calculate the correlation
+        #         function as a sum across Δp, but also to calculate the
+        #         norm before such a sum.
         if j == 0:
             signal_path = s["Delta" + ph_name.capitalize(), ph_val]
             zero_path = s["Delta" + ph_name.capitalize(), 0]

@@ -206,7 +206,7 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    # TODO ☐: this does not select the coherence pathway, which we want
+    # TODO ☐ (later): this does not select the coherence pathway, which we want
     #         to do. HOWEVER -- don't do that right now.  Make sure that
     #         everything else works, leaving this todo in until the very
     #         end.  Then, make a comment on github noting that this is
@@ -219,12 +219,12 @@ def correl_align(
     ).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
-    # TODO ✓: on the master branch (and in your previous version), this
-    #         is where the first ft/ift calls happen, and they imply
-    #         that s_jk is in the frequency domain and in the phase
-    #         domain.  I modify operating under this assumption.  Make
-    #         sure this still works (without rolling back)!
-    # AG: I took this todo to mean "make sure this still works" and it does
+    assert s_jk.get_ft_prop(
+        direct
+    ), "direct dimension must be in the frequency domain"
+    assert not s_jk.get_ft_prop(
+        list(s_jk.get_prop("coherence_pathway"))[0]
+    ), "phase cycling dimension must not be in the coherence transfer domain!"
     f_shift = 0
     for my_iter in range(100):
         # Note that both s_jk and s_leftbracket
@@ -287,6 +287,9 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
+        # TODO ☐: for the following → it's not about the mask, at
+        #         all.  It's about the FT.  And don't reference
+        #         slack, reference the paper.
         # The conjugation is part of the left-hand factor before the transform
         # and the mask so we need to conjugate here
         # https://jmfrancklab.slack.com/archives/CV553TPRV/p1746447146407959?thread_ts=1746117118.076499&cid=CV553TPRV
