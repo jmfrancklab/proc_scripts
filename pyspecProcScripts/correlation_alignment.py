@@ -53,6 +53,15 @@ def correl_align(
         Data given in the frequency (not time) domain and the
         phase-cycling (not coherence transfer) domain.
         This data is not modified.
+    frq_mask_fn : func
+        A function which takes nddata and returns a copy that has been
+        multiplied by the square root of the frequency-domain mask (see
+        DCCT paper).
+    Delta_p_mask_fn : func
+        A function which takes the 3D data which we call leftbracket
+        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over
+        the :math:`\\Delta p` (coherence transfer) dimension,
+        as well as a sum over :math:`\\Delta p`.
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
     repeat_dims : list (default [])
@@ -76,15 +85,8 @@ def correl_align(
         which f_shift will be taken from the correlation function.
         Shift_bounds must be True.
         If it's set to None, then no bounds are applied.
-    frq_mask_fn : func
-        A function which takes nddata and returns a copy that has been
-        multiplied by the square root of the frequency-domain mask (see
-        DCCT paper).
-    Delta_p_mask_fn : func
-        A function which takes the 3D data which we call leftbracket
-        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over
-        the :math:`\\Delta p` (coherence transfer) dimension,
-        as well as a sum over :math:`\\Delta p`.
+    direct: str
+        Direct dimension of s_orig
     fl : boolean
         fl=fl to show the plots and figures produced by this
         function otherwise, fl=None.
