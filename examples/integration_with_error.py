@@ -51,7 +51,6 @@ with figlist_var() as fl:
     just_noise.add_noise(fake_data_noise_std)
     just_noise.set_error(fake_data_noise_std)
     fl.plot(just_noise, ".", capsize=6)
-    # }}}
     data.ft("t2", shift=True)
     # TODO ☐: the goal of the following is essentially to turn the ft into a
     #         unitary FT, which this does.
@@ -61,17 +60,17 @@ with figlist_var() as fl:
     #         always calculate σ_ν (or σ²_ν) first, and then cnovert it to
     #         σ_t as needed.  `time_domain_noise` shows how to do this.
     #     i.e. vector-normalize the FTs above
-    #for thisdim in ["t2", "ph1", "ph2"]:
-    #    dt = data.get_ft_prop(thisdim, "dt")
-    #    data /= sqrt(ndshape(data)[thisdim]) * dt
+    for thisdim in ["t2", "ph1", "ph2"]:
+        dt = data.get_ft_prop(thisdim, "dt")
+        data /= sqrt(ndshape(data)[thisdim]) * dt
     # }}}
     # {{{ First, run the code that automatically chooses integration bounds
     # and also assigns error
     s_int, returned_frq_slice = frequency_domain_integral(
         data,
-        signal_pathway,
-        [manual_slice],
-        excluded_pathways,
+        signal_pathway = signal_pathway,
+        excluded_frqs = [manual_slice],
+        excluded_pathways = excluded_pathways,
         fl=fl,
         return_frq_slice=True,
     )
