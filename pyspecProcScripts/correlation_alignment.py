@@ -292,7 +292,7 @@ def correl_align(
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
         # The conjugation needs to be taken before the FT (while in the phase
-        # cycling domain so we need to conjugate here (eq 29 in DCCT paper -
+        # cycling domain) so we need to conjugate here (eq 29 in DCCT paper -
         # Beaton 2022)
         s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
@@ -348,9 +348,9 @@ def correl_align(
             )
         else:
             delta_f_shift = correl.run(np.real).argmax(direct)
-        # Take s_jk, which is data that unmasked, but which has all of the
-        # shifts from all the previous iterations applied, and apply the
-        # shift for this iteration
+        # Take s_jk, which is data that is unmasked, but which has all of the
+        # shifts from all the previous iterations applied, and apply the shift
+        # for this iteration
         s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
         # we need to accumulate the total shift
         f_shift += delta_f_shift
