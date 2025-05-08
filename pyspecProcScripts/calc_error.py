@@ -83,8 +83,10 @@ def calc_masked_variance(
     Returns
     =======
     collected_variance : nddata
-        The variance of the spectral datapoints with the only dimension being
-        the indirect.
+        The variance of the spectral datapoints with the only dimensions left
+        being true indirect dimensions.
+        (It calculates the variance along the direct dimension,
+        and then averages that over all the unmasked coherence pathways.)
     """
     collected_variance = s.C  # so we don't alter s when we apply the mask
     # {{{ filter out excluded error pathways
