@@ -2,17 +2,15 @@
 Time-Domain Noise
 =================
 
-Here, we want to calculate the time-domain variance to use in error propagation.
-But, to make sure we calculate only noise, we want to mask out portions of the frequency 
-domain.
+Here, we want to calculate the time-domain variance to use in error
+propagation.  But, to make sure we calculate only noise, we want to mask out
+portions of the frequency domain.
 We propose that if we use a unitary transform,
-Parseval's theorem
-tells us we can calculate :math:`\sigma_t^2` (time domain variance)
-directly from the frequency-domain variance, *i.e.* :math:`\sigma_\nu^2=\sigma_t^2`.
-To confirm this, we construct a "spectrum" of pure noise
-and generate a frequency-masked noise,
-and show that is the same as the 
-unmasked time-domain.
+Parseval's theorem tells us we can calculate :math:`\sigma_t^2` (time domain
+variance) directly from the frequency-domain variance, *i.e.*
+:math:`\sigma_\nu^2=\sigma_t^2`.
+To confirm this, we construct a "spectrum" of pure noise and generate a
+frequency-masked noise, and show that is the same as the unmasked time-domain.
 """
 
 import numpy as np
@@ -84,8 +82,6 @@ with figlist_var(black=True) as fl:
     fl.image(forplot)
 # {{{ Calculate the variance using new functions
 #    now, I can do this:
-# TODO ☐: rather than doing the manual stuff above, just set the
-#         coherence pathway, and use this
 result = calc_masked_variance(example_data)
 # convert from σ_ν to σ_t
 result *= result.get_ft_prop("t", "df") / result.get_ft_prop("t", "dt")
