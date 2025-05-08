@@ -77,7 +77,7 @@ def integral_w_errors(
         **kwargs,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
-    variance = calc_masked_variance(
+    spectral_datapoint_variance = calc_masked_variance(
         s,
         excluded_frqs=excluded_frqs,
         indirect=indirect,
@@ -97,13 +97,11 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    # returns ∫s(ν)dν
-    # with error set to
-    # √(σ² Δν² N)
+    # returns ∫s(ν)dν with error set to √(σ² Δν² N)
     retval = (
         select_pathway(s, signal_pathway)
         .integrate(direct)
-        .set_error(psp.sqrt(variance.data * df**2 * N))
+        .set_error(psp.sqrt(spectral_datapoint_variance.data * df**2 * N))
     )
     if not return_frq_slice:
         return retval

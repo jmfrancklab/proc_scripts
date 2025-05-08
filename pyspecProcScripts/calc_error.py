@@ -15,9 +15,11 @@ def _masked_mean_multi(x, axis=None):
 
 
 def _masked_var_multi(x, axis=None):
-    # TODO ☐: see comments in PR that are not resolved
-    """Calculates the variance along a 1D axis if an axis is fed or returns a 
-    single float for the variance. The data must real"""
+    """Calculates the variance along a 1D axis if an axis is fed or returns a
+    single float for the variance. The data must real - when the data is
+    complex, np.var uses both real and imaginary to calculate the variance, BUT
+    we want a quantity that is equal to the variance of either just the real or
+    just the imaginary"""
 
     def masked_var(x):
         x_masked = x[np.isfinite(x)]
@@ -33,9 +35,9 @@ def _masked_var_multi(x, axis=None):
     x_masked = x[np.isfinite(x)]
     if np.iscomplexobj(x) and sum(abs(np.imag(x_masked))) < 1e-7:
         raise ValueError(
-                "Data claims to be complex but has a negligible imaginary part (" + str(
-                    sum(abs(np.imag(x_masked)))
-                    ) + ")"
+            "Data claims to be complex but has a negligible imaginary part ("
+            + str(sum(abs(np.imag(x_masked))))
+            + ")"
         )
     # }}}
     if axis is not None:
@@ -124,7 +126,7 @@ def calc_masked_variance(
     # This must be done before any subsequent averaging of the variance.
     collected_variance.run(_masked_var_multi, direct)
     # {{{ Average over remaining (non-excluded) ct pathways
-    for j in set(s.dimlabels)-set([direct,indirect]):
+    for j in set(s.dimlabels) - set([direct, indirect]):
         collected_variance.run(_masked_mean_multi, j)
     # }}}
     return collected_variance

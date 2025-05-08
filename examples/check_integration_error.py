@@ -16,7 +16,7 @@ Check that the following match:
   what :func:`~pyspecProcScripts.integral_w_errors` does)
 """
 
-from numpy import diff, r_, sqrt, real, exp, pi, var, iscomplexobj, imag
+from numpy import diff, r_, sqrt, real, exp, pi, var
 from pyspecdata import ndshape, nddata, init_logging, figlist_var
 from pyspecProcScripts import integral_w_errors
 
@@ -88,7 +88,9 @@ for j in range(n_repeats):
 # using abs( )**2 and then mean
 std_off_pathway = (
     data["ph1", 0]["ph2", 0]["t2":bounds]
-    .C.run(lambda x, axis=None: var(x, ddof=1, axis=axis) / 2, 't2')  # the 2 is b/c var gives sum of real var and imag var
+    .C.run(
+        lambda x, axis=None: var(x, ddof=1, axis=axis) / 2, "t2"
+    )  # the 2 is b/c var gives sum of real var and imag var
     .mean_all_but(["vd"])
     .run(sqrt)
 )

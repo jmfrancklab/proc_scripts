@@ -6,7 +6,7 @@ Makes sure that automatically chosen integral bounds perform similar to or
 better than what you would choose by hand.
 """
 
-from numpy import sqrt, std, r_, pi, exp, diff
+from numpy import sqrt, std, r_, pi, exp
 from matplotlib.pyplot import rcParams
 from pyspecdata import strm, ndshape, nddata, figlist_var, init_logging
 from pyspecProcScripts import integral_w_errors
@@ -56,8 +56,8 @@ data.ft("t2", shift=True)
 # {{{ usually, we don't use a unitary FT -- this makes it unitary
 #     i.e. vector-normalize the FTs above
 for thisdim in ["t2", "ph1", "ph2"]:
-    dt = data.get_ft_prop("t2", "dt")
-    data /= sqrt(ndshape(data)["t2"]) * dt
+    dt = data.get_ft_prop(thisdim, "dt")
+    data /= sqrt(ndshape(data)[thisdim]) * dt
 # }}}
 # {{{ First, run the code that automatically chooses integration bounds
 # and also assigns error
