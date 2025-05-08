@@ -21,7 +21,12 @@ from .fitting import recovery, decay
 from .fwhm_calculate import fwhm_calculator
 from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
-from .simple_functions import select_pathway, logobj, find_apparent_anal_freq
+from .simple_functions import (
+    select_pathway,
+    logobj,
+    find_apparent_anal_freq,
+    HH_weighted_integral,
+)
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
 from .apod_matched_filter import apod_matched_filter
@@ -57,6 +62,7 @@ __all__ = [
     "fl_mod",
     "fwhm_calculator",
     "generate_integrals",
+    "HH_weighted_integral",
     "hermitian_function_test",
     "integral_w_errors",
     "integrate_limits",

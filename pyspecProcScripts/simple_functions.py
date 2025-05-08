@@ -2,6 +2,7 @@
 import numpy as np
 import logging
 
+
 class logobj(object):
     def __init__(self, array_len=1000):  # just the size of the buffer
         self.log_list = []
@@ -12,7 +13,8 @@ class logobj(object):
         self.log_array = np.empty(array_len, dtype=self.log_dtype)
         self.log_dict = {
             0: ""
-        }  # use hash to convert commands to a number, and this to look up the meaning of the hashes
+        }  # use hash to convert commands to a number, and this to look up the
+        #    meaning of the hashes
         # }}}
         self.currently_logging = False
         self.log_pos = 0
@@ -29,7 +31,8 @@ class logobj(object):
 
     @property
     def total_log(self):
-        "the log is stored internally as a list of arrays -- here return a single array for the whole log"
+        """the log is stored internally as a list of arrays -- here return a
+        single array for the whole log"""
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
@@ -92,14 +95,15 @@ def select_pathway(*args, **kwargs):
 
 
 def find_apparent_anal_freq(s):
-    """A function to identify the position of analytic signal as acquired on the oscilloscope.
-    Importantly this function takes into account the effects of aliasing in identifying the
-    frequency of the resulting signal.
+    """A function to identify the position of analytic signal as acquired on
+    the oscilloscope.  Importantly this function takes into account the effects
+    of aliasing in identifying the frequency of the resulting signal.
 
     Parameters
     ==========
     s: nddata
-        data with a single (dominant) peak, where you want to identify the frequency.
+        data with a single (dominant) peak, where you want to identify the
+        frequency.
 
     Returns
     =======
@@ -113,13 +117,11 @@ def find_apparent_anal_freq(s):
     """
     carrier = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
     dt = s["t"][1] - s["t"][0]
-    # In analytic signal the negative frequencies were tossed.
-    # So we first need to check if the carrier is in the SW of
-    # the analytic signal or if the signal was aliased
+    # In analytic signal the negative frequencies were tossed.  So we first
+    # need to check if the carrier is in the SW of the analytic signal or if
+    # the signal was aliased
     if carrier < 1 / dt:
-        logging.debug(
-            "You are in the clear and no aliasing took place!"
-        )
+        logging.debug("You are in the clear and no aliasing took place!")
         nu_a = carrier
         isflipped = False
     else:
@@ -138,11 +140,40 @@ def find_apparent_anal_freq(s):
         nu_a = carrier - n * SW
         isflipped = False
         if nu_a < 0:
-            # when stored, we threw out the negative frequencies
-            # so that means that we captured an aliased copy of the
-            # negative frequency
+            # when stored, we threw out the negative frequencies so that means
+            # that we captured an aliased copy of the negative frequency
             nu_a = -carrier + n * SW
-            # we need to make note of the fact that the phase of our final time domain signal
+            # we need to make note of the fact that the phase of our final time
+            # domain signal
             # (after filtering and up-conversion) will be flipped
             isflipped = True
     return s, nu_a, isflipped
+
+
+def HH_weighted_integral(s, frq_slice, direct="t2"):
+    """Make a sinc function that is 1 at t=0 and also 1 in the frequency
+    domain over the frequency slice fed. This function will be used as the
+    weighted integral function when integrating in the time domain.
+
+    Parameters
+    ==========
+    s: nddata
+        Data in the frequency domain
+    frq_slice: tuple
+        frequency slice over which we want to integrate.
+    direct: str
+        direct axis of the data
+
+    Returns
+    =======
+    mysinc: nddata
+        sinc function in the time domain corresponding to a heaviside hat
+        function with a width equal to the integration bounds in the frequency
+        domain.
+    """
+    assert s.get_ft_prop(direct), "data must be in the frequency domain!"
+    mysinc = s.fromaxis(direct)
+    mysinc[direct, :] = 0
+    mysinc[direct:frq_slice] = 1
+    mysinc.ift(direct)
+    return mysinc
