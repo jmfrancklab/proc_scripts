@@ -18,12 +18,9 @@ and show that is the same as the unmasked time-domain noise.
 
 import numpy as np
 
-# TODO ☐: the following style is probably better for examples
-#         it can be achieved simply with %s/\<psd\.\(figlist_var\)\>/\1/g
-#         (just delete when read)
-from numpy import r_, sqrt, nan, var
+from numpy import r_, sqrt, var
 from pyspecdata import nddata, figlist_var
-from pyspecProcScripts import select_pathway, calc_masked_variance
+from pyspecProcScripts import calc_masked_variance
 
 N = 1024
 n_repeats = 50
@@ -75,33 +72,18 @@ print(
 # since it's easier to mask out regions of the coherence
 # domain where I expect there is signal (or phase cycling noise).
 # I can then convert that to sigma_t
-# TODO ☐: do not take a unitary transform! That's the whole
-#         point of what I'm explaining in the comments!
 example_data.ft("ph")
 
-# {{{ I'm doing a mildly odd thing where I'm using "nan" to identify signal I
-#     want to exclude from the variance calculation -- i.e. to mask it.  This
-#     is assuming that I have signal that I'm not interested in including in
-#     the calculation.
-temp = select_pathway(example_data, signal_pathway)
-temp.data[:] = nan  # note how I am NOT acting on a copy -- I am trying to
-#                    manipulate the data at its original memory position!
-# for the most complicated case I'll also say I want to exclude phase cycling
-# noise -- so also exclude everything from the signal bandwidth
-# this will give a conservative (small) estimate of the noise
-temp = example_data["t":signal_window]
-temp.data[:] = nan
-# }}}
 with figlist_var(black=True) as fl:
-    fl.next("show the mask in white")
-    forplot = example_data.C
-    # in pyspecdata, nan shows up as the opposite (black vs. white) color vs. 0
-    fl.image(forplot)
-# {{{ Calculate the variance using new functions
-#    now, I can do this:
-# TODO ☐: rather than manually setting the NaN values above,
-#         just set the coherence pathway, and use this
-result = calc_masked_variance(example_data)
+    # {{{ Calculate the variance using new functions
+    #    now, I can do this:
+    result = calc_masked_variance(
+        example_data,
+        direct="t",
+        excluded_frqs=[signal_window],
+        excluded_pathways=[signal_pathway],
+        fl=fl,
+    )
 # next, convert from σ_ν to σ_t
 result *= result.get_ft_prop("t", "df") / result.get_ft_prop("t", "dt")
 result.run(sqrt)  # σ²_t→σ_t
