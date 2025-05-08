@@ -24,9 +24,10 @@ npts = 8192
 t = psd.nddata(r_[-npts:npts] * 10 / npts, "t2").set_units("t2", "s")
 FWHM = 10
 f_range = (-50, 50)
-# Make data
+# {{{ Generate data
 data = np.pi * FWHM / 2 * np.exp(1j * 2 * np.pi * t - np.pi * FWHM * abs(t))
 data.set_plot_color("black")
+# }}}
 with psd.figlist_var() as fl:
     # {{{ Set up plots
     fig, thisax = plt.subplots(2, 1)
