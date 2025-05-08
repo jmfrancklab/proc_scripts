@@ -18,12 +18,19 @@ def integral_w_errors(
     fl=None,
     return_frq_slice=False,
 ):
-    """Calculates the propagation of error for the given signal and returns
-    signal with the error associated.
+    """Returns the integral along the direct dimension,
+    with automatically determined bounds.
+    Error is calculated by propagation of error in the frequency domain,
+    and included in the resulting nddata.
 
     Before declaring the error_path,
     look at an examples such as integration_w_error.py to see how to
     decide which excluded pathways to take the error over.
+
+    Used in these examples:
+    `examples/integration_with_error.py`
+    `examples/check_integration_error.py`
+    `examples/broken/test_error.py`
 
     Parameters
     ==========
@@ -90,6 +97,9 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
+    # returns ∫s(ν)dν
+    # with error set to
+    # √(σ² Δν² N)
     retval = (
         select_pathway(s, signal_pathway)
         .integrate(direct)

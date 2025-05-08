@@ -20,17 +20,24 @@ def _masked_var_multi(x, axis=None):
     single float for the variance. The data must real"""
 
     def masked_var(x):
-        if np.iscomplex(axis) and sum(abs(np.imag(axis))) > 1e-7:
-            raise ValueError(
-                "Data claims to be complex but has a negligible imaginary part"
-            )
-        elif not np.iscomplex(axis):
-            return np.var(x[np.isfinite(x)], ddof=1)
-        else:
+        x_masked = x[np.isfinite(x)]
+        if np.iscomplexobj(x):
             # we can convince ourselves that the following is true by running
             # sqrt(var(normal(size=10000).view(complex128), ddof=1)/2)
-            return np.var(x[np.isfinite(x)], ddof=1) / 2
+            return np.var(x_masked, ddof=1) / 2
+        else:
+            return np.var(x_masked, ddof=1)
 
+    # {{{ check for fake complex data -- not sure why, but this fails
+    #     inside above
+    x_masked = x[np.isfinite(x)]
+    if np.iscomplexobj(x) and sum(abs(np.imag(x_masked))) < 1e-7:
+        raise ValueError(
+                "Data claims to be complex but has a negligible imaginary part (" + str(
+                    sum(abs(np.imag(x_masked)))
+                    ) + ")"
+        )
+    # }}}
     if axis is not None:
         return np.apply_along_axis(masked_var, axis, x)
     else:
@@ -121,10 +128,13 @@ def calc_masked_variance(
     if fl is not None:
         fl.next("Masked Frequency Noise")
         fl.image(collected_variance)
-    # {{{ Average over remaining ct pathways so the returned nddata has one
-    #     dimension
+    # TODO ☐: verify that this works the way you expect! The code was
+    #         very wrong before!
+    # Calculate variance along the direct dimension.
+    # This must be done before any subsequent averaging of the variance.
+    collected_variance.run(_masked_var_multi, direct)
+    # {{{ Average over remaining (non-excluded) ct pathways
     for j in [k for k in s.dimlabels if k.startswith("ph")]:
         collected_variance.run(_masked_mean_multi, j)
     # }}}
-    # calculate variance along the indirect dimension
-    return collected_variance.run(_masked_var_multi, direct)
+    return collected_variance
