@@ -158,16 +158,16 @@ def HH_weighted_integral(s, frq_slice, direct="t2"):
     Parameters
     ==========
     s: nddata
-        Data in the frequency domain
+        Data in the frequency domain.
     frq_slice: tuple
-        frequency slice over which we want to integrate.
+        Frequency slice over which we want to integrate.
     direct: str
-        direct axis of the data
+        Direct axis of the data.
 
     Returns
     =======
     mysinc: nddata
-        sinc function in the time domain corresponding to a heaviside hat
+        Sinc function in the time domain corresponding to a heaviside hat
         function with a width equal to the integration bounds in the frequency
         domain.
     """
