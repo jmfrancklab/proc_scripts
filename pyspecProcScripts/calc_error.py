@@ -134,7 +134,7 @@ def calc_masked_variance(
     # This must be done before any subsequent averaging of the variance.
     collected_variance.run(_masked_var_multi, direct)
     # {{{ Average over remaining (non-excluded) ct pathways
-    for j in [k for k in s.dimlabels if k.startswith("ph")]:
+    for j in set(s.dimlabels)-set([direct,indirect]):
         collected_variance.run(_masked_mean_multi, j)
     # }}}
     return collected_variance
