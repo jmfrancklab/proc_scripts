@@ -28,8 +28,8 @@ def frq_mask(s, sigma=150.0):
     Parameters
     ==========
     s : nddata
-        Signal, given in the frequency domain and phase
-        (*vs.* coherence transfer) domain.
+        Signal, given in the frequency domain and coherence transfer
+        (*vs.* phase) domain.
         The property `coherence_pathway` must be set.
     """
     assert s.get_ft_prop("t2")
