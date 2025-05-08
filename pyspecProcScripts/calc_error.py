@@ -77,7 +77,7 @@ def calc_masked_variance(
         over just the signal pathway.
     direct : str
         Direct axis.
-    indirect : str
+    indirect : str or list of str
         Indirect axis.
 
     Returns
@@ -86,9 +86,11 @@ def calc_masked_variance(
         The variance of the spectral datapoints with the only dimensions left
         being true indirect dimensions.
         (It calculates the variance along the direct dimension,
-        and then averages that over all the unmasked coherence pathways.)
+        and then averages that over all the dimensions (including coherence pathways) that are not marked as `indirect`.)
     """
     collected_variance = s.C  # so we don't alter s when we apply the mask
+    if type(indirect) is str:
+        indirect = [indirect]
     # {{{ filter out excluded error pathways
     if isinstance(excluded_pathways, dict):
         raise ValueError(
@@ -128,7 +130,7 @@ def calc_masked_variance(
     # This must be done before any subsequent averaging of the variance.
     collected_variance.run(_masked_var_multi, direct)
     # {{{ Average over remaining (non-excluded) ct pathways
-    for j in set(s.dimlabels) - set([direct, indirect]):
+    for j in set(s.dimlabels) - set([direct] + indirect):
         collected_variance.run(_masked_mean_multi, j)
     # }}}
     return collected_variance
