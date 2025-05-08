@@ -61,7 +61,7 @@ def calc_masked_variance(
     fl=None,
 ):
 # TODO ☐: is this really propagated error? if so, how?
-    """Calculates the propagation of error for the given signal.
+    """Calculates the variance for the given signal.
 
     Before declaring the excluded_pathways or excluded_frqs,
     look at an examples such as integration_w_error.py to see how to
@@ -128,8 +128,6 @@ def calc_masked_variance(
     if fl is not None:
         fl.next("Masked Frequency Noise")
         fl.image(collected_variance)
-    # TODO ☐: verify that this works the way you expect! The code was
-    #         very wrong before!
     # Calculate variance along the direct dimension.
     # This must be done before any subsequent averaging of the variance.
     collected_variance.run(_masked_var_multi, direct)
