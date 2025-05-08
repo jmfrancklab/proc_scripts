@@ -84,6 +84,8 @@ for j in range(n_repeats):
     # multiplied by df
     all_results["repeats", j] = manual_bounds
     print("#%d" % j)
+# Here, I use var, but I could also do this manually (w/out the ddof)
+# using abs( )**2 and then mean
 std_off_pathway = (
     data["ph1", 0]["ph2", 0]["t2":bounds]
     .C.run(lambda x, axis=None: var(x, ddof=1, axis=axis) / 2, 't2')  # the 2 is b/c var gives sum of real var and imag var
