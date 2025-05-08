@@ -16,10 +16,10 @@ should have the following values under General:
 
 ::
 
-    220720 propfactor = 8.637e-5
-    220720 q = 4600
+    220720new propfactor = 1.715e-10
+    220720new q = 4600
     qesr caps diameter = 0.704
-    default calibration = 220720
+    default calibration = 220720new
     default diameter = qesr caps
 
 Note that the diameter is given in units of mm.
@@ -52,7 +52,7 @@ with figlist_var() as fl:
         pickle_file=pickle_file,
         fl=fl,
     )
-    fl.basename = "reference"
+    fl.basename = "calibration experiment"
     c = QESR(
         "220720_stock_4.DSC",  # filename
         label="70 mM ref",  # label for legends

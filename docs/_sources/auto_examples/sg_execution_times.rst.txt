@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:02.129** total execution time for 33 files **from auto_examples**:
+**00:04.881** total execution time for 33 files **from auto_examples**:
 
 .. container::
 
@@ -32,8 +32,8 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_auto_examples_QESR.py` (``QESR.py``)
-     - 00:02.129
+   * - :ref:`sphx_glr_auto_examples_QESR_samesample.py` (``QESR_samesample.py``)
+     - 00:04.881
      - 0.0
    * - :ref:`sphx_glr_auto_examples_FIDtoEcho_Actual.py` (``FIDtoEcho_Actual.py``)
      - 00:00.000
@@ -42,6 +42,9 @@ Computation times
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_Hermitian_Phasing.py` (``Hermitian_Phasing.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_QESR.py` (``QESR.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_append_conc_to_h5file.py` (``append_conc_to_h5file.py``)
@@ -54,9 +57,6 @@ Computation times
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_compare_CPMG_echo.py` (``compare_CPMG_echo.py``)
-     - 00:00.000
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_correlation_alignment_example.py` (``correlation_alignment_example.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_epr_overlay.py` (``epr_overlay.py``)
