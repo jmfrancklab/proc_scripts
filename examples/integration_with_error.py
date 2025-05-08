@@ -5,7 +5,8 @@ Check Integration
 Makes sure that automatically chosen integral bounds perform similar to or
 better than what you would choose by hand.
 """
-from numpy import sqrt, std, r_, pi, exp
+
+from numpy import sqrt, std, r_, pi, exp, diff
 from matplotlib.pyplot import rcParams
 from pyspecdata import strm, ndshape, nddata, figlist_var, init_logging
 from pyspecProcScripts import integral_w_errors
@@ -50,14 +51,13 @@ just_noise.data *= 0
 just_noise.add_noise(fake_data_noise_std)
 just_noise.set_error(fake_data_noise_std)
 fl.plot(just_noise, ".", capsize=6)
-# {{{ usually, we don't use a unitary FT -- this makes it unitary
-data /= 0.5 * 0.25  # the dt in the integral for both dims
-data /= sqrt(ndshape(data)["ph1"] * ndshape(data)["ph2"])  # normalization
 # }}}
 data.ft("t2", shift=True)
-dt = data.get_ft_prop("t2", "dt")
-# {{{ vector-normalize the FT
-data /= sqrt(ndshape(data)["t2"]) * dt
+# {{{ usually, we don't use a unitary FT -- this makes it unitary
+#     i.e. vector-normalize the FTs above
+for thisdim in ["t2", "ph1", "ph2"]:
+    dt = data.get_ft_prop("t2", "dt")
+    data /= sqrt(ndshape(data)["t2"]) * dt
 # }}}
 # {{{ First, run the code that automatically chooses integration bounds
 # and also assigns error

@@ -29,6 +29,7 @@ from .third_level.QESR import QESR
 from .envelope import L2G, fit_envelope
 from .convert_to_power import convert_to_power
 from .clock_correct import clock_correct
+from .calc_error import calc_masked_variance
 
 __all__ = [
     "DCCT",
@@ -41,6 +42,7 @@ __all__ = [
     "align_esr",
     "apod_matched_filter",
     "calc_baseline",
+    "calc_masked_variance",
     "center_echo",
     "clock_correct",
     "convert_to_power",
