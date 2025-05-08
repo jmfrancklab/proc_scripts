@@ -25,7 +25,8 @@ n_repeats = 50
 signal_window = (-100, 200)  # wherever my "peak" shows up
 
 
-# {{ {generate data with just noise with a phase cycling dimension and repeats dimension
+# {{{ generate data with just noise with a phase cycling dimension and repeats
+#     dimension
 signal_pathway = {"ph": 1}
 example_data = nddata(
     np.random.normal(size=4 * n_repeats * N)
@@ -38,7 +39,8 @@ example_data.setaxis("repeats", r_[0:n_repeats])
 example_data.setaxis("t", r_[0 : 1 : 1j * N])
 # }}}
 # calculate the variance directly in the time domain.
-# Because the data has no signal, know that this actually corresponds to the noise level:
+# Because the data has no signal, know that this actually corresponds to the
+# noise level:
 direct_t_dom_std = sqrt(example_data.C.run(np.var, "t").mean("ph") / 2)
 # the way that we do FT is parseval preserved?
 temp = example_data.C.ft("t", shift=True)
@@ -56,11 +58,10 @@ print(
     sigma_nu * sqrt(df / dt),
 )
 
-# now, I can just calculate sigma_nu,
-# since it's easier to mask out regions of the coherence
-# domain where I expect there is signal (or phase cycling noise).
+# now, I can just calculate sigma_nu, since it's easier to mask out regions of
+# the coherence domain where I expect there is signal (or phase cycling noise).
 # I can then convert that to sigma_t
-
+example_data.ft("t",shift=True,unitary=True)
 example_data.ft("ph")
 
 # {{{ I'm doing a mildly odd thing where I'm using "nan" to identify signal I
@@ -71,8 +72,8 @@ temp = select_pathway(example_data, signal_pathway)
 temp.data[:] = nan  # note how I am NOT acting on a copy -- I am trying to
 #                    manipulate the data at its original memory position!
 # for the most complicated case I'll also say I want to exclude phase cycling
-# noise -- so also exclude everything from the signal bandwidth
-# this will give a conservative (small) estimate of the noise
+# noise -- so also exclude everything from the signal bandwidth this will give
+# a conservative (small) estimate of the noise
 temp = example_data["t":signal_window]
 temp.data[:] = nan
 # }}}
