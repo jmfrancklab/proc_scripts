@@ -38,7 +38,7 @@ def integral_w_errors(
         Dictionary of the path of the desired signal.
     excluded_frqs: list
         List of tuples containing frequencies to be filtered out when
-        calculating the variance.
+        calculating the variance of the spectral datapoints.
     excluded_pathways: list
         List of dictionaries containing all coherence pathways that are to be
         masked out when calculating the error. This should include the signal
@@ -97,7 +97,7 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    # returns ∫s(ν)dν with error set to √(σ² Δν² N)
+    # returns ∫s(ν)dν with error set to √(σ²_ν Δν² N)
     retval = (
         select_pathway(s, signal_pathway)
         .integrate(direct)
