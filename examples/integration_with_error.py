@@ -53,7 +53,13 @@ just_noise.set_error(fake_data_noise_std)
 fl.plot(just_noise, ".", capsize=6)
 # }}}
 data.ft("t2", shift=True)
-# {{{ usually, we don't use a unitary FT -- this makes it unitary
+# TODO ☐: the goal of the following is essentially to turn the ft into a
+#         unitary FT, which this does.
+#         **But** what I was saying in slack is that I think it's better
+#         to remove this, and check that everything still works.
+#         That's because it makes more sense to take the view that we
+#         always calculate σ_ν (or σ²_ν) first, and then cnovert it to
+#         σ_t as needed.  `time_domain_noise` shows how to do this.
 #     i.e. vector-normalize the FTs above
 for thisdim in ["t2", "ph1", "ph2"]:
     dt = data.get_ft_prop(thisdim, "dt")
@@ -147,4 +153,5 @@ for bounds, thislabel in [
         % ((thislabel,) + bounds),
         alpha=0.5,
     )
+# TODO ☐: change to context block
 fl.show()

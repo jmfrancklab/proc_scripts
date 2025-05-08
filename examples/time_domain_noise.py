@@ -3,20 +3,27 @@ Time-Domain Noise
 =================
 
 Here, we want to calculate the time-domain variance to use in error
-propagation.  But, to make sure we calculate only noise, we want to mask out
+propagation.
+But, to make sure we calculate only noise, we want to mask out
 portions of the frequency domain.
 We propose that if we use a unitary transform,
-Parseval's theorem tells us we can calculate :math:`\\sigma_t^2` (time domain
-variance) directly from the frequency-domain variance, *i.e.*
+Parseval's theorem
+tells us we can calculate :math:`\\sigma_t^2` (time domain variance)
+directly from the frequency-domain variance, *i.e.*
 :math:`\\sigma_\\nu^2=\\sigma_t^2`.
-To confirm this, we construct a "spectrum" of pure noise and generate a
-frequency-masked noise, and show that is the same as the unmasked time-domain.
+To confirm this, we construct a "spectrum" of pure noise
+and generate a frequency-masked noise,
+and show that is the same as the unmasked time-domain noise.
 """
 
 import numpy as np
-from numpy import r_
-import pyspecdata as psd
-import pyspecProcScripts as psdpr
+
+# TODO ☐: the following style is probably better for examples
+#         it can be achieved simply with %s/\<psd\.\(figlist_var\)\>/\1/g
+#         (just delete when read)
+from numpy import r_, sqrt, nan, var
+from pyspecdata import nddata, figlist_var
+from pyspecProcScripts import select_pathway, calc_masked_variance
 
 N = 1024
 n_repeats = 50
@@ -26,7 +33,7 @@ signal_window = (-100, 200)  # wherever my "peak" shows up
 # {{{ generate data with just noise with a phase cycling dimension and repeats
 #     dimension
 signal_pathway = {"ph": 1}
-example_data = psd.nddata(
+example_data = nddata(
     np.random.normal(size=4 * n_repeats * N)
     + 1j * np.random.normal(size=4 * n_repeats * N),
     [4, n_repeats, N],
@@ -39,55 +46,65 @@ example_data.setaxis("t", r_[0 : 1 : 1j * N])
 # calculate the variance directly in the time domain.
 # Because the data has no signal, know that this actually corresponds to the
 # noise level:
-direct_t_dom_std = np.sqrt(example_data.C.run(np.var, "t").mean("ph") / 2)
+direct_t_dom_std = (
+    example_data.C.run(lambda x, axis=None: var(x, axis=axis, ddof=1) / 2, "t")
+    .mean("ph")
+    .run(sqrt)
+)
 # the way that we do FT is parseval preserved?
-temp = example_data.C.ft("t", shift=True)
-dt = temp.get_ft_prop("t", "dt")
-df = temp.get_ft_prop("t", "df")
-sigma_nu = np.sqrt(temp.run(np.var, "t").mean("ph") / 2)
+example_data.ft("t", shift=True)
+dt = example_data.get_ft_prop("t", "dt")
+df = example_data.get_ft_prop("t", "df")
+sigma_nu = (
+    example_data.C.run(lambda x, axis=None: var(x, axis=axis, ddof=1) / 2, "t")
+    .mean("ph")
+    .run(sqrt)
+)
 print(
     "If we apply just FT as we normally would the std in the frequency"
     " domain is:",
     sigma_nu,
-    "\nNote that this does **not** match σₜ, which is 1\n",
+    f"\nNote that this does **not** match σ_t, which is {direct_t_dom_std}\n",
     "\nWhile I could use a unitary FT, I don't usually do that, so instead, I"
-    " scale to move from σ_ν to σₜ.  Note I multiply by the √Δν and divide by"
-    " √Δt to move *to* σₜ",
-    sigma_nu * np.sqrt(df / dt),
+    " scale to move from σ_ν to σ_t.  Note I multiply by the √Δν and divide by"
+    " √Δt to move *to* σ_t",
+    sigma_nu * sqrt(df / dt),
 )
 
-# now, I can just calculate sigma_nu, since it's easier to mask out regions of
-# the coherence domain where I expect there is signal (or phase cycling noise).
+# now, I can just calculate sigma_nu,
+# since it's easier to mask out regions of the coherence
+# domain where I expect there is signal (or phase cycling noise).
 # I can then convert that to sigma_t
-example_data.ft("t", shift=True, unitary=True)
+# TODO ☐: do not take a unitary transform! That's the whole
+#         point of what I'm explaining in the comments!
 example_data.ft("ph")
 
 # {{{ I'm doing a mildly odd thing where I'm using "nan" to identify signal I
 #     want to exclude from the variance calculation -- i.e. to mask it.  This
 #     is assuming that I have signal that I'm not interested in including in
 #     the calculation.
-temp = psdpr.select_pathway(example_data, signal_pathway)
-temp.data[:] = np.nan  # note how I am NOT acting on a copy -- I am trying to
+temp = select_pathway(example_data, signal_pathway)
+temp.data[:] = nan  # note how I am NOT acting on a copy -- I am trying to
 #                    manipulate the data at its original memory position!
 # for the most complicated case I'll also say I want to exclude phase cycling
-# noise -- so also exclude everything from the signal bandwidth this will give
-# a conservative (small) estimate of the noise
+# noise -- so also exclude everything from the signal bandwidth
+# this will give a conservative (small) estimate of the noise
 temp = example_data["t":signal_window]
-temp.data[:] = np.nan
+temp.data[:] = nan
 # }}}
-with psd.figlist_var(black=True) as fl:
+with figlist_var(black=True) as fl:
     fl.next("show the mask in white")
     forplot = example_data.C
     # in pyspecdata, nan shows up as the opposite (black vs. white) color vs. 0
     fl.image(forplot)
 # {{{ Calculate the variance using new functions
 #    now, I can do this:
-result = psd.calc_masked_variance(example_data)
-# convert from σ_ν to σ_t
+# TODO ☐: rather than manually setting the NaN values above,
+#         just set the coherence pathway, and use this
+result = calc_masked_variance(example_data)
+# next, convert from σ_ν to σ_t
 result *= result.get_ft_prop("t", "df") / result.get_ft_prop("t", "dt")
-result.run(
-    lambda x: np.sqrt(x)
-)  # convert variance to std for subsequent comparison
+result.run(sqrt)  # σ²_t→σ_t
 print("The std when using the mask on unitary data is:", example_data)
 print(
     "Because we can use the mask in the DCCT domain to exclude signal, that is"
