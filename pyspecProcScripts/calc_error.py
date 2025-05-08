@@ -45,13 +45,6 @@ def _masked_var_multi(x, axis=None):
 
 
 # }}}
-# TODO ☐: previously, I said "just because we call this "calc..error",
-#         wouldn't it be better to return the std?  If the data is V,
-#         then variance has units of V², so it's weird to call it
-#         "error".  On the other hand, std (sqrt of var) has units of
-#         V."
-#         But I decided to rename the function instead.  Delete this
-#         when read.
 def calc_masked_variance(
     s,
     excluded_frqs=None,
@@ -60,7 +53,6 @@ def calc_masked_variance(
     indirect="vd",
     fl=None,
 ):
-# TODO ☐: is this really propagated error? if so, how?
     """Calculates the variance for the given signal.
 
     Before declaring the excluded_pathways or excluded_frqs,
