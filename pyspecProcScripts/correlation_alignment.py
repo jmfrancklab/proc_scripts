@@ -287,12 +287,9 @@ def correl_align(
         #     Δpₗ, we can apply the coherence mask here, before
         #     multiplication, in order to decrease the dimensionality of
         #     the correlation function.
-        # TODO ☐: for the following → it's not about the mask, at
-        #         all.  It's about the FT.  And don't reference
-        #         slack, reference the paper.
-        # The conjugation is part of the left-hand factor before the transform
-        # and the mask so we need to conjugate here
-        # https://jmfrancklab.slack.com/archives/CV553TPRV/p1746447146407959?thread_ts=1746117118.076499&cid=CV553TPRV
+        # The conjugation needs to be taken before the FT (while in the phase
+        # cycling domain so we need to conjugate here (eq 29 in DCCT paper -
+        # Beaton 2022)
         s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])

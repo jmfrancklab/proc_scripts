@@ -28,13 +28,13 @@ def frq_mask(s, sigma=150.0):
     Parameters
     ==========
     s : nddata
-        Signal, given in the frequency domain and coherence transfer
-        (*vs.* phase) domain.
+        Signal, given in the frequency domain and phase
+        (*vs.* coherence transfer) domain.
         The property `coherence_pathway` must be set.
     """
-    # TODO ☐: make sure this still runs
     assert s.get_ft_prop("t2")
-    assert s.get_ft_prop(list(s.get_prop("coherence_pathway").keys())[0])
+    assert not s.get_ft_prop(list(s.get_prop("coherence_pathway").keys())[0])
+    s.ft(list(signal_pathway))
     # {{{ find center frequency
     nu_center = (
         psdpr.select_pathway(s, s.get_prop("coherence_pathway"))
@@ -46,6 +46,7 @@ def frq_mask(s, sigma=150.0):
     #     Standard gaussian is 2σ² in the denominator -- the extra 2 is
     #     for sqrt.
     frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
+    s.ift(list(signal_pathway))
     # }}}
     # note that when we multiply, we automatically generate a copy
     return s * frq_mask
