@@ -1,7 +1,7 @@
 import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
-from .calc_error import calc_masked_error
+from .calc_error import calc_masked_variance
 import logging
 import numpy as np
 
@@ -70,7 +70,7 @@ def integral_w_errors(
         **kwargs,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
-    variance = calc_masked_error(
+    variance = calc_masked_variance(
         s,
         excluded_frqs=excluded_frqs,
         indirect=indirect,

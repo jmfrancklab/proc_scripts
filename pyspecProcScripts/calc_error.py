@@ -15,6 +15,7 @@ def _masked_mean_multi(x, axis=None):
 
 
 def _masked_var_multi(x, axis=None):
+    # TODO ☐: see comments in PR that are not resolved
     """Calculates the variance along a 1D axis if an axis is fed or returns a 
     single float for the variance. The data must real"""
 
@@ -26,10 +27,9 @@ def _masked_var_multi(x, axis=None):
         elif not np.iscomplex(axis):
             return np.var(x[np.isfinite(x)], ddof=1)
         else:
-            raise ValueError(
-                "You're giving me complex data but I only calculate the"
-                " variance of real data!"
-            )
+            # we can convince ourselves that the following is true by running
+            # sqrt(var(normal(size=10000).view(complex128), ddof=1)/2)
+            return np.var(x[np.isfinite(x)], ddof=1) / 2
 
     if axis is not None:
         return np.apply_along_axis(masked_var, axis, x)
@@ -38,7 +38,14 @@ def _masked_var_multi(x, axis=None):
 
 
 # }}}
-def calc_masked_error(
+# TODO ☐: previously, I said "just because we call this "calc..error",
+#         wouldn't it be better to return the std?  If the data is V,
+#         then variance has units of V², so it's weird to call it
+#         "error".  On the other hand, std (sqrt of var) has units of
+#         V."
+#         But I decided to rename the function instead.  Delete this
+#         when read.
+def calc_masked_variance(
     s,
     excluded_frqs=None,
     excluded_pathways=None,
@@ -46,6 +53,7 @@ def calc_masked_error(
     indirect="vd",
     fl=None,
 ):
+# TODO ☐: is this really propagated error? if so, how?
     """Calculates the propagation of error for the given signal.
 
     Before declaring the excluded_pathways or excluded_frqs,
@@ -54,25 +62,26 @@ def calc_masked_error(
 
     Parameters
     ==========
-    s: nddata
+    s : nddata
         Full nddata set in the frequency domain for which the error is being
         propagated.
-    excluded_frqs: list
+    excluded_frqs : list of tuples
         list of frequency ranges that will be filtered out in calculating the
         error - it is assumed this region in all coherence transfer pathways
         contains some amount of phase cycling noise.
-    excluded_pathways: list
+    excluded_pathways : list of dictionaries
         List of dictionaries containing the coherence pathways that are
         to be masked out when calculating the error.
         If no excluded_pathways are fed, the function will apply a mask
         over just the signal pathway.
-    direct: str
+    direct : str
         Direct axis.
-    indirect: str
+    indirect : str
         Indirect axis.
+
     Returns
     =======
-    collected_variance: nddata
+    collected_variance : nddata
         The variance of the spectral datapoints with the only dimension being
         the indirect.
     """
