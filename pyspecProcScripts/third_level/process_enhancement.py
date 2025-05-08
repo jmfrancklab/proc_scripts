@@ -172,7 +172,7 @@ def process_enhancement(
     error_pathway = [{"ph1": j} for j in error_pathway]
     # }}}
     # {{{ integrating with error bar calculation
-    d_, frq_slice, std = integral_w_errors(
+    d_, frq_slice, std = frequency_domain_integral(
         d,
         signal_pathway,
         error_pathway,

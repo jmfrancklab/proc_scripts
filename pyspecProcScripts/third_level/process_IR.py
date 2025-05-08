@@ -183,7 +183,7 @@ def process_IR(
     error_path = [{"ph1": j, "ph2": k} for j, k in error_path]
     # }}}
     # {{{Integrating with associated error from excluded pathways
-    s_int, frq_slice, mystd = integral_w_errors(
+    s_int, frq_slice, mystd = frequency_domain_integral(
         s, signal_pathway, error_path, fl=fl, return_frq_slice=True
     )
     x = s_int.get_error()

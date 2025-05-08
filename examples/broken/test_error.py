@@ -133,7 +133,7 @@ for thisfile, exp_type, nodename in [
     error_lst = []
     avg_error_lst = []
     for thispathway in error_pathway:
-        s_thisint, frq_slice_check = integral_w_errors(
+        s_thisint, frq_slice_check = frequency_domain_integral(
             s,
             signal_pathway,
             [thispathway],
@@ -151,7 +151,7 @@ for thisfile, exp_type, nodename in [
 
     # {{{ Calculating propagated error averaged over all inactive CTs (as the
     #     function is meant to be called)
-    averaged_inactive, frq_slice = integral_w_errors(
+    averaged_inactive, frq_slice = frequency_domain_integral(
         s,
         signal_pathway,
         error_pathway,

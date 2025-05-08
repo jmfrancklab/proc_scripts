@@ -6,7 +6,7 @@ import logging
 import numpy as np
 
 
-def integral_w_errors(
+def frequency_domain_integral(
     s,
     signal_pathway=None,
     excluded_frqs=None,

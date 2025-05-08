@@ -23,7 +23,7 @@ from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
 from .simple_functions import select_pathway, logobj, find_apparent_anal_freq
 from .DCCT_func import DCCT
-from .integral_w_error import integral_w_errors, active_propagation
+from .integral_w_error import frequency_domain_integral, active_propagation
 from .apod_matched_filter import apod_matched_filter
 from .third_level.QESR import QESR
 from .envelope import L2G, fit_envelope
@@ -60,7 +60,7 @@ __all__ = [
     "fwhm_calculator",
     "generate_integrals",
     "hermitian_function_test",
-    "integral_w_errors",
+    "frequency_domain_integral",
     "integrate_limits",
     "logobj",
     "lookup_table",

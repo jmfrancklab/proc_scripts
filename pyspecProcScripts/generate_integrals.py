@@ -4,7 +4,7 @@ import pyspecdata as psd
 import matplotlib.pyplot as plt
 from .simple_functions import select_pathway
 from .correlation_alignment import correl_align
-from .integral_w_error import integral_w_errors
+from .integral_w_error import frequency_domain_integral
 from .DCCT_func import DCCT
 import sympy as sp
 from .phasing import zeroth_order_ph, hermitian_function_test, determine_sign
@@ -219,7 +219,7 @@ def generate_integrals(
         # {{{Integrate with error bars
     if error_bars:
         if "nScans" in s.dimlabels:
-            s_int, frq_slice = integral_w_errors(
+            s_int, frq_slice = frequency_domain_integral(
                 s_after.C.mean("nScans"),
                 signal_pathway,
                 error_path,
@@ -228,7 +228,7 @@ def generate_integrals(
                 return_frq_slice=True,
             )
         else:
-            s_int, frq_slice = integral_w_errors(
+            s_int, frq_slice = frequency_domain_integral(
                 s_after,
                 signal_pathway,
                 error_path,

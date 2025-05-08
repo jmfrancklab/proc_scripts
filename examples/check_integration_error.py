@@ -7,18 +7,18 @@ Generate a fake dataset of an inversion recovery with multiple repeats (φ
 Check that the following match:
 
 - integral w/ error (the canned routine
-  :func:`~pyspecProcScripts.integral_w_errors`)
+  :func:`~pyspecProcScripts.frequency_domain_integral`)
 - propagate error based off the programmed σ of the normal distribution
 - set the error bars based on the standard deviation (along the repeats
   dimension) of the *real* part of the integral
 - propagate error based off the variance of the noise in the inactive
   coherence channels (do this manually inside this script -- should mimic
-  what :func:`~pyspecProcScripts.integral_w_errors` does)
+  what :func:`~pyspecProcScripts.frequency_domain_integral` does)
 """
 
 from numpy import diff, r_, sqrt, real, exp, pi, var
 from pyspecdata import ndshape, nddata, init_logging, figlist_var
-from pyspecProcScripts import integral_w_errors
+from pyspecProcScripts import frequency_domain_integral
 
 # sphinx_gallery_thumbnail_number = 1
 
@@ -66,7 +66,7 @@ for j in range(n_repeats):
     data.ft("t2", shift=True)
     # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
-    s_int, frq_slice = integral_w_errors(
+    s_int, frq_slice = frequency_domain_integral(
         data,
         signal_pathway=signal_pathway,
         excluded_pathways=excluded_pathways,

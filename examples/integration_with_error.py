@@ -9,7 +9,7 @@ better than what you would choose by hand.
 from numpy import sqrt, std, r_, pi, exp
 from matplotlib.pyplot import rcParams
 from pyspecdata import strm, ndshape, nddata, figlist_var, init_logging
-from pyspecProcScripts import integral_w_errors
+from pyspecProcScripts import frequency_domain_integral
 from numpy.random import seed
 
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
@@ -67,7 +67,7 @@ for thisdim in ["t2", "ph1", "ph2"]:
 # }}}
 # {{{ First, run the code that automatically chooses integration bounds
 # and also assigns error
-s_int, returned_frq_slice = integral_w_errors(
+s_int, returned_frq_slice = frequency_domain_integral(
     data,
     signal_pathway,
     [manual_slice],
