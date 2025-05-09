@@ -200,11 +200,13 @@ def generate_integrals(
     if "ph2" in s.dimlabels:
         logging.info(psd.strm("PH2 IS PRESENT"))
         error_path = (
-            set((
-                (j, k)
-                for j in range(psd.ndshape(s)["ph1"])
-                for k in range(psd.ndshape(s)["ph2"])
-            ))
+            set(
+                (
+                    (j, k)
+                    for j in range(psd.ndshape(s)["ph1"])
+                    for k in range(psd.ndshape(s)["ph2"])
+                )
+            )
             - set(excluded_pathways)
             - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
         )

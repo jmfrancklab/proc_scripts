@@ -4,17 +4,11 @@ Processes enhancement data
 Processes data acquired from an enhancement experiment 
 and plots the resulting enhancement curve normalized.
 """
-from pyspecdata import *
-from scipy.optimize import leastsq, minimize, basinhopping, nnls
-from proc_scripts import *
-from proc_scripts import lookup_table
-from proc_scripts.correlation_alignment_ODNP import correl_align
+import pyspecdata as psd
+import pyspecProcScripts as psdpr
 from sympy import symbols
-from matplotlib import *
 import numpy as np
 import matplotlib.pyplot as plt
-from pylab import *
-from sympy import exp as s_exp
 from itertools import cycle
 from .simple_functions import select_pathway
 
@@ -63,7 +57,7 @@ def process_enhancement(
         fl.push_marker()
         fl.next("time domain")
         fl.image(as_scan_nbr(s))
-    rcParams.update(
+    plt.rcParams.update(
         {
             "figure.facecolor": (1.0, 1.0, 1.0, 0.0),
             "axes.facecolor": (1.0, 1.0, 1.0, 0.9),
@@ -92,12 +86,12 @@ def process_enhancement(
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
     # {{{Applying phasing corrections
     s.ift("t2")  # inverse fourier transform into time domain
-    best_shift, max_shift = hermitian_function_test(
+    best_shift, max_shift = psdpr.hermitian_function_test(
         select_pathway(s, signal_pathway).C.convolve("t2", 3e-4)
     )
     best_shift = 0.033e-3
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-    logger.info(strm("applying zeroth order correction"))
+    psd.logger.info(psd.strm("applying zeroth order correction"))
     s.ift(["ph1"])
     phasing = s["t2", 0].C
     phasing.data *= 0
@@ -109,13 +103,13 @@ def process_enhancement(
     ph0 /= abs(ph0)
     s /= ph0
     s.ft(["ph1"])
-    logger.info(strm(s.dimlabels))
+    psd.logger.info(psd.strm(s.dimlabels))
     s.ft("t2")
     if fl is not None:
         fl.next("phase corrected")
         fl.image(as_scan_nbr(s))
     s.reorder(["ph1", "power", "t2"])
-    logger.info(strm("zero corssing at", zero_crossing))
+    psd.logger.info(psd.strm("zero corssing at", zero_crossing))
     # }}}
     # {{{Correcting power axis
     # print(s.getaxis('power'))
@@ -132,11 +126,11 @@ def process_enhancement(
     # }}}
     # {{{Applying correlation alignment
     s.ift(["ph1"])
-    opt_shift, sigma = correl_align(
+    opt_shift, sigma = psdpr.correl_align(
         s, indirect_dim="power", ph1_selection=1, sigma=0.001
     )
     s.ift("t2")
-    s *= np.exp(-1j * 2 * pi * opt_shift * s.fromaxis("t2"))
+    s *= np.exp(-1j * 2 * np.pi * opt_shift * s.fromaxis("t2"))
     s.ft("t2")
     fl.basename = None
     if fl is not None:
@@ -163,16 +157,17 @@ def process_enhancement(
     d = d["t2" : (0, t_range[-1])]
     d["t2":0] *= 0.5
     d.ft("t2")
-    # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    # {{{ this is the general way to do it for 2 pulses I don't offhand know a
+    #     compact method for N pulses
     error_pathway = (
-        set(((j) for j in range(ndshape(d)["ph1"])))
+        set(((j) for j in range(psd.ndshape(d)["ph1"])))
         - set(excluded_pathways)
         - set([(signal_pathway["ph1"])])
     )
     error_pathway = [{"ph1": j} for j in error_pathway]
     # }}}
     # {{{ integrating with error bar calculation
-    d_, frq_slice, std = frequency_domain_integral(
+    d_, frq_slice, std = psdpr.frequency_domain_integral(
         d,
         signal_pathway,
         error_pathway,
@@ -181,19 +176,18 @@ def process_enhancement(
         return_frq_slice=True,
     )
     x = d_.get_error()
-    x[:] /= sqrt(2)
+    x[:] /= np.sqrt(2)
     d = d_.C
     # }}}
     # {{{Normalizing by max
     idx_maxpower = np.argmax(s.getaxis("power"))
     d /= max(d.data)
     # }}}
-    power_axis_dBm = array(s.get_prop("meter_powers"))
-    power_axis_W = zeros_like(power_axis_dBm)
+    power_axis_dBm = np.array(s.get_prop("meter_powers"))
+    power_axis_W = np.zeros_like(power_axis_dBm)
     power_axis_W[:] = 1e-2 * 10 ** ((power_axis_dBm[:] + 10.0) * 1e-1)
-    power_axis_W = r_[0, power_axis_W]
+    power_axis_W = psd.r_[0, power_axis_W]
     d.setaxis("power", power_axis_W)
-    thiscolor = next(thesecolors)
     # d.set_units('power','W')
     if flip:
         d = 1 - d

@@ -6,30 +6,29 @@ Estimates the error of the integral of an actual data set of a standard echo
 experiment. Three methods of acquiring the error associated with the data are 
 compared:
 
-    -   Taking an area along the active coherence transfer (CT) pathway outside of the bandwidth of the signal
-        signal and propagating that error to estimate the error associated with the integral.
-        (The traditional method of acquiring the error associated with a data set.)
-    -   Taking the integral in the inactive CT pathways and propagating to get the error 
-        associated with the integral in the active CT.
+    -   Taking an area along the active coherence transfer (CT) pathway outside
+        of the bandwidth of the signal signal and propagating that error to
+        estimate the error associated with the integral.  (The traditional
+        method of acquiring the error associated with a data set.)
+    -   Taking the integral in the inactive CT pathways and propagating to get
+        the error associated with the integral in the active CT.
     -   Taking the standard deviation of many integrals determined by
         integrating over the signal bandwidth of the active CT pathway.
         (Best method when many scans are available)
     
-Demonstrates that by propagating the error of the integral in the inactive CTs we still
-get a reasonable error within the limits of traditional methods.
+Demonstrates that by propagating the error of the integral in the inactive CTs
+we still get a reasonable error within the limits of traditional methods.
 """
-from pyspecdata import *
-from pylab import *
-from matplotlib import *
-from pyspecProcScripts import *
-from pyspecProcScripts.correlation_alignment import correl_align
+import pyspecdata as psd
+import matplotlib.pyplot as plt
+import pyspecProcScripts as psdpr
 import numpy as np
 
-rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
+plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 4
 
-fl = figlist_var()
+fl = psd.figlist_var()
 signal_pathway = {"ph1": 1, "ph2": 0}
 t_range = (0, 0.05)  # must start at 0 for an FID
 f_range = (-1e3, 1e3)
@@ -43,12 +42,12 @@ for thisfile, exp_type, nodename in [
     )
 ]:
     # {{{processing data
-    s = find_file(
+    s = psd.find_file(
         thisfile,
         exp_type=exp_type,
         expno=nodename,
         postproc="spincore_echo_v1",
-        lookup=lookup_table,
+        lookup=psdpr.lookup_table,
     )
     s.ift("t2")
     fl.next("raw data time domain")
@@ -63,11 +62,13 @@ for thisfile, exp_type, nodename in [
     s = s["t2":f_range]
     # {{{Phase corrections
     s.ift("t2")
-    best_shift = hermitian_function_test(
-        select_pathway(s.C.mean("nScans"), signal_pathway)
+    best_shift = psdpr.hermitian_function_test(
+        psdpr.select_pathway(s.C.mean("nScans"), signal_pathway)
     )
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-    s /= zeroth_order_ph(select_pathway(s.C.mean("nScans"), signal_pathway))
+    s /= psdpr.zeroth_order_ph(
+        psdpr.select_pathway(s.C.mean("nScans"), signal_pathway)
+    )
     fl.next("Phase corrected freq. domain")
     s.ft("t2")
     fl.image(s)
@@ -103,11 +104,11 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{Normalization
-    frq_slice = integrate_limits(
-        select_pathway(s, signal_pathway), convolve_method="Lorentzian"
+    frq_slice = psdpr.integrate_limits(
+        psdpr.select_pathway(s, signal_pathway), convolve_method="Lorentzian"
     )
     s_integral = s["t2":frq_slice].C  # the "official" copy of the integral
-    s_integral = select_pathway(s_integral, signal_pathway)
+    s_integral = psdpr.select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
     avg_d = s_integral.C.mean().real.item()
     s_integral /= avg_d
@@ -119,8 +120,8 @@ for thisfile, exp_type, nodename in [
         set(
             (
                 (j, k)
-                for j in range(ndshape(s)["ph1"])
-                for k in range(ndshape(s)["ph2"])
+                for j in range(psd.ndshape(s)["ph1"])
+                for k in range(psd.ndshape(s)["ph2"])
             )
         )
         - set(excluded_pathways)
@@ -133,7 +134,7 @@ for thisfile, exp_type, nodename in [
     error_lst = []
     avg_error_lst = []
     for thispathway in error_pathway:
-        s_thisint, frq_slice_check = frequency_domain_integral(
+        s_thisint, frq_slice_check = psdpr.frequency_domain_integral(
             s,
             signal_pathway,
             [thispathway],
@@ -151,7 +152,7 @@ for thisfile, exp_type, nodename in [
 
     # {{{ Calculating propagated error averaged over all inactive CTs (as the
     #     function is meant to be called)
-    averaged_inactive, frq_slice = frequency_domain_integral(
+    averaged_inactive, frq_slice = psdpr.frequency_domain_integral(
         s,
         signal_pathway,
         error_pathway,
@@ -164,7 +165,9 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{ Calculating propagated error along active CT on noise slice
-    active_error = active_propagation(s, signal_pathway, indirect="nScans")
+    active_error = psdpr.active_propagation(
+        s, signal_pathway, indirect="nScans"
+    )
     avg_active_error = active_error.C.mean("nScans").item()
     # }}}
 
@@ -189,18 +192,18 @@ for thisfile, exp_type, nodename in [
         label="averaged propagated error\nfrom all inactive CTs",
     )
     for i in range(len(s_int_lst)):
-        axhline(
+        plt.axhline(
             y=avg_error_lst[i],
             linestyle=":",
             color=colors[i],
             label="averaged %s" % error_pathway[i],
         )
-    axhline(
+    plt.axhline(
         y=avg_active_error,
         linestyle="--",
         label="averaged propagated error\nfrom active CT in noise slice",
     )
-    axhline(
+    plt.axhline(
         y=avg_avg_error,
         linestyle="--",
         color="brown",
@@ -209,7 +212,7 @@ for thisfile, exp_type, nodename in [
     # {{{ Calculating the std dev -- error associated with the integrals
     s_integral.run(np.std, "nScans")
     # }}}
-    axhline(
+    plt.axhline(
         y=s_integral.data,
         c="k",
         linestyle="-",

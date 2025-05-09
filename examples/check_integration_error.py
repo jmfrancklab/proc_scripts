@@ -57,10 +57,11 @@ for j in range(n_repeats):
     data = clean_data.C
     data.add_noise(fake_data_noise_std)
     # at this point, the fake data has been generated
-    data.ft(["ph1", "ph2"], unitary=True)
+    data.ft(["ph1", "ph2"],unitary=True)
+    # {{{ vector normalize
     dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
     data.ft("t2", shift=True)
-    # {{{
+    # }}}
     data /= sqrt(ndshape(data)["t2"]) * dt
     s_int, frq_slice = frequency_domain_integral(
         data,
@@ -94,6 +95,7 @@ print(
     "off-pathway std", std_off_pathway, "programmed std", fake_data_noise_std
 )
 propagated_variance_from_inactive = N * df**2 * std_off_pathway**2
+# removed factor of 2 in following, which shouldn't have been there
 propagated_variance = N * df**2 * fake_data_noise_std**2
 fl.next("different types of error")
 fl.plot(s_int, ".", capsize=6, label="std from int w err", alpha=0.5)

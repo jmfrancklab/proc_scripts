@@ -1,11 +1,9 @@
-import pylab as plb
-from pyspecdata import *
-from scipy.optimize import minimize, leastsq
+import pyspecdata as psd
 from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
-from sympy import symbols, latex, Symbol
-from proc_scripts import *
+from sympy import symbols
+import pyspecProcScripts as psdpr
 from .simple_functions import select_pathway
 
 t2 = symbols("t2")
@@ -21,7 +19,7 @@ def process_IR(
     label="",
     fl=None,
     this_l=0.032,
-    l=sqrt(np.logspace(-8.0, 0.5, 35)),
+    l=np.sqrt(np.logspace(-8.0, 0.5, 35)),
     signal_pathway={"ph1": 0, "ph2": 1},
     excluded_pathways=[(0, 0)],
     clock_correction=True,
@@ -29,6 +27,7 @@ def process_IR(
     f_range=(None, None),
     t_range=(None, 83e-3),
     IR=True,
+    save_npz=False,
     flip=False,
     sign=None,
     ILT=False,
@@ -62,7 +61,7 @@ def process_IR(
     s.ift("t2")
     if clock_correction:
         # {{{ clock correction
-        clock_corr = nddata(np.linspace(-3, 3, 2500), "clock_corr")
+        clock_corr = psd.nddata(np.linspace(-3, 3, 2500), "clock_corr")
         s.ft("t2")
         if fl is not None:
             fl.next("before clock correction")
@@ -85,10 +84,10 @@ def process_IR(
             fl.image(s.C.setaxis("vd", "#"))
         s.ift("t2")
     # {{{Applying phase corrections
-    best_shift, max_shift = hermitian_function_test(
+    best_shift, max_shift = psdpr.hermitian_function_test(
         select_pathway(s.C.mean("vd"), signal_pathway)
     )
-    logger.info(strm("best shift is", best_shift))
+    psd.logger.info(psd.strm("best shift is", best_shift))
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
     if fl is not None:
         fl.next("time domain after hermitian test")
@@ -125,8 +124,9 @@ def process_IR(
     # {{{Correlation Alignment
     s.ift(["ph1", "ph2"])
     fl.basename = "correlation subroutine:"
-    # for the following, should be modified so we can pass a mask, rather than specifying ph1 and ph2, as here
-    opt_shift, sigma = correl_align(
+    # for the following, should be modified so we can pass a mask, rather than
+    # specifying ph1 and ph2, as here
+    opt_shift, sigma = psdpr.correl_align(
         s,
         indirect_dim="vd",
         ph1_selection=signal_pathway["ph1"],
@@ -134,7 +134,7 @@ def process_IR(
         sigma=10,
     )
     s.ift("t2")
-    s *= np.exp(-1j * 2 * pi * opt_shift * s.fromaxis("t2"))
+    s *= np.exp(-1j * 2 * np.pi * opt_shift * s.fromaxis("t2"))
     s.ft("t2")
     fl.basename = None
     if fl is not None:
@@ -159,7 +159,6 @@ def process_IR(
         fl.image(as_scan_nbr(s))
     # }}}
     # s *= sign
-    data = s.C
     zero_crossing = (
         abs(select_pathway(s, signal_pathway))
         .sum("t2")
@@ -168,13 +167,14 @@ def process_IR(
     )
     if flip:
         s["vd", :zero_crossing] *= -1
-    # {{{ this is the general way to do it for 2 pulses I don't offhand know a compact method for N pulses
+    # {{{ this is the general way to do it for 2 pulses I don't offhand know a
+    #     compact method for N pulses
     error_path = (
         set(
             (
                 (j, k)
-                for j in range(ndshape(s)["ph1"])
-                for k in range(ndshape(s)["ph2"])
+                for j in range(psd.ndshape(s)["ph1"])
+                for k in range(psd.ndshape(s)["ph2"])
             )
         )
         - set(excluded_pathways)
@@ -183,12 +183,14 @@ def process_IR(
     error_path = [{"ph1": j, "ph2": k} for j, k in error_path]
     # }}}
     # {{{Integrating with associated error from excluded pathways
-    s_int, frq_slice, mystd = frequency_domain_integral(
+    s_int, frq_slice, mystd = psdpr.frequency_domain_integral(
         s, signal_pathway, error_path, fl=fl, return_frq_slice=True
     )
     x = s_int.get_error()
-    x[:] /= sqrt(2)
-    logger.info(strm("here is what the error looks like", s_int.get_error()))
+    x[:] /= np.sqrt(2)
+    psd.logger.info(
+        psd.strm("here is what the error looks like", s_int.get_error())
+    )
     if fl is not None:
         fl.next("Integrated data - recovery curve")
         fl.plot(s_int, "o", capsize=6, label="real")
@@ -196,15 +198,15 @@ def process_IR(
     # }}}
     # {{{Fitting Routine
     x = s_int.fromaxis("vd")
-    f = fitdata(s_int)
+    f = psd.fitdata(s_int)
     M0, Mi, R1, vd = symbols("M_0 M_inf R_1 vd")
     if IR:
         f.functional_form = Mi - 2 * Mi * s_exp(-vd * R1)
     else:
         f.functional_form = Mi * (1 - (2 - s_exp(-W * R1)) * s_exp(-vd * R1))
     f.fit()
-    logger.info(strm("output:", f.output()))
-    logger.info(strm("latex:", f.latex()))
+    psd.logger.info(psd.strm("output:", f.output()))
+    psd.logger.info(psd.strm("latex:", f.latex()))
     T1 = 1.0 / f.output("R_1")
     if fl is not None:
         fl.next("fit", legend=True)
@@ -229,7 +231,7 @@ def process_IR(
     # }}}
 
     if ILT:
-        T1 = nddata(np.logspace(-3, 3, 150), "T1")
+        T1 = psd.nddata(np.logspace(-3, 3, 150), "T1")
         plot_Lcurve = False
         if plot_Lcurve:
 
@@ -243,7 +245,7 @@ def process_IR(
             x_norm = x.get_prop("nnls_residual").data
             r_norm = x.C.run(np.linalg.norm, "T1").data
 
-            with figlist_var() as fl:
+            with psd.figlist_var() as fl:
                 fl.next("L-Curve")
                 plt.figure(figsize=(15, 10))
                 fl.plot(np.log10(r_norm[:, 0]), np.log10(x_norm[:, 0]), ".")
@@ -274,8 +276,6 @@ def process_IR(
                                 va="bottom",
                                 rotation=45,
                             )
-            d_2d = s * nddata(r_[1, 1, 1], r"\Omega")
-        offset = s.get_prop("proc")["OFFSET"]
         o1 = s.get_prop("acq")["O1"]
         sfo1 = s.get_prop("acq")["BF1"]
         s.setaxis("t2", lambda x: x + o1)
@@ -289,13 +289,12 @@ def process_IR(
         soln.setaxis("log(T1)", np.log10(T1.data))
         fl.next("w=3")
         fl.image(soln)
-        logger.info(strm("SAVING FILE"))
+        psd.logger.info(psd.strm("SAVING FILE"))
         if save_npz:
             np.savez(
-                thisfile + "_" + str(nodename) + "_ILT_inv",
+                label + "_ILT_inv",
                 data=soln.data,
                 logT1=soln.getaxis("log(T1)"),
                 t2=soln.getaxis("t2"),
             )
-        logger.info(strm("FILE SAVED"))
-        T1_values[i] = T1
+        psd.logger.info(psd.strm("FILE SAVED"))
