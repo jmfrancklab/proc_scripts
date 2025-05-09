@@ -61,6 +61,8 @@ for j in range(n_repeats):
     # {{{ usually, we don't use a unitary FT -- this makes it unitary
     data /= 0.5 * 0.25  # the dt in the integral for both dims
     data /= sqrt(ndshape(data)["ph1"] * ndshape(data)["ph2"])  # normalization
+    for thisdim in ["ph1", "ph2"]:
+        data.set_ft_prop(thisdim, "unitary", True)
     # }}}
     dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
     data.ft("t2", shift=True)
