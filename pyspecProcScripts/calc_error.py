@@ -86,7 +86,8 @@ def calc_masked_variance(
         The variance of the spectral datapoints with the only dimensions left
         being true indirect dimensions.
         (It calculates the variance along the direct dimension,
-        and then averages that over all the dimensions (including coherence pathways) that are not marked as `indirect`.)
+        and then averages that over all the dimensions (including coherence
+        pathways) that are not marked as `indirect`.)
     """
     collected_variance = s.C  # so we don't alter s when we apply the mask
     if type(indirect) is str:
