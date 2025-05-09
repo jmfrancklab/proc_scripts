@@ -169,8 +169,10 @@ def Heaviside_time_domain(s, frq_slice, direct="t2"):
     =======
     mysinc: nddata
         Sinc function in the time domain corresponding to a heaviside hat
-        function with a width equal to the integration bounds in the frequency
-        domain.
+        function with a width equal to the integration bounds and normalized
+        such that
+        :math: `\\int H(\\nu/\\Delta\\nu_I ) = \\Delta\\nu_I`
+        (equation 19 in time domain paper)
     """
     assert s.get_ft_prop(direct), "data must be in the frequency domain!"
     thisax = s[direct].copy()
@@ -194,6 +196,11 @@ def Heaviside_time_domain(s, frq_slice, direct="t2"):
         mysinc[direct, idx_last_one + 1] = (
             frq_slice[1] - (thisax[idx_last_one + 1] - dt / 2)
         ) / dt
-    # TODO ☐: now that we've constructed the function, please implement the
-    #         normalization you were telling me about.
-    return mysinc.ift(direct)
+    # {{{ Normalize
+    int_width = frq_slice[1] - frq_slice[0]
+    for_norm = mysinc.C.integrate(direct).item()
+    mysinc /= np.sqrt(for_norm)
+    mysinc.ift(direct)
+    mysinc *= np.sqrt(int_width)
+    # }}}
+    return mysinc

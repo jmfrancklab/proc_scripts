@@ -41,6 +41,7 @@ with psd.figlist_var() as fl:
     data.ft("t2", shift=True)
     # {{{ make weighted integral function
     wt_fn = psdpr.Heaviside_time_domain(data, f_range)
+    wt_fn.set_units("t2", "s")
     wt_fn.ft("t2")
     wt_fn.set_plot_color("tab:blue")
     # }}}

@@ -1,5 +1,5 @@
-from pylab import *
-from pyspecdata import *
+from pylab import legend
+from pyspecdata import nddata, figlist_var, r_, plot
 from pyspecProcScripts import Heaviside_time_domain
 
 s = nddata(r_[-5:5:11j], "t")
@@ -10,4 +10,5 @@ with figlist_var() as fl:
         result = Heaviside_time_domain(s, thisrange, direct="t")
         result.ft("t")
         print(result.C.sum("t").item())
-        plot(result, "o-")
+        plot(result, "o-", label="ν slice fed to function: %s" % (thisrange,))
+        legend()
