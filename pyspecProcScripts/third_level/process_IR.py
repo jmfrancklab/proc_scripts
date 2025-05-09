@@ -3,10 +3,9 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols
-# TODO ☐: do not import psdpr as you do in the following line.
-#         Use relative imports to import these functions instead:
-#         https://stackoverflow.com/questions/36826839/python-relative-import-script-two-levels-up
-import pyspecProcScripts as psdpr
+from .phasing import hermitian_function_test
+from .correlation_alignment import correl_align
+from .calc_error import frequency_domain_integral
 from .simple_functions import select_pathway
 
 t2 = symbols("t2")
@@ -87,7 +86,7 @@ def process_IR(
             fl.image(s.C.setaxis("vd", "#"))
         s.ift("t2")
     # {{{Applying phase corrections
-    best_shift, max_shift = psdpr.hermitian_function_test(
+    best_shift, max_shift = hermitian_function_test(
         select_pathway(s.C.mean("vd"), signal_pathway)
     )
     psd.logger.info(psd.strm("best shift is", best_shift))
@@ -131,7 +130,7 @@ def process_IR(
     # specifying ph1 and ph2, as here
     # TODO ☐: this (and others) should be a relative import -- see
     #         comment at top
-    opt_shift, sigma = psdpr.correl_align(
+    opt_shift, sigma = correl_align(
         s,
         indirect_dim="vd",
         ph1_selection=signal_pathway["ph1"],
@@ -188,7 +187,7 @@ def process_IR(
     error_path = [{"ph1": j, "ph2": k} for j, k in error_path]
     # }}}
     # {{{Integrating with associated error from excluded pathways
-    s_int, frq_slice, mystd = psdpr.frequency_domain_integral(
+    s_int, frq_slice, mystd = frequency_domain_integral(
         s, signal_pathway, error_path, fl=fl, return_frq_slice=True
     )
     x = s_int.get_error()

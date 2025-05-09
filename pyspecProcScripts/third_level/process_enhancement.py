@@ -5,8 +5,9 @@ Processes data acquired from an enhancement experiment
 and plots the resulting enhancement curve normalized.
 """
 import pyspecdata as psd
-# TODO ☐: see other file about the following line
-import pyspecProcScripts as psdpr
+from .phasing import hermitian_function_test
+from .correlation_alignment import correl_align
+from .calc_error import frequency_domain_integral
 from sympy import symbols
 import numpy as np
 import matplotlib.pyplot as plt
@@ -87,9 +88,7 @@ def process_enhancement(
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
     # {{{Applying phasing corrections
     s.ift("t2")  # inverse fourier transform into time domain
-    # TODO ☐: see comments in other file -- do not import psdpr -- use
-    #         relative imports
-    best_shift, max_shift = psdpr.hermitian_function_test(
+    best_shift, max_shift = hermitian_function_test(
         select_pathway(s, signal_pathway).C.convolve("t2", 3e-4)
     )
     best_shift = 0.033e-3
@@ -129,7 +128,7 @@ def process_enhancement(
     # }}}
     # {{{Applying correlation alignment
     s.ift(["ph1"])
-    opt_shift, sigma = psdpr.correl_align(
+    opt_shift, sigma = correl_align(
         s, indirect_dim="power", ph1_selection=1, sigma=0.001
     )
     s.ift("t2")
@@ -170,7 +169,7 @@ def process_enhancement(
     error_pathway = [{"ph1": j} for j in error_pathway]
     # }}}
     # {{{ integrating with error bar calculation
-    d_, frq_slice, std = psdpr.frequency_domain_integral(
+    d_, frq_slice, std = frequency_domain_integral(
         d,
         signal_pathway,
         error_pathway,
