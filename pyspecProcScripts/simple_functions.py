@@ -208,10 +208,15 @@ def Heaviside_time_domain(s, frq_slice, direct="t2"):
 #         we multiply should be
 #         ∫s(ν)dν/∫s²(ν)dν = 1
 #         where s(ν) would be the `mysinc` here.
-    # {{{ Normalize
-    for_norm = mysinc.C.integrate(direct).item()
-    mysinc /= np.sqrt(for_norm)
+    # {{{ Normalize so that s(ν)∫s(ν)dν/∫s²(ν)dν = 1 where s(ν) is the real
+    #     part of the HH
+    for_check = mysinc.C
+    HH_int = mysinc.C.integrate(direct).item()
+    HH_sq_int = (mysinc.C**2).integrate(direct).item()
+    mysinc /= HH_sq_int
+    mysinc *= HH_int
+    check = ((for_check*mysinc).integrate(direct))/for_check.integrate(direct)
+    print("I am showing the normalization of eq 20 is true:",check)
     mysinc.ift(direct)
-    mysinc *= np.sqrt(int_width)
     # }}}
     return mysinc
