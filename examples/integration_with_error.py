@@ -43,7 +43,8 @@ fake_data_noise_std = 2.0
 data.add_noise(fake_data_noise_std)
 data.reorder(["ph1", "ph2", "vd"])
 # at this point, the fake data has been generated
-data.ft(["ph1", "ph2"])
+data.ft("t2", shift=True)
+data.ft(["ph1", "ph2"], unitary=True)
 with figlist_var() as fl:
     fl.next("what does a usual error bar look like?")
     just_noise = nddata(r_[0:1:50j], "t")
@@ -51,13 +52,7 @@ with figlist_var() as fl:
     just_noise.add_noise(fake_data_noise_std)
     just_noise.set_error(fake_data_noise_std)
     fl.plot(just_noise, ".", capsize=6)
-    data.ft("t2", shift=True)
-    # the goal of the following is essentially to turn the ft into a unitary
-    # FTs.
-    for thisdim in ["t2", "ph1", "ph2"]:
-        dt = data.get_ft_prop(thisdim, "dt")
-        data /= sqrt(ndshape(data)[thisdim]) * dt
-        data.set_ft_prop(thisdim, "unitary", True)
+    dt = data.get_ft_prop("t2", "dt")
     # }}}
     # {{{ First, run the code that automatically chooses integration bounds
     # and also assigns error
@@ -82,8 +77,8 @@ with figlist_var() as fl:
     fl.next("real part of raw data")
     fl.image(data.real, alpha=0.5)
     fl.next("compare manual vs. automatic")
-    # run a controlled comparison between manually chosen integration bounds and
-    # compare against automatically generated
+    # run a controlled comparison between manually chosen integration bounds
+    # and compare against automatically generated
     # as noted in issue #44 , manually chosen bounds underperform
     for bounds, thislabel in [
         (
@@ -129,7 +124,6 @@ with figlist_var() as fl:
         manual_bounds.integrate("t2")
         # N terms that have variance given by fake_data_noise_std**2 each
         # multiplied by df
-        # the 2 has to do w/ real/imag/abs -- see check_integration_error
         propagated_variance = N * df**2 * fake_data_noise_std**2
         propagated_variance_from_inactive = N * df**2 * std_from_00**2
         logger.debug(
