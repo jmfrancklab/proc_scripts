@@ -5,6 +5,7 @@ Processes data acquired from an enhancement experiment
 and plots the resulting enhancement curve normalized.
 """
 import pyspecdata as psd
+# TODO ☐: see other file about the following line
 import pyspecProcScripts as psdpr
 from sympy import symbols
 import numpy as np
@@ -86,6 +87,8 @@ def process_enhancement(
         fl.image(s.C.setaxis("power", "#").set_units("power", "scan #"))
     # {{{Applying phasing corrections
     s.ift("t2")  # inverse fourier transform into time domain
+    # TODO ☐: see comments in other file -- do not import psdpr -- use
+    #         relative imports
     best_shift, max_shift = psdpr.hermitian_function_test(
         select_pathway(s, signal_pathway).C.convolve("t2", 3e-4)
     )

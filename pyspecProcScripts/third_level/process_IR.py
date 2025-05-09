@@ -3,6 +3,9 @@ from sympy import exp as s_exp
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols
+# TODO ☐: do not import psdpr as you do in the following line.
+#         Use relative imports to import these functions instead:
+#         https://stackoverflow.com/questions/36826839/python-relative-import-script-two-levels-up
 import pyspecProcScripts as psdpr
 from .simple_functions import select_pathway
 
@@ -126,6 +129,8 @@ def process_IR(
     fl.basename = "correlation subroutine:"
     # for the following, should be modified so we can pass a mask, rather than
     # specifying ph1 and ph2, as here
+    # TODO ☐: this (and others) should be a relative import -- see
+    #         comment at top
     opt_shift, sigma = psdpr.correl_align(
         s,
         indirect_dim="vd",
