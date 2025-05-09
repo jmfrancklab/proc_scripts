@@ -52,25 +52,20 @@ with figlist_var() as fl:
     just_noise.set_error(fake_data_noise_std)
     fl.plot(just_noise, ".", capsize=6)
     data.ft("t2", shift=True)
-    # TODO ☐: the goal of the following is essentially to turn the ft into a
-    #         unitary FT, which this does.
-    #         **But** what I was saying in slack is that I think it's better
-    #         to remove this, and check that everything still works.
-    #         That's because it makes more sense to take the view that we
-    #         always calculate σ_ν (or σ²_ν) first, and then cnovert it to
-    #         σ_t as needed.  `time_domain_noise` shows how to do this.
-    #     i.e. vector-normalize the FTs above
+    # the goal of the following is essentially to turn the ft into a unitary
+    # FTs.
     for thisdim in ["t2", "ph1", "ph2"]:
         dt = data.get_ft_prop(thisdim, "dt")
         data /= sqrt(ndshape(data)[thisdim]) * dt
+        data.set_ft_prop(thisdim, "unitary", True)
     # }}}
     # {{{ First, run the code that automatically chooses integration bounds
     # and also assigns error
     s_int, returned_frq_slice = frequency_domain_integral(
         data,
-        signal_pathway = signal_pathway,
-        excluded_frqs = [manual_slice],
-        excluded_pathways = excluded_pathways,
+        signal_pathway=signal_pathway,
+        excluded_frqs=[manual_slice],
+        excluded_pathways=excluded_pathways,
         fl=fl,
         return_frq_slice=True,
     )
@@ -121,7 +116,15 @@ with figlist_var() as fl:
         N = ndshape(manual_bounds)["t2"]
         df = manual_bounds.get_ft_prop("t2", "df")
         logger.debug(
-            strm(ndshape(manual_bounds), "df is", df, "N is", N, "N*df is", N * df)
+            strm(
+                ndshape(manual_bounds),
+                "df is",
+                df,
+                "N is",
+                N,
+                "N*df is",
+                N * df,
+            )
         )
         manual_bounds.integrate("t2")
         # N terms that have variance given by fake_data_noise_std**2 each
@@ -131,7 +134,8 @@ with figlist_var() as fl:
         propagated_variance_from_inactive = N * df**2 * std_from_00**2
         logger.debug(
             strm(
-                "manually calculated integral error is", sqrt(propagated_variance)
+                "manually calculated integral error is",
+                sqrt(propagated_variance),
             )
         )
         manual_bounds.set_error(sqrt(propagated_variance))
