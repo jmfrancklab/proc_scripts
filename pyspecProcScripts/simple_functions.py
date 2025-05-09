@@ -196,8 +196,19 @@ def Heaviside_time_domain(s, frq_slice, direct="t2"):
         mysinc[direct, idx_last_one + 1] = (
             frq_slice[1] - (thisax[idx_last_one + 1] - dt / 2)
         ) / dt
-    # {{{ Normalize
+    # I checked (but leave as an informative comment)
+    # that at this point
+    # print(mysinc.sum(direct), int_width);quit()
+    # gives the same number.
+    # Note that this points out why we need to do the "half steps"
     int_width = frq_slice[1] - frq_slice[0]
+# TODO ☐: I think the following might work (b/c of preceding identity),
+#         but doesn't follow the math of the paper.
+#         In the paper, don't we say that the normalization
+#         we multiply should be
+#         ∫s(ν)dν/∫s²(ν)dν = 1
+#         where s(ν) would be the `mysinc` here.
+    # {{{ Normalize
     for_norm = mysinc.C.integrate(direct).item()
     mysinc /= np.sqrt(for_norm)
     mysinc.ift(direct)

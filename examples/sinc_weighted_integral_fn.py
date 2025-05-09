@@ -6,6 +6,11 @@ The weighted integral function is utilized in integrating a signal.
 Specifically here, we generate a sinc function whose FT is a heaviside hat
 function with a width equal to the integration bounds.
 """
+# TODO ☐: pulling very heavily from the stuff in your paper, can we
+#         please just show a repeated series of simulated data, and
+#         integrate both in the frequency domain and in the time domain.
+#         Do this without apo, and use the same (manual) frequency range for both,
+#         so that the results match.
 
 import pyspecdata as psd
 from pyspecdata import r_
@@ -31,6 +36,7 @@ data.set_plot_color("black")
 with psd.figlist_var() as fl:
     # {{{ Set up plots
     fig, thisax = plt.subplots(2, 1)
+    # TODO ☐: this is not a 'weighted integral function'
     fl.next("Weighted Integral Functions", fig=fig)
     fl.skip_units_check()
     thisax[0].set_title("Frequency Domain")
