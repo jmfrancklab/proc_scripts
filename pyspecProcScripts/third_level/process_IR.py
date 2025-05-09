@@ -128,8 +128,6 @@ def process_IR(
     fl.basename = "correlation subroutine:"
     # for the following, should be modified so we can pass a mask, rather than
     # specifying ph1 and ph2, as here
-    # TODO ☐: this (and others) should be a relative import -- see
-    #         comment at top
     opt_shift, sigma = correl_align(
         s,
         indirect_dim="vd",
