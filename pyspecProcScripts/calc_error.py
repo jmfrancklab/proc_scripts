@@ -131,6 +131,10 @@ def calc_masked_variance(
     collected_variance.run(_masked_var_multi, direct)
     # {{{ Average over remaining (non-excluded) ct pathways
     for j in set(s.dimlabels) - set([direct] + indirect):
+        if "ph" in j:
+            assert s.get_ft_prop(
+                j, "unitary"
+            ), "all phase cycling FTs must be unitary!"
         collected_variance.run(_masked_mean_multi, j)
     # }}}
     return collected_variance

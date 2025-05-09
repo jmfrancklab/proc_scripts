@@ -46,6 +46,7 @@ example_data.setaxis("t", r_[0 : 1 : 1j * N])
 direct_t_dom_std = (
     example_data.C.run(lambda x, axis=None: var(x, axis=axis, ddof=1) / 2, "t")
     .mean("ph")
+    .mean("repeats")
     .run(sqrt)
 )
 # the way that we do FT is parseval preserved?
@@ -55,6 +56,7 @@ df = example_data.get_ft_prop("t", "df")
 sigma_nu = (
     example_data.C.run(lambda x, axis=None: var(x, axis=axis, ddof=1) / 2, "t")
     .mean("ph")
+    .mean("repeats")
     .run(sqrt)
 )
 print(
@@ -64,7 +66,7 @@ print(
     f"\nNote that this does **not** match σ_t, which is {direct_t_dom_std}\n",
     "\nWhile I could use a unitary FT, I don't usually do that, so instead, I"
     " scale to move from σ_ν to σ_t.  Note I multiply by the √Δν and divide by"
-    " √Δt to move *to* σ_t",
+    " √Δt to move *to* σ_t, and I get",
     sigma_nu * sqrt(df / dt),
 )
 
@@ -72,7 +74,7 @@ print(
 # since it's easier to mask out regions of the coherence
 # domain where I expect there is signal (or phase cycling noise).
 # I can then convert that to sigma_t
-example_data.ft("ph")
+example_data.ft("ph", unitary=True)
 
 with figlist_var(black=True) as fl:
     # {{{ Calculate the variance using new functions
@@ -84,18 +86,23 @@ with figlist_var(black=True) as fl:
         excluded_pathways=[signal_pathway],
         fl=fl,
     )
+print(
+    "The std when using the mask is:",
+    sqrt(result.item()),
+    "because there is no signal here, it should match σ_ν:",
+    sigma_nu,
+)
 # next, convert from σ_ν to σ_t
 result *= result.get_ft_prop("t", "df") / result.get_ft_prop("t", "dt")
 result.run(sqrt)  # σ²_t→σ_t
-print("The std when using the mask on unitary data is:", example_data)
 print(
-    "Because we can use the mask in the DCCT domain to exclude signal, that is"
-    " the number we will want, in general."
+    "Because we can use the mask in the DCCT domain to exclude signal,"
+    " we typically want to calculate σ_ν with a mask,"
+    " and then convert to σ_t = σ_ν √(Δν/Δt)."
 )
 print(
-    "However, here we know that all of our data is noise, and so we should"
-    " make sure that this matches the naive, direct time-domain calculation."
+    "Here, because we have all noise, we can check that our math works by"
+    " seeing if the following number is about 1.0:"
 )
-print("If it does, all the following numbers will be about 1.0:")
 print(result / direct_t_dom_std)
 # }}}
