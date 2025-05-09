@@ -25,7 +25,7 @@ from .simple_functions import (
     select_pathway,
     logobj,
     find_apparent_anal_freq,
-    HH_weighted_integral,
+    Heaviside_time_domain,
 )
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation
@@ -62,7 +62,7 @@ __all__ = [
     "fl_mod",
     "fwhm_calculator",
     "generate_integrals",
-    "HH_weighted_integral",
+    "Heaviside_time_domain",
     "hermitian_function_test",
     "integral_w_errors",
     "integrate_limits",

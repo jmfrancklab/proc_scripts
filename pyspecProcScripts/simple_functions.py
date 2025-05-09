@@ -1,5 +1,6 @@
 "First order functions for very simple (a few lines) data manipulation"
 import numpy as np
+import pyspecdata as psd
 import logging
 
 
@@ -150,7 +151,7 @@ def find_apparent_anal_freq(s):
     return s, nu_a, isflipped
 
 
-def HH_weighted_integral(s, frq_slice, direct="t2"):
+def Heaviside_time_domain(s, frq_slice, direct="t2"):
     """Make a sinc function that is 1 at t=0 and also 1 in the frequency
     domain over the frequency slice fed. This function will be used as the
     weighted integral function when integrating in the time domain.
@@ -172,8 +173,27 @@ def HH_weighted_integral(s, frq_slice, direct="t2"):
         domain.
     """
     assert s.get_ft_prop(direct), "data must be in the frequency domain!"
-    mysinc = s.fromaxis(direct)
-    mysinc[direct, :] = 0
-    mysinc[direct:frq_slice] = 1
-    mysinc.ift(direct)
-    return mysinc
+    thisax = s[direct].copy()
+    mysinc = psd.nddata(np.zeros(s.shape[direct]), direct).setaxis(
+        direct, thisax
+    )
+    mysinc.copy_props(s)
+    dt = thisax[1] - thisax[0]
+    # searchsorted finds where to insert to keep order
+    # and to be one, the slice must come dt/2 before the coordinate
+    idx_first_one = np.searchsorted(thisax, frq_slice[0] + dt / 2)
+    # the right bounds will be inserted after the last one, so subtract
+    idx_last_one = np.searchsorted(thisax, frq_slice[1] - dt / 2) - 1
+    mysinc[direct, idx_first_one : idx_last_one + 1] = 1
+    # how much do I slice into the box of the one before?
+    if idx_first_one > 0:
+        mysinc[direct, idx_first_one - 1] = (
+            (thisax[idx_first_one - 1] + dt / 2) - frq_slice[0]
+        ) / dt
+    if idx_last_one + 1 < mysinc.shape[direct]:
+        mysinc[direct, idx_last_one + 1] = (
+            frq_slice[1] - (thisax[idx_last_one + 1] - dt / 2)
+        ) / dt
+    # TODO ☐: now that we've constructed the function, please implement the
+    #         normalization you were telling me about.
+    return mysinc.ift(direct)
