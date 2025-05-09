@@ -182,6 +182,8 @@ def correl_align(
     #     At this stage, s_mn is equal to s_jk.
     s_jk.ft(list(signal_pathway))
     s_leftbracket = frq_mask_fn(s_jk).ift(list(signal_pathway))
+# TODO ☐: has this been run/checked? s_jk is ift'd on line 247, so it would
+#         seem like we don't want to move back into the time domain here
     s_jk.ift(list(signal_pathway))
     sig_energy = (abs(s_leftbracket) ** 2).data.sum().item() / N
     # }}}
@@ -233,7 +235,9 @@ def correl_align(
     for my_iter in range(100):
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
-        # *data* is updated with every iteration
+        # *data* is updated with every iteration.
+        # Note that they are both in the frequency domain and phase cycling
+        # domain at this point.
         logging.debug(psd.strm("*** *** ***"))
         logging.debug(
             psd.strm("CORRELATION ALIGNMENT ITERATION NO. ", my_iter)
@@ -362,6 +366,14 @@ def correl_align(
         # block
         s_jk.ft(list(signal_pathway))
         s_leftbracket = frq_mask_fn(s_jk).ift(list(signal_pathway))
+# TODO ☐: same comment as above (since here we are prepping for the next
+#         iteration of the loop
+#         Note that you can use:
+#         gg " move to the start
+#         :set nows "no wrap search (only look from here forward in the file)
+#         /s_\(jk\|leftbracket\)\.i*ft(
+#         n " next match
+#         to track the domain 
         s_jk.ift(list(signal_pathway))
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After First Iteration", bbox=gs[0, 3])
