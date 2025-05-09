@@ -4,6 +4,10 @@ Check Integration
 
 Makes sure that automatically chosen integral bounds perform similar to or
 better than what you would choose by hand.
+
+We also use this as a quick check on the error bars, because the error bars
+should be reasonable relative to the scatter in the "flat part" of the
+inversion recover.
 """
 
 from numpy import sqrt, std, r_, pi, exp
@@ -39,23 +43,22 @@ data = (
 data *= exp(signal_pathway["ph1"] * 1j * 2 * pi * ph1)
 data *= exp(signal_pathway["ph2"] * 1j * 2 * pi * ph2)
 data["t2":0] *= 0.5
-fake_data_noise_std = 2.0
-data.add_noise(fake_data_noise_std)
+fake_data_σ_t = 2.0
+data.add_noise(fake_data_σ_t)
 data.reorder(["ph1", "ph2", "vd"])
 # at this point, the fake data has been generated
-data.ft("t2", shift=True)
 data.ft(["ph1", "ph2"], unitary=True)
-dt = data.get_ft_prop("t2", "dt")
-# {{{ vector-normalize the FT
-data /= sqrt(ndshape(data)["t2"]) * dt
-# }}}
 with figlist_var() as fl:
     fl.next("what does a usual error bar look like?")
     just_noise = nddata(r_[0:1:50j], "t")
     just_noise.data *= 0
-    just_noise.add_noise(fake_data_noise_std)
-    just_noise.set_error(fake_data_noise_std)
+    just_noise.add_noise(fake_data_σ_t)
+    just_noise.set_error(fake_data_σ_t)
     fl.plot(just_noise, ".", capsize=6)
+    data.ft("t2", shift=True)
+    fake_data_σ_ν = fake_data_σ_t * sqrt(
+        data.get_ft_prop("t2", "dt") / data.get_ft_prop("t2", "df")
+    )
     # }}}
     # {{{ First, run the code that automatically chooses integration bounds
     # and also assigns error
@@ -107,7 +110,7 @@ with figlist_var() as fl:
                 "here is the std calculated from an off pathway",
                 std_from_00,
                 "does it match",
-                fake_data_noise_std,
+                fake_data_σ_t,
                 "?",
             )
         )
@@ -125,9 +128,10 @@ with figlist_var() as fl:
             )
         )
         manual_bounds.integrate("t2")
-        # N terms that have variance given by fake_data_noise_std**2 each
+        # N terms that have variance given by fake_data_σ_t**2 each
         # multiplied by df
-        propagated_variance = N * df**2 * fake_data_noise_std**2
+        # the 2 has to do w/ real/imag/abs -- see check_integration_error
+        propagated_variance = N * df**2 * fake_data_σ_ν**2
         propagated_variance_from_inactive = N * df**2 * std_from_00**2
         logger.debug(
             strm(

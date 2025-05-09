@@ -57,11 +57,9 @@ for j in range(n_repeats):
     data = clean_data.C
     data.add_noise(fake_data_noise_std)
     # at this point, the fake data has been generated
-    data.ft(["ph1", "ph2"],unitary=True)
-    # {{{ vector normalize
+    data.ft(["ph1", "ph2"], unitary=True)
     dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
     data.ft("t2", shift=True)
-    # }}}
     data /= sqrt(ndshape(data)["t2"]) * dt
     s_int, frq_slice = frequency_domain_integral(
         data,
