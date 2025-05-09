@@ -70,7 +70,6 @@ for j in range(n_repeats):
         fl=fl,
         return_frq_slice=True,
     )
-    # }}}
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
     N = ndshape(manual_bounds)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()

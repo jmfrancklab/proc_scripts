@@ -19,35 +19,43 @@ compared:
 Demonstrates that by propagating the error of the integral in the inactive CTs
 we still get a reasonable error within the limits of traditional methods.
 """
-import pyspecdata as psd
+
+# TODO ☐: check that it still works after I move module spec into imports
+from pyspecdata import figlist_var, find_file
 import matplotlib.pyplot as plt
-import pyspecProcScripts as psdpr
+from pyspecProcScripts import (
+    lookup_table,
+    hermitian_function_test,
+    select_pathway,
+    zeroth_order_ph,
+    frequency_domain_integral,
+    active_propagation,
+    integrate_limits,
+)
 import numpy as np
 
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 4
 
-fl = psd.figlist_var()
+fl = figlist_var()
 signal_pathway = {"ph1": 1, "ph2": 0}
 t_range = (0, 0.05)  # must start at 0 for an FID
 f_range = (-1e3, 1e3)
 excluded_pathways = [(0, 0), (0, 3)]
 colors = ["r", "darkorange", "gold", "g", "c", "b", "m", "lightcoral"]
-for thisfile, exp_type, nodename in [
-    (
-        "201113_TEMPOL_capillary_probe_16Scans_noModCoil",
-        "ODNP_NMR_comp/Echoes",
-        "signal",
-    )
-]:
+for thisfile, exp_type, nodename in [(
+    "201113_TEMPOL_capillary_probe_16Scans_noModCoil",
+    "ODNP_NMR_comp/Echoes",
+    "signal",
+)]:
     # {{{processing data
-    s = psd.find_file(
+    s = find_file(
         thisfile,
         exp_type=exp_type,
         expno=nodename,
         postproc="spincore_echo_v1",
-        lookup=psdpr.lookup_table,
+        lookup=lookup_table,
     )
     s.ift("t2")
     fl.next("raw data time domain")
@@ -62,13 +70,11 @@ for thisfile, exp_type, nodename in [
     s = s["t2":f_range]
     # {{{Phase corrections
     s.ift("t2")
-    best_shift = psdpr.hermitian_function_test(
-        psdpr.select_pathway(s.C.mean("nScans"), signal_pathway)
+    best_shift = hermitian_function_test(
+        select_pathway(s.C.mean("nScans"), signal_pathway)
     )
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-    s /= psdpr.zeroth_order_ph(
-        psdpr.select_pathway(s.C.mean("nScans"), signal_pathway)
-    )
+    s /= zeroth_order_ph(select_pathway(s.C.mean("nScans"), signal_pathway))
     fl.next("Phase corrected freq. domain")
     s.ft("t2")
     fl.image(s)
@@ -104,11 +110,11 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{Normalization
-    frq_slice = psdpr.integrate_limits(
-        psdpr.select_pathway(s, signal_pathway), convolve_method="Lorentzian"
+    frq_slice = integrate_limits(
+        select_pathway(s, signal_pathway), convolve_method="Lorentzian"
     )
     s_integral = s["t2":frq_slice].C  # the "official" copy of the integral
-    s_integral = psdpr.select_pathway(s_integral, signal_pathway)
+    s_integral = select_pathway(s_integral, signal_pathway)
     s_integral.integrate("t2")
     avg_d = s_integral.C.mean().real.item()
     s_integral /= avg_d
@@ -117,13 +123,11 @@ for thisfile, exp_type, nodename in [
 
     # {{{integral w errors
     error_pathway = (
-        set(
-            (
-                (j, k)
-                for j in range(psd.ndshape(s)["ph1"])
-                for k in range(psd.ndshape(s)["ph2"])
-            )
-        )
+        set((
+            (j, k)
+            for j in range(s.shape["ph1"])
+            for k in range(s.shape["ph2"])
+        ))
         - set(excluded_pathways)
         - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
     )
@@ -134,7 +138,7 @@ for thisfile, exp_type, nodename in [
     error_lst = []
     avg_error_lst = []
     for thispathway in error_pathway:
-        s_thisint, frq_slice_check = psdpr.frequency_domain_integral(
+        s_thisint, frq_slice_check = frequency_domain_integral(
             s,
             signal_pathway,
             [thispathway],
@@ -152,7 +156,7 @@ for thisfile, exp_type, nodename in [
 
     # {{{ Calculating propagated error averaged over all inactive CTs (as the
     #     function is meant to be called)
-    averaged_inactive, frq_slice = psdpr.frequency_domain_integral(
+    averaged_inactive, frq_slice = frequency_domain_integral(
         s,
         signal_pathway,
         error_pathway,
@@ -165,9 +169,7 @@ for thisfile, exp_type, nodename in [
     # }}}
 
     # {{{ Calculating propagated error along active CT on noise slice
-    active_error = psdpr.active_propagation(
-        s, signal_pathway, indirect="nScans"
-    )
+    active_error = active_propagation(s, signal_pathway, indirect="nScans")
     avg_active_error = active_error.C.mean("nScans").item()
     # }}}
 

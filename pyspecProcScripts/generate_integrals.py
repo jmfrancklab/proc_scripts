@@ -203,8 +203,8 @@ def generate_integrals(
             set(
                 (
                     (j, k)
-                    for j in range(psd.ndshape(s)["ph1"])
-                    for k in range(psd.ndshape(s)["ph2"])
+                    for j in range(s.shape["ph1"])
+                    for k in range(s.shape["ph2"])
                 )
             )
             - set(excluded_pathways)
@@ -213,7 +213,7 @@ def generate_integrals(
         error_path = [{"ph1": j, "ph2": k} for j, k in error_path]
     else:
         error_path = (
-            set(((j) for j in range(psd.ndshape(s)["ph1"])))
+            set(((j) for j in range(s.shape["ph1"])))
             - set(excluded_pathways)
             - set([(signal_pathway["ph1"])])
         )
