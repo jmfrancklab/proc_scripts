@@ -45,6 +45,10 @@ data.reorder(["ph1", "ph2", "vd"])
 # at this point, the fake data has been generated
 data.ft("t2", shift=True)
 data.ft(["ph1", "ph2"], unitary=True)
+dt = data.get_ft_prop("t2", "dt")
+# {{{ vector-normalize the FT
+data /= sqrt(ndshape(data)["t2"]) * dt
+# }}}
 with figlist_var() as fl:
     fl.next("what does a usual error bar look like?")
     just_noise = nddata(r_[0:1:50j], "t")
@@ -52,7 +56,6 @@ with figlist_var() as fl:
     just_noise.add_noise(fake_data_noise_std)
     just_noise.set_error(fake_data_noise_std)
     fl.plot(just_noise, ".", capsize=6)
-    dt = data.get_ft_prop("t2", "dt")
     # }}}
     # {{{ First, run the code that automatically chooses integration bounds
     # and also assigns error
