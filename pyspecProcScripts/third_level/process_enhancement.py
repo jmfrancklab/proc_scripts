@@ -113,6 +113,7 @@ def process_enhancement(
     s.reorder(["ph1", "power", "t2"])
     psd.logger.info(psd.strm("zero corssing at", zero_crossing))
     # }}}
+# TODO ☐: commented out code -- keep or remove
     # {{{Correcting power axis
     # print(s.getaxis('power'))
     # quit()
@@ -169,6 +170,7 @@ def process_enhancement(
     error_pathway = [{"ph1": j} for j in error_pathway]
     # }}}
     # {{{ integrating with error bar calculation
+# TODO ☐: d_ is a weird name
     d_, frq_slice, std = frequency_domain_integral(
         d,
         signal_pathway,
@@ -179,6 +181,7 @@ def process_enhancement(
     )
     x = d_.get_error()
     x[:] /= np.sqrt(2)
+# TODO ☐: why is this copied and then not used again?
     d = d_.C
     # }}}
     # {{{Normalizing by max
