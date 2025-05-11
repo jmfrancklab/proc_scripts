@@ -150,8 +150,7 @@ def find_apparent_anal_freq(s):
             isflipped = True
     return s, nu_a, isflipped
 
-
-def Heaviside_time_domain(s, frq_slice, direct="t2"):
+def heaviside_time_domain(s, frq_slice, direct="t2"):
     """Make a sinc function that is 1 at t=0 and also 1 in the frequency
     domain over the frequency slice fed. This function will be used as the
     weighted integral function when integrating in the time domain.
@@ -196,11 +195,6 @@ def Heaviside_time_domain(s, frq_slice, direct="t2"):
         mysinc[direct, idx_last_one + 1] = (
             frq_slice[1] - (thisax[idx_last_one + 1] - dt / 2)
         ) / dt
-    # I checked (but leave as an informative comment)
-    # that at this point
-    # print(mysinc.sum(direct), int_width);quit()
-    # gives the same number.
-    # Note that this points out why we need to do the "half steps"
     int_width = frq_slice[1] - frq_slice[0]
     # Here I'm agreeing that we don't want to use the same normalization
     # for standard heaviside functions as when we expect the linewidth
