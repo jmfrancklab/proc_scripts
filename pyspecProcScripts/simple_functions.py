@@ -202,21 +202,9 @@ def Heaviside_time_domain(s, frq_slice, direct="t2"):
     # gives the same number.
     # Note that this points out why we need to do the "half steps"
     int_width = frq_slice[1] - frq_slice[0]
-# TODO ☐: I think the following might work (b/c of preceding identity),
-#         but doesn't follow the math of the paper.
-#         In the paper, don't we say that the normalization
-#         we multiply should be
-#         ∫s(ν)dν/∫s²(ν)dν = 1
-#         where s(ν) would be the `mysinc` here.
-    # {{{ Normalize so that s(ν)∫s(ν)dν/∫s²(ν)dν = 1 where s(ν) is the real
-    #     part of the HH
-    for_check = mysinc.C
-    HH_int = mysinc.C.integrate(direct).item()
-    HH_sq_int = (mysinc.C**2).integrate(direct).item()
-    mysinc /= HH_sq_int
-    mysinc *= HH_int
-    check = ((for_check*mysinc).integrate(direct))/for_check.integrate(direct)
-    print("I am showing the normalization of eq 20 is true:",check)
+    # Here I'm agreeing that we don't want to use the same normalization
+    # for standard heaviside functions as when we expect the linewidth
+    # to match w̃(ν)
+    assert np.isclose(int_width, mysinc.C.sum(direct).item())
     mysinc.ift(direct)
-    # }}}
     return mysinc

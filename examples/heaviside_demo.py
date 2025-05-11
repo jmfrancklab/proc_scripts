@@ -10,6 +10,11 @@ with figlist_var() as fl:
     for thisrange in [(0, 4), (-0.75, 3.75)]:
         result = Heaviside_time_domain(s, thisrange, direct="t")
         result.ft("t")
-        slice_label= ','.join(str(val) for val in thisrange)
-        plot(result, "o-", label="ν slice fed to function: (%s) \n sum: %.3f" % (slice_label,result.C.sum("t").real.item()))
+        slice_label = ",".join(str(val) for val in thisrange)
+        plot(
+            result,
+            "o-",
+            label="ν slice fed to function: (%s) \n sum: %.3f"
+            % (slice_label, result.C.sum("t").real.item()),
+        )
         legend()
