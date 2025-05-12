@@ -30,6 +30,18 @@ def correl_align(
     indirect_dim=None,  # no longer used
     avg_dim=None,  # no longer used
 ):
+# TODO ☐: after talking, a lot of the TODOs below become obsolete.  What we
+#         want to do instead is to be in the frequency and coherence domains at
+#         the start of our function and the start (and therefore end) of our
+#         iteration loop.  This means we are going to need to modify:
+#         * The docstring (so we know what to do)
+#         * The assert statements
+#         * ift coherence → phase at the same point where we ift frequency →
+#           time
+#         * look for and remove redundant ft/ift
+# 
+#         :set nows "no wrap search (only look from here forward in the file)
+#         /\(s_\(jk\|leftbracket\)\.i*ft(\|get_ft_prop\)
     """
     Align transients collected with chunked phase cycling dimensions along an
     indirect dimension based on maximizing the correlation across all the
@@ -180,9 +192,13 @@ def correl_align(
     #     s_leftbracket is called that because it becomes (below)
     #     the left square brackets of eq. 29. in Beaton 2022
     #     At this stage, s_mn is equal to s_jk.
-    s_jk.ft(list(signal_pathway))  # FT into coherence domain for frq_mask
+    # Note that in order to apply the frequency mask, we need to find our
+    # center frequency, and so we need be in the coherence transfer domain →
+    # this is what motivates us to want to be in the coherence (rather than
+    # phase) domain when we apply the frequency mask 
+    s_jk.ft(list(signal_pathway))
     s_leftbracket = frq_mask_fn(s_jk).ift(list(signal_pathway))
-    s_jk.ift(list(signal_pathway))  # IFT back to ph cycle domain
+    s_jk.ift(list(signal_pathway))
     sig_energy = (abs(s_leftbracket) ** 2).data.sum().item() / N
     # }}}
     if fl:
@@ -210,14 +226,8 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    # TODO ☐ (later): this does not select the coherence pathway, which we want
-    #         to do. HOWEVER -- don't do that right now.  Make sure that
-    #         everything else works, leaving this todo in until the very
-    #         end.  Then, make a comment on github noting that this is
-    #         the only remaining todo.  (This can be solved by accepting
-    #         data that's in the frequency domain and the coherence
-    #         transfer domain, and then just ft/ift'ing both dimensions
-    #         together)
+    # TODO ☐ Since we will now be in the coherence transfer domain, apply the
+    #        coherence pathway selection in the following expression.
     E_of_avg = (
         abs(s_leftbracket.C.sum("repeats")) ** 2
     ).data.sum().item() / N**2
@@ -362,12 +372,10 @@ def correl_align(
         # only used to calculate the energy at the end of the for block
         # here, but is also used once we return to the start of the
         # block
-        s_jk.ft(list(signal_pathway))  # FT to coherence domain for frq_mask_fn
-        #                               which assumes we are in the coherence
-        #                               transfer domain
+# TODO ☐: currently, this is a bit of redundant domain switching, but will be fixed
+        s_jk.ft(list(signal_pathway))
         s_leftbracket = frq_mask_fn(s_jk).ift(list(signal_pathway))
-        s_jk.ift(list(signal_pathway))  # IFT back to ph cycle domain for next
-        #                                iteration
+        s_jk.ift(list(signal_pathway))
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After First Iteration", bbox=gs[0, 3])
         logging.debug(
@@ -379,6 +387,8 @@ def correl_align(
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
+        # TODO ☐ Since we will now be in the coherence transfer domain, apply the
+        #        coherence pathway selection in the following expression.
         E_of_avg = (
             abs(s_leftbracket.C.sum("repeats")) ** 2
         ).data.sum().item() / N**2
