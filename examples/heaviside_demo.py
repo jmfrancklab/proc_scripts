@@ -1,4 +1,10 @@
-# TODO ☐: title and description needed
+""" Heaviside Hat Function Demo
+===============================
+This example demonstrates the use of the Heaviside hat function
+which generates a Heaviside hat function with a width equal to the
+range given. Specifically, ranges can be fed both as integral values
+or nonintegral values.
+"""
 from pylab import legend
 from pyspecdata import nddata, figlist_var, r_, plot
 from pyspecProcScripts import heaviside_time_domain
