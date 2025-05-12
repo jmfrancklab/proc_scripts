@@ -25,7 +25,7 @@ from .simple_functions import (
     select_pathway,
     logobj,
     find_apparent_anal_freq,
-    Heaviside_time_domain,
+    heaviside_time_domain,
 )
 from .DCCT_func import DCCT
 from .integral_w_error import integral_w_errors, active_propagation

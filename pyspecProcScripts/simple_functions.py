@@ -199,6 +199,6 @@ def heaviside_time_domain(s, frq_slice, direct="t2"):
     # Here I'm agreeing that we don't want to use the same normalization
     # for standard heaviside functions as when we expect the linewidth
     # to match w̃(ν)
-    assert np.isclose(int_width, mysinc.C.integral(direct).item())
+    assert np.isclose(int_width, mysinc.C.integrate(direct).item())
     mysinc.ift(direct)
     return mysinc
