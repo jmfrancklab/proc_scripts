@@ -150,7 +150,7 @@ def find_apparent_anal_freq(s):
             isflipped = True
     return s, nu_a, isflipped
 
-def Heaviside_time_domain(s, frq_slice, direct="t2"):
+def heaviside_time_domain(s, frq_slice, direct="t2"):
     """Make a sinc function that is 1 at t=0 and also 1 in the frequency
     domain over the frequency slice fed. This function will be used as the
     weighted integral function when integrating in the time domain.
@@ -179,26 +179,26 @@ def Heaviside_time_domain(s, frq_slice, direct="t2"):
         direct, thisax
     )
     mysinc.copy_props(s)
-    dt = thisax[1] - thisax[0]
+    dnu = thisax[1] - thisax[0]
     # searchsorted finds where to insert to keep order
-    # and to be one, the slice must come dt/2 before the coordinate
-    idx_first_one = np.searchsorted(thisax, frq_slice[0] + dt / 2)
+    # and to be one, the slice must come dnu/2 before the coordinate
+    idx_first_one = np.searchsorted(thisax, frq_slice[0] + dnu / 2)
     # the right bounds will be inserted after the last one, so subtract
-    idx_last_one = np.searchsorted(thisax, frq_slice[1] - dt / 2) - 1
+    idx_last_one = np.searchsorted(thisax, frq_slice[1] - dnu / 2) - 1
     mysinc[direct, idx_first_one : idx_last_one + 1] = 1
     # how much do I slice into the box of the one before?
     if idx_first_one > 0:
         mysinc[direct, idx_first_one - 1] = (
-            (thisax[idx_first_one - 1] + dt / 2) - frq_slice[0]
-        ) / dt
+            (thisax[idx_first_one - 1] + dnu / 2) - frq_slice[0]
+        ) / dnu
     if idx_last_one + 1 < mysinc.shape[direct]:
         mysinc[direct, idx_last_one + 1] = (
-            frq_slice[1] - (thisax[idx_last_one + 1] - dt / 2)
-        ) / dt
+            frq_slice[1] - (thisax[idx_last_one + 1] - dnu / 2)
+        ) / dnu
     int_width = frq_slice[1] - frq_slice[0]
     # Here I'm agreeing that we don't want to use the same normalization
     # for standard heaviside functions as when we expect the linewidth
     # to match w̃(ν)
-    assert np.isclose(int_width, mysinc.C.sum(direct).item())
+    assert np.isclose(int_width, mysinc.C.integral(direct).item())
     mysinc.ift(direct)
     return mysinc

@@ -8,12 +8,12 @@ function with a width equal to the integration bounds.
 """
 # TODO ☐: pulling very heavily from the stuff in your paper, can we
 #         please just show a repeated series of simulated data, and
-#         integrate both in the frequency domain and in the time domain.  Do
-#         this without apo, and use the same (manual) frequency range for both,
+#         integrate both in the frequency domain and in the time domain.
+#         Do this without apo, and use the same (manual) frequency range for both,
 #         so that the results match.
 
 from pyspecdata import r_, nddata, figlist_var, ndshape
-from pyspecProcScripts import apod_matched_filter, Heaviside_time_domain
+from pyspecProcScripts import apod_matched_filter, heaviside_time_domain
 import numpy as np
 from pylab import rcParams
 from numpy.random import seed
@@ -60,7 +60,7 @@ with figlist_var() as fl:
     # {{{ make weighted integral function
     filter_width = 4 / filter_width
     f_range = tuple(r_[-filter_width / 2, filter_width / 2])
-    wt_fn = Heaviside_time_domain(data, f_range)
+    wt_fn = heaviside_time_domain(data, f_range)
     wt_fn.set_units("t2", "s")
     wt_fn.ft("t2")
     wt_fn.set_plot_color("tab:blue")

@@ -62,7 +62,7 @@ __all__ = [
     "fl_mod",
     "fwhm_calculator",
     "generate_integrals",
-    "Heaviside_time_domain",
+    "heaviside_time_domain",
     "hermitian_function_test",
     "integral_w_errors",
     "integrate_limits",
