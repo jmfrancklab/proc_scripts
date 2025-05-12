@@ -180,9 +180,9 @@ def correl_align(
     #     s_leftbracket is called that because it becomes (below)
     #     the left square brackets of eq. 29. in Beaton 2022
     #     At this stage, s_mn is equal to s_jk.
-    s_jk.ft(list(signal_pathway)) # FT into coherence domain for frq_mask
+    s_jk.ft(list(signal_pathway))  # FT into coherence domain for frq_mask
     s_leftbracket = frq_mask_fn(s_jk).ift(list(signal_pathway))
-    s_jk.ift(list(signal_pathway)) # IFT back to ph cycle domain
+    s_jk.ift(list(signal_pathway))  # IFT back to ph cycle domain
     sig_energy = (abs(s_leftbracket) ** 2).data.sum().item() / N
     # }}}
     if fl:
@@ -362,13 +362,11 @@ def correl_align(
         # only used to calculate the energy at the end of the for block
         # here, but is also used once we return to the start of the
         # block
-        # FT to coherence domain for frq_mask_fn which assumes we are in the 
-        # coherence transfer domain
-        s_jk.ft(list(signal_pathway)) # FT to coherence domain for frq_mask_fn
+        s_jk.ft(list(signal_pathway))  # FT to coherence domain for frq_mask_fn
         #                               which assumes we are in the coherence
         #                               transfer domain
         s_leftbracket = frq_mask_fn(s_jk).ift(list(signal_pathway))
-        s_jk.ift(list(signal_pathway)) # IFT back to ph cycle domain for next
+        s_jk.ift(list(signal_pathway))  # IFT back to ph cycle domain for next
         #                                iteration
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After First Iteration", bbox=gs[0, 3])
