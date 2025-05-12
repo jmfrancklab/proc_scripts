@@ -1,6 +1,6 @@
 """ Heaviside Hat Function Demo
 ===============================
-This example demonstrates the use of the Heaviside hat function
+This example demonstrates the use of the Heaviside_time_domain function
 which generates a Heaviside hat function with a width equal to the
 range given. Specifically, ranges can be fed both as integral values
 or nonintegral values.
