@@ -150,7 +150,7 @@ def find_apparent_anal_freq(s):
             isflipped = True
     return s, nu_a, isflipped
 
-def heaviside_time_domain(s, frq_slice, direct="t2"):
+def Heaviside_time_domain(s, frq_slice, direct="t2"):
     """Make a sinc function that is 1 at t=0 and also 1 in the frequency
     domain over the frequency slice fed. This function will be used as the
     weighted integral function when integrating in the time domain.

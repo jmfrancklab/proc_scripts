@@ -7,14 +7,14 @@ or nonintegral values.
 """
 from pylab import legend
 from pyspecdata import nddata, figlist_var, r_, plot
-from pyspecProcScripts import heaviside_time_domain
+from pyspecProcScripts import Heaviside_time_domain
 
 s = nddata(r_[-5:5:11j], "t")
 s.set_ft_prop("t", True)
 with figlist_var() as fl:
     # show that we can change by sub-integral amounts
     for thisrange in [(0, 4), (-0.75, 3.75)]:
-        result = heaviside_time_domain(s, thisrange, direct="t")
+        result = Heaviside_time_domain(s, thisrange, direct="t")
         result.ft("t")
         slice_label = ",".join(str(val) for val in thisrange)
         plot(
