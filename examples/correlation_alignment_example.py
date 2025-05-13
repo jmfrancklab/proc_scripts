@@ -44,7 +44,9 @@ def frq_mask(s, sigma=150.0):
     # {{{ Make mask using the center frequency and sigma.
     #     Standard gaussian is 2σ² in the denominator -- the extra 2 is
     #     for sqrt.
-    frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
+    frq_mask = np.exp(
+        -((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2)
+    )
     # }}}
     # note that when we multiply, we automatically generate a copy
     return s * frq_mask
@@ -165,7 +167,6 @@ with psd.figlist_var() as fl:
             .C.real.sum("t2")
             .run(np.sign)
         )
-        data.ift(list(signal_pathway))
         opt_shift = psdpr.correl_align(
             data * mysgn,
             frq_mask_fn=frq_mask,
@@ -178,10 +179,14 @@ with psd.figlist_var() as fl:
             #                 accommodate the drift in signal
             fl=fl,
         )
-        data.ift("t2")
+        # The shift correction should be made in the time and phase cycling
+        # domain
+        # (this is how it is done in the function itself as well)
+        data.ift("t2").ift(list(signal_pathway))
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
-        data.ft(list(signal_pathway.keys()))
-        data.ft("t2")
+        data.ft("t2").ft(
+            list(signal_pathway.keys())
+        )  # FT both domains for plotting
         psd.DCCT(data, bbox=gs[2], fig=fig, title=r"Aligned Data ($\nu$)")
         data.ift("t2")
         psd.DCCT(data, bbox=gs[3], fig=fig, title=r"Aligned Data ($t$)")

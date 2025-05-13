@@ -4,6 +4,7 @@ from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import logging
+from .simple_functions import select_pathway
 
 
 @FuncFormatter
@@ -30,18 +31,6 @@ def correl_align(
     indirect_dim=None,  # no longer used
     avg_dim=None,  # no longer used
 ):
-# TODO ☐: after talking, a lot of the TODOs below become obsolete.  What we
-#         want to do instead is to be in the frequency and coherence domains at
-#         the start of our function and the start (and therefore end) of our
-#         iteration loop.  This means we are going to need to modify:
-#         * The docstring (so we know what to do)
-#         * The assert statements
-#         * ift coherence → phase at the same point where we ift frequency →
-#           time
-#         * look for and remove redundant ft/ift
-# 
-#         :set nows "no wrap search (only look from here forward in the file)
-#         /\(s_\(jk\|leftbracket\)\.i*ft(\|get_ft_prop\)
     """
     Align transients collected with chunked phase cycling dimensions along an
     indirect dimension based on maximizing the correlation across all the
@@ -63,7 +52,7 @@ def correl_align(
     ==========
     s_orig:  psd.nddata
         Data given in the frequency (not time) domain and the
-        phase-cycling (not coherence transfer) domain.
+        coherence transfer (not phase-cycling) domain.
         This data is not modified.
     frq_mask_fn : func
         A function which takes nddata and returns a copy that has been
@@ -179,8 +168,8 @@ def correl_align(
         #    s_orig
     s_jk.reorder([direct], first=False)
     for phnames in signal_pathway.keys():
-        assert not s_orig.get_ft_prop(phnames), (
-            str(phnames) + " must not be in the coherence domain"
+        assert s_orig.get_ft_prop(phnames), (
+            str(phnames) + " must be in the coherence domain"
         )
     assert s_orig.get_ft_prop(
         direct
@@ -195,10 +184,8 @@ def correl_align(
     # Note that in order to apply the frequency mask, we need to find our
     # center frequency, and so we need be in the coherence transfer domain →
     # this is what motivates us to want to be in the coherence (rather than
-    # phase) domain when we apply the frequency mask 
-    s_jk.ft(list(signal_pathway))
-    s_leftbracket = frq_mask_fn(s_jk).ift(list(signal_pathway))
-    s_jk.ift(list(signal_pathway))
+    # phase) domain when we apply the frequency mask
+    s_leftbracket = frq_mask_fn(s_jk)
     sig_energy = (abs(s_leftbracket) ** 2).data.sum().item() / N
     # }}}
     if fl:
@@ -226,19 +213,18 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    # TODO ☐ Since we will now be in the coherence transfer domain, apply the
-    #        coherence pathway selection in the following expression.
     E_of_avg = (
-        abs(s_leftbracket.C.sum("repeats")) ** 2
+        abs(select_pathway(s_leftbracket, signal_pathway).C.sum("repeats"))
+        ** 2
     ).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     assert s_jk.get_ft_prop(
         direct
     ), "direct dimension must be in the frequency domain"
-    assert not s_jk.get_ft_prop(
+    assert s_jk.get_ft_prop(
         list(s_jk.get_prop("coherence_pathway"))[0]
-    ), "phase cycling dimension must not be in the coherence transfer domain!"
+    ), "you must be in the coherence transfer domain!"
     f_shift = 0
     for my_iter in range(100):
         # Note that both s_jk and s_leftbracket
@@ -253,11 +239,13 @@ def correl_align(
         logging.debug(psd.strm("*** *** ***"))
         # note that the frequency mask is applied either (for the first
         # iteration) in the code above or (for subsequent iterations) at
-        # the bottom of the for loop
-        # {{{ move both the unmasked and masked data into the time domain
-        s_jk.ift(direct)
-        s_leftbracket.ift(direct)
-        # }}}
+        # the bottom of the for loop which requires us to be in the frequency
+        # and coherence domain.
+        # But for the math and correlation we need to be in the time domain and
+        # the phase cycling domain so we do that here
+        for thisdata in (s_jk, s_leftbracket):
+            thisdata.ift(direct)
+            thisdata.ift(list(signal_pathway))
         # {{{ Make extra dimension (Δφ_n) for s_leftbracket:
         #     start by simply replicating the data along the new
         #     dimension.
@@ -371,11 +359,9 @@ def correl_align(
         # the frequency-masked signal (called s_leftbracket here) is not
         # only used to calculate the energy at the end of the for block
         # here, but is also used once we return to the start of the
-        # block
-# TODO ☐: currently, this is a bit of redundant domain switching, but will be fixed
+        # block - here we must be in the coherence domain!
         s_jk.ft(list(signal_pathway))
-        s_leftbracket = frq_mask_fn(s_jk).ift(list(signal_pathway))
-        s_jk.ift(list(signal_pathway))
+        s_leftbracket = frq_mask_fn(s_jk)
         if fl and my_iter == 0:
             psd.DCCT(s_jk, fig, title="After First Iteration", bbox=gs[0, 3])
         logging.debug(
@@ -387,10 +373,9 @@ def correl_align(
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        # TODO ☐ Since we will now be in the coherence transfer domain, apply the
-        #        coherence pathway selection in the following expression.
         E_of_avg = (
-            abs(s_leftbracket.C.sum("repeats")) ** 2
+            abs(select_pathway(s_leftbracket, signal_pathway).C.sum("repeats"))
+            ** 2
         ).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
