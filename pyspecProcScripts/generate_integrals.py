@@ -4,7 +4,7 @@ import pyspecdata as psd
 import matplotlib.pyplot as plt
 from .simple_functions import select_pathway
 from .correlation_alignment import correl_align
-from .integral_w_error import integral_w_errors
+from .integral_w_error import frequency_domain_integral
 from .DCCT_func import DCCT
 import sympy as sp
 from .phasing import zeroth_order_ph, hermitian_function_test, determine_sign
@@ -200,18 +200,20 @@ def generate_integrals(
     if "ph2" in s.dimlabels:
         logging.info(psd.strm("PH2 IS PRESENT"))
         error_path = (
-            set((
-                (j, k)
-                for j in range(psd.ndshape(s)["ph1"])
-                for k in range(psd.ndshape(s)["ph2"])
-            ))
+            set(
+                (
+                    (j, k)
+                    for j in range(s.shape["ph1"])
+                    for k in range(s.shape["ph2"])
+                )
+            )
             - set(excluded_pathways)
             - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
         )
         error_path = [{"ph1": j, "ph2": k} for j, k in error_path]
     else:
         error_path = (
-            set(((j) for j in range(psd.ndshape(s)["ph1"])))
+            set(((j) for j in range(s.shape["ph1"])))
             - set(excluded_pathways)
             - set([(signal_pathway["ph1"])])
         )
@@ -219,7 +221,7 @@ def generate_integrals(
         # {{{Integrate with error bars
     if error_bars:
         if "nScans" in s.dimlabels:
-            s_int, frq_slice = integral_w_errors(
+            s_int, frq_slice = frequency_domain_integral(
                 s_after.C.mean("nScans"),
                 signal_pathway,
                 error_path,
@@ -228,7 +230,7 @@ def generate_integrals(
                 return_frq_slice=True,
             )
         else:
-            s_int, frq_slice = integral_w_errors(
+            s_int, frq_slice = frequency_domain_integral(
                 s_after,
                 signal_pathway,
                 error_path,

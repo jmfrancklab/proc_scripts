@@ -1,14 +1,16 @@
 import pyspecdata as psp
 from .integrate_limits import integrate_limits
 from .simple_functions import select_pathway
+from .calc_error import calc_masked_variance
 import logging
 import numpy as np
 
 
-def integral_w_errors(
+def frequency_domain_integral(
     s,
-    sig_path,
-    error_path,
+    signal_pathway=None,
+    excluded_frqs=None,
+    excluded_pathways=None,
     cutoff=0.1,
     convolve_method="Gaussian",
     indirect="vd",
@@ -16,54 +18,77 @@ def integral_w_errors(
     fl=None,
     return_frq_slice=False,
 ):
-    """Calculates the propagation of error for the given signal and returns
-    signal with the error associated.
+    """Returns the integral along the direct dimension,
+    with automatically determined bounds.
+    Error is calculated by propagation of error in the frequency domain,
+    and included in the resulting nddata.
 
     Before declaring the error_path,
     look at an examples such as integration_w_error.py to see how to
     decide which excluded pathways to take the error over.
 
+    Used in these examples:
+    `examples/integration_with_error.py`
+    `examples/check_integration_error.py`
+    `examples/broken/test_error.py`
+
     Parameters
     ==========
-    sig_path:   dict
-                Dictionary of the path of the desired signal.
-    error_path: dict
-                Dictionary of all coherence pathways that are
-                not the signal pathway.
-
-                Before declaring the error_path,
-                look at an examples such as integration_w_error.py to
-                see how to decide which excluded pathways to take the
-                error over.
+    signal_pathway: dict
+        Dictionary of the path of the desired signal.
+    excluded_frqs: list
+        List of tuples containing frequencies to be filtered out when
+        calculating the variance of the spectral datapoints.
+    excluded_pathways: list
+        List of dictionaries containing all coherence pathways that are to be
+        masked out when calculating the error. This should include the signal
+        pathway!
+    cutoff: float
+        Multiplier used in determining the integral bounds. Higher values will
+        produce smaller integrals.
     convolve_method: str
-                method of convolution used in integrating limits
-                passed on to :func:`integrate_limits`
-    indirect:   str
-                Indirect axis.
-    direct:     str
-                Direct axis.
+        method of convolution used in integrating limits passed on to
+        :func:`integrate_limits`
+    indirect: str
+        Indirect axis.
+    direct: str
+        Direct axis.
 
     Returns
     =======
-    s:       nddata
-             Data with error associated with coherence pathways
-             not included in the signal pathway.
+    s: nddata
+        Data sampled at the indicated coherence pathway, and integrated over
+        bounds found by applying a matched filter and using the "cutoff" as a
+        fraction of the maximum signal intensity to determine the limits.
+        Errors are determined by error propagation in the frequency domain,
+        with the noise associated with the spectral datapoints determined from
+        the masked variance of the DCCT data.
     """
+    signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
     if convolve_method is not None:
         kwargs = {"convolve_method": convolve_method}
     else:
         kwargs = {}
     frq_slice = integrate_limits(
-        select_pathway(s, sig_path),
+        select_pathway(s, signal_pathway),
         cutoff=cutoff,
         fl=fl,
         **kwargs,
     )
     logging.debug(psp.strm("frq_slice is", frq_slice))
+    spectral_datapoint_variance = calc_masked_variance(
+        s,
+        excluded_frqs=excluded_frqs,
+        indirect=indirect,
+        excluded_pathways=excluded_pathways,
+        fl=fl,
+    )
     s = s[direct:frq_slice]
-    f = s.getaxis(direct)
-    df = f[1] - f[0]
+    # {{{ variables in calculating error over slice
+    N = s.shape[direct]  # number of pts within the slice
+    df = s.get_ft_prop(direct, "df")
+    # }}}
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]
@@ -72,46 +97,12 @@ def integral_w_errors(
             "You have extra (non-phase cycling, non-indirect) dimensions: "
             + str(extra_dims)
         )
-    collected_variance = psp.ndshape(
-        [psp.ndshape(s)[indirect], len(error_path)], [indirect, "pathways"]
-    ).alloc()
-    avg_error = []
-    for j in range(len(error_path)):
-        # calculate N₂ Δf² σ², which is the variance of the integral
-        # (by error propagation) where N₂ is the number of points in
-        # the indirect dimension
-        s_forerror = select_pathway(s, error_path[j])
-        # previous line wipes everything out and starts over -- why not use
-        # collected_variance above, as I had originally set up --> part of
-        # issue #44
-        if j == 0:
-            N2 = psp.ndshape(s_forerror)[direct]
-        # mean divides by N₁ (indirect), integrate multiplies by Δf, and the
-        # mean sums all elements (there are N₁N₂ elements)
-        s_forerror -= s_forerror.C.mean_all_but([indirect, direct]).mean(
-            direct
-        )
-        s_forerror.run(lambda x: abs(x) ** 2 / 2).mean_all_but(
-            [direct, indirect]
-        ).mean(direct)
-        s_forerror *= df**2  # Δf
-        s_forerror *= N2
-        avg_error.append(s_forerror)
-    avg_error = sum(avg_error) / len(avg_error)
-    # {{{ variance calculation for debug
-    variance_debug = False
-    if variance_debug:
-        print(
-            "(inside automatic routine) the stdev seems to be",
-            np.sqrt(collected_variance / (df * N2)),
-        )
-        print(
-            "automatically calculated integral error:",
-            np.sqrt(collected_variance.data),
-        )
-    # }}}
-    s = select_pathway(s, sig_path)
-    retval = s.integrate(direct).set_error(psp.sqrt(s_forerror.data))
+    # returns ∫s(ν)dν with error set to √(σ²_ν Δν² N)
+    retval = (
+        select_pathway(s, signal_pathway)
+        .integrate(direct)
+        .set_error(psp.sqrt(spectral_datapoint_variance.data * df**2 * N))
+    )
     if not return_frq_slice:
         return retval
     elif return_frq_slice:

@@ -28,12 +28,13 @@ from .simple_functions import (
     heaviside_time_domain,
 )
 from .DCCT_func import DCCT
-from .integral_w_error import integral_w_errors, active_propagation
+from .integral_w_error import frequency_domain_integral, active_propagation
 from .apod_matched_filter import apod_matched_filter
 from .third_level.QESR import QESR
 from .envelope import L2G, fit_envelope
 from .convert_to_power import convert_to_power
 from .clock_correct import clock_correct
+from .calc_error import calc_masked_variance
 
 __all__ = [
     "DCCT",
@@ -46,6 +47,7 @@ __all__ = [
     "align_esr",
     "apod_matched_filter",
     "calc_baseline",
+    "calc_masked_variance",
     "center_echo",
     "clock_correct",
     "convert_to_power",
@@ -64,7 +66,7 @@ __all__ = [
     "generate_integrals",
     "heaviside_time_domain",
     "hermitian_function_test",
-    "integral_w_errors",
+    "frequency_domain_integral",
     "integrate_limits",
     "logobj",
     "lookup_table",

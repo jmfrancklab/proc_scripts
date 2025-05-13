@@ -7,18 +7,18 @@ Generate a fake dataset of an inversion recovery with multiple repeats (φ
 Check that the following match:
 
 - integral w/ error (the canned routine
-  :func:`~pyspecProcScripts.integral_w_errors`)
+  :func:`~pyspecProcScripts.frequency_domain_integral`)
 - propagate error based off the programmed σ of the normal distribution
 - set the error bars based on the standard deviation (along the repeats
   dimension) of the *real* part of the integral
 - propagate error based off the variance of the noise in the inactive
   coherence channels (do this manually inside this script -- should mimic
-  what :func:`~pyspecProcScripts.integral_w_errors` does)
+  what :func:`~pyspecProcScripts.frequency_domain_integral` does)
 """
 
-from numpy import diff, r_, sqrt, real, exp, pi
+from numpy import diff, r_, sqrt, real, exp, pi, var
 from pyspecdata import ndshape, nddata, init_logging, figlist_var
-from pyspecProcScripts import integral_w_errors
+from pyspecProcScripts import frequency_domain_integral
 
 # sphinx_gallery_thumbnail_number = 1
 
@@ -29,7 +29,11 @@ vd = nddata(r_[0:1:40j], "vd")
 ph1 = nddata(r_[0, 2] / 4.0, "ph1")
 ph2 = nddata(r_[0:4] / 4.0, "ph2")
 signal_pathway = {"ph1": 0, "ph2": 1}
-excluded_pathways = [(0, 0), (0, 3)]
+excluded_pathways = [
+    signal_pathway,
+    {"ph1": 0, "ph2": 0},
+    {"ph1": 0, "ph2": 3},
+]
 # this generates fake clean_data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
 # offset of 300 Hz, FWHM 10 Hz
@@ -53,34 +57,19 @@ for j in range(n_repeats):
     data = clean_data.C
     data.add_noise(fake_data_noise_std)
     # at this point, the fake data has been generated
-    data.ft(["ph1", "ph2"])
-    # {{{ usually, we don't use a unitary FT -- this makes it unitary
-    data /= 0.5 * 0.25  # the dt in the integral for both dims
-    data /= sqrt(ndshape(data)["ph1"] * ndshape(data)["ph2"])  # normalization
-    # }}}
+    data.ft(["ph1", "ph2"], unitary=True)
     dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
     data.ft("t2", shift=True)
-    # {{{
     data /= sqrt(ndshape(data)["t2"]) * dt
-    error_pathway = (
-        set((
-            (j, k)
-            for j in range(ndshape(data)["ph1"])
-            for k in range(ndshape(data)["ph2"])
-        ))
-        - set(excluded_pathways)
-        - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
-    )
-    error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
-    s_int, frq_slice = integral_w_errors(
+    s_int, frq_slice = frequency_domain_integral(
         data,
-        signal_pathway,
-        error_pathway,
+        signal_pathway=signal_pathway,
+        excluded_pathways=excluded_pathways,
+        excluded_frqs=[bounds],
         indirect="vd",
         fl=fl,
         return_frq_slice=True,
     )
-    # }}}
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
     N = ndshape(manual_bounds)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
@@ -89,11 +78,14 @@ for j in range(n_repeats):
     # multiplied by df
     all_results["repeats", j] = manual_bounds
     print("#%d" % j)
+# Here, I use var, but I could also do this manually (w/out the ddof)
+# using abs( )**2 and then mean
 std_off_pathway = (
     data["ph1", 0]["ph2", 0]["t2":bounds]
-    .C.run(lambda x: abs(x) ** 2 / 2)  # sqrt2 so variance is variance of real
-    .mean_all_but(["t2", "vd"])
-    .mean("t2")
+    .C.run(
+        lambda x, axis=None: var(x, ddof=1, axis=axis) / 2, "t2"
+    )  # the 2 is b/c var gives sum of real var and imag var
+    .mean_all_but(["vd"])
     .run(sqrt)
 )
 print(
