@@ -50,37 +50,33 @@ def frq_mask(s, sigma=150.0):
     return s * frq_mask
 
 
-def Delta_p_mask(s):
-    """Filters out all but the signal pathway and the "ph1":0 or
+def coherence_mask(s):
+    """Gives an nddata mask that can be used to filter out all but the
+    signal pathway and the "ph1":0 or
     {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
     Note this serves as an example function and other filter functions could
     alternatively be used"""
-    for j, (ph_name, ph_val) in enumerate(
-        s.get_prop("coherence_pathway").items()
-    ):
-        # {{{ Determine if the mask is being applied to the Delta ph domain
-        #     used for the correlation or the regular ph domain
-        this_phname = (
-            "Delta" + ph_name.capitalize()
-            if "Delta" + ph_name.capitalize() in s.dimlabels
-            else ph_name
-        )
-        # TODO ☐ (later): leave for JF after all other todo's resolved and
-        #         example runs:
-        #
-        #         Rather than actually applying the slice, return a
-        #         boolean numpy array that can be used to slice the
-        #         smooshed Δp dimension.
-        #         This allows us to not only calculate the correlation
-        #         function as a sum across Δp, but also to calculate the
-        #         norm before such a sum.
-        if j == 0:
-            signal_path = s[this_phname, ph_val]
-            zero_path = s[this_phname, 0]
-        else:
-            signal_path = signal_path[this_phname, ph_val]
-            zero_path = zero_path[this_phname, 0]
-    return signal_path + zero_path
+    # {{{ construct an nddata that's the same shape as the phases, only, and
+    #     fill it with false.  It's important that the way I do this, the
+    #     dimensions are ordered in the same order.
+    retval = psd.ndshape([
+        (k, v)
+        for (k, v) in s.shape
+        if k in s.get_prop("coherence_pathway").keys()
+    ]).alloc(dtype=np.double)
+
+    # }}}
+    def set_pathway_true(pathway_dict):
+        for j, (k, v) in enumerate(pathway_dict.items()):
+            # the last element needs to be treated differently
+            if j < len(pathway_dict) - 1:
+                thisslice = retval[k, v]
+            else:
+                thisslice[k, v] = 1
+
+    set_pathway_true(s.get_prop("coherence_pathway"))
+    set_pathway_true({k: 0 for k in s.get_prop("coherence_pathway").keys()})
+    return retval
 
 
 # }}}
@@ -175,7 +171,7 @@ with psd.figlist_var() as fl:
         opt_shift = psdpr.correl_align(
             data * mysgn,
             frq_mask_fn=frq_mask,
-            Delta_p_mask_fn=Delta_p_mask,
+            coherence_mask=coherence_mask,
             repeat_dims=indirect,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and

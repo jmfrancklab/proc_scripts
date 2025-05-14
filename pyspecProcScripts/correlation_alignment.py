@@ -18,7 +18,7 @@ def to_percent(y, position):
 def correl_align(
     s_orig,
     frq_mask_fn,
-    Delta_p_mask_fn,
+    coherence_mask,
     tol=1e-4,
     repeat_dims=[],
     non_repeat_dims=[],
@@ -58,7 +58,7 @@ def correl_align(
         A function which takes nddata and returns a copy that has been
         multiplied by the square root of the frequency-domain mask (see
         DCCT paper).
-    Delta_p_mask_fn : func
+    coherence_mask : func
         A function which takes the 3D data which we call leftbracket
         (:math:`s_{m,n}` in the DCCT paper), and applies the mask over
         the :math:`\\Delta p` (coherence transfer) dimension,
@@ -212,7 +212,7 @@ def correl_align(
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
     E_of_avg = (
-        abs(Delta_p_mask_fn(s_leftbracket).C.sum("repeats")) ** 2
+        abs(coherence_mask(s_leftbracket).C.sum("repeats")) ** 2
     ).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
@@ -290,7 +290,7 @@ def correl_align(
         s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
-        s_leftbracket = Delta_p_mask_fn(s_leftbracket)
+        s_leftbracket = coherence_mask(s_leftbracket)
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
@@ -367,7 +367,7 @@ def correl_align(
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
         E_of_avg = (
-            abs(Delta_p_mask_fn(s_leftbracket).C.sum("repeats")) ** 2
+            abs(coherence_mask(s_leftbracket).C.sum("repeats")) ** 2
         ).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
