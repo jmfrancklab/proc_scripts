@@ -18,10 +18,11 @@ Check that the following match:
 
 from numpy import diff, r_, sqrt, real, exp, pi, var
 from pyspecdata import ndshape, nddata, init_logging, figlist_var
-from pyspecProcScripts import frequency_domain_integral
+from pyspecProcScripts import frequency_domain_integral, select_pathway
+from pylab import seed
 
 # sphinx_gallery_thumbnail_number = 1
-
+seed(2021)
 init_logging(level="debug")
 fl = figlist_var()
 t2 = nddata(r_[0:1:1024j], "t2")
@@ -45,7 +46,6 @@ clean_data *= exp(signal_pathway["ph2"] * 1j * 2 * pi * ph2)
 clean_data["t2":0] *= 0.5
 fake_data_noise_std = 2.0
 clean_data.reorder(["ph1", "ph2", "vd"])
-bounds = (0, 200)  # seem reasonable to me
 result = 0
 n_repeats = 100
 all_results = ndshape(clean_data) + (n_repeats, "repeats")
@@ -65,29 +65,24 @@ for j in range(n_repeats):
         data,
         signal_pathway=signal_pathway,
         excluded_pathways=excluded_pathways,
-        excluded_frqs=[bounds],
         indirect="vd",
         fl=fl,
         return_frq_slice=True,
     )
-    # TODO ☐: but these are not actually manual bounds -- we are
-    #         re-using the bounds spit out by the previous guy, which
-    #         are automatically determined.
-    #         I went back and looked and in 0d40c6, these were actually
-    #         manual bounds.  It think that you changed them in
-    #         b376414d7bf9201.
-    manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
-    N = ndshape(manual_bounds)["t2"]
+    manual_integration = select_pathway(data, signal_pathway)[
+        "t2":frq_slice
+    ].real
+    N = ndshape(manual_integration)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
-    manual_bounds.integrate("t2")
+    manual_integration.integrate("t2")
     # N terms that have variance given by fake_data_noise_std**2 each
     # multiplied by df
-    all_results["repeats", j] = manual_bounds
+    all_results["repeats", j] = manual_integration
     print("#%d" % j)
 # Here, I use var, but I could also do this manually (w/out the ddof)
 # using abs( )**2 and then mean
 std_off_pathway = (
-    data["ph1", 0]["ph2", 0]["t2":bounds]
+    select_pathway(data, {"ph1": 0, "ph2": 0})["t2":frq_slice]
     .C.run(
         lambda x, axis=None: var(x, ddof=1, axis=axis) / 2, "t2"
     )  # the 2 is b/c var gives sum of real var and imag var
@@ -102,9 +97,9 @@ propagated_variance_from_inactive = N * df**2 * std_off_pathway**2
 propagated_variance = N * df**2 * fake_data_noise_std**2
 fl.next("different types of error")
 fl.plot(s_int, ".", capsize=6, label="std from int w err", alpha=0.5)
-manual_bounds.set_error(sqrt(propagated_variance))
+manual_integration.set_error(sqrt(propagated_variance))
 fl.plot(
-    manual_bounds,
+    manual_integration,
     ".",
     capsize=6,
     label=r"propagated from programmed variance",
@@ -113,13 +108,15 @@ fl.plot(
 all_results.run(real).mean("repeats", std=True)
 # by itself, that would give error bars, but the data would be
 # averaged -- better to put the data in the same position
-manual_bounds.set_error(all_results.get_error())
+manual_integration.set_error(all_results.get_error())
 # the fact that this matches the previous shows that my sample size is
 # large enough to give good statistics
-fl.plot(manual_bounds, ".", capsize=6, label=r"std from repeats", alpha=0.5)
-manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data))
 fl.plot(
-    manual_bounds,
+    manual_integration, ".", capsize=6, label=r"std from repeats", alpha=0.5
+)
+manual_integration.set_error(sqrt(propagated_variance_from_inactive.data))
+fl.plot(
+    manual_integration,
     ".",
     capsize=6,
     label=r"propagated from inactive std",
