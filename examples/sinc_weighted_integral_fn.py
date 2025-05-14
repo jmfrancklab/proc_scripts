@@ -29,12 +29,16 @@ excluded_pathways = [{"ph1":0},{"ph1":1},{"ph1":3}]
 t2, repeats, ph1 = s.symbols("t2 repeats ph1")
 signal_pathway = {"ph1":1}
 n_repeats = 50
-f_range = (-20,20)
-int_width = f_range[1]-f_range[0]
+lambda_L = 2/np.pi
+f_range = (-150,150)
+result = 0
+errors = []
+t_std = []
+real_std = []
 # {{{ Generate data
 data = fake_data(
         expression=(
-            100*s.exp(+1j*2*s.pi*t2-t2*16*s.pi)
+            150*s.exp(+1j*2*s.pi*t2-t2*lambda_L*s.pi)
             +1e-10*repeats
             ),
         axis_coords=OrderedDict(
@@ -49,6 +53,10 @@ data = fake_data(
         scale=10.0
         )
 # }}}
+# {{{ Allocate an nddata for the f_integrals and for the t_integrals
+f_results = ndshape([n_repeats],["repeats"]).alloc().setaxis("repeats",r_[1:n_repeats+1])
+t_results = f_results.C
+# }}}
 # {{{ Note that we start at zero, but still need the echolike → causal
 #     conversion
 data = data["t2":(0,None)]
@@ -59,12 +67,6 @@ t_stop_orig = data.getaxis("t2")[-1] # this will be used later in
 #                                      making the cleaned up non zero
 #                                      data
 orig_causal_data = data.C # needed later for integration
-# {{{ Zero fill 2 x and make real/symmetric
-data.ft("t2",pad = 2*1024)
-data.run(np.real)
-data.ft_new_startpoint("t2","t").set_ft_prop("t2",None)
-data.ift("t2",shift=True)
-# }}}
 data.ft("t2")
 # {{{ Normalize to integral of 1
 data /= (
@@ -74,6 +76,25 @@ data /= (
         .item()
         )
 # }}}
+with figlist_var() as fl:
+    s_int,frq_slice = frequency_domain_integral(
+            data,
+            signal_pathway = signal_pathway,
+            excluded_frqs = [f_range],
+            excluded_pathways = excluded_pathways,
+            fl = fl,
+            return_frq_slice = True)
+    fl.next("Frequency integrals")
+    fl.plot(s_int)
+    data.ift("t2")
+    fl.show();quit()
+# {{{ Zero fill 2 x and make real/symmetric
+data.ft("t2",pad = 2*1024)
+data.run(np.real)
+data.ft_new_startpoint("t2","t").set_ft_prop("t2",None)
+data.ift("t2",shift=True)
+# }}}
+data.ft("t2")
 mysinc = heaviside_time_domain(select_pathway(data,signal_pathway),f_range)
 # {{{ Normalizing the sinc for integration
 mysinc.ft("t2")
