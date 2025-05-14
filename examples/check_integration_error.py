@@ -50,7 +50,7 @@ clean_data["t2":0] *= 0.5
 fake_data_noise_std = 2.0
 clean_data.reorder(["ph1", "ph2", "vd"])
 result = 0
-n_repeats = 25
+n_repeats = 100
 all_results_manual = ndshape(clean_data) + (n_repeats, "repeats")
 all_results_manual.pop("t2").pop("ph1").pop("ph2")
 all_results_manual = all_results_manual.alloc()
