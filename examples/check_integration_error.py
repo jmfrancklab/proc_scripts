@@ -115,6 +115,7 @@ with figlist_var() as fl:
             label=this_label + " with true error",
             alpha=0.5,
         )
+        # TODO ☐: for auto code, the propagated error is smaller than the true error
         this_error.mean("repeats")
         this_data.set_error(this_error.data)
         fl.plot(
