@@ -72,7 +72,10 @@ for j in range(n_repeats):
     )
     # TODO ☐: but these are not actually manual bounds -- we are
     #         re-using the bounds spit out by the previous guy, which
-    #         are automatically determined
+    #         are automatically determined.
+    #         I went back and looked and in 0d40c6, these were actually
+    #         manual bounds.  It think that you changed them in
+    #         b376414d7bf9201.
     manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
     N = ndshape(manual_bounds)["t2"]
     df = diff(data.getaxis("t2")[r_[0, 1]]).item()
