@@ -4,7 +4,6 @@ from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import logging
-from .simple_functions import select_pathway
 
 
 @FuncFormatter
@@ -108,10 +107,9 @@ def correl_align(
         "We updated the correlation function to no longer take avg_dim as a"
         " kwarg!"
     )
-    if signal_pathway is None:
-        signal_pathway = s_orig.get_prop("coherence_pathway")
+    signal_pathway = s_orig.get_prop("coherence_pathway")
     assert signal_pathway is not None, (
-        "You need to tell me what the signal pathway is since your data"
+        "You need to set the coherence_pathway property since your data"
         " doesn't have this property set - this is a problem!!"
     )
     if isinstance(non_repeat_dims, str):
@@ -212,12 +210,8 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    # TODO ☐: we actually want to apply the CT mask here, because we
-    #         define "success" as any signal that's not masked -- not
-    #         just the CT pathway that's defined as signal.
     E_of_avg = (
-        abs(select_pathway(s_leftbracket, signal_pathway).C.sum("repeats"))
-        ** 2
+        abs(Delta_p_mask_fn(s_leftbracket).C.sum("repeats")) ** 2
     ).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
@@ -228,7 +222,7 @@ def correl_align(
         # Note that both s_jk and s_leftbracket
         # change every iteration, because the
         # *data* is updated with every iteration.
-        # Note that they are both in the frequency domain and CT 
+        # Note that they are both in the frequency domain and CT
         # domain at this point.
         logging.debug(psd.strm("*** *** ***"))
         logging.debug(
@@ -371,10 +365,8 @@ def correl_align(
         )
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
-        # TODO ☐: same comment as above
         E_of_avg = (
-            abs(select_pathway(s_leftbracket, signal_pathway).C.sum("repeats"))
-            ** 2
+            abs(Delta_p_mask_fn(s_leftbracket).C.sum("repeats")) ** 2
         ).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
