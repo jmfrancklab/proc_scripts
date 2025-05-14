@@ -2,9 +2,11 @@
 Weighted Integral Function Example
 ==================================
 
-The weighted integral function is utilized in integrating a signal.
-Specifically here, we generate a sinc function whose FT is a heaviside hat
-function with a width equal to the integration bounds.
+The weighted integral function is utilized in integrating a signal in the time
+domain.  Specifically here, we generate a sinc function whose FT is a heaviside
+hat function with a width equal to the integration bounds and integrate in the
+time domain.  These integrals are then compared to the same integrals
+calculated in the frequency domain.
 """
 
 from pyspecdata import r_, nddata, figlist_var, ndshape, fake_data
