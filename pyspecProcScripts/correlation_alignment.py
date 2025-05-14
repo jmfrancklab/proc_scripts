@@ -111,6 +111,7 @@ def correl_align(
     assert signal_pathway is not None, (
         "You need to set the coherence_pathway property since your data"
         " doesn't have this property set - this is a problem!!"
+        " (though this is not used here, it's used by the frequency mask)"
     )
     if isinstance(non_repeat_dims, str):
         non_repeat_dims = [non_repeat_dims]
