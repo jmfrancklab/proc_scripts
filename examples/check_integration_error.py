@@ -8,16 +8,10 @@ Check that the following match:
 
 - integral w/ error (the canned routine
   :func:`~pyspecProcScripts.frequency_domain_integral`)
-- propagate error based off the programmed σ of the normal distribution
 - set the error bars based on the standard deviation (along the repeats
   dimension) of the *real* part of the integral
-- propagate error based off the variance of the noise in the inactive
-  coherence channels (do this manually inside this script -- should mimic
-  what :func:`~pyspecProcScripts.frequency_domain_integral` does)
+and that these should also be similar to if not better than if the integrals and propagated error were calculated manually using bounds selected by hand.  
 """
-
-# TODO ☐: read through current version, and make sure that the
-#         description above matches
 
 from numpy import diff, r_, sqrt, real, exp, pi, var
 from pyspecdata import ndshape, nddata, init_logging, figlist_var
@@ -34,8 +28,9 @@ ph2 = nddata(r_[0:4] / 4.0, "ph2")
 signal_pathway = {"ph1": 0, "ph2": 1}
 excluded_pathways = [
     signal_pathway,
-    {"ph1": 0, "ph2": 0},
+#    {"ph1": 0, "ph2": 0},
     {"ph1": 0, "ph2": 3},
+    {"ph1": 0, "ph2": 2},
 ]
 manual_bounds = (0, 200.0)
 # this generates fake clean_data w/ a T₂ of 0.2s
@@ -70,7 +65,7 @@ with figlist_var() as fl:
         # note that frq_slice is re-determined for each repeat.  This is on
         # purpose.
         s_int, frq_slice = frequency_domain_integral(
-            data,
+            data.real,
             signal_pathway=signal_pathway,
             excluded_pathways=excluded_pathways,
             indirect="vd",
@@ -115,7 +110,6 @@ with figlist_var() as fl:
             label=this_label + " with true error",
             alpha=0.5,
         )
-        # TODO ☐: for auto code, the propagated error is smaller than the true error
         this_error.mean("repeats")
         this_data.set_error(this_error.data)
         fl.plot(
