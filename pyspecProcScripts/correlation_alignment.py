@@ -18,7 +18,7 @@ def to_percent(y, position):
 def correl_align(
     s_orig,
     frq_mask_fn,
-    coherence_mask,
+    coherence_unmask_fn,
     tol=1e-4,
     repeat_dims=[],
     non_repeat_dims=[],
@@ -58,11 +58,13 @@ def correl_align(
         A function which takes nddata and returns a copy that has been
         multiplied by the square root of the frequency-domain mask (see
         DCCT paper).
-    coherence_mask : func
-        A function which takes the 3D data which we call leftbracket
-        (:math:`s_{m,n}` in the DCCT paper), and applies the mask over
-        the :math:`\\Delta p` (coherence transfer) dimension,
-        as well as a sum over :math:`\\Delta p`.
+    coherence_unmask_fn : func
+        A function which takes an nddata,
+        containing all the coherence transfer dimensions and filled with
+        zeros,
+        and sets coherence pathways we do *not* want to mask to 1.
+        Most typically, you would set the coherence pathway of the signal to 1,
+        but you might need to set artifacts to 1 as well.
     tol:            float
                     Sets the tolerance limit for the alignment procedure.
     repeat_dims : list (default [])
@@ -204,6 +206,24 @@ def correl_align(
         )
     energy_diff = 1.0
     energy_vals = []
+    # {{{ construct an nddata that's the same shape as the phases, only, and
+    #     fill it with false.  It's important that the way I do this, the
+    #     dimensions are ordered in the same order.
+    coh_mask = psd.ndshape([(k, s_orig.shape[k]) for k in phcycdims]).alloc(
+        dtype=np.double
+    )
+    coh_mask.set_prop("coherence_pathway", signal_pathway)
+    coh_mask = coherence_unmask_fn(coh_mask)
+
+    def smoosh_or_rename(temp_phcycdims, x):
+        if len(phcycdims) > 1:
+            x.smoosh(temp_phcycdims, "smooshed_coh", noaxis=True)
+        else:
+            x.rename(temp_phcycdims[0], "smooshed_coh")
+        return x
+
+    coh_mask = smoosh_or_rename(phcycdims, coh_mask)
+    # }}}
     # E_of_avg is the energy calculated from the averaged signal
     # (vs. sig_energy above, which is the energy of the *un*averaged
     # signal.
@@ -211,9 +231,9 @@ def correl_align(
     # are the same, then the energy of the resulting sum should increase by N
     # (vs taking the square and summing which is what we do for calculating the
     # sig_energy above)
-    E_of_avg = (
-        abs(coherence_mask(s_leftbracket).C.sum("repeats")) ** 2
-    ).data.sum().item() / N**2
+    E_of_avg = (smoosh_or_rename(phcycdims, s_leftbracket.C) * coh_mask).sum(
+        "repeats"
+    ).run(lambda x: abs(x) ** 2).data.sum().item() / N**2
     energy_vals.append(E_of_avg / sig_energy)
     last_E = None
     # previously, we were re-doing assertion statements pertaining to
@@ -290,7 +310,11 @@ def correl_align(
         s_leftbracket.run(np.conj)
         for ph_name, ph_val in signal_pathway.items():
             s_leftbracket.ft(["Delta%s" % ph_name.capitalize()])
-        s_leftbracket = coherence_mask(s_leftbracket)
+        s_leftbracket = smoosh_or_rename(
+            ["Delta" + j.capitalize() for j in phcycdims], s_leftbracket
+        )
+        s_leftbracket *= coh_mask
+        s_leftbracket.sum("smooshed_coh")
         # }}}
         # the sum over m in eq. 29 only applies to the left bracket,
         # so we just do it here
@@ -367,8 +391,9 @@ def correl_align(
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
         E_of_avg = (
-            abs(coherence_mask(s_leftbracket).C.sum("repeats")) ** 2
-        ).data.sum().item() / N**2
+            smoosh_or_rename(phcycdims, s_leftbracket.C)
+            * coh_mask
+        ).sum("repeats").run(lambda x: abs(x) ** 2).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
             psd.strm("averaged signal energy (per transient):", E_of_avg)

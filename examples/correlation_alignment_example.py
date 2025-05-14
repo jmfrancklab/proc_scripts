@@ -9,7 +9,12 @@ aligning the data through a correlation routine.
 import pyspecdata as psd
 from pyspecdata import r_
 import numpy as np
-import pyspecProcScripts as psdpr
+from pyspecProcScripts import (
+    select_pathway,
+    correl_align,
+    zeroth_order_ph,
+    hermitian_function_test,
+)
 from pylab import rcParams
 import matplotlib.pyplot as plt
 import sympy as s
@@ -36,7 +41,7 @@ def frq_mask(s, sigma=150.0):
     assert s.get_ft_prop(list(s.get_prop("coherence_pathway").keys())[0])
     # {{{ find center frequency
     nu_center = (
-        psdpr.select_pathway(s, s.get_prop("coherence_pathway"))
+        select_pathway(s, s.get_prop("coherence_pathway"))
         .mean("repeats")
         .argmax("t2")
     )
@@ -50,33 +55,27 @@ def frq_mask(s, sigma=150.0):
     return s * frq_mask
 
 
-def coherence_mask(s):
-    """Gives an nddata mask that can be used to filter out all but the
-    signal pathway and the "ph1":0 or
-    {'ph1':0,'ph2':0} pathways (depending on which experiment below is used).
+def coherence_unmask_fn(coh_array):
+    """Filters out all but the signal pathway and the {"ph1":0} or
+    {"ph1":0,"ph2":0} pathways (depending on which experiment below is used).
     Note this serves as an example function and other filter functions could
     alternatively be used"""
-    # {{{ construct an nddata that's the same shape as the phases, only, and
-    #     fill it with false.  It's important that the way I do this, the
-    #     dimensions are ordered in the same order.
-    retval = psd.ndshape([
-        (k, v)
-        for (k, v) in s.shape
-        if k in s.get_prop("coherence_pathway").keys()
-    ]).alloc(dtype=np.double)
 
-    # }}}
     def set_pathway_true(pathway_dict):
         for j, (k, v) in enumerate(pathway_dict.items()):
             # the last element needs to be treated differently
             if j < len(pathway_dict) - 1:
-                thisslice = retval[k, v]
+                thisslice = coh_array[k, v]
+            elif len(pathway_dict) == 1:
+                coh_array[k, v] = 1
             else:
                 thisslice[k, v] = 1
 
-    set_pathway_true(s.get_prop("coherence_pathway"))
-    set_pathway_true({k: 0 for k in s.get_prop("coherence_pathway").keys()})
-    return retval
+    set_pathway_true(coh_array.get_prop("coherence_pathway"))
+    set_pathway_true(
+        {k: 0 for k in coh_array.get_prop("coherence_pathway").keys()}
+    )
+    return coh_array
 
 
 # }}}
@@ -145,16 +144,14 @@ with psd.figlist_var() as fl:
         )
         data = data["t2":f_range]
         data.ift("t2")
-        data /= psdpr.zeroth_order_ph(
-            psdpr.select_pathway(data, signal_pathway)
-        )
+        data /= zeroth_order_ph(select_pathway(data, signal_pathway))
         # }}}
         # {{{ Applying the phase corrections
         data["t2"] -= data.getaxis("t2")[0]  # needed for Hermitian Function
         #                                     (fid_from_echo does this
         #                                     automatically)
-        best_shift = psdpr.hermitian_function_test(
-            psdpr.select_pathway(data.C.mean(indirect), signal_pathway)
+        best_shift = hermitian_function_test(
+            select_pathway(data.C.mean(indirect), signal_pathway)
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
@@ -164,14 +161,14 @@ with psd.figlist_var() as fl:
         mysgn = (  # this is the sign of the signal -- note how on the next
             #        line, I pass sign-flipped data, so that we don't need to
             #        worry about messing with the original signal
-            psdpr.select_pathway(data, signal_pathway)
+            select_pathway(data, signal_pathway)
             .C.real.sum("t2")
             .run(np.sign)
         )
-        opt_shift = psdpr.correl_align(
+        opt_shift = correl_align(
             data * mysgn,
             frq_mask_fn=frq_mask,
-            coherence_mask=coherence_mask,
+            coherence_unmask_fn=coherence_unmask_fn,
             repeat_dims=indirect,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
