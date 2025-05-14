@@ -44,7 +44,9 @@ def frq_mask(s, sigma=150.0):
     # {{{ Make mask using the center frequency and sigma.
     #     Standard gaussian is 2σ² in the denominator -- the extra 2 is
     #     for sqrt.
-    frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
+    frq_mask = np.exp(
+        -((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2)
+    )
     # }}}
     # note that when we multiply, we automatically generate a copy
     return s * frq_mask
@@ -58,6 +60,13 @@ def Delta_p_mask(s):
     for j, (ph_name, ph_val) in enumerate(
         s.get_prop("coherence_pathway").items()
     ):
+        # {{{ Determine if the mask is being applied to the Delta ph domain
+        #     used for the correlation or the regular ph domain
+        this_phname = (
+            "Delta" + ph_name.capitalize()
+            if "Delta" + ph_name.capitalize() in s.dimlabels
+            else ph_name
+        )
         # TODO ☐ (later): leave for JF after all other todo's resolved and
         #         example runs:
         #
@@ -68,11 +77,11 @@ def Delta_p_mask(s):
         #         function as a sum across Δp, but also to calculate the
         #         norm before such a sum.
         if j == 0:
-            signal_path = s["Delta" + ph_name.capitalize(), ph_val]
-            zero_path = s["Delta" + ph_name.capitalize(), 0]
+            signal_path = s[this_phname, ph_val]
+            zero_path = s[this_phname, 0]
         else:
-            signal_path = signal_path["Delta" + ph_name.capitalize(), ph_val]
-            zero_path = zero_path["Delta" + ph_name.capitalize(), 0]
+            signal_path = signal_path[this_phname, ph_val]
+            zero_path = zero_path[this_phname, 0]
     return signal_path + zero_path
 
 
@@ -170,7 +179,6 @@ with psd.figlist_var() as fl:
             frq_mask_fn=frq_mask,
             Delta_p_mask_fn=Delta_p_mask,
             repeat_dims=indirect,
-            signal_pathway=signal_pathway,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
