@@ -24,7 +24,6 @@ from pylab import seed
 # sphinx_gallery_thumbnail_number = 1
 seed(2021)
 init_logging(level="debug")
-fl = figlist_var()
 t2 = nddata(r_[0:1:1024j], "t2")
 vd = nddata(r_[0:1:40j], "vd")
 ph1 = nddata(r_[0, 2] / 4.0, "ph1")
@@ -53,73 +52,80 @@ all_results.pop("t2").pop("ph1").pop("ph2")
 all_results = all_results.alloc()
 all_results.setaxis("vd", clean_data.getaxis("vd"))
 print("shape of all results", ndshape(all_results))
-for j in range(n_repeats):
-    data = clean_data.C
-    data.add_noise(fake_data_noise_std)
-    # at this point, the fake data has been generated
-    data.ft(["ph1", "ph2"], unitary=True)
-    dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
-    data.ft("t2", shift=True)
-    data /= sqrt(ndshape(data)["t2"]) * dt
-    s_int, frq_slice = frequency_domain_integral(
-        data,
-        signal_pathway=signal_pathway,
-        excluded_pathways=excluded_pathways,
-        indirect="vd",
-        fl=fl,
-        return_frq_slice=True,
+with figlist_var() as fl:
+    for j in range(n_repeats):
+        data = clean_data.C
+        data.add_noise(fake_data_noise_std)
+        # at this point, the fake data has been generated
+        data.ft(["ph1", "ph2"], unitary=True)
+        dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
+        data.ft("t2", shift=True)
+        data /= sqrt(ndshape(data)["t2"]) * dt
+        s_int, frq_slice = frequency_domain_integral(
+            data,
+            signal_pathway=signal_pathway,
+            excluded_pathways=excluded_pathways,
+            indirect="vd",
+            fl=fl,
+            return_frq_slice=True,
+        )
+        manual_integration = select_pathway(data, signal_pathway)[
+            "t2":frq_slice
+        ].real
+        N = ndshape(manual_integration)["t2"]
+        df = diff(data.getaxis("t2")[r_[0, 1]]).item()
+        manual_integration.integrate("t2")
+        # N terms that have variance given by fake_data_noise_std**2 each
+        # multiplied by df
+        all_results["repeats", j] = manual_integration
+        print("#%d" % j)
+    # Here, I use var, but I could also do this manually (w/out the ddof)
+    # using abs( )**2 and then mean
+    std_off_pathway = (
+        select_pathway(data, {"ph1": 0, "ph2": 0})["t2":frq_slice]
+        .C.run(
+            lambda x, axis=None: var(x, ddof=1, axis=axis) / 2, "t2"
+        )  # the 2 is b/c var gives sum of real var and imag var
+        .mean_all_but(["vd"])
+        .run(sqrt)
     )
-    manual_integration = select_pathway(data, signal_pathway)[
-        "t2":frq_slice
-    ].real
-    N = ndshape(manual_integration)["t2"]
-    df = diff(data.getaxis("t2")[r_[0, 1]]).item()
-    manual_integration.integrate("t2")
-    # N terms that have variance given by fake_data_noise_std**2 each
-    # multiplied by df
-    all_results["repeats", j] = manual_integration
-    print("#%d" % j)
-# Here, I use var, but I could also do this manually (w/out the ddof)
-# using abs( )**2 and then mean
-std_off_pathway = (
-    select_pathway(data, {"ph1": 0, "ph2": 0})["t2":frq_slice]
-    .C.run(
-        lambda x, axis=None: var(x, ddof=1, axis=axis) / 2, "t2"
-    )  # the 2 is b/c var gives sum of real var and imag var
-    .mean_all_but(["vd"])
-    .run(sqrt)
-)
-print(
-    "off-pathway std", std_off_pathway, "programmed std", fake_data_noise_std
-)
-propagated_variance_from_inactive = N * df**2 * std_off_pathway**2
-# removed factor of 2 in following, which shouldn't have been there
-propagated_variance = N * df**2 * fake_data_noise_std**2
-fl.next("different types of error")
-fl.plot(s_int, ".", capsize=6, label="std from int w err", alpha=0.5)
-manual_integration.set_error(sqrt(propagated_variance))
-fl.plot(
-    manual_integration,
-    ".",
-    capsize=6,
-    label=r"propagated from programmed variance",
-    alpha=0.5,
-)
-all_results.run(real).mean("repeats", std=True)
-# by itself, that would give error bars, but the data would be
-# averaged -- better to put the data in the same position
-manual_integration.set_error(all_results.get_error())
-# the fact that this matches the previous shows that my sample size is
-# large enough to give good statistics
-fl.plot(
-    manual_integration, ".", capsize=6, label=r"std from repeats", alpha=0.5
-)
-manual_integration.set_error(sqrt(propagated_variance_from_inactive.data))
-fl.plot(
-    manual_integration,
-    ".",
-    capsize=6,
-    label=r"propagated from inactive std",
-    alpha=0.5,
-)
-fl.show()
+    print(
+        "off-pathway std",
+        std_off_pathway,
+        "programmed std",
+        fake_data_noise_std,
+    )
+    propagated_variance_from_inactive = N * df**2 * std_off_pathway**2
+    # removed factor of 2 in following, which shouldn't have been there
+    propagated_variance = N * df**2 * fake_data_noise_std**2
+    fl.next("different types of error")
+    fl.plot(s_int, ".", capsize=6, label="std from int w err", alpha=0.5)
+    manual_integration.set_error(sqrt(propagated_variance))
+    fl.plot(
+        manual_integration,
+        ".",
+        capsize=6,
+        label=r"propagated from programmed variance",
+        alpha=0.5,
+    )
+    all_results.run(real).mean("repeats", std=True)
+    # by itself, that would give error bars, but the data would be
+    # averaged -- better to put the data in the same position
+    manual_integration.set_error(all_results.get_error())
+    # the fact that this matches the previous shows that my sample size is
+    # large enough to give good statistics
+    fl.plot(
+        manual_integration,
+        ".",
+        capsize=6,
+        label=r"std from repeats",
+        alpha=0.5,
+    )
+    manual_integration.set_error(sqrt(propagated_variance_from_inactive.data))
+    fl.plot(
+        manual_integration,
+        ".",
+        capsize=6,
+        label=r"propagated from inactive std",
+        alpha=0.5,
+    )
