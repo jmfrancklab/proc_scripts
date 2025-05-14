@@ -8,7 +8,6 @@ from .phasing import (
 )
 from .third_level.rough_table_of_integrals import rough_table_of_integrals
 from .third_level.align_esr import align_esr
-from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
@@ -58,7 +57,6 @@ __all__ = [
     "fit_envelope",
     "fl_mod",
     "fwhm_calculator",
-    "generate_integrals",
     "hermitian_function_test",
     "frequency_domain_integral",
     "integrate_limits",

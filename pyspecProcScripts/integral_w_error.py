@@ -39,6 +39,12 @@ def frequency_domain_integral(
     excluded_frqs: list
         List of tuples containing frequencies to be filtered out when
         calculating the variance of the spectral datapoints.
+
+        If this is set to `None`, then the code will use the
+        automatically chosen integration slice.
+
+        If this is set to `[]` (empty list),
+        then the code will not exclude any frequencies.
     excluded_pathways: list
         List of dictionaries containing all coherence pathways that are to be
         masked out when calculating the error. This should include the signal
@@ -57,12 +63,16 @@ def frequency_domain_integral(
     Returns
     =======
     s: nddata
-        Data sampled at the indicated coherence pathway, and integrated over
-        bounds found by applying a matched filter and using the "cutoff" as a
-        fraction of the maximum signal intensity to determine the limits.
-        Errors are determined by error propagation in the frequency domain,
-        with the noise associated with the spectral datapoints determined from
-        the masked variance of the DCCT data.
+        Data sampled at the indicated coherence pathway, and integrated
+        over automatically determined bounds.
+        The bounds are found by applying a matched filter and using the
+        "cutoff" as a fraction of the maximum signal intensity to
+        determine the limits.
+        Errors are determined by error propagation in the frequency
+        domain, where the noise associated with the spectral datapoints
+        determined from standard deviation of the DCCT data,
+        where the masked frequencies and coherence pathways have been
+        excluded.
     """
     signal_pathway = signal_pathway or s.get_prop("coherence_pathway")
     assert s.get_ft_prop(direct), "need to be in frequency domain!"
@@ -76,7 +86,15 @@ def frequency_domain_integral(
         fl=fl,
         **kwargs,
     )
+    df = s.get_ft_prop(direct, "df")
+    # {{{ round to the nearest discrete coord
+    for j in range(2):
+        idx = np.searchsorted(s[direct], frq_slice[j] + 0.5 * df)
+        frq_slice[j] = s[direct][idx]
+    # }}}
     logging.debug(psp.strm("frq_slice is", frq_slice))
+    if excluded_frqs is None:
+        excluded_frqs = [frq_slice]
     spectral_datapoint_variance = calc_masked_variance(
         s,
         excluded_frqs=excluded_frqs,
@@ -85,10 +103,7 @@ def frequency_domain_integral(
         fl=fl,
     )
     s = s[direct:frq_slice]
-    # {{{ variables in calculating error over slice
     N = s.shape[direct]  # number of pts within the slice
-    df = s.get_ft_prop(direct, "df")
-    # }}}
     all_labels = set(s.dimlabels)
     all_labels -= set([indirect, direct])
     extra_dims = [j for j in all_labels if not j.startswith("ph")]

@@ -47,6 +47,8 @@ s = psd.find_file(
     lookup=prscr.lookup_table,
 )
 with psd.figlist_var() as fl:
+    fl.next("raw data")
+    fl.DCCT(s)
     frq_center, frq_half = prscr.find_peakrange(s, fl=fl)
     signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
     if "nScans" in s.dimlabels:
