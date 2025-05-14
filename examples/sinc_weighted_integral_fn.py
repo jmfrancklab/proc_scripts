@@ -53,9 +53,8 @@ data = fake_data(
         scale=10.0
         )
 # }}}
-# {{{ Allocate an nddata for the f_integrals and for the t_integrals
-f_results = ndshape([n_repeats],["repeats"]).alloc().setaxis("repeats",r_[1:n_repeats+1])
-t_results = f_results.C
+# {{{ Allocate an nddata for the t_integrals
+t_results = ndshape([n_repeats],["repeats"]).alloc().setaxis("repeats",r_[1:n_repeats+1])
 # }}}
 # {{{ Note that we start at zero, but still need the echolike → causal
 #     conversion
@@ -67,53 +66,54 @@ t_stop_orig = data.getaxis("t2")[-1] # this will be used later in
 #                                      making the cleaned up non zero
 #                                      data
 orig_causal_data = data.C # needed later for integration
-data.ft("t2")
-# {{{ Normalize to integral of 1
-data /= (
-        select_pathway(data["t2":f_range],signal_pathway)
-        .real.integrate("t2")
-        .mean("repeats")
-        .item()
-        )
-# }}}
 with figlist_var() as fl:
-    s_int,frq_slice = frequency_domain_integral(
-            data,
+    # {{{ Zero fill 2 x and make real/symmetric
+    data.ft("t2",pad = 2*1024)
+    data.run(np.real)
+    data.ft_new_startpoint("t2","t").set_ft_prop("t2",None)
+    data.ift("t2",shift=True)
+    # }}}
+    data.ft("t2")
+    # {{{ Normalize to integral of 1
+    data /= (
+            select_pathway(data["t2":f_range],signal_pathway)
+            .real.integrate("t2")
+            .mean("repeats")
+            .item()
+            )
+    # }}}
+    data.reorder(["ph1","repeats","t2"])
+    integral_from_freq = select_pathway(data["t2":f_range]["repeats",0].C,signal_pathway).real.integrate("t2").item()
+    f_results,frq_slice = frequency_domain_integral(
+            data.real,
             signal_pathway = signal_pathway,
             excluded_frqs = [f_range],
             excluded_pathways = excluded_pathways,
+            indirect="repeats",
             fl = fl,
             return_frq_slice = True)
     fl.next("Frequency integrals")
-    fl.plot(s_int)
+    fl.plot(f_results,'o')
+    #int_width = frq_slice[1]-frq_slice[0]
+    int_width = f_range[1]-f_range[0]
+    #mysinc = heaviside_time_domain(select_pathway(data,signal_pathway),frq_slice)
+    mysinc = heaviside_time_domain(select_pathway(data,signal_pathway),f_range)
+    # {{{ Normalizing the sinc for integration
+    mysinc.ft("t2")
+    for_norm = (mysinc.C**2).integrate("t2").item()
+    mysinc /= np.sqrt(for_norm)
+    mysinc.ift("t2")
+    mysinc *= np.sqrt(int_width)
+    # }}}
     data.ift("t2")
-    fl.show();quit()
-# {{{ Zero fill 2 x and make real/symmetric
-data.ft("t2",pad = 2*1024)
-data.run(np.real)
-data.ft_new_startpoint("t2","t").set_ft_prop("t2",None)
-data.ift("t2",shift=True)
-# }}}
-data.ft("t2")
-mysinc = heaviside_time_domain(select_pathway(data,signal_pathway),f_range)
-# {{{ Normalizing the sinc for integration
-mysinc.ft("t2")
-for_norm = (mysinc.C**2).integrate("t2").item()
-mysinc /= np.sqrt(for_norm)
-mysinc.ift("t2")
-mysinc *= np.sqrt(int_width)
-# }}}
-data.ift("t2")
-mysinc.set_units("t2",data.get_units("t2"))
-nonzero_data = data["t2":(-t_stop_orig,t_stop_orig)]
-with figlist_var() as fl:
+    mysinc.set_units("t2",data.get_units("t2"))
     data.ft("t2")
     data.set_plot_color("tab:blue")
     mysinc.ft("t2")
     mysinc.set_plot_color("tab:orange")
     fl.next("Frequency domain")
-    fl.plot(select_pathway(data["repeats",0],signal_pathway), alpha = 0.5)
-    fl.plot(mysinc*abs(data).mean("repeats").max().item(),alpha = 0.5)
+    fl.plot(select_pathway(data["repeats",0]["t2":f_range],signal_pathway), alpha = 0.5)
+    fl.plot(mysinc["t2":f_range]*abs(data["repeats",0]).max().item(),alpha = 0.5)
     data.ift("t2")
     mysinc.ift("t2")
     fl.next("Time domain")
@@ -121,33 +121,17 @@ with figlist_var() as fl:
     fl.plot(mysinc/int_width,alpha = 0.5)
     # {{{ Integrate in time domain
     apo_data = data * mysinc
-    # {{{ allocate array to place integrals in
-    t_integral = ndshape(
-        orig_causal_data.fromaxis("repeats")
-    ).alloc()
-    t_integral.setaxis("repeats",orig_causal_data["repeats"])
-    # }}}
     for j in range(len(data["repeats"])):
-        t_integral["repeats",j] = apo_data["repeats",j].C.real.integrate("t2").item()
+        t_results["repeats",j] = select_pathway(apo_data["repeats",j],signal_pathway).C.real.integrate("t2").item()
     # }}}
-    # {{{ Integrate in frequency domain
-    data.ft("t2")
-    f_integral, returned_frq_slice = frequency_domain_integral(
-            data,
-            signal_pathway = signal_pathway,
-            excluded_frqs=[f_range],
-            excluded_pathways = excluded_pathways,
-            indirect="repeats",
-            return_frq_slice = True)
-    print(f_integral)
-    print(t_integral)
+    integral_from_t = select_pathway(apo_data["repeats",0].C,signal_pathway).real.integrate("t2").item()
+    print(integral_from_freq)
+    print(integral_from_t)
+    print(f_results["repeats",0].item())
+    print(t_results["repeats",0].item())
     quit()
-
-    # {{{ Plot
-    for thisdata in [data, wt_fn]:
-        fl.plot(thisdata, ax=thisax[0])
-        thisdata.ift("t2")
-        # Just normalize by the max so they are scaled correctly
-        fl.plot(thisdata["t2":(-0.6, 0.6)] / thisdata.max(), ax=thisax[1])
-    fl.show();quit()
+    # {{{ Plot integrals from frequency domain integration and from time domain integration
+    fl.next("Integrals")
+    fl.plot(t_results,'o',label = "time domain integration")
+    fl.plot(f_results.set_error(None),'o',label = "frequency domain integration")
     # }}}
