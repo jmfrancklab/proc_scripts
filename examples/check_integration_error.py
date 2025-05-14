@@ -61,6 +61,8 @@ with figlist_var() as fl:
         dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
         data.ft("t2", shift=True)
         data /= sqrt(ndshape(data)["t2"]) * dt
+        # note that frq_slice is re-determined for each repeat.  This is on
+        # purpose.
         s_int, frq_slice = frequency_domain_integral(
             data,
             signal_pathway=signal_pathway,
@@ -108,6 +110,9 @@ with figlist_var() as fl:
         label=r"propagated from programmed variance",
         alpha=0.5,
     )
+    # TODO ☐: so, the whole point of this script is that the following guy
+    #         gives the actual/true error.  But it's no longer shown for some
+    #         reason.
     all_results.run(real).mean("repeats", std=True)
     # by itself, that would give error bars, but the data would be
     # averaged -- better to put the data in the same position
