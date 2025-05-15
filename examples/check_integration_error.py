@@ -6,30 +6,49 @@ Generate a fake dataset of an inversion recovery with multiple repeats (φ
 × t2 × vd × repeats) w/ normally distributed random noise.
 Check that the following match:
 
-- integral w/ error (the canned routine
-  :func:`~pyspecProcScripts.integral_w_errors`)
-- propagate error based off the programmed σ of the normal distribution
+- the canned routine
+  :func:`~pyspecProcScripts.frequency_domain_integral`,
+  which sets the errorbars based on the propagated error
 - set the error bars based on the standard deviation (along the repeats
   dimension) of the *real* part of the integral
-- propagate error based off the variance of the noise in the inactive
-  coherence channels (do this manually inside this script -- should mimic
-  what :func:`~pyspecProcScripts.integral_w_errors` does)
+
+and do this for both:
+
+- Fixed integral bounds.
+- Integral bounds that are automatically chosen each time.
+  Under the hood, 
+  :func:`~pyspecProcScripts.frequency_domain_integral`
+  uses
+  :func:`~pyspecProcScripts.integrate_limits`.
+  **This introduces additional error** that is not accounted
+  for by error propagation,
+  because it comes from slicing out a different portion of signal each
+  time.
+  This highlights the problem with the `integrate_limits` routine.
 """
 
-from numpy import diff, r_, sqrt, real, exp, pi
+from numpy import diff, r_, sqrt, exp, pi
 from pyspecdata import ndshape, nddata, init_logging, figlist_var
-from pyspecProcScripts import integral_w_errors
+from pyspecProcScripts import (
+    frequency_domain_integral,
+    select_pathway,
+    calc_masked_variance,
+)
+from pylab import seed
 
 # sphinx_gallery_thumbnail_number = 1
-
+seed(2021)
 init_logging(level="debug")
-fl = figlist_var()
 t2 = nddata(r_[0:1:1024j], "t2")
 vd = nddata(r_[0:1:40j], "vd")
 ph1 = nddata(r_[0, 2] / 4.0, "ph1")
 ph2 = nddata(r_[0:4] / 4.0, "ph2")
 signal_pathway = {"ph1": 0, "ph2": 1}
-excluded_pathways = [(0, 0), (0, 3)]
+excluded_pathways = [
+    signal_pathway,
+    {"ph1": 0, "ph2": 3},
+]
+fixed_bounds = (77.0, 125.0)
 # this generates fake clean_data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
 # offset of 300 Hz, FWHM 10 Hz
@@ -39,92 +58,79 @@ clean_data = (
 clean_data *= exp(signal_pathway["ph1"] * 1j * 2 * pi * ph1)
 clean_data *= exp(signal_pathway["ph2"] * 1j * 2 * pi * ph2)
 clean_data["t2":0] *= 0.5
-fake_data_noise_std = 2.0
+fake_data_noise_std = 8.0
 clean_data.reorder(["ph1", "ph2", "vd"])
-bounds = (0, 200)  # seem reasonable to me
 result = 0
 n_repeats = 100
-all_results = ndshape(clean_data) + (n_repeats, "repeats")
-all_results.pop("t2").pop("ph1").pop("ph2")
-all_results = all_results.alloc()
-all_results.setaxis("vd", clean_data.getaxis("vd"))
-print("shape of all results", ndshape(all_results))
-for j in range(n_repeats):
-    data = clean_data.C
-    data.add_noise(fake_data_noise_std)
-    # at this point, the fake data has been generated
-    data.ft(["ph1", "ph2"])
-    # {{{ usually, we don't use a unitary FT -- this makes it unitary
-    data /= 0.5 * 0.25  # the dt in the integral for both dims
-    data /= sqrt(ndshape(data)["ph1"] * ndshape(data)["ph2"])  # normalization
-    # }}}
-    dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
-    data.ft("t2", shift=True)
-    # {{{
-    data /= sqrt(ndshape(data)["t2"]) * dt
-    error_pathway = (
-        set((
-            (j, k)
-            for j in range(ndshape(data)["ph1"])
-            for k in range(ndshape(data)["ph2"])
-        ))
-        - set(excluded_pathways)
-        - set([(signal_pathway["ph1"], signal_pathway["ph2"])])
-    )
-    error_pathway = [{"ph1": j, "ph2": k} for j, k in error_pathway]
-    s_int, frq_slice = integral_w_errors(
-        data,
-        signal_pathway,
-        error_pathway,
-        indirect="vd",
-        fl=fl,
-        return_frq_slice=True,
-    )
-    # }}}
-    manual_bounds = data["ph1", 0]["ph2", 1]["t2":frq_slice]
-    N = ndshape(manual_bounds)["t2"]
-    df = diff(data.getaxis("t2")[r_[0, 1]]).item()
-    manual_bounds.integrate("t2")
-    # N terms that have variance given by fake_data_noise_std**2 each
-    # multiplied by df
-    all_results["repeats", j] = manual_bounds
-    print("#%d" % j)
-std_off_pathway = (
-    data["ph1", 0]["ph2", 0]["t2":bounds]
-    .C.run(lambda x: abs(x) ** 2 / 2)  # sqrt2 so variance is variance of real
-    .mean_all_but(["t2", "vd"])
-    .mean("t2")
-    .run(sqrt)
-)
-print(
-    "off-pathway std", std_off_pathway, "programmed std", fake_data_noise_std
-)
-propagated_variance_from_inactive = N * df**2 * std_off_pathway**2
-# removed factor of 2 in following, which shouldn't have been there
-propagated_variance = N * df**2 * fake_data_noise_std**2
-fl.next("different types of error")
-fl.plot(s_int, ".", capsize=6, label="std from int w err", alpha=0.5)
-manual_bounds.set_error(sqrt(propagated_variance))
-fl.plot(
-    manual_bounds,
-    ".",
-    capsize=6,
-    label=r"propagated from programmed variance",
-    alpha=0.5,
-)
-all_results.run(real).mean("repeats", std=True)
-# by itself, that would give error bars, but the data would be
-# averaged -- better to put the data in the same position
-manual_bounds.set_error(all_results.get_error())
-# the fact that this matches the previous shows that my sample size is
-# large enough to give good statistics
-fl.plot(manual_bounds, ".", capsize=6, label=r"std from repeats", alpha=0.5)
-manual_bounds.set_error(sqrt(propagated_variance_from_inactive.data))
-fl.plot(
-    manual_bounds,
-    ".",
-    capsize=6,
-    label=r"propagated from inactive std",
-    alpha=0.5,
-)
-fl.show()
+all_results_fixed = ndshape(clean_data) + (n_repeats, "repeats")
+all_results_fixed.pop("t2").pop("ph1").pop("ph2")
+all_results_fixed = all_results_fixed.alloc()
+all_results_fixed.setaxis("vd", clean_data.getaxis("vd"))
+all_results_auto = all_results_fixed.C
+all_error_auto = all_results_fixed.C
+all_error_fixed = all_results_fixed.C
+with figlist_var() as fl:
+    for j in range(n_repeats):
+        data = clean_data.C
+        data.add_noise(fake_data_noise_std)
+        # at this point, the fake data has been generated
+        data.ft(["ph1", "ph2"], unitary=True)
+        dt = diff(data.getaxis("t2")[r_[0, 1]]).item()
+        data.ft("t2", shift=True)
+        data /= sqrt(ndshape(data)["t2"]) * dt
+        # note that frq_slice is re-determined for each repeat.  This is on
+        # purpose.
+        s_int, frq_slice = frequency_domain_integral(
+            data,
+            signal_pathway=signal_pathway,
+            excluded_pathways=excluded_pathways,
+            indirect="vd",
+            fl=(fl if j == 0 else None),
+            return_frq_slice=True,
+        )
+        all_results_auto["repeats", j] = s_int.data
+        all_error_auto["repeats", j] = s_int.get_error()
+        # {{{ manually calculate the error using fixed bounds
+        fixed_integration = select_pathway(data, signal_pathway)[
+            "t2":fixed_bounds
+        ].real
+        if j == 0:  # the following are always the same for fixed integration
+            N = ndshape(fixed_integration)["t2"]
+            df = diff(data.getaxis("t2")[r_[0, 1]]).item()
+        fixed_integration.integrate("t2")
+        all_results_fixed["repeats", j] = fixed_integration
+        # Note that the following function is validated by the
+        # time_domain_noise example
+        inactive_frq_datapoint_var = calc_masked_variance(
+            data,
+            excluded_frqs=[fixed_bounds],
+            indirect="vd",
+            excluded_pathways=excluded_pathways,
+        )
+        all_error_fixed["repeats", j] = (
+            N * df**2 * inactive_frq_datapoint_var
+        ).run(sqrt)
+        # }}}
+        print("#%d" % j)
+    fl.next("different types of error")
+    for this_label, this_data, this_error in [
+        ("fixed bounds", all_results_fixed, all_error_fixed),
+        ("auto bounds", all_results_auto, all_error_auto),
+    ]:
+        this_data.mean("repeats", std=True)
+        fl.plot(
+            this_data,
+            ".",
+            capsize=6,
+            label=this_label + " with true error",
+            alpha=0.5,
+        )
+        this_error.mean("repeats")
+        this_data.set_error(this_error.data)
+        fl.plot(
+            this_data,
+            ".",
+            capsize=6,
+            label=this_label + " with propagated error",
+            alpha=0.5,
+        )

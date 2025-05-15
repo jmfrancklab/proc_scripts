@@ -8,7 +8,6 @@ from .phasing import (
 )
 from .third_level.rough_table_of_integrals import rough_table_of_integrals
 from .third_level.align_esr import align_esr
-from .generate_integrals import generate_integrals
 from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
 from .slice_FID_from_echo import slice_FID_from_echo
@@ -23,12 +22,13 @@ from .integrate_limits import integrate_limits
 from .correlation_alignment import correl_align
 from .simple_functions import select_pathway, logobj, find_apparent_anal_freq
 from .DCCT_func import DCCT
-from .integral_w_error import integral_w_errors, active_propagation
+from .integral_w_error import frequency_domain_integral, active_propagation
 from .apod_matched_filter import apod_matched_filter
 from .third_level.QESR import QESR
 from .envelope import L2G, fit_envelope
 from .convert_to_power import convert_to_power
 from .clock_correct import clock_correct
+from .calc_error import calc_masked_variance
 
 __all__ = [
     "DCCT",
@@ -41,6 +41,7 @@ __all__ = [
     "align_esr",
     "apod_matched_filter",
     "calc_baseline",
+    "calc_masked_variance",
     "center_echo",
     "clock_correct",
     "convert_to_power",
@@ -56,9 +57,8 @@ __all__ = [
     "fit_envelope",
     "fl_mod",
     "fwhm_calculator",
-    "generate_integrals",
     "hermitian_function_test",
-    "integral_w_errors",
+    "frequency_domain_integral",
     "integrate_limits",
     "logobj",
     "lookup_table",
