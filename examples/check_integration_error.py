@@ -6,16 +6,30 @@ Generate a fake dataset of an inversion recovery with multiple repeats (φ
 × t2 × vd × repeats) w/ normally distributed random noise.
 Check that the following match:
 
-- integral w/ error (the canned routine
-  :func:`~pyspecProcScripts.frequency_domain_integral`)
+- the canned routine
+  :func:`~pyspecProcScripts.frequency_domain_integral`,
+  which sets the errorbars based on the propagated error
 - set the error bars based on the standard deviation (along the repeats
   dimension) of the *real* part of the integral
-and that these should also be similar to if not better than if the integrals and propagated error were calculated manually using bounds selected by hand.  
+
+and do this for both:
+
+- Fixed integral bounds.
+- Integral bounds that are automatically chosen each time.
+  Under the hood, 
+  :func:`~pyspecProcScripts.frequency_domain_integral`
+  uses
+  :func:`~pyspecProcScripts.integrate_limits`.
+  **This introduces additional error** that is not accounted
+  for by error propagation,
+  because it comes from slicing out a different portion of signal each
+  time.
+  This highlights the problem with the `integrate_limits` routine.
 """
 
 from numpy import diff, r_, sqrt, real, exp, pi, var
 from pyspecdata import ndshape, nddata, init_logging, figlist_var
-from pyspecProcScripts import frequency_domain_integral, select_pathway
+from pyspecProcScripts import frequency_domain_integral, select_pathway, calc_masked_variance
 from pylab import seed
 
 # sphinx_gallery_thumbnail_number = 1
@@ -28,11 +42,9 @@ ph2 = nddata(r_[0:4] / 4.0, "ph2")
 signal_pathway = {"ph1": 0, "ph2": 1}
 excluded_pathways = [
     signal_pathway,
-#    {"ph1": 0, "ph2": 0},
     {"ph1": 0, "ph2": 3},
-    {"ph1": 0, "ph2": 2},
 ]
-manual_bounds = (0, 200.0)
+fixed_bounds = (77., 125.)
 # this generates fake clean_data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
 # offset of 300 Hz, FWHM 10 Hz
@@ -42,17 +54,17 @@ clean_data = (
 clean_data *= exp(signal_pathway["ph1"] * 1j * 2 * pi * ph1)
 clean_data *= exp(signal_pathway["ph2"] * 1j * 2 * pi * ph2)
 clean_data["t2":0] *= 0.5
-fake_data_noise_std = 2.0
+fake_data_noise_std = 8.0
 clean_data.reorder(["ph1", "ph2", "vd"])
 result = 0
-n_repeats = 100
-all_results_manual = ndshape(clean_data) + (n_repeats, "repeats")
-all_results_manual.pop("t2").pop("ph1").pop("ph2")
-all_results_manual = all_results_manual.alloc()
-all_results_manual.setaxis("vd", clean_data.getaxis("vd"))
-all_results_auto = all_results_manual.C
-all_error_auto = all_results_manual.C
-all_error_manual = all_results_manual.C
+n_repeats = 100 
+all_results_fixed = ndshape(clean_data) + (n_repeats, "repeats")
+all_results_fixed.pop("t2").pop("ph1").pop("ph2")
+all_results_fixed = all_results_fixed.alloc()
+all_results_fixed.setaxis("vd", clean_data.getaxis("vd"))
+all_results_auto = all_results_fixed.C
+all_error_auto = all_results_fixed.C
+all_error_fixed = all_results_fixed.C
 with figlist_var() as fl:
     for j in range(n_repeats):
         data = clean_data.C
@@ -65,7 +77,7 @@ with figlist_var() as fl:
         # note that frq_slice is re-determined for each repeat.  This is on
         # purpose.
         s_int, frq_slice = frequency_domain_integral(
-            data.real,
+            data,
             signal_pathway=signal_pathway,
             excluded_pathways=excluded_pathways,
             indirect="vd",
@@ -74,32 +86,31 @@ with figlist_var() as fl:
         )
         all_results_auto["repeats", j] = s_int.data
         all_error_auto["repeats", j] = s_int.get_error()
-        # {{{ manually calculate the error using manual bounds
-        manual_integration = select_pathway(data, signal_pathway)[
-            "t2":manual_bounds
+        # {{{ manually calculate the error using fixed bounds
+        fixed_integration = select_pathway(data, signal_pathway)[
+            "t2":fixed_bounds
         ].real
-        if j == 0:  # the following are always the same for manual integration
-            N = ndshape(manual_integration)["t2"]
+        if j == 0:  # the following are always the same for fixed integration
+            N = ndshape(fixed_integration)["t2"]
             df = diff(data.getaxis("t2")[r_[0, 1]]).item()
-        manual_integration.integrate("t2")
-        all_results_manual["repeats", j] = manual_integration
-        # Here, I use var, but I could also do this manually (w/out the ddof)
-        # using abs( )**2 and then mean
-        inactive_frq_datapoint_var = (
-            select_pathway(data, {"ph1": 0, "ph2": 0})["t2":manual_bounds]
-            .C.run(
-                lambda x, axis=None: var(x, ddof=1, axis=axis) / 2, "t2"
-            )  # the 2 is b/c var gives sum of real var and imag var
-            .mean_all_but(["vd"])
+        fixed_integration.integrate("t2")
+        all_results_fixed["repeats", j] = fixed_integration
+        # Note that the following function is validated by the
+        # time_domain_noise example
+        inactive_frq_datapoint_var = calc_masked_variance(
+            data,
+            excluded_frqs=[fixed_bounds],
+            indirect="vd",
+            excluded_pathways=excluded_pathways,
         )
-        all_error_manual["repeats", j] = (
+        all_error_fixed["repeats", j] = (
             N * df**2 * inactive_frq_datapoint_var
         ).run(sqrt)
         # }}}
         print("#%d" % j)
     fl.next("different types of error")
     for this_label, this_data, this_error in [
-        ("manual bounds", all_results_manual, all_error_manual),
+        ("fixed bounds", all_results_fixed, all_error_fixed),
         ("auto bounds", all_results_auto, all_error_auto),
     ]:
         this_data.mean("repeats", std=True)

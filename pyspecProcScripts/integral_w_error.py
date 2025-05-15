@@ -116,7 +116,7 @@ def frequency_domain_integral(
     retval = (
         select_pathway(s, signal_pathway)
         .integrate(direct)
-        .set_error(psp.sqrt(spectral_datapoint_variance.data * df**2 * N))
+        .set_error(np.sqrt(spectral_datapoint_variance.data * df**2 * N))
     )
     if not return_frq_slice:
         return retval
