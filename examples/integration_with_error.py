@@ -56,16 +56,19 @@ with figlist_var() as fl:
     just_noise.set_error(fake_data_σ_t)
     fl.plot(just_noise, ".", capsize=6)
     data.ft("t2", shift=True)
+    # this is how we convert from σ_t to σ_ν
     fake_data_σ_ν = fake_data_σ_t * sqrt(
         data.get_ft_prop("t2", "dt") / data.get_ft_prop("t2", "df")
     )
     # }}}
-    # {{{ First, run the code that automatically chooses integration bounds
-    # and also assigns error
+    # {{{ First, run the code that automatically chooses integration
+    #     bounds and also assigns error.
+    #     Note that when we do not pass an `excluded_frqs` argument,
+    #     it will exclude signal within the automatically chosen
+    #     integral bounds from the calculation of the error.
     s_int, returned_frq_slice = frequency_domain_integral(
         data,
         signal_pathway=signal_pathway,
-        excluded_frqs=[manual_slice],
         excluded_pathways=excluded_pathways,
         fl=fl,
         return_frq_slice=True,
