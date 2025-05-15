@@ -1,6 +1,6 @@
 """
-Weighted Integral Function Example
-==================================
+Time-domain integral function
+=============================
 
 The weighted integral function is utilized in integrating a signal in the time
 domain.  Specifically here, we generate a sinc function whose FT is a heaviside
@@ -8,6 +8,11 @@ hat function with a width equal to the integration bounds and integrate in the
 time domain.  These integrals are then compared to the same integrals
 calculated in the frequency domain.
 """
+
+# TODO ☐: the wording above is weird to me -- I don't understand why you make
+#         this about a "weighted integral function".  The point is to show that
+#         your time-domain integration matches the frequency-domain
+#         integration.
 
 from pyspecdata import r_, nddata, figlist_var, ndshape, fake_data
 from pyspecProcScripts import (
@@ -34,12 +39,10 @@ int_width = frq_slice[1] - frq_slice[0]
 # {{{ Generate data with an amplitude of 21 and t constant = 320 ms
 d = fake_data(
     expression=(21 * s.exp(+1j * 2 * s.pi * t2 - abs(t2) * 0.32 * s.pi)),
-    axis_coords=OrderedDict(
-        [
-            ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-            ("t2", nddata(r_[-npts:npts] * 30 / npts, "t2")),
-        ]
-    ),
+    axis_coords=OrderedDict([
+        ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
+        ("t2", nddata(r_[-npts:npts] * 30 / npts, "t2")),
+    ]),
     signal_pathway=signal_pathway,
     scale=0,
     fake_data_noise_std=0,
@@ -80,24 +83,27 @@ data *= 2
 data["t2":0] *= 0.5
 # }}}
 with figlist_var() as fl:
+    # TODO ☐: The goal is to (1) take an integral in the frequency domain (2)
+    #         take an integral in the time domain (3) show that the integrals
+    #         and the errors match.  This is currently showing that the
+    #         integrals match, but there are no errors.  Given that you are
+    #         using a fixed bounds (good, keeps it simple), I would just call
+    #         the function that calculates the masked variance, and calculate
+    #         the error from that.
     # {{{ Zero fill 2 x and make real/symmetric
     nPoints = len(select_pathway(data, signal_pathway)["repeats", 0].data)
     data.ft("t2", pad=2 * nPoints)
     data.run(np.real)
-    data.ft_new_startpoint("t2", "t").set_ft_prop("t2", None)
-    data.ift("t2", shift=True)
-    # }}}
-    data.ft("t2")
-    # {{{ Normalize to integral of 1
-    data /= (
-        select_pathway(data["t2":frq_slice], signal_pathway)
-        .C.real.integrate("t2")
-        .mean("repeats")
-        .item()
+    data.ft_new_startpoint("t2", "t").set_ft_prop("t2", None).ift(
+        "t2", shift=True
     )
     # }}}
+    # TODO ☐: I removed the normalization b/c you choose the size of the data
+    #         above.  Get it to work w/out rolling this back.
+    data.ft("t2")
     data.reorder(["ph1", "repeats", "t2"])
     for j in range(len(data["repeats"])):
+        # TODO ☐: why is there a loop here? Vectorize your code!
         f_results["repeats", j] = (
             select_pathway(data["repeats", j]["t2":frq_slice], signal_pathway)
             .C.real.integrate("t2")
@@ -108,27 +114,22 @@ with figlist_var() as fl:
     mysinc = heaviside_time_domain(
         select_pathway(data, signal_pathway), frq_slice
     )
-    # {{{ Normalizing the sinc for integration
-    for_norm = (mysinc.C**2).integrate("t2").item()
-    mysinc /= np.sqrt(for_norm)
-    mysinc *= np.sqrt(int_width)
+    # TODO ☐: the extra plots were unneeded and we don't want to add a weird
+    #         extra normalization to our w(t), so I deleted those.  Get code to
+    #         work without rolling back that change.
     # }}}
     data.ift("t2")
+    # TODO ☐: the following should not be needed here -- you might want to edit heaviside_time_domain
     mysinc.set_units("t2", data.get_units("t2"))
-    data.ft("t2").set_plot_color("tab:blue")
-    mysinc.ft("t2").set_plot_color("tab:orange")
-    fl.next("Frequency domain")
-    fl.plot(select_pathway(data["repeats", 0], signal_pathway), alpha=0.5)
-    fl.plot(mysinc * abs(data["repeats", 0]).max().item(), alpha=0.5)
-    # }}}
-    data.ift("t2")
-    mysinc.ift("t2")
-    fl.next("Time domain")
-    fl.plot(select_pathway(data["repeats", 0], signal_pathway), alpha=0.5)
-    fl.plot(mysinc / int_width, alpha=0.5)
     # {{{ Integrate in time domain
+    # TODO ☐: objecting to your variable naming here -- this is NOT apodized!
+    #         You are just calculating the integral.  Aside from that, why not
+    #         just do the expression in the loop (which should not be a loop!)
+    #         together with the multiplication in one expression.  That matches
+    #         your math better, anyways.
     apo_data = data * mysinc
     for j in range(len(data["repeats"])):
+        # TODO ☐: why is there a loop here? Vectorize your code!
         t_results["repeats", j] = (
             select_pathway(apo_data["repeats", j], signal_pathway)
             .C.real.integrate("t2")
