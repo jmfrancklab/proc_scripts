@@ -27,9 +27,13 @@ and do this for both:
   This highlights the problem with the `integrate_limits` routine.
 """
 
-from numpy import diff, r_, sqrt, real, exp, pi, var
+from numpy import diff, r_, sqrt, exp, pi
 from pyspecdata import ndshape, nddata, init_logging, figlist_var
-from pyspecProcScripts import frequency_domain_integral, select_pathway, calc_masked_variance
+from pyspecProcScripts import (
+    frequency_domain_integral,
+    select_pathway,
+    calc_masked_variance,
+)
 from pylab import seed
 
 # sphinx_gallery_thumbnail_number = 1
@@ -44,7 +48,7 @@ excluded_pathways = [
     signal_pathway,
     {"ph1": 0, "ph2": 3},
 ]
-fixed_bounds = (77., 125.)
+fixed_bounds = (77.0, 125.0)
 # this generates fake clean_data w/ a T₂ of 0.2s
 # amplitude of 21, just to pick a random amplitude
 # offset of 300 Hz, FWHM 10 Hz
@@ -57,7 +61,7 @@ clean_data["t2":0] *= 0.5
 fake_data_noise_std = 8.0
 clean_data.reorder(["ph1", "ph2", "vd"])
 result = 0
-n_repeats = 100 
+n_repeats = 100
 all_results_fixed = ndshape(clean_data) + (n_repeats, "repeats")
 all_results_fixed.pop("t2").pop("ph1").pop("ph2")
 all_results_fixed = all_results_fixed.alloc()
