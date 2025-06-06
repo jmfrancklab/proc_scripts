@@ -15,7 +15,7 @@ appropriate section to obtain calibrated pulse lengths for the given amplitude.
 """
 
 import pyspecdata as psd
-from pyspecProcScripts import find_apparent_anal_freq
+from pyspecProcScripts import find_apparent_anal_freq, lookup_table
 import matplotlib.pyplot as plt
 import numpy as np
 import logging
@@ -48,22 +48,28 @@ with psd.figlist_var() as fl:
         ),
     ]:
         d = psd.find_file(
-            filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
+            filename,
+            expno=nodename,
+            exp_type="ODNP_NMR_comp/test_equipment",
+            lookup=lookup_table,
         )
-        assert (
-            d.get_prop("postproc_type") == "GDS_capture_v1"
-        ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
+        assert d.get_prop("postproc_type") == "GDS_capture_v1", (
+            "The wrong postproc_type was set so you most likely used the wrong"
+            " script for acquisition"
+        )
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude:.2f}"
         # {{{ ensure units are set
         if d.get_units("t") is None:
             logging.info(
-                "Units for your t axis weren't set to anything so I am setting them to s"
+                "Units for your t axis weren't set to anything so I am setting"
+                " them to s"
             )
             d.set_units("t", "s")
         if d.get_units("t_pulse") is None:
             logging.info(
-                "Units for your t_pulse axis weren't set to anything so I am setting them to s"
+                "Units for your t_pulse axis weren't set to anything so I am"
+                " setting them to s"
             )
             d.set_units("t_pulse", "s")
         # }}}
@@ -104,9 +110,11 @@ with psd.figlist_var() as fl:
             s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
-        assert (0 > nu_a + 0.5 * HH_width) or (
-            0 < nu_a - 0.5 * HH_width
-        ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
+        assert (0 > nu_a + 0.5 * HH_width) or (0 < nu_a - 0.5 * HH_width), (
+            "unfortunately the region I want to filter includes DC -- this is"
+            " probably not good, and you should pick a different timescale for"
+            " your scope so this doesn't happen"
+        )
         # }}}
         # {{{ apply HH frequency filter
         d["t" : (0, nu_a - 0.5 * HH_width)] *= 0
@@ -152,8 +160,9 @@ with psd.figlist_var() as fl:
                 plt.text(
                     np.mean(int_range) / 1e-6,
                     0.25,
-                    r"$t_{pulse} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
-                    % (beta_v_t["t_pulse", j].item() / 1e-6),
+                    r"$t_{pulse} \sqrt{P_{tx}} ="
+                    f"{beta_v_t['t_pulse',j].item().to('μs√W'):~0.1fL}$"
+                    ,
                     ha="center",
                 )
             # }}}
@@ -224,7 +233,8 @@ with psd.figlist_var() as fl:
             r"$\beta$", order=1
         )
         print(
-            f"\n**************** Coefficients for {amplitude} ****************\n"
+            "\n**************** Coefficients for"
+            f" {amplitude} ****************\n"
         )
         print("Non-linear regime coefficients:\n", c_nonlinear)
         print("Linear regime coefficients:\n", c_linear)

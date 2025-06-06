@@ -1,4 +1,4 @@
-""""
+"""
 Process Gain of Receiver Chain
 ==============================
 

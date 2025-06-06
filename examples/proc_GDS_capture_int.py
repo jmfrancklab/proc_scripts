@@ -7,11 +7,12 @@ in the FLInst repo using the GDS oscilloscope, this script plots the absolute an
 along with the frequency filtered absolute of the analytic before
 integrating to calculate :math:`\beta = \frac{1}{\sqrt{2}}\int{V(t)dt}'.
 """
+
 import pyspecdata as psd
 import matplotlib.pyplot as plt
 import numpy as np
 from itertools import cycle
-from pyspecProcScripts import find_apparent_anal_freq
+from pyspecProcScripts import find_apparent_anal_freq, lookup_table
 
 colorcyc_list = plt.rcParams["axes.prop_cycle"].by_key()["color"][:3]
 color_cycle = cycle(colorcyc_list)
@@ -38,15 +39,23 @@ with psd.figlist_var() as fl:
         ),
     ]:
         s = psd.find_file(
-            filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
+            filename,
+            expno=nodename,
+            exp_type="ODNP_NMR_comp/test_equipment",
+            lookup=lookup_table,
         )
         # {{{ define basename
         amplitude = s.get_prop("acq_params")["amplitude"]
-        fl.basename = f"amplitude = {amplitude}, ${{\\beta}}$ = {s.get_prop('acq_params')['beta_90_s_sqrtW'] / 1e-6} ${{\\mathrm{{\\mu s \\sqrt{{W}}}}}}$ \n"
+        fl.basename = (
+            f"amplitude = {amplitude}, ${{\\beta}}$ ="
+            f" {s.get_prop('acq_params')['beta_90_s_sqrtW'] / 1e-6} ${{\\mathrm{{\\mu"
+            " s \\sqrt{W}}}$ \n"
+        )
         # }}}
         if not s.get_units("t") == "s":
             print(
-                "units weren't set for the t axis or else I can't read them from the hdf5 file!"
+                "units weren't set for the t axis or else I can't read them"
+                " from the hdf5 file!"
             )
             s.set_units("t", "s")
         s *= V_atten_ratio  # attenutation ratio
@@ -58,9 +67,11 @@ with psd.figlist_var() as fl:
         # }}}
         # {{{ apply frequency filter
         s, nu_a, _ = find_apparent_anal_freq(s)
-        assert (0 > nu_a * 0.5 * HH_width) or (
-            0 < nu_a - 0.5 * HH_width
-        ), "unfortunately the region I want to filter includes DC -- this is probably not good, and means you should pick a different timescale for your scope so this doesn't happen"
+        assert (0 > nu_a * 0.5 * HH_width) or (0 < nu_a - 0.5 * HH_width), (
+            "unfortunately the region I want to filter includes DC -- this is"
+            " probably not good, and means you should pick a different"
+            " timescale for your scope so this doesn't happen"
+        )
         s.ft("t")
         # {{{ Display frequency domain
         fl.next("Frequency Domain")

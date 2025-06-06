@@ -8,6 +8,7 @@ and demonstrate how we can automatically find the zeroth order phase and the
 center of the echo in order to get data that's purely real in the frequency
 domain.
 """
+
 from pyspecdata import *
 from pyspecProcScripts import *
 from pylab import *
@@ -70,6 +71,9 @@ with figlist_var() as fl:
         ax_list[0].set_title("Raw Data")
         data = data["t2":f_range]
         data.ift("t2")
+        data["t2"] -= data["t2"][0]  # it demands that we start at 0 -- this is
+        #                              automatically done by FID slicing and
+        #                              other routines
         data /= zeroth_order_ph(select_pathway(data, signal_pathway), fl=fl)
         fl.image(data, ax=ax_list[1], human_units=False)
         ax_list[1].set_title("Zeroth Order \n Phase Corrected")

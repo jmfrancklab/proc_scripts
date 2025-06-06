@@ -73,7 +73,9 @@ def analyze_square_refl(
                 plottype="semilogy",
                 label=f"CH{j} {label}",
             )
-    frq_guess = abs(d["ch", 0]).argmax("t").item()  # find the peak
+    frq_guess = (
+        abs(d["ch", 0]).argmax("t").item().to("Hz").magnitude
+    )  # find the peak
     frq_range = r_[-frq_bw, frq_bw] * 0.5 + frq_guess
     d["t" : (0, frq_range[0])] = 0  # set everything else to zero
     d["t" : (frq_range[1], None)] = 0
@@ -117,11 +119,13 @@ def analyze_square_refl(
     # at this point, we have something of the form
     # ρe^{iΔφ} for each point -- average them
     ph_diff.sum("t")
-    ph_diff = ph_diff.angle.item()  # Δφ above
+    ph_diff = ph_diff.angle.item().magnitude  # Δφ above
     frq = ph_diff / dt / 2 / pi
     # }}}
     logger.info(strm("frq:", frq))
-    d *= plb.exp(-1j * 2 * pi * frq * d.fromaxis("t"))  # mix down
+    d *= plb.exp(
+        -1j * 2 * pi * frq * d.fromaxis("t").set_units(None)
+    )  # mix down
     d.ft("t")
     if fl is not None:
         fl.next("after slice and mix down freq domain")
@@ -129,7 +133,7 @@ def analyze_square_refl(
         fl.plot(abs(d), label=label)
     d.ift("t")
     # {{{ zeroth order phase correction
-    ph0 = d["ch", 0]["t":pulse_middle_slice].C.mean("t").item()
+    ph0 = d["ch", 0]["t":pulse_middle_slice].C.mean("t").item().magnitude
     pulse_middle_amp = abs(ph0)
     ph0 /= pulse_middle_amp
     d /= ph0
@@ -178,6 +182,7 @@ def analyze_square_refl(
         d["ch", 1]["t" : (keep_after_pulse, pulse_middle_slice[-1])]
         .mean("t")
         .item()
+        .magnitude
     )
     if label == "hairpin probe":
         color = "darkorange"
@@ -215,7 +220,7 @@ def analyze_square_refl(
     ]  # we need the ch axis for the complex plot,
     #                                  but it complicates things now
     decay = abs(secon_blip)
-    decay_start = decay.C.argmax("t").item()
+    decay_start = decay.C.argmax("t").item().magnitude
     decay = decay["t":(decay_start, None)]
     f = psp.fitdata(decay)
     A, R, C, t = s.symbols("A R C t", real=True)

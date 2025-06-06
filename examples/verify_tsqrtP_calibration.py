@@ -12,7 +12,7 @@ Compare to `example/calibrate_tsqrtP.py`, which generates the calibration.
 """
 
 import pyspecdata as psd
-from pyspecProcScripts import find_apparent_anal_freq
+from pyspecProcScripts import find_apparent_anal_freq, lookup_table
 import matplotlib.pyplot as plt
 import numpy as np
 from itertools import cycle
@@ -46,11 +46,15 @@ with psd.figlist_var() as fl:
         ),
     ]:
         d = psd.find_file(
-            filename, expno=nodename, exp_type="ODNP_NMR_comp/test_equipment"
+            filename,
+            expno=nodename,
+            exp_type="ODNP_NMR_comp/test_equipment",
+            lookup=lookup_table,
         )
-        assert (
-            d.get_prop("postproc_type") == "GDS_capture_v1"
-        ), "The wrong postproc_type was set so you most likely used the wrong script for acquisition"
+        assert d.get_prop("postproc_type") == "GDS_capture_v1", (
+            "The wrong postproc_type was set so you most likely used the wrong"
+            " script for acquisition"
+        )
         amplitude = d.get_prop("acq_params")["amplitude"]
         fl.basename = f"amplitude = {amplitude:.2f}"
         d *= V_atten_ratio  # V at output of amplifier
@@ -90,9 +94,11 @@ with psd.figlist_var() as fl:
             s=rf"$\nu_a={nu_a/1e6:0.2f}$ MHz",
             transform=plt.gca().transAxes,
         )
-        assert (0 > nu_a * 0.5 * HH_width) or (
-            0 < nu_a - 0.5 * HH_width
-        ), "unfortunately the region I want to filter includes DC -- this is probably not good, and you should pick a different timescale for your scope so this doesn't happen"
+        assert (0 > nu_a * 0.5 * HH_width) or (0 < nu_a - 0.5 * HH_width), (
+            "unfortunately the region I want to filter includes DC -- this is"
+            " probably not good, and you should pick a different timescale for"
+            " your scope so this doesn't happen"
+        )
         # }}}
         # {{{ apply HH frequency filter
         d["t" : (None, nu_a - 0.5 * HH_width)] *= 0
@@ -139,8 +145,8 @@ with psd.figlist_var() as fl:
                 plt.text(
                     np.mean(int_range) / 1e-6,
                     0.25,
-                    r"$t_{90} \sqrt{P_{tx}} = %f \mathrm{μs} \sqrt{\mathrm{W}}$"
-                    % (verify_beta["beta", j].item() / 1e-6),
+                    r"$t_{90} \sqrt{P_{tx}} ="
+                    f"{verify_beta['beta', j].item().to('μs√W'):~0.1fL}$",
                     ha="center",
                 )
             # }}}
