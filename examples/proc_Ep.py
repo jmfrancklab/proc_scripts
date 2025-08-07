@@ -1,7 +1,7 @@
 """
 Process Enhancement experiment 
 ====================================================
-Opens .h5 results file, uses rough_table_of_integrals() to roughly process
+Opens .h5 results file, uses table_of_integrals() to roughly process
 dataset including generating a table of integrals
 """
 
@@ -41,7 +41,7 @@ with psd.figlist_var() as fl:
         s["indirect"]["start_times"] - s["indirect"]["start_times"][0]
     )
     s.set_units("indirect", "s")
-    s, _ = prscr.rough_table_of_integrals(s, fl=fl)
+    s, _ = prscr.table_of_integrals(s, fl=fl)
     assert psd.det_unit_prefactor(s.get_units("indirect")) == 0
     s.set_error(s["indirect", 0].item() * 0.01)  # We are not calculating the
     #                                              errors in rough table of

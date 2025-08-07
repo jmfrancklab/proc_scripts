@@ -155,7 +155,7 @@ with psd.figlist_var() as fl:
             if clock_correction:
                 s = prscr.clock_correct(s)
         fl.next("rough aligned")
-        s, _ = prscr.rough_table_of_integrals(s, fl=fl, title="rough")
+        s, _ = prscr.table_of_integrals(s, fl=fl, title="rough")
         fl.next("after RTOI %s" % nodename)
         fl.plot(s)
         if nodename == "ODNP":

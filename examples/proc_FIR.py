@@ -1,7 +1,7 @@
 """
 Process FIR experiment 
 ======================
-Opens .h5 results file, uses :func:`rough_table_of_integrals` to roughly
+Opens .h5 results file, uses :func:`table_of_integrals` to roughly
 process
 dataset including generating a table of integrals
 """
@@ -50,8 +50,8 @@ with psd.figlist_var() as fl:
         if clock_correction:
             s = prscr.clock_correct(s)
         s = s.squeeze()
-        s, ax_last = prscr.rough_table_of_integrals(s, fl=fl)
-        # Included signal averaging in rough_table_of_integrals
+        s, ax_last = prscr.table_of_integrals(s, fl=fl)
+        # Included signal averaging in table_of_integrals
         Mi, R1, vd = sympy.symbols("M_inf R_1 vd", real=True)
         psd.logger.debug(psd.strm("acq keys", s.get_prop("acq_params")))
         W = (
