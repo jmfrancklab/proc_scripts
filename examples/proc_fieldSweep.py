@@ -53,7 +53,7 @@ with psd.figlist_var(black=False) as fl:
         # above to False
         s["indirect"] = s["indirect"]["Field"]
         s.set_units("indirect", "G")
-    s, ax4 = prscr.rough_table_of_integrals(s, fl=fl)
+    s, ax4 = prscr.table_of_integrals(s, fl=fl)
     if use_freq:
         assert s.get_units("indirect") == "ppt", "doesn't seem to be in ppt"
         # {{{ use analytic differentiation to find the max of the polynomial

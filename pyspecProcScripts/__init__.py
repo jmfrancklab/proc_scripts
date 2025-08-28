@@ -6,7 +6,7 @@ from .phasing import (
     fid_from_echo,
     find_peakrange,
 )
-from .third_level.rough_table_of_integrals import rough_table_of_integrals
+from .third_level.table_of_integrals import table_of_integrals
 from .third_level.align_esr import align_esr
 from .load_data import lookup_table
 from .plotting import expand_limits, draw_limits, fl_mod
@@ -65,7 +65,7 @@ __all__ = [
     "ph1_real_Abs",
     "power2dBm",
     "recovery",
-    "rough_table_of_integrals",
+    "table_of_integrals",
     "select_pathway",
     "show_pickle_table",
     "slice_FID_from_echo",

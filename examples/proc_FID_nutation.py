@@ -49,7 +49,7 @@ with psd.figlist_var() as fl:
         "g"
     )  # this affects the 1D plots, but not the images, etc.
     # {{{ generate the table of integrals and fit
-    s, ax_last = prscr.rough_table_of_integrals(
+    s, ax_last = prscr.table_of_integrals(
         s, signal_range, fl=fl, title=sys.argv[2], echo_like=False
     )
     A, R, beta_ninety, beta = sp.symbols("A R beta_ninety beta", real=True)
@@ -80,7 +80,7 @@ with psd.figlist_var() as fl:
     fl.plot(fit, ax=ax_last)
     ax_last.set_title("Integrated and fit")
     beta_90 = s.output("beta_ninety")  # because we allow
-    #                                   rough_table_of_integrals to convert to
+    #                                   table_of_integrals to convert to
     #                                   human units (with prefactors), this
     #                                   will be in human units
     ax_last.axvline(beta_90, color="b")

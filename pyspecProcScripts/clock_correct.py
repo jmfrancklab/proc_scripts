@@ -37,9 +37,10 @@ def clock_correct(s, fl=None, indirect="vd"):
         fl.image(s)
     s_clock = (
         prscr.select_pathway(s, s.get_prop("coherence_pathway"))
-        .mean("nScans")
         .sum("t2")
-    )
+    )    
+    if "nScans" in s.dimlabels:
+        s_clock = s_clock.mean("nScans")
     phase_dims = [j for j in s.dimlabels if j.startswith("ph")]
     s.ift(phase_dims)
     min_index = abs(s_clock).argmin(indirect, raw_index=True).item()

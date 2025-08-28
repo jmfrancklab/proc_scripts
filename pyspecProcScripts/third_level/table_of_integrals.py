@@ -12,7 +12,7 @@ from numpy import pi
 import pyspecdata as psd
 
 
-def rough_table_of_integrals(
+def table_of_integrals(
     s,
     signal_range=None,
     signal_pathway=None,
