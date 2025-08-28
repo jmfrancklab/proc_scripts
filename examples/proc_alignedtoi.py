@@ -10,6 +10,12 @@ experiment
 
 frq_mask() and coherence_unmask_fn() functions taken from correlation_alignment_example.py
 
+WK, 8/13/25 - want to totally gut and rewrite after convo with JF. There are
+things to keep at the start with calling a file in the bash terminal. Now want
+to edit more of the newly named 'table_of_integrals' function adding an
+attribute to choose which type of alignment is being applied but otherwise treat data the same and have a similar resulting plot.  
+
+
 """
 
 import pyspecProcScripts as prscr
@@ -39,6 +45,9 @@ colorcyc = cycle(colorcyc_list)
 # }}}
 
 # {{{ Mask funcs from correl align example
+# These (mask and unmask funcs) may need to be moved to within
+# 'table_of_integrals' func or as actual funcs for used in and outside of the
+# 'toi' function
 def frq_mask(s, sigma=150.0):
     """Note that we assume that our mask is a product of a
     frequency-domain and a coherence-domain function.
@@ -94,6 +103,7 @@ def coherence_unmask_fn(coh_array):
     return coh_array
 # }}}
 
+# {{{ Most likely want to keep...
 assert len(sys.argv) == 5
 filename=sys.argv[2]
 exptype=sys.argv[3]
@@ -116,7 +126,7 @@ with psd.figlist_var() as fl:
     signal_range = None
     signal_pathway = None
     direct="t2"
-    if nodename == "ODNP":
+    if nodename == "ODNP": # may be a better way to do this
         indirect="indirect"
     if nodename.startswith("FIR_"):    
         indirect="vd"
