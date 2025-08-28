@@ -59,6 +59,7 @@ with figlist_var() as fl:
     for k, v in d.items():
         fl.plot(v, label=k, alpha=0.7)
     for k, v in d.items():
+        fl.basename = k
         c = QESR(
             v,
             label=k,

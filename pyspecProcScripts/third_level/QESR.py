@@ -8,6 +8,11 @@ from scipy.interpolate import UnivariateSpline
 from ..first_level.QESR_rescale import QESR_apply_scalefactor
 import pickle
 import logging
+from pyspecdata import pyspec_config
+
+_figure_mode_setting = pyspec_config.get_setting(
+    "figures", section="mode", environ="pyspecdata_figures"
+)
 
 # {{{ all basic info
 colors = plt.rcParams[
@@ -132,17 +137,20 @@ def QESR(
         thisfig = plt.figure()
         gs = plt.GridSpec(4, 1, figure=thisfig)
         ax = thisfig.add_subplot(gs[:3, 0])
-        fl.text(r"\par")
-        fl.setprops(width=0.9)
+        if _figure_mode_setting != "standard":
+            fl.text(r"\par")
+            fl.setprops(width=0.9)
         fl.next("absorption, bg. no bl.", ax=ax, fig=thisfig, legend=True)
         ax_dblint = thisfig.add_subplot(gs[3, 0])
     else:
         thisfig = fl.next("absorption, bg. no bl.")
         ax, ax_dblint = thisfig.get_axes()
-    fl.text(r"\textbf{\texttt{%s}}\par" % data_or_filename)
+    if _figure_mode_setting != "standard":
+        fl.text(r"\textbf{\texttt{%s}}\par" % data_or_filename)
     # }}}
     ax.set_title("abs mode:\nbackground subtracted, show baseline")
-    fl.text(r"\par")
+    if _figure_mode_setting != "standard":
+        fl.text(r"\par")
     fl.next("baseline diagnostic")
     gca().set_title(
         "zoomed-in baseline diagnostic\nshowing only baseline\n(data and fit)"

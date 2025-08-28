@@ -3,6 +3,11 @@ from collections import OrderedDict
 import numpy as np
 from numpy import r_, pi
 import matplotlib.pyplot as plt
+from pyspecdata import pyspec_config
+
+_figure_mode_setting = pyspec_config.get_setting(
+    "figures", section="mode", environ="pyspecdata_figures"
+)
 
 
 def align_esr(
@@ -110,19 +115,25 @@ def align_esr(
     # }}}
     # {{{ arrange the figures in the PDF
     if fl:
-        fl.par_break()  # each fig on new line
+        if _figure_mode_setting != "standard":
+            fl.par_break()  # each fig on new line
         fl.next("Raw", legend=True)
-        fl.par_break()  # each fig on new line
+        if _figure_mode_setting != "standard":
+            fl.par_break()  # each fig on new line
         fl.next("correlation", legend=True)
-        fl.par_break()
+        if _figure_mode_setting != "standard":
+            fl.par_break()
         fl.next("find center", legend=True)
         fl.next("before centering -- ift", legend=True)
-        fl.par_break()
+        if _figure_mode_setting != "standard":
+            fl.par_break()
         fl.next("after centering -- ift", legend=True)
-        fl.par_break()
+        if _figure_mode_setting != "standard":
+            fl.par_break()
         fl.next("aligned, autoscaled", legend=True)
-        fl.par_break()
-        fl.setprops(width=0.98)
+        if _figure_mode_setting != "standard":
+            fl.par_break()
+            fl.setprops(width=0.98)
         fl.next("centered spectra", legend=True)
     # }}}
     # {{{ pull the reference (largest) up front
