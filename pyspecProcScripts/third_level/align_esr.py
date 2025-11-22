@@ -3,7 +3,7 @@ from collections import OrderedDict
 import numpy as np
 from numpy import r_, pi
 import matplotlib.pyplot as plt
-from pyspecdata import pyspec_config
+from pyspecdata import pyspec_config, strm, T_per_G, Q_
 
 _figure_mode_setting = pyspec_config.get_setting(
     "figures", section="mode", environ="pyspecdata_figures"
@@ -88,8 +88,27 @@ def align_esr(
     all_axes_extents = []
     maxval = 0
     for label_str, d in data_dict.items():
+        # {{{ change all axes to mT
+        # gives (___ mT/ 1 origunit)
+        print(
+            label_str,
+            "orig units:",
+            d.get_units(Bname),
+            d.getaxis(Bname)[r_[0, -1]],
+        )
+        conv = d.div_units(Bname, "mT", Q=True)
+        if not conv.dimensionless:
+            conv *= T_per_G
+            assert (
+                conv.dimensionless
+            ), "I can't convert this to units of field!!"
+        conv = conv.to_base_units().magnitude
+        d[Bname] *= conv
+        d.set_units(Bname, "mT")
+        print(label_str)
+        print("axis runs over range", d.getaxis(Bname)[r_[0, -1]])
+        # }}}
         # {{{ load, rescale
-        d.setaxis(Bname, lambda x: x / 1e4).set_units(Bname, "T")
         d = QESR_apply_scalefactor(d)
         if "harmonic" in d.dimlabels:
             d = d["harmonic", 0]
@@ -110,6 +129,21 @@ def align_esr(
     minB = min(minB)
     maxB = max(maxB)
     dB = min(dB)
+    if (maxB - minB) / dB > 2**14:
+        range_string = strm(
+            "trying to build a reference axis from",
+            minB,
+            "to",
+            maxB,
+            "in steps of",
+            dB,
+            "for",
+            (maxB - minB) / dB,
+            "steps",
+        )
+        raise ValueError(
+            "align ends up attempting a huge reference axis by " + range_string
+        )
     ref_axis = r_[minB : maxB + dB : dB]
     BSW = maxB - minB
     # }}}
@@ -241,8 +275,7 @@ def align_esr(
             fl.next("centered spectra")
         d.ft(Bname)
         d = d[Bname : (-BSW / 2, BSW / 2)]
-        d.human_units()
-        Bname_new = f"$(B_0{-center_point/d.div_units(Bname,'T'):+#0.5g})$"
+        Bname_new = f"$(B_0{-Q_(center_point,'mT'):+#0.5g~L})$"
         d.rename(Bname, Bname_new)
         if fl:
             fl.plot(
