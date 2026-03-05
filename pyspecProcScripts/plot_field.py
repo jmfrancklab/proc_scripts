@@ -6,6 +6,7 @@ from Instruments.logobj import logobj
 import datetime
 import re
 
+
 def plot_field(
     s,
     filename,
@@ -58,22 +59,26 @@ def plot_field(
 
     log_vs_time = (
         psd.nddata(
-            log_array["field"],
-            [-1],
-            ["time"],
+            log_array["field"],  # Create an nddata object from the field data
+            [
+                -1
+            ],  # The shape of the data is 1D, so we use -1 to indicate that the length should be inferred
+            ["time"],  # The axis is named "time"
         )
         .setaxis("time", log_array["time"])
         .set_units("time", "s")
     )
     log_vs_time.set_units("G")
 
-    if fl:
+    if fl:  # Check that fl is not None before plotting
         fl.next("field log")
         fl.plot(
-            log_vs_time, ".",
+            log_vs_time,
+            ".",
             human_units=False,
-        )
+        )  # Plot the field log data as points
         ax = plt.gca()
+        # {{{ this is just matplotlib time formatting
         ax.xaxis.set_major_formatter(
             plt.FuncFormatter(
                 lambda x, _: (
@@ -83,7 +88,7 @@ def plot_field(
                 )
             )
         )
-
+        # }}}
     log_vs_time.set_units("time", "s")
     mean_field_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
@@ -103,7 +108,7 @@ def plot_field(
         )
     ):
         mean_field_vs_time["time", j] = log_vs_time[
-            "time":(time_start, time_stop)
+            "time" : (time_start, time_stop)
         ].mean("time", std=True)
         mean_field_vs_time["time"][j] = (time_start + time_stop) / 2
         plt.axvspan(
@@ -118,7 +123,8 @@ def plot_field(
 
     if fl:
         fl.plot(
-            mean_field_vs_time, "o",
+            mean_field_vs_time,
+            "o",
             human_units=False,
         )
 
