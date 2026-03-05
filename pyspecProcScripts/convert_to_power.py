@@ -56,9 +56,9 @@ def convert_to_power(
     with h5py.File(my_filename, "r") as f:
         thislog = logobj.from_group(f[node_name])
         log_array = thislog.total_log
-    assert log_array.dtype.names == ("time", "Rx", "power", "cmd"), str(
-        log_array.dtype.names
-    )
+    assert all(
+        name in log_array.dtype.names for name in ("time", "Rx", "power", "cmd")
+    ), str(log_array.dtype.names)
     assert s["indirect"].dtype.names == (
         "start_times",
         "stop_times",
@@ -70,9 +70,7 @@ def convert_to_power(
             log_array[
                 "power"
             ],  # new nddata, whose data are the values from the gigatronix
-            [
-                -1
-            ],  # it's one dimension, whose length is automatically determined
+            [-1],  # it's one dimension, whose length is automatically determined
             ["time"],  # the name of hte dimension is time
         )
         .setaxis(
@@ -89,7 +87,8 @@ def convert_to_power(
     if fl:  # checks that fl is not None
         fl.next("power log")
         fl.plot(
-            log_vs_time, ".",
+            log_vs_time,
+            ".",
             human_units=False,
         )  # should be a picture of the gigatronics powers
         # {{{ this is just matplotlib time formatting
@@ -130,7 +129,7 @@ def convert_to_power(
         )
     ):
         mean_power_vs_time["time", j] = log_vs_time[
-            "time":(time_start, time_stop)
+            "time" : (time_start, time_stop)
         ].mean("time", std=True)
         mean_power_vs_time["time"][j] = (time_start + time_stop) / 2
         # {{{ I realized a crosshatch would be better here
@@ -147,7 +146,8 @@ def convert_to_power(
         # }}}
     if fl:
         fl.plot(
-            mean_power_vs_time, "o",
+            mean_power_vs_time,
+            "o",
             human_units=False,
         )  # this  should be a *single* o at the center of each power step.
         #    Its y value should be the avaerage power for that step, and its
