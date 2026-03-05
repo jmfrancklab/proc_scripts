@@ -15,7 +15,7 @@ def plot_field(
     node_name="log",
 ):
     """Generate field axis for ODNP/E(p)/FIR experiments, converts instrument
-    field log to useable axis
+    field log to useable axis. Adapted from convert_to_power.py
 
     Parameters
     ===========
@@ -97,10 +97,11 @@ def plot_field(
         .set_units("time", "s")
         .setaxis("time", np.zeros(len(s["indirect"])))
     )
-
+    # {{{ we need to convert these to relative time up front, so that things
+    #     don't get complicated!
     s["indirect"]["start_times"] -= zero_time
     s["indirect"]["stop_times"] -= zero_time
-
+    # }}}
     for j, (time_start, time_stop) in enumerate(
         zip(
             s["indirect"][:]["start_times"],
