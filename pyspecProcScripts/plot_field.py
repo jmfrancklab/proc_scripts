@@ -121,7 +121,7 @@ def plot_field(
             alpha=0.1,
         )
         mean_field_vs_time.set_units("G")
-
+    # {{{ Plot mean field vs. time with error bars
     if fl:
         fl.plot(
             mean_field_vs_time,
@@ -133,4 +133,5 @@ def plot_field(
         "indirect", mean_field_vs_time.get_error()
     ).set_units("indirect", "G")
     s.rename("indirect", "field")
+    # }}}
     return s
