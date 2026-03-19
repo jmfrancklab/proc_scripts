@@ -70,7 +70,7 @@ def convert_to_power(
             log_array[
                 "power"
             ],  # new nddata, whose data are the values from the gigatronix
-            [-1],  # it's one dimension, whose length is automatically determined
+            [-1],  # it's one dimension, length is automatically determined
             ["time"],  # the name of hte dimension is time
         )
         .setaxis(
