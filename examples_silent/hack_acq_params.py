@@ -15,7 +15,7 @@ The GPT conversation is `here
 
 import sys
 import h5py
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QWidget,
     QVBoxLayout,
@@ -280,7 +280,7 @@ def main():
 
     app = QApplication(sys.argv)
     with EditAcqParams(hdf_filename, nodename) as _:
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
 
 if __name__ == "__main__":
