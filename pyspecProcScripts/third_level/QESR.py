@@ -3,10 +3,16 @@ from numpy import r_
 import os
 from matplotlib.pyplot import axvline, gca
 import matplotlib.pyplot as plt
-from pyspecdata import find_file, gammabar_e, ndshape, gridandtick
+from pyspecdata import find_file, gammabar_e, ndshape, gridandtick, nddata
 from scipy.interpolate import UnivariateSpline
 from ..first_level.QESR_rescale import QESR_apply_scalefactor
 import pickle
+import logging
+from pyspecdata import pyspec_config
+
+_figure_mode_setting = pyspec_config.get_setting(
+    "figures", section="mode", environ="pyspecdata_figures"
+)
 
 # {{{ all basic info
 colors = plt.rcParams[
@@ -17,7 +23,7 @@ fieldaxis = "$B_0$"
 
 
 def QESR(
-    file_name,
+    data_or_filename,
     label,
     pushout=0.5,
     threshold=0.05,
@@ -41,6 +47,8 @@ def QESR(
 
     Parameters
     ==========
+    data_or_filename: nddata or string
+        Either the data or the filename.
     pushout: float
         Adjusts the "generous limits" factor which is added
         to the integration area surrounding the peaks
@@ -68,10 +76,6 @@ def QESR(
     fl: figure list
         required!
     """
-    if exp_type is None:
-        raise ValueError(
-            "You must specify the location of the file with exp_type!"
-        )
     if fl is None:
         raise ValueError("for now, you just have to pass a figure list")
     if pickle_file is not None:
@@ -87,9 +91,14 @@ def QESR(
             pickle_vars = {}
         # }}}
     # {{{ load the file of interest, and get set up
-    d = find_file(file_name, exp_type=exp_type)
-    if "harmonic" in d.dimlabels:
-        d = d["harmonic", 0]
+    if type(data_or_filename) is str:
+        d = find_file(data_or_filename, exp_type=exp_type)
+        if "harmonic" in d.dimlabels:
+            d = d["harmonic", 0]
+    elif type(data_or_filename) is nddata:
+        d = data_or_filename
+    else:
+        raise ValueError("not sure what type the file is!")
     d -= d[fieldaxis, -100:].data.mean()
     d.setaxis(fieldaxis, lambda x: x - d.get_prop("MWFQ") / gammabar_e * 1e4)
     if calibration_name is not None:
@@ -119,7 +128,6 @@ def QESR(
     # {{{ configure all the plots -- I like to do this in one place so I
     #     can easily control placement in the PDF
     fl.next("baseline diagnostic")  # I want this plot to come first
-    fl.text(r"\textbf{\texttt{%s}}\par" % file_name)
     # {{{ make the complicated figure if we haven't done so yet
     if (
         "absorption, bg. no bl."
@@ -129,14 +137,20 @@ def QESR(
         thisfig = plt.figure()
         gs = plt.GridSpec(4, 1, figure=thisfig)
         ax = thisfig.add_subplot(gs[:3, 0])
+        if _figure_mode_setting != "standard":
+            fl.text(r"\par")
+            fl.setprops(width=0.9)
         fl.next("absorption, bg. no bl.", ax=ax, fig=thisfig, legend=True)
         ax_dblint = thisfig.add_subplot(gs[3, 0])
     else:
         thisfig = fl.next("absorption, bg. no bl.")
         ax, ax_dblint = thisfig.get_axes()
+    if _figure_mode_setting != "standard":
+        fl.text(r"\textbf{\texttt{%s}}\par" % data_or_filename)
     # }}}
     ax.set_title("abs mode:\nbackground subtracted, show baseline")
-    fl.text(r"\par")
+    if _figure_mode_setting != "standard":
+        fl.text(r"\par")
     fl.next("baseline diagnostic")
     gca().set_title(
         "zoomed-in baseline diagnostic\nshowing only baseline\n(data and fit)"
@@ -176,9 +190,17 @@ def QESR(
     # pull the furthest left and furthest right boundaries of any peaks that we
     # find
     specrange = (peaklist.ravel().min(), peaklist.ravel().max())
+    logging.debug(f"specrange {specrange} out of {d_abs[fieldaxis][r_[0,-1]]}")
     generous_limits = (
         specrange + np.diff(specrange).item() * r_[-pushout, +pushout]
     )
+    # {{{ if the limits extend to the end, then pull back
+    if generous_limits[-1] > d_abs[fieldaxis][-100]:
+        generous_limits[-1] = d_abs[fieldaxis][-100]
+    if generous_limits[0] < d_abs[fieldaxis][100]:
+        generous_limits[0] = d_abs[fieldaxis][100]
+    # }}}
+    logging.debug(f"expanded to {generous_limits}")
     for j in r_[np.array(specrange)]:
         # show where the peaks were identified
         axvline(x=j, alpha=0.5, color=d.get_plot_color(), ls=":")
@@ -209,6 +231,7 @@ def QESR(
     d_abs -= polybaseline  # background subtraction
     d_abs.integrate(fieldaxis, cumulative=True)
     d_abs.name("conc").set_units("micromolar")
+    logging.debug(f"trying to slice by {generous_limits[-1]} to right")
     final_conc = (
         d_abs[fieldaxis : (generous_limits[-1], None)].mean(fieldaxis).item()
     ).real.to_compact()

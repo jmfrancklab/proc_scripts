@@ -9,13 +9,76 @@ aligning the data through a correlation routine.
 import pyspecdata as psd
 from pyspecdata import r_
 import numpy as np
-import pyspecProcScripts as psdpr
+from pyspecProcScripts import (
+    select_pathway,
+    correl_align,
+    zeroth_order_ph,
+    hermitian_function_test,
+)
 from pylab import rcParams
 import matplotlib.pyplot as plt
 import sympy as s
 from collections import OrderedDict
 from numpy.random import seed
 
+
+# {{{ Define the frequency mask function and the ph cyc mask
+def frq_mask(s, sigma=150.0):
+    """Note that we assume that our mask is a product of a
+    frequency-domain and a coherence-domain function.
+    This returns a copy multiplied by the square root of the
+    frequency-domain part,
+    leaving the original data untouched.
+
+    Parameters
+    ==========
+    s : nddata
+        Signal, given in the frequency domain and coherence transfer
+        (*vs.* phase) domain.
+        The property `coherence_pathway` must be set.
+    """
+    assert s.get_ft_prop("t2")
+    assert s.get_ft_prop(list(s.get_prop("coherence_pathway").keys())[0])
+    # {{{ find center frequency
+    nu_center = (
+        select_pathway(s, s.get_prop("coherence_pathway"))
+        .mean("repeats")
+        .argmax("t2")
+    )
+    # }}}
+    # {{{ Make mask using the center frequency and sigma.
+    #     Standard gaussian is 2σ² in the denominator -- the extra 2 is
+    #     for sqrt.
+    frq_mask = np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
+    # }}}
+    # note that when we multiply, we automatically generate a copy
+    return s * frq_mask
+
+
+def coherence_unmask_fn(coh_array):
+    """Filters out all but the signal pathway and the {"ph1":0} or
+    {"ph1":0,"ph2":0} pathways (depending on which experiment below is used).
+    Note this serves as an example function and other filter functions could
+    alternatively be used"""
+
+    def set_pathway_true(pathway_dict):
+        for j, (k, v) in enumerate(pathway_dict.items()):
+            # the last element needs to be treated differently
+            if j < len(pathway_dict) - 1:
+                thisslice = coh_array[k, v]
+            elif len(pathway_dict) == 1:
+                coh_array[k, v] = 1
+            else:
+                thisslice[k, v] = 1
+
+    set_pathway_true(coh_array.get_prop("coherence_pathway"))
+    set_pathway_true(
+        {k: 0 for k in coh_array.get_prop("coherence_pathway").keys()}
+    )
+    return coh_array
+
+
+# }}}
 seed(2021)
 rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
@@ -68,12 +131,12 @@ with psd.figlist_var() as fl:
         fl.next("Data Processing", fig=fig)
         data = psd.fake_data(
             expression, OrderedDict(orderedDict), signal_pathway
-        )
+        ).set_prop("coherence_pathway", signal_pathway)
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the individual
-            #        figures
+        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the
+            #        individual figures
             data,
             bbox=gs[0],
             fig=fig,
@@ -81,44 +144,46 @@ with psd.figlist_var() as fl:
         )
         data = data["t2":f_range]
         data.ift("t2")
-        data /= psdpr.zeroth_order_ph(
-            psdpr.select_pathway(data, signal_pathway)
-        )
+        data /= zeroth_order_ph(select_pathway(data, signal_pathway))
         # }}}
         # {{{ Applying the phase corrections
-        best_shift = psdpr.hermitian_function_test(
-            psdpr.select_pathway(data.C.mean(indirect), signal_pathway)
+        data["t2"] -= data.getaxis("t2")[0]  # needed for Hermitian Function
+        #                                     (fid_from_echo does this
+        #                                     automatically)
+        best_shift = hermitian_function_test(
+            select_pathway(data.C.mean(indirect), signal_pathway)
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
         psd.DCCT(data, bbox=gs[1], fig=fig, title="Phased and \n Centered")
         # }}}
         # {{{ Applying Correlation Routine to Align Data
-        mysgn = (
-            psdpr.select_pathway(data, signal_pathway)
+        mysgn = (  # this is the sign of the signal -- note how on the next
+            #        line, I pass sign-flipped data, so that we don't need to
+            #        worry about messing with the original signal
+            select_pathway(data, signal_pathway)
             .C.real.sum("t2")
             .run(np.sign)
         )
-        #    this is the sign of the signal -- note how on the next line,
-        #    I pass sign-flipped data, so that we don't need to worry about
-        #    messing with the original signal
-        data.ift(list(signal_pathway.keys()))
-        opt_shift, sigma, mask_func = psdpr.correl_align(
+        opt_shift = correl_align(
             data * mysgn,
-            indirect_dim=indirect,
-            signal_pathway=signal_pathway,
-            sigma=3000 / 2.355,
+            frq_mask_fn=frq_mask,
+            coherence_unmask_fn=coherence_unmask_fn,
+            repeat_dims=indirect,
             max_shift=300,  # this makes the Gaussian mask 3
             #                 kHz (so much wider than the signal), and
             #                 max_shift needs to be set just wide enough to
             #                 accommodate the drift in signal
             fl=fl,
         )
-        # removed display of the mask (I think that's what it was)
-        data.ift("t2")
+        # The shift correction should be made in the time and phase cycling
+        # domain
+        # (this is how it is done in the function itself as well)
+        data.ift("t2").ift(list(signal_pathway))
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
-        data.ft(list(signal_pathway.keys()))
-        data.ft("t2")
+        data.ft("t2").ft(
+            list(signal_pathway.keys())
+        )  # FT both domains for plotting
         psd.DCCT(data, bbox=gs[2], fig=fig, title=r"Aligned Data ($\nu$)")
         data.ift("t2")
         psd.DCCT(data, bbox=gs[3], fig=fig, title=r"Aligned Data ($t$)")

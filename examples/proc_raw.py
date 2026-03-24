@@ -26,14 +26,17 @@ ODNP_NMR_comp/field_dependent``
 ``py proc_raw.py FIR_34dBm K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
 
 """
+
 import pyspecProcScripts as prscr
-import numpy as np
 import sys, os
 import matplotlib.pyplot as plt
 from itertools import cycle
 import pyspecdata as psd
 
-if "SPHINX_GALLERY_RUNNING" in os.environ and os.environ['SPHINX_GALLERY_RUNNING'] == 'True':
+if (
+    "SPHINX_GALLERY_RUNNING" in os.environ
+    and os.environ["SPHINX_GALLERY_RUNNING"] == "True"
+):
     sys.argv = [
         sys.argv[0],
         "echo_6",
@@ -48,16 +51,49 @@ colorcyc = cycle(colorcyc_list)
 
 assert len(sys.argv) == 4
 d = psd.find_file(
-    sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1],
-    lookup=prscr.lookup_table
+    sys.argv[2],
+    exp_type=sys.argv[3],
+    expno=sys.argv[1],
+    lookup=prscr.lookup_table,
 )
 print("postproc_type:", d.get_prop("postproc_type"))
+
+
+def get_first_field_if_structured(d):
+    for j in d.dimlabels:
+        arr = d[j]
+        if arr is not None:
+            if arr.dtype.names:  # True if structured array
+                print(
+                    "for the '",
+                    j,
+                    "' dimension, you will want to select the field ",
+                    arr.dtype.names,
+                    " that you want to use, but I'm just picking the first",
+                )
+                retval = arr[arr.dtype.names[0]]
+                if "time" in arr.dtype.names[0].lower():
+                    print(
+                        "this is called 'time', so I'm assuming it has units"
+                        " of seconds"
+                    )
+                    d.set_units(j, "s")
+                if retval[1] / abs(retval[1] - retval[0]) > 10:
+                    # there is a large offset to all the numbers
+                    retval -= retval[0]
+                    print(
+                        "I'm also making this axis relative, because it has a"
+                        " large offset (it's probably a time axis)"
+                    )
+                d[j] = retval
+    return d
+
+
 with psd.figlist_var() as fl:
     d.squeeze()
     print("=" * 13 + "ACQ PARAMS" + "=" * 13)
     for k, v in d.get_prop("acq_params").items():
         print(f"{k:>25s} : {v}")
-    fl.next("raw data")
     print("=" * 36)
 
     def image_or_plot(d):
@@ -65,7 +101,7 @@ with psd.figlist_var() as fl:
             fl.plot(d)
         elif len(d.dimlabels) == 2:
             iterdim = d.shape.min()
-            if d.shape[iterdim] > 5:
+            if d.shape[iterdim] > 3:
                 # so that we can do pcolor, if the indirect is a structured
                 # array, just pull the first field
                 if d[d.dimlabels[0]].dtype.names is not None:
@@ -95,12 +131,11 @@ with psd.figlist_var() as fl:
                     human_units=False,
                 )
         else:
-            rows = np.prod([d.shape[j] for j in d.dimlabels[:-1]])
-            if rows < 500:
-                fl.image(d)
-            else:
-                fl.image(d, interpolation="bilinear")
+            d = get_first_field_if_structured(d)
+            fl.DCCT(d)
 
+    fl.next("raw data")
+    print("about to image or plot", d.shape)
     image_or_plot(d)
     if "nScans" in d.dimlabels:
         d.mean("nScans")
@@ -122,5 +157,5 @@ with psd.figlist_var() as fl:
         image_or_plot(forplot)
         d = prscr.select_pathway(d, d.get_prop("coherence_pathway"))
         fl.next("with coherence pathway selected")
-        plt.gca().set_title("select " + str(d.get_prop("coherence_pathway")))
         image_or_plot(d)
+        plt.gcf().suptitle("select " + str(d.get_prop("coherence_pathway")))

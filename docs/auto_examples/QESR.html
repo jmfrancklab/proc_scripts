@@ -21,8 +21,8 @@
     <link rel="icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="FID from Echo after Phasing and Timing Correction" href="FIDtoEcho_Actual.html" />
-    <link rel="prev" title="Process a square wave reflection" href="proc_square_refl.html" />
+    <link rel="next" title="EPR correlation alignment" href="epr_overlay.html" />
+    <link rel="prev" title="QESR of same sample" href="QESR_samesample.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -58,28 +58,67 @@ gain, etc) and multiplied by a proportionality constant that
 is defined in your pyspecdata config file.</p>
 <p>In order to properly run this example, your config file
 should have the following values under General:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">220720</span> <span class="n">propfactor</span> <span class="o">=</span> <span class="mf">8.637e-5</span>
-<span class="mi">220720</span> <span class="n">q</span> <span class="o">=</span> <span class="mi">4600</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">220720</span><span class="n">new</span> <span class="n">propfactor</span> <span class="o">=</span> <span class="mf">1.715e-10</span>
+<span class="mi">220720</span><span class="n">new</span> <span class="n">q</span> <span class="o">=</span> <span class="mi">4600</span>
 <span class="n">qesr</span> <span class="n">caps</span> <span class="n">diameter</span> <span class="o">=</span> <span class="mf">0.704</span>
-<span class="n">default</span> <span class="n">calibration</span> <span class="o">=</span> <span class="mi">220720</span>
+<span class="n">default</span> <span class="n">calibration</span> <span class="o">=</span> <span class="mi">220720</span><span class="n">new</span>
 <span class="n">default</span> <span class="n">diameter</span> <span class="o">=</span> <span class="n">qesr</span> <span class="n">caps</span>
 </pre></div>
 </div>
 <p>Note that the diameter is given in units of mm.</p>
 <ul class="sphx-glr-horizontal">
 <li><img src="../_images/sphx_glr_QESR_001.png" srcset="../_images/sphx_glr_QESR_001.png" alt="zoomed-in baseline diagnostic showing only baseline (data and fit)" class = "sphx-glr-multi-img"/></li>
-<li><img src="../_images/sphx_glr_QESR_002.png" srcset="../_images/sphx_glr_QESR_002.png" alt="abs mode: background subtracted, show baseline, $\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow 220720)$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_002.png" srcset="../_images/sphx_glr_QESR_002.png" alt="abs mode: background subtracted, show baseline, $\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow None)$" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_003.png" srcset="../_images/sphx_glr_QESR_003.png" alt="zoomed-in baseline diagnostic showing only baseline (data and fit)" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_QESR_004.png" srcset="../_images/sphx_glr_QESR_004.png" alt="abs mode: background subtracted, show baseline, $\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow None)$" class = "sphx-glr-multi-img"/></li>
 </ul>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>the stored concentration is 521.3941419867239 micromolar
-1: baseline diagnostic
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>the stored concentration is 69.93816677405941 millimolar
+the stored concentration is 521.3475578866337 micromolar
+1: ras baseline diagnostic
+{&#39;print_string&#39;: &#39;\\par&#39;}
+{&#39;width&#39;: 0.9}
+2: ras absorption, bg. no bl. |||G
 {&#39;print_string&#39;: &#39;\\textbf{\\texttt{220804_rasI36_MTSL.DSC}}\\par&#39;}
-2: absorption, bg. no bl. |||G
+{&#39;print_string&#39;: &#39;\\par&#39;}
+3: calibration experiment baseline diagnostic
+{&#39;print_string&#39;: &#39;\\par&#39;}
+{&#39;width&#39;: 0.9}
+4: calibration experiment absorption, bg. no bl. |||G
+{&#39;print_string&#39;: &#39;\\textbf{\\texttt{220720_stock_4.DSC}}\\par&#39;}
 {&#39;print_string&#39;: &#39;\\par&#39;}
 
 
 
 
+\par
+
+
+
+
+
+
 \textbf{\texttt{220804_rasI36_MTSL.DSC}}\par
+
+
+
+
+
+
+\par
+
+
+
+
+
+
+\par
+
+
+
+
+
+
+\textbf{\texttt{220720_stock_4.DSC}}\par
 
 
 
@@ -100,14 +139,16 @@ should have the following values under General:</p>
 <span class="c1"># sphinx_gallery_thumbnail_number = 2</span>
 <span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;image.aspect&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>  <span class="c1"># needed for sphinx gallery</span>
 
-<span class="n">pickle_file</span> <span class="o">=</span> <span class="s2">&quot;TEMPOL_rerun_conc.pickle&quot;</span> <span class="c1"># when complete, the</span>
+<span class="n">pickle_file</span> <span class="o">=</span> <span class="s2">&quot;TEMPOL_rerun_conc.pickle&quot;</span>  <span class="c1"># when complete, the</span>
 <span class="c1">#                                          concentration is stored here</span>
 <span class="k">with</span> <span class="n">figlist_var</span><span class="p">()</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">basename</span> <span class="o">=</span> <span class="s2">&quot;ras&quot;</span>  <span class="c1"># I want different basenames so these show up on</span>
+    <span class="c1">#                      different plots, because they have very</span>
+    <span class="c1">#                      different concentrations</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">QESR</span><span class="p">(</span>
         <span class="s2">&quot;220804_rasI36_MTSL.DSC&quot;</span><span class="p">,</span>  <span class="c1"># filename</span>
         <span class="n">label</span><span class="o">=</span><span class="s2">&quot;kRas I36&quot;</span><span class="p">,</span>  <span class="c1"># label for legends</span>
         <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;francklab_esr/Farhana&quot;</span><span class="p">,</span>  <span class="c1"># location of file</span>
-        <span class="n">calibration_name</span><span class="o">=</span><span class="s2">&quot;220720&quot;</span><span class="p">,</span>
         <span class="n">diameter_name</span><span class="o">=</span><span class="s2">&quot;QESR caps&quot;</span><span class="p">,</span>
         <span class="n">background</span><span class="o">=</span><span class="n">find_file</span><span class="p">(</span>
             <span class="s2">&quot;220804_water.DSC&quot;</span><span class="p">,</span> <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;francklab_esr/Farhana&quot;</span>
@@ -117,12 +158,22 @@ should have the following values under General:</p>
         <span class="n">pickle_file</span><span class="o">=</span><span class="n">pickle_file</span><span class="p">,</span>
         <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">fl</span><span class="o">.</span><span class="n">basename</span> <span class="o">=</span> <span class="s2">&quot;calibration experiment&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">QESR</span><span class="p">(</span>
+        <span class="s2">&quot;220720_stock_4.DSC&quot;</span><span class="p">,</span>  <span class="c1"># filename</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;70 mM ref&quot;</span><span class="p">,</span>  <span class="c1"># label for legends</span>
+        <span class="n">exp_type</span><span class="o">=</span><span class="s2">&quot;francklab_esr/alex&quot;</span><span class="p">,</span>  <span class="c1"># location of file</span>
+        <span class="n">diameter_name</span><span class="o">=</span><span class="s2">&quot;QESR caps&quot;</span><span class="p">,</span>
+        <span class="n">pickle_file</span><span class="o">=</span><span class="n">pickle_file</span><span class="p">,</span>
+        <span class="n">fl</span><span class="o">=</span><span class="n">fl</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pickle_file</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
         <span class="n">pickle_vars</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;the stored concentration is&quot;</span><span class="p">,</span><span class="n">pickle_vars</span><span class="p">[</span><span class="s2">&quot;kRas I36&quot;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;the stored concentration is&quot;</span><span class="p">,</span> <span class="n">pickle_vars</span><span class="p">[</span><span class="s2">&quot;70 mM ref&quot;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;the stored concentration is&quot;</span><span class="p">,</span> <span class="n">pickle_vars</span><span class="p">[</span><span class="s2">&quot;kRas I36&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.129 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 2.328 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-qesr-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/f3e3db64a82f124f96e56116771028f5/QESR.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">QESR.ipynb</span></code></a></p>
@@ -161,14 +212,15 @@ should have the following values under General:</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">ProcScripts Example Gallery</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="append_conc_to_h5file.html">Edit the concentration parameter of a saved HDF5 file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_square_refl.html">Process a square wave reflection</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Quantify the Double Integral of an ESR spectra (QESR)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual.html">FID from Echo after Phasing and Timing Correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="phaseCycNoise_example.html">Phase Cycling Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay2.html">Another EPR Alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generate_oscilloscope_PSD.html">Generate a PSD from Oscilloscope Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QESR_samesample.html">QESR of same sample</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Quantify the Double Integral of an ESR spectra (QESR)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="epr_overlay.html">EPR correlation alignment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integrate_limits_realData.html">Demonstrate Integrate Limits on Experimental Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">PSD from SpinCore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generate_SC_PSD.html">Generate a PSD from SpinCore Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_CPMG.html">CPMG-specific processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_Ep.html">Process Enhancement experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="FIDtoEcho_Actual_Challenging.html">FID from Echo after Phasing and Timing Correction – Challenging Actual Data</a></li>
@@ -184,7 +236,6 @@ should have the following values under General:</p>
 <li class="toctree-l2"><a class="reference internal" href="proc_FIR.html">Process FIR experiment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="proc_GDS_capture_int.html">Calculating β from individual pulse capture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="check_integration_error.html">Check integral error calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="correlation_alignment_example.html">Align data with significant frequency drift</a></li>
 <li class="toctree-l2"><a class="reference internal" href="time_domain_noise.html">Time-Domain Noise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="integration_with_error.html">Check Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="verify_tsqrtP_calibration.html">Verify the pulse calibration</a></li>
@@ -200,8 +251,8 @@ should have the following values under General:</p>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">ProcScripts Example Gallery</a><ul>
-      <li>Previous: <a href="proc_square_refl.html" title="previous chapter">Process a square wave reflection</a></li>
-      <li>Next: <a href="FIDtoEcho_Actual.html" title="next chapter">FID from Echo after Phasing and Timing Correction</a></li>
+      <li>Previous: <a href="QESR_samesample.html" title="previous chapter">QESR of same sample</a></li>
+      <li>Next: <a href="epr_overlay.html" title="next chapter">EPR correlation alignment</a></li>
   </ul></li>
   </ul></li>
 </ul>

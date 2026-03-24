@@ -35,15 +35,15 @@ should have the following values under General:
 
 ::
 
-    220720 propfactor = 8.637e-5
-    220720 q = 4600
+    220720new propfactor = 1.715e-10
+    220720new q = 4600
     qesr caps diameter = 0.704
-    default calibration = 220720
+    default calibration = 220720new
     default diameter = qesr caps
 
 Note that the diameter is given in units of mm.
 
-.. GENERATED FROM PYTHON SOURCE LINES 27-56
+.. GENERATED FROM PYTHON SOURCE LINES 27-68
 
 
 
@@ -60,8 +60,22 @@ Note that the diameter is given in units of mm.
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_QESR_002.png
-         :alt: abs mode: background subtracted, show baseline, $\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow 220720)$
+         :alt: abs mode: background subtracted, show baseline, $\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow None)$
          :srcset: /auto_examples/images/sphx_glr_QESR_002.png
+         :class: sphx-glr-multi-img
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_QESR_003.png
+         :alt: zoomed-in baseline diagnostic showing only baseline (data and fit)
+         :srcset: /auto_examples/images/sphx_glr_QESR_003.png
+         :class: sphx-glr-multi-img
+
+    *
+
+      .. image-sg:: /auto_examples/images/sphx_glr_QESR_004.png
+         :alt: abs mode: background subtracted, show baseline, $\left(\frac{dblint}{denom}\right)(calibration\ \rightarrow None)$
+         :srcset: /auto_examples/images/sphx_glr_QESR_004.png
          :class: sphx-glr-multi-img
 
 
@@ -69,16 +83,53 @@ Note that the diameter is given in units of mm.
 
  .. code-block:: none
 
-    the stored concentration is 521.3941419867239 micromolar
-    1: baseline diagnostic
+    the stored concentration is 69.93816677405941 millimolar
+    the stored concentration is 521.3475578866337 micromolar
+    1: ras baseline diagnostic
+    {'print_string': '\\par'}
+    {'width': 0.9}
+    2: ras absorption, bg. no bl. |||G
     {'print_string': '\\textbf{\\texttt{220804_rasI36_MTSL.DSC}}\\par'}
-    2: absorption, bg. no bl. |||G
+    {'print_string': '\\par'}
+    3: calibration experiment baseline diagnostic
+    {'print_string': '\\par'}
+    {'width': 0.9}
+    4: calibration experiment absorption, bg. no bl. |||G
+    {'print_string': '\\textbf{\\texttt{220720_stock_4.DSC}}\\par'}
     {'print_string': '\\par'}
 
 
 
 
+    \par
+
+
+
+
+
+
     \textbf{\texttt{220804_rasI36_MTSL.DSC}}\par
+
+
+
+
+
+
+    \par
+
+
+
+
+
+
+    \par
+
+
+
+
+
+
+    \textbf{\texttt{220720_stock_4.DSC}}\par
 
 
 
@@ -108,14 +159,16 @@ Note that the diameter is given in units of mm.
     # sphinx_gallery_thumbnail_number = 2
     rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
-    pickle_file = "TEMPOL_rerun_conc.pickle" # when complete, the
+    pickle_file = "TEMPOL_rerun_conc.pickle"  # when complete, the
     #                                          concentration is stored here
     with figlist_var() as fl:
+        fl.basename = "ras"  # I want different basenames so these show up on
+        #                      different plots, because they have very
+        #                      different concentrations
         c = QESR(
             "220804_rasI36_MTSL.DSC",  # filename
             label="kRas I36",  # label for legends
             exp_type="francklab_esr/Farhana",  # location of file
-            calibration_name="220720",
             diameter_name="QESR caps",
             background=find_file(
                 "220804_water.DSC", exp_type="francklab_esr/Farhana"
@@ -125,14 +178,24 @@ Note that the diameter is given in units of mm.
             pickle_file=pickle_file,
             fl=fl,
         )
+        fl.basename = "calibration experiment"
+        c = QESR(
+            "220720_stock_4.DSC",  # filename
+            label="70 mM ref",  # label for legends
+            exp_type="francklab_esr/alex",  # location of file
+            diameter_name="QESR caps",
+            pickle_file=pickle_file,
+            fl=fl,
+        )
         with open(pickle_file, "rb") as fp:
             pickle_vars = pickle.load(fp)
-        print("the stored concentration is",pickle_vars["kRas I36"])
+        print("the stored concentration is", pickle_vars["70 mM ref"])
+        print("the stored concentration is", pickle_vars["kRas I36"])
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.129 seconds)
+   **Total running time of the script:** (0 minutes 2.328 seconds)
 
 
 .. _sphx_glr_download_auto_examples_QESR.py:

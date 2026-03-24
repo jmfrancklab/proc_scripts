@@ -1,11 +1,14 @@
 """
-PSD from SpinCore
-=================
+Generate a PSD from SpinCore Data
+=================================
+Here, data containing the noise signal acquired on the SpinCore is converted to
+a power spectral density and convolved to display a smooth spectra illustrating
+the noise power.
 """
 from numpy import r_
 import pyspecdata as psd
 from pyspecProcScripts import lookup_table
-from pylab import diff, ylabel, sqrt
+from pylab import diff, sqrt
 
 lambda_G = 4e3  # Width for Gaussian convolution
 dg_per_V = 583e6  # Calibration coefficient to convert the
@@ -33,7 +36,8 @@ with psd.figlist_var() as fl:
     acq_time = diff(s.getaxis("t")[r_[0, -1]])[0]
     s /= sqrt(
         2
-    )  # Instantaneous $\frac{V_{p}\sqrt{s}}{\sqrt{Hz}} \rightarrow \frac{V_{rms}\sqrt{s}}{\sqrt{Hz}}$
+    )  # Instantaneous Vₚ√s / √Hz to
+    #    Vᵣₘₛ√s / √Hz 
     # {{{ equation 21
     s = abs(s) ** 2  # Take mod squared to convert to
     #                   energy $\frac{V_{rms}^{2} \cdot s}{Hz}$
@@ -42,11 +46,11 @@ with psd.figlist_var() as fl:
     s /= 50  # Divide by impedance $\rightarrow$ W/Hz
     # }}}
     # Plot unconvolved PSD on a semilog plot
-    s.name(r"$S(\nu) / \text{(W/Hz)}$")
+    s.name(r"$S(\nu)$").set_units("W/Hz")
     fl.next("PSD acquired on SpinCore")
     fl.plot(s, color="blue", alpha=0.1, plottype="semilogy")
     # Convolve using the $\lambda_{G}$ specified above
     s.convolve("t", lambda_G, enforce_causality=False)
     # Plot the convolved PSD on the semilog plot with the
     # unconvolved
-    fl.plot( s, color="blue", alpha=0.5, plottype="semilogy")
+    fl.plot(s, color="blue", alpha=0.5, plottype="semilogy")

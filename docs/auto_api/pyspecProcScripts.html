@@ -274,31 +274,31 @@ same.</p></li>
 <span id="pyspecprocscripts-correlation-alignment-module"></span><h2>pyspecProcScripts.correlation_alignment module<a class="headerlink" href="#module-pyspecProcScripts.correlation_alignment" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyspecProcScripts.correlation_alignment.correl_align">
-<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.correlation_alignment.</span></span><span class="sig-name descname"><span class="pre">correl_align</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_orig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">align_phases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indirect_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'indirect'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'correlation</span> <span class="pre">alignment'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_pathway</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'ph1':</span> <span class="pre">0,</span> <span class="pre">'ph2':</span> <span class="pre">1}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'t2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.correlation_alignment.correl_align" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.correlation_alignment.</span></span><span class="sig-name descname"><span class="pre">correl_align</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_orig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indirect_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'indirect'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'correlation</span> <span class="pre">alignment'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_pathway</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'ph1':</span> <span class="pre">0,</span> <span class="pre">'ph2':</span> <span class="pre">1}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'t2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.correlation_alignment.correl_align" title="Link to this definition">¶</a></dt>
 <dd><p>Align transients collected with chunked phase cycling dimensions along an
 indirect dimension based on maximizing the correlation across all the
 transients and repeat alignment until the calculated signal energy remains
 constant to within a given tolerance level.</p>
+<p>This implements Eq 29 in the DCCT paper (Beaton et al JCP 2022),
+remembering that the FT of the cross-correlation is the product
+of the two functions, with the <em>first</em> on complex conjugate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>s_orig</strong> (<em>psd.nddata</em>) – A psd.nddata object which contains phase cycle dimensions and an
-indirect dimension.</p></li>
-<li><p><strong>align_phases</strong> (<em>boolean</em>) – </p></li>
+indirect dimension.
+This data is not modified.</p></li>
 <li><p><strong>tol</strong> (<em>float</em>) – Sets the tolerance limit for the alignment procedure.</p></li>
 <li><p><strong>indirect_dim</strong> (<em>str</em>) – Name of the indirect dimension along which you seek to
 align
 the transients.</p></li>
 <li><p><strong>fig_title</strong> (<em>str</em>) – Title for the figures generated.</p></li>
 <li><p><strong>signal_pathway</strong> (<em>dict</em>) – Dictionary containing the signal pathway.</p></li>
-<li><p><strong>shift_bounds</strong> (<em>boolean</em>) – Keeps f_shift to be within a specified
-limit (upper and lower bounds given by max_shift)
-which should be around the location of the expected
-signal.</p></li>
 <li><p><strong>avg_dim</strong> (<em>str</em>) – Dimension along which the data is being averaged.</p></li>
 <li><p><strong>max_shift</strong> (<em>float</em>) – Specifies the upper and lower bounds to the range over
 which f_shift will be taken from the correlation function.
-Shift_bounds must be True.</p></li>
+Shift_bounds must be True.
+If it’s set to None, then no bounds are applied.</p></li>
 <li><p><strong>sigma</strong> (<em>int</em>) – Sigma value for the Gaussian mask. Related to the line
 width of the given data.</p></li>
 <li><p><strong>fl</strong> (<em>boolean</em>) – fl=fl to show the plots and figures produced by this
@@ -1187,7 +1187,7 @@ factor</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyspecProcScripts.QESR">
-<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">QESR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pushout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.QESR" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">QESR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_or_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pushout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.QESR" title="Link to this definition">¶</a></dt>
 <dd><p>Converts a raw ESR spectra to the double integral and calculates the
 appropriate concentration of spins present.</p>
 <p>If a background spectra is provided, background subtraction is applied to
@@ -1198,6 +1198,7 @@ integral with the calculated concentration in micromolar in the legend.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>data_or_filename</strong> (<em>nddata</em><em> or </em><em>string</em>) – Either the data or the filename.</p></li>
 <li><p><strong>pushout</strong> (<em>float</em>) – Adjusts the “generous limits” factor which is added
 to the integration area surrounding the peaks</p></li>
 <li><p><strong>threshold</strong> (<em>float</em>) – Used in defining the integration limits (threshold*max)</p></li>
@@ -1220,8 +1221,8 @@ plots</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="pyspecProcScripts.QESR_scalefactor">
-<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">QESR_scalefactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diameter_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.QESR_scalefactor" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="pyspecProcScripts.QESR_apply_scalefactor">
+<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">QESR_apply_scalefactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.QESR_apply_scalefactor" title="Link to this definition">¶</a></dt>
 <dd><p>Divide the ESR spectrum by this number so that the double integral
 should be equal to concentration in μM.</p>
 <p>We specifically calculate
@@ -1236,18 +1237,25 @@ rather than the total number of spins).</p>
 Note that a larger <span class="math notranslate nohighlight">\(c_{propfactor}\)</span> corresponds to a higher
 concentration
 for the same recorded spectrum.</p>
+<p>See the <cite>QESR.py</cite> example for currently recommended settings
+for the example data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>calibration_name</strong> (<em>str</em>) – The key corresponding to the appropriate
+<dd class="field-odd"><p><strong>d</strong> (<em>nddata</em>) – <p>has these properties:</p>
+<dl class="simple">
+<dt>calibration_name:   str</dt><dd><p>The key corresponding to the appropriate
 proportionality constant
 in your pyspecdata config file.
-Typically this is one value that doesn’t need changing</p></li>
-<li><p><strong>diameter_name</strong> (<em>str</em>) – The key corresponding to the diameter of the
+Typically this is one value that doesn’t need
+changing</p>
+</dd>
+<dt>diameter_name:      str</dt><dd><p>The key corresponding to the diameter of the
 capillary tube used in the ESR experiment. This
 enables us to calculate a reliable concentration
-regardless of which capillary was used.</p></li>
-</ul>
+regardless of which capillary was used.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
@@ -1258,6 +1266,11 @@ regardless of which capillary was used.</p></li>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyspecProcScripts.QESR_scalefactor">
+<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">QESR_scalefactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.QESR_scalefactor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyspecProcScripts.Vpp2power">
@@ -1495,31 +1508,31 @@ same.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyspecProcScripts.correl_align">
-<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">correl_align</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_orig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">align_phases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indirect_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'indirect'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'correlation</span> <span class="pre">alignment'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_pathway</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'ph1':</span> <span class="pre">0,</span> <span class="pre">'ph2':</span> <span class="pre">1}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'t2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.correl_align" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">correl_align</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_orig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indirect_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'indirect'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig_title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'correlation</span> <span class="pre">alignment'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_pathway</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'ph1':</span> <span class="pre">0,</span> <span class="pre">'ph2':</span> <span class="pre">1}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'t2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.correl_align" title="Link to this definition">¶</a></dt>
 <dd><p>Align transients collected with chunked phase cycling dimensions along an
 indirect dimension based on maximizing the correlation across all the
 transients and repeat alignment until the calculated signal energy remains
 constant to within a given tolerance level.</p>
+<p>This implements Eq 29 in the DCCT paper (Beaton et al JCP 2022),
+remembering that the FT of the cross-correlation is the product
+of the two functions, with the <em>first</em> on complex conjugate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>s_orig</strong> (<em>psd.nddata</em>) – A psd.nddata object which contains phase cycle dimensions and an
-indirect dimension.</p></li>
-<li><p><strong>align_phases</strong> (<em>boolean</em>) – </p></li>
+indirect dimension.
+This data is not modified.</p></li>
 <li><p><strong>tol</strong> (<em>float</em>) – Sets the tolerance limit for the alignment procedure.</p></li>
 <li><p><strong>indirect_dim</strong> (<em>str</em>) – Name of the indirect dimension along which you seek to
 align
 the transients.</p></li>
 <li><p><strong>fig_title</strong> (<em>str</em>) – Title for the figures generated.</p></li>
 <li><p><strong>signal_pathway</strong> (<em>dict</em>) – Dictionary containing the signal pathway.</p></li>
-<li><p><strong>shift_bounds</strong> (<em>boolean</em>) – Keeps f_shift to be within a specified
-limit (upper and lower bounds given by max_shift)
-which should be around the location of the expected
-signal.</p></li>
 <li><p><strong>avg_dim</strong> (<em>str</em>) – Dimension along which the data is being averaged.</p></li>
 <li><p><strong>max_shift</strong> (<em>float</em>) – Specifies the upper and lower bounds to the range over
 which f_shift will be taken from the correlation function.
-Shift_bounds must be True.</p></li>
+Shift_bounds must be True.
+If it’s set to None, then no bounds are applied.</p></li>
 <li><p><strong>sigma</strong> (<em>int</em>) – Sigma value for the Gaussian mask. Related to the line
 width of the given data.</p></li>
 <li><p><strong>fl</strong> (<em>boolean</em>) – fl=fl to show the plots and figures produced by this
@@ -2121,6 +2134,17 @@ cycling dimensions) and values are the pathway you want to select</p></li>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyspecProcScripts.show_pickle_table">
+<span class="sig-prename descclassname"><span class="pre">pyspecProcScripts.</span></span><span class="sig-name descname"><span class="pre">show_pickle_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pickle_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyspecProcScripts.show_pickle_table" title="Link to this definition">¶</a></dt>
+<dd><p>show a pickle file with scalar variables in a
+latex table</p>
+<p>Useful function when comparing multiple data sets and
+takes advantage of the capability of <code class="xref py py-func docutils literal notranslate"><span class="pre">QESR()</span></code>
+function to output pickle files.
+A latex table is generated pulling from the pickle file called.</p>
 </dd></dl>
 
 <dl class="py function">

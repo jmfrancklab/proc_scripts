@@ -72,7 +72,13 @@ with psd.figlist_var() as fl:
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        fl.DCCT(data, bbox=gs[0], title="Raw Data")
+        psd.DCCT(  # note that fl.DCCT doesn't allow us to title the individual
+            #        figures
+            data,
+            bbox=gs[0],
+            fig=fig,
+            title="Raw Data",
+        )
         data = data["t2":f_range]
         data.ift("t2")
         data /= psdpr.zeroth_order_ph(
@@ -85,7 +91,7 @@ with psd.figlist_var() as fl:
         )
         data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
         data.ft("t2")
-        fl.DCCT(data, bbox=gs[1], title="Phased and \n Centered")
+        psd.DCCT(data, bbox=gs[1], fig=fig, title="Phased and \n Centered")
         # }}}
         # {{{ Applying Correlation Routine to Align Data
         mysgn = (
@@ -113,8 +119,8 @@ with psd.figlist_var() as fl:
         data *= np.exp(-1j * 2 * np.pi * opt_shift * data.fromaxis("t2"))
         data.ft(list(signal_pathway.keys()))
         data.ft("t2")
-        fl.DCCT(data, bbox=gs[2], title="Aligned Data (v)")
+        psd.DCCT(data, bbox=gs[2], fig=fig, title=r"Aligned Data ($\nu$)")
         data.ift("t2")
-        fl.DCCT(data, bbox=gs[3], title="Aligned Data (t)")
+        psd.DCCT(data, bbox=gs[3], fig=fig, title=r"Aligned Data ($t$)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
         # }}}

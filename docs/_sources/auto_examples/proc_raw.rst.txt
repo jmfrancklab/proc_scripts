@@ -41,7 +41,7 @@ Tested with:
 
 ``py proc_raw.py FIR_34dBm K42.*A1_kRasbatch240814 ODNP_NMR_comp/ODNP``
 
-.. GENERATED FROM PYTHON SOURCE LINES 29-127
+.. GENERATED FROM PYTHON SOURCE LINES 29-133
 
 
 
@@ -51,21 +51,21 @@ Tested with:
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_raw_001.png
-         :alt: raw data
+         :alt: (real), (imag)
          :srcset: /auto_examples/images/sphx_glr_proc_raw_001.png
          :class: sphx-glr-multi-img
 
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_raw_002.png
-         :alt: sum of abs of all coherence pathways (for comparison)
+         :alt: (real)
          :srcset: /auto_examples/images/sphx_glr_proc_raw_002.png
          :class: sphx-glr-multi-img
 
     *
 
       .. image-sg:: /auto_examples/images/sphx_glr_proc_raw_003.png
-         :alt: select {'ph1': 1}
+         :alt: select {'ph1': 1}, with coherence pathway selected
          :srcset: /auto_examples/images/sphx_glr_proc_raw_003.png
          :class: sphx-glr-multi-img
 
@@ -128,6 +128,7 @@ Tested with:
 
 .. code-block:: Python
 
+
     import pyspecProcScripts as prscr
     import numpy as np
     import sys, os
@@ -135,7 +136,10 @@ Tested with:
     from itertools import cycle
     import pyspecdata as psd
 
-    if "SPHINX_GALLERY_RUNNING" in os.environ and os.environ['SPHINX_GALLERY_RUNNING'] == 'True':
+    if (
+        "SPHINX_GALLERY_RUNNING" in os.environ
+        and os.environ["SPHINX_GALLERY_RUNNING"] == "True"
+    ):
         sys.argv = [
             sys.argv[0],
             "echo_6",
@@ -150,8 +154,10 @@ Tested with:
 
     assert len(sys.argv) == 4
     d = psd.find_file(
-        sys.argv[2], exp_type=sys.argv[3], expno=sys.argv[1],
-        lookup=prscr.lookup_table
+        sys.argv[2],
+        exp_type=sys.argv[3],
+        expno=sys.argv[1],
+        lookup=prscr.lookup_table,
     )
     print("postproc_type:", d.get_prop("postproc_type"))
     with psd.figlist_var() as fl:
@@ -167,7 +173,7 @@ Tested with:
                 fl.plot(d)
             elif len(d.dimlabels) == 2:
                 iterdim = d.shape.min()
-                if d.shape[iterdim] > 5:
+                if d.shape[iterdim] > 3:
                     # so that we can do pcolor, if the indirect is a structured
                     # array, just pull the first field
                     if d[d.dimlabels[0]].dtype.names is not None:
@@ -224,13 +230,13 @@ Tested with:
             image_or_plot(forplot)
             d = prscr.select_pathway(d, d.get_prop("coherence_pathway"))
             fl.next("with coherence pathway selected")
-            plt.gca().set_title("select " + str(d.get_prop("coherence_pathway")))
             image_or_plot(d)
+            plt.gcf().suptitle("select " + str(d.get_prop("coherence_pathway")))
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.767 seconds)
+   **Total running time of the script:** (0 minutes 1.492 seconds)
 
 
 .. _sphx_glr_download_auto_examples_proc_raw.py:

@@ -17,6 +17,16 @@ class calib_info(object):
     def use_calibration(self, calibration_name):
         """if diameter_name is None, default to the calibration name given
         by default calibration"""
+        if calibration_name == "default":
+            raise ValueError(
+                "you may not use a calibration named 'default' -- that is"
+                " just too confusing!!!\nGive your calibration a meaningful"
+                ' name, and then set "default calibration" which gives the'
+                " name that is used for the propFactor and for the Q factor as"
+                ' well as "default diameter" which gives the name that is used'
+                " for the diameter"
+            )
+        calibration_name_setting = calibration_name
         if calibration_name is None:
             calibration_name = pyspec_config.get_setting("default calibration")
         if calibration_name != self.current_calib_name:
@@ -40,11 +50,13 @@ class calib_info(object):
                 )
             except Exception:
                 raise RuntimeError(
-                    "I expect a line in the [General] block of your"
-                    " pyspecdata config file (in your home directory) that"
-                    " sets the value of the following"
-                    f" variables:\n{calibration_name} q\n{calibration_name} "
-                    "propFactor\n\n(I"
+                    "You set calibration_name to"
+                    f' "{calibration_name_setting}"\nSo, I expect a line in'
+                    " the [General] block of your pyspecdata config file (in"
+                    " your home directory) that sets the value of the"
+                    " following"
+                    f" variables:\n{calibration_name} q\n"
+                    f"{calibration_name} propFactor\n\n(I"
                     " can't run without these)"
                 )
             self.current_calib_name = calibration_name
@@ -87,6 +99,28 @@ ureg = UnitRegistry(
 Q_ = ureg.Quantity
 
 
+def QESR_scalefactor(d, **kwargs):
+    raise ValueError("""QESR_scalefactor no longer exists
+    replace
+
+    d /= QESR_scalefactor(d)
+
+    with 
+
+    d = QESR_apply_scalefactor(d)
+
+    and set the keyword arguments (calibration_name, diameter_name) as
+    properties of the data:
+
+    d.set_prop("calibration_name","blabla")
+    d = QESR_apply_scalefactor(d)
+
+    We are doing this because QESR_apply_scalefactor makes sure the scalefactor
+    isn't applied more than once, and the properties are also used by
+    align_ESR.
+                     """)
+
+
 def QESR_apply_scalefactor(d):
     """Divide the ESR spectrum by this number so that the double integral
     should be equal to concentration in μM.
@@ -105,6 +139,9 @@ def QESR_apply_scalefactor(d):
     concentration
     for the same recorded spectrum.
 
+    See the `QESR.py` example for currently recommended settings
+    for the example data.
+
     Parameters
     ==========
     d : nddata
@@ -114,7 +151,8 @@ def QESR_apply_scalefactor(d):
                             The key corresponding to the appropriate
                             proportionality constant
                             in your pyspecdata config file.
-                            Typically this is one value that doesn't need changing
+                            Typically this is one value that doesn't need
+                            changing
         diameter_name:      str
                             The key corresponding to the diameter of the
                             capillary tube used in the ESR experiment. This
@@ -129,11 +167,13 @@ def QESR_apply_scalefactor(d):
     if d.get_prop("has_been_calibrated"):
         raise ValueError("this spectrum has already been calibrated!!")
     else:
-        d.set_prop('has_been_calibrated',True)
+        d.set_prop("has_been_calibrated", True)
     calibcache.use_calibration(d.get_prop("calibration_name"))
     calibcache.use_diameter(d.get_prop("diameter_name"))
     # {{{ determine the signal denominator from the parameters of interest
+    logger.debug(strm("power is",d.get_prop("Power")))
     G_R = Q_(*d.get_prop("Gain"))
+    logger.debug(strm("ConvTime is",d.get_prop("ConvTime")))
     C_t = Q_(*d.get_prop("ConvTime"))
     power = Q_(*d.get_prop("Power"))
     B_m = Q_(*d.get_prop("ModAmp"))
@@ -146,13 +186,21 @@ def QESR_apply_scalefactor(d):
     )  # the first fraction on eq 2-17 -- in bruker E500 manual
     c_propfactor = Q_(calibcache.dint_propFactor, "m**2")
     dint_conversion = (c_propfactor / diameter**2).to("").magnitude
-    signal_denom = G_R * C_t * sqrt(power) * B_m * n_B * S * (S + 1) * Q
-    signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")) * Q_("s"))
+    logging.debug(strm("power is",repr(power),"of type",type(power),repr(power.magnitude),type(power.magnitude)))
+    signal_denom = (
+        sqrt(power)
+        * B_m
+        * n_B
+        * S
+        * (S + 1)
+        * Q
+    )
+    signal_denom = signal_denom.to(Q_("G") * sqrt(Q_("W")))
     # }}}
     logger.debug(
         strm(
-            f"$G_R={G_R:~P}$\n"
-            f"$C_t={C_t:~P}$\n"
+            f"$G_R={G_R:~P}$ (ignored)\n"
+            f"$C_t={C_t:~P}$ (ignored)\n"
             f"$power={power:~P}$\n"
             f"$B_m={B_m:~P}$\n"
             f"$Q={Q:~P} $\n"
