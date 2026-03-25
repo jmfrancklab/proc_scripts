@@ -7,15 +7,9 @@ import re
 import shutil
 import sys
 from pathlib import Path
-
 from .command_registry import _COMMAND_SPECS, register_command
-
-try:
-    import argcomplete
-    from argcomplete.completers import SuppressCompleter
-except ImportError:
-    argcomplete = None
-    SuppressCompleter = None
+import argcomplete
+from argcomplete.completers import SuppressCompleter
 
 _EXP_TYPE_FILENAME_NODE_HELP = {
     "exp_type": "Configured pyspecdata experiment type.",
@@ -45,20 +39,23 @@ dimension.
 
 Tested with:
 
-``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_echo.h5 echo_6``
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes \
+240620_200uM_TEMPOL_pm_echo.h5 echo_6``
 
-``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_generic_echo.h5 \
-echo_8``
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes \
+240620_200uM_TEMPOL_pm_generic_echo.h5 echo_8``
 
-``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_generic_CPMG.h5 \
-CPMG_9``
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes \
+240620_200uM_TEMPOL_pm_generic_CPMG.h5  CPMG_9``
 
-``pyspecProcScripts raw ODNP_NMR_comp/field_dependent 240920_27mM_TEMPOL_debug_field \
-field_3``
+``pyspecProcScripts raw ODNP_NMR_comp/field_dependent\
+ 240920_27mM_TEMPOL_debug_field field_3``
 
-``pyspecProcScripts raw ODNP_NMR_comp/ODNP K42.*A1_kRasbatch240814 ODNP``
+``pyspecProcScripts raw ODNP_NMR_comp/ODNP K42.*A1_kRasbatch240814 \
+ODNP``
 
-``pyspecProcScripts raw ODNP_NMR_comp/ODNP K42.*A1_kRasbatch240814 FIR_34dBm``
+``pyspecProcScripts raw ODNP_NMR_comp/ODNP K42.*A1_kRasbatch240814 \
+FIR_34dBm``
 """
 
 _CONFIG = configparser.ConfigParser()
@@ -132,7 +129,8 @@ def _build_cli_epilog(include_subcommands=False):
             + " ".join(completion_commands),
             "",
             "(tailor the list of commands to the different commands you have "
-            "available on your computer, and you might need to use AI to refactor for zshrc, etc.)",
+            "available on your computer, and you might need to use"
+            " AI to refactor for zshrc, etc.)",
         ]
     )
     return "\n".join(lines)
@@ -386,8 +384,10 @@ def main(argv=None):
         argcomplete.autocomplete(
             parser,
             always_complete_options=False,
-            validator=lambda completion, prefix: completion.casefold().startswith(
-                prefix.casefold()
+            validator=(
+                lambda completion, prefix: completion.casefold().startswith(
+                    prefix.casefold()
+                )
             ),
             default_completer=SuppressCompleter(),
         )

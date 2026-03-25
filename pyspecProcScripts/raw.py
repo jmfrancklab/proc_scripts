@@ -10,20 +10,23 @@ dimension.
 
 Tested with:
 
-``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_echo.h5 echo_6``
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes \
+    240620_200uM_TEMPOL_pm_echo.h5 echo_6``
 
-``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_generic_echo.h5 \
-echo_8``
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes \
+240620_200uM_TEMPOL_pm_generic_echo.h5 echo_8``
 
-``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_generic_CPMG.h5 \
-CPMG_9``
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes \
+240620_200uM_TEMPOL_pm_generic_CPMG.h5 CPMG_9``
 
-``pyspecProcScripts raw ODNP_NMR_comp/field_dependent 240920_27mM_TEMPOL_debug_field \
-field_3``
+``pyspecProcScripts raw ODNP_NMR_comp/field_dependent \
+240920_27mM_TEMPOL_debug_field field_3``
 
-``pyspecProcScripts raw ODNP_NMR_comp/ODNP K42.*A1_kRasbatch240814 ODNP``
+``pyspecProcScripts raw ODNP_NMR_comp/ODNP \
+K42.*A1_kRasbatch240814 ODNP``
 
-``pyspecProcScripts raw ODNP_NMR_comp/ODNP K42.*A1_kRasbatch240814 FIR_34dBm``
+``pyspecProcScripts raw ODNP_NMR_comp/ODNP \
+K42.*A1_kRasbatch240814 FIR_34dBm``
 """
 
 from itertools import cycle
@@ -131,8 +134,7 @@ def run_raw(exp_type, filename, node):
                 temp.pop("indirect")
                 guess_direct = temp.max()
             forplot.mean_all_but(
-                list(d.get_prop("coherence_pathway").keys())
-                + [guess_direct]
+                list(d.get_prop("coherence_pathway").keys()) + [guess_direct]
             )
             image_or_plot(forplot, fl, colorcyc)
             d = prscr.select_pathway(d, d.get_prop("coherence_pathway"))
