@@ -11,8 +11,10 @@ from .command_registry import _COMMAND_SPECS, register_command
 
 try:
     import argcomplete
+    from argcomplete.completers import SuppressCompleter
 except ImportError:
     argcomplete = None
+    SuppressCompleter = None
 
 _CONFIG = configparser.ConfigParser()
 for _config_name in (".pyspecdata", "_pyspecdata"):
@@ -282,9 +284,11 @@ def main(argv=None):
         # typed a different case, e.g. `B27` -> `b27/echoes`.
         argcomplete.autocomplete(
             parser,
+            always_complete_options=False,
             validator=lambda completion, prefix: completion.casefold().startswith(
                 prefix.casefold()
             ),
+            default_completer=SuppressCompleter(),
         )
     if not argv:
         parser.print_help()
