@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -21,10 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pyspecProcScripts_hackacq = "pyspecProcScripts_hackacq:main"
-
-[tool.setuptools]
-py-modules = ["pyspecProcScripts_hackacq"]
+pyspecProcScripts_hackacq = "pyspecProcScripts.hack_acq_params:main"
 
 [tool.setuptools.packages.find]
 include = ["pyspecProcScripts*"]
