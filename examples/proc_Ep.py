@@ -1,5 +1,5 @@
 """
-Process Enhancement experiment 
+Process Enhancement experiment
 ====================================================
 Opens .h5 results file, uses rough_table_of_integrals() to roughly process
 dataset including generating a table of integrals
@@ -12,15 +12,17 @@ import matplotlib.pyplot as plt
 
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 2
-plt.rcParams.update({
-    "errorbar.capsize": 2,
-    "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
-    "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
-    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
-    "savefig.bbox": "tight",
-    "savefig.dpi": 300,
-    "figure.figsize": (6, 5),
-})
+plt.rcParams.update(
+    {
+        "errorbar.capsize": 2,
+        "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+        "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "savefig.bbox": "tight",
+        "savefig.dpi": 300,
+        "figure.figsize": (6, 5),
+    }
+)
 
 
 with psd.figlist_var() as fl:
@@ -37,9 +39,7 @@ with psd.figlist_var() as fl:
     )
     orig_axis = s["indirect"]  # let's save this so we
     #                           can pass it to the log
-    s["indirect"] = (
-        s["indirect"]["start_times"] - s["indirect"]["start_times"][0]
-    )
+    s["indirect"] = s["indirect"]["start_times"] - s["indirect"]["start_times"][0]
     s.set_units("indirect", "s")
     s, _ = prscr.rough_table_of_integrals(s, fl=fl)
     assert psd.det_unit_prefactor(s.get_units("indirect")) == 0
@@ -63,3 +63,7 @@ with psd.figlist_var() as fl:
     s = prscr.convert_to_power(s, thisfile, exptype, fl=fl)
     fl.next("normalized $E(p)$")
     fl.plot(s, "o")
+    try:
+        s = prscr.plot_field(s, thisfile, exptype, fl=fl)
+    except Exception as e:
+        print(f"Field axis doesn't exist in this experiment: {e}")
