@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from pyspecdata import search_filename
+from .cmdline import resolve_hdf_filename
 
 
 class NodeAsDict:
@@ -156,27 +156,28 @@ class EditAcqParams(QWidget):
         if self.nodename in self.hdf_file:
             self.node = self.hdf_file[self.nodename]
         else:
-
-            def recurse_names(thisnode, indent):
-                if isinstance(thisnode, h5py.Group) and not isinstance(
-                    thisnode, h5py.Dataset
+            tree_lines = []
+            stack = [(self.hdf_file, 0)]
+            while stack:
+                thisnode, indent = stack.pop()
+                tree_lines.append("\t" * indent + str(thisnode))
+                if (
+                    indent < 3
+                    and isinstance(thisnode, h5py.Group)
+                    and not isinstance(thisnode, h5py.Dataset)
                 ):
-                    retval = "\t" * indent + str(thisnode) + "\n"
-                    for j in thisnode:
-                        if indent < 3:
-                            try:
-                                retval += recurse_names(
-                                    thisnode[j], indent + 1
-                                )
-                            except Exception:
-                                pass
-                    return retval
-                else:
-                    return "\t" * indent + str(thisnode) + "\n"
-
+                    children = []
+                    for child_name in thisnode:
+                        try:
+                            children.append(thisnode[child_name])
+                        except Exception:
+                            pass
+                    for child in reversed(children):
+                        stack.append((child, indent + 1))
             raise ValueError(
                 f"Expno '{self.nodename}' not found in the HDF5 file:\n"
-                + recurse_names(self.hdf_file, 0)
+                + "\n".join(tree_lines)
+                + "\n"
             )
         self.read_other_info()
         self.init_ui()
@@ -220,7 +221,8 @@ class EditAcqParams(QWidget):
             if breakout:
                 print(prop_name, "not found in this file, continuing")
                 continue
-            # Retrieve the existing value from NodeAsDict with default handling
+            # Retrieve the existing value from NodeAsDict with default
+            # handling.
             h_layout = QHBoxLayout()
             label = QLabel(label_text)
             value = dictref.get(dictkeys[-1], "")
@@ -264,22 +266,23 @@ class EditAcqParams(QWidget):
         QMessageBox.information(self, "Success", "Values saved successfully!")
 
 
+def run_hackacq(exp_type, filename, node):
+    hdf_filename = resolve_hdf_filename(exp_type, filename)
+    if hdf_filename is None:
+        raise ValueError(
+            f"Could not resolve {filename!r} inside exp_type {exp_type!r}"
+        )
+    app = QApplication(sys.argv)
+    with EditAcqParams(str(hdf_filename), node) as _:
+        return app.exec()
+
+
 def main(argv=None):
     if argv is None:
-        argv = sys.argv
-    if len(argv) != 4:
-        print(
-            "Usage: pyspecProcScripts_hackacq <nodename> <filename_pattern>"
-            " <exp_type>"
-        )
-        return 1
+        argv = sys.argv[1:]
+    from .cmdline import main as cmdline_main
 
-    hdf_filename = search_filename(argv[2], unique=True, exp_type=argv[3])
-    nodename = argv[1]
-
-    app = QApplication(argv)
-    with EditAcqParams(hdf_filename, nodename) as _:
-        return app.exec()
+    return cmdline_main(["hackacq", *argv])
 
 
 if __name__ == "__main__":
