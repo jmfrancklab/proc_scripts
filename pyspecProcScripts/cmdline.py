@@ -16,6 +16,40 @@ except ImportError:
     argcomplete = None
     SuppressCompleter = None
 
+_EXP_TYPE_FILENAME_NODE_HELP = {
+    "exp_type": "Configured pyspecdata experiment type.",
+    "filename": "HDF5 file name inside the experiment directory.",
+    "node": "HDF5 node path to edit.",
+}
+
+_RAW_DESCRIPTION = """
+Show data with postproc
+=======================
+`pyspecProcScripts raw EXP_TYPE FILENAME NODENAME`
+
+Fourier transforms (and any needed data corrections for older data) are
+performed according to the `postproc_type` attribute of the data node.  This
+script plots the result, as well as signal that's averaged along the `nScans`
+dimension.
+
+Tested with:
+
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_echo.h5 echo_6``
+
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_generic_echo.h5 \
+echo_8``
+
+``pyspecProcScripts raw ODNP_NMR_comp/Echoes 240620_200uM_TEMPOL_pm_generic_CPMG.h5 \
+CPMG_9``
+
+``pyspecProcScripts raw ODNP_NMR_comp/field_dependent 240920_27mM_TEMPOL_debug_field \
+field_3``
+
+``pyspecProcScripts raw ODNP_NMR_comp/ODNP K42.*A1_kRasbatch240814 ODNP``
+
+``pyspecProcScripts raw ODNP_NMR_comp/ODNP K42.*A1_kRasbatch240814 FIR_34dBm``
+"""
+
 _CONFIG = configparser.ConfigParser()
 for _config_name in (".pyspecdata", "_pyspecdata"):
     _config_path = Path.home() / _config_name
@@ -240,16 +274,23 @@ def hackacq_completer(prefix, action, parsed_args=None, **kwargs):
 
 @register_command(
     "Edit labeling fields inside a saved HDF5 acquisition.",
-    help={
-        "exp_type": "Configured pyspecdata experiment type.",
-        "filename": "HDF5 file name inside the experiment directory.",
-        "node": "HDF5 node path to edit.",
-    },
+    help=_EXP_TYPE_FILENAME_NODE_HELP,
 )
 def hackacq(exp_type, filename, node):
     from .hack_acq_params import run_hackacq
 
     return run_hackacq(exp_type, filename, node)
+
+
+@register_command(
+    "Show raw data with postproc handling applied.",
+    description=_RAW_DESCRIPTION,
+    help=_EXP_TYPE_FILENAME_NODE_HELP,
+)
+def raw(exp_type, filename, node):
+    from .raw import run_raw
+
+    return run_raw(exp_type, filename, node)
 
 
 def main(argv=None):
@@ -272,7 +313,7 @@ def main(argv=None):
             action = subparser.add_argument(
                 *argument["flags"], **dict(argument["kwargs"])
             )
-            if name == "hackacq" and action.dest in {
+            if action.dest in {
                 "exp_type",
                 "filename",
                 "node",
