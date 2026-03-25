@@ -1,4 +1,4 @@
-from pyspecdata import find_file, image, DCCT, gammabar_H
+from pyspecdata import find_file, DCCT
 
 # from pyspecProcScripts import lookup_table
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ for whichexp in [3, 4, 6]:
     d = find_file(
         rf"{date[this_lim]}.*{whichexp}\.",
         exp_type="B27/Echoes",
-        expno=this_expno,  # when I leave out expno, it gives me an error that lists all the nodes
+        expno=this_expno,
         lookup=prscr.lookup_table,
     )
     beta = d.get_prop("acq_params")["beta_90_s_sqrtW"]
@@ -35,7 +35,10 @@ for whichexp in [3, 4, 6]:
     DCCT(
         d,
         fig=fig,
-        title=(f"{this_expno}\n β={beta} time domain \n f = {freq} nscans = {nscans}"),
+        title=(
+            f"{this_expno}\n β={beta} time domain \n f = {freq}",
+            f" nscans = {nscans}",
+        ),
         bbox=gs[0, 0],
     )
     d = d["t2", 1:]  # remove first point, which has ringdown
@@ -48,7 +51,8 @@ for whichexp in [3, 4, 6]:
         d,
         fig=fig,
         title=(
-            f"{this_expno}\n β={beta} frequency domain \n f = {freq} nscans = {nscans}"
+            f"{this_expno}\n β={beta} frequency domain \n f = {freq},"
+            f" nscans = {nscans}"
         ),
         interpolation="nearest",
         bbox=gs[0, 1],
@@ -57,14 +61,17 @@ for whichexp in [3, 4, 6]:
     # }}}
     # {{{ carry through to energy
     fig = plt.figure(f"{this_expno} determine energy")
-    gs = mpl.gridspec.GridSpec(1, 3, left=0.1, right=0.95, top=0.9, bottom=0.15)
+    gs = mpl.gridspec.GridSpec(
+        1, 3, left=0.1, right=0.95, top=0.9, bottom=0.15
+    )
     if slicing:
         d = d["t2" : lims[this_lim]]
     DCCT(
         d,
         fig=fig,
         title=(
-            f"{this_expno}\n β={beta} frequency domain \n f = {freq} nscans = {nscans}"
+            f"{this_expno}\n β={beta} frequency domain \n"
+            f"f = {freq} nscans = {nscans}"
         ),
         interpolation="nearest",
         bbox=gs[0, 0],
