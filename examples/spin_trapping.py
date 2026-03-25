@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import pyspecProcScripts as psdpr
 import re
 from pyspecdata import Q_
-from numpy import pi, inf
+from numpy import pi
 import sympy as sp
 from scipy.special import jv
 import pyspecdata as psd
