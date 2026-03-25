@@ -4,6 +4,7 @@ import argparse
 import configparser
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -21,6 +22,16 @@ _EXP_TYPE_FILENAME_NODE_HELP = {
     "filename": "HDF5 file name inside the experiment directory.",
     "node": "HDF5 node path to edit.",
 }
+_ROOT_COMMAND = "pyspecProcScripts"
+_AUTOCOMPLETE_CANDIDATES = (
+    "python",
+    "python3",
+    "py",
+    "pip",
+    "hfss_py",
+    "pydifft",
+    _ROOT_COMMAND,
+)
 
 _RAW_DESCRIPTION = """
 Show data with postproc
@@ -81,6 +92,50 @@ else:
 # responsive while tabbing through the same path.
 _DIRECTORY_CACHE = {}
 _NODE_CACHE = {}
+
+
+class HelpfulArgumentParser(argparse.ArgumentParser):
+    """Print full help on parse errors so users can see subcommands/options."""
+
+    def error(self, message):
+        self.exit(2, f"{self.prog}: error: {message}\n\n{self.format_help()}")
+
+
+def _commands_on_path(candidates):
+    commands = []
+    for name in candidates:
+        if name == _ROOT_COMMAND or shutil.which(name):
+            commands.append(name)
+    return commands
+
+
+def _build_cli_epilog(include_subcommands=False):
+    lines = []
+    if include_subcommands:
+        lines.append("Available subcommands:")
+        for name, spec in _COMMAND_SPECS.items():
+            lines.append(f"  {name:<8} {spec['help']}")
+        lines.append("")
+    interpreter_commands = _commands_on_path(("python", "python3", "py"))
+    if not interpreter_commands:
+        interpreter_commands = ["python"]
+    completion_commands = _commands_on_path(_AUTOCOMPLETE_CANDIDATES)
+    lines.extend(
+        [
+            "AUTOCOMPLETE: install argcomplete and add the following to your "
+            "shell rc file (.bashrc, .zshrc, etc.)\nThe syntax for bashrc is:",
+            "",
+            'eval "$(register-python-argcomplete --shell bash '
+            + " ".join(interpreter_commands)
+            + ')"',
+            "complete -o default -o nospace -F _python_argcomplete "
+            + " ".join(completion_commands),
+            "",
+            "(tailor the list of commands to the different commands you have "
+            "available on your computer, and you might need to use AI to refactor for zshrc, etc.)",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def resolve_exp_type_dir(exp_type):
@@ -296,11 +351,15 @@ def raw(exp_type, filename, node):
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
-    parser = argparse.ArgumentParser(
-        prog="pyspecProcScripts",
+    parser = HelpfulArgumentParser(
+        prog=_ROOT_COMMAND,
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=_build_cli_epilog(),
     )
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(
+        dest="command",
+        title="available subcommands",
+    )
     subparsers.required = True
     for name, spec in _COMMAND_SPECS.items():
         subparser = subparsers.add_parser(
@@ -308,6 +367,7 @@ def main(argv=None):
             help=spec["help"],
             description=spec["description"],
             formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog=_build_cli_epilog(include_subcommands=True),
         )
         for argument in spec["arguments"]:
             action = subparser.add_argument(
