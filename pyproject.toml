@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyspecProcScripts"
+version = "0.1"
+description = "Tools for processing and phasing Overhauser DNP NMR data."
+readme = "README.rst"
+license = { file = "LICENSE.md" }
+authors = [
+    { name = "A Guinness" },
+    { name = "A A Beaton" },
+    { name = "J M Franck" },
+]
+dependencies = [
+    "PySide6",
+    "h5py",
+    "pint",
+    "pyspecdata",
+]
+
+[project.scripts]
+pyspecProcScripts_hackacq = "pyspecProcScripts_hackacq:main"
+
+[tool.setuptools]
+py-modules = ["pyspecProcScripts_hackacq"]
+
+[tool.setuptools.packages.find]
+include = ["pyspecProcScripts*"]
+namespaces = true

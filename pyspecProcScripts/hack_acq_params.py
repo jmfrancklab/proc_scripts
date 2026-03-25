@@ -14,16 +14,17 @@ The GPT conversation is `here
 """
 
 import sys
+
 import h5py
 from PySide6.QtWidgets import (
     QApplication,
-    QWidget,
-    QVBoxLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
     QMessageBox,
-    QHBoxLayout,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
 from pyspecdata import search_filename
 
@@ -54,9 +55,7 @@ class NodeAsDict:
         print("entered setitem for", key)
         if isinstance(value, (int, float)):  # Numbers stored as attributes
             self.node.attrs[key] = value
-        elif isinstance(
-            value, str
-        ):
+        elif isinstance(value, str):
             self.node.attrs[key] = value
         elif isinstance(value, dict):  # Dictionaries stored as groups
             if key not in self.node:
@@ -224,9 +223,9 @@ class EditAcqParams(QWidget):
             # Retrieve the existing value from NodeAsDict with default handling
             h_layout = QHBoxLayout()
             label = QLabel(label_text)
-            v = dictref.get(dictkeys[-1], "")
-            print("attempting", prop_name, "which is", v)
-            text_field = QLineEdit(str(v))
+            value = dictref.get(dictkeys[-1], "")
+            print("attempting", prop_name, "which is", value)
+            text_field = QLineEdit(str(value))
 
             h_layout.addWidget(label)
             h_layout.addWidget(text_field)
@@ -265,23 +264,23 @@ class EditAcqParams(QWidget):
         QMessageBox.information(self, "Success", "Values saved successfully!")
 
 
-def main():
-    if len(sys.argv) != 4:
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    if len(argv) != 4:
         print(
-            "Usage: python hack_acq_params.py <nodename> <filename_pattern>"
+            "Usage: pyspecProcScripts_hackacq <nodename> <filename_pattern>"
             " <exp_type>"
         )
-        sys.exit(1)
+        return 1
 
-    hdf_filename = search_filename(
-        sys.argv[2], unique=True, exp_type=sys.argv[3]
-    )
-    nodename = sys.argv[1]
+    hdf_filename = search_filename(argv[2], unique=True, exp_type=argv[3])
+    nodename = argv[1]
 
-    app = QApplication(sys.argv)
+    app = QApplication(argv)
     with EditAcqParams(hdf_filename, nodename) as _:
-        sys.exit(app.exec())
+        return app.exec()
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
