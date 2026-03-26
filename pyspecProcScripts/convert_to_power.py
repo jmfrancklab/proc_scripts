@@ -57,7 +57,8 @@ def convert_to_power(
         thislog = logobj.from_group(f[node_name])
         log_array = thislog.total_log
     assert all(
-        name in log_array.dtype.names for name in ("time", "Rx", "power", "cmd")
+        name in log_array.dtype.names
+        for name in ("time", "Rx", "power", "cmd")
     ), str(log_array.dtype.names)
     assert s["indirect"].dtype.names == (
         "start_times",

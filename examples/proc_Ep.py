@@ -39,7 +39,9 @@ with psd.figlist_var() as fl:
     )
     orig_axis = s["indirect"]  # let's save this so we
     #                           can pass it to the log
-    s["indirect"] = s["indirect"]["start_times"] - s["indirect"]["start_times"][0]
+    s["indirect"] = (
+        s["indirect"]["start_times"] - s["indirect"]["start_times"][0]
+    )
     s.set_units("indirect", "s")
     s, _ = prscr.rough_table_of_integrals(s, fl=fl)
     assert psd.det_unit_prefactor(s.get_units("indirect")) == 0

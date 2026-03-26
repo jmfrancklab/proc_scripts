@@ -48,8 +48,8 @@ def plot_field(
         thislog = logobj.from_group(f[node_name])
         log_array = np.array(thislog.total_log)
 
-    assert all(name in log_array.dtype.names for name in ("time", "field")), str(
-        log_array.dtype.names
+    assert all(name in log_array.dtype.names for name in ("time", "field")), (
+        str(log_array.dtype.names)
     )
     assert s["indirect"].dtype.names == (
         "start_times",
@@ -131,10 +131,14 @@ def plot_field(
                 s_for_peak.ft("t2")
             peak_shift_vs_time = s_for_peak.run(abs).argmax("t2")
             source_axis = (
-                "field" if "field" in peak_shift_vs_time.dimlabels else "indirect"
+                "field"
+                if "field" in peak_shift_vs_time.dimlabels
+                else "indirect"
             )
             peak_shift_vs_time.rename(source_axis, "time")
-            peak_shift_vs_time.setaxis("time", time_midpoints).set_units("time", "s")
+            peak_shift_vs_time.setaxis("time", time_midpoints).set_units(
+                "time", "s"
+            )
             ax_shift = ax_field.twinx()
             fl.plot(
                 peak_shift_vs_time,
