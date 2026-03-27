@@ -17,7 +17,6 @@ exp_list = [
     ("260324", (-3330.0, 250.0), 4),
     ("260324", (-10000.0, -6000.0), 6),
 ]
-this_lim = 0
 for thisdate, frq_lims, whichexp in exp_list:
     this_node = f"shim_y_{whichexp}"
     d = find_file(
@@ -86,6 +85,5 @@ for thisdate, frq_lims, whichexp in exp_list:
     psd.plot(d, "o", ax=fig.add_subplot(gs[0, 2]))
     plt.title(this_node)
     plt.tight_layout()
-    this_lim += 1
     # }}}
 plt.show()
