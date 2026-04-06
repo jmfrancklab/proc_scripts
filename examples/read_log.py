@@ -2,6 +2,7 @@
 Read Instrument Log
 ===================
 """
+
 from pyspecProcScripts import logobj
 import pyspecdata as psd
 import h5py
@@ -26,7 +27,7 @@ with psd.figlist_var() as fl:
     thislog.total_log["time"] -= thislog.total_log["time"][0]
     # }}}
     # {{{ plot the output power and reflection
-    fig, (ax_Rx, ax_power) = plt.subplots(2, 1, figsize=(10, 8))
+    fig, (ax_Rx, ax_power, ax_field) = plt.subplots(3, 1, figsize=(10, 8))
     fl.next("log figure", fig=fig)
     ax_Rx.set_ylabel("Rx / mV")
     ax_Rx.set_xlabel("Time / ms")
@@ -35,12 +36,13 @@ with psd.figlist_var() as fl:
     ax_power.set_xlabel("Time / ms")
     ax_power.plot(
         thislog.total_log["time"],
-        10
-        ** (
-            (thislog.total_log["power"] + coupler_atten) / 10 - 3
-        ),  # -3 for mW to W
+        10 ** ((thislog.total_log["power"] + coupler_atten) / 10 - 3),
+        # -3 for mW to W
         ".",
     )
+    ax_field.set_ylabel("field / G")
+    ax_field.set_xlabel("Time / ms")
+    ax_field.plot(thislog.total_log["time"], thislog.total_log["field"], ".")
     # }}}
     mask = thislog.total_log["cmd"] != 0
     position = 0
@@ -54,7 +56,7 @@ with psd.figlist_var() as fl:
         position = (
             position % npositions
         )  # use npositions positions top to bottom, then roll over
-        for thisax in [ax_Rx, ax_power]:
+        for thisax in [ax_Rx, ax_power, ax_field]:
             thisax.axvline(x=thisevent["time"], color="g", alpha=0.5)
             thisax.text(
                 s=event_name,
@@ -69,7 +71,7 @@ with psd.figlist_var() as fl:
             )
         position += 1
         # }}}
-    for thisax in [ax_Rx, ax_power]:
+    for thisax in [ax_Rx, ax_power, ax_field]:
         thisax.xaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=x)))
         )
