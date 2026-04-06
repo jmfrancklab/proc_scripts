@@ -8,6 +8,21 @@ import datetime
 import re
 
 
+def load_log_data(
+    filename,
+    exp_type,
+    node_name="log",
+):
+    """Loadinstrument log and resolved file name from an HDF5 file."""
+    filename = psd.search_filename(
+        re.escape(filename), exp_type=exp_type, unique=True
+    )
+    with h5py.File(filename, "r") as f:
+        thislog = logobj.from_group(f[node_name])
+        log_array = thislog.total_log.copy()
+    return log_array
+
+
 def convert_to_power(
     s,
     filename,
@@ -50,15 +65,11 @@ def convert_to_power(
         The axis coordinate errors are the standard deviations of the
         same.
     """
-    my_filename = psd.search_filename(
-        re.escape(filename), exp_type=exp_type, unique=True
-    )
-    with h5py.File(my_filename, "r") as f:
-        thislog = logobj.from_group(f[node_name])
-        log_array = thislog.total_log
-    assert log_array.dtype.names == ("time", "Rx", "power", "cmd"), str(
-        log_array.dtype.names
-    )
+    log_array = load_log_data(filename, exp_type, node_name=node_name)
+    assert all(
+        name in log_array.dtype.names
+        for name in ["time", "Rx", "power", "cmd"]
+    ), str(log_array.dtype.names)
     assert s["indirect"].dtype.names == (
         "start_times",
         "stop_times",
@@ -89,7 +100,8 @@ def convert_to_power(
     if fl:  # checks that fl is not None
         fl.next("power log")
         fl.plot(
-            log_vs_time, ".",
+            log_vs_time,
+            ".",
             human_units=False,
         )  # should be a picture of the gigatronics powers
         # {{{ this is just matplotlib time formatting
@@ -130,7 +142,7 @@ def convert_to_power(
         )
     ):
         mean_power_vs_time["time", j] = log_vs_time[
-            "time":(time_start, time_stop)
+            "time" : (time_start, time_stop)
         ].mean("time", std=True)
         mean_power_vs_time["time"][j] = (time_start + time_stop) / 2
         # {{{ I realized a crosshatch would be better here
@@ -147,7 +159,8 @@ def convert_to_power(
         # }}}
     if fl:
         fl.plot(
-            mean_power_vs_time, "o",
+            mean_power_vs_time,
+            "o",
             human_units=False,
         )  # this  should be a *single* o at the center of each power step.
         #    Its y value should be the avaerage power for that step, and its
