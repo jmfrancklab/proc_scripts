@@ -42,25 +42,64 @@ class logobj(object):
         self._totallog = result
 
     def __setstate__(self, inputdict):
-        in_hdf = False
-        if "dictkeys" in inputdict.keys():
-            self.log_dict = dict(
-                zip(inputdict["dictkeys"], inputdict["dictvalues"])
-            )
-        elif "dictkeys" in inputdict.attrs.keys():
-            # allows setstate from hdf5 node
-            self.log_dict = dict(
-                zip(inputdict.attrs["dictkeys"], inputdict.attrs["dictvalues"])
-            )
-            in_hdf = True
+        if hasattr(inputdict, "attrs") and "dictkeys" in inputdict.attrs.keys():
+            # {{{ legacy HDF layout: the group carries the metadata as
+            #     attrs and the actual structured array lives in the
+            #     "array" dataset below it
+            dictkeys = inputdict.attrs["dictkeys"]
+            dictvalues = inputdict.attrs["dictvalues"]
+            total_log = inputdict["array"][
+                :
+            ]  # force the dataset into memory before the file is closed
+            dictkeys = [
+                thisitem.decode("utf-8")
+                if isinstance(thisitem, bytes)
+                else thisitem
+                for thisitem in dictkeys
+            ]
+            dictvalues = [
+                thisitem.decode("utf-8")
+                if isinstance(thisitem, bytes)
+                else thisitem
+                for thisitem in dictvalues
+            ]
+            # }}}
+        elif "array" in inputdict.keys() and hasattr(inputdict["array"], "attrs"):
+            # {{{ current HDF layout: hdf_save_dict_to_group has already
+            #     consumed the NUMPY_DATA wrapper and written the array
+            #     as the "array" dataset.  The remaining metadata is
+            #     stored as dataset attrs, and HDF gives string attrs
+            #     back as bytes that need decoding here.
+            array_node = inputdict["array"]
+            dictkeys = array_node.attrs["dictkeys"]
+            dictvalues = array_node.attrs["dictvalues"]
+            total_log = array_node[
+                :
+            ]  # force the dataset into memory before the file is closed
+            dictkeys = [
+                thisitem.decode("utf-8")
+                if isinstance(thisitem, bytes)
+                else thisitem
+                for thisitem in dictkeys
+            ]
+            dictvalues = [
+                thisitem.decode("utf-8")
+                if isinstance(thisitem, bytes)
+                else thisitem
+                for thisitem in dictvalues
+            ]
         else:
             raise IOError("I can't find dictkeys!")
-        if in_hdf:
-            self.total_log = inputdict["array"][
-                :
-            ]  # makes accessible after hdf is closed (forces into memory)
-        else:
-            self.total_log = inputdict["array"]
+        dictkeys = [
+            thisitem.item() if isinstance(thisitem, np.generic) else thisitem
+            for thisitem in dictkeys
+        ]
+        dictvalues = [
+            thisitem.item() if isinstance(thisitem, np.generic) else thisitem
+            for thisitem in dictvalues
+        ]
+        self.log_dict = dict(zip(dictkeys, dictvalues))
+        self.total_log = total_log
 
 
 def select_pathway(*args, **kwargs):
