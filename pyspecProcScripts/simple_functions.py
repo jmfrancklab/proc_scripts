@@ -1,18 +1,27 @@
 "First order functions for very simple (a few lines) data manipulation"
+
 import numpy as np
 import logging
+
 
 class logobj(object):
     def __init__(self, array_len=1000):  # just the size of the buffer
         self.log_list = []
         # {{{ this is a structured array
         self.log_dtype = np.dtype(
-            [("time", "f8"), ("Rx", "f8"), ("power", "f8"), ("cmd", "i8")]
+            [
+                ("time", "f8"),
+                ("Rx", "f8"),
+                ("power", "f8"),
+                ("field", "f8"),
+                ("cmd", "i8"),
+            ]
         )
         self.log_array = np.empty(array_len, dtype=self.log_dtype)
         self.log_dict = {
             0: ""
-        }  # use hash to convert commands to a number, and this to look up the meaning of the hashes
+        }  # use hash to convert commands to a number, and this to look up
+        # the meaning of the hashes
         # }}}
         self.currently_logging = False
         self.log_pos = 0
@@ -29,7 +38,8 @@ class logobj(object):
 
     @property
     def total_log(self):
-        "the log is stored internally as a list of arrays -- here return a single array for the whole log"
+        "the log is stored internally as a list of arrays -- here return a"
+        "single array for the whole log"
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
@@ -92,14 +102,15 @@ def select_pathway(*args, **kwargs):
 
 
 def find_apparent_anal_freq(s):
-    """A function to identify the position of analytic signal as acquired on the oscilloscope.
-    Importantly this function takes into account the effects of aliasing in identifying the
-    frequency of the resulting signal.
+    """A function to identify the position of analytic signal as acquired on
+    the oscilloscope. Importantly this function takes into account the effects
+    of aliasing in identifying the frequency of the resulting signal.
 
     Parameters
     ==========
     s: nddata
-        data with a single (dominant) peak, where you want to identify the frequency.
+        data with a single (dominant) peak, where you want to identify the
+        frequency.
 
     Returns
     =======
@@ -117,9 +128,7 @@ def find_apparent_anal_freq(s):
     # So we first need to check if the carrier is in the SW of
     # the analytic signal or if the signal was aliased
     if carrier < 1 / dt:
-        logging.debug(
-            "You are in the clear and no aliasing took place!"
-        )
+        logging.debug("You are in the clear and no aliasing took place!")
         nu_a = carrier
         isflipped = False
     else:
@@ -132,8 +141,7 @@ def find_apparent_anal_freq(s):
             #            sampling frequency.
             #            Measured from the left side of
             #            the shifted spectrum
-            (carrier + SW / 2)
-            / SW
+            (carrier + SW / 2) / SW
         )
         nu_a = carrier - n * SW
         isflipped = False
@@ -142,7 +150,7 @@ def find_apparent_anal_freq(s):
             # so that means that we captured an aliased copy of the
             # negative frequency
             nu_a = -carrier + n * SW
-            # we need to make note of the fact that the phase of our final time domain signal
-            # (after filtering and up-conversion) will be flipped
+            # we need to make note of the fact that the phase of our final time
+            # domain signal (after filtering and up-conversion) will be flipped
             isflipped = True
     return s, nu_a, isflipped
