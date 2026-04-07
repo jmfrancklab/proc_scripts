@@ -11,13 +11,24 @@ def load_log_data(
     filename,
     exp_type,
     node_name="log",
+    hdf_repair=None,
 ):
-    """Load instrument log from an HDF5 file."""
+    """Load instrument log from an HDF5 file.
+
+    Parameters
+    ==========
+    hdf_repair: function default None
+        For some intermediate versions with broken HDF storage, this
+        allows us to supply a patch function that fixes the data.
+    """
     filename = psd.search_filename(
         re.escape(filename), exp_type=exp_type, unique=True
     )
     with h5py.File(filename, "r") as f:
-        thislog = prscr.logobj.from_group(f[node_name])
+        if hdf_repair is None:
+            thislog = prscr.logobj.from_group(f[node_name])
+        else:
+            thislog = prscr.logobj.from_group(hdf_repair(f[node_name]))
         log_array = np.array(thislog.total_log, copy=True)
     return log_array
 
