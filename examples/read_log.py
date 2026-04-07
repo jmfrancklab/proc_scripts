@@ -26,6 +26,8 @@ def _decode_list_node(h5group):
 
 
 def fix_broken_hdf(log_group):
+    # {{{ because this is a hack, let's just create our classes inline,
+    #     to keep it simple
     array_node_cls = type(
         "BrokenArrayNode",
         (),
@@ -45,6 +47,7 @@ def fix_broken_hdf(log_group):
             ),
         },
     )
+    # }}}
     array_node = array_node_cls()
     array_node._array = log_group["array"][:]
     array_node.attrs = {
@@ -58,6 +61,7 @@ def fix_broken_hdf(log_group):
 
 coupler_atten = 22
 files_to_check = [
+    ("230626_batch230515_E37_Ras_B10_ODNP_1.h5", "ODNP_NMR_comp/ODNP", False),
     ("260406_hydroxytempo.*", "B27/ODNP", True),
     ("260107_hydroxytempo_ODNP_1.h5", "B27/ODNP", False),
 ]
@@ -85,20 +89,17 @@ with psd.figlist_var() as fl:
         plot_field = "field" in thislog.total_log.dtype.names
         # }}}
         # {{{ plot the output power and reflection
-        n_axes = 3 if plot_field else 2
-        fig, axes = plt.subplots(n_axes, 1, figsize=(10, 8))
-        fl.next("log figure:", fig=fig)
+        fig, ax_list = plt.subplots(3 if plot_field else 2, 1, figsize=(10, 8))
+        fl.next("log figure", fig=fig)
         if plot_field:
-            ax_Rx, ax_power, ax_field = axes
-            ax_list = [ax_Rx, ax_power, ax_field]
+            ax_Rx, ax_power, ax_field = ax_list
             ax_field.set_ylabel("field / G")
             ax_field.set_xlabel("Time / ms")
             ax_field.plot(
                 thislog.total_log["time"], thislog.total_log["field"], "."
             )
         else:
-            ax_Rx, ax_power = axes
-            ax_list = [ax_Rx, ax_power]
+            ax_Rx, ax_power = ax_list
         ax_Rx.set_ylabel("Rx / mV")
         ax_Rx.set_xlabel("Time / ms")
         ax_Rx.plot(thislog.total_log["time"], thislog.total_log["Rx"], ".")

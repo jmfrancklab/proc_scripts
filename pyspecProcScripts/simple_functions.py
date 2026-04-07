@@ -21,7 +21,7 @@ class logobj(object):
         self.log_dict = {
             0: ""
         }  # use hash to convert commands to a number, and this to look up
-        # the meaning of the hashes
+        #    the meaning of the hashes
         # }}}
         self.currently_logging = False
         self.log_pos = 0
@@ -39,7 +39,7 @@ class logobj(object):
     @property
     def total_log(self):
         "the log is stored internally as a list of arrays -- here return a"
-        "single array for the whole log"
+        " single array for the whole log"
         if hasattr(self, "_totallog"):
             return self._totallog
         else:
@@ -52,7 +52,10 @@ class logobj(object):
         self._totallog = result
 
     def __setstate__(self, inputdict):
-        if hasattr(inputdict, "attrs") and "dictkeys" in inputdict.attrs.keys():
+        if (
+            hasattr(inputdict, "attrs")
+            and "dictkeys" in inputdict.attrs.keys()
+        ):
             # {{{ legacy HDF layout: the group carries the metadata as
             #     attrs and the actual structured array lives in the
             #     "array" dataset below it
@@ -62,19 +65,25 @@ class logobj(object):
                 :
             ]  # force the dataset into memory before the file is closed
             dictkeys = [
-                thisitem.decode("utf-8")
-                if isinstance(thisitem, bytes)
-                else thisitem
+                (
+                    thisitem.decode("utf-8")
+                    if isinstance(thisitem, bytes)
+                    else thisitem
+                )
                 for thisitem in dictkeys
             ]
             dictvalues = [
-                thisitem.decode("utf-8")
-                if isinstance(thisitem, bytes)
-                else thisitem
+                (
+                    thisitem.decode("utf-8")
+                    if isinstance(thisitem, bytes)
+                    else thisitem
+                )
                 for thisitem in dictvalues
             ]
             # }}}
-        elif "array" in inputdict.keys() and hasattr(inputdict["array"], "attrs"):
+        elif "array" in inputdict.keys() and hasattr(
+            inputdict["array"], "attrs"
+        ):
             # {{{ current HDF layout: hdf_save_dict_to_group has already
             #     consumed the NUMPY_DATA wrapper and written the array
             #     as the "array" dataset.  The remaining metadata is
@@ -87,15 +96,19 @@ class logobj(object):
                 :
             ]  # force the dataset into memory before the file is closed
             dictkeys = [
-                thisitem.decode("utf-8")
-                if isinstance(thisitem, bytes)
-                else thisitem
+                (
+                    thisitem.decode("utf-8")
+                    if isinstance(thisitem, bytes)
+                    else thisitem
+                )
                 for thisitem in dictkeys
             ]
             dictvalues = [
-                thisitem.decode("utf-8")
-                if isinstance(thisitem, bytes)
-                else thisitem
+                (
+                    thisitem.decode("utf-8")
+                    if isinstance(thisitem, bytes)
+                    else thisitem
+                )
                 for thisitem in dictvalues
             ]
         else:
@@ -180,7 +193,8 @@ def find_apparent_anal_freq(s):
             #            sampling frequency.
             #            Measured from the left side of
             #            the shifted spectrum
-            (carrier + SW / 2) / SW
+            (carrier + SW / 2)
+            / SW
         )
         nu_a = carrier - n * SW
         isflipped = False

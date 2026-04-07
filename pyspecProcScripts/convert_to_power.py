@@ -141,7 +141,7 @@ def convert_to_power(
         )
     ):
         mean_power_vs_time["time", j] = log_vs_time[
-            "time" : (time_start, time_stop)
+            "time":(time_start, time_stop)
         ].mean("time", std=True)
         mean_power_vs_time["time"][j] = (time_start + time_stop) / 2
         # {{{ I realized a crosshatch would be better here
