@@ -1,6 +1,3 @@
-import datetime
-
-import numpy as np
 import pyspecdata as psd
 import pyspecProcScripts as prscr
 
