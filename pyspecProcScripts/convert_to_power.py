@@ -3,7 +3,6 @@ import pyspecProcScripts as prscr
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-from Instruments.logobj import logobj
 import datetime
 import re
 
@@ -13,13 +12,13 @@ def load_log_data(
     exp_type,
     node_name="log",
 ):
-    """Loadinstrument log and resolved file name from an HDF5 file."""
+    """Load instrument log from an HDF5 file."""
     filename = psd.search_filename(
         re.escape(filename), exp_type=exp_type, unique=True
     )
     with h5py.File(filename, "r") as f:
-        thislog = logobj.from_group(f[node_name])
-        log_array = thislog.total_log.copy()
+        thislog = prscr.logobj.from_group(f[node_name])
+        log_array = np.array(thislog.total_log, copy=True)
     return log_array
 
 
