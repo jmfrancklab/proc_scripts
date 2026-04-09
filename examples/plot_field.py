@@ -89,7 +89,7 @@ s["t"] = s["t"]["nScans"] + s["t"]["t"]
 s.set_units("t", "s")
 # }}}
 s.reorder("t2", first=False)
-# ☐ TODO: are these supposed to be very different? They might be
+# TODO ☐: are these supposed to be very different? They might be
 print("time axis of nmr data", s["t"])
 print("time axis of log", log_array["time"])
 field_drift_Hz = (
@@ -122,3 +122,7 @@ with psd.figlist_var() as fl:
     fl.plot(field_drift_Hz, ".", label="Hall probe")
     fl.plot(s, "o", label="NMR")
     plt.ylim(frq_range)
+    # TODO ☐: I'm confused here b/c it seems like the frequencies almost
+    #         *could* be backwards, but we do use conj when calculating
+    #         It would make sense to use the data for a field sweep
+    #         experiment.
