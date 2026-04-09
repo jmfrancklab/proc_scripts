@@ -1,5 +1,6 @@
 import pyspecdata as psd
 import pyspecProcScripts as prscr
+import numpy as np
 
 
 # {{{ the HDF used in this particular example is broken, so we need to
@@ -69,7 +70,6 @@ s = psd.find_file(
     expno="ODNP",
     lookup=prscr.lookup_table,
 )
-s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
 if "nScans" in s.dimlabels:
     s = s.mean("nScans")
 zero_time = log_array["time"][0].item()
@@ -79,15 +79,37 @@ gamma_eff_Hz_G = s.get_prop("acq_params")["gamma_eff_MHz_G"] * 1e6
 field_drift_Hz = log_array["field"] * gamma_eff_Hz_G - carrier_Hz
 s.rename("indirect", "t").set_units("t", "s")
 s["t"] = 0.5 * (s["t"]["start_times"] + s["t"]["stop_times"]) - zero_time
+# ☐ TODO: are these supposed to be very different? They might be
+print("time axis of nmr data", s["t"])
+print("time axis of log", log_array["time"])
 field_drift_Hz = (
     psd.nddata(field_drift_Hz, [-1], ["t"])
     .setaxis("t", log_array["time"])
     .set_units("t", "s")
 )
 with psd.figlist_var() as fl:
-    fl.next("raw NMR signal")
-    fl.image(s)
-    s.run(abs).argmax("t2")
+    fl.next("NMR signal - $\\varphi_0$ only")
+    s /= prscr.zeroth_order_ph(s)
+    fl.DCCT(s)
+    fl.next("slice FID")
+    s = prscr.fid_from_echo(s, signal_pathway=s.get_prop("coherence_pathway"))
+    s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
+    frq_range = (-5e3, 5e3)
+    fl.plot(s.real)
+    fl.next("NMR signal - with zf and conv (tdom)")
+    s.ift("t2").ft("t2", pad=s.shape["t2"] * 20).convolve("t2", 1 / 5e-3)
+    fl.plot(s)
+    fl.next("normalized (zoomed)")
+    s = s.real
+    s /= s.C.integrate("t2", frq_range)
+    fl.plot(s['t2':frq_range])
+    # {{{ now that we have s(ν)/∫s(ν')dν', calculate
+    #     ∫ ν (s(ν)/∫s(ν')dν') dν
+    s *= s.fromaxis(
+        "t2"
+    )
+    s.integrate("t2", frq_range)
+    # }}}
     fl.next("B field and peak shift vs. time")
     fl.plot(field_drift_Hz, ".", label="Hall probe")
     fl.plot(s, "o", label="NMR")
