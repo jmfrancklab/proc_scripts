@@ -3,9 +3,34 @@ import pyspecProcScripts as prscr
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-from Instruments.logobj import logobj
 import datetime
 import re
+
+
+def load_log_data(
+    filename,
+    exp_type,
+    node_name="log",
+    hdf_repair=None,
+):
+    """Load instrument log from an HDF5 file.
+
+    Parameters
+    ==========
+    hdf_repair: function default None
+        For some intermediate versions with broken HDF storage, this
+        allows us to supply a patch function that fixes the data.
+    """
+    filename = psd.search_filename(
+        re.escape(filename), exp_type=exp_type, unique=True
+    )
+    with h5py.File(filename, "r") as f:
+        if hdf_repair is None:
+            thislog = prscr.logobj.from_group(f[node_name])
+        else:
+            thislog = prscr.logobj.from_group(hdf_repair(f[node_name]))
+        log_array = np.array(thislog.total_log, copy=True)
+    return log_array
 
 
 def convert_to_power(
@@ -50,15 +75,11 @@ def convert_to_power(
         The axis coordinate errors are the standard deviations of the
         same.
     """
-    my_filename = psd.search_filename(
-        re.escape(filename), exp_type=exp_type, unique=True
-    )
-    with h5py.File(my_filename, "r") as f:
-        thislog = logobj.from_group(f[node_name])
-        log_array = thislog.total_log
-    assert log_array.dtype.names == ("time", "Rx", "power", "cmd"), str(
-        log_array.dtype.names
-    )
+    log_array = load_log_data(filename, exp_type, node_name=node_name)
+    assert all(
+        name in log_array.dtype.names
+        for name in ["time", "Rx", "power", "cmd"]
+    ), str(log_array.dtype.names)
     assert s["indirect"].dtype.names == (
         "start_times",
         "stop_times",
@@ -89,7 +110,8 @@ def convert_to_power(
     if fl:  # checks that fl is not None
         fl.next("power log")
         fl.plot(
-            log_vs_time, ".",
+            log_vs_time,
+            ".",
             human_units=False,
         )  # should be a picture of the gigatronics powers
         # {{{ this is just matplotlib time formatting
@@ -147,7 +169,8 @@ def convert_to_power(
         # }}}
     if fl:
         fl.plot(
-            mean_power_vs_time, "o",
+            mean_power_vs_time,
+            "o",
             human_units=False,
         )  # this  should be a *single* o at the center of each power step.
         #    Its y value should be the avaerage power for that step, and its
