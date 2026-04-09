@@ -1,6 +1,6 @@
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import numpy as np
+import matplotlib.pyplot as plt
 
 
 # {{{ the HDF used in this particular example is broken, so we need to
@@ -70,8 +70,6 @@ s = psd.find_file(
     expno="ODNP",
     lookup=prscr.lookup_table,
 )
-if "nScans" in s.dimlabels:
-    s = s.mean("nScans")
 zero_time = log_array["time"][0].item()
 log_array["time"] -= zero_time
 carrier_Hz = s.get_prop("acq_params")["carrierFreq_MHz"] * 1e6
@@ -79,6 +77,18 @@ gamma_eff_Hz_G = s.get_prop("acq_params")["gamma_eff_MHz_G"] * 1e6
 field_drift_Hz = log_array["field"] * gamma_eff_Hz_G - carrier_Hz
 s.rename("indirect", "t").set_units("t", "s")
 s["t"] = 0.5 * (s["t"]["start_times"] + s["t"]["stop_times"]) - zero_time
+# {{{ rather than averaging over nScans, I create an appropriate time
+#     axis for it, and then smoosh to create a dimension with all my scans
+s["nScans"] = s["nScans"] * (
+    s.get_prop("acq_params")["acq_time_ms"] * 1e-3
+    + s.get_prop("acq_params")["repetition_us"] * 1e-6
+)
+s.smoosh(["t", "nScans"], dimname="t")
+# smoosh makes a record array
+s["t"] = s["t"]["nScans"] + s["t"]["t"]
+s.set_units("t", "s")
+# }}}
+s.reorder("t2", first=False)
 # ☐ TODO: are these supposed to be very different? They might be
 print("time axis of nmr data", s["t"])
 print("time axis of log", log_array["time"])
@@ -102,14 +112,13 @@ with psd.figlist_var() as fl:
     fl.next("normalized (zoomed)")
     s = s.real
     s /= s.C.integrate("t2", frq_range)
-    fl.plot(s['t2':frq_range])
+    fl.plot(s["t2":frq_range])
     # {{{ now that we have s(ν)/∫s(ν')dν', calculate
     #     ∫ ν (s(ν)/∫s(ν')dν') dν
-    s *= s.fromaxis(
-        "t2"
-    )
+    s *= s.fromaxis("t2")
     s.integrate("t2", frq_range)
     # }}}
     fl.next("B field and peak shift vs. time")
     fl.plot(field_drift_Hz, ".", label="Hall probe")
     fl.plot(s, "o", label="NMR")
+    plt.ylim(frq_range)
