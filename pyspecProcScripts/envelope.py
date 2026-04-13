@@ -21,7 +21,7 @@ def fit_envelope(
     fl=None,
 ):
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
-    envelope = abs(s[direct:(0, None)]).mean_all_but(direct)
+    envelope = abs(s[direct:(0, None)]).mean_all_but([direct])
     envelope = psp.lmfitdata(envelope)
     # {{{ copy/paste code for envelope
     A, lL, sigma, t = sp.symbols("A lambda_L sigma t2")
