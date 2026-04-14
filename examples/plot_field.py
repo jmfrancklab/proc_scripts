@@ -51,6 +51,8 @@ def fix_broken_hdf(log_group):
     group_node = group_node_cls()
     group_node._array_node = array_node
     return group_node
+
+
 # }}}
 
 
@@ -107,16 +109,16 @@ with psd.figlist_var() as fl:
     frq_range = (-5e3, 5e3)
     fl.plot(s.real)
     fl.next("NMR signal - with zf and conv (tdom)")
-    s.ift("t2").ft("t2", pad=s.shape["t2"] * 20).convolve("t2", 1 / 5e-3)
+    s.ift("t2").ft("t2", pad=s.shape["t2"] * 20).convolve("t2", 1e3)
     fl.plot(s)
     fl.next("normalized (zoomed)")
-    s = s.real
-    s /= s.C.integrate("t2", frq_range)
-    fl.plot(s["t2":frq_range])
+    s = s["t2":frq_range].real
+    s /= s.C.integrate("t2")
+    fl.plot(s)
     # {{{ now that we have s(ν)/∫s(ν')dν', calculate
     #     ∫ ν (s(ν)/∫s(ν')dν') dν
     s *= s.fromaxis("t2")
-    s.integrate("t2", frq_range)
+    s.integrate("t2")
     # }}}
     fl.next("B field and peak shift vs. time")
     fl.plot(field_drift_Hz, ".", label="Hall probe")
