@@ -10,12 +10,61 @@ import matplotlib.pyplot as plt
 from matplotlib.transforms import blended_transform_factory
 import datetime
 
+def fix_broken_hdf(log_group):
+    def _decode_list_node(h5group):
+        item_names = sorted(
+            (name for name in h5group.attrs if name.startswith("ITEM")),
+            key=lambda name: int(name[4:]),
+        )
+        values = []
+        for name in item_names:
+            value = h5group.attrs[name]
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+            values.append(value)
+        return values
+    # {{{ because this is a hack, let's just create our classes inline,
+    #     to keep it simple
+    array_node_cls = type(
+        "BrokenArrayNode",
+        (),
+        {
+            "__getitem__": lambda self, item: self._array[item],
+        },
+    )
+    group_node_cls = type(
+        "BrokenGroupNode",
+        (),
+        {
+            "keys": lambda self: ["array"],
+            "__getitem__": lambda self, key: (
+                self._array_node
+                if key == "array"
+                else (_ for _ in ()).throw(KeyError(key))
+            ),
+        },
+    )
+    # }}}
+    array_node = array_node_cls()
+    array_node._array = log_group["array"][:]
+    array_node.attrs = {
+        "dictkeys": _decode_list_node(log_group["dictkeys"]),
+        "dictvalues": _decode_list_node(log_group["dictvalues"]),
+    }
+    group_node = group_node_cls()
+    group_node._array_node = array_node
+    return group_node
+
+
 coupler_atten = 22
+files_to_check = [
+    ("230626_batch230515_E37_Ras_B10_ODNP_1.h5", "ODNP_NMR_comp/ODNP", False),
+    ("260406_hydroxytempo.*", "B27/ODNP", True),
+    ("260107_hydroxytempo_ODNP_1.h5", "B27/ODNP", False),
+]
+
 with psd.figlist_var() as fl:
-    for which_fname, which_exptype in [
-        ("230626_batch230515_E37_Ras_B10_ODNP_1.h5", "ODNP_NMR_comp/ODNP"),
-        ("260107_hydroxytempo.*", "B27/ODNP"),
-    ]:
+    for which_fname, which_exptype, broken_hdf in files_to_check:
         myfilename = psd.search_filename(
             which_fname,
             exp_type=which_exptype,
@@ -23,7 +72,10 @@ with psd.figlist_var() as fl:
         )
         # {{{ open h5 file to real log
         with h5py.File(myfilename, "r") as f:
-            thislog = logobj.from_group(f["log"])
+            if broken_hdf:
+                thislog = logobj.from_group(fix_broken_hdf(f["log"]))
+            else:
+                thislog = logobj.from_group(f["log"])
         # }}}
         # In order to properly set the time axis to start at 0
         # both the log's start time will be subtracted from the
@@ -31,10 +83,20 @@ with psd.figlist_var() as fl:
         print("ask for overall type", type(thislog.total_log))
         print("ask for dtype", thislog.total_log.dtype)
         thislog.total_log["time"] -= thislog.total_log["time"][0]
+        plot_field = "field" in thislog.total_log.dtype.names
         # }}}
         # {{{ plot the output power and reflection
-        fig, (ax_Rx, ax_power) = plt.subplots(2, 1, figsize=(10, 8))
+        fig, ax_list = plt.subplots(3 if plot_field else 2, 1, figsize=(10, 8))
         fl.next("log figure", fig=fig)
+        if plot_field:
+            ax_Rx, ax_power, ax_field = ax_list
+            ax_field.set_ylabel("field / G")
+            ax_field.set_xlabel("Time / ms")
+            ax_field.plot(
+                thislog.total_log["time"], thislog.total_log["field"], "."
+            )
+        else:
+            ax_Rx, ax_power = ax_list
         ax_Rx.set_ylabel("Rx / mV")
         ax_Rx.set_xlabel("Time / ms")
         ax_Rx.plot(thislog.total_log["time"], thislog.total_log["Rx"], ".")
@@ -67,7 +129,7 @@ with psd.figlist_var() as fl:
             position = (
                 position % npositions
             )  # use npositions positions top to bottom, then roll over
-            for thisax in [ax_Rx, ax_power]:
+            for thisax in ax_list:
                 thisax.axvline(x=thisevent["time"], color="g", alpha=0.5)
                 thisax.text(
                     s=event_name,
@@ -82,8 +144,10 @@ with psd.figlist_var() as fl:
                 )
             position += 1
             # }}}
-        for thisax in [ax_Rx, ax_power]:
+        for thisax in ax_list:
             thisax.xaxis.set_major_formatter(
-                plt.FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=x)))
+                plt.FuncFormatter(
+                    lambda x, _: str(datetime.timedelta(seconds=x))
+                )
             )
         plt.tight_layout()

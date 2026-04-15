@@ -67,6 +67,7 @@ _EXPORTS = {
     "L2G": (".envelope", "L2G"),
     "fit_envelope": (".envelope", "fit_envelope"),
     "convert_to_power": (".convert_to_power", "convert_to_power"),
+    "load_log_data": (".convert_to_power", "load_log_data"),
     "clock_correct": (".clock_correct", "clock_correct"),
     "calc_masked_variance": (".calc_error", "calc_masked_variance"),
 }
