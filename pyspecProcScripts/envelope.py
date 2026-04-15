@@ -17,7 +17,7 @@ def fit_envelope(
     fl=None,
 ):
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
-    envelope = abs(s[direct : (0, None)]).mean_all_but([direct])
+    envelope = abs(s[direct:(0, None)]).mean_all_but([direct])
     envelope = psp.lmfitdata(envelope)
     # {{{ copy/paste code for envelope
     A, lL, sigma, t = sp.symbols("A lambda_L sigma t2")
@@ -66,8 +66,8 @@ def fit_envelope(
         envelope.set_guess(new_guess)
         envelope.settoguess()
         points_over = (
-            envelope[direct : (0, t_at_exp_end)]
-            - envelope.eval()[direct : (0, t_at_exp_end)]
+            envelope[direct:(0, t_at_exp_end)]
+            - envelope.eval()[direct:(0, t_at_exp_end)]
         )
         points_over[lambda x: x < 0] = 0
         points_over.run(lambda x: np.sqrt(abs(x) ** 2)).mean()

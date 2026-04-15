@@ -10,22 +10,19 @@ import matplotlib.pyplot as plt
 from matplotlib.transforms import blended_transform_factory
 import datetime
 
-
-def _decode_list_node(h5group):
-    item_names = sorted(
-        (name for name in h5group.attrs if name.startswith("ITEM")),
-        key=lambda name: int(name[4:]),
-    )
-    values = []
-    for name in item_names:
-        value = h5group.attrs[name]
-        if isinstance(value, bytes):
-            value = value.decode("utf-8")
-        values.append(value)
-    return values
-
-
 def fix_broken_hdf(log_group):
+    def _decode_list_node(h5group):
+        item_names = sorted(
+            (name for name in h5group.attrs if name.startswith("ITEM")),
+            key=lambda name: int(name[4:]),
+        )
+        values = []
+        for name in item_names:
+            value = h5group.attrs[name]
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+            values.append(value)
+        return values
     # {{{ because this is a hack, let's just create our classes inline,
     #     to keep it simple
     array_node_cls = type(
