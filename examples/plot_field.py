@@ -113,7 +113,8 @@ with psd.figlist_var() as fl:
     s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
     fl.plot(s.real)
     fl.next("NMR signal - with zf and conv (tdom)")
-    # the linewidth is about 1 kHz, so in the following, we're shooting for a matched filter
+    # the linewidth is about 1 kHz, so in the following, we're shooting for a
+    # matched filter
     s.ift("t2").ft("t2", pad=s.shape["t2"] * 20).convolve("t2", 1e3)
     fl.plot(s)
     fl.next("normalized (zoomed)")
