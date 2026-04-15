@@ -91,9 +91,6 @@ s["t"] = s["t"]["nScans"] + s["t"]["t"]
 s.set_units("t", "s")
 # }}}
 s.reorder("t2", first=False)
-# TODO ☐: are these supposed to be very different? They might be
-print("time axis of nmr data", s["t"])
-print("time axis of log", log_array["time"])
 field_drift_Hz = (
     psd.nddata(field_drift_Hz, [-1], ["t"])
     .setaxis("t", log_array["time"])
