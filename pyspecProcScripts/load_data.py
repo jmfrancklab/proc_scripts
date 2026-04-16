@@ -749,6 +749,14 @@ def proc_capture(s):
     return s
 
 
+def proc_save_data_example(s, fl=None):
+    """Post-process the synthetic dataset from FLInst/save_data_example.py."""
+    direct = "t2" if "t2" in s.dimlabels else "t"
+    s.reorder(direct, first=False)
+    s.ft(direct, shift=True)
+    return s
+
+
 def proc_DOSY_CPMG(s, fl=None):
     if fl is None:
         raise ValueError("you must pass kwarg fl or edit the source")
@@ -765,11 +773,13 @@ def proc_DOSY_CPMG(s, fl=None):
     logging.debug(psd.strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.debug(
-        psd.strm([
-            (j, s.get_prop("acq")[j])
-            for j in s.get_prop("acq").keys()
-            if "de" in j.lower()
-        ])
+        psd.strm(
+            [
+                (j, s.get_prop("acq")[j])
+                for j in s.get_prop("acq").keys()
+                if "de" in j.lower()
+            ]
+        )
     )
     # I actually can't find depa
     # }}}
@@ -913,6 +923,7 @@ lookup_table = {
     "spincore_var_tau_v1": proc_var_tau,
     "spincore_generalproc_v1": proc_spincore_generalproc_v1,
     "square_wave_capture_v1": proc_capture,
+    "synthetic_test": proc_save_data_example,
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
     "current_sweep_v1": proc_spincore_generalproc_v1,
