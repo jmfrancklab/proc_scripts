@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.transforms import blended_transform_factory
 import datetime
 
+
 def fix_broken_hdf(log_group):
     def _decode_list_node(h5group):
         item_names = sorted(
@@ -23,6 +24,7 @@ def fix_broken_hdf(log_group):
                 value = value.decode("utf-8")
             values.append(value)
         return values
+
     # {{{ because this is a hack, let's just create our classes inline,
     #     to keep it simple
     array_node_cls = type(
@@ -93,13 +95,18 @@ with psd.figlist_var() as fl:
             ax_field.set_ylabel("field / G")
             ax_field.set_xlabel("Time / ms")
             ax_field.plot(
-                thislog.total_log["time"], thislog.total_log["field"], "."
+                thislog.total_log["time"],
+                thislog.total_log["field"],
+                "k,",
+                alpha=0.25,
             )
         else:
             ax_Rx, ax_power = ax_list
         ax_Rx.set_ylabel("Rx / mV")
         ax_Rx.set_xlabel("Time / ms")
-        ax_Rx.plot(thislog.total_log["time"], thislog.total_log["Rx"], ".")
+        ax_Rx.plot(
+            thislog.total_log["time"], thislog.total_log["Rx"], "k,", alpha=0.25
+        )
         ax_power.set_ylabel("power / dBm")
         ax_power.set_xlabel("Time / ms")
         ax_power.plot(
@@ -108,7 +115,8 @@ with psd.figlist_var() as fl:
             ** (
                 (thislog.total_log["power"] + coupler_atten) / 10 - 3
             ),  # -3 for mW to W
-            ".",
+            "k,",
+            alpha=0.25,
         )
         # }}}
         mask = thislog.total_log["cmd"] != 0
@@ -130,7 +138,7 @@ with psd.figlist_var() as fl:
                 position % npositions
             )  # use npositions positions top to bottom, then roll over
             for thisax in ax_list:
-                thisax.axvline(x=thisevent["time"], color="g", alpha=0.5)
+                thisax.axvline(x=thisevent["time"], color="g", alpha=0.3)
                 thisax.text(
                     s=event_name,
                     x=thisevent["time"],
@@ -138,7 +146,7 @@ with psd.figlist_var() as fl:
                     transform=blended_transform_factory(
                         thisax.transData, thisax.transAxes
                     ),
-                    alpha=0.5,
+                    alpha=0.3,
                     color="g",
                     size=8,  # really tiny!
                 )
