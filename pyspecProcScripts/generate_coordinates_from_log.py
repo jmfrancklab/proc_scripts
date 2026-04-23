@@ -105,8 +105,8 @@ def generate_coordinates_from_log(
         )
         .set_units("time", "s")
     )
-    log_vs_time["power"] = prscr.dBm2power(
-        log_vs_time["power"] + directional_coupler_dB
+    log_vs_time.data = prscr.dBm2power(
+        log_vs_time.data + directional_coupler_dB
     )
     if fl:  # checks that fl is not None
         fl.next("power log")
@@ -153,7 +153,9 @@ def generate_coordinates_from_log(
             s["indirect"][:]["stop_times"],
         )
     ):
-        mean_power_vs_time["time", j] = log_vs_time.mean("time", std=True)
+        mean_power_vs_time["time", j] = log_vs_time[
+            "time":(time_start, time_stop)
+        ].mean("time", std=True)
         mean_power_vs_time["time"][j] = (time_start + time_stop) / 2
         # {{{ I realized a crosshatch would be better here
         plt.axvspan(
@@ -178,12 +180,10 @@ def generate_coordinates_from_log(
         #    the step
     # }}}
     s.setaxis("indirect", mean_power_vs_time.data).set_error(
-        "indirect", mean_power_vs_time.get_error()
-    )
-    s["indirect"]["power"][abs(s["indirect"]) < 10**-10] = 0  # the power log
-    #                                                 reads as a very
-    #                                                 very small power
-    #                                                 rather than 0, so
-    #                                                 threshold these
-    #                                                 out
+        mean_power_vs_time.get_error()
+    ).set_error("indirect", mean_power_vs_time.get_error())
+    indirect_axis = np.asarray(s.getaxis("indirect")).copy()
+    indirect_axis[abs(indirect_axis) < 10**-10] = 0  # the power log reads as
+    s.setaxis("indirect", indirect_axis)  # a very small power rather than 0
+    #                                        so threshold these out
     return s
