@@ -55,7 +55,7 @@ pyspecProcScripts.clock\_correct module
 pyspecProcScripts.convert\_to\_power module
 -------------------------------------------
 
-.. automodule:: pyspecProcScripts.convert_to_power
+.. automodule:: pyspecProcScripts.generate_coordinates_from_log
    :members:
    :undoc-members:
    :show-inheritance:

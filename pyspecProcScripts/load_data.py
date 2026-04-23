@@ -15,6 +15,8 @@ import numpy as np
 from numpy import r_
 import re
 
+from .simple_functions import logobj
+
 
 # to use type s = load_data("nameoffile")
 def proc_bruker_deut_IR_withecho_mancyc(s, fl=None):
@@ -669,6 +671,22 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 
+def proc_spincore_ODNP_v6(s, fl=None):
+    if s.get_prop("coherence_pathway") is None:
+        print(
+            "WARNING!! The data was not saved with a coherence pathway"
+            " property! You should fix this!"
+        )
+        result = input('Type "I will fix this" to confirm')
+        if result != "I will fix this":
+            raise ValueError("fix not confirmed!")
+        s.set_prop("coherence_pathway", {"ph1": 1})
+    # TODO: Call power helper function here
+    # Helper function
+    s.set_prop("log", logobj.from_group(thislog))
+    return proc_spincore_generalproc_v1(s, fl=fl)
+
+
 def hack_oldproc(s, direct="t2", fl=None):
     """this is for things that are so old that they don't even have
     acq_params set"""
@@ -765,11 +783,13 @@ def proc_DOSY_CPMG(s, fl=None):
     logging.debug(psd.strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.debug(
-        psd.strm([
-            (j, s.get_prop("acq")[j])
-            for j in s.get_prop("acq").keys()
-            if "de" in j.lower()
-        ])
+        psd.strm(
+            [
+                (j, s.get_prop("acq")[j])
+                for j in s.get_prop("acq").keys()
+                if "de" in j.lower()
+            ]
+        )
     )
     # I actually can't find depa
     # }}}
@@ -909,6 +929,7 @@ lookup_table = {
     #                                             meter powers
     "spincore_ODNP_v4": proc_spincore_ODNP_v4,
     "spincore_ODNP_v5": proc_spincore_ODNP_v4,
+    "spincore_ODNP_v6": proc_spincore_ODNP_v6,
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
     "spincore_generalproc_v1": proc_spincore_generalproc_v1,
