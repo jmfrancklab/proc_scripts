@@ -33,7 +33,7 @@ def load_log_data(
     return log_array
 
 
-def convert_to_power(
+def generate_coordinates_from_log(
     s,
     filename,
     exp_type,
