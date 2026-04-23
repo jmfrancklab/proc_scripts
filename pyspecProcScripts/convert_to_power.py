@@ -75,7 +75,7 @@ def convert_to_power(
         The axis coordinate errors are the standard deviations of the
         same.
     """
-    log_array = load_log_data(filename, exp_type, node_name=node_name)
+    log_array = s.get_prop("log")
     assert all(
         name in log_array.dtype.names
         for name in ["time", "Rx", "power", "cmd"]
@@ -105,8 +105,9 @@ def convert_to_power(
         )
         .set_units("time", "s")
     )
-    log_vs_time = prscr.dBm2power(log_vs_time + directional_coupler_dB)
-    log_vs_time.set_units("W")
+    log_vs_time["power"] = prscr.dBm2power(
+        log_vs_time["power"] + directional_coupler_dB
+    )
     if fl:  # checks that fl is not None
         fl.next("power log")
         fl.plot(
@@ -140,6 +141,7 @@ def convert_to_power(
         .setaxis("time", np.zeros(len(s["indirect"])))
     )
     # }}}
+
     # {{{ we need to convert these to relative time up front, so that things
     #     don't get complicated!
     s["indirect"]["start_times"] -= zero_time
@@ -151,9 +153,7 @@ def convert_to_power(
             s["indirect"][:]["stop_times"],
         )
     ):
-        mean_power_vs_time["time", j] = log_vs_time[
-            "time":(time_start, time_stop)
-        ].mean("time", std=True)
+        mean_power_vs_time["time", j] = log_vs_time.mean("time", std=True)
         mean_power_vs_time["time"][j] = (time_start + time_stop) / 2
         # {{{ I realized a crosshatch would be better here
         plt.axvspan(
@@ -165,7 +165,7 @@ def convert_to_power(
             alpha=0.1,
         )
         # mean_power_vs_time = prscr.dBm2power(mean_power_vs_time)
-        mean_power_vs_time.set_units("W")
+
         # }}}
     if fl:
         fl.plot(
@@ -179,12 +179,11 @@ def convert_to_power(
     # }}}
     s.setaxis("indirect", mean_power_vs_time.data).set_error(
         "indirect", mean_power_vs_time.get_error()
-    ).set_units("indirect", "W")
-    s["indirect"][abs(s["indirect"]) < 10**-10] = 0  # the power log
+    )
+    s["indirect"]["power"][abs(s["indirect"]) < 10**-10] = 0  # the power log
     #                                                 reads as a very
     #                                                 very small power
     #                                                 rather than 0, so
     #                                                 threshold these
     #                                                 out
-    s.rename("indirect", "power")
     return s
