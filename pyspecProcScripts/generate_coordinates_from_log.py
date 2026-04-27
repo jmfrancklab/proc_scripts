@@ -7,6 +7,8 @@ import datetime
 import re
 
 
+# Future TODO: This function will be moved when we edit proc_Ep.py in
+# a separate PR.
 def load_log_data(
     filename,
     exp_type,
@@ -154,7 +156,7 @@ def generate_coordinates_from_log(
         )
     ):
         mean_power_vs_time["time", j] = log_vs_time[
-            "time":(time_start, time_stop)
+            "time" : (time_start, time_stop)
         ].mean("time", std=True)
         mean_power_vs_time["time"][j] = (time_start + time_stop) / 2
         # {{{ I realized a crosshatch would be better here

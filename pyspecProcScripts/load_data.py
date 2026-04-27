@@ -14,7 +14,6 @@ import logging
 import numpy as np
 from numpy import r_
 import re
-
 from .simple_functions import logobj
 
 
@@ -683,7 +682,7 @@ def proc_spincore_ODNP_v6(s, fl=None):
         s.set_prop("coherence_pathway", {"ph1": 1})
     # TODO: Call power helper function here
     # Helper function
-    s.set_prop("log", logobj.from_group(thislog))
+    s.set_prop("log", logobj.from_group(s.get_prop("log")))
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 
