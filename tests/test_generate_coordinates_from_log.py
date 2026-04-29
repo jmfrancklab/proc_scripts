@@ -94,26 +94,26 @@ def run_generate_coordinates_from_log(monkeypatch=None, fl=None):
         original = load_data_mod.proc_spincore_generalproc_v1
         load_data_mod.proc_spincore_generalproc_v1 = lambda s, fl=None: s
     s, expected_log = build_fake_dataset()
-    try:
-        processed = load_data_mod.proc_spincore_ODNP_v6(s)
-        assert processed is s
-        assert hasattr(processed.get_prop("log"), "total_log")
-        np.testing.assert_array_equal(
-            np.array(processed.get_prop("log").total_log),
-            np.array(
-                expected_log,
-                dtype=processed.get_prop("log").total_log.dtype,
-            ),
-        )
-        returned = prscr.generate_coordinates_from_log(
-            processed,
-            filename="unused.h5",
-            exp_type="unused",
-            fl=fl,
-        )
-    finally:
-        if monkeypatch is None:
-            load_data_mod.proc_spincore_generalproc_v1 = original
+
+    processed = load_data_mod.proc_spincore_ODNP_v6(s)
+    assert processed is s
+    assert hasattr(processed.get_prop("log"), "total_log")
+    np.testing.assert_array_equal(
+        np.array(processed.get_prop("log").total_log),
+        np.array(
+            expected_log,
+            dtype=processed.get_prop("log").total_log.dtype,
+        ),
+    )
+    returned = prscr.generate_coordinates_from_log(
+        processed,
+        filename="unused.h5",
+        exp_type="unused",
+        fl=fl,
+    )
+    print("v6 works")
+    if monkeypatch is None:
+        load_data_mod.proc_spincore_generalproc_v1 = original
     return returned
 
 
@@ -122,29 +122,51 @@ def test_generate_coordinates_from_log_with_proc_spincore_odnp_v6(
 ):
     returned = run_generate_coordinates_from_log(monkeypatch=monkeypatch)
     assert returned is not None
+    indirect_axis = returned.getaxis("indirect")
+    indirect_error = returned.get_error("indirect")
     expected_power = prscr.dBm2power(22.0)
     np.testing.assert_allclose(
-        np.asarray(returned.getaxis("indirect")),
-        np.array([expected_power, expected_power]),
+        indirect_axis["time"],
+        np.array([1.0, 3.0]),
     )
     np.testing.assert_allclose(
-        np.asarray(returned.get_error()),
-        np.zeros(2),
+        indirect_axis["power"],
+        np.array([expected_power, expected_power]),
     )
+    np.testing.assert_allclose(indirect_axis["Rx"], np.array([0.0, 0.0]))
+    np.testing.assert_allclose(
+        indirect_axis["field"], np.array([3400.0, 3400.0])
+    )
+    np.testing.assert_allclose(indirect_axis["cmd"], np.array([0.0, 0.0]))
+    np.testing.assert_allclose(
+        indirect_error["time"], np.array([np.std([0.0, 1.0, 2.0]), 0.5])
+    )
+    np.testing.assert_allclose(indirect_error["power"], np.array([0.0, 0.0]))
 
 
 def main():
     fl = SimpleFigList()
     returned = run_generate_coordinates_from_log(fl=fl)
+    indirect_axis = returned.getaxis("indirect")
+    indirect_error = returned.get_error("indirect")
     expected_power = prscr.dBm2power(22.0)
     np.testing.assert_allclose(
-        np.asarray(returned.getaxis("indirect")),
-        np.array([expected_power, expected_power]),
+        indirect_axis["time"],
+        np.array([1.0, 3.0]),
     )
     np.testing.assert_allclose(
-        np.asarray(returned.get_error()),
-        np.zeros(2),
+        indirect_axis["power"],
+        np.array([expected_power, expected_power]),
     )
+    np.testing.assert_allclose(indirect_axis["Rx"], np.array([0.0, 0.0]))
+    np.testing.assert_allclose(
+        indirect_axis["field"], np.array([3400.0, 3400.0])
+    )
+    np.testing.assert_allclose(indirect_axis["cmd"], np.array([0.0, 0.0]))
+    np.testing.assert_allclose(
+        indirect_error["time"], np.array([np.std([0.0, 1.0, 2.0]), 0.5])
+    )
+    np.testing.assert_allclose(indirect_error["power"], np.array([0.0, 0.0]))
     fl.ax.grid(alpha=0.2)
     print(
         "test_generate_coordinates_from_log_with_proc_spincore_odnp_v6 passed"

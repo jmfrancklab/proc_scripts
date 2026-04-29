@@ -71,13 +71,13 @@ def generate_coordinates_from_log(
     values : numpy.array
     s : nddata
         (modified in-place)
-        When we're done, the axis coordinates for "indirect" are a (not
-        structured) array containing the average power recorded on the
-        log between each start_time and stop_time.
-        The axis coordinate errors are the standard deviations of the
-        same.
+        When we're done, the axis coordinates for "indirect" are a
+        structured array containing the original time coordinate together
+        with the averages of the logged quantities recorded on the
+        log between each start_time and stop_time.  The axis coordinate
+        errors are the standard deviations of the same.
     """
-    log_array = s.get_prop("log")
+    log_array = s.get_prop("log").total_log.copy()
     assert all(
         name in log_array.dtype.names
         for name in ["time", "Rx", "power", "cmd"]
@@ -88,7 +88,15 @@ def generate_coordinates_from_log(
     ), str(s["indirect"].dtype.names)
     zero_time = log_array["time"][0]
     log_array["time"] -= zero_time
+    log_array["power"] = prscr.dBm2power(
+        log_array["power"] + directional_coupler_dB
+    )
     log_vs_time = (
+        psd.nddata(log_array, [-1], ["time"])
+        .setaxis("time", log_array["time"])
+        .set_units("time", "s")
+    )
+    power_vs_time = (
         psd.nddata(
             log_array[
                 "power"
@@ -107,13 +115,10 @@ def generate_coordinates_from_log(
         )
         .set_units("time", "s")
     )
-    log_vs_time.data = prscr.dBm2power(
-        log_vs_time.data + directional_coupler_dB
-    )
     if fl:  # checks that fl is not None
         fl.next("power log")
         fl.plot(
-            log_vs_time,
+            power_vs_time,
             ".",
             human_units=False,
         )  # should be a picture of the gigatronics powers
@@ -132,13 +137,9 @@ def generate_coordinates_from_log(
     # {{{ construct an nddata whose data are the average power values,
     #     whose errors are the std of of the power values, and whose time
     #     axis is the center time for each power
-    # {{{ AG does something else, but basically we want to create an
-    #     nddata that will store our powers and the associated errors
-    log_vs_time.set_units("time", "s")
     mean_power_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
         .alloc(dtype=np.float64)
-        .set_error(0)
         .set_units("time", "s")
         .setaxis("time", np.zeros(len(s["indirect"])))
     )
@@ -149,16 +150,21 @@ def generate_coordinates_from_log(
     s["indirect"]["start_times"] -= zero_time
     s["indirect"]["stop_times"] -= zero_time
     # }}}
+    mean_log_records = []
+    mean_log_errors = []
     for j, (time_start, time_stop) in enumerate(
         zip(
             s["indirect"][:]["start_times"],
             s["indirect"][:]["stop_times"],
         )
     ):
-        mean_power_vs_time["time", j] = log_vs_time[
-            "time" : (time_start, time_stop)
-        ].mean("time", std=True)
-        mean_power_vs_time["time"][j] = (time_start + time_stop) / 2
+        this_mean = log_vs_time["time" : (time_start, time_stop)].mean(
+            "time", std=True
+        )
+        mean_log_records.append(this_mean.data[0].copy())
+        mean_log_errors.append(this_mean.get_error()[0].copy())
+        mean_power_vs_time.data[j] = this_mean.data["power"].item()
+        mean_power_vs_time.getaxis("time")[j] = (time_start + time_stop) / 2
         # {{{ I realized a crosshatch would be better here
         plt.axvspan(
             time_start,
@@ -181,11 +187,15 @@ def generate_coordinates_from_log(
         #    error bars should give the standard deviation of the power over
         #    the step
     # }}}
-    s.setaxis("indirect", mean_power_vs_time.data).set_error(
-        mean_power_vs_time.get_error()
-    ).set_error("indirect", mean_power_vs_time.get_error())
-    indirect_axis = np.asarray(s.getaxis("indirect")).copy()
-    indirect_axis[abs(indirect_axis) < 10**-10] = 0  # the power log reads as
-    s.setaxis("indirect", indirect_axis)  # a very small power rather than 0
-    #                                        so threshold these out
+    mean_power_vs_time.set_error(
+        np.array([j["power"] for j in mean_log_errors])
+    )
+    indirect_axis = np.array(mean_log_records, dtype=this_mean.data.dtype)
+    indirect_error = np.array(mean_log_errors, dtype=this_mean.get_error().dtype)
+    indirect_axis["time"] = (
+        s["indirect"][:]["start_times"] + s["indirect"][:]["stop_times"]
+    ) / 2
+    indirect_axis["power"][abs(indirect_axis["power"]) < 10**-10] = 0
+    s.set_error(None)
+    s.setaxis("indirect", indirect_axis).set_error("indirect", indirect_error)
     return s
