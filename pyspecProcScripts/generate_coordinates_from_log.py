@@ -140,6 +140,7 @@ def generate_coordinates_from_log(
     mean_power_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
         .alloc(dtype=np.float64)
+        .set_error(0)
         .set_units("time", "s")
         .setaxis("time", np.zeros(len(s["indirect"])))
     )
@@ -150,8 +151,6 @@ def generate_coordinates_from_log(
     s["indirect"]["start_times"] -= zero_time
     s["indirect"]["stop_times"] -= zero_time
     # }}}
-    mean_log_records = []
-    mean_log_errors = []
     for j, (time_start, time_stop) in enumerate(
         zip(
             s["indirect"][:]["start_times"],
@@ -161,9 +160,19 @@ def generate_coordinates_from_log(
         this_mean = log_vs_time["time" : (time_start, time_stop)].mean(
             "time", std=True
         )
-        mean_log_records.append(this_mean.data[0].copy())
-        mean_log_errors.append(this_mean.get_error()[0].copy())
+        if j == 0:
+            indirect_axis = np.empty(
+                len(s["indirect"]), dtype=this_mean.data.dtype
+            )
+            indirect_error = np.empty(
+                len(s["indirect"]), dtype=this_mean.get_error().dtype
+            )
+        indirect_axis[j] = this_mean.data[0]
+        indirect_error[j] = this_mean.get_error()[0]
         mean_power_vs_time.data[j] = this_mean.data["power"].item()
+        mean_power_vs_time.get_error()[j] = this_mean.get_error()[
+            "power"
+        ].item()
         mean_power_vs_time.getaxis("time")[j] = (time_start + time_stop) / 2
         # {{{ I realized a crosshatch would be better here
         plt.axvspan(
@@ -187,11 +196,6 @@ def generate_coordinates_from_log(
         #    error bars should give the standard deviation of the power over
         #    the step
     # }}}
-    mean_power_vs_time.set_error(
-        np.array([j["power"] for j in mean_log_errors])
-    )
-    indirect_axis = np.array(mean_log_records, dtype=this_mean.data.dtype)
-    indirect_error = np.array(mean_log_errors, dtype=this_mean.get_error().dtype)
     indirect_axis["time"] = (
         s["indirect"][:]["start_times"] + s["indirect"][:]["stop_times"]
     ) / 2
