@@ -26,7 +26,7 @@ plt.rcParams.update(
 
 with psd.figlist_var() as fl:
     thisfile, exptype, nodename = (
-        "260429_hydroxytempo_ODNP_1.h5",
+        "260429_hydroxytempo_ODNP_2.h5",
         "B27/ODNP",
         "ODNP",
     )
@@ -64,10 +64,8 @@ with psd.figlist_var() as fl:
     post_proc_type = s.get_prop("postproc_type")
     if post_proc_type == "spincore_ODNP_v6":
         s = prscr.generate_coordinates_from_log(s, thisfile, exptype, fl=fl)
-        indirect_error = s.get_error("indirect")
         s.setaxis("indirect", s["indirect"]["power"])
-        s.set_error("indirect", indirect_error["power"])
-        s.set_units("indirect", "dBm").rename("indirect", "power")
+        s.set_units("indirect", "W").rename("indirect", "power")
     else:
         s = prscr.generate_power_coordinates_from_log(
             s,
