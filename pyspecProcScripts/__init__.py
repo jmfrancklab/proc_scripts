@@ -70,6 +70,14 @@ _EXPORTS = {
         ".generate_coordinates_from_log",
         "generate_coordinates_from_log",
     ),
+    "generate_power_coordinates_from_log": (
+        ".legacy_log_fix",
+        "generate_power_coordinates_from_log",
+    ),
+    "attach_log_data_from_file": (
+        ".legacy_log_fix",
+        "attach_log_data_from_file",
+    ),
     "load_log_data": (
         ".generate_coordinates_from_log",
         "load_log_data",

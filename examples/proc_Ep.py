@@ -1,5 +1,5 @@
 """
-Process Enhancement experiment 
+Process Enhancement experiment
 ====================================================
 Opens .h5 results file, uses rough_table_of_integrals() to roughly process
 dataset including generating a table of integrals
@@ -12,21 +12,22 @@ import matplotlib.pyplot as plt
 
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 2
-plt.rcParams.update({
-    "errorbar.capsize": 2,
-    "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
-    "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
-    "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
-    "savefig.bbox": "tight",
-    "savefig.dpi": 300,
-    "figure.figsize": (6, 5),
-})
-
+plt.rcParams.update(
+    {
+        "errorbar.capsize": 2,
+        "figure.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "axes.facecolor": (1.0, 1.0, 1.0, 0.9),  # 90% transparent white
+        "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),  # clear
+        "savefig.bbox": "tight",
+        "savefig.dpi": 300,
+        "figure.figsize": (6, 5),
+    }
+)
 
 with psd.figlist_var() as fl:
     thisfile, exptype, nodename = (
-        "240924_13p5mM_TEMPOL_ODNP_1.h5",
-        "ODNP_NMR_comp/ODNP",
+        "260406_hydroxytempo_ODNP_1.h5",
+        "B27/ODNP",
         "ODNP",
     )
     s = psd.find_file(
@@ -60,6 +61,15 @@ with psd.figlist_var() as fl:
     )
     # }}}
     s["indirect"] = orig_axis
-    s = prscr.generate_coordinates_from_log(s, thisfile, exptype, fl=fl)
+    post_proc_type = s.get_prop("postproc_type")
+    if post_proc_type == "spincore_ODNP_v6":
+        s = prscr.generate_coordinates_from_log(s, thisfile, exptype, fl=fl)
+    else:
+        s = prscr.generate_power_coordinates_from_log(
+            s,
+            thisfile,
+            exptype,
+            fl=fl,
+        )
     fl.next("normalized $E(p)$")
     fl.plot(s, "o")
