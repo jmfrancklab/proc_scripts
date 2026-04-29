@@ -200,6 +200,5 @@ def generate_coordinates_from_log(
         s["indirect"][:]["start_times"] + s["indirect"][:]["stop_times"]
     ) / 2
     indirect_axis["power"][abs(indirect_axis["power"]) < 10**-10] = 0
-    s.set_error(None)
     s.setaxis("indirect", indirect_axis).set_error("indirect", indirect_error)
     return s
