@@ -7,12 +7,6 @@ import matplotlib.pyplot as plt
 import re
 
 
-# TODO ☐: there are boxes trying to indicate
-# start and stop that show up in weird
-# places
-# TODO ☐: the DCCT is not on its own figure,
-# but superimposed on another figure for some
-# reason
 with psd.figlist_var() as fl:
     for filename, exp_type in [
         ("260406_hydroxytempo_ODNP_1.h5", "B27/ODNP"),  # Broken hdf example
@@ -84,7 +78,8 @@ with psd.figlist_var() as fl:
         # }}}
         s.reorder("t2", first=False)
         fl.basename = filename
-        fl.next("NMR signal - $\\varphi_0$ only")
+        fig = fl.next("NMR signal - $\\varphi_0$ only")
+        fig.clf()
         s /= prscr.zeroth_order_ph(s)
         fl.DCCT(s)
         fl.next("slice FID")

@@ -131,16 +131,18 @@ def generate_coordinates_from_log(
             )
         # }}}
         mean_log_columns_vs_time["time", j] = result
-        # {{{ I realized a crosshatch would be better here
-        plt.axvspan(
-            time_start,
-            time_stop,
-            facecolor="none",
-            edgecolor="k",
-            hatch="XXXXXX",
-            alpha=0.1,
-        )
-        # }}}
+        if fl:
+            # {{{ I realized a crosshatch would be better here
+            for ax in ax_list:
+                ax.axvspan(
+                    time_start,
+                    time_stop,
+                    facecolor="none",
+                    edgecolor="k",
+                    hatch="XXXXXX",
+                    alpha=0.1,
+                )
+            # }}}
     mean_log_columns_vs_time.set_axis(
         "time", mean_log_columns_vs_time.data["time"]
     )
