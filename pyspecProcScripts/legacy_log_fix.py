@@ -1,11 +1,7 @@
-import datetime
 import re
-
 import h5py
-import matplotlib.pyplot as plt
 import numpy as np
 import pyspecdata as psd
-
 import pyspecProcScripts as prscr
 
 
