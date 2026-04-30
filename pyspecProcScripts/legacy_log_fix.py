@@ -14,6 +14,7 @@ def attach_log_data_from_file(
     filename,
     exp_type,
     node_name="log",
+    hdf_repair=None,
 ):
     """Attach legacy HDF log data as an nddata property.
 
@@ -25,7 +26,10 @@ def attach_log_data_from_file(
         re.escape(filename), exp_type=exp_type, unique=True
     )
     with h5py.File(filename, "r") as f:
-        thislog = prscr.logobj.from_group(f[node_name])
+        if hdf_repair is None:
+            thislog = prscr.logobj.from_group(f[node_name])
+        else:
+            thislog = prscr.logobj.from_group(hdf_repair(f[node_name]))
         # TODO ☐: previously there was extra code here, which could be
         #         unnecessary.  I'm not sure what the reason for this
         #         is.  Looking at test_logobj.py, which is in FLInst,
