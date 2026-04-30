@@ -78,10 +78,6 @@ _EXPORTS = {
         ".legacy_log_fix",
         "attach_log_data_from_file",
     ),
-    "load_log_data": (
-        ".generate_coordinates_from_log",
-        "load_log_data",
-    ),
     "clock_correct": (".clock_correct", "clock_correct"),
     "calc_masked_variance": (".calc_error", "calc_masked_variance"),
 }

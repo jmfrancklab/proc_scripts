@@ -1,11 +1,12 @@
 import datetime
+import re
 
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import pyspecdata as psd
 
 import pyspecProcScripts as prscr
-from .generate_coordinates_from_log import load_log_data
 
 
 def attach_log_data_from_file(
@@ -15,11 +16,12 @@ def attach_log_data_from_file(
     node_name="log",
 ):
     """Attach legacy HDF log data as an nddata property."""
-    log_array = load_log_data(
-        filename,
-        exp_type,
-        node_name=node_name,
+    filename = psd.search_filename(
+        re.escape(filename), exp_type=exp_type, unique=True
     )
+    with h5py.File(filename, "r") as f:
+        thislog = prscr.logobj.from_group(f[node_name])
+        log_array = np.array(thislog.total_log, copy=True)
     thislog = prscr.logobj()
     thislog.total_log = log_array
     s.set_prop("log", thislog)
