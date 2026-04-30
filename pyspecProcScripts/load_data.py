@@ -683,7 +683,6 @@ def proc_spincore_ODNP_v6(s, fl=None):
     s.set_prop("log", logobj.from_group(s.get_prop("log")))
     return proc_spincore_generalproc_v1(s, fl=fl)
 
-
 def hack_oldproc(s, direct="t2", fl=None):
     """this is for things that are so old that they don't even have
     acq_params set"""
@@ -780,13 +779,11 @@ def proc_DOSY_CPMG(s, fl=None):
     logging.debug(psd.strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.debug(
-        psd.strm(
-            [
-                (j, s.get_prop("acq")[j])
-                for j in s.get_prop("acq").keys()
-                if "de" in j.lower()
-            ]
-        )
+        psd.strm([
+            (j, s.get_prop("acq")[j])
+            for j in s.get_prop("acq").keys()
+            if "de" in j.lower()
+        ])
     )
     # I actually can't find depa
     # }}}
