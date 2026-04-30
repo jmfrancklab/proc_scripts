@@ -960,7 +960,9 @@ lookup_table = {
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
     "current_sweep_v1": proc_spincore_generalproc_v1,
+    "current_sweep_v2": proc_spincore_withlog_v1,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
     "field_sweep_v4": hack_field_sweep_v4,
+    "spincore_withlog_v1": proc_spincore_withlog_v1,
 }
