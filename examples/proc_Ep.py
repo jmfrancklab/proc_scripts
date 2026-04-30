@@ -63,14 +63,14 @@ with psd.figlist_var() as fl:
     )
     # }}}
     s["indirect"] = orig_axis
-    m = re.search(s.get_prop('postproc_type'), '.*ODNP.*v([0-9]+)$')
+    m = re.search(s.get_prop("postproc_type"), ".*ODNP.*v([0-9]+)$")
     if m:
         vernum = int(m.group())
     else:
         raise IOError("What the heck type of postproc type is that!!")
     if vernum < 6:
         # the next line is done already if we are 6 or higher
-        s = prscr.generate_coordinates_from_log(s, thisfile, exptype, fl=fl)
+        s = prscr.generate_coordinates_from_log(s, fl=fl)
     # {{{ our standard philosophy for postproc is that we do not destroy
     #    info -- so the following, which destroys info about everything
     #    but power, belongs here.

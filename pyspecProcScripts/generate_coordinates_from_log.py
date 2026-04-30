@@ -37,10 +37,7 @@ def load_log_data(
 
 def generate_coordinates_from_log(
     s,
-    filename,
-    exp_type,
     fl=None,
-    node_name="log",
     directional_coupler_dB=22,
 ):
     """Generate power axis for ODNP/E(p)/FIR experiments, converts instrument
@@ -54,10 +51,6 @@ def generate_coordinates_from_log(
         axis is a structured array.  This structured array gives the
         `start_times` and `stop_times` (as fields) for each datapoint
         along the indirect axis.
-    filename : str
-        Name of the hdf file that contains the power log.
-    exp_type : str
-        The "experiment type" used to search for the file.
         directional_coupler_dB : float
         The ratio (in dB) of the power that leaves the main port of the
         directional coupler vs. the power that arrives at the power
