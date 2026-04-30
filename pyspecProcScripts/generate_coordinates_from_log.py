@@ -75,14 +75,15 @@ def generate_coordinates_from_log(
             ("power", "power / W"),
         ]
         if "field" in log_array.dtype.names:
-            plot_fields.append(("field", "field / G"))
+            plot_fields.append(("field", "magnetic field / G"))
         fig, ax_list = plt.subplots(
             len(plot_fields), 1, figsize=(10, 8), sharex=True
         )
         fl.next("log data", fig=fig)
         for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
-            ax.plot(log_array["time"], log_array[field_name], ".")
+            ax.plot(log_array["time"], log_array[field_name], ".", label="log")
             ax.set_ylabel(ylabel)
+            ax.ticklabel_format(axis="y", style="plain", useOffset=False)
             # {{{ this is just matplotlib time formatting
             ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
             # }}}
@@ -143,26 +144,17 @@ def generate_coordinates_from_log(
     mean_log_columns_vs_time.set_axis(
         "time", mean_log_columns_vs_time.data["time"]
     )
-    print(mean_log_columns_vs_time["time"])
     if fl:
-        plot_fields = [
-            ("Rx", "Rx / mV"),
-            ("power", "power / W"),
-        ]
-        if "field" in log_array.dtype.names:
-            plot_fields.append(("field", "field / G"))
-        fig, ax_list = plt.subplots(
-            len(plot_fields), 1, figsize=(10, 8), sharex=True
-        )
-        fl.next("mean log data", fig=fig)
         for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
             ax.errorbar(
                 mean_log_columns_vs_time["time"],
                 mean_log_columns_vs_time.data[field_name],
                 yerr=mean_log_columns_vs_time.get_error()[field_name],
-                fmt=".",
+                fmt="o",
+                label="mean",
             )
             ax.set_ylabel(ylabel)
+            ax.legend()
             # {{{ this is just matplotlib time formatting
             ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
             # }}}
