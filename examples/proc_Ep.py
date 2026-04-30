@@ -28,11 +28,11 @@ plt.rcParams.update(
 with psd.figlist_var() as fl:
     # TODO ☐: make into a loop that includes this -- I only didn't want
     #         to change the indent b/c I wanted you to be able to see the diff
-    #thisfile, exptype, nodename = (
+    # thisfile, exptype, nodename = (
     #    "240924_13p5mM_TEMPOL_ODNP_1.h5",
     #    "ODNP_NMR_comp/ODNP",
     #    "ODNP",
-    #)
+    # )
     thisfile, thisexptype, nodename = (
         "260429_hydroxytempo_ODNP_2.h5",
         "B27/ODNP",
@@ -69,7 +69,7 @@ with psd.figlist_var() as fl:
     )
     # }}}
     s["indirect"] = orig_axis
-    m = re.search(s.get_prop('postproc_type'), '.*ODNP.*v([0-9]+)$')
+    m = re.search(s.get_prop("postproc_type"), ".*ODNP.*v([0-9]+)$")
     if m:
         vernum = int(m.group())
     else:
@@ -80,7 +80,7 @@ with psd.figlist_var() as fl:
         s = prscr.attach_log_data_from_file(s, thisfile, thisexptype)
     if vernum < 6:
         # the next line is done already if we are 6 or higher
-        s = prscr.generate_coordinates_from_log(s, thisfile, thisexptype, fl=fl)
+        s = prscr.generate_coordinates_from_log(s, fl=fl)
     # {{{ our standard philosophy for postproc is that we do not destroy
     #    info -- so the following, which destroys info about everything
     #    but power, belongs here.

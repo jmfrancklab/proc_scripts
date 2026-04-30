@@ -7,10 +7,7 @@ import datetime
 
 def generate_coordinates_from_log(
     s,
-    filename,
-    exp_type,
     fl=None,
-    node_name="log",
     directional_coupler_dB=22,
 ):
     """Generate power axis for ODNP/E(p)/FIR experiments, converts instrument
@@ -24,10 +21,6 @@ def generate_coordinates_from_log(
         axis is a structured array.  This structured array gives the
         `start_times` and `stop_times` (as fields) for each datapoint
         along the indirect axis.
-    filename : str
-        Name of the hdf file that contains the power log.
-    exp_type : str
-        The "experiment type" used to search for the file.
         directional_coupler_dB : float
         The ratio (in dB) of the power that leaves the main port of the
         directional coupler vs. the power that arrives at the power
@@ -68,33 +61,38 @@ def generate_coordinates_from_log(
         .set_units("time", "s")
     )
     if fl:  # checks that fl is not None
-        fl.next("power log")
-        # TODO ☐: I know that this doesn't work.  Use a loop to plot
-        #         over subplots.  **Reuse** code that you already wrote
-        #         for the read log example that does this.
-        fl.plot(
-            log_vs_time,
-            ".",
-            human_units=False,
-        )  # should be a picture of the gigatronics powers
+        plot_fields = [
+            ("Rx", "Rx / mV"),
+            ("power", "power / W"),
+        ]
+        if "field" in log_array.dtype.names:
+            plot_fields.append(("field", "field / G"))
+        fig, ax_list = plt.subplots(
+            len(plot_fields), 1, figsize=(10, 8), sharex=True
+        )
+        fl.next("power log", fig=fig)
+        for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
+            ax.plot(log_array["time"], log_array[field_name], ".")
+            ax.set_ylabel(ylabel)
+        ax_list[-1].set_xlabel("time / s")
         # {{{ this is just matplotlib time formatting
-        ax = plt.gca()
-        ax.xaxis.set_major_formatter(
-            plt.FuncFormatter(
-                lambda x, _: (
-                    str(datetime.timedelta(seconds=x)).lstrip("0:").lstrip(":")
-                    if x > 0
-                    else "0:00"
+        for ax in ax_list:
+            ax.xaxis.set_major_formatter(
+                plt.FuncFormatter(
+                    lambda x, _: (
+                        str(datetime.timedelta(seconds=x))
+                        .lstrip("0:")
+                        .lstrip(":")
+                        if x > 0
+                        else "0:00"
+                    )
                 )
             )
-        )
         # }}}
     # {{{ construct an nddata whose data are the average power values,
     #     whose errors are the std of of the power values, and whose time
     #     axis is the center time for each power
-    # TODO ☐: the name of this is bad -- it should be the mean of
-    #         everything, right?
-    mean_log_quant_vs_time = (
+    mean_log_columns_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
         .alloc(dtype=np.float64)
         .set_error(0)
@@ -113,7 +111,7 @@ def generate_coordinates_from_log(
             s["indirect"][:]["stop_times"],
         )
     ):
-        mean_log_quant_vs_time["time", j] = log_vs_time[
+        mean_log_columns_vs_time["time", j] = log_vs_time[
             "time" : (time_start, time_stop)
         ].mean("time", std=True)
         # {{{ I realized a crosshatch would be better here
@@ -125,11 +123,11 @@ def generate_coordinates_from_log(
             hatch="XXXXXX",
             alpha=0.1,
         )
-        # mean_log_quant_vs_time = prscr.dBm2power(mean_log_quant_vs_time)
+        # mean_log_columns_vs_time = prscr.dBm2power(mean_log_columns_vs_time)
         # }}}
     if fl:
         fl.plot(
-            mean_log_quant_vs_time,
+            mean_log_columns_vs_time,
             "o",
             human_units=False,
         )  # this  should be a *single* o at the center of each power step.
@@ -137,9 +135,9 @@ def generate_coordinates_from_log(
         #    error bars should give the standard deviation of the power over
         #    the step
     # }}}
-    s.setaxis("indirect", mean_log_quant_vs_time.data).set_error(
-        "indirect", mean_log_quant_vs_time.get_error()
-    ).set_units("indirect", None) # for now, we need to set this to no units
+    s.setaxis("indirect", mean_log_columns_vs_time.data).set_error(
+        "indirect", mean_log_columns_vs_time.get_error()
+    ).set_units("indirect", None)  # for now, we need to set this to no units
     s["indirect"][abs(s["indirect"]) < 10**-10] = 0  # the power log
     #                                                 reads as a very
     #                                                 very small power
