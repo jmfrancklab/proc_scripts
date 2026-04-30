@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 
-def time_formatter(x,y):
+
+def time_formatter(x, y):
     # y is not used
     return (
-        str(datetime.timedelta(seconds=x))
-        .lstrip("0:")
-        .lstrip(":")
+        str(datetime.timedelta(seconds=x)).lstrip("0:").lstrip(":")
         if x > 0
         else "0:00"
     )
+
 
 def generate_coordinates_from_log(
     s,
@@ -84,9 +84,7 @@ def generate_coordinates_from_log(
             ax.plot(log_array["time"], log_array[field_name], ".")
             ax.set_ylabel(ylabel)
             # {{{ this is just matplotlib time formatting
-            ax.xaxis.set_major_formatter(
-                plt.FuncFormatter( time_formatter)
-            )
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
             # }}}
         ax_list[-1].set_xlabel("time / s")
     # {{{ construct an nddata whose data are the average power values,
@@ -94,8 +92,7 @@ def generate_coordinates_from_log(
     #     axis is the center time for each power
     mean_log_columns_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
-        .alloc(dtype=log_vs_time.data.dtype)
-        .set_error(0)
+        .alloc()
         .set_units("time", "s")
         .set_axis("time", np.zeros(len(s["indirect"])))
     )
@@ -111,9 +108,21 @@ def generate_coordinates_from_log(
             s["indirect"][:]["stop_times"],
         )
     ):
-        mean_log_columns_vs_time["time", j] = log_vs_time[
-            "time" : (time_start, time_stop)
-        ].mean("time", std=True)
+        result = log_vs_time["time":(time_start, time_stop)].mean(
+            "time", std=True
+        )
+        # {{{ the dtype of result will not be the same as the
+        #     log_vs_time data, so rather than doing this at alloc, we
+        #     do it here
+        if j == 0:
+            mean_log_columns_vs_time.data = np.zeros(
+                mean_log_columns_vs_time.data.shape, dtype=result.data.dtype
+            )
+            mean_log_columns_vs_time.set_error(
+                np.zeros(mean_log_columns_vs_time.data.shape, dtype=result.data.dtype)
+            )
+        # }}}
+        mean_log_columns_vs_time["time", j] = result
         # {{{ I realized a crosshatch would be better here
         plt.axvspan(
             time_start,
@@ -134,10 +143,14 @@ def generate_coordinates_from_log(
         #    error bars should give the standard deviation of the power over
         #    the step
     # }}}
-    s.setaxis("indirect", mean_log_columns_vs_time.data).set_error(
+    s.set_axis("indirect", mean_log_columns_vs_time.data).set_error(
         "indirect", mean_log_columns_vs_time.get_error()
-    ).set_units("indirect", None)  # for now, we need to set this to no units
-    s["indirect"]['power'][abs(s["indirect"]['power']) < 10**-10] = 0  # the power log
+    ).set_units(
+        "indirect", None
+    )  # for now, we need to set this to no units
+    s["indirect"]["power"][
+        abs(s["indirect"]["power"]) < 10**-10
+    ] = 0  # the power log
     #                                                 reads as a very
     #                                                 very small power
     #                                                 rather than 0, so
