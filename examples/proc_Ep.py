@@ -61,8 +61,7 @@ with psd.figlist_var() as fl:
     )
     # }}}
     s["indirect"] = orig_axis
-    post_proc_type = s.get_prop("postproc_type")
-    if post_proc_type == "spincore_ODNP_v6":
+    if s.get_prop("postproc_type") == "spincore_ODNP_v6":
         s = prscr.generate_coordinates_from_log(s, thisfile, exptype, fl=fl)
         s.setaxis("indirect", s["indirect"]["power"])
         s.set_units("indirect", "W").rename("indirect", "power")
