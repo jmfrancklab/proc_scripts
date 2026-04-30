@@ -681,9 +681,10 @@ def proc_spincore_ODNP_v6(s, fl=None):
         if result != "I will fix this":
             raise ValueError("fix not confirmed!")
         s.set_prop("coherence_pathway", {"ph1": 1})
-    s.set_prop("log", logobj.from_group(s.get_prop("log")))
-    s = generate_coordinates_from_log(s, fl=fl)
-    return proc_spincore_generalproc_v1(s, fl=fl)
+    thislog = s.get_prop("log")
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    s.set_prop("log", logobj.from_group(thislog))
+    return generate_coordinates_from_log(s, fl=fl)
 
 
 def hack_oldproc(s, direct="t2", fl=None):
