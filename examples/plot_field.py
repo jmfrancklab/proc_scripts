@@ -1,3 +1,6 @@
+"""Compare Hall probe field drift with NMR peak shift over time
+of a combined_ODNP experiment from log."""
+
 import pyspecdata as psd
 import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
