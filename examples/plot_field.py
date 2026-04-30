@@ -1,6 +1,8 @@
 import pyspecdata as psd
 import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
+import re
+import numpy as np
 
 
 # {{{ the HDF used in this particular example is broken, so we need to
@@ -73,6 +75,16 @@ s = psd.find_file(
 )
 if s.get_prop("log") is None:
     s = prscr.attach_log_data_from_file(s, filename, exp_type, hdf_repair=hdf_repair)
+# {{{ gen coords if old data
+m = re.search(".*ODNP.*v([0-9]+)$",s.get_prop("postproc_type"))
+if m:
+    vernum = int(m.groups()[0])
+else:
+    raise IOError(f"What the heck type of postproc type is that!! ({s.get_prop('postproc_type')})")
+if vernum < 6:
+    # the next line is done already if we are 6 or higher
+    s = prscr.generate_coordinates_from_log.generate_coordinates_from_log(s)
+# }}}
 log_array = s.get_prop("log").total_log
 log_start_time = log_array["time"][0].item()
 log_array["time"] -= log_start_time
@@ -89,10 +101,11 @@ Hall_drift_Hz = (
     .setaxis("t", log_array["time"])
     .set_units("t", "s")
 )
+s["indirect"] = s['indirect']['time'] # this is the average time from the log -- here I rely on the fact that the log data was used to replace the axis
+s.set_error("indirect",0)
 s.rename("indirect", "t").set_units("t", "s")
 # the time axis for the signal is originally a structured array that gives both
 # experiment start and stop times.  Convert to a normal array
-s["t"] = 0.5 * (s["t"]["start_times"] + s["t"]["stop_times"]) - log_start_time
 # {{{ rather than averaging over nScans, I create an appropriate time
 #     axis for it, and then smoosh to create a dimension with all my scans
 if "nScans" in s.dimlabels:
@@ -100,6 +113,12 @@ if "nScans" in s.dimlabels:
         s.get_prop("acq_params")["acq_time_ms"] * 1e-3
         + s.get_prop("acq_params")["repetition_us"] * 1e-6
     )
+    # TODO ☐: at this point, it's giving an error related to structured
+    # arrays, but t isn't structured
+    print(s)
+    print('data dtype',s.data.dtype)
+    print('t dtype',s['t'].dtype)
+    print('nscans dtype',s['nScans'].dtype)
     s.smoosh(["t", "nScans"], dimname="t")
     # smoosh makes a structured array, which I convert to a normal array here:
     s["t"] = s["t"]["nScans"] + s["t"]["t"]
