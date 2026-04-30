@@ -70,10 +70,9 @@ _EXPORTS = {
         ".generate_coordinates_from_log",
         "generate_coordinates_from_log",
     ),
-    "generate_power_coordinates_from_log": (
-        ".legacy_log_fix",
-        "generate_power_coordinates_from_log",
-    ),
+    # TODO ☐: I don't understand what this means, I realize -- can you
+    #         explain this? I'm used to __all__ being a list, not a dict
+    #         e.g. here, what is "legacy log fix"??
     "attach_log_data_from_file": (
         ".legacy_log_fix",
         "attach_log_data_from_file",

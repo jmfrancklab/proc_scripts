@@ -14,7 +14,7 @@ s = psd.find_file(
 )
 if s.get_prop("log") is None:
     s = prscr.attach_log_data_from_file(s, filename, exp_type)
-log_array = s.get_prop("log").total_log.copy()
+log_array = s.get_prop("log").total_log
 log_start_time = log_array["time"][0].item()
 log_array["time"] -= log_start_time
 Hall_drift_Hz = (

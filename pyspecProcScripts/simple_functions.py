@@ -28,7 +28,6 @@ class logobj(object):
         self.currently_logging = False
         self.log_pos = 0
         self.array_len = array_len
-        self.wg_has_been_flipped = False
         return
 
     @classmethod
@@ -38,45 +37,6 @@ class logobj(object):
         thislog = cls()
         thislog.__setstate__(h5group)
         return thislog
-
-    def reset(self):
-        "wipe the log and start over, set to not currently logging"
-        self.log_array = np.empty(self.array_len, dtype=self.log_dtype)
-        self.log_dict = {
-            0: ""
-        }  # use hash to convert commands to a number, and this to look up
-        #    the meaning of the hashes
-        self.currently_logging = False
-        self.log_pos = 0
-        self.log_list = []
-        if hasattr(self, "_totallog"):
-            del self._totallog
-        return
-
-    def add(self, time=None, Rx=None, power=None, cmd=None, field=None):
-        if time is None:
-            time = timemodule.time()
-        self.log_array[self.log_pos]["time"] = time
-        if cmd is None:
-            self.log_array[self.log_pos]["cmd"] = 0
-        else:
-            thehash = hash(cmd)
-            self.log_dict[thehash] = cmd
-            self.log_array[self.log_pos]["cmd"] = thehash
-        assert Rx is not None
-        self.log_array[self.log_pos]["Rx"] = Rx
-        assert power is not None
-        self.log_array[self.log_pos]["power"] = power
-        if field is not None and "field" in self.log_dtype.names:
-            self.log_array[self.log_pos]["field"] = field
-        # {{{ done for all additions
-        self.log_pos += 1
-        if self.log_pos == self.array_len:
-            self.log_pos = 0
-            self.log_list.append(self.log_array)
-            self.log_array = np.empty(self.array_len, dtype=self.log_dtype)
-        # }}}
-        return self
 
     @property
     def total_log(self):
@@ -92,15 +52,6 @@ class logobj(object):
     @total_log.setter
     def total_log(self, result):
         self._totallog = result
-
-    def __getstate__(self):
-        """return a picklable object -- I go with a dictionary that contains
-        the message dict and the total array"""
-        return {
-            "NUMPY_DATA": self.total_log,
-            "dictkeys": list(self.log_dict.keys()),
-            "dictvalues": list(self.log_dict.values()),
-        }
 
     def __setstate__(self, inputdict):
         if hasattr(inputdict, "keys") and "array" in inputdict.keys():

@@ -9,6 +9,7 @@ import pyspecProcScripts as prscr
 import pyspecdata as psd
 import datetime
 import matplotlib.pyplot as plt
+import re
 
 plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 # sphinx_gallery_thumbnail_number = 2
@@ -25,14 +26,14 @@ plt.rcParams.update(
 )
 
 with psd.figlist_var() as fl:
-    thisfile, exptype, nodename = (
+    thisfile, thisexptype, nodename = (
         "260429_hydroxytempo_ODNP_2.h5",
         "B27/ODNP",
         "ODNP",
     )
     s = psd.find_file(
         thisfile,
-        exp_type=exptype,
+        exp_type=thisexptype,
         expno=nodename,
         lookup=prscr.lookup_table,
     )
@@ -61,16 +62,24 @@ with psd.figlist_var() as fl:
     )
     # }}}
     s["indirect"] = orig_axis
-    if s.get_prop("postproc_type") == "spincore_ODNP_v6":
-        s = prscr.generate_coordinates_from_log(s, thisfile, exptype, fl=fl)
-        s.setaxis("indirect", s["indirect"]["power"])
-        s.set_units("indirect", "W").rename("indirect", "power")
+    m = re.search(s.get_prop('postproc_type'), '.*ODNP.*v([0-9]+)$')
+    if m:
+        vernum = int(m.group())
     else:
-        s = prscr.generate_power_coordinates_from_log(
-            s,
-            thisfile,
-            exptype,
-            fl=fl,
-        )
+        raise IOError("What the heck type of postproc type is that!!")
+    if s.get_prop("log") is None:
+        # the log has not changed, just its location in the HDF file.
+        # so, once we attach it, the following should work!
+        s = prscr.attach_log_data_from_file(s, thisfile, thisexptype)
+    if vernum < 6:
+        # the next line is done already if we are 6 or higher
+        s = prscr.generate_coordinates_from_log(s, thisfile, thisexptype, fl=fl)
+    # {{{ our standard philosophy for postproc is that we do not destroy
+    #    info -- so the following, which destroys info about everything
+    #    but power, belongs here.
+    s.set_error("indirect", s.get_error("indirect")["power"])
+    s["indirect"] = s["indirect"]["power"]
+    s.set_units("indirect", "W").rename("indirect", "power")
+    # }}}
     fl.next("normalized $E(p)$")
     fl.plot(s, "o")
