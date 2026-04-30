@@ -671,7 +671,30 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 
-def proc_spincore_ODNP_v6(s, fl=None):
+def proc_spincore_withlog_v1(s, fl=None):
+    """This is the first version of code that automatically takes the log data
+    and uses it to construct a structured array indirect coordinate axis.
+
+    This should serve as a good "general processing" function for newer format
+    data where the log is saved as a property.
+
+    **However** note that this **requires** that the indirect axis is saved
+    with  a structured array giving the start_time and stop_times.
+    *All newer log-based pulse sequences should have an indirect axis with
+    these keys.*
+    If your data was not saved in that way, then you cannot use this as a
+    postproc.
+
+    Future TODO (leave for a future PR): we want to modify
+    generate_coordinates_from_log so that it preserves + carries forward all
+    the previous keys for the indirect axis.  E.g. currently, I believe we
+    throw out the start_time and stop_time, and there might be reasons to keep
+    those around.
+    Also, say we have a truly multi-dimensional experiment where we are
+    changing a pulse sequence delay, but also want to correlate the start and
+    stop with the log -- there, we would save with start, stop, and ppg delay
+    value, and we want to preserve the ppg delay value.
+    """
     if s.get_prop("coherence_pathway") is None:
         print(
             "WARNING!! The data was not saved with a coherence pathway"
@@ -929,7 +952,7 @@ lookup_table = {
     #                                             meter powers
     "spincore_ODNP_v4": proc_spincore_ODNP_v4,
     "spincore_ODNP_v5": proc_spincore_ODNP_v4,
-    "spincore_ODNP_v6": proc_spincore_ODNP_v6,
+    "spincore_ODNP_v6": proc_spincore_withlog_v1,
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
     "spincore_generalproc_v1": proc_spincore_generalproc_v1,
