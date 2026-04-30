@@ -94,7 +94,7 @@ def generate_coordinates_from_log(
     #     axis is the center time for each power
     mean_log_columns_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
-        .alloc(dtype=np.float64)
+        .alloc(dtype=log_vs_time.data.dtype)
         .set_error(0)
         .set_units("time", "s")
         .set_axis("time", np.zeros(len(s["indirect"])))
@@ -137,7 +137,7 @@ def generate_coordinates_from_log(
     s.setaxis("indirect", mean_log_columns_vs_time.data).set_error(
         "indirect", mean_log_columns_vs_time.get_error()
     ).set_units("indirect", None)  # for now, we need to set this to no units
-    s["indirect"][abs(s["indirect"]) < 10**-10] = 0  # the power log
+    s["indirect"]['power'][abs(s["indirect"]['power']) < 10**-10] = 0  # the power log
     #                                                 reads as a very
     #                                                 very small power
     #                                                 rather than 0, so
