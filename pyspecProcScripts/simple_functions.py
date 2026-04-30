@@ -2,7 +2,7 @@
 
 import logging
 import time as timemodule
-
+from copy import deepcopy
 import numpy as np
 
 
@@ -92,6 +92,41 @@ class logobj(object):
                     for thisitem in dictvalues
                 ]
                 # }}}
+            elif (
+                hasattr(inputdict, "keys")
+                and
+                "array" in inputdict.keys()
+                and hasattr(inputdict["array"], "attrs")
+            ):
+                # {{{ another legacy HDF layout: the "array" has the
+                #     metatdata attached as attrs below it
+                #     This is what the "fixed" version gives -- this
+                #     actually seems right, so I'm not sure what the
+                #     previous is, but whatever.
+                dictkeys = inputdict["array"].attrs["dictkeys"]
+                dictvalues = inputdict["array"].attrs["dictvalues"]
+                total_log = inputdict["array"][
+                    :
+                ]  # force the dataset into memory before the file is closed
+                dictkeys = [
+                    (
+                        thisitem.decode("utf-8")
+                        if isinstance(thisitem, bytes)
+                        else thisitem
+                    )
+                    for thisitem in dictkeys
+                ]
+                dictvalues = [
+                    (
+                        thisitem.decode("utf-8")
+                        if isinstance(thisitem, bytes)
+                        else thisitem
+                    )
+                    for thisitem in dictvalues
+                ]
+                # }}}
+            else:
+                raise ValueError("this didn't match legacy HDF or legacy non-hdf")
         else:
             # new format -- three keys for numpy data, dict keys, and
             # dict values
@@ -151,6 +186,13 @@ class logobj(object):
         self.log_dict = dict(zip(dictkeys, dictvalues))
         self.total_log = total_log
 
+    def __deepcopy__(self, memo):
+        "don't involve setstate/getstate in deepcopy"
+        dup = self.__class__.__new__(self.__class__)
+        memo[id(self)] = dup
+        dup.__dict__ = {k: deepcopy(v, memo) for k, v in self.__dict__.items()}
+        # rebuild any transients if needed
+        return dup
 
 def select_pathway(*args, **kwargs):
     r"""select a particular CT pathway from the signal `s`

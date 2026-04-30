@@ -3,7 +3,66 @@ import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
 
 
+# {{{ the HDF used in this particular example is broken, so we need to
+#     patch it
+def fix_broken_hdf(log_group):
+    def _decode_list_node(h5group):
+        item_names = sorted(
+            (name for name in h5group.attrs if name.startswith("ITEM")),
+            key=lambda name: int(name[4:]),
+        )
+        values = []
+        for name in item_names:
+            value = h5group.attrs[name]
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+            values.append(value)
+        return values
+
+    # {{{ because this is a hack, let's just create our classes inline,
+    #     to keep it simple
+    array_node_cls = type(
+        "BrokenArrayNode",
+        (),
+        {
+            "__getitem__": lambda self, item: self._array[item],
+        },
+    )
+    group_node_cls = type(
+        "BrokenGroupNode",
+        (),
+        {
+            "keys": lambda self: ["array"],
+            "__getitem__": lambda self, key: (
+                self._array_node
+                if key == "array"
+                else (_ for _ in ()).throw(KeyError(key))
+            ),
+        },
+    )
+    # }}}
+    array_node = array_node_cls()
+    array_node._array = log_group["array"][:]
+    array_node.attrs = {
+        "dictkeys": _decode_list_node(log_group["dictkeys"]),
+        "dictvalues": _decode_list_node(log_group["dictvalues"]),
+    }
+    group_node = group_node_cls()
+    group_node._array_node = array_node
+    return group_node
+# }}}
+
+# TODO ☐: loop over both files to show that both can work. Consider
+#         moving fix_broken_hdf into package now.
+#         As of adding this comment, it does work for both.
+# TODO ☐: note -- to generate 2 separate sets of plots, just set
+#         fl.basename to the filename (or whatever, if the basename is
+#         different, then even plots under the same next( command go
+#         into different figures
+#filename = "260406_hydroxytempo_ODNP_1.h5"
+#hdf_repair = fix_broken_hdf
 filename = "260429_hydroxytempo_ODNP_2.h5"
+hdf_repair = None
 exp_type = "B27/ODNP"
 frq_range = (-5e3, 5e3)
 s = psd.find_file(
@@ -13,7 +72,7 @@ s = psd.find_file(
     lookup=prscr.lookup_table,
 )
 if s.get_prop("log") is None:
-    s = prscr.attach_log_data_from_file(s, filename, exp_type)
+    s = prscr.attach_log_data_from_file(s, filename, exp_type, hdf_repair=hdf_repair)
 log_array = s.get_prop("log").total_log
 log_start_time = log_array["time"][0].item()
 log_array["time"] -= log_start_time
