@@ -5,55 +5,6 @@ import re
 import numpy as np
 
 
-# {{{ the HDF used in this particular example is broken, so we need to
-#     patch it
-def fix_broken_hdf(log_group):
-    def _decode_list_node(h5group):
-        item_names = sorted(
-            (name for name in h5group.attrs if name.startswith("ITEM")),
-            key=lambda name: int(name[4:]),
-        )
-        values = []
-        for name in item_names:
-            value = h5group.attrs[name]
-            if isinstance(value, bytes):
-                value = value.decode("utf-8")
-            values.append(value)
-        return values
-
-    # {{{ because this is a hack, let's just create our classes inline,
-    #     to keep it simple
-    array_node_cls = type(
-        "BrokenArrayNode",
-        (),
-        {
-            "__getitem__": lambda self, item: self._array[item],
-        },
-    )
-    group_node_cls = type(
-        "BrokenGroupNode",
-        (),
-        {
-            "keys": lambda self: ["array"],
-            "__getitem__": lambda self, key: (
-                self._array_node
-                if key == "array"
-                else (_ for _ in ()).throw(KeyError(key))
-            ),
-        },
-    )
-    # }}}
-    array_node = array_node_cls()
-    array_node._array = log_group["array"][:]
-    array_node.attrs = {
-        "dictkeys": _decode_list_node(log_group["dictkeys"]),
-        "dictvalues": _decode_list_node(log_group["dictvalues"]),
-    }
-    group_node = group_node_cls()
-    group_node._array_node = array_node
-    return group_node
-# }}}
-
 # TODO ☐: loop over both files to show that both can work. Consider
 #         moving fix_broken_hdf into package now.
 #         As of adding this comment, it does work for both.
@@ -61,26 +12,32 @@ def fix_broken_hdf(log_group):
 #         fl.basename to the filename (or whatever, if the basename is
 #         different, then even plots under the same next( command go
 #         into different figures
-#filename = "260406_hydroxytempo_ODNP_1.h5"
-#hdf_repair = fix_broken_hdf
+# filename = "260406_hydroxytempo_ODNP_1.h5"
 filename = "260429_hydroxytempo_ODNP_2.h5"
-hdf_repair = None
 exp_type = "B27/ODNP"
-frq_range = (-5e3, 5e3)
 s = psd.find_file(
     filename,
     exp_type=exp_type,
     expno="ODNP",
     lookup=prscr.lookup_table,
 )
+frq_center, frq_half = prscr.find_peakrange(
+    s, direct="t2", peak_lower_thresh=0.05
+)
+frq_range = (
+    frq_center - frq_half,
+    frq_center + frq_half,
+)
 if s.get_prop("log") is None:
-    s = prscr.attach_log_data_from_file(s, filename, exp_type, hdf_repair=hdf_repair)
+    s = prscr.attach_log_data_from_file(s, filename, exp_type)
 # {{{ gen coords if old data
-m = re.search(".*ODNP.*v([0-9]+)$",s.get_prop("postproc_type"))
+m = re.search(".*ODNP.*v([0-9]+)$", s.get_prop("postproc_type"))
 if m:
     vernum = int(m.groups()[0])
 else:
-    raise IOError(f"What the heck type of postproc type is that!! ({s.get_prop('postproc_type')})")
+    raise IOError(
+        f"What the heck type of postproc type is that!! ({s.get_prop('postproc_type')})"
+    )
 if vernum < 6:
     # the next line is done already if we are 6 or higher
     s = prscr.generate_coordinates_from_log.generate_coordinates_from_log(s)
@@ -101,8 +58,10 @@ Hall_drift_Hz = (
     .setaxis("t", log_array["time"])
     .set_units("t", "s")
 )
-s["indirect"] = s['indirect']['time'] # this is the average time from the log -- here I rely on the fact that the log data was used to replace the axis
-s.set_error("indirect",0)
+s["indirect"] = s["indirect"][
+    "time"
+]  # this is the average time from the log -- here I rely on the fact that the log data was used to replace the axis
+s.set_error("indirect", 0)
 s.rename("indirect", "t").set_units("t", "s")
 # the time axis for the signal is originally a structured array that gives both
 # experiment start and stop times.  Convert to a normal array
@@ -116,9 +75,9 @@ if "nScans" in s.dimlabels:
     # TODO ☐: at this point, it's giving an error related to structured
     # arrays, but t isn't structured
     print(s)
-    print('data dtype',s.data.dtype)
-    print('t dtype',s['t'].dtype)
-    print('nscans dtype',s['nScans'].dtype)
+    print("data dtype", s.data.dtype)
+    print("t dtype", s["t"].dtype)
+    print("nscans dtype", s["nScans"].dtype)
     s.smoosh(["t", "nScans"], dimname="t")
     # smoosh makes a structured array, which I convert to a normal array here:
     s["t"] = s["t"]["nScans"] + s["t"]["t"]
