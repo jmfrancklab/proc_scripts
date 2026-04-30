@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 
-def time_formatter(x,y):
+
+def time_formatter(x, y):
     # y is not used
     return (
-        str(datetime.timedelta(seconds=x))
-        .lstrip("0:")
-        .lstrip(":")
+        str(datetime.timedelta(seconds=x)).lstrip("0:").lstrip(":")
         if x > 0
         else "0:00"
     )
+
 
 def generate_coordinates_from_log(
     s,
@@ -83,19 +83,18 @@ def generate_coordinates_from_log(
         for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
             ax.plot(log_array["time"], log_array[field_name], ".")
             ax.set_ylabel(ylabel)
-            # {{{ this is just matplotlib time formatting
-            ax.xaxis.set_major_formatter(
-                plt.FuncFormatter( time_formatter)
-            )
-            # }}}
         ax_list[-1].set_xlabel("time / s")
-    # {{{ construct an nddata whose data are the average power values,
-    #     whose errors are the std of of the power values, and whose time
-    #     axis is the center time for each power
+        # {{{ this is just matplotlib time formatting
+        for ax in ax_list:
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
+        # }}}
+    # {{{ construct an nddata whose data are the average log values,
+    #     whose errors are the std of the log values, and whose time
+    #     axis is the center time for each indirect point
     mean_log_columns_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
-        .alloc(dtype=log_vs_time.data.dtype)
-        .set_error(0)
+        .alloc(dtype=log_array.dtype)
+        .set_error(np.zeros(len(s["indirect"]), dtype=log_array.dtype))
         .set_units("time", "s")
         .set_axis("time", np.zeros(len(s["indirect"])))
     )
@@ -137,7 +136,8 @@ def generate_coordinates_from_log(
     s.setaxis("indirect", mean_log_columns_vs_time.data).set_error(
         "indirect", mean_log_columns_vs_time.get_error()
     ).set_units("indirect", None)  # for now, we need to set this to no units
-    s["indirect"]['power'][abs(s["indirect"]['power']) < 10**-10] = 0  # the power log
+    s["indirect"]["power"][abs(s["indirect"]["power"]) < 10**-10] = 0
+    #                                                 the power log
     #                                                 reads as a very
     #                                                 very small power
     #                                                 rather than 0, so

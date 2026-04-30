@@ -28,11 +28,11 @@ plt.rcParams.update(
 with psd.figlist_var() as fl:
     # TODO ☐: make into a loop that includes this -- I only didn't want
     #         to change the indent b/c I wanted you to be able to see the diff
-    #thisfile, exptype, nodename = (
+    # thisfile, exptype, nodename = (
     #    "240924_13p5mM_TEMPOL_ODNP_1.h5",
     #    "ODNP_NMR_comp/ODNP",
     #    "ODNP",
-    #)
+    # )
     thisfile, thisexptype, nodename = (
         "260429_hydroxytempo_ODNP_2.h5",
         "B27/ODNP",
@@ -46,9 +46,11 @@ with psd.figlist_var() as fl:
     )
     orig_axis = s["indirect"]  # let's save this so we
     #                           can pass it to the log
-    s["indirect"] = (
-        s["indirect"]["start_times"] - s["indirect"]["start_times"][0]
-    )
+    orig_axis_error = s.get_error("indirect")
+    s["indirect"] = s["indirect"][
+        "time"
+    ]  # we need to do this so that the rough table of
+    s.set_error("indirect", orig_axis_error["time"])
     s.set_units("indirect", "s")
     s, _ = prscr.rough_table_of_integrals(s, fl=fl)
     assert psd.det_unit_prefactor(s.get_units("indirect")) == 0
@@ -69,9 +71,10 @@ with psd.figlist_var() as fl:
     )
     # }}}
     s["indirect"] = orig_axis
-    m = re.search(s.get_prop("postproc_type"), ".*ODNP.*v([0-9]+)$")
+    s.set_error("indirect", orig_axis_error)
+    m = re.search(r".*ODNP.*v([0-9]+)$", s.get_prop("postproc_type"))
     if m:
-        vernum = int(m.group())
+        vernum = int(m.group(1))
     else:
         raise IOError("What the heck type of postproc type is that!!")
     if s.get_prop("log") is None:
