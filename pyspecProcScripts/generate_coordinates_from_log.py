@@ -140,15 +140,36 @@ def generate_coordinates_from_log(
             alpha=0.1,
         )
         # }}}
+    mean_log_columns_vs_time.set_axis(
+        "time", mean_log_columns_vs_time.data["time"]
+    )
+    print(mean_log_columns_vs_time["time"])
     if fl:
-        fl.plot(
-            mean_log_columns_vs_time,
-            "o",
-            human_units=False,
-        )  # this  should be a *single* o at the center of each power step.
-        #    Its y value should be the avaerage power for that step, and its
-        #    error bars should give the standard deviation of the power over
-        #    the step
+        plot_fields = [
+            ("Rx", "Rx / mV"),
+            ("power", "power / W"),
+        ]
+        if "field" in log_array.dtype.names:
+            plot_fields.append(("field", "field / G"))
+        fig, ax_list = plt.subplots(
+            len(plot_fields), 1, figsize=(10, 8), sharex=True
+        )
+        fl.next("mean log data", fig=fig)
+        for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
+            ax.errorbar(
+                mean_log_columns_vs_time["time"],
+                mean_log_columns_vs_time.data[field_name],
+                yerr=mean_log_columns_vs_time.get_error()[field_name],
+                fmt=".",
+            )
+            ax.set_ylabel(ylabel)
+            # {{{ this is just matplotlib time formatting
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
+            # }}}
+        ax_list[-1].set_xlabel("time / s")
+        # {{{ this is just matplotlib time formatting
+        for ax in ax_list:
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
     # }}}
     s.set_axis("indirect", mean_log_columns_vs_time.data).set_error(
         "indirect", mean_log_columns_vs_time.get_error()
