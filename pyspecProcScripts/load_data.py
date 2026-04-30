@@ -15,7 +15,7 @@ import numpy as np
 from numpy import r_
 import re
 from .simple_functions import logobj
-import pyspecProcScripts as prscr
+from .generate_coordinates_from_log import generate_coordinates_from_log
 
 
 # to use type s = load_data("nameoffile")
@@ -682,7 +682,7 @@ def proc_spincore_ODNP_v6(s, fl=None):
             raise ValueError("fix not confirmed!")
         s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_prop("log", logobj.from_group(s.get_prop("log")))
-    s = prscr.generate_coordinates_from_log(s, fl=fl)
+    s = generate_coordinates_from_log(s, fl=fl)
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 

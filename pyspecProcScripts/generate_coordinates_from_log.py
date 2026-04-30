@@ -4,6 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 
+def time_formatter(x,y):
+    # y is not used
+    return (
+        str(datetime.timedelta(seconds=x))
+        .lstrip("0:")
+        .lstrip(":")
+        if x > 0
+        else "0:00"
+    )
 
 def generate_coordinates_from_log(
     s,
@@ -70,25 +79,16 @@ def generate_coordinates_from_log(
         fig, ax_list = plt.subplots(
             len(plot_fields), 1, figsize=(10, 8), sharex=True
         )
-        fl.next("power log", fig=fig)
+        fl.next("log data", fig=fig)
         for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
             ax.plot(log_array["time"], log_array[field_name], ".")
             ax.set_ylabel(ylabel)
-        ax_list[-1].set_xlabel("time / s")
-        # {{{ this is just matplotlib time formatting
-        for ax in ax_list:
+            # {{{ this is just matplotlib time formatting
             ax.xaxis.set_major_formatter(
-                plt.FuncFormatter(
-                    lambda x, _: (
-                        str(datetime.timedelta(seconds=x))
-                        .lstrip("0:")
-                        .lstrip(":")
-                        if x > 0
-                        else "0:00"
-                    )
-                )
+                plt.FuncFormatter( time_formatter)
             )
-        # }}}
+            # }}}
+        ax_list[-1].set_xlabel("time / s")
     # {{{ construct an nddata whose data are the average power values,
     #     whose errors are the std of of the power values, and whose time
     #     axis is the center time for each power
@@ -123,7 +123,6 @@ def generate_coordinates_from_log(
             hatch="XXXXXX",
             alpha=0.1,
         )
-        # mean_log_columns_vs_time = prscr.dBm2power(mean_log_columns_vs_time)
         # }}}
     if fl:
         fl.plot(
