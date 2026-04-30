@@ -26,6 +26,13 @@ plt.rcParams.update(
 )
 
 with psd.figlist_var() as fl:
+    # TODO ☐: make into a loop that includes this -- I only didn't want
+    #         to change the indent b/c I wanted you to be able to see the diff
+    #thisfile, exptype, nodename = (
+    #    "240924_13p5mM_TEMPOL_ODNP_1.h5",
+    #    "ODNP_NMR_comp/ODNP",
+    #    "ODNP",
+    #)
     thisfile, thisexptype, nodename = (
         "260429_hydroxytempo_ODNP_2.h5",
         "B27/ODNP",
