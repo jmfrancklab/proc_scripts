@@ -15,6 +15,7 @@ import numpy as np
 from numpy import r_
 import re
 from .simple_functions import logobj
+import pyspecProcScripts as prscr
 
 
 # to use type s = load_data("nameoffile")
@@ -681,7 +682,9 @@ def proc_spincore_ODNP_v6(s, fl=None):
             raise ValueError("fix not confirmed!")
         s.set_prop("coherence_pathway", {"ph1": 1})
     s.set_prop("log", logobj.from_group(s.get_prop("log")))
+    s = prscr.generate_coordinates_from_log(s, fl=fl)
     return proc_spincore_generalproc_v1(s, fl=fl)
+
 
 def hack_oldproc(s, direct="t2", fl=None):
     """this is for things that are so old that they don't even have
@@ -779,11 +782,13 @@ def proc_DOSY_CPMG(s, fl=None):
     logging.debug(psd.strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.debug(
-        psd.strm([
-            (j, s.get_prop("acq")[j])
-            for j in s.get_prop("acq").keys()
-            if "de" in j.lower()
-        ])
+        psd.strm(
+            [
+                (j, s.get_prop("acq")[j])
+                for j in s.get_prop("acq").keys()
+                if "de" in j.lower()
+            ]
+        )
     )
     # I actually can't find depa
     # }}}
