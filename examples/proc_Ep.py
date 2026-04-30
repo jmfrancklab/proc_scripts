@@ -67,10 +67,11 @@ with psd.figlist_var() as fl:
             s["indirect", 0].item() * 0.01
         )  # We are not calculating the
         #                                              errors in rough table of
-        #                                              integrals, so just make up a
-        #                                              reasonable sized random
-        #                                              number so that I can see the
-        #                                              relative errors!
+        #                                              integrals, so just make
+        #                                              up a reasonable sized
+        #                                              random number so that I
+        #                                              can see the relative
+        #                                              errors!
         s /= s["indirect", 0:1]
         fl.next("normalized $E(p(t))$")
         s["indirect"] -= s["indirect"][0]

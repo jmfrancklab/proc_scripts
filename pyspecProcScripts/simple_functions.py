@@ -1,7 +1,6 @@
 "First order functions for very simple (a few lines) data manipulation"
 
 import logging
-import time as timemodule
 from copy import deepcopy
 import numpy as np
 
@@ -94,8 +93,7 @@ class logobj(object):
                 # }}}
             elif (
                 hasattr(inputdict, "keys")
-                and
-                "array" in inputdict.keys()
+                and "array" in inputdict.keys()
                 and hasattr(inputdict["array"], "attrs")
             ):
                 # {{{ another legacy HDF layout: the "array" has the
@@ -126,7 +124,9 @@ class logobj(object):
                 ]
                 # }}}
             else:
-                raise ValueError("this didn't match legacy HDF or legacy non-hdf")
+                raise ValueError(
+                    "this didn't match legacy HDF or legacy non-hdf"
+                )
         else:
             # new format -- three keys for numpy data, dict keys, and
             # dict values
@@ -193,6 +193,7 @@ class logobj(object):
         dup.__dict__ = {k: deepcopy(v, memo) for k, v in self.__dict__.items()}
         # rebuild any transients if needed
         return dup
+
 
 def select_pathway(*args, **kwargs):
     r"""select a particular CT pathway from the signal `s`
@@ -262,8 +263,7 @@ def find_apparent_anal_freq(s):
             #            sampling frequency.
             #            Measured from the left side of
             #            the shifted spectrum
-            (carrier + SW / 2)
-            / SW
+            (carrier + SW / 2) / SW
         )
         nu_a = carrier - n * SW
         isflipped = False
