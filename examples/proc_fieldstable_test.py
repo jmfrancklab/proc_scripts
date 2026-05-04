@@ -5,6 +5,16 @@
 Process repeated echo field-stability test data
 ===============================================
 
+# TODO ☐: so, this name was new, so in FLInst, I just said "well,
+#         everything that's called stability_test will be newer data, so
+#         it should just be v1, not v4.
+#         But, then I see this, and don't understand it.  Do you have
+#         files with these versions that you actually want? Or are these
+#         just things that you acquired over the past week, in which
+#         case, I would say, let's just rename the postproc type of
+#         those to "Unsupported."  Overall, I'm just confused about what
+#         the point of this script is given that plot_fields already
+#         exists.
 ``stability_test_v1`` files do not store enough time/field information for
 this script.  ``stability_test_v2`` files have no log, ``stability_test_v3``
 files have a log that is not attached, and ``stability_test_v4`` files
