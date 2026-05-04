@@ -15,6 +15,7 @@ import numpy as np
 from numpy import r_
 import re
 from .simple_functions import logobj
+# TODO ☐: you can't external import like this
 import pyspecProcScripts as prscr
 
 

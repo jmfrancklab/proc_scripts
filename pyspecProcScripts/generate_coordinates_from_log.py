@@ -100,25 +100,26 @@ def generate_coordinates_from_log(
         fig, ax_list = plt.subplots(
             len(plot_fields), 1, figsize=(10, 8), sharex=True
         )
-        fl.next("power log", fig=fig)
-        for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
-            ax.plot(log_array["time"], log_array[field_name], ".")
-            ax.set_ylabel(ylabel)
-        ax_list[-1].set_xlabel("time / s")
-        # {{{ this is just matplotlib time formatting
-        for ax in ax_list:
-            ax.xaxis.set_major_formatter(
-                plt.FuncFormatter(
-                    lambda x, _: (
-                        str(datetime.timedelta(seconds=x))
-                        .lstrip("0:")
-                        .lstrip(":")
-                        if x > 0
-                        else "0:00"
+        if fl:
+            fl.next("power log", fig=fig)
+            for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
+                ax.plot(log_array["time"], log_array[field_name], ".")
+                ax.set_ylabel(ylabel)
+            ax_list[-1].set_xlabel("time / s")
+            # {{{ this is just matplotlib time formatting
+            for ax in ax_list:
+                ax.xaxis.set_major_formatter(
+                    plt.FuncFormatter(
+                        lambda x, _: (
+                            str(datetime.timedelta(seconds=x))
+                            .lstrip("0:")
+                            .lstrip(":")
+                            if x > 0
+                            else "0:00"
+                        )
                     )
                 )
-            )
-        # }}}
+            # }}}
     # {{{ construct an nddata whose data are the average power values,
     #     whose errors are the std of of the power values, and whose time
     #     axis is the center time for each power
