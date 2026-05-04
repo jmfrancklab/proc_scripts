@@ -3,6 +3,10 @@ from importlib import import_module
 # Keep package import light so submodule-based console entry points start
 # quickly. Public names are loaded the first time they are requested.
 _EXPORTS = {
+    # _EXPORTS maps public package attributes to the module and name that
+    # should be imported lazily by __getattr__. __all__ remains a list below.
+    # The form is "public_name": ("module_to_import_from",
+    # name_inside_that_module"),
     "zeroth_order_ph": (".phasing", "zeroth_order_ph"),
     "hermitian_function_test": (
         ".phasing",
@@ -70,9 +74,9 @@ _EXPORTS = {
         ".generate_coordinates_from_log",
         "generate_coordinates_from_log",
     ),
-    "load_log_data": (
-        ".generate_coordinates_from_log",
-        "load_log_data",
+    "attach_log_data_from_file": (
+        ".legacy_log_fix",
+        "attach_log_data_from_file",
     ),
     "clock_correct": (".clock_correct", "clock_correct"),
     "calc_masked_variance": (".calc_error", "calc_masked_variance"),

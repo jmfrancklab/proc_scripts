@@ -1,38 +1,17 @@
 import pyspecdata as psd
 import pyspecProcScripts as prscr
-import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
-import re
 
 
-# Future TODO: This function will be moved when we edit proc_Ep.py in
-# a separate PR.
-def load_log_data(
-    filename,
-    exp_type,
-    node_name="log",
-    hdf_repair=None,
-):
-    """Load instrument log from an HDF5 file.
-
-    Parameters
-    ==========
-    hdf_repair: function default None
-        For some intermediate versions with broken HDF storage, this
-        allows us to supply a patch function that fixes the data.
-    """
-    filename = psd.search_filename(
-        re.escape(filename), exp_type=exp_type, unique=True
+def time_formatter(x, y):
+    # y is not used
+    return (
+        str(datetime.timedelta(seconds=x)).lstrip("0:").lstrip(":")
+        if x > 0
+        else "0:00"
     )
-    with h5py.File(filename, "r") as f:
-        if hdf_repair is None:
-            thislog = prscr.logobj.from_group(f[node_name])
-        else:
-            thislog = prscr.logobj.from_group(hdf_repair(f[node_name]))
-        log_array = np.array(thislog.total_log, copy=True)
-    return log_array
 
 
 def generate_coordinates_from_log(
@@ -96,36 +75,29 @@ def generate_coordinates_from_log(
             ("power", "power / W"),
         ]
         if "field" in log_array.dtype.names:
-            plot_fields.append(("field", "field / G"))
+            plot_fields.append(("field", "magnetic field / G"))
         fig, ax_list = plt.subplots(
             len(plot_fields), 1, figsize=(10, 8), sharex=True
         )
-        fl.next("power log", fig=fig)
+        fl.next("log data", fig=fig)
         for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
-            ax.plot(log_array["time"], log_array[field_name], ".")
+            ax.plot(log_array["time"], log_array[field_name], ".", label="log")
             ax.set_ylabel(ylabel)
+            ax.ticklabel_format(axis="y", style="plain", useOffset=False)
+            # {{{ this is just matplotlib time formatting
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
+            # }}}
         ax_list[-1].set_xlabel("time / s")
         # {{{ this is just matplotlib time formatting
         for ax in ax_list:
-            ax.xaxis.set_major_formatter(
-                plt.FuncFormatter(
-                    lambda x, _: (
-                        str(datetime.timedelta(seconds=x))
-                        .lstrip("0:")
-                        .lstrip(":")
-                        if x > 0
-                        else "0:00"
-                    )
-                )
-            )
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
         # }}}
-    # {{{ construct an nddata whose data are the average power values,
-    #     whose errors are the std of of the power values, and whose time
-    #     axis is the center time for each power
+    # {{{ construct an nddata whose data are the average log values,
+    #     whose errors are the std of the log values, and whose time
+    #     axis is the center time for each indirect point
     mean_log_columns_vs_time = (
         psd.ndshape([("time", len(s["indirect"]))])
-        .alloc(dtype=np.float64)
-        .set_error(0)
+        .alloc()
         .set_units("time", "s")
         .set_axis("time", np.zeros(len(s["indirect"])))
     )
@@ -141,34 +113,64 @@ def generate_coordinates_from_log(
             s["indirect"][:]["stop_times"],
         )
     ):
-        mean_log_columns_vs_time["time", j] = log_vs_time[
-            "time" : (time_start, time_stop)
-        ].mean("time", std=True)
-        # {{{ I realized a crosshatch would be better here
-        plt.axvspan(
-            time_start,
-            time_stop,
-            facecolor="none",
-            edgecolor="k",
-            hatch="XXXXXX",
-            alpha=0.1,
+        result = log_vs_time["time" : (time_start, time_stop)].mean(
+            "time", std=True
         )
-        # mean_log_columns_vs_time = prscr.dBm2power(mean_log_columns_vs_time)
+        # {{{ the dtype of result will not be the same as the
+        #     log_vs_time data, so rather than doing this at alloc, we
+        #     do it here
+        if j == 0:
+            mean_log_columns_vs_time.data = np.zeros(
+                mean_log_columns_vs_time.data.shape, dtype=result.data.dtype
+            )
+            mean_log_columns_vs_time.set_error(
+                np.zeros(
+                    mean_log_columns_vs_time.data.shape,
+                    dtype=result.data.dtype,
+                )
+            )
         # }}}
+        mean_log_columns_vs_time["time", j] = result
+        if fl:
+            # {{{ I realized a crosshatch would be better here
+            for ax in ax_list:
+                ax.axvspan(
+                    time_start,
+                    time_stop,
+                    facecolor="none",
+                    edgecolor="k",
+                    hatch="XXXXXX",
+                    alpha=0.1,
+                )
+            # }}}
+    mean_log_columns_vs_time.set_axis(
+        "time", mean_log_columns_vs_time.data["time"]
+    )
     if fl:
-        fl.plot(
-            mean_log_columns_vs_time,
-            "o",
-            human_units=False,
-        )  # this  should be a *single* o at the center of each power step.
-        #    Its y value should be the avaerage power for that step, and its
-        #    error bars should give the standard deviation of the power over
-        #    the step
+        for ax, (field_name, ylabel) in zip(ax_list, plot_fields):
+            ax.errorbar(
+                mean_log_columns_vs_time["time"],
+                mean_log_columns_vs_time.data[field_name],
+                yerr=mean_log_columns_vs_time.get_error()[field_name],
+                fmt="o",
+                label="mean",
+            )
+            ax.set_ylabel(ylabel)
+            ax.legend()
+            # {{{ this is just matplotlib time formatting
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
+            # }}}
+        ax_list[-1].set_xlabel("time / s")
+        # {{{ this is just matplotlib time formatting
+        for ax in ax_list:
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
     # }}}
-    s.setaxis("indirect", mean_log_columns_vs_time.data).set_error(
+    s.set_axis("indirect", mean_log_columns_vs_time.data).set_error(
         "indirect", mean_log_columns_vs_time.get_error()
     ).set_units("indirect", None)  # for now, we need to set this to no units
-    s["indirect"][abs(s["indirect"]) < 10**-10] = 0  # the power log
+    s["indirect"]["power"][abs(s["indirect"]["power"]) < 10**-10] = (
+        0  # the power log
+    )
     #                                                 reads as a very
     #                                                 very small power
     #                                                 rather than 0, so
