@@ -6,7 +6,6 @@ import pyspecProcScripts as prscr
 import matplotlib.pyplot as plt
 import re
 
-
 with psd.figlist_var() as fl:
     for filename, exp_type in [
         ("260406_hydroxytempo_ODNP_1.h5", "B27/ODNP"),  # Broken hdf example
@@ -38,10 +37,12 @@ with psd.figlist_var() as fl:
             )
         if vernum < 6:
             # the next line is done already if we are 6 or higher
-            s = prscr.generate_coordinates_from_log.generate_coordinates_from_log(
-                s
-            )
-        # }}}
+            s = (
+                    prscr
+                    .generate_coordinates_from_log
+                    .generate_coordinates_from_log(s)
+                    )
+            # }}}
         log_array = s.get_prop("log").total_log
         log_start_time = log_array["time"][0].item()
         log_array["time"] -= log_start_time
@@ -62,17 +63,20 @@ with psd.figlist_var() as fl:
         s["indirect"] = s["indirect"]["time"]
         s.set_error("indirect", 0)
         s.rename("indirect", "t").set_units("t", "s")
-        # the time axis for the signal is originally a structured array that gives
-        # both experiment start and stop times.  Convert to a normal array
+        # the time axis for the signal is originally a structured array that
+        # gives both experiment start and stop times.  Convert to a normal
+        # array
         # {{{ rather than averaging over nScans, I create an appropriate time
-        #     axis for it, and then smoosh to create a dimension with all my scans
+        #     axis for it, and then smoosh to create a dimension with all my
+        #     scans
         if "nScans" in s.dimlabels:
             s["nScans"] = s["nScans"] * (
                 s.get_prop("acq_params")["acq_time_ms"] * 1e-3
                 + s.get_prop("acq_params")["repetition_us"] * 1e-6
             )
             s.smoosh(["t", "nScans"], dimname="t")
-            # smoosh makes a structured array, which I convert to a normal array:
+            # smoosh makes a structured array, which I convert to a normal
+            # array:
             s["t"] = s["t"]["nScans"] + s["t"]["t"]
         s.set_units("t", "s")
         # }}}
