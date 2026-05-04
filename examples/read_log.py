@@ -97,8 +97,8 @@ with psd.figlist_var() as fl:
             ax_field.plot(
                 thislog.total_log["time"],
                 thislog.total_log["field"],
-                thislog.total_log["field"],
-                "."
+                "k,",
+                alpha=0.25,
             )
         else:
             ax_Rx, ax_power = ax_list
