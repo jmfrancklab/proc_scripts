@@ -1,3 +1,6 @@
+# TODO ☐: I don't understand the point of this file.  We already have
+#         plot_field.  Why can't we just use that to process these types
+#         of files?
 """
 Process repeated echo field-stability test data
 ===============================================
@@ -89,6 +92,11 @@ with psd.figlist_var() as fl:
                 or old_axis["time"].max() > log_times.max()
             )
         if use_fake_log:
+            # TODO ☐: I'm not super interested in considering this type
+            #         of file.  If it's the new type, dont' forget that
+            #         the log is still there.  If you're talking about
+            #         old field/current-sweep experiments, I am fine to
+            #         just lok at the DCCT to see how the field changes.
             # These files stored the field directly on the indirect axis, and
             # either have no log or the file-level log is for a different node.
             fake_log = prscr.logobj()
