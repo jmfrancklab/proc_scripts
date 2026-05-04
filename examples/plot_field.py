@@ -37,11 +37,8 @@ with psd.figlist_var() as fl:
             )
         if vernum < 6:
             # the next line is done already if we are 6 or higher
-            s = (
-                    prscr
-                    .generate_coordinates_from_log
-                    .generate_coordinates_from_log(s)
-                    )
+            s = (prscr.generate_coordinates_from_log
+                 .generate_coordinates_from_log(s))
             # }}}
         log_array = s.get_prop("log").total_log
         log_start_time = log_array["time"][0].item()
