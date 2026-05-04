@@ -78,15 +78,14 @@ with psd.figlist_var() as fl:
         # }}}
         s.reorder("t2", first=False)
         fl.basename = filename
-        fig = fl.next("NMR signal - $\\varphi_0$ only")
-        fig.clf()
         s /= prscr.zeroth_order_ph(s)
+        fig = fl.next("NMR signal - $\\varphi_0$ only")
         fl.DCCT(s)
-        fl.next("slice FID")
         s = prscr.fid_from_echo(
             s, signal_pathway=s.get_prop("coherence_pathway")
         )
         s = prscr.select_pathway(s, s.get_prop("coherence_pathway"))
+        fl.next("slice FID")
         fl.plot(s.real)
         fl.next("NMR signal - with zf and conv (tdom)")
         # the linewidth is about 1 kHz, so in the following, we're shooting
