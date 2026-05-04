@@ -188,7 +188,7 @@ psd.plot(
 )
 # }}}
 # {{{ show the initial guess
-forplot = d.settoguess().eval()
+forplot = d.set_to_guess().eval()
 psd.plot(forplot["B":zoom_tuple], label="initial guess", alpha=0.7, ax=ax)
 # }}}
 # {{{ vary only the center field

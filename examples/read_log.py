@@ -105,7 +105,10 @@ with psd.figlist_var() as fl:
         ax_Rx.set_ylabel("Rx / mV")
         ax_Rx.set_xlabel("Time / ms")
         ax_Rx.plot(
-            thislog.total_log["time"], thislog.total_log["Rx"], "k,", alpha=0.25
+            thislog.total_log["time"],
+            thislog.total_log["Rx"],
+            "k,",
+            alpha=0.25,
         )
         ax_power.set_ylabel("power / dBm")
         ax_power.set_xlabel("Time / ms")
