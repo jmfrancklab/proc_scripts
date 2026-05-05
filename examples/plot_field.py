@@ -16,8 +16,9 @@ with psd.figlist_var() as fl:
             "B27/ODNP",
             "ODNP",
         ),  # Broken hdf example
-        ("260429_hydroxytempo_ODNP_2.h5", "B27/ODNP", "ODNP"),  # v2
+        ("260429_hydroxytempo_ODNP_2.h5", "B27/ODNP", "ODNP"),  # v6
         ("260414_hydroxytempo_n_scan.h5", "B27/n_scans", "n_scan_2"),  # v3
+        ("260505_hydroxytempo_n_scan.h5", "B27/n_scans", "n_scan_1"),  # v4
     ]:
         fl.basename = f"{filename} {expno}"
         s = psd.find_file(
