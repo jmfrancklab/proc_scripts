@@ -710,34 +710,15 @@ def proc_spincore_withlog_v1(s, fl=None):
     return generate_coordinates_from_log(s, fl=fl)
 
 
-def proc_stability_test_v1(s, fl=None):
-    raise ValueError(
-        "stability_test_v1 does not store enough time/field information"
-        " so I am not plotting it."
-    )
-
-
 def proc_stability_test_legacy(s, fl=None):
     s = proc_spincore_generalproc_v1(s, fl=fl)
     old_axis = s["indirect"].copy()
     thislog = s.get_prop("log")
     if thislog is not None and not hasattr(thislog, "total_log"):
+        # For the broken log in one of the files.
         thislog = logobj.from_group(thislog)
-    if thislog is not None:
-        log_times = thislog.total_log["time"]
-    if (
-        thislog is None
-        or old_axis["time"].min() < log_times.min()
-        or old_axis["time"].max() > log_times.max()
-    ):
-        fake_log = logobj()
-        fake_log.total_log = np.zeros(len(old_axis), dtype=fake_log.log_dtype)
-        fake_log.total_log["time"] = old_axis["time"]
-        fake_log.total_log["field"] = old_axis["field"]
-        fake_log.total_log["power"] = -np.inf
-        fake_log.total_log["cmd"] = 0
-        thislog = fake_log
-    s.set_prop("log", thislog)
+    s.set_prop("log", logobj.from_group(thislog))
+    # We generate fake experiments start stop times based on the time axis.
     fake_axis = np.zeros(
         len(old_axis), dtype=[("start_times", "f8"), ("stop_times", "f8")]
     )
@@ -1003,7 +984,7 @@ lookup_table = {
     "current_sweep_v1": proc_spincore_generalproc_v1,
     "current_sweep_v2": proc_spincore_withlog_v1,
     "stability_test_v1": proc_spincore_generalproc_v1,
-    "stability_test_v2": proc_stability_test_legacy,
+    "stability_test_v2": proc_spincore_generalproc_v1,
     "stability_test_v3": proc_stability_test_legacy,
     "stability_test_v4": proc_spincore_withlog_v1,
     "field_sweep_v1": proc_field_sweep_v1,

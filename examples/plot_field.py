@@ -14,8 +14,6 @@ with psd.figlist_var() as fl:
             "ODNP",
         ),  # Broken hdf example
         ("260429_hydroxytempo_ODNP_2.h5", "B27/ODNP", "ODNP"),  # v2
-        ("251109_hydroxytempo_n_scan.h5", "B27/n_scans", "n_scan_37"),  # v1
-        ("260409_hydroxytempo_n_scan.h5", "B27/n_scans", "n_scan_1"),  # v2
         (
             "260414_hydroxytempo_n_scan.h5",
             "B27/n_scans",
