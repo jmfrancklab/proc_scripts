@@ -3,6 +3,9 @@ of a combined_ODNP experiment from log."""
 
 import pyspecdata as psd
 import pyspecProcScripts as prscr
+from pyspecProcScripts.generate_coordinates_from_log import (
+    generate_coordinates_from_log,
+)
 import matplotlib.pyplot as plt
 import re
 
@@ -14,11 +17,6 @@ with psd.figlist_var() as fl:
             "ODNP",
         ),  # Broken hdf example
         ("260429_hydroxytempo_ODNP_2.h5", "B27/ODNP", "ODNP"),  # v2
-        (
-            "260414_hydroxytempo_n_scan.h5",
-            "B27/n_scans",
-            "n_scan_1",
-        ),  # v3 distrupted log
         ("260414_hydroxytempo_n_scan.h5", "B27/n_scans", "n_scan_2"),  # v3
     ]:
         fl.basename = f"{filename} {expno}"
@@ -37,13 +35,6 @@ with psd.figlist_var() as fl:
                 "What the heck type of postproc type is that!!"
                 f" ({postproc_type})"
             )
-        if "stability_test" in postproc_type and vernum == 1:
-            print(
-                f"This script does not work for {postproc_type} files, since"
-                f" the field and time is not stored at all, so I won't plot."
-                f"{filename}. Use DCCT to observe the field drift instead."
-            )
-            continue
         frq_center, frq_half = prscr.find_peakrange(
             s, direct="t2", peak_lower_thresh=0.05
         )
@@ -55,11 +46,14 @@ with psd.figlist_var() as fl:
             s = prscr.attach_log_data_from_file(s, filename, exp_type)
         # {{{ gen coords if old data
 
-        if "ODNP" in postproc_type and vernum < 6:
+        if (
+            "ODNP" in postproc_type
+            and vernum < 6
+            or "stability_test" in postproc_type
+            and vernum == 3
+        ):
             # the next line is done already if we are 6 or higher
-            s = prscr.generate_coordinates_from_log.generate_coordinates_from_log(
-                s
-            )
+            s = generate_coordinates_from_log(s)
             # }}}
         log_array = s.get_prop("log").total_log
         log_start_time = log_array["time"][0].item()

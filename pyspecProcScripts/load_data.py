@@ -713,11 +713,6 @@ def proc_spincore_withlog_v1(s, fl=None):
 def proc_stability_test_legacy(s, fl=None):
     s = proc_spincore_generalproc_v1(s, fl=fl)
     old_axis = s["indirect"].copy()
-    thislog = s.get_prop("log")
-    if thislog is not None and not hasattr(thislog, "total_log"):
-        # For the broken log in one of the files.
-        thislog = logobj.from_group(thislog)
-    s.set_prop("log", logobj.from_group(thislog))
     # We generate fake experiments start stop times based on the time axis.
     fake_axis = np.zeros(
         len(old_axis), dtype=[("start_times", "f8"), ("stop_times", "f8")]
@@ -729,7 +724,7 @@ def proc_stability_test_legacy(s, fl=None):
     fake_axis["start_times"] = old_axis["time"] - fake_dt / 2
     fake_axis["stop_times"] = old_axis["time"] + fake_dt / 2
     s.setaxis("indirect", fake_axis).set_units("indirect", None)
-    return generate_coordinates_from_log(s, fl=fl)
+    return s
 
 
 def hack_oldproc(s, direct="t2", fl=None):
