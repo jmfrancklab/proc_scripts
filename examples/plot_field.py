@@ -7,16 +7,45 @@ import matplotlib.pyplot as plt
 import re
 
 with psd.figlist_var() as fl:
-    for filename, exp_type in [
-        ("260406_hydroxytempo_ODNP_1.h5", "B27/ODNP"),  # Broken hdf example
-        ("260429_hydroxytempo_ODNP_2.h5", "B27/ODNP"),
+    for filename, exp_type, expno in [
+        (
+            "260406_hydroxytempo_ODNP_1.h5",
+            "B27/ODNP",
+            "ODNP",
+        ),  # Broken hdf example
+        ("260429_hydroxytempo_ODNP_2.h5", "B27/ODNP", "ODNP"),  # v2
+        ("251109_hydroxytempo_n_scan.h5", "B27/n_scans", "n_scan_37"),  # v1
+        ("260409_hydroxytempo_n_scan.h5", "B27/n_scans", "n_scan_1"),  # v2
+        (
+            "260414_hydroxytempo_n_scan.h5",
+            "B27/n_scans",
+            "n_scan_1",
+        ),  # v3 distrupted log
+        ("260414_hydroxytempo_n_scan.h5", "B27/n_scans", "n_scan_2"),  # v3
     ]:
+        fl.basename = f"{filename} {expno}"
         s = psd.find_file(
             filename,
             exp_type=exp_type,
-            expno="ODNP",
+            expno=expno,
             lookup=prscr.lookup_table,
         )
+        postproc_type = s.get_prop("postproc_type")
+        m = re.search(".*(?:ODNP|stability_test).*v([0-9]+)$", postproc_type)
+        if m:
+            vernum = int(m.groups()[0])
+        else:
+            raise IOError(
+                "What the heck type of postproc type is that!!"
+                f" ({postproc_type})"
+            )
+        if "stability_test" in postproc_type and vernum == 1:
+            print(
+                f"This script does not work for {postproc_type} files, since"
+                f" the field and time is not stored at all, so I won't plot."
+                f"{filename}. Use DCCT to observe the field drift instead."
+            )
+            continue
         frq_center, frq_half = prscr.find_peakrange(
             s, direct="t2", peak_lower_thresh=0.05
         )
@@ -27,18 +56,12 @@ with psd.figlist_var() as fl:
         if s.get_prop("log") is None:
             s = prscr.attach_log_data_from_file(s, filename, exp_type)
         # {{{ gen coords if old data
-        m = re.search(".*ODNP.*v([0-9]+)$", s.get_prop("postproc_type"))
-        if m:
-            vernum = int(m.groups()[0])
-        else:
-            raise IOError(
-                "What the heck type of postproc type is that!!"
-                f" ({s.get_prop('postproc_type')})"
-            )
-        if vernum < 6:
+
+        if "ODNP" in postproc_type and vernum < 6:
             # the next line is done already if we are 6 or higher
-            s = (prscr.generate_coordinates_from_log
-                 .generate_coordinates_from_log(s))
+            s = prscr.generate_coordinates_from_log.generate_coordinates_from_log(
+                s
+            )
             # }}}
         log_array = s.get_prop("log").total_log
         log_start_time = log_array["time"][0].item()
@@ -78,7 +101,6 @@ with psd.figlist_var() as fl:
         s.set_units("t", "s")
         # }}}
         s.reorder("t2", first=False)
-        fl.basename = filename
         s /= prscr.zeroth_order_ph(s)
         fig = fl.next("NMR signal - $\\varphi_0$ only")
         fl.DCCT(s)
