@@ -710,6 +710,24 @@ def proc_spincore_withlog_v1(s, fl=None):
     return generate_coordinates_from_log(s, fl=fl)
 
 
+def proc_stability_test_legacy(s, fl=None):
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    old_axis = s["indirect"].copy()
+    # We generate fake experiments start stop times based on the time
+    # axis.
+    fake_axis = np.zeros(
+        len(old_axis), dtype=[("start_times", "f8"), ("stop_times", "f8")]
+    )
+    fake_dt = (
+        s.get_prop("acq_params").get("acq_time_ms", 1e3) * 1e-3
+        + s.get_prop("acq_params").get("repetition_us", 0) * 1e-6
+    )
+    fake_axis["start_times"] = old_axis["time"] - fake_dt
+    fake_axis["stop_times"] = old_axis["time"]
+    s.setaxis("indirect", fake_axis).set_units("indirect", None)
+    return s
+
+
 def hack_oldproc(s, direct="t2", fl=None):
     """this is for things that are so old that they don't even have
     acq_params set"""
@@ -960,7 +978,13 @@ lookup_table = {
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
     "current_sweep_v1": proc_spincore_generalproc_v1,
+    "current_sweep_v2": proc_spincore_withlog_v1,
+    "stability_test_v1": proc_spincore_generalproc_v1,
+    "stability_test_v2": proc_spincore_generalproc_v1,
+    "stability_test_v3": proc_stability_test_legacy,
+    "stability_test_v4": proc_spincore_withlog_v1,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
     "field_sweep_v4": hack_field_sweep_v4,
+    "field_sweep_v5": proc_spincore_withlog_v1,
 }
