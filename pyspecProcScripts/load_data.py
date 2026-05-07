@@ -713,7 +713,8 @@ def proc_spincore_withlog_v1(s, fl=None):
 def proc_stability_test_legacy(s, fl=None):
     s = proc_spincore_generalproc_v1(s, fl=fl)
     old_axis = s["indirect"].copy()
-    # We generate fake experiments start stop times based on the time axis.
+    # We generate fake experiments start stop times based on the time
+    # axis.
     fake_axis = np.zeros(
         len(old_axis), dtype=[("start_times", "f8"), ("stop_times", "f8")]
     )
@@ -721,8 +722,8 @@ def proc_stability_test_legacy(s, fl=None):
         s.get_prop("acq_params").get("acq_time_ms", 1e3) * 1e-3
         + s.get_prop("acq_params").get("repetition_us", 0) * 1e-6
     )
-    fake_axis["start_times"] = old_axis["time"] - fake_dt / 2
-    fake_axis["stop_times"] = old_axis["time"] + fake_dt / 2
+    fake_axis["start_times"] = old_axis["time"] - fake_dt
+    fake_axis["stop_times"] = old_axis["time"]
     s.setaxis("indirect", fake_axis).set_units("indirect", None)
     return s
 

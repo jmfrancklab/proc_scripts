@@ -46,7 +46,6 @@ with psd.figlist_var() as fl:
         if s.get_prop("log") is None:
             s = prscr.attach_log_data_from_file(s, filename, exp_type)
         # {{{ gen coords if old data
-
         if (
             "ODNP" in postproc_type
             and vernum < 6
