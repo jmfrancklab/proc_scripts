@@ -113,6 +113,20 @@ def build_lorentzian_basis(
     return A
 
 
+def smoosh_valid_lorentzians(A, Bname):
+    A.smoosh(["center", "lambda_L"], "basis")
+    basis_axis = A.getaxis("basis")
+    x = A.getaxis(Bname)
+    # Assume resonances are captured inside the acquired window: centers must
+    # sit at least λ_L/3 from either edge, while broader edge-like structure is
+    # left for the Hermite baseline correction.
+    return A[
+        "basis",
+        (basis_axis["center"] >= x[0] + basis_axis["lambda_L"] / 3)
+        & (basis_axis["center"] <= x[-1] - basis_axis["lambda_L"] / 3),
+    ]
+
+
 def build_hermite_baseline_basis(d, Bname, target_norm):
     x = d.getaxis(Bname)
     x_scaled = 2 * (x - x.mean()) / (x[-1] - x[0])
@@ -158,7 +172,6 @@ with figlist_var() as fl:
     preview_A = build_lorentzian_basis(
         d, Bname, preview_n_center, preview_n_lambda_L
     )
-    print("preview basis shape", preview_A.shape)
     A = build_lorentzian_basis(d, Bname, fit_n_center, fit_n_lambda_L)
 
     # The imaginary component is transform-roundoff; the solver boundary below
@@ -166,7 +179,9 @@ with figlist_var() as fl:
 
     # Collapse the physical coefficient grid only after constructing the basis.
     # The coefficient vector c still indexes individual (center, λ_L) components.
-    A.smoosh(["center", "lambda_L"], "basis")
+    preview_A = smoosh_valid_lorentzians(preview_A, Bname)
+    A = smoosh_valid_lorentzians(A, Bname)
+    print("preview basis shape", preview_A.shape)
     n_lorentzian_basis = A.shape["basis"]
     A.setaxis("basis", r_[0:n_lorentzian_basis])
     A = concat(
@@ -187,13 +202,8 @@ with figlist_var() as fl:
     # }}}
 
     fl.next("reduced basis preview")
-    for center_j in range(preview_n_center):
-        for lambda_j in range(preview_n_lambda_L):
-            plot(
-                preview_A["center", center_j]["lambda_L", lambda_j],
-                alpha=0.35,
-                human_units=False,
-            )
+    for basis_j in range(preview_A.shape["basis"]):
+        plot(preview_A["basis", basis_j], alpha=0.35, human_units=False)
     title("reduced Lorentzian-derivative basis")
 
     # {{{ SVD-compress residual coordinates
