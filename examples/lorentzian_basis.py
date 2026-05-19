@@ -83,14 +83,19 @@ def build_lorentzian_basis(
     lambda_L_limits = ((x[1]-x[0])*5, (x[-1]-x[0])/2)
     if center_limits is None:
         center_limits = (x[0], x[-1])
-    center = nddata(
-        r_[center_limits[0] : center_limits[1] : n_center * 1j],
-        "center",
-    ).set_units("center", "T")
     lambda_L = nddata(
         logspace(log10(lambda_L_limits[0]), log10(lambda_L_limits[1]), n_lambda_L),
         "lambda_L",
     ).set_units("lambda_L", "T")
+    center = nddata(r_[0:1 : n_center * 1j], "center")
+    # Assume resonances are captured inside the acquired window: for each
+    # linewidth, only generate centers at least λ_L/3 from either edge.
+    # Broader off-window structure belongs in the Hermite baseline.
+    center = (
+        center_limits[0]
+        + lambda_L / 3
+        + center * (center_limits[1] - center_limits[0] - 2 * lambda_L / 3)
+    )
     u = d.C.ift(Bname).fromaxis(Bname)
     A = (
         -1j
@@ -111,20 +116,6 @@ def build_lorentzian_basis(
     # the column norm changes with λ_L.
     A /= sqrt((abs(A) ** 2).sum(Bname))
     return A
-
-
-def smoosh_valid_lorentzians(A, Bname):
-    A.smoosh(["center", "lambda_L"], "basis")
-    basis_axis = A.getaxis("basis")
-    x = A.getaxis(Bname)
-    # Assume resonances are captured inside the acquired window: centers must
-    # sit at least λ_L/3 from either edge, while broader edge-like structure is
-    # left for the Hermite baseline correction.
-    return A[
-        "basis",
-        (basis_axis["center"] >= x[0] + basis_axis["lambda_L"] / 3)
-        & (basis_axis["center"] <= x[-1] - basis_axis["lambda_L"] / 3),
-    ]
 
 
 def build_hermite_baseline_basis(d, Bname, target_norm):
@@ -173,17 +164,16 @@ with figlist_var() as fl:
         d, Bname, preview_n_center, preview_n_lambda_L
     )
     A = build_lorentzian_basis(d, Bname, fit_n_center, fit_n_lambda_L)
+    print("preview basis shape", preview_A.shape)
 
     # The imaginary component is transform-roundoff; the solver boundary below
     # uses the real part.  Keep A as nddata until that boundary.
 
     # Collapse the physical coefficient grid only after constructing the basis.
     # The coefficient vector c still indexes individual (center, λ_L) components.
-    preview_A = smoosh_valid_lorentzians(preview_A, Bname)
-    A = smoosh_valid_lorentzians(A, Bname)
-    print("preview basis shape", preview_A.shape)
+    A.smoosh(["center", "lambda_L"], "basis")
     n_lorentzian_basis = A.shape["basis"]
-    A.setaxis("basis", r_[0:n_lorentzian_basis])
+    A.setaxis("basis", r_[0:n_lorentzian_basis]).set_units("basis", None)
     A = concat(
         [
             A,
@@ -202,8 +192,13 @@ with figlist_var() as fl:
     # }}}
 
     fl.next("reduced basis preview")
-    for basis_j in range(preview_A.shape["basis"]):
-        plot(preview_A["basis", basis_j], alpha=0.35, human_units=False)
+    for center_j in range(preview_n_center):
+        for lambda_j in range(preview_n_lambda_L):
+            plot(
+                preview_A["center", center_j]["lambda_L", lambda_j],
+                alpha=0.35,
+                human_units=False,
+            )
     title("reduced Lorentzian-derivative basis")
 
     # {{{ SVD-compress residual coordinates
