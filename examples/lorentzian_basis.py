@@ -66,7 +66,7 @@ preview_n_lambda_L = 4
 # The dense basis can be made larger again once we know everything is correct.
 fit_n_center = 80
 fit_n_lambda_L = 8
-n_hermite = 3
+n_hermite = 2
 baseline_norm_ratio = 1
 # }}}
 
