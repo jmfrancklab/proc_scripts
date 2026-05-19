@@ -51,8 +51,10 @@ Reading off 1ᵀc along that path gives the desired residual-vs-L1 curve.
 
 from pyspecdata import *
 from numpy import r_, pi, exp, logspace, sqrt, log10
+from numpy.polynomial.hermite import hermval
 from matplotlib.pyplot import title, xlabel, ylabel, legend
 from sklearn.linear_model import lars_path
+from math import factorial
 import os
 
 # {{{ changeable parameters
@@ -64,6 +66,8 @@ preview_n_lambda_L = 4
 # The dense basis can be made larger again once we know everything is correct.
 fit_n_center = 80
 fit_n_lambda_L = 8
+n_hermite = 3
+baseline_norm_ratio = 1
 # }}}
 
 
@@ -109,6 +113,29 @@ def build_lorentzian_basis(
     return A
 
 
+def build_hermite_baseline_basis(d, Bname, target_norm):
+    x = d.getaxis(Bname)
+    x_scaled = 2 * (x - x.mean()) / (x[-1] - x[0])
+    H = concat(
+        [
+            nddata(
+                hermval(x_scaled, [0] * order + [1])
+                / sqrt(2**order * factorial(order)),
+                Bname,
+            )
+            .setaxis(Bname, x)
+            .set_units(Bname, d.get_units(Bname))
+            for order in range(n_hermite)
+        ],
+        "basis",
+    )
+    # Hermites use the standard H_n/sqrt(2^n n!) relative normalization,
+    # then get ~5x the Lorentzian L2 norm so the L1 path prefers smooth
+    # baseline terms over very wide Lorentzians.
+    H *= target_norm / sqrt((abs(H) ** 2).sum(Bname))
+    return H
+
+
 init_logging(level="info")
 
 # {{{ load a real cw ESR spectrum
@@ -122,11 +149,6 @@ d = d["harmonic", 0]["phase", 0]
 d[Bname] *= 1e-4
 d.set_units(Bname, "T")
 d.set_ft_initial(Bname, "f").set_ft_prop(Bname, "time_not_aliased")
-
-# A derivative Lorentzian dictionary cannot represent a DC baseline.
-# Remove the DC component explicitly before fitting.
-d -= d.C.mean(Bname)
-
 # }}}
 
 # {{{ plots
@@ -145,6 +167,23 @@ with figlist_var() as fl:
     # Collapse the physical coefficient grid only after constructing the basis.
     # The coefficient vector c still indexes individual (center, λ_L) components.
     A.smoosh(["center", "lambda_L"], "basis")
+    n_lorentzian_basis = A.shape["basis"]
+    A.setaxis("basis", r_[0:n_lorentzian_basis])
+    A = concat(
+        [
+            A,
+            build_hermite_baseline_basis(
+                d,
+                Bname,
+                baseline_norm_ratio
+                * sqrt((abs(A) ** 2).sum(Bname)).data.max(),
+            ).setaxis(
+                "basis",
+                r_[n_lorentzian_basis : n_lorentzian_basis + n_hermite],
+            ),
+        ],
+        "basis",
+    )
     # }}}
 
     fl.next("reduced basis preview")
@@ -189,7 +228,16 @@ with figlist_var() as fl:
 
     # {{{ evaluate path with pyspecdata algebra
     # Show the least-regularized point in the path.
-    fit_show = A.C.along("basis") @ coef_path.C["alpha", -1]
+    coef_show = coef_path.C["alpha", -1]
+    baseline = (
+        A.C["basis", n_lorentzian_basis:].along("basis")
+        @ coef_show.C["basis", n_lorentzian_basis:]
+    )
+    baseline_subtracted = (
+        A.C["basis", 0:n_lorentzian_basis].along("basis")
+        @ coef_show.C["basis", 0:n_lorentzian_basis]
+    )
+    fit_show = baseline + baseline_subtracted
     # }}}
 
     fl.next("positive LARS path")
@@ -204,11 +252,13 @@ with figlist_var() as fl:
     )
     xlabel("positive L1 mass 1ᵀc")
     ylabel("compressed residual norm ‖Ãc − ỹ‖₂")
-    title("positive Lorentzian-derivative LASSO path")
+    title("positive Lorentzian/Hermite LASSO path")
 
     fl.next("fit at end of path")
     plot(d, label="data", alpha=0.7)
-    plot(fit_show, label="fit", alpha=0.7)
-    plot(d - fit_show, label="residual", alpha=0.7)
+    plot(fit_show, label="full reconstruction", alpha=0.7)
+    plot(d - fit_show, label="full residual", alpha=0.7)
+    plot(baseline, label="baseline", alpha=0.7)
+    plot(baseline_subtracted, label="baseline subtracted", alpha=0.7)
     legend()
 # }}}
