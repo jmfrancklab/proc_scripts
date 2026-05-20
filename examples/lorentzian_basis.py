@@ -7,18 +7,12 @@ fit ESR to Lorentzian basis
 For Lorentzian absorption:
     L(B; B_c, λ_L) has HWHM = λ_L/2
 
-Fourier rule:
-    ℱ{L}(u) = exp(−π λ_L |u|) exp(−i 2π u B_c)
-
-Derivative rule:
-    ℱ{∂L/∂B} = i 2π u ℱ{L}
-
-Therefore:
-    A_u(u, B_c, λ_L)
-      = i 2π u exp(−π λ_L |u|) exp(−i 2π u B_c)
+Field-domain derivative kernel:
+    A(B; B_c, λ_L)
+      = real(-i 2π (1 + i (B − B_c)/λ_L)^-2)
 
 This uses pyspecdata broadcasting over:
-    u        conjugate to B₀
+    B₀       field axis
     center   Lorentzian center field B_c
     λ_L      Lorentzian FWHM
 
@@ -50,19 +44,7 @@ Reading off 1ᵀc along that path gives the desired residual-vs-L1 curve.
 # vim: set foldmethod=marker :
 
 from pyspecdata import *
-from numpy import (
-    r_,
-    pi,
-    exp,
-    logspace,
-    sqrt,
-    log10,
-    array,
-    cumsum,
-    searchsorted,
-    unique,
-    where,
-)
+from numpy import r_, pi, logspace, sqrt, log10, real
 from numpy.polynomial.hermite import hermval
 from matplotlib.pyplot import title, xlabel, ylabel, legend
 from sklearn.linear_model import lars_path
@@ -108,17 +90,8 @@ def build_lorentzian_basis(
         + lambda_L / 3
         + center * (center_limits[1] - center_limits[0] - 2 * lambda_L / 3)
     )
-    u = d.C.ift(Bname).fromaxis(Bname)
-    A = (
-        -1j
-        * 2
-        * pi
-        * u
-        * exp(-pi * lambda_L * abs(u))
-        * exp(1j * 2 * pi * u * center)
-    )
-    A[Bname,0] *= 0.5 # u=0 Heaviside issue
-    A.ft(Bname)
+    B = d.fromaxis(Bname) - center
+    A = real(-1j * 2 * pi * (1 + 1j * B / lambda_L) ** -2)
     A.setaxis(Bname, x)
     A.set_units(Bname, d.get_units(Bname))
     # Normalize each column:
@@ -133,22 +106,20 @@ def build_lorentzian_basis(
 def build_hermite_baseline_basis(d, Bname, target_norm):
     x = d.getaxis(Bname)
     x_scaled = 2 * (x - x.mean()) / (x[-1] - x[0])
-    H = concat(
-        [
-            nddata(
-                hermval(x_scaled, [0] * order + [1])
-                / sqrt(2**order * factorial(order)),
-                Bname,
-            )
-            .setaxis(Bname, x)
-            .set_units(Bname, d.get_units(Bname))
-            for order in range(n_hermite)
-        ],
-        "basis",
-    )
-    # Hermites use the standard H_n/sqrt(2^n n!) relative normalization,
-    # then get ~5x the Lorentzian L2 norm so the L1 path prefers smooth
-    # baseline terms over very wide Lorentzians.
+    hermites = [
+        nddata(
+            hermval(x_scaled, [0] * order + [1])
+            / sqrt(2**order * factorial(order)),
+            Bname,
+        )
+        .setaxis(Bname, x)
+        .set_units(Bname, d.get_units(Bname))
+        for order in range(n_hermite)
+    ]
+    H = concat(hermites + [-j for j in hermites], "basis")
+    # Hermites use the standard H_n/sqrt(2^n n!) relative normalization, then
+    # get boosted so the L1 path prefers smooth baseline terms over very wide
+    # Lorentzians.
     H *= target_norm / sqrt((abs(H) ** 2).sum(Bname))
     return H
 
@@ -178,26 +149,24 @@ with figlist_var() as fl:
     A = build_lorentzian_basis(d, Bname, fit_n_center, fit_n_lambda_L)
     print("preview basis shape", preview_A.shape)
 
-    # The imaginary component is transform-roundoff; the solver boundary below
-    # uses the real part.  Keep A as nddata until that boundary.
+    # Keep A as nddata until the solver boundary below.
 
     # Collapse the physical coefficient grid only after constructing the basis.
     # The coefficient vector c still indexes individual (center, λ_L) components.
     A.smoosh(["center", "lambda_L"], "basis")
     n_lorentzian_basis = A.shape["basis"]
-    lorentzian_lambda_L = A.getaxis("basis")["lambda_L"].copy()
     A.setaxis("basis", r_[0:n_lorentzian_basis]).set_units("basis", None)
+    H = build_hermite_baseline_basis(
+        d,
+        Bname,
+        baseline_norm_ratio * sqrt((abs(A) ** 2).sum(Bname)).data.max(),
+    )
     A = concat(
         [
             A,
-            build_hermite_baseline_basis(
-                d,
-                Bname,
-                baseline_norm_ratio
-                * sqrt((abs(A) ** 2).sum(Bname)).data.max(),
-            ).setaxis(
+            H.setaxis(
                 "basis",
-                r_[n_lorentzian_basis : n_lorentzian_basis + n_hermite],
+                r_[n_lorentzian_basis : n_lorentzian_basis + H.shape["basis"]],
             ),
         ],
         "basis",
@@ -255,44 +224,7 @@ with figlist_var() as fl:
         A.C["basis", 0:n_lorentzian_basis].along("basis")
         @ coef_show.C["basis", 0:n_lorentzian_basis]
     )
-    coef_lorentzian = coef_show.C["basis", 0:n_lorentzian_basis].data
-    lambda_levels = unique(lorentzian_lambda_L)
-    lambda_mass = array(
-        [
-            coef_lorentzian[lorentzian_lambda_L == this_lambda].sum()
-            for this_lambda in lambda_levels
-        ]
-    )
-    if lambda_mass.sum() > 0:
-        coef_integral = cumsum(lambda_mass)
-        cut1 = searchsorted(coef_integral, coef_integral[-1] / 3) + 1
-        cut2 = searchsorted(coef_integral, 2 * coef_integral[-1] / 3) + 1
-    else:
-        cut1, cut2 = len(lambda_levels) // 3, 2 * len(lambda_levels) // 3
-    cut1 = min(max(cut1, 1), len(lambda_levels) - 2)
-    cut2 = min(max(cut2, cut1 + 1), len(lambda_levels) - 1)
-    lambda_buckets = [
-        ("narrow", lambda_levels[:cut1]),
-        ("medium", lambda_levels[cut1:cut2]),
-        ("broad", lambda_levels[cut2:]),
-    ]
-    bucket_parts = []
-    for bucket_name, bucket_lambdas in lambda_buckets:
-        bucket_idx = where(
-            (lorentzian_lambda_L >= bucket_lambdas[0])
-            & (lorentzian_lambda_L <= bucket_lambdas[-1])
-        )[0]
-        bucket_coef = coef_show.C["basis", 0:n_lorentzian_basis]
-        bucket_coef.data[:] = 0
-        bucket_coef.data[bucket_idx] = coef_lorentzian[bucket_idx]
-        bucket_parts.append(
-            (
-                bucket_name,
-                bucket_lambdas[0],
-                bucket_lambdas[-1],
-                A.C["basis", 0:n_lorentzian_basis].along("basis") @ bucket_coef,
-            )
-        )
+    weighted_kernel = (A * coef_show).C.reorder(["basis", Bname])
     fit_show = baseline + baseline_subtracted
     # }}}
 
@@ -310,20 +242,15 @@ with figlist_var() as fl:
     ylabel("compressed residual norm ‖Ãc − ỹ‖₂")
     title("positive Lorentzian/Hermite LASSO path")
 
+    fl.next("weighted basis functions")
+    fl.image(weighted_kernel, interpolation="auto")
+    title("basis functions times fitted coefficients")
+
     fl.next("fit at end of path")
     plot(d, label="data", alpha=0.7)
     plot(fit_show, label="full reconstruction", alpha=0.7)
     plot(d - fit_show, label="full residual", alpha=0.7)
     plot(baseline, label="baseline", alpha=0.7)
     plot(baseline_subtracted, label="baseline subtracted", alpha=0.7)
-    for bucket_name, lambda_min, lambda_max, bucket_part in bucket_parts:
-        plot(
-            bucket_part,
-            label=(
-                f"{bucket_name} λ_L "
-                f"{1e3 * lambda_min:.3g}-{1e3 * lambda_max:.3g} mT"
-            ),
-            alpha=0.2,
-        )
     legend()
 # }}}
