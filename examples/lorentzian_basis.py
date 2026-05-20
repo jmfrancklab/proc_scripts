@@ -46,7 +46,7 @@ Reading off 1ᵀc along that path gives the desired residual-vs-L1 curve.
 from pyspecdata import *
 from numpy import r_, pi, logspace, sqrt, log10, real
 from numpy.polynomial.hermite import hermval
-from matplotlib.pyplot import title, xlabel, ylabel, legend
+from matplotlib.pyplot import title, xlabel, ylabel, legend, subplot
 from sklearn.linear_model import lars_path
 from math import factorial
 import os
@@ -60,7 +60,7 @@ preview_n_lambda_L = 4
 # The dense basis can be made larger again once we know everything is correct.
 fit_n_center = 80
 fit_n_lambda_L = 8
-n_hermite = 4
+n_hermite = 2
 baseline_norm_ratio = 1
 lorentzian_B_range = (0.344, 0.358)
 lambda_frac_from_edge = 3
@@ -252,8 +252,14 @@ with figlist_var() as fl:
 
     fl.next("weighted basis functions")
     print(weighted_kernel.data.dtype)
-    fl.image(weighted_kernel, interpolation="auto")
-    title("basis functions times fitted coefficients")
+    ax = subplot(1, 2, 1)
+    fl.image(weighted_kernel, interpolation="auto", ax=ax)
+    ax.set_title("basis functions times fitted coefficients")
+    ax = subplot(1, 2, 2)
+    ax.semilogy(coef_show.getaxis("basis"), abs(coef_show).data, ".")
+    ax.set_xlabel("basis index")
+    ax.set_ylabel("coefficient amplitude")
+    ax.set_title("fit coefficient amplitudes")
 
     fl.next("fit at end of path")
     plot(d, label="data", alpha=0.7)
