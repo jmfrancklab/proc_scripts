@@ -57,13 +57,13 @@ Bname = "$B_0$"
 esr_file = "15N_S175R1a_pR_DHPC_today_200304.DSC"
 # Use a tiny basis first so that we can inspect the functions and debug fast.
 preview_n_center = 7
-preview_n_lambda_L = 5
+preview_n_lambda_L = 8
 # The dense basis can be made larger again once we know everything is correct.
 fit_n_center = 80
 fit_n_lambda_L = 8
 n_hermite = 5
 hermite_amplitude_scale = 1
-lorentzian_B_range = (0.344, 0.358)
+lorentzian_B_range = (0.3468, 0.356)
 lambda_frac_from_edge = 5  # prevent lopsided contributions
 coef_threshold_frac = 1e-2
 # }}}
@@ -130,6 +130,16 @@ def build_lorentzian_basis(
     return A
 
 
+def mark_active_region(active_B_range, ax=None):
+    if active_B_range is None:
+        return
+    for edge in active_B_range:
+        if ax is None:
+            axvline(edge, color="k", linestyle=(0, (1, 2)), linewidth=1)
+        else:
+            ax.axvline(edge, color="k", linestyle=(0, (1, 2)), linewidth=1)
+
+
 def fit_lars_path(
     fl,
     label,
@@ -138,15 +148,42 @@ def fit_lars_path(
     Bname,
     first_baseline_basis,
     coef_threshold_frac,
+    active_B_range=None,
 ):
+    basis_axis = A.getaxis("basis")
+    lorentzian_mask = basis_axis < first_baseline_basis
+    baseline_mask = ~lorentzian_mask
+    if active_B_range is not None:
+        x = d.getaxis(Bname)
+        outside_active = (x < active_B_range[0]) | (x > active_B_range[1])
+        if outside_active.any():
+            A_outside = A.C[Bname, outside_active]
+            # In the duplicated outside-region rows, only the Hermite baseline is
+            # allowed to explain the data.  The full, original rows still measure
+            # the overall reconstruction RMS.
+            A_outside["basis", lorentzian_mask] *= 0
+            A_fit = concat([A, A_outside], Bname)
+            d_fit = concat([d, d.C[Bname, outside_active]], Bname)
+            print(
+                f"{label}: added",
+                outside_active.sum(),
+                "outside-active-region baseline rows",
+            )
+        else:
+            A_fit = A
+            d_fit = d
+            print(f"{label}: no outside-active-region rows to add")
+    else:
+        A_fit = A
+        d_fit = d
     # {{{ SVD-compress residual coordinates
-    U, Sigma, Vh = A.C.svd(Bname, "basis")
-    U.set_units(Bname, d.get_units(Bname))
+    U, Sigma, Vh = A_fit.C.svd(Bname, "basis")
+    U.set_units(Bname, d_fit.get_units(Bname))
     A_tilde = Sigma * Vh
-    y_tilde = U.C.reorder(["SV", Bname]).along(Bname) @ d
+    y_tilde = U.C.reorder(["SV", Bname]).along(Bname) @ d_fit
     print(
         f"{label}: during compression, d was reduced from",
-        d.shape,
+        d_fit.shape,
         "to",
         y_tilde.shape,
     )
@@ -172,9 +209,6 @@ def fit_lars_path(
 
     # {{{ evaluate path with pyspecdata algebra
     coef_show = coef_path.C["alpha", -1]
-    basis_axis = A.getaxis("basis")
-    lorentzian_mask = basis_axis < first_baseline_basis
-    baseline_mask = ~lorentzian_mask
     baseline = (
         A.C["basis", baseline_mask].along("basis")
         @ coef_show.C["basis", baseline_mask]
@@ -210,7 +244,8 @@ def fit_lars_path(
     fl.next(f"{label}: weighted basis functions")
     print(weighted_kernel.data.dtype)
     ax = subplot(1, 2, 1)
-    fl.image(weighted_kernel, interpolation="auto", ax=ax)
+    fl.image(weighted_kernel, interpolation="auto", ax=ax, human_units=False)
+    mark_active_region(active_B_range, ax=ax)
     ax.set_title("basis functions times fitted coefficients")
     ax = subplot(1, 2, 2)
     ax.semilogy(basis_axis, coef_amplitudes, ".")
@@ -225,6 +260,7 @@ def fit_lars_path(
     plot(d - fit_show, label="full residual", alpha=0.7)
     plot(baseline, label="baseline", alpha=0.7)
     plot(baseline_subtracted, label="baseline subtracted", alpha=0.7)
+    mark_active_region(active_B_range)
     legend()
     return {
         "coef_show": coef_show,
@@ -318,6 +354,7 @@ with figlist_var() as fl:
                 alpha=0.35,
                 human_units=False,
             )
+    mark_active_region(lorentzian_B_range)
     title("reduced Lorentzian-derivative basis")
 
     full_fit = fit_lars_path(
@@ -328,6 +365,7 @@ with figlist_var() as fl:
         Bname,
         n_lorentzian_basis,
         coef_threshold_frac,
+        lorentzian_B_range,
     )
     basis_axis = A.getaxis("basis")
     coef_amplitudes = abs(full_fit["coef_show"]).data
@@ -350,5 +388,6 @@ with figlist_var() as fl:
         Bname,
         n_lorentzian_basis,
         coef_threshold_frac,
+        lorentzian_B_range,
     )
 # }}}
