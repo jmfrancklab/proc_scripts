@@ -143,6 +143,7 @@ with figlist_var() as fl:
         d, Bname, preview_n_center, preview_n_lambda_L
     )
     A = build_lorentzian_basis(d, Bname, fit_n_center, fit_n_lambda_L)
+    print("note that this is real, as it should be",A.data.dtype)
     print("preview basis shape", preview_A.shape)
 
     # Keep A as nddata until the solver boundary below.
