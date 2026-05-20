@@ -50,7 +50,19 @@ Reading off 1ᵀc along that path gives the desired residual-vs-L1 curve.
 # vim: set foldmethod=marker :
 
 from pyspecdata import *
-from numpy import r_, pi, exp, logspace, sqrt, log10
+from numpy import (
+    r_,
+    pi,
+    exp,
+    logspace,
+    sqrt,
+    log10,
+    array,
+    cumsum,
+    searchsorted,
+    unique,
+    where,
+)
 from numpy.polynomial.hermite import hermval
 from matplotlib.pyplot import title, xlabel, ylabel, legend
 from sklearn.linear_model import lars_path
@@ -66,7 +78,7 @@ preview_n_lambda_L = 4
 # The dense basis can be made larger again once we know everything is correct.
 fit_n_center = 80
 fit_n_lambda_L = 8
-n_hermite = 2
+n_hermite = 4
 baseline_norm_ratio = 1
 # }}}
 
@@ -173,6 +185,7 @@ with figlist_var() as fl:
     # The coefficient vector c still indexes individual (center, λ_L) components.
     A.smoosh(["center", "lambda_L"], "basis")
     n_lorentzian_basis = A.shape["basis"]
+    lorentzian_lambda_L = A.getaxis("basis")["lambda_L"].copy()
     A.setaxis("basis", r_[0:n_lorentzian_basis]).set_units("basis", None)
     A = concat(
         [
@@ -242,6 +255,44 @@ with figlist_var() as fl:
         A.C["basis", 0:n_lorentzian_basis].along("basis")
         @ coef_show.C["basis", 0:n_lorentzian_basis]
     )
+    coef_lorentzian = coef_show.C["basis", 0:n_lorentzian_basis].data
+    lambda_levels = unique(lorentzian_lambda_L)
+    lambda_mass = array(
+        [
+            coef_lorentzian[lorentzian_lambda_L == this_lambda].sum()
+            for this_lambda in lambda_levels
+        ]
+    )
+    if lambda_mass.sum() > 0:
+        coef_integral = cumsum(lambda_mass)
+        cut1 = searchsorted(coef_integral, coef_integral[-1] / 3) + 1
+        cut2 = searchsorted(coef_integral, 2 * coef_integral[-1] / 3) + 1
+    else:
+        cut1, cut2 = len(lambda_levels) // 3, 2 * len(lambda_levels) // 3
+    cut1 = min(max(cut1, 1), len(lambda_levels) - 2)
+    cut2 = min(max(cut2, cut1 + 1), len(lambda_levels) - 1)
+    lambda_buckets = [
+        ("narrow", lambda_levels[:cut1]),
+        ("medium", lambda_levels[cut1:cut2]),
+        ("broad", lambda_levels[cut2:]),
+    ]
+    bucket_parts = []
+    for bucket_name, bucket_lambdas in lambda_buckets:
+        bucket_idx = where(
+            (lorentzian_lambda_L >= bucket_lambdas[0])
+            & (lorentzian_lambda_L <= bucket_lambdas[-1])
+        )[0]
+        bucket_coef = coef_show.C["basis", 0:n_lorentzian_basis]
+        bucket_coef.data[:] = 0
+        bucket_coef.data[bucket_idx] = coef_lorentzian[bucket_idx]
+        bucket_parts.append(
+            (
+                bucket_name,
+                bucket_lambdas[0],
+                bucket_lambdas[-1],
+                A.C["basis", 0:n_lorentzian_basis].along("basis") @ bucket_coef,
+            )
+        )
     fit_show = baseline + baseline_subtracted
     # }}}
 
@@ -265,5 +316,14 @@ with figlist_var() as fl:
     plot(d - fit_show, label="full residual", alpha=0.7)
     plot(baseline, label="baseline", alpha=0.7)
     plot(baseline_subtracted, label="baseline subtracted", alpha=0.7)
+    for bucket_name, lambda_min, lambda_max, bucket_part in bucket_parts:
+        plot(
+            bucket_part,
+            label=(
+                f"{bucket_name} λ_L "
+                f"{1e3 * lambda_min:.3g}-{1e3 * lambda_max:.3g} mT"
+            ),
+            alpha=0.2,
+        )
     legend()
 # }}}
