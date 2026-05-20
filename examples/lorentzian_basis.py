@@ -41,6 +41,7 @@ Positive LARS computes the LASSO path:
 Reading off 1ᵀc along that path gives the desired residual-vs-L1 curve.
 
 """
+
 # vim: set foldmethod=marker :
 
 from pyspecdata import *
@@ -63,7 +64,7 @@ fit_n_lambda_L = 8
 n_hermite = 2
 baseline_norm_ratio = 1
 lorentzian_B_range = (0.344, 0.358)
-lambda_frac_from_edge = 3
+lambda_frac_from_edge = 5  # prevent lopsided contributions
 coef_threshold_frac = 1e-2
 # }}}
 
@@ -80,26 +81,32 @@ def build_lorentzian_basis(
         center_limits = (x[0], x[-1])
     # go for 5x the pixel size (decayed to 0 at end), b/c otherwise, we get weird discretization issues
     lambda_L_limits = (
-        (x[1]-x[0])*5,
-        (center_limits[1]-center_limits[0])/2,
+        (x[1] - x[0]) * 5,
+        (center_limits[1] - center_limits[0]) / 2,
     )
     lambda_L = nddata(
-        logspace(log10(lambda_L_limits[0]), log10(lambda_L_limits[1]), n_lambda_L),
+        logspace(
+            log10(lambda_L_limits[0]), log10(lambda_L_limits[1]), n_lambda_L
+        ),
         "lambda_L",
     ).set_units("lambda_L", "T")
-    center = nddata(r_[0:1 : n_center * 1j], "center")
+    center = nddata(r_[0 : 1 : n_center * 1j], "center")
     # Assume resonances are captured inside the acquired window: for each
-    # linewidth, only generate centers at least λ_L/lambda_frac_from_edge from either edge.
+    # linewidth, only generate centers at least λ_L*lambda_frac_from_edge from either edge.
     # Broader off-window structure belongs in the Hermite baseline.
     center = (
         center_limits[0]
-        + lambda_L / lambda_frac_from_edge
-        + center * (center_limits[1] - center_limits[0] - 2 * lambda_L / lambda_frac_from_edge)
+        + lambda_L * lambda_frac_from_edge
+        + center
+        * (
+            center_limits[1]
+            - center_limits[0]
+            - 2 * lambda_L * lambda_frac_from_edge
+        )
     )
-    B = d.fromaxis(Bname) - center
     # this is normalized by peak-to-peak amplitude.  This means it's less
     # "costly" to make one broad lorentzian vs. summing many narrow ones
-    A = real(-1j * (1 + 1j * B / lambda_L) ** -2)
+    A = real(-1j * (1 + 1j * (d.fromaxis(Bname) - center) / lambda_L) ** -2)
     A.setaxis(Bname, x)
     A.set_units(Bname, d.get_units(Bname))
     return A
@@ -212,9 +219,7 @@ init_logging(level="info")
 
 # {{{ load a real cw ESR spectrum
 
-d = find_file(
-    esr_file, exp_type="francklab_esr/Sam"
-)
+d = find_file(esr_file, exp_type="francklab_esr/Sam")
 d.chunk_auto("harmonic", "phase")
 d = d["harmonic", 0]["phase", 0]
 
@@ -233,7 +238,7 @@ with figlist_var() as fl:
     A = build_lorentzian_basis(
         d, Bname, fit_n_center, fit_n_lambda_L, lorentzian_B_range
     )
-    print("note that this is real, as it should be",A.data.dtype)
+    print("note that this is real, as it should be", A.data.dtype)
     print("preview basis shape", preview_A.shape)
 
     # Keep A as nddata until the solver boundary below.
@@ -303,9 +308,8 @@ with figlist_var() as fl:
     basis_axis = A.getaxis("basis")
     coef_amplitudes = abs(full_fit["coef_show"]).data
     reduced_basis_mask = basis_axis >= n_lorentzian_basis
-    reduced_basis_mask |= (
-        (basis_axis < n_lorentzian_basis)
-        & (coef_amplitudes >= full_fit["coef_cutoff"])
+    reduced_basis_mask |= (basis_axis < n_lorentzian_basis) & (
+        coef_amplitudes >= full_fit["coef_cutoff"]
     )
     print(
         "reduced basis keeps",
