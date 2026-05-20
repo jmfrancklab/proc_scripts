@@ -62,6 +62,8 @@ fit_n_center = 80
 fit_n_lambda_L = 8
 n_hermite = 4
 baseline_norm_ratio = 1
+lorentzian_B_range = (0.344, 0.358)
+lambda_frac_from_edge = 3
 # }}}
 
 
@@ -73,22 +75,25 @@ def build_lorentzian_basis(
     center_limits=None,
 ):
     x = d.getaxis(Bname)
-    # go for 5x the pixel size (decayed to 0 at end), b/c otherwise, we get weird discretization issues
-    lambda_L_limits = ((x[1]-x[0])*5, (x[-1]-x[0])/2)
     if center_limits is None:
         center_limits = (x[0], x[-1])
+    # go for 5x the pixel size (decayed to 0 at end), b/c otherwise, we get weird discretization issues
+    lambda_L_limits = (
+        (x[1]-x[0])*5,
+        (center_limits[1]-center_limits[0])/2,
+    )
     lambda_L = nddata(
         logspace(log10(lambda_L_limits[0]), log10(lambda_L_limits[1]), n_lambda_L),
         "lambda_L",
     ).set_units("lambda_L", "T")
     center = nddata(r_[0:1 : n_center * 1j], "center")
     # Assume resonances are captured inside the acquired window: for each
-    # linewidth, only generate centers at least λ_L/3 from either edge.
+    # linewidth, only generate centers at least λ_L/lambda_frac_from_edge from either edge.
     # Broader off-window structure belongs in the Hermite baseline.
     center = (
         center_limits[0]
-        + lambda_L / 3
-        + center * (center_limits[1] - center_limits[0] - 2 * lambda_L / 3)
+        + lambda_L / lambda_frac_from_edge
+        + center * (center_limits[1] - center_limits[0] - 2 * lambda_L / lambda_frac_from_edge)
     )
     B = d.fromaxis(Bname) - center
     # this is normalized by peak-to-peak amplitude.  This means it's less
@@ -140,9 +145,11 @@ d.set_ft_initial(Bname, "f").set_ft_prop(Bname, "time_not_aliased")
 with figlist_var() as fl:
     # {{{ construct dense Lorentzian-derivative basis using labeled broadcasting
     preview_A = build_lorentzian_basis(
-        d, Bname, preview_n_center, preview_n_lambda_L
+        d, Bname, preview_n_center, preview_n_lambda_L, lorentzian_B_range
     )
-    A = build_lorentzian_basis(d, Bname, fit_n_center, fit_n_lambda_L)
+    A = build_lorentzian_basis(
+        d, Bname, fit_n_center, fit_n_lambda_L, lorentzian_B_range
+    )
     print("note that this is real, as it should be",A.data.dtype)
     print("preview basis shape", preview_A.shape)
 
@@ -222,6 +229,10 @@ with figlist_var() as fl:
         @ coef_show.C["basis", 0:n_lorentzian_basis]
     )
     weighted_kernel = (A * coef_show).C.reorder(["basis", Bname])
+    # SVD/dot bookkeeping can leave complex dtype; the original field-domain
+    # kernel and ESR data are real.
+    for j in [baseline, baseline_subtracted, weighted_kernel]:
+        j.data = real(j.data)
     fit_show = baseline + baseline_subtracted
     # }}}
 
@@ -240,7 +251,7 @@ with figlist_var() as fl:
     title("positive Lorentzian/Hermite LASSO path")
 
     fl.next("weighted basis functions")
-    print(weighted_kernel.data.dtype) # this should be real, but it's complex
+    print(weighted_kernel.data.dtype)
     fl.image(weighted_kernel, interpolation="auto")
     title("basis functions times fitted coefficients")
 
