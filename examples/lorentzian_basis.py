@@ -57,12 +57,12 @@ Bname = "$B_0$"
 esr_file = "15N_S175R1a_pR_DHPC_today_200304.DSC"
 # Use a tiny basis first so that we can inspect the functions and debug fast.
 preview_n_center = 7
-preview_n_lambda_L = 4
+preview_n_lambda_L = 5
 # The dense basis can be made larger again once we know everything is correct.
 fit_n_center = 80
 fit_n_lambda_L = 8
-n_hermite = 2
-baseline_cost_multiplier = 10
+n_hermite = 5
+hermite_amplitude_scale = 1
 lorentzian_B_range = (0.344, 0.358)
 lambda_frac_from_edge = 5  # prevent lopsided contributions
 coef_threshold_frac = 1e-2
@@ -81,8 +81,11 @@ def build_lorentzian_basis(
         center_limits = (x[0], x[-1])
     # go for 5x the pixel size (decayed to 0 at end), b/c otherwise, we get weird discretization issues
     lambda_L_min = (x[1] - x[0]) * 5
+    # lambda_L < ΔB - 2*lambda_frac_from_edge*lambda_L
+    # lambda_L + 2*lambda_frac_from_edge*lambda_L < ΔB
+    # lambda_L < ΔB / (1 + 2*lambda_frac_from_edge)
     lambda_L_max = (center_limits[1] - center_limits[0]) / (
-        2 * lambda_frac_from_edge
+        1 + 2 * lambda_frac_from_edge
     )
     if lambda_L_max <= lambda_L_min:
         raise ValueError(
@@ -263,22 +266,15 @@ with figlist_var() as fl:
     A.smoosh(["center", "lambda_L"], "basis")
     n_lorentzian_basis = A.shape["basis"]
     lorentzian_basis_axis = A.getaxis("basis")
-    broadest_lorentzian_amp = abs(
-        A[
-            "basis",
-            lorentzian_basis_axis["lambda_L"]
-            == lorentzian_basis_axis["lambda_L"].max(),
-        ]
-    ).data.max()
+    lambda_L_max = lorentzian_basis_axis["lambda_L"].max()
     A.setaxis("basis", r_[0:n_lorentzian_basis]).set_units("basis", None)
 
     # {{{ build Hermite baseline basis: generate ± Hermite polynomial columns
     # Hermites use the standard H_n/sqrt(2^n n!) relative normalization.
-    # They do not have a spin-count meaning, so price them against the broadest
-    # smooth Lorentzian they might replace: scale their largest absolute
-    # excursion to broadest_lorentzian_amp / baseline_cost_multiplier.  This
-    # uses max amplitude rather than L2 norm because the Lorentzian expense was
-    # chosen from physical peak-to-peak scaling, not equal-energy atoms.
+    # Larger basis-function amplitude is cheaper in LARS because the same
+    # signal needs less coefficient.  At hermite_amplitude_scale=1, scale the
+    # Hermites so their largest absolute excursion is 1/lambda_L_max, making
+    # them approximately competitive with the broadest allowed Lorentzians.
     # Both signs are included because the solver coefficients are constrained
     # positive.
     x = d.getaxis(Bname)
@@ -294,10 +290,10 @@ with figlist_var() as fl:
         for order in range(n_hermite)
     ]
     H = concat(hermites + [-j for j in hermites], "basis")
-    hermite_scale = broadest_lorentzian_amp / (
-        baseline_cost_multiplier * abs(H).data.max()
-    )
-    print("broadest Lorentzian amplitude", broadest_lorentzian_amp)
+    hermite_target_amp = hermite_amplitude_scale / lambda_L_max
+    hermite_scale = hermite_target_amp / abs(H).data.max()
+    print("lambda_L max", lambda_L_max)
+    print("Hermite target amplitude", hermite_target_amp)
     print("Hermite scale factor", hermite_scale)
     H *= hermite_scale
     # }}}
