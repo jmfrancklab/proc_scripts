@@ -91,15 +91,11 @@ def build_lorentzian_basis(
         + center * (center_limits[1] - center_limits[0] - 2 * lambda_L / 3)
     )
     B = d.fromaxis(Bname) - center
-    A = real(-1j * 2 * pi * (1 + 1j * B / lambda_L) ** -2)
+    # this is normalized by peak-to-peak amplitude.  This means it's less
+    # "costly" to make one broad lorentzian vs. summing many narrow ones
+    A = real(-1j * (1 + 1j * B / lambda_L) ** -2)
     A.setaxis(Bname, x)
     A.set_units(Bname, d.get_units(Bname))
-    # Normalize each column:
-    #     ‖A_i‖₂ = 1
-    #
-    # Otherwise the L1 constraint would prefer some linewidths simply because
-    # the column norm changes with λ_L.
-    A /= sqrt((abs(A) ** 2).sum(Bname))
     return A
 
 
@@ -243,6 +239,7 @@ with figlist_var() as fl:
     title("positive Lorentzian/Hermite LASSO path")
 
     fl.next("weighted basis functions")
+    print(weighted_kernel.data.dtype) # this should be real, but it's complex
     fl.image(weighted_kernel, interpolation="auto")
     title("basis functions times fitted coefficients")
 
