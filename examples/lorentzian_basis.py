@@ -46,7 +46,7 @@ Reading off 1ᵀc along that path gives the desired residual-vs-L1 curve.
 from pyspecdata import *
 from numpy import r_, pi, logspace, sqrt, log10, real
 from numpy.polynomial.hermite import hermval
-from matplotlib.pyplot import title, xlabel, ylabel, legend, subplot
+from matplotlib.pyplot import title, xlabel, ylabel, legend, subplot, axvline
 from sklearn.linear_model import lars_path
 from math import factorial
 import os
@@ -64,6 +64,7 @@ n_hermite = 2
 baseline_norm_ratio = 1
 lorentzian_B_range = (0.344, 0.358)
 lambda_frac_from_edge = 3
+coef_threshold_frac = 1e-2
 # }}}
 
 
@@ -104,25 +105,107 @@ def build_lorentzian_basis(
     return A
 
 
-def build_hermite_baseline_basis(d, Bname, target_norm):
-    x = d.getaxis(Bname)
-    x_scaled = 2 * (x - x.mean()) / (x[-1] - x[0])
-    hermites = [
-        nddata(
-            hermval(x_scaled, [0] * order + [1])
-            / sqrt(2**order * factorial(order)),
-            Bname,
-        )
-        .setaxis(Bname, x)
-        .set_units(Bname, d.get_units(Bname))
-        for order in range(n_hermite)
-    ]
-    H = concat(hermites + [-j for j in hermites], "basis")
-    # Hermites use the standard H_n/sqrt(2^n n!) relative normalization, then
-    # get boosted so the L1 path prefers smooth baseline terms over very wide
-    # Lorentzians.
-    H *= target_norm / sqrt((abs(H) ** 2).sum(Bname))
-    return H
+def fit_lars_path(
+    fl,
+    label,
+    A,
+    d,
+    Bname,
+    first_baseline_basis,
+    coef_threshold_frac,
+):
+    # {{{ SVD-compress residual coordinates
+    U, Sigma, Vh = A.C.svd(Bname, "basis")
+    U.set_units(Bname, d.get_units(Bname))
+    A_tilde = Sigma * Vh
+    y_tilde = U.C.reorder(["SV", Bname]).along(Bname) @ d
+    print(
+        f"{label}: during compression, d was reduced from",
+        d.shape,
+        "to",
+        y_tilde.shape,
+    )
+    # }}}
+
+    # {{{ positive LARS solver boundary
+    print(f"{label}: beginning LARS path")
+    alphas, active, coefs = lars_path(
+        A_tilde.C.reorder(["SV", "basis"]).data.real,
+        y_tilde.C.reorder("SV").data.real,
+        method="lasso",
+        positive=True,
+        max_iter=400,
+        return_path=True,
+    )
+    print(f"{label}: done with LARS path")
+    # LARS coefficients are still on A's original basis axis; only the
+    # residual coordinates have been compressed.
+    coef_path = nddata(coefs, ["basis", "alpha"])
+    coef_path.setaxis("basis", A_tilde.getaxis("basis"))
+    coef_path.setaxis("alpha", alphas)
+    # }}}
+
+    # {{{ evaluate path with pyspecdata algebra
+    coef_show = coef_path.C["alpha", -1]
+    basis_axis = A.getaxis("basis")
+    lorentzian_mask = basis_axis < first_baseline_basis
+    baseline_mask = ~lorentzian_mask
+    baseline = (
+        A.C["basis", baseline_mask].along("basis")
+        @ coef_show.C["basis", baseline_mask]
+    )
+    baseline_subtracted = (
+        A.C["basis", lorentzian_mask].along("basis")
+        @ coef_show.C["basis", lorentzian_mask]
+    )
+    weighted_kernel = (A * coef_show).C.reorder(["basis", Bname])
+    # SVD/dot bookkeeping can leave complex dtype; the original field-domain
+    # kernel and ESR data are real.
+    for j in [baseline, baseline_subtracted, weighted_kernel]:
+        j.data = real(j.data)
+    fit_show = baseline + baseline_subtracted
+    coef_amplitudes = abs(coef_show).data
+    coef_cutoff = coef_threshold_frac * coef_amplitudes[lorentzian_mask].max()
+    l1_path = coef_path.C.sum("basis").data
+    residual_path = sqrt(
+        (abs((A_tilde.C.along("basis") @ coef_path) - y_tilde) ** 2).sum("SV")
+    ).data
+    # }}}
+
+    fl.next(f"{label}: positive LARS path")
+    plot(l1_path, residual_path, "o-")
+    axvline(coef_show.C.sum("basis").data.item(), linestyle="--", color="k")
+    xlabel(r"$\mathbf{1}^{\mathsf{T}}\mathbf{c}$")
+    ylabel(
+        r"$\left\|\widetilde{\mathbf{A}}\mathbf{c}"
+        r"-\widetilde{\mathbf{y}}\right\|_2$"
+    )
+    title("positive Lorentzian/Hermite LASSO path")
+
+    fl.next(f"{label}: weighted basis functions")
+    print(weighted_kernel.data.dtype)
+    ax = subplot(1, 2, 1)
+    fl.image(weighted_kernel, interpolation="auto", ax=ax)
+    ax.set_title("basis functions times fitted coefficients")
+    ax = subplot(1, 2, 2)
+    ax.semilogy(basis_axis, coef_amplitudes, ".")
+    ax.axhline(coef_cutoff, linestyle="--", color="k")
+    ax.set_xlabel("original basis index")
+    ax.set_ylabel("coefficient amplitude")
+    ax.set_title("fit coefficient amplitudes")
+
+    fl.next(f"{label}: fit at end of path")
+    plot(d, label="data", alpha=0.7)
+    plot(fit_show, label="full reconstruction", alpha=0.7)
+    plot(d - fit_show, label="full residual", alpha=0.7)
+    plot(baseline, label="baseline", alpha=0.7)
+    plot(baseline_subtracted, label="baseline subtracted", alpha=0.7)
+    legend()
+    return {
+        "coef_show": coef_show,
+        "coef_cutoff": coef_cutoff,
+        "lorentzian_mask": lorentzian_mask,
+    }
 
 
 init_logging(level="info")
@@ -160,11 +243,32 @@ with figlist_var() as fl:
     A.smoosh(["center", "lambda_L"], "basis")
     n_lorentzian_basis = A.shape["basis"]
     A.setaxis("basis", r_[0:n_lorentzian_basis]).set_units("basis", None)
-    H = build_hermite_baseline_basis(
-        d,
-        Bname,
-        baseline_norm_ratio * sqrt((abs(A) ** 2).sum(Bname)).data.max(),
+
+    # {{{ build Hermite baseline basis: generate ± Hermite polynomial columns
+    # Hermites use the standard H_n/sqrt(2^n n!) relative normalization, then
+    # get boosted so the L1 path prefers smooth baseline terms over very wide
+    # Lorentzians.  Both signs are included because the solver coefficients are
+    # constrained positive.
+    x = d.getaxis(Bname)
+    x_scaled = 2 * (x - x.mean()) / (x[-1] - x[0])
+    hermites = [
+        nddata(
+            hermval(x_scaled, [0] * order + [1])
+            / sqrt(2**order * factorial(order)),
+            Bname,
+        )
+        .setaxis(Bname, x)
+        .set_units(Bname, d.get_units(Bname))
+        for order in range(n_hermite)
+    ]
+    H = concat(hermites + [-j for j in hermites], "basis")
+    H *= (
+        baseline_norm_ratio
+        * sqrt((abs(A) ** 2).sum(Bname)).data.max()
+        / sqrt((abs(H) ** 2).sum(Bname))
     )
+    # }}}
+
     A = concat(
         [
             A,
@@ -187,85 +291,36 @@ with figlist_var() as fl:
             )
     title("reduced Lorentzian-derivative basis")
 
-    # {{{ SVD-compress residual coordinates
-    U, Sigma, Vh = A.C.svd(Bname, "basis")
-    U.set_units(Bname, d.get_units(Bname))
-    A_tilde = Sigma * Vh
-    y_tilde = U.C.reorder(["SV", Bname]).along(Bname) @ d
+    full_fit = fit_lars_path(
+        fl,
+        "full basis",
+        A,
+        d,
+        Bname,
+        n_lorentzian_basis,
+        coef_threshold_frac,
+    )
+    basis_axis = A.getaxis("basis")
+    coef_amplitudes = abs(full_fit["coef_show"]).data
+    reduced_basis_mask = basis_axis >= n_lorentzian_basis
+    reduced_basis_mask |= (
+        (basis_axis < n_lorentzian_basis)
+        & (coef_amplitudes >= full_fit["coef_cutoff"])
+    )
     print(
-        "during compression, d was reduced from",
-        d.shape,
-        "to",
-        y_tilde.shape,
+        "reduced basis keeps",
+        reduced_basis_mask[:n_lorentzian_basis].sum(),
+        "of",
+        n_lorentzian_basis,
+        "Lorentzian columns",
     )
-    # }}}
-
-    # {{{ positive LARS solver boundary
-    print("beginning LARS path")
-    alphas, active, coefs = lars_path(
-        A_tilde.C.reorder(["SV", "basis"]).data.real,
-        y_tilde.C.reorder("SV").data.real,
-        method="lasso",
-        positive=True,
-        max_iter=400,
-        return_path=True,
+    fit_lars_path(
+        fl,
+        "thresholded Lorentzian basis",
+        A["basis", reduced_basis_mask],
+        d,
+        Bname,
+        n_lorentzian_basis,
+        coef_threshold_frac,
     )
-    print("done with LARS path")
-    # Immediately wrap solver output back into labeled nddata.
-    coef_path = nddata(coefs, ["basis", "alpha"])
-    coef_path.setaxis("basis", A_tilde.getaxis("basis"))
-    coef_path.setaxis("alpha", alphas)
-    # }}}
-
-    # {{{ evaluate path with pyspecdata algebra
-    # Show the least-regularized point in the path.
-    coef_show = coef_path.C["alpha", -1]
-    baseline = (
-        A.C["basis", n_lorentzian_basis:].along("basis")
-        @ coef_show.C["basis", n_lorentzian_basis:]
-    )
-    baseline_subtracted = (
-        A.C["basis", 0:n_lorentzian_basis].along("basis")
-        @ coef_show.C["basis", 0:n_lorentzian_basis]
-    )
-    weighted_kernel = (A * coef_show).C.reorder(["basis", Bname])
-    # SVD/dot bookkeeping can leave complex dtype; the original field-domain
-    # kernel and ESR data are real.
-    for j in [baseline, baseline_subtracted, weighted_kernel]:
-        j.data = real(j.data)
-    fit_show = baseline + baseline_subtracted
-    # }}}
-
-    fl.next("positive LARS path")
-    plot(
-        coef_path.C.sum("basis").data,
-        sqrt(
-            (
-                abs((A_tilde.C.along("basis") @ coef_path) - y_tilde) ** 2
-            ).sum("SV")
-        ).data,
-        "o-",
-    )
-    xlabel("positive L1 mass 1ᵀc")
-    ylabel("compressed residual norm ‖Ãc − ỹ‖₂")
-    title("positive Lorentzian/Hermite LASSO path")
-
-    fl.next("weighted basis functions")
-    print(weighted_kernel.data.dtype)
-    ax = subplot(1, 2, 1)
-    fl.image(weighted_kernel, interpolation="auto", ax=ax)
-    ax.set_title("basis functions times fitted coefficients")
-    ax = subplot(1, 2, 2)
-    ax.semilogy(coef_show.getaxis("basis"), abs(coef_show).data, ".")
-    ax.set_xlabel("basis index")
-    ax.set_ylabel("coefficient amplitude")
-    ax.set_title("fit coefficient amplitudes")
-
-    fl.next("fit at end of path")
-    plot(d, label="data", alpha=0.7)
-    plot(fit_show, label="full reconstruction", alpha=0.7)
-    plot(d - fit_show, label="full residual", alpha=0.7)
-    plot(baseline, label="baseline", alpha=0.7)
-    plot(baseline_subtracted, label="baseline subtracted", alpha=0.7)
-    legend()
 # }}}
