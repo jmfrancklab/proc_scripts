@@ -45,7 +45,7 @@ Reading off 1ᵀc along that path gives the desired residual-vs-L1 curve.
 # vim: set foldmethod=marker :
 
 from pyspecdata import *
-from numpy import r_, pi, logspace, sqrt, log10, real
+from numpy import r_, pi, logspace, sqrt, log10, real, empty
 from numpy.polynomial.hermite import hermval
 from matplotlib.pyplot import title, xlabel, ylabel, legend, subplot, axvline
 from sklearn.linear_model import lars_path
@@ -65,6 +65,9 @@ n_hermite = 5
 hermite_amplitude_scale = 1
 lorentzian_B_range = (0.3468, 0.356)
 lambda_frac_from_edge = 5  # prevent lopsided contributions
+# Weight the stacked outside-region rows: this makes Hermite-only baseline
+# mismatch outside the active spectrum cost more than ordinary full-fit RMS.
+baseline_region_rms_multiplier = 5
 coef_threshold_frac = 1e-2
 # }}}
 
@@ -81,11 +84,8 @@ def build_lorentzian_basis(
         center_limits = (x[0], x[-1])
     # go for 5x the pixel size (decayed to 0 at end), b/c otherwise, we get weird discretization issues
     lambda_L_min = (x[1] - x[0]) * 5
-    # lambda_L < ΔB - 2*lambda_frac_from_edge*lambda_L
-    # lambda_L + 2*lambda_frac_from_edge*lambda_L < ΔB
-    # lambda_L < ΔB / (1 + 2*lambda_frac_from_edge)
     lambda_L_max = (center_limits[1] - center_limits[0]) / (
-        1 + 2 * lambda_frac_from_edge
+        2 * lambda_frac_from_edge
     )
     if lambda_L_max <= lambda_L_min:
         raise ValueError(
@@ -96,25 +96,31 @@ def build_lorentzian_basis(
         lambda_L_min,
         lambda_L_max,
     )
-    lambda_L = nddata(
-        logspace(
-            log10(lambda_L_limits[0]), log10(lambda_L_limits[1]), n_lambda_L
-        ),
-        "lambda_L",
-    ).set_units("lambda_L", "T")
-    center = nddata(r_[0 : 1 : n_center * 1j], "center")
-    # Assume resonances are captured inside the acquired window: for each
-    # linewidth, only generate centers at least λ_L*lambda_frac_from_edge from either edge.
-    # Broader off-window structure belongs in the Hermite baseline.
-    center = (
-        center_limits[0]
-        + lambda_L * lambda_frac_from_edge
-        + center
-        * (
-            center_limits[1]
-            - center_limits[0]
-            - 2 * lambda_L * lambda_frac_from_edge
-        )
+    lambda_L_values = logspace(
+        log10(lambda_L_limits[0]), log10(lambda_L_limits[1]), n_lambda_L
+    )
+    center_values = r_[center_limits[0] : center_limits[1] : n_center * 1j]
+    center_pairs = center_values[:, None] + 0 * lambda_L_values[None, :]
+    lambda_L_pairs = 0 * center_values[:, None] + lambda_L_values[None, :]
+    # Use one fixed center grid for all linewidths, then keep only centers at
+    # least lambda_frac_from_edge*lambda_L from the active-region edge.  This
+    # assumes captured resonances live inside the window; broader off-window
+    # structure belongs in the Hermite baseline.
+    valid_pairs = (
+        center_pairs >= center_limits[0] + lambda_frac_from_edge * lambda_L_pairs
+    ) & (
+        center_pairs <= center_limits[1] - lambda_frac_from_edge * lambda_L_pairs
+    )
+    if not valid_pairs.any():
+        raise ValueError("No Lorentzian center/linewidth pairs survived filtering")
+    basis_axis = empty(
+        valid_pairs.sum(), dtype=[("center", float), ("lambda_L", float)]
+    )
+    basis_axis["center"] = center_pairs[valid_pairs]
+    basis_axis["lambda_L"] = lambda_L_pairs[valid_pairs]
+    center = nddata(basis_axis["center"], "basis").setaxis("basis", basis_axis)
+    lambda_L = nddata(basis_axis["lambda_L"], "basis").setaxis(
+        "basis", basis_axis
     )
     # The raw derivative shape has linewidth-independent peak amplitude.
     # Physically, equal ESR spin count would give peak-to-peak amplitude
@@ -149,6 +155,7 @@ def fit_lars_path(
     first_baseline_basis,
     coef_threshold_frac,
     active_B_range=None,
+    baseline_region_rms_multiplier=1,
 ):
     basis_axis = A.getaxis("basis")
     lorentzian_mask = basis_axis < first_baseline_basis
@@ -162,12 +169,15 @@ def fit_lars_path(
             # allowed to explain the data.  The full, original rows still measure
             # the overall reconstruction RMS.
             A_outside["basis", lorentzian_mask] *= 0
+            A_outside *= baseline_region_rms_multiplier
+            d_outside = d.C[Bname, outside_active] * baseline_region_rms_multiplier
             A_fit = concat([A, A_outside], Bname)
-            d_fit = concat([d, d.C[Bname, outside_active]], Bname)
+            d_fit = concat([d, d_outside], Bname)
             print(
                 f"{label}: added",
                 outside_active.sum(),
-                "outside-active-region baseline rows",
+                "outside-active-region baseline rows with multiplier",
+                baseline_region_rms_multiplier,
             )
         else:
             A_fit = A
@@ -295,11 +305,6 @@ with figlist_var() as fl:
     print("note that this is real, as it should be", A.data.dtype)
     print("preview basis shape", preview_A.shape)
 
-    # Keep A as nddata until the solver boundary below.
-
-    # Collapse the physical coefficient grid only after constructing the basis.
-    # The coefficient vector c still indexes individual (center, λ_L) components.
-    A.smoosh(["center", "lambda_L"], "basis")
     n_lorentzian_basis = A.shape["basis"]
     lorentzian_basis_axis = A.getaxis("basis")
     lambda_L_max = lorentzian_basis_axis["lambda_L"].max()
@@ -347,13 +352,12 @@ with figlist_var() as fl:
     # }}}
 
     fl.next("reduced basis preview")
-    for center_j in range(preview_n_center):
-        for lambda_j in range(preview_n_lambda_L):
-            plot(
-                preview_A["center", center_j]["lambda_L", lambda_j],
-                alpha=0.35,
-                human_units=False,
-            )
+    for basis_j in range(preview_A.shape["basis"]):
+        plot(
+            preview_A["basis", basis_j],
+            alpha=0.35,
+            human_units=False,
+        )
     mark_active_region(lorentzian_B_range)
     title("reduced Lorentzian-derivative basis")
 
@@ -366,6 +370,7 @@ with figlist_var() as fl:
         n_lorentzian_basis,
         coef_threshold_frac,
         lorentzian_B_range,
+        baseline_region_rms_multiplier,
     )
     basis_axis = A.getaxis("basis")
     coef_amplitudes = abs(full_fit["coef_show"]).data
@@ -389,5 +394,6 @@ with figlist_var() as fl:
         n_lorentzian_basis,
         coef_threshold_frac,
         lorentzian_B_range,
+        baseline_region_rms_multiplier,
     )
 # }}}
