@@ -62,7 +62,7 @@ preview_n_lambda_L = 4
 fit_n_center = 80
 fit_n_lambda_L = 8
 n_hermite = 2
-baseline_norm_ratio = 1
+baseline_cost_multiplier = 10
 lorentzian_B_range = (0.344, 0.358)
 lambda_frac_from_edge = 5  # prevent lopsided contributions
 coef_threshold_frac = 1e-2
@@ -80,9 +80,18 @@ def build_lorentzian_basis(
     if center_limits is None:
         center_limits = (x[0], x[-1])
     # go for 5x the pixel size (decayed to 0 at end), b/c otherwise, we get weird discretization issues
+    lambda_L_min = (x[1] - x[0]) * 5
+    lambda_L_max = (center_limits[1] - center_limits[0]) / (
+        2 * lambda_frac_from_edge
+    )
+    if lambda_L_max <= lambda_L_min:
+        raise ValueError(
+            "No Lorentzian linewidths fit inside lorentzian_B_range with "
+            f"lambda_frac_from_edge={lambda_frac_from_edge}"
+        )
     lambda_L_limits = (
-        (x[1] - x[0]) * 5,
-        (center_limits[1] - center_limits[0]) / 2,
+        lambda_L_min,
+        lambda_L_max,
     )
     lambda_L = nddata(
         logspace(
@@ -104,9 +113,15 @@ def build_lorentzian_basis(
             - 2 * lambda_L * lambda_frac_from_edge
         )
     )
-    # this is normalized by peak-to-peak amplitude.  This means it's less
-    # "costly" to make one broad lorentzian vs. summing many narrow ones
-    A = real(-1j * (1 + 1j * (d.fromaxis(Bname) - center) / lambda_L) ** -2)
+    # The raw derivative shape has linewidth-independent peak amplitude.
+    # Physically, equal ESR spin count would give peak-to-peak amplitude
+    # proportional to 1/lambda_L**2.  Multiplying that physical scale by
+    # lambda_L intentionally favors one broad Lorentzian over a collection of
+    # narrow Lorentzians, so the implemented compromise divides by lambda_L.
+    A = (
+        real(-1j * (1 + 1j * (d.fromaxis(Bname) - center) / lambda_L) ** -2)
+        / lambda_L
+    )
     A.setaxis(Bname, x)
     A.set_units(Bname, d.get_units(Bname))
     return A
@@ -247,13 +262,25 @@ with figlist_var() as fl:
     # The coefficient vector c still indexes individual (center, λ_L) components.
     A.smoosh(["center", "lambda_L"], "basis")
     n_lorentzian_basis = A.shape["basis"]
+    lorentzian_basis_axis = A.getaxis("basis")
+    broadest_lorentzian_amp = abs(
+        A[
+            "basis",
+            lorentzian_basis_axis["lambda_L"]
+            == lorentzian_basis_axis["lambda_L"].max(),
+        ]
+    ).data.max()
     A.setaxis("basis", r_[0:n_lorentzian_basis]).set_units("basis", None)
 
     # {{{ build Hermite baseline basis: generate ± Hermite polynomial columns
-    # Hermites use the standard H_n/sqrt(2^n n!) relative normalization, then
-    # get boosted so the L1 path prefers smooth baseline terms over very wide
-    # Lorentzians.  Both signs are included because the solver coefficients are
-    # constrained positive.
+    # Hermites use the standard H_n/sqrt(2^n n!) relative normalization.
+    # They do not have a spin-count meaning, so price them against the broadest
+    # smooth Lorentzian they might replace: scale their largest absolute
+    # excursion to broadest_lorentzian_amp / baseline_cost_multiplier.  This
+    # uses max amplitude rather than L2 norm because the Lorentzian expense was
+    # chosen from physical peak-to-peak scaling, not equal-energy atoms.
+    # Both signs are included because the solver coefficients are constrained
+    # positive.
     x = d.getaxis(Bname)
     x_scaled = 2 * (x - x.mean()) / (x[-1] - x[0])
     hermites = [
@@ -267,11 +294,12 @@ with figlist_var() as fl:
         for order in range(n_hermite)
     ]
     H = concat(hermites + [-j for j in hermites], "basis")
-    H *= (
-        baseline_norm_ratio
-        * sqrt((abs(A) ** 2).sum(Bname)).data.max()
-        / sqrt((abs(H) ** 2).sum(Bname))
+    hermite_scale = broadest_lorentzian_amp / (
+        baseline_cost_multiplier * abs(H).data.max()
     )
+    print("broadest Lorentzian amplitude", broadest_lorentzian_amp)
+    print("Hermite scale factor", hermite_scale)
+    H *= hermite_scale
     # }}}
 
     A = concat(
