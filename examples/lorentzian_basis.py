@@ -59,12 +59,12 @@ esr_file = "15N_S175R1a_pR_DHPC_today_200304.DSC"
 preview_n_center = 7
 preview_n_lambda_L = 8
 # The dense basis can be made larger again once we know everything is correct.
-fit_n_center = 80
+fit_n_center = 200
 fit_n_lambda_L = 8
-n_hermite = 5
+n_hermite = 1
 hermite_amplitude_scale = 1
 lorentzian_B_range = (0.3468, 0.356)
-lambda_frac_from_edge = 5  # prevent lopsided contributions
+lambda_frac_from_edge = 1  # prevent lopsided contributions
 # Weight the stacked outside-region rows: this makes Hermite-only baseline
 # mismatch outside the active spectrum cost more than ordinary full-fit RMS.
 baseline_region_rms_multiplier = 5
