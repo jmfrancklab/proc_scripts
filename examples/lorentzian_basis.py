@@ -45,7 +45,7 @@ Reading off 1ᵀc along that path gives the desired residual-vs-L1 curve.
 # vim: set foldmethod=marker :
 
 from pyspecdata import *
-from numpy import r_, pi, logspace, sqrt, log10, real, empty
+from numpy import r_, pi, logspace, sqrt, log10, real, empty, ones_like
 from numpy.polynomial.hermite import hermval
 from matplotlib.pyplot import title, xlabel, ylabel, legend, subplot, axvline
 from sklearn.linear_model import lars_path
@@ -61,10 +61,10 @@ preview_n_lambda_L = 8
 # The dense basis can be made larger again once we know everything is correct.
 fit_n_center = 200
 fit_n_lambda_L = 8
-n_hermite = 1
+n_hermite = 10
 hermite_amplitude_scale = 1
 lorentzian_B_range = (0.3468, 0.356)
-lambda_frac_from_edge = 1  # prevent lopsided contributions
+lambda_frac_from_edge = 0  # 0 keeps all centers inside lorentzian_B_range
 # Weight the stacked outside-region rows: this makes Hermite-only baseline
 # mismatch outside the active spectrum cost more than ordinary full-fit RMS.
 baseline_region_rms_multiplier = 5
@@ -84,9 +84,11 @@ def build_lorentzian_basis(
         center_limits = (x[0], x[-1])
     # go for 5x the pixel size (decayed to 0 at end), b/c otherwise, we get weird discretization issues
     lambda_L_min = (x[1] - x[0]) * 5
-    lambda_L_max = (center_limits[1] - center_limits[0]) / (
-        2 * lambda_frac_from_edge
-    )
+    active_width = center_limits[1] - center_limits[0]
+    if lambda_frac_from_edge > 0:
+        lambda_L_max = active_width / (2 * lambda_frac_from_edge)
+    else:
+        lambda_L_max = active_width
     if lambda_L_max <= lambda_L_min:
         raise ValueError(
             "No Lorentzian linewidths fit inside lorentzian_B_range with "
@@ -102,15 +104,20 @@ def build_lorentzian_basis(
     center_values = r_[center_limits[0] : center_limits[1] : n_center * 1j]
     center_pairs = center_values[:, None] + 0 * lambda_L_values[None, :]
     lambda_L_pairs = 0 * center_values[:, None] + lambda_L_values[None, :]
-    # Use one fixed center grid for all linewidths, then keep only centers at
-    # least lambda_frac_from_edge*lambda_L from the active-region edge.  This
-    # assumes captured resonances live inside the window; broader off-window
-    # structure belongs in the Hermite baseline.
-    valid_pairs = (
-        center_pairs >= center_limits[0] + lambda_frac_from_edge * lambda_L_pairs
-    ) & (
-        center_pairs <= center_limits[1] - lambda_frac_from_edge * lambda_L_pairs
-    )
+    # Use one fixed center grid for all linewidths.
+    # Optionally reject centers close to the active-region edge, but
+    # default to no rejection now that the constant offset is removed
+    # explicitly below.
+    if lambda_frac_from_edge > 0:
+        valid_pairs = (
+            center_pairs
+            >= center_limits[0] + lambda_frac_from_edge * lambda_L_pairs
+        ) & (
+            center_pairs
+            <= center_limits[1] - lambda_frac_from_edge * lambda_L_pairs
+        )
+    else:
+        valid_pairs = ones_like(center_pairs, dtype=bool)
     if not valid_pairs.any():
         raise ValueError("No Lorentzian center/linewidth pairs survived filtering")
     basis_axis = empty(
@@ -290,6 +297,11 @@ d = d["harmonic", 0]["phase", 0]
 d[Bname] *= 1e-4
 d.set_units(Bname, "T")
 d.set_ft_initial(Bname, "f").set_ft_prop(Bname, "time_not_aliased")
+# Remove the constant offset explicitly; otherwise the positive Lorentzian
+# and baseline basis spend most of their effort reproducing DC.
+dc_offset = d.C.mean(Bname)
+print("subtracting constant offset", dc_offset.data.item())
+d -= dc_offset
 # }}}
 
 # {{{ plots
