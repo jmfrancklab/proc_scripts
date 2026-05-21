@@ -49,6 +49,7 @@ from numpy import r_, pi, logspace, sqrt, log10, real, empty, ones_like
 from numpy.polynomial.hermite import hermval
 from matplotlib.pyplot import title, xlabel, ylabel, legend, subplot, axvline
 from sklearn.linear_model import lars_path
+from scipy.optimize import nnls
 from math import factorial
 import os
 
@@ -69,6 +70,7 @@ lambda_frac_from_edge = 0  # 0 keeps all centers inside lorentzian_B_range
 # mismatch outside the active spectrum cost more than ordinary full-fit RMS.
 baseline_region_rms_multiplier = 5
 coef_threshold_frac = 1e-2
+nnls_maxiter_factor = 10
 # }}}
 
 
@@ -207,13 +209,16 @@ def fit_lars_path(
     # }}}
 
     # {{{ positive LARS solver boundary
-    print(f"{label}: beginning LARS path")
+    X = A_tilde.C.reorder(["SV", "basis"]).data.real
+    y = y_tilde.C.reorder("SV").data.real
+    lars_max_iter = max(400, X.shape[1])
+    print(f"{label}: beginning LARS path with max_iter", lars_max_iter)
     alphas, active, coefs = lars_path(
-        A_tilde.C.reorder(["SV", "basis"]).data.real,
-        y_tilde.C.reorder("SV").data.real,
+        X,
+        y,
         method="lasso",
         positive=True,
-        max_iter=400,
+        max_iter=lars_max_iter,
         return_path=True,
     )
     print(f"{label}: done with LARS path")
@@ -224,8 +229,17 @@ def fit_lars_path(
     coef_path.setaxis("alpha", alphas)
     # }}}
 
+    # {{{ NNLS endpoint
+    # The LARS path is useful for sparsity diagnostics, but with a large basis it
+    # can stop far from the least-regularized positive fit.  Use NNLS for the
+    # actual endpoint reconstruction and coefficient thresholding.
+    coef_nnls, nnls_residual = nnls(X, y, maxiter=nnls_maxiter_factor * X.shape[1])
+    coef_show = nddata(coef_nnls, "basis")
+    coef_show.setaxis("basis", A_tilde.getaxis("basis"))
+    print(f"{label}: NNLS compressed residual", nnls_residual)
+    # }}}
+
     # {{{ evaluate path with pyspecdata algebra
-    coef_show = coef_path.C["alpha", -1]
     baseline = (
         A.C["basis", baseline_mask].along("basis")
         @ coef_show.C["basis", baseline_mask]
@@ -250,13 +264,16 @@ def fit_lars_path(
 
     fl.next(f"{label}: positive LARS path")
     plot(l1_path, residual_path, "o-")
-    axvline(coef_show.C.sum("basis").data.item(), linestyle="--", color="k")
+    nnls_l1 = coef_show.C.sum("basis").data.item()
+    axvline(nnls_l1, linestyle="--", color="k")
+    plot([nnls_l1], [nnls_residual], "kx", label="NNLS endpoint")
     xlabel(r"$\mathbf{1}^{\mathsf{T}}\mathbf{c}$")
     ylabel(
         r"$\left\|\widetilde{\mathbf{A}}\mathbf{c}"
         r"-\widetilde{\mathbf{y}}\right\|_2$"
     )
     title("positive Lorentzian/Hermite LASSO path")
+    legend()
 
     fl.next(f"{label}: weighted basis functions")
     print(weighted_kernel.data.dtype)
