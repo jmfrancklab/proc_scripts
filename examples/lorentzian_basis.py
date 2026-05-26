@@ -49,9 +49,9 @@ from numpy import r_, pi, logspace, sqrt, log10, real, empty, ones_like
 from numpy.polynomial.hermite import hermval
 from matplotlib.pyplot import title, xlabel, ylabel, legend, subplot, axvline
 from sklearn.linear_model import lars_path
-from scipy.optimize import nnls
-from math import factorial
+from math import factorial, ceil
 import os
+import warnings
 
 # {{{ changeable parameters
 Bname = "$B_0$"
@@ -62,7 +62,7 @@ preview_n_lambda_L = 8
 # The dense basis can be made larger again once we know everything is correct.
 fit_n_center = 200
 fit_n_lambda_L = 8
-n_hermite = 10
+n_hermite = 5 
 hermite_amplitude_scale = 1
 lorentzian_B_range = (0.3468, 0.356)
 lambda_frac_from_edge = 0  # 0 keeps all centers inside lorentzian_B_range
@@ -70,7 +70,9 @@ lambda_frac_from_edge = 0  # 0 keeps all centers inside lorentzian_B_range
 # mismatch outside the active spectrum cost more than ordinary full-fit RMS.
 baseline_region_rms_multiplier = 5
 coef_threshold_frac = 1e-2
-nnls_maxiter_factor = 10
+lars_initial_max_iter = 5000
+lars_max_iter_limit = 50000
+lars_residual_target_multiplier = 2
 # }}}
 
 
@@ -211,35 +213,122 @@ def fit_lars_path(
     # {{{ positive LARS solver boundary
     X = A_tilde.C.reorder(["SV", "basis"]).data.real
     y = y_tilde.C.reorder("SV").data.real
-    lars_max_iter = max(400, X.shape[1])
-    print(f"{label}: beginning LARS path with max_iter", lars_max_iter)
-    alphas, active, coefs = lars_path(
-        X,
-        y,
-        method="lasso",
-        positive=True,
-        max_iter=lars_max_iter,
-        return_path=True,
-    )
-    print(f"{label}: done with LARS path")
+    x = d.getaxis(Bname)
+    if active_B_range is None:
+        inside_active = ones_like(x, dtype=bool)
+    else:
+        inside_active = (x >= active_B_range[0]) & (x <= active_B_range[1])
+    outside_active = ~inside_active
+
+    def coefficient_residual_stats(coef_values):
+        coef_candidate = nddata(coef_values, "basis")
+        coef_candidate.setaxis("basis", A.getaxis("basis"))
+        baseline_candidate = (
+            A.C["basis", baseline_mask].along("basis")
+            @ coef_candidate.C["basis", baseline_mask]
+        )
+        baseline_subtracted_candidate = (
+            A.C["basis", lorentzian_mask].along("basis")
+            @ coef_candidate.C["basis", lorentzian_mask]
+        )
+        for j in [baseline_candidate, baseline_subtracted_candidate]:
+            j.data = real(j.data)
+        fit_candidate = baseline_candidate + baseline_subtracted_candidate
+        active_residual = (d - fit_candidate).C[Bname, inside_active]
+        active_rms = sqrt((abs(active_residual) ** 2).mean(Bname)).data.item()
+        if outside_active.any():
+            baseline_residual = (
+                d.C[Bname, outside_active]
+                - baseline_candidate.C[Bname, outside_active]
+            )
+            baseline_rms = sqrt(
+                (abs(baseline_residual) ** 2).mean(Bname)
+            ).data.item()
+        else:
+            baseline_rms = active_rms / lars_residual_target_multiplier
+        return {
+            "active_rms": active_rms,
+            "baseline_rms": baseline_rms,
+            "target_rms": lars_residual_target_multiplier * baseline_rms,
+        }
+
+    lars_max_iter = max(lars_initial_max_iter, 3 * X.shape[1])
+    while True:
+        print(f"{label}: beginning LARS path with max_iter", lars_max_iter)
+        alphas, active, coefs = lars_path(
+            X,
+            y,
+            method="lasso",
+            positive=True,
+            max_iter=lars_max_iter,
+            alpha_min=0,
+            return_path=True,
+        )
+        print(f"{label}: done with LARS path")
+        final_stats = coefficient_residual_stats(coefs[:, -1])
+        if final_stats["active_rms"] <= final_stats["target_rms"]:
+            break
+        if lars_max_iter >= lars_max_iter_limit:
+            warnings.warn(
+                f"{label}: LARS reached max_iter={lars_max_iter} but active "
+                f"RMS {final_stats['active_rms']:.3g} remained above target "
+                f"{final_stats['target_rms']:.3g}; using best available point"
+            )
+            break
+        target_rms = max(final_stats["target_rms"], 1e-15)
+        new_max_iter = min(
+            lars_max_iter_limit,
+            ceil(
+                lars_max_iter
+                * max(2, 1.5 * final_stats["active_rms"] / target_rms)
+            ),
+        )
+        warnings.warn(
+            f"{label}: final LARS active RMS {final_stats['active_rms']:.3g} "
+            f"exceeded target {final_stats['target_rms']:.3g}; rerunning with "
+            f"max_iter={new_max_iter}"
+        )
+        lars_max_iter = new_max_iter
     # LARS coefficients are still on A's original basis axis; only the
     # residual coordinates have been compressed.
     coef_path = nddata(coefs, ["basis", "alpha"])
     coef_path.setaxis("basis", A_tilde.getaxis("basis"))
     coef_path.setaxis("alpha", alphas)
-    # }}}
 
-    # {{{ NNLS endpoint
-    # The LARS path is useful for sparsity diagnostics, but with a large basis it
-    # can stop far from the least-regularized positive fit.  Use NNLS for the
-    # actual endpoint reconstruction and coefficient thresholding.
-    coef_nnls, nnls_residual = nnls(X, y, maxiter=nnls_maxiter_factor * X.shape[1])
-    coef_show = nddata(coef_nnls, "basis")
-    coef_show.setaxis("basis", A_tilde.getaxis("basis"))
-    print(f"{label}: NNLS compressed residual", nnls_residual)
+    if final_stats["active_rms"] <= final_stats["target_rms"]:
+        selected_idx = coefs.shape[1] - 1
+        selected_stats = final_stats
+        for j in range(coefs.shape[1] - 2, -1, -1):
+            this_stats = coefficient_residual_stats(coefs[:, j])
+            if this_stats["active_rms"] <= this_stats["target_rms"]:
+                selected_idx = j
+                selected_stats = this_stats
+            else:
+                break
+    else:
+        selected_idx = coefs.shape[1] - 1
+        selected_stats = final_stats
+        for j in range(coefs.shape[1] - 2, -1, -1):
+            this_stats = coefficient_residual_stats(coefs[:, j])
+            if this_stats["active_rms"] < selected_stats["active_rms"]:
+                selected_idx = j
+                selected_stats = this_stats
+    print(
+        f"{label}: selected LARS index",
+        selected_idx,
+        "alpha",
+        alphas[selected_idx],
+        "active RMS",
+        selected_stats["active_rms"],
+        "baseline RMS",
+        selected_stats["baseline_rms"],
+        "target RMS",
+        selected_stats["target_rms"],
+    )
     # }}}
 
     # {{{ evaluate path with pyspecdata algebra
+    coef_show = coef_path.C["alpha", selected_idx]
     baseline = (
         A.C["basis", baseline_mask].along("basis")
         @ coef_show.C["basis", baseline_mask]
@@ -264,9 +353,14 @@ def fit_lars_path(
 
     fl.next(f"{label}: positive LARS path")
     plot(l1_path, residual_path, "o-")
-    nnls_l1 = coef_show.C.sum("basis").data.item()
-    axvline(nnls_l1, linestyle="--", color="k")
-    plot([nnls_l1], [nnls_residual], "kx", label="NNLS endpoint")
+    selected_l1 = coef_show.C.sum("basis").data.item()
+    axvline(selected_l1, linestyle="--", color="k")
+    plot(
+        [selected_l1],
+        [residual_path[selected_idx]],
+        "kx",
+        label="selected residual target",
+    )
     xlabel(r"$\mathbf{1}^{\mathsf{T}}\mathbf{c}$")
     ylabel(
         r"$\left\|\widetilde{\mathbf{A}}\mathbf{c}"
