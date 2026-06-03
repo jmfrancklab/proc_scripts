@@ -13,7 +13,7 @@ def align_esr_2d(
     indirect_dim,
     direct_dim="$B_0$",
     correlation_slice=None,
-    zerofill_factor=10,
+    zerofill_factor=20,
     fl=None,
 ):
     r"""Correlation-align a 2D ESR data set in place.
@@ -37,7 +37,7 @@ def align_esr_2d(
     correlation_slice: tuple default None
         Optional range of direct-axis shifts over which to search for the
         correlation maximum.
-    zerofill_factor: int default 10
+    zerofill_factor: int default 20
         Zero-filling factor used only while calculating the correlation
         function.  This gives a finer shift axis without changing the number
         of points in the final aligned spectrum.
