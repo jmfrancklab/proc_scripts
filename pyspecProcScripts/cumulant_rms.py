@@ -14,6 +14,12 @@ def cumulant_rms(d, indirect_dim, direct_dim="$B_0$"):
     # view of the data, so an additional .C before .real is not needed.
     average_spectrum = d.real.C.mean(indirect_dim)
     cumulant = d.real.C.run(mydiff, indirect_dim)
+    # mydiff preserves the axis length, but the final difference point is not
+    # meaningful for this cumulant, so explicitly zero it before squaring.
+    final_difference_point = [slice(None, None, None)]
+    final_difference_point *= len(cumulant.dimlabels)
+    final_difference_point[cumulant.dimlabels.index(indirect_dim)] = -1
+    cumulant.data[tuple(final_difference_point)] = 0
 
     # Normalize the point-to-point differences by the vector norm of each
     # indirect trace, so the diagnostic emphasizes shape changes rather than

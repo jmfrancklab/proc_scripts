@@ -13,6 +13,7 @@ def align_esr_2d(
     indirect_dim,
     direct_dim="$B_0$",
     correlation_slice=None,
+    zerofill_factor=10,
     fl=None,
 ):
     r"""Correlation-align a 2D ESR data set in place.
@@ -36,6 +37,10 @@ def align_esr_2d(
     correlation_slice: tuple default None
         Optional range of direct-axis shifts over which to search for the
         correlation maximum.
+    zerofill_factor: int default 10
+        Zero-filling factor used only while calculating the correlation
+        function.  This gives a finer shift axis without changing the number
+        of points in the final aligned spectrum.
     fl: figlist_var default None
         If supplied, show diagnostic plots similar to :func:`align_esr`.
 
@@ -81,11 +86,16 @@ def align_esr_2d(
 
     # Calculate all correlations at once.  The direct-axis Fourier transform
     # turns the product with the conjugated reference into a shift axis.
+    # We zero fill only the correlation calculation, because this finds shifts
+    # on a finer grid while leaving the final ESR spectra at their original
+    # number of direct-axis points.
+    correlation_pad = d.data.shape[d.dimlabels.index(direct_dim)]
+    correlation_pad *= zerofill_factor
     correlation = d.C
     correlation.ift(direct_dim)
     correlation *= average_spectrum
     correlation.ft_new_startpoint(direct_dim, "f")
-    correlation.ft(direct_dim, shift=True)
+    correlation.ft(direct_dim, shift=True, pad=correlation_pad)
     if fl:
         fl.next("2D ESR correlation")
         fl.image(correlation.real)
