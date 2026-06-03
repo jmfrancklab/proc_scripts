@@ -18,19 +18,29 @@ rcParams["image.aspect"] = "auto"
 # Load a 2D ESR file whose direct field dimension is $B_0$ and whose indirect
 # dimension is Temperature.  This placeholder filename is intended to be
 # swapped for a real file on the user's computer.
-d = find_file("example.DSC")
+d = find_file("Temperature_vs_Time_250428.h5", exp_type="rs_proc_data", expno="all_spectra").real
+d.reorder("$B_0$", first=False)
 
 with figlist_var() as fl:
     fl.next("raw 2D ESR")
-    fl.image(d.real.C.reorder(["Temperature", "$B_0$"]))
+    fl.image(d)
 
-    fl.next("cumulant RMS before alignment")
-    fl.plot(cumulant_rms(d, "Temperature"), label="before")
+    fl.next("difference from average, raw")
+    fl.image(d['Time':(0,400)] - d['Time':(0,400)].C.mean('Time'))
 
-    align_esr_2d(d, "Temperature", fl=fl)
+    fl.next("difference from average, raw, plot a few")
+    fl.plot((d['Time':(0,400)] - d['Time':(0,400)].C.mean('Time'))['Time',::100])
+
+    fl.next("cumulant RMS", legend=True)
+    fl.plot(cumulant_rms(d, "Time"), label="before alignment")
+
+    align_esr_2d(d, "Time", fl=fl)
 
     fl.next("aligned 2D ESR")
-    fl.image(d.C.reorder(["Temperature", "$B_0$"]))
+    fl.image(d.reorder("$B_0$", first=False))
 
-    fl.next("cumulant RMS after alignment")
-    fl.plot(cumulant_rms(d, "Temperature"), label="after")
+    fl.next("cumulant RMS")
+    fl.plot(cumulant_rms(d, "Time"), label="after alignment")
+
+    fl.next("difference from average, after align")
+    fl.image(d['Time':(0,400)] - d['Time':(0,400)].C.mean('Time'))
