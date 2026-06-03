@@ -43,7 +43,7 @@ def calculate_esr_2d_shift(
     if ax is not None:
         correlation_for_plot = correlation.real.C.reorder(
             [indirect_dim, direct_dim]
-        )
+        )[direct_dim, ::zerofill_factor]
         ax.imshow(
             correlation_for_plot.data,
             aspect="auto",
@@ -62,8 +62,8 @@ def align_esr_2d(
     indirect_dim,
     direct_dim="$B_0$",
     correlation_slice=None,
-    zerofill_factor=200,
-    n_chunks=5,
+    zerofill_factor=60,
+    n_chunks=12,
     chunk_extender_frac=0.1,
     fl=None,
 ):
@@ -176,7 +176,7 @@ def align_esr_2d(
             direct_dim=direct_dim,
             correlation_slice=correlation_slice,
             zerofill_factor=zerofill_factor,
-            ax=ax_array[j],
+            ax=ax_array[j]
         )
         if ax_array[j] is not None:
             ax_array[j].set_title(
@@ -231,8 +231,7 @@ def align_esr_2d(
         plt.plot(
             shifts.getaxis(indirect_dim),
             shifts.data,
-            "x",
-            alpha=0.5,
+            alpha=0.2,
             color="k",
             label="stitched average",
         )
