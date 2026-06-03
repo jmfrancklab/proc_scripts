@@ -22,7 +22,7 @@ d = find_file("example.DSC")
 
 with figlist_var() as fl:
     fl.next("raw 2D ESR")
-    fl.image(d.real)
+    fl.image(d.real.C.reorder(["Temperature", "$B_0$"]))
 
     fl.next("cumulant RMS before alignment")
     fl.plot(cumulant_rms(d, "Temperature"), label="before")
@@ -30,7 +30,7 @@ with figlist_var() as fl:
     align_esr_2d(d, "Temperature", fl=fl)
 
     fl.next("aligned 2D ESR")
-    fl.image(d)
+    fl.image(d.C.reorder(["Temperature", "$B_0$"]))
 
     fl.next("cumulant RMS after alignment")
     fl.plot(cumulant_rms(d, "Temperature"), label="after")
