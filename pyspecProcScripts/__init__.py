@@ -21,6 +21,8 @@ _EXPORTS = {
         "rough_table_of_integrals",
     ),
     "align_esr": (".third_level.align_esr", "align_esr"),
+    "align_esr_2d": (".third_level.align_esr_2d", "align_esr_2d"),
+    "cumulant_rms": (".cumulant_rms", "cumulant_rms"),
     "lookup_table": (".load_data", "lookup_table"),
     "expand_limits": (".plotting", "expand_limits"),
     "draw_limits": (".plotting", "draw_limits"),
