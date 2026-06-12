@@ -27,7 +27,7 @@ Motional narrowing (extreme-narrowing limit, ω τ\ :sub:`c` ≪ 1 at 15 MHz):
     T(p) = T₀ + α p
 
 The motional narrowing fit is **only attempted when there are ≥ 4 FIR power
-points**. With the current two-point dataset the script produces valid T₁
+points**. With the example two-point dataset the script produces valid T₁
 maps and the k\ :sub:`ρ`\ ⁻¹ linear fit, but skips the Arrhenius fit.
 
 Key proc_scripts conventions followed
