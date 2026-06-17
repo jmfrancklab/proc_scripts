@@ -3,7 +3,7 @@
 This is the updated version of ``examples/broken/generate_integrals.py``.
 The old helper named ``generate_integrals`` is no longer exported by
 ``pyspecProcScripts``; the current supported route is
-``rough_table_of_integrals``.
+``table_of_integrals``.
 """
 
 from collections import OrderedDict
@@ -69,12 +69,15 @@ with psd.figlist_var() as fl:
         data.reorder([cfg["indirect"], "t2"], first=False)
         data.ft("t2")
         data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
-        data_int, ax = prscr.rough_table_of_integrals(
+        data_int, ax = prscr.table_of_integrals(
             data,
             signal_range=cfg["signal_range"],
             signal_pathway=cfg["signal_pathway"],
             fl=fl,
             title=cfg["label"],
+            repeat_dims=cfg["indirect"],
+            center_aligned_peak=cfg["label"] != "Enhancement",
+            equal_energy_apodization=False,
         )
         fl.next(f"{cfg['label']} table of integrals")
         fl.plot(data_int, "o")

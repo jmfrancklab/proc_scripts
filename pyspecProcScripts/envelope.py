@@ -31,7 +31,7 @@ def fit_envelope(
         lambda_L=1 / 10e-3 / pi,
     )
     if fl:
-        envelope.settoguess()
+        envelope.set_to_guess()
         orig_guess = envelope.eval()
     envelope.fit()
     new_guess = envelope.output()
@@ -64,7 +64,7 @@ def fit_envelope(
     for j, newL in enumerate(lw_range):
         new_guess.update(lambda_L=newL)
         envelope.set_guess(new_guess)
-        envelope.settoguess()
+        envelope.set_to_guess()
         points_over = (
             envelope[direct:(0, t_at_exp_end)]
             - envelope.eval()[direct:(0, t_at_exp_end)]
@@ -73,6 +73,8 @@ def fit_envelope(
         points_over.run(lambda x: np.sqrt(abs(x) ** 2)).mean()
         amount_over[j] = points_over.item()
     # }}}
+    if not np.any(np.isfinite(amount_over)) or amount_over.max() == 0:
+        return lsq_lambda
     lamb = "$\\lambda_L$"
     env_expansion = psp.nddata(amount_over / amount_over.max(), [-1], [lamb])
     env_expansion.setaxis(lamb, lw_range).set_units(lamb, "Hz")
@@ -97,7 +99,7 @@ def fit_envelope(
         fl.plot(opt_lambda, "o")
     new_guess.update(lambda_L=opt_lambda.getaxis(lamb).item().real)
     envelope.set_guess(new_guess)
-    envelope.settoguess()
+    envelope.set_to_guess()
     if fl:
         fl.next(plot_name)
     env_out = envelope.output()

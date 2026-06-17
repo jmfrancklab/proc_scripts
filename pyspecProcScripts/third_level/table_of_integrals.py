@@ -1,4 +1,6 @@
 from ..correlation_alignment import correl_align
+from ..calc_error import calc_masked_variance
+from ..envelope import fit_envelope, L2G
 from ..phasing import (
     zeroth_order_ph,
     determine_sign,
@@ -29,7 +31,14 @@ def table_of_integrals(
     non_repeat_dims=None,
     alignment_sigma=150.0,
     max_shift=300.0,
+    center_aligned_peak=True,
     show_alignment_diagnostics=False,
+    propagate_error=True,
+    excluded_pathways=None,
+    require_unitary_error=True,
+    equal_energy_apodization=True,
+    apodization_lambda=None,
+    show_apodization_diagnostics=False,
 ):
     """Generate a table of integrals after correlation alignment.
 
@@ -78,10 +87,38 @@ def table_of_integrals(
         ``correl_align``.
     max_shift : float
         Maximum frequency shift allowed by ``correl_align``.
+    center_aligned_peak : boolean
+        If true, recenter the integration window on the peak of the aligned
+        average.  This is useful for FIR nodes, where the aligned average is a
+        good representative spectrum.  Set false for E(p) power trajectories,
+        where a single averaged center can be dominated by high-SNR/high-power
+        points.
     show_alignment_diagnostics : boolean
         If true, send the figure list into the Hermitian centering and
         correlation-alignment diagnostics.  The main four-panel table plot is
         always generated through ``fl``.
+    propagate_error : boolean
+        If true, estimate spectral-point variance from non-selected coherence
+        pathways and propagate it through the direct-dimension integral.
+    excluded_pathways : list of dicts
+        Pathways to mask before estimating the variance.  By default, only the
+        selected signal pathway is masked, so signal/artifact leakage into
+        other pathways contributes to the propagated error.
+    require_unitary_error : bool
+        Passed to ``calc_masked_variance``.  Keep true for freshly processed
+        data with unitary phase-cycling Fourier transforms; set false for
+        legacy/postprocessed data where the coherence-domain variance is used
+        with its existing scaling.
+    equal_energy_apodization : bool
+        If true, apply the DCCT equal-energy Lorentzian-to-Gaussian
+        apodization in the time domain after Hermitian centering and before
+        correlation alignment.
+    apodization_lambda : float or None
+        Lorentzian linewidth used for the L2G apodization.  If None, estimate
+        it from the selected pathway envelope.
+    show_apodization_diagnostics : bool
+        If true, show envelope-fit diagnostic plots used to determine the
+        apodization linewidth.
 
     Returns
     =======
@@ -163,10 +200,25 @@ def table_of_integrals(
         fl=fl if show_alignment_diagnostics else None,
     )
     s.setaxis(direct, lambda x: x - best_shift).register_axis({direct: 0})
+    if equal_energy_apodization:
+        # {{{ Apply DCCT equal-energy apodization after Hermitian centering
+        # L2G is a two-sided time-domain transformation, so the origin matters.
+        # Apply it only after the Hermitian test has located the echo/FID
+        # origin; otherwise the window is centered on the acquisition start and
+        # can create two apparent frequency centers in E(p).
+        if apodization_lambda is None:
+            apodization_lambda = fit_envelope(
+                select_pathway(s.C, signal_pathway),
+                direct=direct,
+                fl=fl if show_apodization_diagnostics else None,
+            )
+        s *= L2G(apodization_lambda, criterion="energy")(s.fromaxis(direct))
+        # }}}
     s.ft(direct)
     mysign_for_alignment = (
         select_pathway(s, signal_pathway).C.real.sum(direct).run(np.sign)
     )
+    mysign_for_alignment[lambda x: x == 0] = 1
 
     def frq_mask(x):
         nu_center = (
@@ -190,6 +242,7 @@ def table_of_integrals(
                     thisslice = thisslice[k, v]
         return coh_array
 
+    # {{{ Align repeated measurements to their optimized common average
     opt_shift = correl_align(
         s * mysign_for_alignment,
         frq_mask_fn=frq_mask,
@@ -200,9 +253,29 @@ def table_of_integrals(
         direct=direct,
         fl=fl if show_alignment_diagnostics else None,
     )
+    # }}}
     s.ift(direct).ift(list(signal_pathway.keys()))
     s *= np.exp(-1j * 2 * pi * opt_shift * s.fromaxis(direct))
     s.ft(direct).ft(list(signal_pathway.keys()))
+    aligned_for_error = s.C
+    if center_aligned_peak:
+        # {{{ Recenter the integration window on the aligned peak
+        # The correlation step aligns repeated traces to each other; it does
+        # not force the absolute resonance position to zero.  After the
+        # relative alignment, find the peak in the aligned average and rebuild
+        # the signal window around that frequency so the plotted/integrated
+        # slice is centered on the aligned signal rather than on the
+        # pre-alignment estimate.
+        aligned_peak = abs(
+            select_pathway(s[direct:signal_range_expanded].C, signal_pathway)
+        )
+        aligned_peak.mean_all_but([direct])
+        center_of_range = aligned_peak.argmax(direct).item()
+        signal_range = center_of_range + r_[-1, 1] * half_range
+        signal_range_expanded = (
+            center_of_range + expansion * r_[-1, 1] * half_range
+        )
+        # }}}
     s = select_pathway(s[direct:signal_range_expanded], signal_pathway)
     fl.image(
         s,
@@ -218,6 +291,41 @@ def table_of_integrals(
         signal_range,
     )
     s *= mysign
+    integral_error = None
+    spectral_datapoint_variance = None
+    if propagate_error and len(signal_pathway) > 0:
+        # {{{ Propagate DCCT leakage/noise from non-selected pathways
+        # The DCCT paper motivates inspecting all coherence-transfer pathways
+        # rather than treating them as discarded data.  Here, the selected
+        # signal pathway is masked, while the same frequency window in all
+        # other pathways is retained.  Therefore signal leakage and artifacts
+        # that land in non-selected pathways increase the spectral-point
+        # variance that is propagated into the final integral error.
+        error_source = aligned_for_error[direct:signal_range_expanded]
+        error_source *= mysign
+        if echo_like:
+            error_source = fid_from_echo(
+                error_source.set_error(None),
+                signal_pathway,
+                frq_center=center_of_range,
+                frq_half=half_range,
+            )
+        error_source = error_source[direct:signal_range]
+        error_source.set_prop("coherence_pathway", signal_pathway)
+        error_indirect_dims = [
+            j
+            for j in error_source.dimlabels
+            if j != direct and not j.startswith("ph")
+        ]
+        spectral_datapoint_variance = calc_masked_variance(
+            error_source,
+            excluded_frqs=[],
+            indirect=error_indirect_dims,
+            excluded_pathways=excluded_pathways,
+            direct=direct,
+            require_unitary=require_unitary_error,
+        )
+        # }}}
     fl.image(
         s,
         ax=ax2,
@@ -233,7 +341,7 @@ def table_of_integrals(
             signal_pathway,
             frq_center=center_of_range,
             frq_half=half_range,
-            fl=fl,
+            fl=fl if show_alignment_diagnostics else None,
         )
         s *= mysign
     else:
@@ -248,7 +356,39 @@ def table_of_integrals(
     ax3.set_title(
         "FID sliced" + (", phased," if echo_like else "") + " and aligned"
     )
-    s = s[direct:signal_range].real.integrate(direct).set_error(None)
+    final_slice = s[direct:signal_range]
+    if final_slice.shape[direct] < 2:
+        # {{{ Recover from an empty final slice after echo/FID conversion
+        # The alignment window is chosen in the original frequency-domain
+        # data.  For echo-like data, fid_from_echo can rebuild the direct axis
+        # so the old absolute frequency window no longer contains enough
+        # points.  Keep the same width, but center the final integration on
+        # the peak that is present in the aligned/FID-converted data.
+        final_peak = abs(s.C)
+        final_peak.mean_all_but([direct])
+        center_of_range = final_peak.argmax(direct).item()
+        signal_range = center_of_range + r_[-1, 1] * half_range
+        final_slice = s[direct:signal_range]
+        if final_slice.shape[direct] < 2:
+            raise ValueError(
+                "table_of_integrals could not find enough points in the "
+                "final integration window"
+            )
+        # }}}
+    s = final_slice.real
+    if spectral_datapoint_variance is not None:
+        df = s.get_ft_prop(direct, "df")
+        if df is None:
+            df = np.diff(s.getaxis(direct)[r_[0, 1]]).item()
+        N = s.shape[direct]
+        integral_error = (spectral_datapoint_variance.C * df**2 * N).run(
+            np.sqrt
+        )
+    s.integrate(direct).set_error(None)
+    if integral_error is not None:
+        if set(integral_error.dimlabels) == set(s.dimlabels):
+            integral_error.reorder(s.dimlabels)
+        s.set_error(integral_error.data)
     if inc_plot_color:
         s.set_plot_color_next()
     if "nScans" in s.dimlabels:
