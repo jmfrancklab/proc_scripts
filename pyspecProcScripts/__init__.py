@@ -20,6 +20,10 @@ _EXPORTS = {
         ".third_level.rough_table_of_integrals",
         "rough_table_of_integrals",
     ),
+    "table_of_integrals": (
+        ".third_level.table_of_integrals",
+        "table_of_integrals",
+    ),
     "align_esr": (".third_level.align_esr", "align_esr"),
     "lookup_table": (".load_data", "lookup_table"),
     "expand_limits": (".plotting", "expand_limits"),
