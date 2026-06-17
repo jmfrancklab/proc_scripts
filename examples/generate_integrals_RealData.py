@@ -2,13 +2,16 @@
 
 This is the updated version of
 ``examples/broken/generate_integrals_RealData.py``.  It uses the current
-``table_of_integrals`` workflow and writes the tables that
-``fit_ODNP_data.py`` expects:
+``table_of_integrals`` workflow and writes the top-level HDF5 nodes that
+``fit_ODNP_data.py`` expects in ``<source filename>_integrals.h5``:
 
 * ``Ep``: normalized enhancement integrals vs microwave power
 * ``R1p``: fitted relaxation rates vs microwave power, after FIR correlation
   alignment
 * ``T1p``: reciprocal of ``R1p``
+
+Each saved node also carries ``source_file`` and ``Apodization`` metadata so
+the downstream fit can identify how the table was generated.
 """
 
 from pathlib import Path
@@ -36,11 +39,11 @@ thisfile, thisexptype, nodename = (
 output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
+output_path = output_dir / output_file
 show_alignment_diagnostics = False
 alignment_mask_sigma = 150.0
 alignment_max_shift = 2000.0
 Ep_alignment_max_shift = 1000.0
-require_unitary_error = False
 equal_energy_apodization = True
 # }}}
 
@@ -107,7 +110,7 @@ with psd.figlist_var() as fl:
         max_shift=Ep_alignment_max_shift,
         center_aligned_peak=False,
         show_alignment_diagnostics=show_alignment_diagnostics,
-        require_unitary_error=require_unitary_error,
+        require_unitary_error=False,
         equal_energy_apodization=equal_energy_apodization,
     )
     Ep /= Ep["indirect", 0:1]
@@ -117,15 +120,16 @@ with psd.figlist_var() as fl:
     Ep["indirect"] = Ep["indirect"]["power"]
     Ep.set_units("indirect", "W").rename("indirect", "power")
     acq_params = Ep.get_prop("acq_params")
-    output_dir.mkdir(parents=True, exist_ok=True)
     Ep_to_save = Ep.C
     Ep_to_save.name("Ep")
     Ep_to_save.set_prop("acq_params", acq_params)
+    Ep_to_save.set_prop("source_file", thisfile)
+    Ep_to_save.set_prop("Apodization", bool(equal_energy_apodization))
     Ep_to_save.hdf5_write(
-        f"{output_file}/{dataset_id}",
+        output_file,
         directory=str(output_dir),
     )
-    print(f"saved {dataset_id}/Ep -> {output_dir / output_file}")
+    print(f"saved Ep -> {output_dir / output_file}")
     # }}}
 
     # {{{ Prepare node-by-node FIR range detection
@@ -232,7 +236,7 @@ with psd.figlist_var() as fl:
             alignment_sigma=alignment_mask_sigma,
             max_shift=alignment_max_shift,
             show_alignment_diagnostics=show_alignment_diagnostics,
-            require_unitary_error=require_unitary_error,
+            require_unitary_error=False,
             equal_energy_apodization=equal_energy_apodization,
         )
         # {{{ Fit this aligned FIR integral trace to get one R1 value
@@ -317,26 +321,30 @@ with psd.figlist_var() as fl:
         R1p_to_save = R1p.C
         R1p_to_save.name("R1p")
         R1p_to_save.set_prop("acq_params", acq_params)
+        R1p_to_save.set_prop("source_file", thisfile)
+        R1p_to_save.set_prop("Apodization", bool(equal_energy_apodization))
         R1p_to_save.set_prop(
             "R1_fit_upper_bound", float(np.nanmax(R1p_upper_bound))
         )
         R1p_to_save.hdf5_write(
-            f"{output_file}/{dataset_id}",
+            output_file,
             directory=str(output_dir),
         )
-        print(f"saved {dataset_id}/R1p -> {output_dir / output_file}")
+        print(f"saved R1p -> {output_dir / output_file}")
         T1p_to_save = (1.0 / R1p).C
         if R1p.get_error() is not None:
             T1p_to_save.set_error(R1p.get_error() / R1p.data**2)
         T1p_to_save.name("T1p")
         T1p_to_save.set_prop("acq_params", acq_params)
+        T1p_to_save.set_prop("source_file", thisfile)
+        T1p_to_save.set_prop("Apodization", bool(equal_energy_apodization))
         T1p_to_save.set_prop(
             "R1_fit_upper_bound", float(np.nanmax(R1p_upper_bound))
         )
         T1p_to_save.hdf5_write(
-            f"{output_file}/{dataset_id}",
+            output_file,
             directory=str(output_dir),
         )
-        print(f"saved {dataset_id}/T1p -> {output_dir / output_file}")
+        print(f"saved T1p -> {output_dir / output_file}")
         # }}}
     # }}}

@@ -1,8 +1,9 @@
 r"""Fit ODNP data from saved integral tables.
 
-Run ``generate_integrals_RealData.py`` first.  This script loads the saved
-``Ep`` and ``R1p`` tables and follows the ODNP analysis in the DCCT paper
-and ODNP book chapter:
+Run ``generate_integrals_RealData.py`` first.  This script loads the top-level
+``Ep``, ``R1p``, and ``T1p`` nodes from ``<source filename>_integrals.h5`` using
+``find_file``, then follows the ODNP analysis in the DCCT paper and ODNP book
+chapter:
 
     epsilon(p) = 1 - E(p)
     k_sigma s(p) = epsilon(p) R1(p) / C_SL * |omega_H / omega_e|
@@ -32,18 +33,19 @@ KRHO_INV_POLY_ORDER = 2
 
 
 def load_table(node_name):
-    h5path = f"{output_file}/{dataset_id}/{node_name}"
-    if not (output_dir / output_file).exists():
-        raise FileNotFoundError(
-            f"Missing {output_dir / output_file}. "
-            "Run examples/generate_integrals_RealData.py first."
-        )
-    return psd.nddata_hdf5(h5path, directory=str(output_dir))
+    """Load one top-level generated table using the broken example's style."""
+    return psd.find_file(
+        output_file,
+        exp_type=str(output_dir),
+        expno=node_name,
+    )
 
 
-# {{{ load saved integral tables
+# {{{ Load saved top-level integral tables using find_file
 Ep = load_table("Ep")
 R1p = load_table("R1p")
+T1p = load_table("T1p")
+
 if np.isnan(R1p.data).any():
     raise ValueError("R1p table contains NaNs; regenerate integrals first.")
 
@@ -181,7 +183,7 @@ Ep_fit_curve = Ep_fit.eval(100)
 with psd.figlist_var() as fl:
     fl.basename = output_file
 
-    # {{{ Just plotting
+    # {{{ Plot epsilon(p), R1(p), and k_sigma s(p)
     fig = plt.figure(figsize=(10, 7.5), constrained_layout=True)
     fig.suptitle(sample_label)
     gs = fig.add_gridspec(2, 2)
