@@ -23,7 +23,7 @@ import sympy as sp
 
 
 # {{{ user-editable block
-thisfile = "260615_hydroxytempo_ODNP_3.h5"
+thisfile = "260622_hydroxytempo_ODNP_4.h5"
 output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
@@ -49,6 +49,17 @@ T1p = load_table("T1p")
 if np.isnan(R1p.data).any():
     raise ValueError("R1p table contains NaNs; regenerate integrals first.")
 
+acq = Ep.get_prop("acq_params")
+C = float(acq["concentration"])
+chemical = acq.get("chemical", b"TEMPOL")
+if isinstance(chemical, bytes):
+    chemical = chemical.decode()
+sample_label = f"{1e3 * C:g} mM {chemical}"
+T10_p = np.r_[
+    acq["T1water_cold"],
+    (acq["T1water_hot"] - acq["T1water_cold"]) / acq["max_power"],
+]
+R10_p_all = 1.0 / R1p.fromaxis("power").eval_poly(T10_p, "power")
 R1p_values = R1p.real.data
 R1p_upper_bound = R1p.get_prop("R1_fit_upper_bound")
 if R1p_upper_bound is None:
@@ -57,9 +68,11 @@ if R1p_upper_bound is None:
         "integrals with examples/generate_integrals_RealData.py."
     )
 R1p_upper_bound = float(R1p_upper_bound)
-R1p_outlier_mask = np.isclose(
+R1p_upper_outlier_mask = np.isclose(
     R1p_values, R1p_upper_bound, rtol=1e-8, atol=1e-8
 ) | (R1p_values > R1p_upper_bound)
+R1p_unphysical_mask = R1p_values <= R10_p_all.real.data
+R1p_outlier_mask = R1p_upper_outlier_mask | R1p_unphysical_mask
 R1p_fit_idx = np.flatnonzero(~R1p_outlier_mask)
 R1p_outlier_idx = np.flatnonzero(R1p_outlier_mask)
 if len(R1p_fit_idx) < 2:
@@ -68,18 +81,11 @@ R1p_for_fit = R1p["power", R1p_fit_idx]
 if len(R1p_outlier_idx) > 0:
     R1p_outliers = R1p["power", R1p_outlier_idx]
     print(
-        "Excluding R1p outlier(s) at powers "
+        "Excluding R1p point(s) from k_rho fit at powers "
         f"{R1p_outliers.getaxis('power')} W: {R1p_outliers.data} s^-1"
     )
 else:
     R1p_outliers = None
-
-acq = Ep.get_prop("acq_params")
-C = float(acq["concentration"])
-chemical = acq.get("chemical", b"TEMPOL")
-if isinstance(chemical, bytes):
-    chemical = chemical.decode()
-sample_label = f"{1e3 * C:g} mM {chemical}"
 # }}}
 
 # {{{ The powers go up, then return for a reproducibility check
@@ -87,10 +93,6 @@ flip_idx = np.argmax(Ep.getaxis("power")) + 1
 # }}}
 
 # {{{ Generate water R1(p) from the cold/hot water T1 interpolation
-T10_p = np.r_[
-    acq["T1water_cold"],
-    (acq["T1water_hot"] - acq["T1water_cold"]) / acq["max_power"],
-]
 R10_p = 1.0 / R1p_for_fit.fromaxis("power").eval_poly(T10_p, "power")
 if R1p_outliers is not None:
     R10_p_outliers = 1.0 / R1p_outliers.fromaxis("power").eval_poly(
@@ -165,16 +167,22 @@ ksig = ksigma_s_fit.output("KsigmaSmax")
 # Legacy/raw-integral fit used by examples/broken/fit_ODNP_data.py.  This is
 # algebraically related, but the paper/book protocol above fits k_sigma s(p).
 Ep_fit = psd.lmfitdata(Ep["power", :flip_idx].real)
-Ep_fit.functional_form = M0 - (M0 * A * saturation_expr) / R1p_expr
-A_guess = 1.0 - (
-    R1p["power", 0].real.item()
-    * (Ep["power", flip_idx].real.item() / Ep["power", 0].real.item())
-)
 M0_val = Ep["power", 0].real.item()
+Ep_fit.functional_form = M0_val - (M0_val * A * saturation_expr) / R1p_expr
+phalf_guess = float(acq.get("guessed_phalf", 0.2))
+progressive_Ep = Ep["power", :flip_idx].real
+max_epsilon_idx = np.nanargmax(1.0 - progressive_Ep.data)
+p_for_A_guess = progressive_Ep.getaxis("power")[max_epsilon_idx]
+s_for_A_guess = p_for_A_guess / (p_for_A_guess + phalf_guess)
+A_guess = (
+    (1.0 - progressive_Ep.data[max_epsilon_idx] / M0_val)
+    * R1p_func(p_for_A_guess)
+    / s_for_A_guess
+)
+A_guess = float(np.real(A_guess))
 Ep_fit.set_guess(
-    M0=dict(value=M0_val, min=0.1 * M0_val, max=2.0 * M0_val),
-    A=dict(value=A_guess, min=0.2 * A_guess, max=3.0 * A_guess),
-    phalf=dict(value=float(acq.get("guessed_phalf", 0.2)), min=0.05, max=1.0),
+    A=dict(value=A_guess, min=0.0, max=3.0 * A_guess),
+    phalf=dict(value=phalf_guess, min=0.05, max=1.0),
 )
 Ep_fit.fit()
 Ep_fit_curve = Ep_fit.eval(100)
@@ -226,14 +234,6 @@ with psd.figlist_var() as fl:
         label="fit points",
         human_units=False,
     )
-    if R1p_outliers is not None:
-        psd.plot(
-            R1p_outliers.C.set_plot_color("r"),
-            "s",
-            ax=ax_R1,
-            label="outlier, excluded from fit",
-            human_units=False,
-        )
     psd.plot(
         R1p_fit,
         "k-",
@@ -242,6 +242,30 @@ with psd.figlist_var() as fl:
         label=rf"order-{KRHO_INV_POLY_ORDER} $k_\rho^{{-1}}$ fit",
         human_units=False,
     )
+    R1_plot_data = np.r_[R1p_for_fit.real.data, R1p_fit.real.data]
+    R1_y_pad = 0.1 * np.ptp(R1_plot_data)
+    if R1_y_pad == 0:
+        R1_y_pad = 1.0
+    R1_y_limits = (
+        np.nanmin(R1_plot_data) - R1_y_pad,
+        np.nanmax(R1_plot_data) + R1_y_pad,
+    )
+    if R1p_outliers is not None:
+        R1p_outlier_plot = R1p_outliers.C.set_plot_color("r")
+        R1p_outlier_plot.data = np.clip(
+            R1p_outlier_plot.data,
+            R1_y_limits[0],
+            R1_y_limits[1],
+        )
+        R1p_outlier_plot.set_error(None)
+        psd.plot(
+            R1p_outlier_plot,
+            "s",
+            ax=ax_R1,
+            label="outlier, excluded from fit",
+            human_units=False,
+        )
+    ax_R1.set_ylim(*R1_y_limits)
     ax_R1.set_xlabel("Power / W")
     ax_R1.set_ylabel(r"$R_1$ / s$^{-1}$")
     ax_R1.legend()

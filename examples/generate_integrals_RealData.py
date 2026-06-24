@@ -32,7 +32,7 @@ plt.rcParams["image.aspect"] = "auto"
 
 # {{{ user-editable block
 thisfile, thisexptype, nodename = (
-    "260615_hydroxytempo_ODNP_3.h5",
+    "260622_hydroxytempo_ODNP_4.h5",
     "B27/ODNP",
     "ODNP",
 )
@@ -40,10 +40,10 @@ output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
 output_path = output_dir / output_file
-show_alignment_diagnostics = False
+show_alignment_diagnostics = True
 alignment_mask_sigma = 150.0
 alignment_max_shift = 2000.0
-Ep_alignment_max_shift = 1000.0
+Ep_alignment_max_shift = 1500.0
 equal_energy_apodization = True
 # }}}
 
@@ -59,7 +59,7 @@ with h5py.File(filename, "r") as h5file:
     fir_node_names = [k for k in h5file.keys() if k.startswith("FIR_")]
 fir_nodes = []
 for thisnodename in fir_node_names:
-    m = re.search(r"([0-9]+(?:p[0-9]+)?)dBm", thisnodename)
+    m = re.search(r"([0-9]+(?:[p.][0-9]+)?)dBm", thisnodename)
     if m:
         power = prscr.dBm2power(float(m.group(1).replace("p", "."))).item()
     elif "noPower" in thisnodename:
