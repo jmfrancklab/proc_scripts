@@ -32,7 +32,7 @@ plt.rcParams["image.aspect"] = "auto"
 
 # {{{ user-editable block
 thisfile, thisexptype, nodename = (
-    "260622_hydroxytempo_ODNP_4.h5",
+    "260625_hydroxytempo_ODNP_5.h5",
     "B27/ODNP",
     "ODNP",
 )
@@ -40,7 +40,7 @@ output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
 output_path = output_dir / output_file
-show_alignment_diagnostics = True
+show_alignment_diagnostics = False
 alignment_mask_sigma = 150.0
 alignment_max_shift = 2000.0
 Ep_alignment_max_shift = 1500.0
