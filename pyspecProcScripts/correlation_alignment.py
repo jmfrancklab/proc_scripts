@@ -28,7 +28,6 @@ def correl_align(
     fl=None,
     indirect_dim=None,  # no longer used
     avg_dim=None,  # no longer used
-    _delta_phase_method="vectorized",
 ):
     """
     Align transients collected with chunked phase cycling dimensions along an
@@ -110,10 +109,6 @@ def correl_align(
         "We updated the correlation function to no longer take avg_dim as a"
         " kwarg!"
     )
-    if _delta_phase_method not in {"legacy", "vectorized"}:
-        raise ValueError(
-            "_delta_phase_method must be 'legacy' or 'vectorized'"
-        )
     signal_pathway = s_orig.get_prop("coherence_pathway")
     assert signal_pathway is not None, (
         "You need to set the coherence_pathway property since your data"
@@ -291,18 +286,6 @@ def correl_align(
         #     3 2 1 0
         for phname, phlen in ph_len.items():
             delta_name = "Delta%s" % phname.capitalize()
-            if _delta_phase_method == "legacy":
-                # Retained only for examples/compare_correlation_alignment.py.
-                for ph_index in range(phlen):
-                    s_leftbracket[delta_name, ph_index] = s_leftbracket[
-                        delta_name, ph_index
-                    ].run(
-                        lambda data, axis=None: np.roll(
-                            data, ph_index, axis=axis
-                        ),
-                        phname,
-                    )
-                continue
             delta_axis = s_leftbracket.dimlabels.index(delta_name)
             if s_leftbracket.shape[delta_name] != phlen:
                 raise ValueError(
@@ -310,15 +293,15 @@ def correl_align(
                 )
             phase_index = np.arange(phlen)[:, None]
             delta_index = np.arange(phlen)[None, :]
-            # NOTE: to JF -- The legacy branch above slices each Delta-phase
-            # column and calls np.roll once per column.  Because Delta was just
-            # created by replication, all columns are identical.  Indexing the
-            # first copy with (phase-delta) modulo the phase-cycle length builds
-            # every rolled column at once and gives exactly the same Delta-phi
-            # table.  Keeping the NumPy operation inside nddata.run preserves
-            # the nddata axes, properties, and errors.  This removes repeated
-            # nddata slicing/assignment overhead; it improves computation, not
-            # the alignment physics or phase convention.
+            # NOTE: to JF -- The original form sliced each Delta-phase column
+            # and called np.roll once per column. Because Delta was just made
+            # by replication, all columns are identical. Indexing the first
+            # copy with (phase-delta) modulo the phase-cycle length constructs
+            # every rolled column at once and gives the same Delta-phi table.
+            # Keeping the NumPy operation inside nddata.run preserves the
+            # nddata axes, properties, and errors. This removes repeated
+            # nddata slicing/assignment overhead; it improves computation,
+            # not the alignment physics or phase convention.
             s_leftbracket.run(
                 lambda data, axis: np.moveaxis(
                     np.moveaxis(data, [axis, delta_axis], [0, 1])[:, 0, ...][
