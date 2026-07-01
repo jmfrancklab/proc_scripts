@@ -28,6 +28,7 @@ def correl_align(
     fl=None,
     indirect_dim=None,  # no longer used
     avg_dim=None,  # no longer used
+    _delta_phase_method="vectorized",
 ):
     """
     Align transients collected with chunked phase cycling dimensions along an
@@ -109,6 +110,10 @@ def correl_align(
         "We updated the correlation function to no longer take avg_dim as a"
         " kwarg!"
     )
+    if _delta_phase_method not in {"legacy", "vectorized"}:
+        raise ValueError(
+            "_delta_phase_method must be 'legacy' or 'vectorized'"
+        )
     signal_pathway = s_orig.get_prop("coherence_pathway")
     assert signal_pathway is not None, (
         "You need to set the coherence_pathway property since your data"
@@ -119,9 +124,9 @@ def correl_align(
         non_repeat_dims = [non_repeat_dims]
     if isinstance(repeat_dims, str):
         repeat_dims = [repeat_dims]
-    assert (
-        type(repeat_dims) is list and len(repeat_dims) > 0
-    ), "You must tell me which dimension contains the repeats!"
+    assert type(repeat_dims) is list and len(repeat_dims) > 0, (
+        "You must tell me which dimension contains the repeats!"
+    )
     temp = set(repeat_dims) - set(s_orig.dimlabels)
     assert len(temp) == 0, (
         f"{temp} were not found in the data dimensions, but were specified in"
@@ -171,9 +176,9 @@ def correl_align(
         assert s_orig.get_ft_prop(phnames), (
             str(phnames) + " must be in the coherence domain"
         )
-    assert s_orig.get_ft_prop(
-        direct
-    ), "direct dimension must be in the frequency domain"
+    assert s_orig.get_ft_prop(direct), (
+        "direct dimension must be in the frequency domain"
+    )
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
     # {{{ s_jk is preserved without the mask, and accepts the
@@ -285,15 +290,45 @@ def correl_align(
         #     2 1 0 4
         #     3 2 1 0
         for phname, phlen in ph_len.items():
-            for ph_index in range(phlen):
-                s_leftbracket[
-                    "Delta%s" % phname.capitalize(), ph_index
-                ] = s_leftbracket[
-                    "Delta%s" % phname.capitalize(), ph_index
-                ].run(
-                    lambda x, axis=None: np.roll(x, ph_index, axis=axis),
-                    phname,
+            delta_name = "Delta%s" % phname.capitalize()
+            if _delta_phase_method == "legacy":
+                # Retained only for examples/compare_correlation_alignment.py.
+                for ph_index in range(phlen):
+                    s_leftbracket[delta_name, ph_index] = s_leftbracket[
+                        delta_name, ph_index
+                    ].run(
+                        lambda data, axis=None: np.roll(
+                            data, ph_index, axis=axis
+                        ),
+                        phname,
+                    )
+                continue
+            delta_axis = s_leftbracket.dimlabels.index(delta_name)
+            if s_leftbracket.shape[delta_name] != phlen:
+                raise ValueError(
+                    f"{phname} and {delta_name} must have the same length"
                 )
+            phase_index = np.arange(phlen)[:, None]
+            delta_index = np.arange(phlen)[None, :]
+            # NOTE: to JF -- The legacy branch above slices each Delta-phase
+            # column and calls np.roll once per column.  Because Delta was just
+            # created by replication, all columns are identical.  Indexing the
+            # first copy with (phase-delta) modulo the phase-cycle length builds
+            # every rolled column at once and gives exactly the same Delta-phi
+            # table.  Keeping the NumPy operation inside nddata.run preserves
+            # the nddata axes, properties, and errors.  This removes repeated
+            # nddata slicing/assignment overhead; it improves computation, not
+            # the alignment physics or phase convention.
+            s_leftbracket.run(
+                lambda data, axis: np.moveaxis(
+                    np.moveaxis(data, [axis, delta_axis], [0, 1])[:, 0, ...][
+                        (phase_index - delta_index) % phlen, ...
+                    ],
+                    [0, 1],
+                    [axis, delta_axis],
+                ),
+                phname,
+            )
         # }}}
         # {{{ this applies the Fourier transform from Δφ to Δpₗ
         #     that is found inside the left square bracket of eq. 29.
@@ -359,7 +394,7 @@ def correl_align(
         # Find optimal f shift based on max of correlation function
         if max_shift is not None:
             delta_f_shift = (
-                correl[direct:(-max_shift, max_shift)]
+                correl[direct : (-max_shift, max_shift)]
                 .run(np.real)
                 .argmax(direct)
             )
@@ -391,8 +426,7 @@ def correl_align(
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
         E_of_avg = (
-            smoosh_or_rename(phcycdims, s_leftbracket.C)
-            * coh_mask
+            smoosh_or_rename(phcycdims, s_leftbracket.C) * coh_mask
         ).sum("repeats").run(lambda x: abs(x) ** 2).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
