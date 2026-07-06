@@ -280,9 +280,9 @@ def correl_align(
         #     Δφ_n by an increasing amount, so it looks like this
         #
         #     Δφ_n →
-        # φ_k 0 4 3 2
-        #  ↓  1 0 4 3
-        #     2 1 0 4
+        # φ_k 0 3 2 1
+        #  ↓  1 0 3 2
+        #     2 1 0 3
         #     3 2 1 0
         for phname, phlen in ph_len.items():
             delta_name = "Delta%s" % phname.capitalize()
@@ -293,19 +293,35 @@ def correl_align(
                 )
             ph_idx_array = np.arange(phlen)[:, None]
             delta_idx_array = np.arange(phlen)[None, :]
-            # NOTE: to JF -- The original form sliced each Delta-phase column
-            # and called np.roll once per column. Because Delta was just made
-            # by replication, all columns are identical. Indexing the first
-            # copy with (phase-delta) modulo the phase-cycle length constructs
-            # every rolled column at once and gives the same Delta-phi table.
-            # Keeping the NumPy operation inside nddata.run preserves the
-            # nddata axes, properties, and errors. This removes repeated
-            # nddata slicing/assignment overhead; it improves computation,
-            # not the alignment physics or phase convention.
+            roll_idx_array = (  # phase - Delta; modulo wraps to [0, phlen)
+                ph_idx_array - delta_idx_array
+            ) % phlen
+            # Each Delta-phase column should contain one cyclic shift of the
+            # original phase data. For source phases [s0, s1, s2, s3], the
+            # desired table is
+            #                  Delta phase
+            #              0    1    2    3
+            #     phase 0  s0   s3   s2   s1
+            #           1  s1   s0   s3   s2
+            #           2  s2   s1   s0   s3
+            #           3  s3   s2   s1   s0
+            # ph_idx_array has shape (N, 1), while delta_idx_array has shape
+            # (1, N). NumPy broadcasting repeats the column across N columns
+            # and the row across N rows before subtracting them. Subtracting a
+            # Delta index selects the source phase shifted backward by that
+            # amount. Taking modulo phlen wraps negative results into the valid
+            # cyclic phase-index range 0 through phlen-1, producing the 2D
+            # source-index table shown above.
+            # Since the Delta axis was just replicated, every copy is still
+            # identical: move phase and Delta to the first two axes, select
+            # the first copy, gather all shifted columns with roll_idx_array,
+            # then restore both axes to their original positions. Unspecified
+            # trailing dimensions are retained. nddata.run preserves the
+            # nddata metadata while avoiding repeated slicing and assignment.
             s_leftbracket.run(
                 lambda data, axis: np.moveaxis(
-                    np.moveaxis(data, [axis, delta_axn], [0, 1])[:, 0, ...][
-                        (ph_idx_array - delta_idx_array) % phlen, ...
+                    np.moveaxis(data, [axis, delta_axn], [0, 1])[:, 0][
+                        roll_idx_array
                     ],
                     [0, 1],
                     [axis, delta_axn],
