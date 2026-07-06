@@ -286,7 +286,7 @@ def correl_align(
         #     3 2 1 0
         for phname, phlen in ph_len.items():
             delta_name = "Delta%s" % phname.capitalize()
-            delta_axis = s_leftbracket.dimlabels.index(delta_name)
+            delta_axn = s_leftbracket.axn(delta_name)
             if s_leftbracket.shape[delta_name] != phlen:
                 raise ValueError(
                     f"{phname} and {delta_name} must have the same length"
@@ -304,11 +304,11 @@ def correl_align(
             # not the alignment physics or phase convention.
             s_leftbracket.run(
                 lambda data, axis: np.moveaxis(
-                    np.moveaxis(data, [axis, delta_axis], [0, 1])[:, 0, ...][
+                    np.moveaxis(data, [axis, delta_axn], [0, 1])[:, 0, ...][
                         (phase_index - delta_index) % phlen, ...
                     ],
                     [0, 1],
-                    [axis, delta_axis],
+                    [axis, delta_axn],
                 ),
                 phname,
             )
