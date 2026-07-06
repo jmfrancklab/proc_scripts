@@ -291,8 +291,8 @@ def correl_align(
                 raise ValueError(
                     f"{phname} and {delta_name} must have the same length"
                 )
-            phase_index = np.arange(phlen)[:, None]
-            delta_index = np.arange(phlen)[None, :]
+            ph_idx_array = np.arange(phlen)[:, None]
+            delta_idx_array = np.arange(phlen)[None, :]
             # NOTE: to JF -- The original form sliced each Delta-phase column
             # and called np.roll once per column. Because Delta was just made
             # by replication, all columns are identical. Indexing the first
@@ -305,7 +305,7 @@ def correl_align(
             s_leftbracket.run(
                 lambda data, axis: np.moveaxis(
                     np.moveaxis(data, [axis, delta_axn], [0, 1])[:, 0, ...][
-                        (phase_index - delta_index) % phlen, ...
+                        (ph_idx_array - delta_idx_array) % phlen, ...
                     ],
                     [0, 1],
                     [axis, delta_axn],
