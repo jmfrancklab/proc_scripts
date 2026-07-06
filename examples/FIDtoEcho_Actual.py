@@ -32,6 +32,7 @@ with psd.figlist_var(file_name="tempdata220922final.pdf") as fl:
             postproc="spincore_ODNP_v1",
             lookup=lookup_table,
             expno=nodename,
+            zenodo="21084153",
         )  # returns signal with t=0 set approximately correctly
         fl.basename = nodename
         d = pypcs.fid_from_echo(d, signal_pathway, fl=fl)

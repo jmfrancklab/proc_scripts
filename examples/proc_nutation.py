@@ -45,6 +45,7 @@ s = psd.find_file(
     exp_type=sys.argv[3],
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
+    zenodo="21084153",
 )
 with psd.figlist_var() as fl:
     frq_center, frq_half = prscr.find_peakrange(prscr.select_pathway(s, s.get_prop("coherence_pathway")), fl=fl)
