@@ -17,7 +17,7 @@ def _fitcurve_final(f, whichrate, guess):
     logging.info(strm("Functional form", f.functional_form))
     if guess is not None:
         f.set_guess(guess)
-        f.settoguess()
+        f.set_to_guess()
         save_guess = f.eval(100)  # if we really wanted to plot the guess,
         # we could return this as well, and then pass it to the fit_curve
         # function

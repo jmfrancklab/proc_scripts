@@ -50,6 +50,8 @@ def apod_matched_filter(
         filter_width = abs(signal_E - 1 / sqrt(2)).argmin("sigma").item()
     elif convolve_method == "lorentzian":
         filter_width = abs(signal_E - 1 / 2).argmin("sigma").item()
+    # TODO ☐: do not call getattr, that's non-pythonic.  use .magnitude, and use it inline.  BETTER YET, use pint pretty printing!
+    filter_width = getattr(filter_width, "magnitude", filter_width)
     logger.debug(strm("FILTER WIDTH IS", filter_width))
     if fl is not None:
         fl.next("matched filter diagnostic -- signal Energy")

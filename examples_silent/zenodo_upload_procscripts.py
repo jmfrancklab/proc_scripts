@@ -20,22 +20,6 @@ the remaining files will be uploaded to that same deposition.
 from pyspecdata import search_filename, zenodo_upload
 import re
 
-# TODO ☐: these added functions are ridiculous.  Just inline the required code patterns below.
-def contains_regex(pattern):
-    """Match files whose names contain the already-regex ``pattern``."""
-    return f".*{pattern}.*"
-
-
-def esr_sidecar(stem, suffix):
-    """Match a Bruker ESR sidecar for examples that search by stem."""
-    return f".*{re.escape(stem)}.*{re.escape('.' + suffix)}$"
-
-
-def exact_escaped(text):
-    """Match exactly ``text``."""
-    return f"^{re.escape(text)}$"
-
-
 # {{{ changeable parameters
 # list of (search string, exp_type) pairs for example data files
 # in older versions, we auto-added .*, but that's no longer true
@@ -63,18 +47,15 @@ files_to_upload = [
         "ODNP_NMR_comp/ODNP",
     ),
     (re.escape("260107_hydroxytempo_ODNP_1.h5"), "B27/ODNP"),
-    (
-        contains_regex(r"260406_hydroxytempo.*\.h5$"),
-        "B27/ODNP",
-    ),
+    (r".*260406_hydroxytempo.*\.h5$", "B27/ODNP"),
     # proc_scripts master examples: plot_field.py and proc_Ep.py
     (re.escape("260429_hydroxytempo_ODNP_2.h5"), "B27/ODNP"),
     (re.escape("260414_hydroxytempo_n_scan.h5"), "B27/n_scans"),
     (re.escape("260505_hydroxytempo_n_scan.h5"), "B27/n_scans"),
     # proc_scripts master example: proc_shim_y.py
-    (contains_regex(r"260323.*3\.h5$"), "B27/Echoes"),
-    (contains_regex(r"260324.*4\.h5$"), "B27/Echoes"),
-    (contains_regex(r"260324.*6\.h5$"), "B27/Echoes"),
+    (r".*260323.*3\.h5$", "B27/Echoes"),
+    (r".*260324.*4\.h5$", "B27/Echoes"),
+    (r".*260324.*6\.h5$", "B27/Echoes"),
     # proc_scripts master examples: calibrate_tsqrtP.py and
     # verify_tsqrtP_calibration.py
     (
@@ -228,14 +209,14 @@ files_to_upload = [
     (re.escape("250321_OHT_lowpower.DSC"), "francklab_esr/Warren"),
     (re.escape("250321_OHT_lowpower.DTA"), "francklab_esr/Warren"),
     # proc_scripts master example: spin_trapping.py
-    (esr_sidecar("250217_DMPO_5min_PBS", "DSC"), "francklab_esr/Warren"),
-    (esr_sidecar("250217_DMPO_5min_PBS", "DTA"), "francklab_esr/Warren"),
-    (exact_escaped("250217_DMPO_5min_PBS"), "francklab_esr/Warren"),
+    (r".*250217_DMPO_5min_PBS.*\.DSC$", "francklab_esr/Warren"),
+    (r".*250217_DMPO_5min_PBS.*\.DTA$", "francklab_esr/Warren"),
+    (r"^250217_DMPO_5min_PBS$", "francklab_esr/Warren"),
     # proc_scripts master example: epr_overlay.py
     (re.escape("220729_prS175.DSC"), "francklab_esr/Farhana"),
     (re.escape("220729_prS175.DTA"), "francklab_esr/Farhana"),
-    (esr_sidecar("220307_S175_KCl", "DSC"), "francklab_esr/Farhana"),
-    (esr_sidecar("220307_S175_KCl", "DTA"), "francklab_esr/Farhana"),
+    (r".*220307_S175_KCl.*\.DSC$", "francklab_esr/Farhana"),
+    (r".*220307_S175_KCl.*\.DTA$", "francklab_esr/Farhana"),
     (re.escape("220307_S175_KI.DSC"), "francklab_esr/Farhana"),
     (re.escape("220307_S175_KI.DTA"), "francklab_esr/Farhana"),
     (re.escape("220307_prS175_KH2PO4.DSC"), "francklab_esr/Farhana"),
@@ -301,17 +282,15 @@ files_to_upload = [
         "test_equipment/var_tau",
     ),
     (
-        contains_regex(
-            r"201113_TEMPOL_capillary_probe_16Scans_noModCoil.*\.h5$"
-        ),
+        r".*201113_TEMPOL_capillary_probe_16Scans_noModCoil.*\.h5$",
         "ODNP_NMR_comp/Echoes",
     ),
     (
-        contains_regex(r"211223_Ras_M67R1a_capProbe.*\.h5$"),
+        r".*211223_Ras_M67R1a_capProbe.*\.h5$",
         "ODNP_NMR_comp/ODNP",
     ),
     (re.escape("ras.h5"), "AG_processed_data"),
-    (exact_escaped("T10_DI_water_230412"), "AG_processed_data"),
+    (r"^T10_DI_water_230412$", "AG_processed_data"),
 ]
 # }}}
 

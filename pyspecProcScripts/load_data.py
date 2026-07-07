@@ -516,7 +516,7 @@ def proc_FID_v1(s, fl=None):
     return s
 
 
-def proc_var_tau(s, fl=None):
+def proc_single_tau(s, fl=None):
     s.get_prop("SW")
     if "ph1" not in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
@@ -538,6 +538,21 @@ def proc_var_tau(s, fl=None):
         fl.next("raw signal")
         fl.image(s)
     return s
+
+
+def proc_var_tau_v2(s, fl=None):
+    # TODO ☐: the following line does nothing
+    s.get_prop("SW")
+    if "ph1" not in s.dimlabels:
+        s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
+        s.setaxis("ph2", r_[0, 2] / 4)
+        s.setaxis("ph1", r_[0:4] / 4)
+    # TODO ☐: this should not be set here -- it should be set inside the relevant example scripts
+    s.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
+    s.set_units("t2", "s")
+    return proc_spincore_generalproc_v1(
+        s, include_tau_sub=False, direct="t2", fl=fl
+    )
 
 
 def proc_spincore_echo_v1(s, fl=None):
@@ -972,7 +987,8 @@ lookup_table = {
     "spincore_ODNP_v5": proc_spincore_ODNP_v4,
     "spincore_ODNP_v6": proc_spincore_withlog_v1,
     "spincore_echo_v1": proc_spincore_echo_v1,
-    "spincore_var_tau_v1": proc_var_tau,
+    "spincore_var_tau_v1": proc_single_tau,
+    "spincore_var_tau_v2": proc_var_tau_v2,
     "spincore_generalproc_v1": proc_spincore_generalproc_v1,
     "square_wave_capture_v1": proc_capture,
     "DOSY_CPMG_v1": proc_DOSY_CPMG,

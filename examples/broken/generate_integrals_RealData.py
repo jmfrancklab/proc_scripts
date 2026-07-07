@@ -52,13 +52,31 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
-        s_int, s = generate_integrals(
+        # TODO ☐: you have added an entire code block here without adding an explanation!  You need to explain!
+        # TODO ☐: it seems quite likely that you need to research the code history in git, and explain what what changed and what has motivated your changes here (when I tell you to explain, I mean with inline comments in the relevant location!)
+        if clock_correction:
+            s = clock_correct(s, indirect=indirect, fl=fl)
+        phase_dims = [j for j in s.dimlabels if j.startswith("ph")]
+        if any(
+            s.get_ft_prop(j) and not s.get_ft_prop(j, "unitary")
+            for j in phase_dims
+        ):
+            s.ift(phase_dims)
+            for j in phase_dims:
+                s.set_ft_prop(j, "unitary", True)
+            s.ft(phase_dims)
+        zero_pathway = {j: 0 for j in signal_pathway}
+        excluded_pathways = [signal_pathway]
+        if zero_pathway != signal_pathway:
+            excluded_pathways.append(zero_pathway)
+        s = s["t2":f_range]
+        # TODO ☐: you have changed the name of the function called here, without adding a comment to explain what's going on
+        s_int = frequency_domain_integral(
             s,
             signal_pathway=signal_pathway,
-            searchstr=label,
-            f_range=f_range,
+            excluded_pathways=excluded_pathways,
             indirect=indirect,
-            alias_slop=2,
-            clock_correction=clock_correction,
             fl=fl,
         )
+        fl.next(f"{label} integrals")
+        fl.plot(s_int, ".", capsize=6)

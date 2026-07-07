@@ -63,10 +63,9 @@ with figlist_var() as fl:
     fl.next("fake data -- freq domain")
     data = select_pathway(data, ph1=0, ph2=1)
     fl.image(data)
-    # TODO ☐: don't make a new LG variable -- just overwrite data moving forward
-    LG = data.C.ift("t2")
-    # TODO ☐: in the previous code, we passed L2G fl, so that it would show the figures that show the envelope fitting. We need to still do that.
-    LG *= L2G(50)(LG.fromaxis("t2"))
-    LG.ft("t2")
+    data.ift("t2")
+    lambda_L = fit_envelope(data, fl=fl)
+    data *= L2G(lambda_L)(data.fromaxis("t2"))
+    data.ft("t2")
     fl.next("fake data -- freq domain after L2G")
-    fl.image(LG)
+    fl.image(data)
