@@ -7,19 +7,34 @@ Demonstrates how to load a h5 file.
 """
 from pylab import *
 from pyspecdata import *
-from pyspecProcScripts.load_data import lookup_table
 import h5py as h5
 
 rcParams["image.aspect"] = "auto"
 # sphinx_gallery_thumbnail_number = 3
 
+# TODO ☐: here you have the same issue where you're trying to hack the postproc.  This is not acceptable!!  If there is an issue with the existing postproc, discuss in the chat.
+def process_var_tau_data(data):
+    if "ph1" not in data.dimlabels:
+        data.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
+        data.setaxis("ph2", r_[0, 2] / 4)
+        data.setaxis("ph1", r_[0:4] / 4)
+    data.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
+    data.set_units("t2", "s")
+    data *= data.get_prop("acq_params").get("nScans", 1)
+    data.squeeze()
+    data *= 2e-6 / 1.11e4
+    data.set_units("V")
+    data.ft("t2", shift=True).ft(["ph1", "ph2"])
+    data.reorder(["ph1", "ph2", "tau"])
+    return data
+
+
 with figlist_var() as fl:
-    for filename, expno, exp_type, postproc, frequency, f_range in [
+    for filename, expno, exp_type, frequency, f_range in [
         (
             "201209_Ni_sol_probe_var_tau_",
             "var_tau",
             "test_equipment/var_tau",
-            "spincore_var_tau_v1",
             14.89e6,
             (-13.5e3, 0),
         )
@@ -31,14 +46,13 @@ with figlist_var() as fl:
         with h5.File(fullname, "r") as fp:
             logger.info(strm(fp.keys()))
         # }}}
+        # TODO ☐: again, all the following changes are undesired -- discuss in chat to thread the needle
         d = find_file(
             filename,
             exp_type=exp_type,
             expno=expno,
-            postproc=postproc,
-            lookup=lookup_table,
-            fl=fl,
         )
+        d = process_var_tau_data(d)
         d = d["t2":f_range]
         d = d["ph1", +1]["ph2", -2]
         d.ift("t2")

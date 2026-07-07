@@ -31,9 +31,8 @@ with figlist_var() as fl:
         variable_defs,
         signal_pathway,
         indirect,
-        clock_correction,
+        # TODO ☐: the clock correction is an important correction feature for some data.  You can't just throw it out!
         label,
-        f_range,
     ) in [
         (
             (
@@ -49,14 +48,12 @@ with figlist_var() as fl:
             ],
             {"ph1": 0, "ph2": 1},
             "vd",
-            True,
             "IR",
-            (-400, 400),
         ),
         (
             (
                 23
-                * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
+                * (1 - (3.2 * power / (0.25 + power)) * 150e-6 * 659.33)
                 * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
             ),
             [
@@ -66,9 +63,7 @@ with figlist_var() as fl:
             ],
             {"ph1": 1},
             "power",
-            False,
             "Enhancement",
-            (-200, 600),
         ),
     ]:
         fl.basename = "(%s)" % label
@@ -79,12 +74,17 @@ with figlist_var() as fl:
         # {{{ make data unitary again
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
         # }}}
-        data_int, data = generate_integrals(
-            s=data,
+        zero_pathway = {j: 0 for j in signal_pathway}
+        excluded_pathways = [signal_pathway]
+        if zero_pathway != signal_pathway:
+            excluded_pathways.append(zero_pathway)
+        # TODO ☐: you can't just choose a different function without explaining why you are doing it!
+        data_int = frequency_domain_integral(
+            data,
             signal_pathway=signal_pathway,
-            searchstr=label,
-            f_range=f_range,
+            excluded_pathways=excluded_pathways,
             indirect=indirect,
-            clock_correction=clock_correction,
             fl=fl,
         )
+        fl.next(f"{label} integrals")
+        fl.plot(data_int, ".", capsize=6)
