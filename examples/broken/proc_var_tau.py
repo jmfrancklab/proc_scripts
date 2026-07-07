@@ -51,8 +51,7 @@ with figlist_var() as fl:
         )
         d.set_prop("coherence_pathway", signal_pathway)
         d = d["t2":f_range]
-        # TODO ☐: isn't the second argument a kwarg that will auto-pull from the coherence pathway prop?
-        d = select_pathway(d, signal_pathway)
+        d = select_pathway(d)
         d.ift("t2")
         fl.next("echoes")
         fl.plot(d.real, alpha=0.2, linewidth=0.5)

@@ -61,8 +61,7 @@ with figlist_var() as fl:
             this_data.ift("t2")
             fl.basename = "%0.1f ms" % (programmed_tau / 1e-3)
             best_shift = hermitian_function_test(
-                # TODO ☐: isn't second arg a kwarg that will pull coh pathway prop?
-                select_pathway(this_data, signal_pathway),
+                select_pathway(this_data),
                 aliasing_slop=alias_slop,
                 fl=fl,
             )
