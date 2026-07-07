@@ -232,6 +232,17 @@ def select_pathway(*args, **kwargs):
     return retval
 
 
+def order_dims_for_display(s, direct="t2"):
+    """Reorder dimensions for display: ph* first (sorted), then non-ph/non-direct
+    dims sorted smallest-first (outermost), then direct last."""
+    ph_dims = sorted(d for d in s.dimlabels if d.startswith("ph"))
+    middle_dims = sorted(
+        (d for d in s.dimlabels if not d.startswith("ph") and d != direct),
+        key=lambda d: s.shape[d],
+    )
+    return s.reorder(ph_dims + middle_dims + [direct])
+
+
 def find_apparent_anal_freq(s):
     """A function to identify the position of analytic signal as acquired on
     the oscilloscope. Importantly this function takes into account the effects
