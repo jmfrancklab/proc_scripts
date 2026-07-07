@@ -86,17 +86,15 @@ with figlist_var() as fl:
         if clock_correction and "nScans" in data.dimlabels:
             data = clock_correct(data, indirect=indirect, fl=fl)
         data = data["t2":f_range]
-        # TODO ☐: in the following, you need
-        # to investigate the git history to
-        # explain where this was removed, and
-        # summarize the result of any added
-        # comments or git commit msgs.  This
-        # is also relevant to why we need to
-        # call clock correct above
-        # The old generate_integrals helper is gone; this example now
-        # calls the lower-level routine that performs its key final step:
-        # find frequency bounds, integrate the selected pathway, and
-        # propagate the error.
+        # Git history: d9a49fe1 deleted
+        # pyspecProcScripts.generate_integrals with the note that
+        # rough_table_of_integrals had taken over the full correction
+        # workflow.
+        # This example only needs the final integration with propagated
+        # frequency-domain error, so call that lower-level helper
+        # directly.
+        # The old helper also carried the clock-correction option, so
+        # keep that hook above for data with an nScans axis.
         data_int = frequency_domain_integral(
             data,
             signal_pathway=signal_pathway,

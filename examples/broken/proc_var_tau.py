@@ -7,6 +7,7 @@ Demonstrates how to load a h5 file.
 """
 from pylab import *
 from pyspecdata import *
+from pyspecProcScripts import select_pathway
 from pyspecProcScripts.load_data import lookup_table
 import h5py as h5
 
@@ -15,12 +16,21 @@ rcParams["image.aspect"] = "auto"
 
 
 with figlist_var() as fl:
-    for filename, expno, exp_type, postproc, frequency, f_range in [
+    for (
+        filename,
+        expno,
+        exp_type,
+        postproc,
+        signal_pathway,
+        frequency,
+        f_range,
+    ) in [
         (
             "201209_Ni_sol_probe_var_tau_",
             "var_tau",
             "test_equipment/var_tau",
             "spincore_var_tau_v2",
+            {"ph1": 1, "ph2": 0},
             14.89e6,
             (-13.5e3, 0),
         )
@@ -39,8 +49,10 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
+        d.set_prop("coherence_pathway", signal_pathway)
         d = d["t2":f_range]
-        d = select_pathway(d, d.get_prop("coherence_pathway"))
+        # TODO ☐: isn't the second argument a kwarg that will auto-pull from the coherence pathway prop?
+        d = select_pathway(d, signal_pathway)
         d.ift("t2")
         fl.next("echoes")
         fl.plot(d.real, alpha=0.2, linewidth=0.5)

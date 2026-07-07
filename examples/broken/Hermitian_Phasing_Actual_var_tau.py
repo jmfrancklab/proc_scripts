@@ -43,6 +43,7 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
+        data.set_prop("coherence_pathway", signal_pathway)
         data = data["tau", :-7]
         tau_list = list(data.getaxis("tau"))
         data.reorder(["ph1", "ph2", "tau", "t2"])
@@ -60,6 +61,7 @@ with figlist_var() as fl:
             this_data.ift("t2")
             fl.basename = "%0.1f ms" % (programmed_tau / 1e-3)
             best_shift = hermitian_function_test(
+                # TODO ☐: isn't second arg a kwarg that will pull coh pathway prop?
                 select_pathway(this_data, signal_pathway),
                 aliasing_slop=alias_slop,
                 fl=fl,

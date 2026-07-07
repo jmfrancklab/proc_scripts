@@ -1,4 +1,5 @@
 from pyspecdata import *
+from pint import Quantity
 
 
 def apod_matched_filter(
@@ -50,9 +51,12 @@ def apod_matched_filter(
         filter_width = abs(signal_E - 1 / sqrt(2)).argmin("sigma").item()
     elif convolve_method == "lorentzian":
         filter_width = abs(signal_E - 1 / 2).argmin("sigma").item()
-    # TODO ☐: do not call getattr, that's non-pythonic.  use .magnitude, and use it inline.  BETTER YET, use pint pretty printing!
-    filter_width = getattr(filter_width, "magnitude", filter_width)
-    logger.debug(strm("FILTER WIDTH IS", filter_width))
+    # TODO ☐: In this example, filter width either is or is not a pint
+    if isinstance(filter_width, Quantity):
+        logger.debug(strm("FILTER WIDTH IS", f"{filter_width:~P}"))
+        filter_width = filter_width.magnitude
+    else:
+        logger.debug(strm("FILTER WIDTH IS", filter_width))
     if fl is not None:
         fl.next("matched filter diagnostic -- signal Energy")
         fl.plot(signal_E, human_units=False)

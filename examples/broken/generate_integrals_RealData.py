@@ -52,8 +52,15 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
-        # TODO ☐: you have added an entire code block here without adding an explanation!  You need to explain!
-        # TODO ☐: it seems quite likely that you need to research the code history in git, and explain what what changed and what has motivated your changes here (when I tell you to explain, I mean with inline comments in the relevant location!)
+        # TODO ☐: the following comment is good, but seems to pertain to a section of code, so use a vim fold marker
+        # Git history: d9a49fe1 deleted
+        # pyspecProcScripts.generate_integrals because
+        # rough_table_of_integrals had taken over the full correction
+        # workflow.
+        # This old real-data example still demonstrates the final
+        # integration-with-error step, so the setup that the old helper
+        # bundled is kept locally before calling
+        # frequency_domain_integral below.
         if clock_correction:
             s = clock_correct(s, indirect=indirect, fl=fl)
         phase_dims = [j for j in s.dimlabels if j.startswith("ph")]
@@ -61,6 +68,11 @@ with figlist_var() as fl:
             s.get_ft_prop(j) and not s.get_ft_prop(j, "unitary")
             for j in phase_dims
         ):
+            # TODO ☐: again -- fold marker!
+            # Legacy spincore_ODNP_v1 used a non-unitary phase-cycle FT.
+            # calc_masked_variance averages noise across phase-cycle
+            # axes and requires unitary phase transforms for that
+            # propagation.
             s.ift(phase_dims)
             for j in phase_dims:
                 s.set_ft_prop(j, "unitary", True)
@@ -70,7 +82,9 @@ with figlist_var() as fl:
         if zero_pathway != signal_pathway:
             excluded_pathways.append(zero_pathway)
         s = s["t2":f_range]
-        # TODO ☐: you have changed the name of the function called here, without adding a comment to explain what's going on
+        # See the d9a49fe1 note above: the old wrapper is gone, and this
+        # is the lower-level helper that performs the integration/error
+        # step.
         s_int = frequency_domain_integral(
             s,
             signal_pathway=signal_pathway,

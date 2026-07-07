@@ -541,14 +541,10 @@ def proc_single_tau(s, fl=None):
 
 
 def proc_var_tau_v2(s, fl=None):
-    # TODO ☐: the following line does nothing
-    s.get_prop("SW")
     if "ph1" not in s.dimlabels:
         s.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
         s.setaxis("ph2", r_[0, 2] / 4)
         s.setaxis("ph1", r_[0:4] / 4)
-    # TODO ☐: this should not be set here -- it should be set inside the relevant example scripts
-    s.set_prop("coherence_pathway", {"ph1": 1, "ph2": -2})
     s.set_units("t2", "s")
     return proc_spincore_generalproc_v1(
         s, include_tau_sub=False, direct="t2", fl=fl
