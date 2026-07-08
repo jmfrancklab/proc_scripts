@@ -1,5 +1,4 @@
 from pyspecdata import *
-from pint import Quantity
 
 
 def apod_matched_filter(
@@ -51,9 +50,11 @@ def apod_matched_filter(
         filter_width = abs(signal_E - 1 / sqrt(2)).argmin("sigma").item()
     elif convolve_method == "lorentzian":
         filter_width = abs(signal_E - 1 / 2).argmin("sigma").item()
-    # TODO ☐: In this example, filter width either is or is not a pint
     if isinstance(filter_width, Quantity):
         logger.debug(strm("FILTER WIDTH IS", f"{filter_width:~P}"))
+        # convert filter width to units of the sigma axis
+        filter_width /= signal_E.div_units("sigma", filter_width.units) 
+        # now, we can safely conver to a number
         filter_width = filter_width.magnitude
     else:
         logger.debug(strm("FILTER WIDTH IS", filter_width))

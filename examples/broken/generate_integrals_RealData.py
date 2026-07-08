@@ -52,15 +52,15 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
-        # TODO ☐: the following comment is good, but seems to pertain to a section of code, so use a vim fold marker
-        # Git history: d9a49fe1 deleted
-        # pyspecProcScripts.generate_integrals because
-        # rough_table_of_integrals had taken over the full correction
-        # workflow.
-        # This old real-data example still demonstrates the final
-        # integration-with-error step, so the setup that the old helper
-        # bundled is kept locally before calling
-        # frequency_domain_integral below.
+        # {{{ local replacement for the removed generate_integrals helper
+        #     Git history: d9a49fe1 deleted
+        #     pyspecProcScripts.generate_integrals because
+        #     rough_table_of_integrals had taken over the full
+        #     correction workflow.
+        #     This old real-data example still demonstrates the final
+        #     integration-with-error step, so the setup that the old
+        #     helper bundled is kept locally before calling
+        #     frequency_domain_integral below.
         if clock_correction:
             s = clock_correct(s, indirect=indirect, fl=fl)
         phase_dims = [j for j in s.dimlabels if j.startswith("ph")]
@@ -68,20 +68,22 @@ with figlist_var() as fl:
             s.get_ft_prop(j) and not s.get_ft_prop(j, "unitary")
             for j in phase_dims
         ):
-            # TODO ☐: again -- fold marker!
-            # Legacy spincore_ODNP_v1 used a non-unitary phase-cycle FT.
-            # calc_masked_variance averages noise across phase-cycle
-            # axes and requires unitary phase transforms for that
-            # propagation.
+            # {{{ convert legacy non-unitary phase transforms
+            #     Legacy spincore_ODNP_v1 used a non-unitary phase-cycle
+            #     FT.  calc_masked_variance averages noise across
+            #     phase-cycle axes and requires unitary phase transforms
+            #     for that propagation.
             s.ift(phase_dims)
             for j in phase_dims:
                 s.set_ft_prop(j, "unitary", True)
             s.ft(phase_dims)
+            # }}}
         zero_pathway = {j: 0 for j in signal_pathway}
         excluded_pathways = [signal_pathway]
         if zero_pathway != signal_pathway:
             excluded_pathways.append(zero_pathway)
         s = s["t2":f_range]
+        # }}}
         # See the d9a49fe1 note above: the old wrapper is gone, and this
         # is the lower-level helper that performs the integration/error
         # step.
