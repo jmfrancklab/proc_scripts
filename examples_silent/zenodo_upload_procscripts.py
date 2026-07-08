@@ -13,14 +13,21 @@ it from the ``[zenodo]`` section of ``~/.pyspecdata``::
     [zenodo]
     token_file = /path/to/zenodo.token
 
-A new deposition record will be created automatically for the first file and
-the remaining files will be uploaded to that same deposition.
+When ``deposition_id`` is set below, all files will be uploaded to that
+deposition.  When it is set to ``None``, a new deposition record will be
+created automatically for the first file and the remaining files will be
+uploaded to that same deposition.
 """
 
 from pyspecdata import search_filename, zenodo_upload
 import re
 
 # {{{ changeable parameters
+# Set this to an existing Zenodo draft deposition id to keep uploading into
+# that draft.  Set it to None to have pyspecdata create a new deposition on the
+# first upload, then reuse that newly-created id for the remaining files.
+deposition_id = "21252663"
+
 # list of (search string, exp_type) pairs for example data files
 # in older versions, we auto-added .*, but that's no longer true
 files_to_upload = [
@@ -294,7 +301,6 @@ files_to_upload = [
 ]
 # }}}
 
-deposition_id = None
 for search_str, exp_type in files_to_upload:
     local_path = search_filename(search_str, exp_type=exp_type, unique=True)
     if deposition_id is None:

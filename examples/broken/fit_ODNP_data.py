@@ -40,25 +40,46 @@ T_1w_info = dict(
 )
 # }}}
 # {{{ load data
-integral_vs_p = psd.find_file(
-    data_info["filename"],
-    exp_type=data_info["data_dir"],
-    expno=f"{data_info['nodename']}/Ep",
+
+
+def extract_error(s):
+    # Older pyspecdata saved data+error as a single structured numpy array
+    # with dtype [('data', ...), ('error', ...)].  The current format stores
+    # them as separate datasets in an h5 subgroup, so find_file populates
+    # data_error correctly.  For files written by the old code the structured
+    # array arrives intact but data_error is never set, which breaks both
+    # arithmetic and the errorbar-vs-plot routing in fl.plot.
+    if s.data.dtype.names is not None:
+        s.set_error(s.data["error"])
+        s.data = s.data["data"]
+    return s
+
+
+integral_vs_p = extract_error(
+    psd.find_file(
+        data_info["filename"],
+        exp_type=data_info["data_dir"],
+        expno=f"{data_info['nodename']}/Ep",
+    )
 )
 # {{{ Some older h5 files save the T1p rather than the R1p. If there isn't an
 # R1p expno then it will load the T1p integrals and convert to R1p by taking
 # the inverse
 try:
-    R1p = psd.find_file(
-        data_info["filename"],
-        exp_type=data_info["data_dir"],
-        expno=f"{data_info['nodename']}/R1p",
+    R1p = extract_error(
+        psd.find_file(
+            data_info["filename"],
+            exp_type=data_info["data_dir"],
+            expno=f"{data_info['nodename']}/R1p",
+        )
     )
 except Exception:
-    T1p = psd.find_file(
-        data_info["filename"],
-        exp_type=data_info["data_dir"],
-        expno=f"{data_info['nodename']}/T1p",
+    T1p = extract_error(
+        psd.find_file(
+            data_info["filename"],
+            exp_type=data_info["data_dir"],
+            expno=f"{data_info['nodename']}/T1p",
+        )
     )
     R1p = 1 / T1p
 # }}}
@@ -67,6 +88,7 @@ except Exception:
 # reproducibility. Figure out where this flip occurs
 flip_idx = np.where(np.diff(integral_vs_p.getaxis("power")) < 0)[0][0] + 1
 # }}}
+concentration = float(integral_vs_p.get_prop("acq_params")["concentration"])
 with psd.figlist_var() as fl:
     # {{{Plot integrals as a function of power
     fl.next("Integrals vs power")
@@ -98,13 +120,13 @@ with psd.figlist_var() as fl:
     )["a"][0, :]
     R10_p = 1 / (R1p.fromaxis("power").eval_poly(T10_p, "power"))
     powers_fine = psd.nddata(r_[0 : R1p.getaxis("power")[-1] : 300j], "power")
-    krho_inv = integral_vs_p.get_prop("acq_params")["concentration"] / (
+    krho_inv = concentration / (
         R1p - R10_p
     )
     krho_inv_coeff = krho_inv.polyfit("power", order=1)
     M0, A, phalf, p = symbols("M0 A phalf power", real=True)
     R1p_expr = (T10_p[0] + T10_p[1] * p) ** -1 + (
-        integral_vs_p.get_prop("acq_params")["concentration"]
+        concentration
         / (krho_inv_coeff[0] + krho_inv_coeff[1] * p)
     )
     R1p_fit = lambdify(p, R1p_expr)(powers_fine)
@@ -159,7 +181,7 @@ with psd.figlist_var() as fl:
         * 1e-3  # the experimental ppt overwrites the guess for our
         # final ODNP experiment. Though the key is labeled
         # guessed, it is the ppt returned with a field sweep
-    ) / integral_vs_p.get_prop("acq_params")["concentration"]
+    ) / concentration
     ax = plt.gca()
     plt.text(
         0.5,
