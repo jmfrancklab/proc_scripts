@@ -119,9 +119,9 @@ def correl_align(
         non_repeat_dims = [non_repeat_dims]
     if isinstance(repeat_dims, str):
         repeat_dims = [repeat_dims]
-    assert type(repeat_dims) is list and len(repeat_dims) > 0, (
-        "You must tell me which dimension contains the repeats!"
-    )
+    assert (
+        type(repeat_dims) is list and len(repeat_dims) > 0
+    ), "You must tell me which dimension contains the repeats!"
     temp = set(repeat_dims) - set(s_orig.dimlabels)
     assert len(temp) == 0, (
         f"{temp} were not found in the data dimensions, but were specified in"
@@ -171,9 +171,9 @@ def correl_align(
         assert s_orig.get_ft_prop(phnames), (
             str(phnames) + " must be in the coherence domain"
         )
-    assert s_orig.get_ft_prop(direct), (
-        "direct dimension must be in the frequency domain"
-    )
+    assert s_orig.get_ft_prop(
+        direct
+    ), "direct dimension must be in the frequency domain"
     ph_len = {j: psd.ndshape(s_orig)[j] for j in signal_pathway.keys()}
     N = s_jk.shape["repeats"]
     # {{{ s_jk is preserved without the mask, and accepts the
@@ -285,46 +285,38 @@ def correl_align(
         #     2 1 0 3
         #     3 2 1 0
         for phname, phlen in ph_len.items():
-            delta_name = "Delta%s" % phname.capitalize()
-            delta_axn = s_leftbracket.axn(delta_name)
-            if s_leftbracket.shape[delta_name] != phlen:
+            # TODO ☐: the Delta names are generated above.  Why are we
+            #         re-generating them here? In a more troublesome
+            #         development, why are we looping through the ph and
+            #         Delta, which are different dimensions
+            #         *together*???
+            Delta_name = "Delta%s" % phname.capitalize()
+            Delta_axn = s_leftbracket.axn(Delta_name)
+            if s_leftbracket.shape[Delta_name] != phlen:
                 raise ValueError(
-                    f"{phname} and {delta_name} must have the same length"
+                    f"{phname} and {Delta_name} must have the same length"
                 )
             ph_idx_array = np.arange(phlen)[:, None]
-            delta_idx_array = np.arange(phlen)[None, :]
+            Delta_idx_array = np.arange(phlen)[None, :]
+            # this generates the 2D table mentioned above
             roll_idx_array = (  # phase - Delta; modulo wraps to [0, phlen)
-                ph_idx_array - delta_idx_array
+                ph_idx_array - Delta_idx_array
             ) % phlen
-            # Each Delta-phase column should contain one cyclic shift of the
-            # original phase data. For source phases [s0, s1, s2, s3], the
-            # desired table is
-            #                  Delta phase
-            #              0    1    2    3
-            #     phase 0  s0   s3   s2   s1
-            #           1  s1   s0   s3   s2
-            #           2  s2   s1   s0   s3
-            #           3  s3   s2   s1   s0
-            # ph_idx_array has shape (N, 1), while delta_idx_array has shape
-            # (1, N). NumPy broadcasting repeats the column across N columns
-            # and the row across N rows before subtracting them. Subtracting a
-            # Delta index selects the source phase shifted backward by that
-            # amount. Taking modulo phlen wraps negative results into the valid
-            # cyclic phase-index range 0 through phlen-1, producing the 2D
-            # source-index table shown above.
-            # Since the Delta axis was just replicated, every copy is still
-            # identical: move phase and Delta to the first two axes, select
-            # the first copy, gather all shifted columns with roll_idx_array,
-            # then restore both axes to their original positions. Unspecified
-            # trailing dimensions are retained. nddata.run preserves the
-            # nddata metadata while avoiding repeated slicing and assignment.
+            # TODO ☐: the comment that was here told me all the stuff
+            #         that I already know (in fact, it's already
+            #         described above!!!!!).
+            #         What I do not understand is (1) how exactly does
+            #         this moveaxis achieve the rearrangement that we
+            #         are looking for, and (2) you are running a loop
+            #         where we advance along the ph and Delta dimensions
+            #         together.
             s_leftbracket.run(
                 lambda data, axis: np.moveaxis(
-                    np.moveaxis(data, [axis, delta_axn], [0, 1])[:, 0][
+                    np.moveaxis(data, [axis, Delta_axn], [0, 1])[:, 0][
                         roll_idx_array
                     ],
                     [0, 1],
-                    [axis, delta_axn],
+                    [axis, Delta_axn],
                 ),
                 phname,
             )
@@ -392,19 +384,19 @@ def correl_align(
                 )
         # Find optimal f shift based on max of correlation function
         if max_shift is not None:
-            delta_f_shift = (
-                correl[direct : (-max_shift, max_shift)]
+            Delta_f_shift = (
+                correl[direct:(-max_shift, max_shift)]
                 .run(np.real)
                 .argmax(direct)
             )
         else:
-            delta_f_shift = correl.run(np.real).argmax(direct)
+            Delta_f_shift = correl.run(np.real).argmax(direct)
         # Take s_jk, which is data that is unmasked, but which has all of the
         # shifts from all the previous iterations applied, and apply the shift
         # for this iteration
-        s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
+        s_jk *= np.exp(-1j * 2 * np.pi * Delta_f_shift * s_jk.fromaxis(direct))
         # we need to accumulate the total shift
-        f_shift += delta_f_shift
+        f_shift += Delta_f_shift
         # move back into the frequency and CT domains to analyze the
         # result
         s_jk.ft(direct).ft(phcycdims)
