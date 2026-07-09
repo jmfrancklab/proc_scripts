@@ -45,8 +45,11 @@ s = psd.find_file(
     exp_type=sys.argv[3],
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
-    zenodo="21084153",
+    zenodo="21252663",
+    zenodo_draft=True,
 )
 with psd.figlist_var() as fl:
-    frq_center, frq_half = prscr.find_peakrange(prscr.select_pathway(s, s.get_prop("coherence_pathway")), fl=fl)
+    frq_center, frq_half = prscr.find_peakrange(
+        prscr.select_pathway(s, s.get_prop("coherence_pathway")), fl=fl
+    )
     signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)

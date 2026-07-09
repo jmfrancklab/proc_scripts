@@ -4,10 +4,11 @@ FID from Echo after Phasing and Timing Correction
 
 Demonstrate how we can automatically find the zeroth order phase and the
 center of the echo and then slice, in order to get a properly phased FID.
-Here we see this 
+Here we see this
 
 This example provides a relatively routine example.
 """
+
 import pyspecdata as psd
 import pyspecProcScripts as pypcs
 import matplotlib.pyplot as plt
@@ -32,7 +33,8 @@ with psd.figlist_var(file_name="tempdata220922final.pdf") as fl:
             postproc="spincore_ODNP_v1",
             lookup=lookup_table,
             expno=nodename,
-            zenodo="21084153",
+            zenodo="21252663",
+            zenodo_draft=True,
         )  # returns signal with t=0 set approximately correctly
         fl.basename = nodename
         d = pypcs.fid_from_echo(d, signal_pathway, fl=fl)
