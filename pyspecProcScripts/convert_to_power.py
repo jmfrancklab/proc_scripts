@@ -3,7 +3,7 @@ import pyspecProcScripts as prscr
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-from Instruments.logobj import logobj
+from .simple_functions import logobj
 import datetime
 import re
 
