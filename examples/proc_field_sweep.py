@@ -2,8 +2,6 @@
 Process field-swept enhancement data
 ====================================
 
-``py proc_field_sweep.py NODENAME FILENAME EXP_TYPE``
-
 Process a field sweep acquired by ``run_field_sweep.py``.  The acquisition
 stores the requested and measured fields in the ``field_axis_G`` and
 ``field_readback_G`` properties.  Here we use the measured field readback as
@@ -11,14 +9,9 @@ the sweep axis, integrate each echo with ``rough_table_of_integrals``,
 normalize to the off-resonance edge points, and fit the field profile with a
 simple pseudo-Voigt line shape using ``lmfitdata``.
 
-Tested with:
-
-``py proc_field_sweep.py field_sweep 260000_field_sweep.h5\
-        ODNP_NMR_comp/field_dependent``
 """
 
 import os
-import sys
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -41,29 +34,36 @@ plt.rcParams.update(
     }
 )
 
+# {{{ changeable parameters
+if "thisfile" not in globals():
+    thisfile, exp_type, nodename = (
+        "260713_hydroxytempo_field_sweep.h5",  # TODO: Change the file name once run
+        "B27/field_dependent",
+        "field_sweep_1",
+    )
+# }}}
+
 if (
     "SPHINX_GALLERY_RUNNING" in os.environ
     and os.environ["SPHINX_GALLERY_RUNNING"] == "True"
 ):
-    sys.argv = [
-        sys.argv[0],
-        "field_sweep",
-        "260000_field_sweep.h5",  # TODO: Change the file name once run
+    thisfile, exp_type, nodename = (
+        "260713_field_sweep.h5",  # TODO: Change the file name once run
         "B27/field_dependent",
-    ]
+        "field_sweep_1",
+    )
 
-assert len(sys.argv) == 4, "intended to be called with file info at cmdline"
 s = psd.find_file(
-    sys.argv[2],
-    exp_type=sys.argv[3],
-    expno=sys.argv[1],
+    thisfile,
+    exp_type=exp_type,
+    expno=nodename,
     lookup=prscr.lookup_table,
 )
 
 with psd.figlist_var() as fl:
-    fl.basename = sys.argv[2]
+    fl.basename = thisfile
     acq_params = s.get_prop("acq_params")
-    field_G = np.asarray(s.get_prop("field_readback_G"), dtype=float)
+    field_G = s.get_prop("field_readback_G")["NUMPY_DATA"]
     center_field_G = (
         acq_params["carrierFreq_MHz"] / acq_params["gamma_eff_MHz_G"]
     )
@@ -71,7 +71,7 @@ with psd.figlist_var() as fl:
     s.rename("indirect", "nu_offset")
     s.set_units("nu_offset", "MHz")
     s.sort("nu_offset")
-    s, _ = prscr.rough_table_of_integrals(s, fl=fl, title=sys.argv[2])
+    s, _ = prscr.rough_table_of_integrals(s, fl=fl, title=thisfile)
     if s.get_units("nu_offset") == "kHz":
         s["nu_offset"] = s["nu_offset"] / 1e3
         s.set_units("nu_offset", "MHz")
@@ -89,22 +89,40 @@ with psd.figlist_var() as fl:
     )
     fitdata = psd.lmfitdata(s)
     fitdata.functional_form = E0 + A * (
-        eta * lambda_L**2 / ((nu_offset - nu_center) ** 2 + lambda_L**2)
-        + (1 - eta) * sp.exp(-((nu_offset - nu_center) ** 2) / (2 * sigma**2))
+        eta
+        * (
+            -2
+            * lambda_L**2
+            * (nu_offset - nu_center)
+            / ((nu_offset - nu_center) ** 2 + lambda_L**2) ** 2
+        )
+        + (1 - eta)
+        * (
+            -(nu_offset - nu_center)
+            / sigma**2
+            * sp.exp(-((nu_offset - nu_center) ** 2) / (2 * sigma**2))
+        )
     )
-    baseline_guess = s.data.real[edge_idx].mean()
-    y_from_baseline = s.data.real - baseline_guess
     nu_axis = np.asarray(s["nu_offset"], dtype=float)
-    sweep_width = nu_axis.max() - nu_axis.min()
+    sweep_width = np.ptp(nu_axis)
+    enhancement_width = np.ptp(s.data.real)
+    max_idx = np.argmax(s.data.real)
+    min_idx = np.argmin(s.data.real)
     linewidth_guess = max(sweep_width / 8, 1e-3)
-    amp_guess = y_from_baseline[np.argmax(abs(y_from_baseline))]
+    center_guess = 0.5 * (nu_axis[max_idx] + nu_axis[min_idx])
     fitdata.set_guess(
-        E_0=dict(value=baseline_guess, min=0.2, max=2.0),
-        A=dict(value=amp_guess, min=2 * amp_guess, max=0)
-        if amp_guess < 0
-        else dict(value=amp_guess, min=0, max=2 * amp_guess),
+        E_0=dict(
+            value=np.median(s.data.real),
+            min=s.data.real.min() - enhancement_width,
+            max=s.data.real.max() + enhancement_width,
+        ),
+        A=dict(
+            value=enhancement_width * linewidth_guess,
+            min=-100 * enhancement_width * linewidth_guess,
+            max=100 * enhancement_width * linewidth_guess,
+        ),
         nu_center=dict(
-            value=nu_axis[np.argmax(abs(y_from_baseline))],
+            value=center_guess,
             min=nu_axis.min(),
             max=nu_axis.max(),
         ),
