@@ -285,11 +285,12 @@ def correl_align(
         #     2 1 0 3
         #     3 2 1 0
         for phname, phlen in ph_len.items():
-            # TODO ☐: the Delta names are generated above.  Why are we
-            #         re-generating them here? In a more troublesome
-            #         development, why are we looping through the ph and
-            #         Delta, which are different dimensions
-            #         *together*???
+            # The Delta axis name is the deterministic partner of this phase
+            # axis name, so this rebuilds the same label used when the Delta
+            # axes were created above.  The loop is over phase/Delta axis
+            # pairs: for each phase axis, fill only its matching Delta axis
+            # with cyclic shifts of that phase axis.  It is not advancing
+            # through both dimensions element-by-element.
             Delta_name = "Delta%s" % phname.capitalize()
             Delta_axn = s_leftbracket.axn(Delta_name)
             if s_leftbracket.shape[Delta_name] != phlen:
@@ -298,18 +299,21 @@ def correl_align(
                 )
             ph_idx_array = np.arange(phlen)[:, None]
             Delta_idx_array = np.arange(phlen)[None, :]
-            # this generates the 2D table mentioned above
             roll_idx_array = (  # phase - Delta; modulo wraps to [0, phlen)
                 ph_idx_array - Delta_idx_array
             ) % phlen
-            # TODO ☐: the comment that was here told me all the stuff
-            #         that I already know (in fact, it's already
-            #         described above!!!!!).
-            #         What I do not understand is (1) how exactly does
-            #         this moveaxis achieve the rearrangement that we
-            #         are looking for, and (2) you are running a loop
-            #         where we advance along the ph and Delta dimensions
-            #         together.
+            # Move this phase axis and its Delta axis to the front so the
+            # data are temporarily ordered as data[phase, Delta, remaining].
+            # The Delta axis is still just replicated data, so column 0 is
+            # enough to recover the original phase series.  Indexing that
+            # phase series with roll_idx_array builds the full shifted table
+            # in one operation:
+            #
+            #     output phase i, Delta j <- source phase (i - j) mod phlen
+            #
+            # Finally, move the two front axes back to their original axis
+            # numbers.  All remaining dimensions are carried through
+            # unchanged by NumPy indexing.
             s_leftbracket.run(
                 lambda data, axis: np.moveaxis(
                     np.moveaxis(data, [axis, Delta_axn], [0, 1])[:, 0][
