@@ -1,4 +1,4 @@
-from .simple_functions import select_pathway
+from .simple_functions import select_pathway, order_dims_for_display
 import numpy as np
 
 
@@ -126,7 +126,7 @@ def calc_masked_variance(
     # }}}
     if fl is not None:
         fl.next("Masked Frequency Noise")
-        fl.image(collected_variance)
+        fl.DCCT(order_dims_for_display(collected_variance, direct=direct))
     # Calculate variance along the direct dimension.
     # This must be done before any subsequent averaging of the variance.
     collected_variance.run(_masked_var_multi, direct)

@@ -31,7 +31,7 @@ def fit_envelope(
         lambda_L=1 / 10e-3 / pi,
     )
     if fl:
-        envelope.settoguess()
+        envelope.set_to_guess()
         orig_guess = envelope.eval()
     envelope.fit()
     new_guess = envelope.output()
@@ -64,7 +64,7 @@ def fit_envelope(
     for j, newL in enumerate(lw_range):
         new_guess.update(lambda_L=newL)
         envelope.set_guess(new_guess)
-        envelope.settoguess()
+        envelope.set_to_guess()
         points_over = (
             envelope[direct:(0, t_at_exp_end)]
             - envelope.eval()[direct:(0, t_at_exp_end)]
@@ -86,18 +86,20 @@ def fit_envelope(
         lamb, norm_min * (1 - threshold) + norm_max * threshold, kind="linear"
     )
     logging.debug(
-        "opt_lambda",
-        opt_lambda,
-        "at",
-        norm_min * (1 - threshold) + norm_max * threshold,
-        "out of",
-        lw_range,
+        psp.strm(
+            "opt_lambda",
+            opt_lambda,
+            "at",
+            norm_min * (1 - threshold) + norm_max * threshold,
+            "out of",
+            lw_range,
+        )
     )
     if fl and show_expanding_envelope:
         fl.plot(opt_lambda, "o")
     new_guess.update(lambda_L=opt_lambda.getaxis(lamb).item().real)
     envelope.set_guess(new_guess)
-    envelope.settoguess()
+    envelope.set_to_guess()
     if fl:
         fl.next(plot_name)
     env_out = envelope.output()
