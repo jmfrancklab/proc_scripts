@@ -489,9 +489,10 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
         freq_envelope.get_ft_prop(direct, "df") * 5,
         enforce_causality=False,
     )
-    freq_envelope -= (
-        freq_envelope[direct, -1].item() + freq_envelope[direct, 0].item()
+    baseline = (
+        freq_envelope[direct, -1] + freq_envelope[direct, 0]
     ) / 2
+    freq_envelope -= baseline
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(
@@ -742,7 +743,9 @@ def hermitian_function_test(
     #             square root for a well-defined
     #             minimum -- it could be better to do
     #             this before averaging in the future
-    cost_min = cost_func.C.argmin(direct).item()
+    # argmin stores an axis coordinate in data but retains the signal units,
+    # so extract the underlying numerical coordinate directly.
+    cost_min = cost_func.C.argmin(direct).data.item()
     if fl is not None:
         forplot = s_energy / t_dwos
         forplot.mean_all_but([direct])
@@ -765,7 +768,7 @@ def hermitian_function_test(
     if fl is not None:
         fl.plot(
             echo_peak / det_devisor(fl),
-            forplot[direct:echo_peak].item(),
+            forplot[direct:echo_peak].data.item(),
             "o",
             c="violet",
             alpha=0.3,
@@ -809,7 +812,8 @@ def hermitian_function_test(
         if fl is not None:
             fl.next("refinement")
             fl.plot(s_foropt, human_units=False)
-        s_foropt = s_foropt.argmin("echo shift").item()
+        # As above, this is an axis coordinate rather than signal data.
+        s_foropt = s_foropt.argmin("echo shift").data.item()
         if fl is not None:
             fl.next("refinement")
             axvline(x=s_foropt)
