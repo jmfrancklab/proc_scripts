@@ -2,12 +2,13 @@
 hydroxyTEMPO ODNP field sweep: DNP spectrum (epsilon = 1 - E)
 ==============================================================
 
-``py proc_field_sweep_dnp_curve.py FILENAME EXP_TYPE``
+``py proc_field_sweep.py ON_FILE OFF_FILE EXP_TYPE [ON_NODE OFF_NODE]``
 
-Loads the two field-sweep nodes with ``find_file(..., lookup=lookup_table)``
-(dispatching on the saved ``field_sweep_v5`` postproc, so each node returns
-conjugated, ``tau``-shifted, FT'd along ``t2`` and along the phase cycle,
-with ``coherence_pathway`` / ``acq_params`` / ``field_readback_G`` as
+Loads the MW-on and MW-off field-sweep files/nodes with
+``find_file(..., lookup=lookup_table)`` (dispatching on the saved
+``field_sweep_v5`` postproc, so each node returns conjugated,
+``tau``-shifted, FT'd along ``t2`` and along the phase cycle, with
+``coherence_pathway`` / ``acq_params`` / ``field_readback_G`` as
 properties), phases each node, integrates the on-resonance NMR peak for
 every field, and plots ``epsilon = 1 - E`` (``E = S_on / S_off``) with a
 three-line pseudo-Voigt fit via ``lmfitdata``, alongside the analytic
@@ -17,12 +18,14 @@ Phasing (before any integration or plotting)
 ---------------------------------------------
 Per repo convention (see ``examples/Hermitian_Phasing.py``), each node gets:
 
+Opt. **Equal-energy apodization**
 1. **zeroth-order phasing** (``zeroth_order_ph``) -- a single global phase
    for the whole node, found from the moment of inertia of the
    coherence-selected signal in the complex plane.
 2. **Hermitian (first-order) phasing** (``hermitian_function_test``) -- a
    single global timing correction that centers the echo, found from the
    nu_offset-averaged, coherence-selected FID/echo.
+3. **Correlation alignment**
 
 Sign convention
 ----------------
@@ -32,14 +35,15 @@ conventional ``epsilon = 1 - E`` instead, which is positive under the DNP
 lines and zero off-resonance.
 """
 
-import sys
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pyspecProcScripts as prscr
 import pyspecdata as psd
 import sympy as sp
+from matplotlib.gridspec import GridSpec
 from pyspecProcScripts import (
+    L2G,
+    correl_align,
     hermitian_function_test,
     select_pathway,
     zeroth_order_ph,
@@ -47,23 +51,28 @@ from pyspecProcScripts import (
 
 # {{{ changeable parameters
 
-thisfile, exp_type = (
+on_file, off_file, exp_type = (
+    "260720_hydroxytempo_field_sweep.h5",
     "260720_hydroxytempo_field_sweep.h5",
     "b27/field_dependent",
 )
 on_node, off_node = "field_sweep_1", "field_sweep_2"  # MW on / MW off
 signal_pathway = {"ph1": 1}
-signal_band_Hz = 3e3  # +-band around the on-resonance NMR peak
-# }}}
+peak_lower_thresh = 0.1
+apodization = True  # Apply to both or none. Recommended.
+apod_width_Hz = 1e3  # After the optimal value increasing shouldn't change
+# the enhancement. Low values give weird results.
+# }}}}
 
 
-def phase_node(nodename, shared_zeroth_phase=None):
+def phase_node_and_align(filename, nodename, apod=False, fl=None):
     """Load one node and apply zeroth-order phasing and Hermitian timing
-    correction.  Returns the phased nddata, acq_params, the center field,
-    and the zeroth-order phase actually used (so the caller can share it
-    with the other node)."""
+    correction.  Optionally apply equal-energy apodization and correlation
+    alignment.  Returns the phased nddata, acq_params, the center field, and
+    the zeroth-order phase actually used (so the caller can share it with the
+    other node)."""
     s = psd.find_file(
-        thisfile, exp_type=exp_type, expno=nodename, lookup=prscr.lookup_table
+        filename, exp_type=exp_type, expno=nodename, lookup=prscr.lookup_table
     )
     acq_params = s.get_prop("acq_params")
     field_G = s.get_prop("field_readback_G")["NUMPY_DATA"]
@@ -80,12 +89,36 @@ def phase_node(nodename, shared_zeroth_phase=None):
     s.sort("nu_offset")
     s.set_prop("coherence_pathway", signal_pathway)
 
-    s.ift("t2")
-    zeroth_phase = (
-        zeroth_order_ph(select_pathway(s, signal_pathway))
-        if shared_zeroth_phase is None
-        else shared_zeroth_phase
+    if apod:
+        # {{{ Equal-energy apodization
+        fig = fl.next(f"{nodename} apodized signal")
+        fl.title = f"{nodename} apodized signal"
+        gs = GridSpec(1, 3, figure=fig, left=0.05, right=0.95)
+        psd.DCCT(
+            s,
+            fig,
+            title="Raw Data",
+            bbox=gs[0, 0],
+        )
+        s.ift("t2")
+        s *= L2G(apod_width_Hz, criterion="energy")(s.fromaxis("t2"))
+        s.ft("t2")
+        psd.DCCT(
+            s,
+            fig,
+            title="Equal Energy Apodization",
+            bbox=gs[0, 1],
+        )
+    signal = select_pathway(s, signal_pathway)
+    nu_axis = signal.getaxis("nu_offset")
+    frq_center, frq_half = prscr.find_peakrange(
+        signal["nu_offset" : nu_axis[abs(nu_axis).argmin()]],
+        peak_lower_thresh=peak_lower_thresh,
     )
+    frq_half = abs(frq_half)
+
+    s.ift("t2")
+    zeroth_phase = zeroth_order_ph(select_pathway(s, signal_pathway))
     s /= zeroth_phase
     s["t2"] -= s.getaxis("t2")[0]  # needed for hermitian_function_test
     best_shift = hermitian_function_test(
@@ -93,29 +126,76 @@ def phase_node(nodename, shared_zeroth_phase=None):
     )
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
     s.ft("t2")
-    return s, acq_params, center_field_G, zeroth_phase
+
+    def frq_mask(this_s):
+        repeat_dim = (
+            "repeats" if "repeats" in this_s.dimlabels else "nu_offset"
+        )
+        nu_center = (
+            select_pathway(this_s, signal_pathway)
+            .mean(repeat_dim)
+            .argmax("t2")
+        )
+        return this_s * np.exp(
+            -((this_s.fromaxis("t2") - nu_center) ** 2) / (4 * frq_half**2)
+        )
+
+    def coherence_unmask_fn(coh_array):
+        thisslice = coh_array
+        for j, (k, v) in enumerate(signal_pathway.items()):
+            if j == len(signal_pathway) - 1:
+                thisslice[k, v] = 1
+            else:
+                thisslice = thisslice[k, v]
+        return coh_array
+
+    repeat_sign = select_pathway(s, signal_pathway).C.real.sum("t2")
+    repeat_sign = repeat_sign.run(np.sign)
+    opt_shift = correl_align(
+        s * repeat_sign,
+        frq_mask_fn=frq_mask,
+        coherence_unmask_fn=coherence_unmask_fn,
+        repeat_dims="nu_offset",
+        max_shift=frq_half,
+    )
+    s.ift("t2").ift(list(signal_pathway))
+    s *= np.exp(-1j * 2 * np.pi * opt_shift * s.fromaxis("t2"))
+    s.ft("t2").ft(list(signal_pathway.keys()))
+
+    if apod:
+        psd.DCCT(
+            s,
+            fig,
+            title="After apodization\nand alignment",
+            bbox=gs[0, 2],
+        )
+
+    return s, acq_params, center_field_G, frq_center, frq_half
 
 
 with psd.figlist_var() as fl:
-    fl.basename = thisfile
+    fl.basename = on_file
 
-    on, acq_params, center_field_G, on_zeroth_phase = phase_node(on_node)
-    off, _, _, _ = phase_node(off_node, shared_zeroth_phase=on_zeroth_phase)
+    (
+        off,
+        acq_params,
+        center_field_G,
+        off_frq_center,
+        off_frq_half,
+    ) = phase_node_and_align(off_file, off_node, apod=apodization, fl=fl)
+    on, _, _, on_frq_center, on_frq_half = phase_node_and_align(
+        on_file, on_node, apod=apodization, fl=fl
+    )
 
     on_band = select_pathway(on, signal_pathway)[
-        "t2" : (-signal_band_Hz, signal_band_Hz)
+        "t2" : (on_frq_center - on_frq_half, on_frq_center + on_frq_half)
     ].integrate("t2")
     off_band = select_pathway(off, signal_pathway)[
-        "t2" : (-signal_band_Hz, signal_band_Hz)
+        "t2" : (off_frq_center - off_frq_half, off_frq_center + off_frq_half)
     ].integrate("t2")
 
     # {{{ epsilon = 1 - E, E = S_on / S_off, off node interpolated onto the
-    #     on-node field axis (the two sweeps sit on grids offset by ~2 G).
-    #     Both bands share the zeroth-order phase determined above, so
-    #     their real parts are directly comparable; the thermal (off)
-    #     level is the sign reference -- by convention it is positive, so
-    #     E is negative (and epsilon positive) under the DNP lines, since
-    #     1H Overhauser enhancement inverts the signal.
+    #     on-node field axis.
     nu_on = np.asarray(on_band["nu_offset"], dtype=float)
     nu_off = np.asarray(off_band["nu_offset"], dtype=float)
     off_order = np.argsort(nu_off)
@@ -123,8 +203,14 @@ with psd.figlist_var() as fl:
         nu_on, nu_off[off_order], off_band.data.real[off_order]
     )
     thermal_level = np.median(off_on_axis)
+    # DNP data is negative wrt thermals
+    if np.median(on_band.data.real) * thermal_level > 0:
+        on_band *= -1
     epsilon = on_band.C
     epsilon.data = 1 - on_band.data.real / thermal_level
+    epsilon.set_error(None)  # None for now. In the future we can add errors
+    # from the goodness of the fit.
+
     epsilon.name("epsilon")
     # }}}
 
