@@ -53,7 +53,7 @@ from scipy.special import wofz
 # {{{ changeable parameters
 
 on_file, off_file, exp_type = (
-    "260720_hydroxytempo_field_sweep.h5",
+    "260723_hydroxytempo_field_sweep.h5",
     "260720_hydroxytempo_field_sweep.h5",
     "b27/field_dependent",
 )
@@ -93,7 +93,6 @@ def phase_node_and_align(filename, nodename, apod=False, fl=None):
     if apod:
         # {{{ Equal-energy apodization
         fig = fl.next(f"{nodename} apodized signal")
-        fl.title = f"{nodename} apodized signal"
         gs = GridSpec(1, 3, figure=fig, left=0.05, right=0.95)
         psd.DCCT(
             s,
@@ -434,6 +433,7 @@ with psd.figlist_var() as fl:
 
     fig, (ax_eps, ax_deriv) = plt.subplots(2, 1, sharex=True, figsize=(6, 7))
     fl.next("hydroxyTEMPO ODNP field sweep", fig=fig)
+    fig.suptitle(f"{on_file} {on_node} Field Sweep")
     psd.plot(
         epsilon,
         "o",
