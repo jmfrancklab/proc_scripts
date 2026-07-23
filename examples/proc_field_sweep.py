@@ -1,6 +1,6 @@
 """
-hydroxyTEMPO ODNP field sweep: transition-rate spectrum
-=======================================================
+hydroxyTEMPO ODNP field sweep: DNP spectrum (epsilon = 1 - E)
+==============================================================
 
 ``py proc_field_sweep_dnp_curve.py FILENAME EXP_TYPE``
 
@@ -8,15 +8,14 @@ Loads the two field-sweep nodes with ``find_file(..., lookup=lookup_table)``
 (dispatching on the saved ``field_sweep_v5`` postproc, so each node returns
 conjugated, ``tau``-shifted, FT'd along ``t2`` and along the phase cycle,
 with ``coherence_pathway`` / ``acq_params`` / ``field_readback_G`` as
-properties), post-processes each node with the repo's standard alignment
-sequence, integrates the on-resonance NMR peak for every field, and plots
-``epsilon = 1 - E`` with a three-line pseudo-Voigt fit via ``lmfitdata``.
+properties), phases each node, integrates the on-resonance NMR peak for
+every field, and plots ``epsilon = 1 - E`` (``E = S_on / S_off``) with a
+three-line pseudo-Voigt fit via ``lmfitdata``, alongside the analytic
+derivative of the fit.
 
-Alignment sequence (before any integration or plotting)
----------------------------------------------------------
-Per repo convention (see ``examples/correlation_alignment_example.py``),
-each node is post-processed in three steps before we ever look at signs or
-integrate:
+Phasing (before any integration or plotting)
+---------------------------------------------
+Per repo convention (see ``examples/Hermitian_Phasing.py``), each node gets:
 
 1. **zeroth-order phasing** (``zeroth_order_ph``) -- a single global phase
    for the whole node, found from the moment of inertia of the
@@ -24,21 +23,13 @@ integrate:
 2. **Hermitian (first-order) phasing** (``hermitian_function_test``) -- a
    single global timing correction that centers the echo, found from the
    nu_offset-averaged, coherence-selected FID/echo.
-3. **correlation alignment** (``correl_align``, DCCT paper Eq. 29) -- a
-   per-field frequency-domain shift that maximizes each field's
-   correlation with the (locally sign-corrected) mean transient.  This is
-   what removes the small field-dependent echo-frequency-offset drift that
-   otherwise causes wild phase/amplitude scatter when transients are
-   coherently summed.
 
-The MW-off (thermal) node is noise-dominated, so its *own*
-``zeroth_order_ph`` estimate is unreliable (the moment-of-inertia ellipse is
-nearly circular).  Since both nodes are acquired in the same session on the
-same hardware with the same pulse sequence, the receiver's zeroth-order
-phase is shared, so we determine it once from the high-SNR MW-on node and
-reuse it for the MW-off node -- this is what puts both nodes' real parts on
-a common, physically meaningful sign axis.  After that, the enhancement
-``E = S_on / S_off`` is converted to ``epsilon = 1 - E``.
+Sign convention
+----------------
+``E = S_on / S_off`` is negative under the DNP lines (1H Overhauser
+enhancement inverts the water-proton signal).  We plot the more
+conventional ``epsilon = 1 - E`` instead, which is positive under the DNP
+lines and zero off-resonance.
 """
 
 import sys
@@ -49,63 +40,28 @@ import pyspecProcScripts as prscr
 import pyspecdata as psd
 import sympy as sp
 from pyspecProcScripts import (
-    correl_align,
     hermitian_function_test,
     select_pathway,
     zeroth_order_ph,
 )
 
 # {{{ changeable parameters
-if len(sys.argv) == 3:
-    thisfile, exp_type = sys.argv[1], sys.argv[2]
-else:
-    thisfile, exp_type = (
-        "260720_hydroxytempo_field_sweep.h5",
-        "b27/field_dependent",
-    )
+
+thisfile, exp_type = (
+    "260720_hydroxytempo_field_sweep.h5",
+    "b27/field_dependent",
+)
 on_node, off_node = "field_sweep_1", "field_sweep_2"  # MW on / MW off
 signal_pathway = {"ph1": 1}
 signal_band_Hz = 3e3  # +-band around the on-resonance NMR peak
-correl_max_shift_Hz = 3e3  # search range for correl_align's field-to-field
-#                             frequency drift
 # }}}
 
 
-# SINGLE_USE_EXCEPTION -- dispatch boundary (passed as frq_mask_fn callback
-# to correl_align, per examples/correlation_alignment_example.py)
-def frq_mask(s, sigma=150.0):
-    """Multiply by the square root of a Gaussian frequency-domain mask
-    centered on the coherence-selected peak, as required by correl_align."""
-    nu_center = (
-        select_pathway(s, s.get_prop("coherence_pathway"))
-        .mean("repeats")
-        .argmax("t2")
-    )
-    return s * np.exp(-((s.fromaxis("t2") - nu_center) ** 2) / (4 * sigma**2))
-
-
-# SINGLE_USE_EXCEPTION -- dispatch boundary (passed as coherence_unmask_fn
-# callback to correl_align, per examples/correlation_alignment_example.py)
-def coherence_unmask_fn(coh_array):
-    """Unmask only the signal coherence pathway and its {ph1: 0} sibling,
-    as required by correl_align."""
-
-    def set_pathway_true(pathway_dict):
-        for k, v in pathway_dict.items():
-            coh_array[k, v] = 1
-
-    set_pathway_true(coh_array.get_prop("coherence_pathway"))
-    set_pathway_true(
-        {k: 0 for k in coh_array.get_prop("coherence_pathway").keys()}
-    )
-    return coh_array
-
-
-def phase_and_align(nodename, fl, shared_zeroth_phase=None):
-    """Load one node and apply zeroth-order phasing, Hermitian timing
-    correction, and correlation alignment along nu_offset.  Returns the
-    aligned nddata, acq_params, the center field, and the zeroth-order
-    phase actually used (so the caller can share it with the other node)."""
+def phase_node(nodename, shared_zeroth_phase=None):
+    """Load one node and apply zeroth-order phasing and Hermitian timing
+    correction.  Returns the phased nddata, acq_params, the center field,
+    and the zeroth-order phase actually used (so the caller can share it
+    with the other node)."""
     s = psd.find_file(
         thisfile, exp_type=exp_type, expno=nodename, lookup=prscr.lookup_table
     )
@@ -137,35 +93,14 @@ def phase_and_align(nodename, fl, shared_zeroth_phase=None):
     )
     s.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
     s.ft("t2")
-
-    # correl_align requires same-sign repeats; multiply by the current sign
-    # only to find the alignment shift, then apply that shift to the
-    # (unflipped) data below
-    repeat_sign = select_pathway(s, signal_pathway).C.real.sum("t2")
-    repeat_sign = repeat_sign.run(np.sign)
-    opt_shift = correl_align(
-        s * repeat_sign,
-        frq_mask_fn=frq_mask,
-        coherence_unmask_fn=coherence_unmask_fn,
-        repeat_dims="nu_offset",
-        max_shift=correl_max_shift_Hz,
-        fl=fl,
-    )
-    s.ift("t2").ift(list(signal_pathway))
-    s *= np.exp(-1j * 2 * np.pi * opt_shift * s.fromaxis("t2"))
-    s.ft("t2").ft(list(signal_pathway.keys()))
     return s, acq_params, center_field_G, zeroth_phase
 
 
 with psd.figlist_var() as fl:
     fl.basename = thisfile
 
-    on, acq_params, center_field_G, on_zeroth_phase = phase_and_align(
-        on_node, fl
-    )
-    off, _, _, _ = phase_and_align(
-        off_node, fl, shared_zeroth_phase=on_zeroth_phase
-    )
+    on, acq_params, center_field_G, on_zeroth_phase = phase_node(on_node)
+    off, _, _, _ = phase_node(off_node, shared_zeroth_phase=on_zeroth_phase)
 
     on_band = select_pathway(on, signal_pathway)[
         "t2" : (-signal_band_Hz, signal_band_Hz)
@@ -174,12 +109,13 @@ with psd.figlist_var() as fl:
         "t2" : (-signal_band_Hz, signal_band_Hz)
     ].integrate("t2")
 
-    # {{{ enhancement = S_on / S_off, off node interpolated onto the on-node
-    #     field axis (the two sweeps sit on grids offset by ~2 G).  Both
-    #     bands share the zeroth-order phase determined above, so their real
-    #     parts are directly comparable; the thermal (off) level is the sign
-    #     reference -- by convention it is positive, and the DNP lines are
-    #     then negative, since 1H Overhauser enhancement inverts the signal.
+    # {{{ epsilon = 1 - E, E = S_on / S_off, off node interpolated onto the
+    #     on-node field axis (the two sweeps sit on grids offset by ~2 G).
+    #     Both bands share the zeroth-order phase determined above, so
+    #     their real parts are directly comparable; the thermal (off)
+    #     level is the sign reference -- by convention it is positive, so
+    #     E is negative (and epsilon positive) under the DNP lines, since
+    #     1H Overhauser enhancement inverts the signal.
     nu_on = np.asarray(on_band["nu_offset"], dtype=float)
     nu_off = np.asarray(off_band["nu_offset"], dtype=float)
     off_order = np.argsort(nu_off)
@@ -187,14 +123,8 @@ with psd.figlist_var() as fl:
         nu_on, nu_off[off_order], off_band.data.real[off_order]
     )
     thermal_level = np.median(off_on_axis)
-    sign_convention = 1 if thermal_level > 0 else -1
-    enhancement = on_band.C
-    enhancement.data = (
-        sign_convention * on_band.data.real / (sign_convention * thermal_level)
-    )
-    enhancement.name("enhancement")
-    epsilon = enhancement.C
-    epsilon.data = 1 - enhancement.data
+    epsilon = on_band.C
+    epsilon.data = 1 - on_band.data.real / thermal_level
     epsilon.name("epsilon")
     # }}}
 
@@ -241,17 +171,16 @@ with psd.figlist_var() as fl:
     fitdata.fit(use_jacobian=False)
     # }}}
 
-    # {{{ analytic derivative of the fitted curve -- this is the quantity
-    #     that's directly comparable to a conventional (derivative-mode)
-    #     EPR spectrum: Eq. S7-S9 in the supplement write the DNP transition
-    #     rates in terms of the EPR *absorption* lineshape phi(nu), so our
-    #     fitted epsilon curve is itself absorption-shaped, and its
-    #     derivative is what a field-modulated CW-EPR spectrometer would
-    #     display.  We differentiate the noise-free fitted expression
-    #     (substituting the fitted parameter values via their sympy symbols,
-    #     not the string names output() returns) rather than the raw data,
-    #     since numerically differentiating scattered points would just
-    #     amplify noise.
+    # {{{ analytic derivative of the fitted curve -- comparable to a
+    #     conventional (derivative-mode) EPR spectrum: Eq. S7-S9 in the
+    #     supplement write the DNP transition rates in terms of the EPR
+    #     *absorption* lineshape phi(nu), so our fitted epsilon curve is
+    #     itself absorption-shaped, and its derivative is what a field-
+    #     modulated CW-EPR spectrometer would display-like.  We differentiate
+    #     the noise-free fitted expression (substituting fitted parameter
+    #     values via their sympy symbols, not the string names output()
+    #     returns) rather than the raw data, since numerically
+    #     differentiating scattered points would just amplify noise.
     symbol_table = {
         "E_0": E_0,
         "sigma": sigma,
@@ -275,51 +204,60 @@ with psd.figlist_var() as fl:
     derivative.name("d(epsilon)/d(nu_offset)")
     # }}}
 
-    fig, (ax_dnp, ax_deriv) = plt.subplots(2, 1, sharex=True, figsize=(6, 7))
+    fig, (ax_eps, ax_deriv) = plt.subplots(2, 1, sharex=True, figsize=(6, 7))
     fl.next("hydroxyTEMPO ODNP field sweep", fig=fig)
     psd.plot(
         epsilon,
         "o",
-        ax=ax_dnp,
+        ax=ax_eps,
         color="k",
         markersize=3,
-        label=r"$\epsilon = 1 - E$",
+        label="DNP curve",
     )
     psd.plot(
         fitdata.eval(500),
-        ax=ax_dnp,
+        ax=ax_eps,
         color="r",
         alpha=0.8,
         label="3-line pseudo-Voigt",
     )
     nu_c_fit, A_hf_fit = fitdata.output("nu_c"), fitdata.output("A_hf")
     line_centers = (nu_c_fit - A_hf_fit, nu_c_fit, nu_c_fit + A_hf_fit)
+    epr_shift_per_G = acq_params["uw_dip_center_GHz"] * 1e3 / center_field_G
+    middle_peak_nmr_MHz = (
+        center_field_G + nu_c_fit / epr_shift_per_G
+    ) * acq_params["gamma_eff_MHz_G"]
     for this_center in line_centers:
-        ax_dnp.axvline(this_center, ls=":", color="grey", alpha=0.5)
-    ax_dnp.axhline(0, lw=0.6, color="k")
-    ax_dnp.set_ylabel(r"$\epsilon = 1 - E$")
-    ax_dnp.legend()
-    ax_dnp.grid(alpha=0.3)
+        ax_eps.axvline(this_center, ls=":", color="grey", alpha=0.5)
+    ax_eps.axhline(0, lw=0.6, color="k")
+    ax_eps.set_ylabel(r"$\epsilon  = 1 - E$")
+    ax_eps.legend()
+    ax_eps.grid(alpha=0.3)
 
     psd.plot(
         derivative,
         ax=ax_deriv,
         color="b",
-        label=r"$d\epsilon/d\nu$ (EPR-like)",
+        label=r"$d\epsilon/d\nu$",
     )
     for this_center in line_centers:
         ax_deriv.axvline(this_center, ls=":", color="grey", alpha=0.5)
     ax_deriv.axhline(0, lw=0.6, color="k")
     ax_deriv.set_xlabel(r"EPR offset $\nu-\nu_\mathrm{center}$ / MHz")
-    ax_deriv.set_ylabel(r"$d\epsilon/d\nu$ / MHz$^{-1}$")
+    ax_deriv.set_ylabel("First Derivative Spectrum")
     ax_deriv.legend()
     ax_deriv.grid(alpha=0.3)
     fig.tight_layout()
 
     print(f"center field: {center_field_G:#0.8g} G")
-    print(f"largest epsilon: {epsilon.data.max():#0.4g}")
+    print(f"peak epsilon: {epsilon.data.max():#0.4g}")
     print(
         f"14N hyperfine spacing: {A_hf_fit:#0.4g} MHz;  centers (MHz): "
         f"{nu_c_fit - A_hf_fit:#0.4g}, {nu_c_fit:#0.4g}, "
         f"{nu_c_fit + A_hf_fit:#0.4g}"
+    )
+    print(
+        "NMR/EPR ratio: "
+        f"{middle_peak_nmr_MHz / acq_params['uw_dip_center_GHz']:#0.8g}"
+        " MHz/GHz "
     )
