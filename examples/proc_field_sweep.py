@@ -11,8 +11,8 @@ Loads the MW-on and MW-off field-sweep files/nodes with
 ``coherence_pathway`` / ``acq_params`` / ``field_readback_G`` as
 properties), phases each node, integrates the on-resonance NMR peak for
 every field, and plots ``epsilon = 1 - E`` (``E = S_on / S_off``) with a
-three-line pseudo-Voigt fit via ``lmfitdata``, alongside the analytic
-derivative of the fit.
+three-line Voigt fit via ``lmfitdata``, alongside the analytic derivative
+of the fit.
 
 Phasing (before any integration or plotting)
 ---------------------------------------------
@@ -48,6 +48,7 @@ from pyspecProcScripts import (
     select_pathway,
     zeroth_order_ph,
 )
+from scipy.special import wofz
 
 # {{{ changeable parameters
 
@@ -214,78 +215,219 @@ with psd.figlist_var() as fl:
     epsilon.name("epsilon")
     # }}}
 
-    # {{{ three-line pseudo-Voigt fit (shared center + 14N hyperfine spacing)
-    nu_offset, E_0, sigma, lambda_L, eta, nu_c, A_hf, A_0, A_1, A_2 = (
-        sp.symbols(
-            "nu_offset E_0 sigma lambda_L eta nu_c A_hf A_0 A_1 A_2",
-            real=True,
+    # {{{ Three-line Voigt fit.
+    nu_offset, E_0 = sp.symbols("nu_offset E_0", real=True)
+    A_symbols = sp.symbols("A0:3", real=True)
+    A_disp_symbols = sp.symbols("A_disp0:3", real=True)
+    Bcenter_symbols = sp.symbols("Bcenter0:3", real=True)
+    FWHM_symbols = sp.symbols("FWHM0:3", real=True)
+    L_vs_G_frac_symbols = sp.symbols("L_vs_G_frac0:3", real=True)
+    wofz_symbol = sp.Function("wofz")
+    voigt_fwhm_coeff = 0.5346
+    voigt_fwhm_remainder = (1.0 - voigt_fwhm_coeff) ** 2
+
+    def build_model(absorptive_amplitudes, dispersive_amplitudes=None):
+        model = E_0
+        for j, absorptive_amplitude in enumerate(absorptive_amplitudes):
+            lorentzian_FWHM = FWHM_symbols[j] * L_vs_G_frac_symbols[j]
+            gaussian_FWHM = sp.sqrt(
+                (
+                    FWHM_symbols[j]
+                    - sp.Float(voigt_fwhm_coeff) * lorentzian_FWHM
+                )
+                ** 2
+                - sp.Float(voigt_fwhm_remainder) * lorentzian_FWHM**2
+            )
+            gaussian_sigma = gaussian_FWHM / (2 * sp.sqrt(2 * sp.log(2)))
+            z = (
+                nu_offset - Bcenter_symbols[j] + sp.I * lorentzian_FWHM / 2
+            ) / (gaussian_sigma * sp.sqrt(2))
+            complex_voigt = wofz_symbol(z) / (
+                gaussian_sigma * sp.sqrt(2 * sp.pi)
+            )
+            model += absorptive_amplitude * sp.re(complex_voigt)
+            if dispersive_amplitudes is not None:
+                model += dispersive_amplitudes[j] * sp.im(complex_voigt)
+        return model
+
+    def fit_in_stages(stages):
+        for stage_number, (label, vary_prefixes) in enumerate(stages):
+            if stage_number > 0:
+                fitdata.guess_parameters = fitdata.fit_parameters
+            for name, parameter in fitdata.guess_parameters.items():
+                parameter.vary = any(
+                    name.startswith(prefix) for prefix in vary_prefixes
+                )
+            print(f"about to run {label}")
+            fitdata.fit(use_jacobian=False)
+
+    edge_count = max(3, len(nu_on) // 10)
+    edge_baseline = np.r_[
+        epsilon.data.real[:edge_count],
+        epsilon.data.real[-edge_count:],
+    ].mean()
+    peak_signal = epsilon.C
+    peak_signal -= edge_baseline
+    signal_scale = float(peak_signal.data.real.max())
+    if signal_scale <= 0:
+        raise ValueError("Cannot find positive peaks in the enhancement")
+    for threshold in np.linspace(0.80, 0.10, 15):
+        cutoff = threshold * signal_scale
+        peak_ranges = peak_signal.contiguous(
+            lambda values, cutoff=cutoff: values.real > cutoff
         )
-    )
+        peak_chunks = sorted(
+            [
+                tuple(peak_ranges[j, :])
+                for j in range(peak_ranges.shape[0])
+                if abs(peak_ranges[j, 1] - peak_ranges[j, 0]) > 0
+            ],
+            key=lambda chunk: 0.5 * (chunk[0] + chunk[1]),
+        )
+        if len(peak_chunks) == 3:
+            break
+    else:
+        raise ValueError("Could not find three enhancement peaks")
+
+    peak_centers = [
+        peak_signal["nu_offset":chunk].argmax("nu_offset").item()
+        for chunk in peak_chunks
+    ]
+    hyperfine_guess = float(np.median(np.diff(peak_centers)))
+    linewidth_guess = hyperfine_guess / 2
+    peak_guesses = []
+    for center in peak_centers:
+        peak_height = peak_signal["nu_offset":center].item().real
+        area_guess = max(peak_height, 0.1 * signal_scale) * linewidth_guess
+        peak_guesses.append(
+            {
+                "A": {
+                    "value": area_guess,
+                    "min": 0,
+                    "max": 10 * area_guess,
+                },
+                "FWHM": {
+                    "value": linewidth_guess,
+                    "min": 0.25 * linewidth_guess,
+                    "max": 4 * linewidth_guess,
+                },
+                "L_vs_G_frac": {
+                    "value": 0.5,
+                    "min": 0.01,
+                    "max": 0.99,
+                },
+                "Bcenter": {
+                    "value": center,
+                    "min": center - linewidth_guess,
+                    "max": center + linewidth_guess,
+                },
+            }
+        )
+
     fitdata = psd.lmfitdata(epsilon)
-    fitdata.functional_form = E_0 + sum(
-        A
-        * (
-            eta * lambda_L**2 / ((nu_offset - c) ** 2 + lambda_L**2)
-            + (1 - eta) * sp.exp(-((nu_offset - c) ** 2) / (2 * sigma**2))
-        )
-        for A, c in (
-            (A_0, nu_c - A_hf),
-            (A_1, nu_c),
-            (A_2, nu_c + A_hf),
-        )
+    fitdata.functional_form = build_model(A_symbols)
+    fit_guesses = {
+        "E_0": {
+            "value": edge_baseline,
+            "min": edge_baseline - signal_scale,
+            "max": edge_baseline + signal_scale,
+        }
+    }
+    for j, line_guess in enumerate(peak_guesses):
+        for name in ("A", "FWHM", "L_vs_G_frac", "Bcenter"):
+            fit_guesses[f"{name}{j}"] = line_guess[name]
+    fitdata.set_guess(fit_guesses)
+    fit_in_stages(
+        [
+            ("vary only center fields", ("Bcenter",)),
+            (
+                "vary center fields and amplitudes",
+                ("Bcenter", "A", "E_0"),
+            ),
+            (
+                "vary center fields, amplitudes, and FWHM",
+                ("Bcenter", "A", "E_0", "FWHM"),
+            ),
+            (
+                "three-Voigt final stage",
+                tuple(fitdata.guess_parameters.keys()),
+            ),
+        ]
     )
-    depth = float(abs(epsilon.data).max())
-    sweep = float(np.ptp(nu_on))
-    fitdata.set_guess(
-        E_0=dict(value=0.0, min=-depth, max=depth),
-        nu_c=dict(value=0.0, min=-10.0, max=10.0),
-        A_hf=dict(value=45.0, min=30.0, max=60.0),  # 14N hyperfine spacing
-        A_0=dict(value=depth, min=-20 * depth, max=20 * depth),
-        A_1=dict(value=depth, min=-20 * depth, max=20 * depth),
-        A_2=dict(value=depth, min=-20 * depth, max=20 * depth),
-        sigma=dict(value=sweep / 12, min=0.5, max=sweep / 2),
-        lambda_L=dict(value=sweep / 12, min=0.5, max=sweep / 2),
-        eta=dict(value=0.5, min=0.01, max=0.99),
+    three_voigt_parameters = fitdata.fit_parameters.copy()
+    three_voigt_fit = fitdata.eval(500)
+
+    # Add the dispersive components only after the absorptive fit converges.
+    fitdata.functional_form = build_model(A_symbols, A_disp_symbols)
+    extended_guesses = {
+        name: {
+            "value": np.clip(
+                parameter.value,
+                parameter.min + 0.02 * (parameter.max - parameter.min),
+                parameter.max - 0.02 * (parameter.max - parameter.min),
+            ),
+            "min": parameter.min,
+            "max": parameter.max,
+        }
+        for name, parameter in three_voigt_parameters.items()
+        if name in fitdata.guess_parameters
+    }
+    for j in range(3):
+        absorptive_area = three_voigt_parameters[f"A{j}"].value
+        dispersive_guess = 0
+        if j == 0:
+            dispersive_guess = -absorptive_area
+        elif j == 2:
+            dispersive_guess = absorptive_area
+        extended_guesses[f"A_disp{j}"] = {
+            "value": dispersive_guess,
+            "min": -10 * absorptive_area,
+            "max": 10 * absorptive_area,
+        }
+    fitdata.set_guess(extended_guesses)
+    fit_in_stages(
+        [
+            (
+                "center fields and all amplitudes",
+                ("A", "Bcenter", "E_0"),
+            ),
+            (
+                "full absorptive/dispersive stage",
+                tuple(fitdata.guess_parameters.keys()),
+            ),
+        ]
     )
-    # stage 1: line positions frozen; stage 2: released from stage-1 result
-    for guess_name, guess_par in fitdata.guess_parameters.items():
-        guess_par.vary = guess_name not in ("nu_c", "A_hf")
-    fitdata.fit(use_jacobian=False)
-    fitdata.guess_parameters = fitdata.fit_parameters
-    for guess_par in fitdata.guess_parameters.values():
-        guess_par.vary = True
-    fitdata.fit(use_jacobian=False)
+    fitted_curve = fitdata.eval(500)
+    fit_output = fitdata.output()
     # }}}
 
-    # {{{ analytic derivative of the fitted curve -- comparable to a
-    #     conventional (derivative-mode) EPR spectrum: Eq. S7-S9 in the
-    #     supplement write the DNP transition rates in terms of the EPR
-    #     *absorption* lineshape phi(nu), so our fitted epsilon curve is
-    #     itself absorption-shaped, and its derivative is what a field-
-    #     modulated CW-EPR spectrometer would display-like.  We differentiate
-    #     the noise-free fitted expression (substituting fitted parameter
-    #     values via their sympy symbols, not the string names output()
-    #     returns) rather than the raw data, since numerically
-    #     differentiating scattered points would just amplify noise.
-    symbol_table = {
-        "E_0": E_0,
-        "sigma": sigma,
-        "lambda_L": lambda_L,
-        "eta": eta,
-        "nu_c": nu_c,
-        "A_hf": A_hf,
-        "A_0": A_0,
-        "A_1": A_1,
-        "A_2": A_2,
-    }
-    fitted_expr = fitdata.functional_form.subs(
-        {symbol_table[k]: v for k, v in fitdata.output().items()}
-    )
-    derivative_func = sp.lambdify(
-        nu_offset, sp.diff(fitted_expr, nu_offset), "numpy"
-    )
+    # {{{ Analytic derivative of the fitted absorption/dispersive curve.
+    # For w(z), dw/dz = -2*z*w(z) + 2i/sqrt(pi).
     nu_fine = np.linspace(nu_on.min(), nu_on.max(), 500)
-    derivative = psd.nddata(derivative_func(nu_fine), ["nu_offset"])
+    derivative_values = np.zeros_like(nu_fine)
+    for j in range(3):
+        FWHM_out = fit_output[f"FWHM{j}"]
+        L_vs_G_frac_out = fit_output[f"L_vs_G_frac{j}"]
+        lorentzian_FWHM = FWHM_out * L_vs_G_frac_out
+        gaussian_FWHM = np.sqrt(
+            max(
+                (FWHM_out - voigt_fwhm_coeff * lorentzian_FWHM) ** 2
+                - voigt_fwhm_remainder * lorentzian_FWHM**2,
+                0,
+            )
+        )
+        gaussian_sigma = gaussian_FWHM / (2 * np.sqrt(2 * np.log(2)))
+        z = (
+            nu_fine - fit_output[f"Bcenter{j}"] + 1j * lorentzian_FWHM / 2
+        ) / (gaussian_sigma * np.sqrt(2))
+        profile_derivative = (-2 * z * wofz(z) + 2j / np.sqrt(np.pi)) / (
+            2 * gaussian_sigma**2 * np.sqrt(np.pi)
+        )
+        derivative_values += (
+            fit_output[f"A{j}"] * profile_derivative.real
+            + fit_output[f"A_disp{j}"] * profile_derivative.imag
+        )
+    derivative = psd.nddata(derivative_values, ["nu_offset"])
     derivative.setaxis("nu_offset", nu_fine).set_units("nu_offset", "MHz")
     derivative.name("d(epsilon)/d(nu_offset)")
     # }}}
@@ -301,14 +443,23 @@ with psd.figlist_var() as fl:
         label="DNP curve",
     )
     psd.plot(
-        fitdata.eval(500),
+        three_voigt_fit,
+        ax=ax_eps,
+        color="C1",
+        linestyle="--",
+        alpha=0.6,
+        label="3-Voigt fit",
+    )
+    psd.plot(
+        fitted_curve,
         ax=ax_eps,
         color="r",
         alpha=0.8,
-        label="3-line pseudo-Voigt",
+        label="3-Voigt + dispersive fit",
     )
-    nu_c_fit, A_hf_fit = fitdata.output("nu_c"), fitdata.output("A_hf")
-    line_centers = (nu_c_fit - A_hf_fit, nu_c_fit, nu_c_fit + A_hf_fit)
+    line_centers = tuple(fit_output[f"Bcenter{j}"] for j in range(3))
+    nu_c_fit = line_centers[1]
+    A_hf_fit = 0.5 * (line_centers[2] - line_centers[0])
     epr_shift_per_G = acq_params["uw_dip_center_GHz"] * 1e3 / center_field_G
     middle_peak_nmr_MHz = (
         center_field_G + nu_c_fit / epr_shift_per_G
@@ -338,10 +489,16 @@ with psd.figlist_var() as fl:
     print(f"center field: {center_field_G:#0.8g} G")
     print(f"peak epsilon: {epsilon.data.max():#0.4g}")
     print(
-        f"14N hyperfine spacing: {A_hf_fit:#0.4g} MHz;  centers (MHz): "
-        f"{nu_c_fit - A_hf_fit:#0.4g}, {nu_c_fit:#0.4g}, "
-        f"{nu_c_fit + A_hf_fit:#0.4g}"
+        f"14N hyperfine spacing: {A_hf_fit:#0.4g} MHz; centers (MHz): "
+        + ", ".join(f"{center:#0.4g}" for center in line_centers)
     )
+    for j in range(3):
+        print(
+            f"line {j + 1}: FWHM {fit_output[f'FWHM{j}']:#0.4g} MHz, "
+            f"L/G {fit_output[f'L_vs_G_frac{j}']:#0.3g}, "
+            f"A_disp/A "
+            f"{fit_output[f'A_disp{j}'] / fit_output[f'A{j}']:#0.3g}"
+        )
     print(
         "NMR/EPR ratio: "
         f"{middle_peak_nmr_MHz / acq_params['uw_dip_center_GHz']:#0.8g}"
