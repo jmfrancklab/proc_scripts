@@ -33,17 +33,19 @@ def table_of_integrals(
     show_alignment_diagnostics=False,
     propagate_error=True,
     excluded_pathways=None,
-    fallback_signal=None,
+    fallback_signal_range=None,
+    clock_correction=False,
     fid_from_echo_slice_multiplier=5,
 ):
     """Generate a table of frequency-domain integrals after DCCT alignment.
 
     The echo-like path follows the FIR DCCT pipeline used for the ODNP T1
-    examples: remove receiver offset in the time domain, Hermitian-center the
-    echo, use an exponential echo filter only for correlation alignment, slice
-    the FID from the aligned echo, and integrate the selected coherence
-    pathway.  Setting ``echo_like=False`` preserves the older direct-spectrum
-    behavior while still using correlation alignment.
+    examples: remove receiver offset in the time domain, optionally correct
+    clock drift, Hermitian-center the echo, use an exponential echo filter only
+    for correlation alignment, slice the FID from the aligned echo, and
+    integrate the selected coherence pathway.  Setting ``echo_like=False``
+    preserves the older direct-spectrum behavior while still using correlation
+    alignment.
     """
 
     def mean_if_present(x, dimnames):
@@ -78,6 +80,14 @@ def table_of_integrals(
         )
     s = s.C
     s.set_prop("coherence_pathway", signal_pathway)
+    s.reorder(direct, first=False)
+    if echo_like and set(["ph1", "ph2"]).issubset(s.dimlabels):
+        # {{{ Kill axial noise at zero frequency
+        # Match the FIR pipeline before receiver-offset correction.  Axial
+        # signal in the zero-order pathway can otherwise survive into the
+        # aligned average and make find_peakrange see multiple peaks.
+        s["ph2", 0]["ph1", 0][direct:0] = 0
+        # }}}
     if non_repeat_dims is None:
         non_repeat_dims = []
     elif isinstance(non_repeat_dims, str):
@@ -101,33 +111,28 @@ def table_of_integrals(
             "table_of_integrals needs at least one repeat dimension for"
             " correlation alignment"
         )
+    used_fallback = False
+    clock_correction_value = None
 
-    # {{{ Determine the initial signal range
-    # The fallback signal is used only to get through Hermitian centering,
-    # alignment, and FID slicing when the current low-SNR node does not pass
-    # find_peakrange.  For echo-like data, the final integration range is
-    # recalculated from the filtered/aligned current node below.
-    if signal_range is None:
-        signal_for_range = (
-            fallback_signal
-            if fallback_signal is not None
-            else select_pathway(s.C, signal_pathway)
-        )
+    # {{{ Determine the initial signal range for non-echo data
+    # Echo-like FIR data determines this after receiver-offset correction and
+    # Hermitian phasing, matching the standalone FIR pipeline.
+    if signal_range is None and not echo_like:
         frq_center, frq_half = find_peakrange(
-            signal_for_range,
+            select_pathway(s.C, signal_pathway),
             fl=None,
             direct=direct,
             peak_lower_thresh=peak_lower_thresh,
         )
         signal_range = tuple(sorted(frq_center + r_[-1, 1] * abs(frq_half)))
-    else:
+    elif signal_range is not None:
         if signal_range == "peakrange":
             signal_range = s.get_prop("peakrange")
         frq_center = np.mean(signal_range)
         frq_half = abs(0.5 * np.diff(signal_range).item())
-    signal_range_expanded = tuple(
-        sorted(frq_center + expansion * r_[-1, 1] * frq_half)
-    )
+        signal_range_expanded = tuple(
+            sorted(frq_center + expansion * r_[-1, 1] * frq_half)
+        )
     # }}}
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
@@ -135,7 +140,7 @@ def table_of_integrals(
     fl.next("Raw Data with correlation alignment", fig=fig)
     fl.skip_units_check()
 
-    # {{{ Receiver-offset correction and Hermitian centering
+    # {{{ Receiver-offset correction
     working = to_time_domain(s)
     working.set_units(direct, "s")
     if echo_like:
@@ -143,6 +148,47 @@ def table_of_integrals(
         t_max = working.getaxis(direct)[-1]
         working -= working[direct : (t_max * 0.75, None)].mean(direct)
         working.ft(list(signal_pathway))
+    # }}}
+
+    # {{{ Clock correction
+    # FIR inversion-recovery data need this correction even when nScans has
+    # already been removed by postprocessing.  Keep this after DC correction
+    # and before Hermitian phasing to match the standalone FIR pipeline.
+    if echo_like and clock_correction:
+        if len(repeat_dims) != 1:
+            raise ValueError(
+                "clock correction requires exactly one repeat dimension"
+            )
+        clock_dim = repeat_dims[0]
+        working.ft(direct)
+        s_clock = select_pathway(
+            mean_if_present(working.C, ("nScans",)), signal_pathway
+        ).C.sum(direct)
+        working.ift(list(signal_pathway))
+        clock_corr_axis = np.linspace(-3, 3, 2500)
+        clock_corr = psd.nddata(clock_corr_axis, ["clock_corr"])
+        clock_corr.setaxis("clock_corr", clock_corr_axis)
+        min_index = abs(s_clock).argmin(
+            clock_dim, raw_index=True
+        ).item()
+        s_clock *= np.exp(
+            -1j * clock_corr * working.fromaxis(clock_dim)
+        )
+        s_clock[clock_dim, : min_index + 1] *= -1
+        s_clock.sum(clock_dim).run(abs)
+        clock_correction_value = s_clock.argmax("clock_corr").item()
+        working *= np.exp(
+            -1j
+            * clock_correction_value
+            * working.fromaxis(clock_dim)
+        )
+        working.ft(list(signal_pathway))
+        working.ift(direct)
+        working.ft(direct)
+        working.ift(direct)
+    # }}}
+
+    # {{{ Hermitian centering
     working.setaxis(direct, lambda x: x - x[0])
     hermitian_input = select_pathway(working.C, signal_pathway)
     hermitian_input = mean_if_present(
@@ -172,42 +218,41 @@ def table_of_integrals(
             -abs(alignment_data.fromaxis(direct) - actual_tau) / 10e-3
         )
         alignment_data.ft(direct)
-        if fallback_signal is not None:
-            # {{{ Recalculate current-node range after alignment filtering
-            # The fallback range is allowed to
-            # reach the alignment/FID-slicing stage, but the final limits are
-            # derived from the current node after the exponential echo filter.
-            alignment_signal_for_integral = select_pathway(
-                alignment_data.C, signal_pathway
+        if signal_range is None:
+            # {{{ Determine FIR signal range after DC/Hermitian processing
+            # Match the standalone FIR pipeline by finding the initial range
+            # from the phased frequency-domain data, not from the raw node.
+            signal = select_pathway(to_frequency_domain(working).C,
+                                    signal_pathway)
+            signal = mean_if_present(
+                signal, repeat_dims + ["nScans", "repeats"]
             )
-            alignment_signal_for_integral = mean_if_present(
-                alignment_signal_for_integral, ("nScans", "repeats")
-            )
-            if len(repeat_dims) == 1:
-                alignment_signal_for_integral = alignment_signal_for_integral[
-                    repeat_dims[0], -1
-                ]
-            argmax_frq = (
-                alignment_signal_for_integral.C.run(abs).argmax(direct).item()
-            )
-            peak_search_slice = tuple(
-                sorted(argmax_frq + r_[-1, 1] * abs(frq_half) / 2)
-            )
-            frq_center, frq_half = find_peakrange(
-                alignment_signal_for_integral[direct:peak_search_slice],
-                direct=direct,
-                peak_lower_thresh=peak_lower_thresh,
-                fl=None,
-            )
+            try:
+                frq_center, frq_half = find_peakrange(
+                    signal,
+                    direct=direct,
+                    peak_lower_thresh=peak_lower_thresh,
+                    fl=None,
+                )
+            except ValueError as e:
+                if fallback_signal_range is not None:
+                    frq_center = np.mean(fallback_signal_range)
+                    frq_half = abs(
+                        0.5 * np.diff(fallback_signal_range).item()
+                    )
+                else:
+                    raise
+                used_fallback = True
+                print(
+                    f"find_peakrange failed after FIR phasing ({e}); "
+                    "using remembered fallback range"
+                )
             frq_half = abs(frq_half)
-            signal_range = tuple(sorted(frq_center + r_[-1, 1] * frq_half))
+            signal_range = tuple(
+                sorted(frq_center + r_[-1, 1] * frq_half)
+            )
             signal_range_expanded = tuple(
                 sorted(frq_center + expansion * r_[-1, 1] * frq_half)
-            )
-            print(
-                "fallback peak range was only used to reach FID slicing; "
-                "integration limits were recalculated from the filtered "
-                "current node"
             )
             # }}}
     else:
@@ -258,7 +303,74 @@ def table_of_integrals(
     aligned.ft(direct)
     # }}}
 
-    if center_aligned_peak:
+    # {{{ Final FID slice after alignment
+    if echo_like:
+        freq_data = to_frequency_domain(aligned)
+        signal = select_pathway(freq_data.C, signal_pathway)
+        signal = mean_if_present(
+            signal, repeat_dims + ["nScans", "repeats"]
+        )
+        if not used_fallback:
+            frq_center, frq_half = find_peakrange(
+                signal,
+                direct=direct,
+                peak_lower_thresh=peak_lower_thresh,
+                fl=None,
+            )
+        else:
+            alignment_signal_for_integral = select_pathway(
+                alignment_data.C, signal_pathway
+            )
+            alignment_signal_for_integral = mean_if_present(
+                alignment_signal_for_integral, ("nScans", "repeats")
+            )
+            if len(repeat_dims) == 1:
+                alignment_signal_for_integral = alignment_signal_for_integral[
+                    repeat_dims[0], -1
+                ]
+            argmax_frq = (
+                alignment_signal_for_integral.C.run(abs)
+                .argmax(direct)
+                .item()
+            )
+            peak_search_slice = tuple(
+                sorted(argmax_frq + r_[-1, 1] * abs(frq_half) / 2)
+            )
+            frq_center, frq_half = find_peakrange(
+                alignment_signal_for_integral[direct:peak_search_slice],
+                direct=direct,
+                peak_lower_thresh=peak_lower_thresh,
+                fl=None,
+            )
+            print(
+                "fallback peak range was only used to reach FID slicing; "
+                "integration limits were recalculated from the filtered "
+                "current node"
+            )
+        frq_half = abs(frq_half)
+        peak_slice = tuple(sorted(frq_center + r_[-1, 1] * frq_half))
+        signal[direct:peak_slice].integrate(direct)
+        aligned_fid = fid_from_echo(
+            freq_data.C.set_error(None),
+            signal_pathway,
+            fl=fl if show_alignment_diagnostics else None,
+            add_rising=False,
+            slice_multiplier=fid_from_echo_slice_multiplier,
+            frq_center=frq_center,
+            frq_half=frq_half,
+            direct=direct,
+        )
+        aligned_fid.set_prop("fid_from_echo_frq_center", frq_center)
+        aligned_fid.set_prop("fid_from_echo_frq_half", frq_half)
+        aligned_fid.set_prop("fid_from_echo_peak_slice", peak_slice)
+        aligned_fid = to_frequency_domain(aligned_fid)
+        signal_range = tuple(sorted(frq_center + r_[-1, 1] * frq_half))
+        signal_range_expanded = tuple(
+            sorted(frq_center + expansion * r_[-1, 1] * frq_half)
+        )
+    # }}}
+
+    if center_aligned_peak and not echo_like:
         aligned_peak = abs(
             select_pathway(
                 aligned[direct:signal_range_expanded].C, signal_pathway
@@ -287,16 +399,6 @@ def table_of_integrals(
     ax2.set_title("check phase variation\nalong indirect")
 
     if echo_like:
-        aligned_fid = fid_from_echo(
-            aligned.C.set_error(None),
-            signal_pathway,
-            frq_center=frq_center,
-            frq_half=frq_half,
-            fl=fl if show_alignment_diagnostics else None,
-            direct=direct,
-            slice_multiplier=fid_from_echo_slice_multiplier,
-        )
-        aligned_fid = to_frequency_domain(aligned_fid)
         selected = select_pathway(
             aligned_fid[direct:signal_range_expanded], signal_pathway
         )
@@ -336,12 +438,13 @@ def table_of_integrals(
         signal_for_integral = mean_if_present(
             signal_for_integral, repeat_dims + ["nScans", "repeats"]
         )
-        frq_center, frq_half = find_peakrange(
-            signal_for_integral,
-            direct=direct,
-            peak_lower_thresh=peak_lower_thresh,
-            fl=None,
-        )
+        if not used_fallback:
+            frq_center, frq_half = find_peakrange(
+                signal_for_integral,
+                direct=direct,
+                peak_lower_thresh=peak_lower_thresh,
+                fl=None,
+            )
         frq_half = abs(frq_half)
         peak_frq_slice = list(sorted(frq_center + r_[-1, 1] * frq_half))
         frq_slice = list(
@@ -372,6 +475,16 @@ def table_of_integrals(
             this_IR[direct:frq_slice], signal_pathway
         ).integrate(direct)
         selected.set_error(integral_error)
+        selected.set_prop(
+            "table_of_integrals_used_fallback", used_fallback
+        )
+        selected.set_prop(
+            "table_of_integrals_clock_correction",
+            clock_correction_value,
+        )
+        selected.set_prop(
+            "table_of_integrals_integration_range", tuple(frq_slice)
+        )
         fl.next("IR Integration Limits")
         for j in range(len(d.getaxis(repeat_dims[0]))):
             fl.plot(
