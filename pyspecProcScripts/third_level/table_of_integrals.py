@@ -1,5 +1,6 @@
 from ..calc_error import calc_masked_variance
 from ..correlation_alignment import correl_align
+from ..envelope import fit_envelope, L2G
 from ..phasing import (
     determine_sign,
     fid_from_echo,
@@ -36,6 +37,9 @@ def table_of_integrals(
     fallback_signal_range=None,
     clock_correction=False,
     fid_from_echo_slice_multiplier=5,
+    equal_energy_apodization=False,
+    apodization_lambda=None,
+    show_apodization_diagnostics=False,
 ):
     """Generate a table of frequency-domain integrals after DCCT alignment.
 
@@ -45,7 +49,8 @@ def table_of_integrals(
     for correlation alignment, slice the FID from the aligned echo, and
     integrate the selected coherence pathway.  Setting ``echo_like=False``
     preserves the older direct-spectrum behavior while still using correlation
-    alignment.
+    alignment.  Equal-energy Lorentzian-to-Gaussian apodization can optionally
+    be applied after Hermitian centering and before correlation alignment.
     """
 
     def mean_if_present(x, dimnames):
@@ -125,7 +130,7 @@ def table_of_integrals(
             peak_lower_thresh=peak_lower_thresh,
         )
         signal_range = tuple(sorted(frq_center + r_[-1, 1] * abs(frq_half)))
-    elif signal_range is not None:
+    if signal_range is not None:
         if signal_range == "peakrange":
             signal_range = s.get_prop("peakrange")
         frq_center = np.mean(signal_range)
@@ -206,12 +211,28 @@ def table_of_integrals(
     )
     # }}}
 
+    if equal_energy_apodization:
+        # {{{ Apply equal-energy apodization about the centered echo
+        # L2G is a two-sided time-domain transformation, so apply it only after
+        # the Hermitian test has located the echo/FID origin.
+        if apodization_lambda is None:
+            apodization_lambda = fit_envelope(
+                select_pathway(working.C, signal_pathway),
+                direct=direct,
+                fl=fl if show_apodization_diagnostics else None,
+            )
+        working *= L2G(
+            apodization_lambda,
+            criterion="energy",
+        )(working.fromaxis(direct))
+        # }}}
+
     if echo_like:
-        fid_unapodized = working.C[direct : (0, None)]
-        fid_unapodized *= 2
-        fid_unapodized[direct:0] *= 0.5
-        fid_unapodized.ft(direct)
-        alignment_data = to_time_domain(fid_unapodized)
+        fid_for_alignment = working.C[direct : (0, None)]
+        fid_for_alignment *= 2
+        fid_for_alignment[direct:0] *= 0.5
+        fid_for_alignment.ft(direct)
+        alignment_data = to_time_domain(fid_for_alignment)
         acq_params = alignment_data.get_prop("acq_params")
         actual_tau = acq_params["tau_us"] * 1e-6
         alignment_data *= np.exp(
@@ -515,6 +536,14 @@ def table_of_integrals(
         selected.set_plot_color_next()
     if "nScans" in selected.dimlabels:
         selected.mean("nScans")
+    selected.set_prop(
+        "table_of_integrals_equal_energy_apodization",
+        bool(equal_energy_apodization),
+    )
+    selected.set_prop(
+        "table_of_integrals_apodization_lambda",
+        apodization_lambda,
+    )
     if selected.get_units(selected.dimlabels[-1]) != "s":
         selected.human_units()
     psd.plot(selected, "o", ax=ax4, alpha=0.5)

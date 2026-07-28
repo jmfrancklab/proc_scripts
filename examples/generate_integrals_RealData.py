@@ -33,8 +33,8 @@ if not hasattr(psd.lmfitdata, "settoguess"):
 
 # {{{ changeable parameters
 thisfile, thisexptype, nodename = (
-    #    "260724_TMTPDI_ODNP_1.h5",
-    "260625_hydroxytempo_ODNP_5.h5",
+    "260724_TMTPDI_ODNP_1.h5",
+    #   "260625_hydroxytempo_ODNP_5.h5",
     "B27/ODNP",
     "ODNP",
 )
@@ -42,9 +42,11 @@ output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
 show_alignment_diagnostics = False
-alignment_mask_sigma = 125.0
+alignment_mask_sigma = 20e3
 Ep_alignment_max_shift_Hz = 440 * 2.5
-fid_from_echo_slice_multiplier = 5
+fid_from_echo_slice_multiplier = 1.45
+Ep_equal_energy_apodization = True
+FIR_equal_energy_apodization = True
 # }}}
 
 
@@ -104,6 +106,7 @@ with psd.figlist_var() as fl:
         center_aligned_peak=False,
         show_alignment_diagnostics=show_alignment_diagnostics,
         fid_from_echo_slice_multiplier=fid_from_echo_slice_multiplier,
+        equal_energy_apodization=Ep_equal_energy_apodization,
     )
     Ep["indirect"] = orig_axis
     Ep.set_error("indirect", orig_axis_error)
@@ -114,12 +117,17 @@ with psd.figlist_var() as fl:
     # complex reference onto the real axis without changing its magnitude.
     Ep_reference = Ep["power", 0].item()
     Ep /= Ep_reference / abs(Ep_reference)
-    Ep = Ep.real.normalize("power")
+    Ep = Ep.real
+    if Ep.get_error() is None:
+        Ep /= Ep["power", 0].item()
+    else:
+        Ep = Ep.normalize("power")
     acq_params = Ep.get_prop("acq_params")
     Ep_to_save = Ep.C
     Ep_to_save.name("Ep")
     Ep_to_save.set_prop("acq_params", acq_params)
     Ep_to_save.set_prop("source_file", thisfile)
+    Ep_to_save.set_prop("Apodization", bool(Ep_equal_energy_apodization))
     Ep_to_save.hdf5_write(output_file, directory=str(output_dir))
     print(f"saved Ep -> {output_dir / output_file}")
     # }}}
@@ -193,6 +201,7 @@ with psd.figlist_var() as fl:
             fallback_signal_range=fallback_signal_range,
             clock_correction=True,
             fid_from_echo_slice_multiplier=fid_from_echo_slice_multiplier,
+            equal_energy_apodization=FIR_equal_energy_apodization,
         )
         if s.get_prop("table_of_integrals_used_fallback"):
             print(
@@ -324,6 +333,7 @@ with psd.figlist_var() as fl:
         R1p_to_save.name("R1p")
         R1p_to_save.set_prop("acq_params", acq_params)
         R1p_to_save.set_prop("source_file", thisfile)
+        R1p_to_save.set_prop("Apodization", bool(FIR_equal_energy_apodization))
         R1p_to_save.hdf5_write(output_file, directory=str(output_dir))
         print(f"saved R1p -> {output_dir / output_file}")
         T1p_to_save = (1.0 / R1p).C
@@ -332,6 +342,7 @@ with psd.figlist_var() as fl:
         T1p_to_save.name("T1p")
         T1p_to_save.set_prop("acq_params", acq_params)
         T1p_to_save.set_prop("source_file", thisfile)
+        T1p_to_save.set_prop("Apodization", bool(FIR_equal_energy_apodization))
         T1p_to_save.hdf5_write(output_file, directory=str(output_dir))
         print(f"saved T1p -> {output_dir / output_file}")
         # }}}
