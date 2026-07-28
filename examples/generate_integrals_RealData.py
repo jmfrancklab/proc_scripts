@@ -27,23 +27,23 @@ from pyspecProcScripts.generate_coordinates_from_log import (
     generate_coordinates_from_log,
 )
 
-
 plt.rcParams["image.aspect"] = "auto"
 if not hasattr(psd.lmfitdata, "settoguess"):
     psd.lmfitdata.settoguess = psd.lmfitdata.set_to_guess
 
 # {{{ changeable parameters
 thisfile, thisexptype, nodename = (
-    "260724_TMTPDI_ODNP_1.h5",
+    #    "260724_TMTPDI_ODNP_1.h5",
+    "260625_hydroxytempo_ODNP_5.h5",
     "B27/ODNP",
     "ODNP",
 )
 output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
-show_alignment_diagnostics = True
-alignment_mask_sigma = 100.0
-Ep_alignment_max_shift_Hz = 880
+show_alignment_diagnostics = False
+alignment_mask_sigma = 125.0
+Ep_alignment_max_shift_Hz = 440 * 2.5
 fid_from_echo_slice_multiplier = 5
 # }}}
 
@@ -105,12 +105,16 @@ with psd.figlist_var() as fl:
         show_alignment_diagnostics=show_alignment_diagnostics,
         fid_from_echo_slice_multiplier=fid_from_echo_slice_multiplier,
     )
-    Ep /= Ep["indirect", 0:1]
     Ep["indirect"] = orig_axis
     Ep.set_error("indirect", orig_axis_error)
     Ep.set_error("indirect", Ep.get_error("indirect")["power"])
     Ep["indirect"] = Ep["indirect"]["power"]
     Ep.set_units("indirect", "W").rename("indirect", "power")
+    # normalize() propagates covariance for real data, so first phase the
+    # complex reference onto the real axis without changing its magnitude.
+    Ep_reference = Ep["power", 0].item()
+    Ep /= Ep_reference / abs(Ep_reference)
+    Ep = Ep.real.normalize("power")
     acq_params = Ep.get_prop("acq_params")
     Ep_to_save = Ep.C
     Ep_to_save.name("Ep")
@@ -174,9 +178,7 @@ with psd.figlist_var() as fl:
                 f"{current_signal_range}"
             )
         except ValueError as e:
-            print(
-                f"Could not cache a raw range from {thisnodename} ({e})"
-            )
+            print(f"Could not cache a raw range from {thisnodename} ({e})")
         # }}}
 
         s, ax_last = prscr.table_of_integrals(
