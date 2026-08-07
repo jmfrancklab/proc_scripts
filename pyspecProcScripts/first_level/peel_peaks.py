@@ -3,9 +3,30 @@
 import numpy as np
 
 
+# TODO ☐: this function is ridiculous!! you have actually written a
+#      fucntion where you only use have the othe return values half of
+#      the time so that you can call it twice! you should have just
+#      inlined the code.  How COMPLETELY UNACCEPTABLE!
+def _extrema(d, axis):
+    """Return peak-to-peak separation, height, and center."""
+    positive = d.argmax()
+    positive["y"] = d.max()
+    negative = d.argmin()
+    negative["y"] = d.min()
+    field_extrema = np.array([positive[axis], negative[axis]])
+    height_extrema = np.array([positive["y"], negative["y"]])
+    return (
+        np.ptp(field_extrema),
+        np.ptp(height_extrema),
+        field_extrema.mean(),
+    )
+
+
 def peel_peaks(
     d,
-    max_peaks,
+    amplitude_parameters,
+    linewidth_parameters,
+    center_parameters,
     close_threshold,
     exclusion_factor=2.0,
     lo=0.95,
@@ -13,36 +34,38 @@ def peel_peaks(
     n=80,
     axis="B",
 ):
-    r"""Pick derivative-lineshape peaks from ``d`` one at a time.
+    r"""Find derivative peaks and install model-calibrated guesses on ``d``.
 
-    At each threshold (scanned from ``lo`` to ``hi``), find the closest
-    positive/negative contiguous-chunk pair.  A derivative lineshape has
-    positive and negative lobes close together, whereas unrelated noise
-    excursions are typically farther apart.  Once a pair is closer than
-    ``close_threshold``, accept it and mask ``exclusion_factor`` times its
-    peak-to-peak linewidth around its center before looking for another
-    peak.
+    ``d`` must be an ``lmfitdata`` with its functional form, data transform,
+    residual transform, and non-peak guesses already configured.  Each
+    position in ``amplitude_parameters``, ``linewidth_parameters``, and
+    ``center_parameters`` identifies the three fit parameters belonging to
+    one line.  In particular, ``linewidth_parameters`` names the parameters
+    that control overall width, not shape-balance parameters such as a
+    Lorentzian/Gaussian fraction.
 
-    All returned lines share a pooled linewidth: the mean of the measured
-    peak-to-peak separations.  This pooled value is also used to convert
-    peak-to-peak heights to amplitudes.  Lines in a hyperfine multiplet
-    physically share a linewidth, and the conversion depends on its square,
-    so pooling prevents noise in each individual width from being amplified
-    into the amplitude guesses.
+    The experimental trace is generated with the data transform and peeled
+    one line at a time.  Each isolated model line is then evaluated to convert
+    its measured peak-to-peak separation into the named linewidth parameter
+    and its measured peak-to-peak height into the named amplitude parameter.
+    No lineshape-specific conversion factors are used.
 
     Parameters
     ----------
-    d : pyspecdata.nddata
-        Real, one-dimensional derivative spectrum.  It is not modified.
-    max_peaks : int
-        Maximum number of peaks to return.  Fewer are returned when no
-        remaining chunk pair is closer than ``close_threshold``.
+    d : pyspecdata.lmfitdata
+        Configured fit object.  Its guess parameters are updated in place.
+    amplitude_parameters : sequence of str
+        Amplitude parameter names, ordered by increasing center field.
+    linewidth_parameters : sequence of str
+        Overall-width parameter names, ordered by increasing center field.
+    center_parameters : sequence of str
+        Center-field parameter names, ordered by increasing center field.
     close_threshold : float
-        Largest accepted positive/negative center-to-center separation, in
-        the units of ``axis``.
+        Largest accepted positive/negative chunk-center separation, in the
+        units of ``axis``.
     exclusion_factor : float, optional
-        Half-width of the masked region around each found peak, in units of
-        that peak's raw peak-to-peak separation.
+        Half-width of the region masked after finding a peak, in units of its
+        measured peak-to-peak separation.
     lo, hi : float, optional
         Starting and ending fractions of the remaining signal maximum used
         for the threshold scan.
@@ -53,38 +76,21 @@ def peel_peaks(
 
     Returns
     -------
-    list of dict
-        Peak guesses sorted by increasing center field.  Each dictionary has
-        the keys ``"A"``, ``"FWHM"``, and ``"Bcenter"``.
+    pyspecdata.lmfitdata
+        The same fit object, with calibrated guesses and bounds installed.
     """
-    if d.dimlabels != [axis]:
-        raise ValueError(
-            "peel_peaks requires one-dimensional data whose only axis is "
-            f"{axis!r}; got {d.dimlabels!r}"
-        )
-    if max_peaks < 0 or int(max_peaks) != max_peaks:
-        raise ValueError("max_peaks must be a non-negative integer")
-    if close_threshold <= 0:
-        raise ValueError("close_threshold must be positive")
-    if exclusion_factor <= 0:
-        raise ValueError("exclusion_factor must be positive")
-    if not 0 <= hi <= lo <= 1:
-        raise ValueError("lo and hi must satisfy 0 <= hi <= lo <= 1")
-    if n < 1 or int(n) != n:
-        raise ValueError("n must be a positive integer")
-
-    # A working copy is necessary here: masking each accepted peak is the
-    # defining operation of the peeling algorithm, but callers should retain
-    # their unmodified spectrum.
-    remaining = d.C
+    max_peaks = len(amplitude_parameters)
+    all_amplitude_parameters = amplitude_parameters
+    experimental = d.data_transform(d.C)
+    remaining = experimental.C
     found = []
-    for _ in range(int(max_peaks)):
+    for _ in range(max_peaks):
         signal_scale = max(abs(remaining.max()), abs(remaining.min()))
         if signal_scale == 0:
             break
         best_pair = None
         best_distance = None
-        for threshold in np.linspace(lo, hi, int(n)):
+        for threshold in np.linspace(lo, hi, n):
             cutoff = threshold * signal_scale
             # contiguous returns chunks widest-first.  Zero-width chunks do
             # not contain a lobe, and chunks beyond this small multiple of
@@ -136,7 +142,7 @@ def peel_peaks(
             {
                 "dB_pp": peak_to_peak_width,
                 "raw_height": np.ptp(height_extrema),
-                "Bcenter": center_field,
+                "center": center_field,
             }
         )
         exclusion_bounds = center_field + (
@@ -144,35 +150,72 @@ def peel_peaks(
         )
         remaining[axis:exclusion_bounds] = 0
 
-    if not found:
-        return []
+    # TODO ☐: what is all of the repeated code that follows? at a
+    #         glance, it looks like really bad design, where you should
+    #         have at least used some type of loop
+    found.sort(key=lambda peak: peak["center"])
+    for amplitude_name, linewidth_name, center_name in zip(
+        amplitude_parameters,
+        linewidth_parameters,
+        center_parameters,
+    ):
+        d.guess_parameters[amplitude_name].value = 0.0
+        d.guess_parameters[linewidth_name].value = 1.0
+        d.guess_parameters[center_name].value = 0.0
+    amplitude_parameters = amplitude_parameters[: len(found)]
+    linewidth_parameters = linewidth_parameters[: len(found)]
+    center_parameters = center_parameters[: len(found)]
 
-    # Voigt-derivative peak-to-peak conversion, averaged for the 50/50
-    # Lorentzian/Gaussian mixture used as the initial lineshape guess:
-    #
-    # Lorentzian: dB_pp/FWHM = 1/sqrt(3)
-    # Gaussian:   dB_pp/FWHM = 1/sqrt(2*ln(2))
-    db_pp_per_fwhm = 0.5 * (1 / np.sqrt(3) + 1 / np.sqrt(2 * np.log(2)))
-    # For unit integrated amplitude, the corresponding peak-to-peak heights
-    # are 3*sqrt(3)/(pi*FWHM**2) and
-    # 8*sqrt(2)*ln(2)*exp(-1/2)/(sqrt(pi)*FWHM**2), respectively.
-    height_per_amplitude_over_fwhm_squared = 0.5 * (
-        3 * np.sqrt(3) / np.pi
-        + 8 * np.sqrt(2) * np.log(2) * np.exp(-0.5) / np.sqrt(np.pi)
-    )
-    common_fwhm = np.mean([peak["dB_pp"] for peak in found]) / db_pp_per_fwhm
-    return sorted(
-        [
+    for peak, amplitude_name, linewidth_name, center_name in zip(
+        found,
+        amplitude_parameters,
+        linewidth_parameters,
+        center_parameters,
+    ):
+        d.guess_parameters[amplitude_name].value = 1.0
+        d.guess_parameters[linewidth_name].value = peak["dB_pp"]
+        d.guess_parameters[center_name].value = peak["center"]
+
+    calibrated = {}
+    for peak, amplitude_name, linewidth_name, center_name in zip(
+        found,
+        amplitude_parameters,
+        linewidth_parameters,
+        center_parameters,
+    ):
+        for name in all_amplitude_parameters:
+            d.guess_parameters[name].value = 0.0
+        d.guess_parameters[amplitude_name].value = 1.0
+        model_line = d.set_to_guess().eval()
+        model_width, _, _ = _extrema(model_line, axis)
+        linewidth = (
+            d.guess_parameters[linewidth_name].value
+            * peak["dB_pp"]
+            / model_width
+        )
+        d.guess_parameters[linewidth_name].value = linewidth
+
+        model_line = d.set_to_guess().eval()
+        _, model_height, _ = _extrema(model_line, axis)
+        amplitude = peak["raw_height"] / model_height
+        calibrated.update(
             {
-                "A": (
-                    peak["raw_height"]
-                    * common_fwhm**2
-                    / height_per_amplitude_over_fwhm_squared
-                ),
-                "FWHM": common_fwhm,
-                "Bcenter": peak["Bcenter"],
+                amplitude_name: amplitude,
+                linewidth_name: linewidth,
+                center_name: peak["center"],
             }
-            for peak in found
-        ],
-        key=lambda peak: peak["Bcenter"],
-    )
+        )
+
+    for name, value in calibrated.items():
+        d.guess_parameters[name].value = value
+    for amplitude_name, linewidth_name in zip(
+        amplitude_parameters, linewidth_parameters
+    ):
+        amplitude = d.guess_parameters[amplitude_name]
+        amplitude.min = 0
+        amplitude.max = 10 * max(amplitude.value, 1e-12)
+        linewidth = d.guess_parameters[linewidth_name]
+        linewidth.min = 0.1 * linewidth.value
+        linewidth.max = 10 * linewidth.value
+    d.set_to_guess()
+    return d
