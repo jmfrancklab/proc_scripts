@@ -175,6 +175,26 @@ def my_residual_transform(d):
 
 
 # }}}
+
+
+# {{{ run successive fits while progressively releasing parameter groups
+def fit_in_stages(d_local, stages, zoom, ax):
+    final_fit = None
+    for j, (label, vary_prefixes) in enumerate(stages):
+        if j > 0:
+            d_local.guess_parameters = d_local.fit_parameters
+        for name, par in d_local.guess_parameters.items():
+            par.vary = vary_prefixes is None or any(
+                name.startswith(prefix) for prefix in vary_prefixes
+            )
+        print(f"about to fit {label}")
+        d_local.fit(use_jacobian=False)
+        final_fit = d_local.eval()
+        psd.plot(final_fit["B":zoom], label=label, alpha=0.7, ax=ax)
+    return final_fit
+
+
+# }}}
 ax = plt.gca()
 # {{{ plot the data
 #
@@ -191,47 +211,14 @@ psd.plot(
 forplot = d.set_to_guess().eval()
 psd.plot(forplot["B":zoom_tuple], label="initial guess", alpha=0.7, ax=ax)
 # }}}
-# {{{ vary only the center field
-for name, par in d.guess_parameters.items():
-    if not name.startswith("B"):
-        par.vary = False
-print("about to fit field")
-d.fit(use_jacobian=False)
-forplot = d.eval()
-psd.plot(forplot["B":zoom_tuple], label="vary only field", alpha=0.7, ax=ax)
-# }}}
-d.guess_parameters = d.fit_parameters
-# {{{ add variation of center field and splitting
-for name, par in d.guess_parameters.items():
-    if name.startswith("a_"):
-        par.vary = True
-print("about to fit splitting")
-d.fit(use_jacobian=False)
-forplot = d.eval()
-psd.plot(
-    forplot["B":zoom_tuple], label="vary splitting, as well", alpha=0.7, ax=ax
-)
-# }}}
-d.guess_parameters = d.fit_parameters
-# {{{ vary splitting, center field, and amplitude
-for name, par in d.guess_parameters.items():
-    if name.startswith("A"):
-        par.vary = True
-print("about to fit amplitude")
-d.fit(use_jacobian=False)
-forplot = d.eval()
-psd.plot(
-    forplot["B":zoom_tuple], label="vary amplitude, as well", alpha=0.7, ax=ax
-)
-# }}}
-d.guess_parameters = d.fit_parameters
-# {{{ vary everything
-for name, par in d.guess_parameters.items():
-    par.vary = True
-print("about to fit everything")
-d.fit(use_jacobian=False)
-thefit = d.eval()
-psd.plot(thefit["B":zoom_tuple], label="final fit", alpha=0.7, ax=ax)
+# {{{ progressively vary field, splitting, amplitude, and linewidths
+fit_stages = [
+    ("vary only field", ("B",)),
+    ("vary splitting, as well", ("B", "a_")),
+    ("vary amplitude, as well", ("B", "a_", "A")),
+    ("final fit", None),
+]
+thefit = fit_in_stages(d, fit_stages, zoom_tuple, ax)
 # }}}
 print(f"parameters for {filename} {Q_(C, 'M').to('μM')}")
 out = d.output()

@@ -3,25 +3,6 @@
 import numpy as np
 
 
-# TODO ☐: this function is ridiculous!! you have actually written a
-#      fucntion where you only use have the othe return values half of
-#      the time so that you can call it twice! you should have just
-#      inlined the code.  How COMPLETELY UNACCEPTABLE!
-def _extrema(d, axis):
-    """Return peak-to-peak separation, height, and center."""
-    positive = d.argmax()
-    positive["y"] = d.max()
-    negative = d.argmin()
-    negative["y"] = d.min()
-    field_extrema = np.array([positive[axis], negative[axis]])
-    height_extrema = np.array([positive["y"], negative["y"]])
-    return (
-        np.ptp(field_extrema),
-        np.ptp(height_extrema),
-        field_extrema.mean(),
-    )
-
-
 def peel_peaks(
     d,
     amplitude_parameters,
@@ -80,7 +61,6 @@ def peel_peaks(
         The same fit object, with calibrated guesses and bounds installed.
     """
     max_peaks = len(amplitude_parameters)
-    all_amplitude_parameters = amplitude_parameters
     experimental = d.data_transform(d.C)
     remaining = experimental.C
     found = []
@@ -150,44 +130,32 @@ def peel_peaks(
         )
         remaining[axis:exclusion_bounds] = 0
 
-    # TODO ☐: what is all of the repeated code that follows? at a
-    #         glance, it looks like really bad design, where you should
-    #         have at least used some type of loop
     found.sort(key=lambda peak: peak["center"])
-    for amplitude_name, linewidth_name, center_name in zip(
-        amplitude_parameters,
-        linewidth_parameters,
-        center_parameters,
-    ):
+    parameter_groups = list(
+        zip(amplitude_parameters, linewidth_parameters, center_parameters)
+    )
+    # Give every line finite parameters before evaluating an isolated
+    # one: zero amplitude does not protect a symbolic model from 0 *
+    # NaN.
+    # TODO ☐: the previous comment is unclear -- where the heck would a NaN come from? Are you considering edge cases that will never occur??!!
+    for amplitude_name, linewidth_name, center_name in parameter_groups:
         d.guess_parameters[amplitude_name].value = 0.0
         d.guess_parameters[linewidth_name].value = 1.0
         d.guess_parameters[center_name].value = 0.0
-    amplitude_parameters = amplitude_parameters[: len(found)]
-    linewidth_parameters = linewidth_parameters[: len(found)]
-    center_parameters = center_parameters[: len(found)]
-
-    for peak, amplitude_name, linewidth_name, center_name in zip(
-        found,
-        amplitude_parameters,
-        linewidth_parameters,
-        center_parameters,
-    ):
+    calibrated = {}
+    active_groups = list(zip(found, parameter_groups))
+    for peak, (amplitude_name, linewidth_name, center_name) in active_groups:
         d.guess_parameters[amplitude_name].value = 1.0
         d.guess_parameters[linewidth_name].value = peak["dB_pp"]
         d.guess_parameters[center_name].value = peak["center"]
-
-    calibrated = {}
-    for peak, amplitude_name, linewidth_name, center_name in zip(
-        found,
-        amplitude_parameters,
-        linewidth_parameters,
-        center_parameters,
-    ):
-        for name in all_amplitude_parameters:
-            d.guess_parameters[name].value = 0.0
-        d.guess_parameters[amplitude_name].value = 1.0
         model_line = d.set_to_guess().eval()
-        model_width, _, _ = _extrema(model_line, axis)
+        # TODO ☐: the following is stupid -- just directly subtract the
+        #         max from the min.  Also use .max() and .min() rather
+        #         than argmax
+        model_field_extrema = np.array(
+            [model_line.argmax()[axis], model_line.argmin()[axis]]
+        )
+        model_width = np.ptp(model_field_extrema)
         linewidth = (
             d.guess_parameters[linewidth_name].value
             * peak["dB_pp"]
@@ -196,7 +164,8 @@ def peel_peaks(
         d.guess_parameters[linewidth_name].value = linewidth
 
         model_line = d.set_to_guess().eval()
-        _, model_height, _ = _extrema(model_line, axis)
+        # TODO ☐: same comment as above
+        model_height = np.ptp([model_line.max(), model_line.min()])
         amplitude = peak["raw_height"] / model_height
         calibrated.update(
             {
@@ -205,12 +174,11 @@ def peel_peaks(
                 center_name: peak["center"],
             }
         )
+        d.guess_parameters[amplitude_name].value = 0.0
 
     for name, value in calibrated.items():
         d.guess_parameters[name].value = value
-    for amplitude_name, linewidth_name in zip(
-        amplitude_parameters, linewidth_parameters
-    ):
+    for _, (amplitude_name, linewidth_name, _) in active_groups:
         amplitude = d.guess_parameters[amplitude_name]
         amplitude.min = 0
         amplitude.max = 10 * max(amplitude.value, 1e-12)

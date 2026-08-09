@@ -72,16 +72,18 @@ C = d.get_prop("concentration")
 d.ift("B", shift=True)
 d = psd.lmfitdata(d)
 
-# TODO ☐: I remember that the two transforms were essential, but I don't
-#         remember how/why.  The residual transform is used to calculate
-#         the residual, and I believe also for eval, so what is the data
-#         transform for? You're going to need to analyze the source to
-#         give a clear + concise answer
+
+# The data transform converts the stored experimental data back to the
+# field domain used for comparison (it is applied only to the u-domain
+# data).
+# In contrast, the model needs to apply D to simulate modulation, which
+# is included in the residual transform.
 @d.define_data_transform
 def my_data_transform(d_local):
     d_local["B":0] *= 0.5
     d_local.ft("B")
     return d_local.real
+
 
 @d.define_residual_transform
 def my_residual_transform(d_local):
@@ -89,6 +91,7 @@ def my_residual_transform(d_local):
     d_local["B":0] *= 0.5
     d_local.ft("B")
     return d_local.real
+
 
 # }}}
 # {{{ peel four independent lines to obtain model-calibrated
@@ -99,14 +102,12 @@ A_line, Bcenter_line, FWHM_line, L_vs_G_frac_line = (
     sp.symbols(f"{name}0:{npeaks}", real=True)
     for name in ("A_line", "Bcenter_line", "FWHM_line", "L_vs_G_frac_line")
 )
-# TODO ☐: add in a comment here, point out how the FWHM is some type of
-#         some of sigma (maybe squared) and lambda_L, with this
-#         voigt_coeff involved.  That's needed to understand what the
-#         voigt coefficient is.
+# The Olivero-Longbothum approximation is
+# FWHM ≈ 0.5346 lambda_L + sqrt((1-0.5346)^2 lambda_L^2 + f_G^2).
+# Here f_G is 2*sqrt(log(2))*sigma, so the expression below solves this
+# approximation for sigma at the requested total FWHM.
 voigt_coeff = 0.5346
-lambda_L_line = [
-    FWHM_line[j] * L_vs_G_frac_line[j] for j in range(npeaks)
-]
+lambda_L_line = [FWHM_line[j] * L_vs_G_frac_line[j] for j in range(npeaks)]
 sigma_line = [
     sp.sqrt(
         (FWHM_line[j] - voigt_coeff * lambda_L_line[j]) ** 2
@@ -127,9 +128,9 @@ d.functional_form = sum(
         for j in range(npeaks)
     ]
 )
-# TODO ☐: do we really need set guess here? isn't it handled by peel
-#         peaks? at the very least, shouldn't we restrict ourselves to
-#         things not handled by peel peaks?
+# peel_peaks calibrates only the named amplitude, FWHM, and center parameters.
+# Set the remaining shape-balance parameters first because their values affect
+# the model-derived calibration.
 d.set_guess(
     {
         str(symbol): {"value": 0.5, "min": 0, "max": 1}
@@ -159,13 +160,9 @@ A, FWHM, L_vs_G_frac, Bcenter, a_N, a_H = sp.symbols(
     "A FWHM L_vs_G_frac Bcenter a_N a_H", real=True
 )
 lambda_L = FWHM * L_vs_G_frac
-sigma = (
-    sp.sqrt(
-        (FWHM - voigt_coeff * lambda_L) ** 2
-        - (1 - voigt_coeff) ** 2 * lambda_L**2
-    )
-    / (2 * sp.sqrt(sp.log(2)))
-)
+sigma = sp.sqrt(
+    (FWHM - voigt_coeff * lambda_L) ** 2 - (1 - voigt_coeff) ** 2 * lambda_L**2
+) / (2 * sp.sqrt(sp.log(2)))
 d.functional_form = sum(
     [
         A
