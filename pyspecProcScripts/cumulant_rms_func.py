@@ -9,13 +9,27 @@ def cumulant_rms(d, indirect_dim, direct_dim="$B_0$"):
     horizontal-jitter artifacts, making this cumulant smoother along the
     indirect dimension.
 
-    For :math:`M` ESR spectra :math:`S_i(B)`,
+    Specifically, the RMS difference between adjacent spectra is
 
     .. math::
 
-      C_k =
-      \frac{\sum_{i=1}^{k}\sqrt{\int|S_{i+1}(B)-S_i(B)|^2\,dB}}
-      {\frac{1}{M}\sum_{j=1}^{M}\sqrt{\int|S_j(B)|^2\,dB}}.
+      \Delta_i = \sqrt{\int |s_{i+1}(B_0)-s_i(B_0)|^2\,dB_0}.
+
+    For a series of :math:`M` spectra, the normalization factor
+
+    .. math::
+
+      N = \frac{1}{M}\sum_{j=1}^{M}
+      \sqrt{\int |s_j(B_0)|^2\,dB_0}
+
+    has the same units as :math:`\Delta_i` and enables calculation of the
+    cumulant
+
+    .. math::
+
+      C_i = \frac{1}{N}\sum_{k=1}^{i}\Delta_k.
+
+    Thus, :math:`C_i` is dimensionless.
 
     The discrete implementation uses ``np.diff`` along ``indirect_dim``.
     The common field-axis scale factor cancels, so both integrals use a mean.
