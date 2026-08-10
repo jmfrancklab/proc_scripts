@@ -26,13 +26,14 @@ import sympy as sp
 
 # {{{ changeable parameters
 # thisfile = "260724_TMTPDI_ODNP_1.h5"
-thisfile = "260625_hydroxytempo_ODNP_5.h5"
+thisfile = "260724_TMTPDI_ODNP_1.h5"
 output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
 KRHO_INV_POLY_ORDER = 2
 PHALF_MIN_W = 0.05
 PHALF_MAX_POWER_FACTOR = 2.0
+PLOT_FONT_SIZE = 18
 # }}}
 
 
@@ -195,6 +196,7 @@ def main():
     )
     R1p_fit = powers_fine.fromaxis("power").run(R1p_func)
     krho_zero = float(1.0 / krho_inv_func(0.0))
+    krho_hot = float(1.0 / krho_inv_func(p_max))
     # }}}
 
     # {{{ Fit k_sigma s(p)
@@ -266,6 +268,17 @@ def main():
     # }}}
 
     # {{{ Plot ODNP fits
+    plt.rcParams.update(
+        {
+            "font.size": PLOT_FONT_SIZE,
+            "axes.titlesize": PLOT_FONT_SIZE,
+            "axes.labelsize": PLOT_FONT_SIZE,
+            "xtick.labelsize": PLOT_FONT_SIZE,
+            "ytick.labelsize": PLOT_FONT_SIZE,
+            "legend.fontsize": plt.rcParamsDefault["font.size"],
+            "figure.titlesize": PLOT_FONT_SIZE,
+        }
+    )
     with psd.figlist_var() as fl:
         fl.basename = output_file
         fig = plt.figure(figsize=(10, 7.5), layout="constrained")
@@ -397,7 +410,7 @@ def main():
             ),
             ha="right",
             va="bottom",
-            size=9,
+            size=PLOT_FONT_SIZE,
             transform=ax_ksigma.transAxes,
         )
         ax_ksigma.set_xlabel("Power / W")
@@ -409,7 +422,9 @@ def main():
     # {{{ Console summary
     print(f"dataset: {thisfile}")
     print(f"sample: {sample_label}")
+    print(f"pmax: {p_max:#0.6g} W")
     print(f"k_rho(0): {krho_zero:#0.6g} M^-1 s^-1")
+    print(f"k_rho(pmax): {krho_hot:#0.6g} M^-1 s^-1")
     print(f"k_sigma: {ksigma:#0.6g} M^-1 s^-1")
     print(f"p_1/2: {phalf_value:#0.6g} W")
     print(f"coupling factor xi: {coupling_factor:#0.6g}")
@@ -419,8 +434,10 @@ def main():
     # }}}
     return {
         "krho_zero": krho_zero,
+        "krho_hot": krho_hot,
         "ksigma": ksigma,
         "phalf": phalf_value,
+        "pmax": p_max,
         "coupling_factor": coupling_factor,
         "krho_inv_coeff": np.asarray(krho_inv_coeff),
     }
