@@ -134,10 +134,11 @@ def peel_peaks(
     parameter_groups = list(
         zip(amplitude_parameters, linewidth_parameters, center_parameters)
     )
-    # Give every line finite parameters before evaluating an isolated
-    # one: zero amplitude does not protect a symbolic model from 0 *
-    # NaN.
-    # TODO ☐: the previous comment is unclear -- where the heck would a NaN come from? Are you considering edge cases that will never occur??!!
+    # Unspecified lmfitdata parameters default to negative infinity.  The
+    # generated model evaluates every line even when its amplitude is zero,
+    # so an inactive line's nonfinite width or center can make the full model
+    # nonfinite.  Give every line finite values before evaluating one at a
+    # time.
     for amplitude_name, linewidth_name, center_name in parameter_groups:
         d.guess_parameters[amplitude_name].value = 0.0
         d.guess_parameters[linewidth_name].value = 1.0
@@ -149,13 +150,9 @@ def peel_peaks(
         d.guess_parameters[linewidth_name].value = peak["dB_pp"]
         d.guess_parameters[center_name].value = peak["center"]
         model_line = d.set_to_guess().eval()
-        # TODO ☐: the following is stupid -- just directly subtract the
-        #         max from the min.  Also use .max() and .min() rather
-        #         than argmax
-        model_field_extrema = np.array(
-            [model_line.argmax()[axis], model_line.argmin()[axis]]
+        model_width = abs(
+            model_line.argmax()[axis] - model_line.argmin()[axis]
         )
-        model_width = np.ptp(model_field_extrema)
         linewidth = (
             d.guess_parameters[linewidth_name].value
             * peak["dB_pp"]
@@ -164,8 +161,7 @@ def peel_peaks(
         d.guess_parameters[linewidth_name].value = linewidth
 
         model_line = d.set_to_guess().eval()
-        # TODO ☐: same comment as above
-        model_height = np.ptp([model_line.max(), model_line.min()])
+        model_height = model_line.max() - model_line.min()
         amplitude = peak["raw_height"] / model_height
         calibrated.update(
             {
