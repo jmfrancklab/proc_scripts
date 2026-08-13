@@ -82,6 +82,7 @@ _EXPORTS = {
     ),
     "clock_correct": (".clock_correct", "clock_correct"),
     "calc_masked_variance": (".calc_error", "calc_masked_variance"),
+    "peel_peaks": (".first_level.peel_peaks", "peel_peaks"),
 }
 
 __all__ = list(_EXPORTS)
