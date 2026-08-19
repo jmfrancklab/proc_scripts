@@ -39,8 +39,8 @@ elif len(sys.argv) == 6:
     on_file, off_file, exp_type, on_node, off_node = sys.argv[1:]
 else:
     on_file, off_file, exp_type = (
-        "260723_hydroxytempo_field_sweep.h5",
-        "260720_hydroxytempo_field_sweep.h5",
+        "260818_TMTPDI_field_sweep.h5",
+        "260818_TMTPDI_field_sweep.h5",
         "b27/field_dependent",
     )
     on_node, off_node = "field_sweep_1", "field_sweep_2"
@@ -171,13 +171,22 @@ with psd.figlist_var() as fl:
 
     (
         off,
-        acq_params,
-        center_field_G,
+        _,
+        _,
         off_frq_center,
         off_frq_half,
     ) = phase_node_and_align(off_file, off_node, apod=apodization, fl=fl)
-    on, _, _, on_frq_center, on_frq_half = phase_node_and_align(
-        on_file, on_node, apod=apodization, fl=fl
+    (
+        on,
+        acq_params,
+        center_field_G,
+        on_frq_center,
+        on_frq_half,
+    ) = phase_node_and_align(
+        on_file,
+        on_node,
+        apod=apodization,
+        fl=fl,
     )
 
     on_band = select_pathway(on, signal_pathway)[
@@ -188,21 +197,31 @@ with psd.figlist_var() as fl:
     ].integrate("t2")
 
     nu_on = np.asarray(on_band["nu_offset"], dtype=float)
-    nu_off = np.asarray(off_band["nu_offset"], dtype=float)
-    off_order = np.argsort(nu_off)
-    off_on_axis = np.interp(
-        nu_on, nu_off[off_order], off_band.data.real[off_order]
-    )
-    thermal_level = np.median(off_on_axis)
-    if np.median(on_band.data.real) * thermal_level > 0:
+    epr_shift_per_G = acq_params["uw_dip_center_GHz"] * 1e3 / center_field_G
+    # Thermal signal should be common across the sweep, so use one positive
+    # flat baseline averaged over all MW-off field points.
+    thermal_level = abs(np.mean(off_band.data.real))
+    field_offset_on = nu_on / epr_shift_per_G
+    field_spacing_guess = 44.5 / epr_shift_per_G
+    expected_centers = field_spacing_guess * np.r_[-1, 0, 1]
+    peak_mask = np.zeros_like(field_offset_on, dtype=bool)
+    for center_guess in expected_centers:
+        peak_mask |= (
+            abs(field_offset_on - center_guess) < 0.45 * field_spacing_guess
+        )
+    if not peak_mask.any():
+        peak_mask[:] = True
+
+    enhancement_for_sign = on_band.data.real / thermal_level
+    peak_enhancement = enhancement_for_sign[peak_mask]
+    strongest_peak = peak_enhancement[np.argmax(abs(peak_enhancement))]
+    if strongest_peak > 0:
         on_band *= -1
     epsilon = on_band.C
     epsilon.data = 1 - on_band.data.real / thermal_level
     epsilon.set_error(None)
     epsilon.name("epsilon")
 
-    epr_shift_per_G = acq_params["uw_dip_center_GHz"] * 1e3 / center_field_G
-    field_offset_on = nu_on / epr_shift_per_G
     epsilon.rename("nu_offset", "B")
     epsilon.setaxis("B", field_offset_on).set_units("B", "G")
 
@@ -227,8 +246,6 @@ with psd.figlist_var() as fl:
     if signal_scale <= 0:
         raise ValueError("Cannot find positive peaks in epsilon")
 
-    field_spacing_guess = 44.5 / epr_shift_per_G
-    expected_centers = field_spacing_guess * np.r_[-1, 0, 1]
     peak_centers = []
     peak_heights = []
     for center_guess in expected_centers:
