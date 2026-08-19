@@ -26,7 +26,7 @@ import sympy as sp
 
 # {{{ changeable parameters
 # thisfile = "260724_TMTPDI_ODNP_1.h5"
-thisfile = "260724_TMTPDI_ODNP_1.h5"
+thisfile = "260818_TMTPDI_ODNP_1.h5"
 output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"

@@ -33,7 +33,7 @@ if not hasattr(psd.lmfitdata, "settoguess"):
 
 # {{{ changeable parameters
 thisfile, thisexptype, nodename = (
-    "260724_TMTPDI_ODNP_1.h5",
+    "260818_TMTPDI_ODNP_1.h5",
     #   "260625_hydroxytempo_ODNP_5.h5",
     "B27/ODNP",
     "ODNP",
@@ -42,9 +42,9 @@ output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
 show_alignment_diagnostics = False
-alignment_mask_sigma = 20e3
+alignment_mask_sigma = 8e3
 Ep_alignment_max_shift_Hz = 440 * 2.5
-fid_from_echo_slice_multiplier = 1.45
+fid_from_echo_slice_multiplier = 4
 Ep_equal_energy_apodization = True
 FIR_equal_energy_apodization = True
 # }}}
@@ -141,6 +141,7 @@ with psd.figlist_var() as fl:
     R1p.set_prop("acq_params", acq_params)
 
     previous_signal_range = None
+    previous_integration_range = None
     previous_fallback_node = None
     for j, (thisnodename, _) in sorted(
         enumerate(fir_nodes),
@@ -164,6 +165,7 @@ with psd.figlist_var() as fl:
         # table_of_integrals.  Only if that search fails does it use the raw
         # range cached from the preceding higher-power node.
         fallback_signal_range = previous_signal_range
+        fallback_integration_range = previous_integration_range
         fallback_node = previous_fallback_node
         current_signal_range = None
         pathway_data = prscr.select_pathway(s.C, signal_pathway)
@@ -189,6 +191,10 @@ with psd.figlist_var() as fl:
             print(f"Could not cache a raw range from {thisnodename} ({e})")
         # }}}
 
+        # Ambiguous raw peaks, e.g. FIR_noPower, reuse previous node limits.
+        force_fallback_signal_range = (
+            current_signal_range is None and fallback_signal_range is not None
+        )
         s, ax_last = prscr.table_of_integrals(
             s,
             fl=fl,
@@ -199,6 +205,8 @@ with psd.figlist_var() as fl:
             center_aligned_peak=True,
             show_alignment_diagnostics=show_alignment_diagnostics,
             fallback_signal_range=fallback_signal_range,
+            fallback_integration_range=fallback_integration_range,
+            force_fallback_signal_range=force_fallback_signal_range,
             clock_correction=True,
             fid_from_echo_slice_multiplier=fid_from_echo_slice_multiplier,
             equal_energy_apodization=FIR_equal_energy_apodization,
@@ -210,6 +218,9 @@ with psd.figlist_var() as fl:
             )
         if current_signal_range is not None:
             previous_signal_range = current_signal_range
+            previous_integration_range = s.get_prop(
+                "table_of_integrals_integration_range"
+            )
             previous_fallback_node = thisnodename
 
         # {{{ Fit this aligned FIR integral trace to get one R1 value

@@ -35,6 +35,8 @@ def table_of_integrals(
     propagate_error=True,
     excluded_pathways=None,
     fallback_signal_range=None,
+    fallback_integration_range=None,
+    force_fallback_signal_range=False,
     clock_correction=False,
     fid_from_echo_slice_multiplier=5,
     equal_energy_apodization=False,
@@ -51,6 +53,8 @@ def table_of_integrals(
     preserves the older direct-spectrum behavior while still using correlation
     alignment.  Equal-energy Lorentzian-to-Gaussian apodization can optionally
     be applied after Hermitian centering and before correlation alignment.
+    Clock-corrected FIR processing also applies a fixed edge-smoothing
+    exponential apodization to soften acquisition-edge discontinuities.
     """
 
     def mean_if_present(x, dimnames):
@@ -118,6 +122,13 @@ def table_of_integrals(
         )
     used_fallback = False
     clock_correction_value = None
+    if force_fallback_signal_range:
+        if fallback_signal_range is None:
+            raise ValueError(
+                "force_fallback_signal_range requires fallback_signal_range"
+            )
+        signal_range = fallback_signal_range
+        used_fallback = True
 
     # {{{ Determine the initial signal range for non-echo data
     # Echo-like FIR data determines this after receiver-offset correction and
@@ -210,6 +221,21 @@ def table_of_integrals(
         select_pathway(working[direct:0], signal_pathway)
     )
     # }}}
+
+    edge_smoothing_apodization_multiplier = 5 if clock_correction else None
+    if edge_smoothing_apodization_multiplier is not None:
+        # {{{ Smooth acquisition edges in the clock-corrected FIR path
+        acq_params = working.get_prop("acq_params")
+        edge_smoothing_apodization_timeconst_s = (
+            edge_smoothing_apodization_multiplier
+            * acq_params["acq_time_ms"]
+            * 1e-3
+        )
+        working *= np.exp(
+            -abs(working.fromaxis(direct))
+            / edge_smoothing_apodization_timeconst_s
+        )
+        # }}}
 
     if equal_energy_apodization:
         # {{{ Apply equal-energy apodization about the centered echo
@@ -339,34 +365,10 @@ def table_of_integrals(
                 fl=None,
             )
         else:
-            alignment_signal_for_integral = select_pathway(
-                alignment_data.C, signal_pathway
-            )
-            alignment_signal_for_integral = mean_if_present(
-                alignment_signal_for_integral, ("nScans", "repeats")
-            )
-            if len(repeat_dims) == 1:
-                alignment_signal_for_integral = alignment_signal_for_integral[
-                    repeat_dims[0], -1
-                ]
-            argmax_frq = (
-                alignment_signal_for_integral.C.run(abs)
-                .argmax(direct)
-                .item()
-            )
-            peak_search_slice = tuple(
-                sorted(argmax_frq + r_[-1, 1] * abs(frq_half) / 2)
-            )
-            frq_center, frq_half = find_peakrange(
-                alignment_signal_for_integral[direct:peak_search_slice],
-                direct=direct,
-                peak_lower_thresh=peak_lower_thresh,
-                fl=None,
-            )
+            # Reuse fallback only after peak finding failed on this FIR node.
             print(
-                "fallback peak range was only used to reach FID slicing; "
-                "integration limits were recalculated from the filtered "
-                "current node"
+                "using remembered fallback range for FID slicing and "
+                "integration limits"
             )
         frq_half = abs(frq_half)
         peak_slice = tuple(sorted(frq_center + r_[-1, 1] * frq_half))
@@ -468,12 +470,16 @@ def table_of_integrals(
             )
         frq_half = abs(frq_half)
         peak_frq_slice = list(sorted(frq_center + r_[-1, 1] * frq_half))
-        frq_slice = list(
-            sorted(
-                frq_center
-                + r_[-1, 1] * frq_half * fid_from_echo_slice_multiplier
+        if used_fallback and fallback_integration_range is not None:
+            # Match the previous node's final limits after peak finding fails.
+            frq_slice = list(fallback_integration_range)
+        else:
+            frq_slice = list(
+                sorted(
+                    frq_center
+                    + r_[-1, 1] * frq_half * fid_from_echo_slice_multiplier
+                )
             )
-        )
         df = this_IR.get_ft_prop(direct, "df")
         for j in range(2):
             idx = np.searchsorted(this_IR[direct], frq_slice[j] + 0.5 * df)
@@ -543,6 +549,10 @@ def table_of_integrals(
     selected.set_prop(
         "table_of_integrals_apodization_lambda",
         apodization_lambda,
+    )
+    selected.set_prop(
+        "table_of_integrals_edge_smoothing_apodization_multiplier",
+        edge_smoothing_apodization_multiplier,
     )
     if selected.get_units(selected.dimlabels[-1]) != "s":
         selected.human_units()
