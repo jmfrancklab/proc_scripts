@@ -4,7 +4,8 @@ This script writes the top-level HDF5 nodes expected by the ODNP fitting
 script:
 
 * ``Ep``: normalized enhancement integrals vs microwave power
-* ``R1p``: fitted relaxation rates vs microwave power
+* ``R1p``: fitted relaxation rates vs microwave power, including each
+  repeated no-power measurement at zero power
 * ``T1p``: reciprocal relaxation times vs microwave power
 
 The FIR integrations use ``table_of_integrals``.  Node discovery and cached
@@ -33,7 +34,7 @@ if not hasattr(psd.lmfitdata, "settoguess"):
 
 # {{{ changeable parameters
 thisfile, thisexptype, nodename = (
-    "260818_TMTPDI_ODNP_1.h5",
+    "260820_TTPDI_ODNP_3.h5",
     #   "260625_hydroxytempo_ODNP_5.h5",
     "B27/ODNP",
     "ODNP",
@@ -41,12 +42,21 @@ thisfile, thisexptype, nodename = (
 output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
-show_alignment_diagnostics = False
-alignment_mask_sigma = 8e3
+show_alignment_diagnostics = True
+alignment_mask_sigma = 10e3
 Ep_alignment_max_shift_Hz = 440 * 2.5
-fid_from_echo_slice_multiplier = 4
+fid_from_echo_slice_multiplier = 5
 Ep_equal_energy_apodization = True
 FIR_equal_energy_apodization = True
+# Map selected FIR nodes to (peak center, peak half-width), both in Hz.
+# Leave the mapping empty to use automatic detection for every FIR node.
+FIR_manual_peak_ranges_Hz = {
+    "FIR_noPower": (0, 1000.0),
+    "FIR_noPower_1": (0, 1000.0),
+    "FIR_noPower_2": (0, 1000.0),
+    "FIR_noPower_3": (0, 1000.0),
+    "FIR_noPower_4": (0, 1000.0),
+}
 # }}}
 
 
@@ -56,7 +66,10 @@ with h5py.File(filename, "r") as h5file:
     fir_node_names = [
         name
         for name in h5file.keys()
-        if re.match(r"^FIR_(?:noPower|-?\d+(?:[p.]\d+)?dBm)$", name)
+        if re.match(
+            r"^FIR_(?:noPower(?:_\d+)?|-?\d+(?:[p.]\d+)?dBm)$",
+            name,
+        )
     ]
 fir_nodes = []
 for thisnodename in fir_node_names:
@@ -160,35 +173,65 @@ with psd.figlist_var() as fl:
         acq = s.get_prop("acq_params")
         align_max_shift_hz = 2.5 * acq["tolerance_Hz"]
 
-        # {{{ Cache this node's raw range for the next lower-power node
+        # {{{ Select a manual range or cache an automatic fallback range
         # The current node first searches its own fully processed signal inside
         # table_of_integrals.  Only if that search fails does it use the raw
-        # range cached from the preceding higher-power node.
+        # range cached from the preceding higher-power node.  A manual center
+        # and half-width bypass both searches and remain fixed throughout the
+        # shared pipeline, matching the standalone FIR example.
         fallback_signal_range = previous_signal_range
         fallback_integration_range = previous_integration_range
         fallback_node = previous_fallback_node
         current_signal_range = None
-        pathway_data = prscr.select_pathway(s.C, signal_pathway)
-        pathway_data = pathway_data.C
-        for dimname in ("vd", "nScans", "repeats"):
-            if dimname in pathway_data.dimlabels:
-                pathway_data = pathway_data.mean(dimname)
-        try:
-            frq_center, frq_half = prscr.find_peakrange(
-                pathway_data,
-                direct="t2",
-                peak_lower_thresh=0.1,
+        manual_peak_parameters = FIR_manual_peak_ranges_Hz.get(thisnodename)
+        if manual_peak_parameters is not None:
+            manual_peak_center, manual_peak_half_width = map(
+                float,
+                manual_peak_parameters,
             )
-            frq_half = abs(frq_half)
+            if not np.isfinite(manual_peak_center):
+                raise ValueError(
+                    f"Manual peak center for {thisnodename} must be finite"
+                )
+            if (
+                not np.isfinite(manual_peak_half_width)
+                or manual_peak_half_width <= 0
+            ):
+                raise ValueError(
+                    f"Manual peak half-width for {thisnodename} must be "
+                    "finite and positive"
+                )
             current_signal_range = tuple(
-                sorted(frq_center + np.r_[-1, 1] * frq_half)
+                sorted(
+                    manual_peak_center + np.r_[-1, 1] * manual_peak_half_width
+                )
             )
             print(
-                f"Cached FIR fallback range from {thisnodename}: "
-                f"{current_signal_range}"
+                f"Using manual FIR peak center/half-width for "
+                f"{thisnodename}: {manual_peak_center:#0.6g}, "
+                f"{manual_peak_half_width:#0.6g} Hz"
             )
-        except ValueError as e:
-            print(f"Could not cache a raw range from {thisnodename} ({e})")
+        else:
+            pathway_data = prscr.select_pathway(s.C, signal_pathway).C
+            for dimname in ("vd", "nScans", "repeats"):
+                if dimname in pathway_data.dimlabels:
+                    pathway_data = pathway_data.mean(dimname)
+            try:
+                frq_center, frq_half = prscr.find_peakrange(
+                    pathway_data,
+                    direct="t2",
+                    peak_lower_thresh=0.1,
+                )
+                frq_half = abs(frq_half)
+                current_signal_range = tuple(
+                    sorted(frq_center + np.r_[-1, 1] * frq_half)
+                )
+                print(
+                    f"Cached FIR fallback range from {thisnodename}: "
+                    f"{current_signal_range}"
+                )
+            except ValueError as e:
+                print(f"Could not cache a raw range from {thisnodename} ({e})")
         # }}}
 
         # Ambiguous raw peaks, e.g. FIR_noPower, reuse previous node limits.
@@ -197,6 +240,11 @@ with psd.figlist_var() as fl:
         )
         s, ax_last = prscr.table_of_integrals(
             s,
+            signal_range=(
+                current_signal_range
+                if manual_peak_parameters is not None
+                else None
+            ),
             fl=fl,
             signal_pathway=signal_pathway,
             repeat_dims="vd",
@@ -215,6 +263,11 @@ with psd.figlist_var() as fl:
             print(
                 f"{thisnodename} used the remembered range from "
                 f"{fallback_node}: {fallback_signal_range}"
+            )
+        if manual_peak_parameters is not None:
+            print(
+                f"{thisnodename} manual integration limits: "
+                f"{s.get_prop('table_of_integrals_integration_range')} Hz"
             )
         if current_signal_range is not None:
             previous_signal_range = current_signal_range

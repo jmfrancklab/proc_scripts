@@ -4,6 +4,7 @@ import pyspecdata as psp
 import sympy as sp
 import numpy as np
 import logging
+import warnings
 
 
 def fit_envelope(
@@ -73,8 +74,26 @@ def fit_envelope(
         points_over.run(lambda x: np.sqrt(abs(x) ** 2)).mean()
         amount_over[j] = points_over.item()
     # }}}
+    # {{{ Fall back when the expansion criterion contains no information
+    # The least-squares envelope fit above is still valid when every expanded
+    # candidate has zero or non-finite excess.  In that case, match the FIR
+    # pipeline by using its fitted linewidth directly.
+    amount_over_max = amount_over.max()
+    if not np.isfinite(amount_over_max) or amount_over_max <= 0:
+        warnings.warn(
+            "fit_envelope could not expand the envelope criterion; using "
+            "the least-squares envelope lambda",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        if fl:
+            fl.next(plot_name)
+            fl.plot(L2G(lsq_lambda, criterion="energy")(s.fromaxis(direct)))
+            fl.pop_marker()
+        return lsq_lambda
+    # }}}
     lamb = "$\\lambda_L$"
-    env_expansion = psp.nddata(amount_over / amount_over.max(), [-1], [lamb])
+    env_expansion = psp.nddata(amount_over / amount_over_max, [-1], [lamb])
     env_expansion.setaxis(lamb, lw_range).set_units(lamb, "Hz")
     env_expansion.name("norm of points\noutside envelope")
     if fl and show_expanding_envelope:

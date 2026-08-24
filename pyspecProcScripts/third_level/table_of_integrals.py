@@ -54,7 +54,10 @@ def table_of_integrals(
     alignment.  Equal-energy Lorentzian-to-Gaussian apodization can optionally
     be applied after Hermitian centering and before correlation alignment.
     Clock-corrected FIR processing also applies a fixed edge-smoothing
-    exponential apodization to soften acquisition-edge discontinuities.
+    exponential apodization to soften acquisition-edge discontinuities.  An
+    explicitly supplied ``signal_range`` is preserved for alignment, FID
+    slicing, noise masking, and integration instead of being replaced by
+    automatic peak detection after alignment.
     """
 
     def mean_if_present(x, dimnames):
@@ -120,6 +123,7 @@ def table_of_integrals(
             "table_of_integrals needs at least one repeat dimension for"
             " correlation alignment"
         )
+    preserve_supplied_signal_range = signal_range is not None
     used_fallback = False
     clock_correction_value = None
     if force_fallback_signal_range:
@@ -357,19 +361,20 @@ def table_of_integrals(
         signal = mean_if_present(
             signal, repeat_dims + ["nScans", "repeats"]
         )
-        if not used_fallback:
-            frq_center, frq_half = find_peakrange(
-                signal,
-                direct=direct,
-                peak_lower_thresh=peak_lower_thresh,
-                fl=None,
-            )
-        else:
-            # Reuse fallback only after peak finding failed on this FIR node.
-            print(
-                "using remembered fallback range for FID slicing and "
-                "integration limits"
-            )
+        if not preserve_supplied_signal_range:
+            if not used_fallback:
+                frq_center, frq_half = find_peakrange(
+                    signal,
+                    direct=direct,
+                    peak_lower_thresh=peak_lower_thresh,
+                    fl=None,
+                )
+            else:
+                # Reuse fallback only after peak finding failed on this node.
+                print(
+                    "using remembered fallback range for FID slicing and "
+                    "integration limits"
+                )
         frq_half = abs(frq_half)
         peak_slice = tuple(sorted(frq_center + r_[-1, 1] * frq_half))
         signal[direct:peak_slice].integrate(direct)
@@ -461,7 +466,7 @@ def table_of_integrals(
         signal_for_integral = mean_if_present(
             signal_for_integral, repeat_dims + ["nScans", "repeats"]
         )
-        if not used_fallback:
+        if not used_fallback and not preserve_supplied_signal_range:
             frq_center, frq_half = find_peakrange(
                 signal_for_integral,
                 direct=direct,

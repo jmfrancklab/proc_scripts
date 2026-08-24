@@ -12,21 +12,23 @@ file and follows the ODNP book-chapter analysis:
         \frac{\epsilon(p)R_1(p)}{C_\mathrm{SL}}
         \left|\frac{\omega_H}{\omega_e}\right|.
 
-The measured :math:`k_\rho^{-1}(p)` values are fit to an
-uncertainty-weighted low-order polynomial and reinserted into the
-relaxation expression before fitting the saturation curve.
+Repeated no-power relaxation rates are retained for plotting, but their
+arithmetic mean and propagated uncertainty provide the single zero-power
+point in the uncertainty-weighted :math:`k_\rho^{-1}(p)` polynomial fit.
+The resulting relaxation expression is then used to fit the saturation
+curve.
 """
 
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
+import numpy as np 
 import pyspecdata as psd
 import sympy as sp
 
 # {{{ changeable parameters
 # thisfile = "260724_TMTPDI_ODNP_1.h5"
-thisfile = "260818_TMTPDI_ODNP_1.h5"
+thisfile = "260820_TTPDI_ODNP_3.h5"
 output_dir = Path("/Users/atahan/exp_data/Atahan_Processed_Data/ODNP")
 dataset_id = thisfile.removesuffix(".h5")
 output_file = f"{dataset_id}_integrals.h5"
@@ -86,6 +88,36 @@ def main():
     sample_label = f"{1e3 * concentration:g} mM {chemical}"
     # }}}
 
+    # {{{ Average repeated no-power R1 measurements for fitting
+    # Keep every fitted no-power R1 in the saved table and plot, but replace
+    # them with one arithmetic mean in the analysis table.  Independent fit
+    # uncertainties propagate through that mean as sqrt(sum(sigma_i^2))/N.
+    R1p_power = np.asarray(R1p.getaxis("power"), dtype=float)
+    no_power_idx = np.flatnonzero(np.isclose(R1p_power, 0.0, atol=1e-15))
+    if len(no_power_idx) == 0:
+        raise ValueError("R1p does not contain a no-power measurement")
+    no_power_R1 = R1p["power", no_power_idx]
+    no_power_R1_error = no_power_R1.get_error()
+    if no_power_R1_error is None or not np.all(
+        np.isfinite(no_power_R1_error) & (no_power_R1_error > 0)
+    ):
+        raise ValueError(
+            "No-power R1 measurements require finite positive uncertainties"
+        )
+    no_power_R1_mean = float(np.mean(no_power_R1.real.data))
+    no_power_R1_mean_error = float(
+        np.sqrt(np.sum(np.asarray(no_power_R1_error) ** 2)) / len(no_power_idx)
+    )
+    R1p_analysis = R1p[
+        "power",
+        np.r_[no_power_idx[0], np.flatnonzero(R1p_power > 0.0)],
+    ]
+    R1p_analysis.data[0] = no_power_R1_mean
+    R1p_analysis_error = R1p_analysis.get_error()
+    R1p_analysis_error[0] = no_power_R1_mean_error
+    R1p_analysis.set_error(R1p_analysis_error)
+    # }}}
+
     # {{{ Determine progressive enhancement powers
     # Enhancement powers rise and then return to lower powers as a
     # reproducibility check.  The maximum-power point belongs to the
@@ -105,11 +137,11 @@ def main():
         acq["T1water_cold"],
         (acq["T1water_hot"] - acq["T1water_cold"]) / acq["max_power"],
     ]
-    R10_p_all = 1.0 / R1p.fromaxis("power").eval_poly(
+    R10_p_all = 1.0 / R1p_analysis.fromaxis("power").eval_poly(
         T10_p,
         "power",
     )
-    R1p_values = R1p.real.data
+    R1p_values = R1p_analysis.real.data
     R1p_outlier_mask = (
         ~np.isfinite(R1p_values)
         | ~np.isfinite(R10_p_all.real.data)
@@ -119,7 +151,7 @@ def main():
         ("R1_fit_lower_bound", np.less),
         ("R1_fit_upper_bound", np.greater),
     ):
-        R1p_bound = R1p.get_prop(bound_name)
+        R1p_bound = R1p_analysis.get_prop(bound_name)
         if R1p_bound is not None:
             R1p_bound = float(R1p_bound)
             R1p_outlier_mask |= np.isclose(
@@ -135,10 +167,10 @@ def main():
             "Not enough physical R1p points for the requested "
             f"order-{KRHO_INV_POLY_ORDER} k_rho inverse fit"
         )
-    R1p_for_fit = R1p["power", R1p_fit_idx]
+    R1p_for_fit = R1p_analysis["power", R1p_fit_idx]
     R10_p = R10_p_all["power", R1p_fit_idx]
     if len(R1p_outlier_idx) > 0:
-        R1p_outliers = R1p["power", R1p_outlier_idx]
+        R1p_outliers = R1p_analysis["power", R1p_outlier_idx]
         print(
             "Excluding R1p point(s) at powers "
             f"{R1p_outliers.getaxis('power')} W: "
@@ -317,13 +349,35 @@ def main():
         ax_epsilon.legend()
         psd.gridandtick(ax_epsilon)
 
-        psd.plot(
-            R1p_for_fit.C.set_plot_color("k"),
-            "o",
-            ax=ax_R1,
-            label="fit points",
-            human_units=False,
-        )
+        powered_fit_idx = np.flatnonzero(R1p_for_fit.getaxis("power") > 0.0)
+        if len(powered_fit_idx) > 0:
+            psd.plot(
+                R1p_for_fit["power", powered_fit_idx].C.set_plot_color("k"),
+                "o",
+                ax=ax_R1,
+                label="powered fit points",
+                human_units=False,
+            )
+        if len(no_power_idx) > 1:
+            psd.plot(
+                no_power_R1.C.set_plot_color("0.5"),
+                "x",
+                ax=ax_R1,
+                label="individual no-power measurements",
+                human_units=False,
+            )
+        if not R1p_outlier_mask[0]:
+            psd.plot(
+                R1p_analysis["power", :1].C.set_plot_color("k"),
+                "D",
+                ax=ax_R1,
+                label=(
+                    rf"no-power mean: {no_power_R1_mean:.4g} $\pm$ "
+                    rf"{no_power_R1_mean_error:.2g} s$^{{-1}}$ "
+                    f"(n={len(no_power_idx)})"
+                ),
+                human_units=False,
+            )
         psd.plot(
             R1p_fit.C.set_plot_color("k"),
             "-",
@@ -334,7 +388,7 @@ def main():
             ),
             human_units=False,
         )
-        R1_plot_data = np.r_[R1p_for_fit.real.data, R1p_fit.real.data]
+        R1_plot_data = np.r_[R1p.real.data, R1p_fit.real.data]
         R1_y_pad = 0.1 * np.ptp(R1_plot_data)
         if R1_y_pad == 0:
             R1_y_pad = 1.0
@@ -422,6 +476,11 @@ def main():
     # {{{ Console summary
     print(f"dataset: {thisfile}")
     print(f"sample: {sample_label}")
+    print(
+        f"no-power R1 mean (n={len(no_power_idx)}): "
+        f"{no_power_R1_mean:#0.6g} +/- "
+        f"{no_power_R1_mean_error:#0.3g} s^-1"
+    )
     print(f"pmax: {p_max:#0.6g} W")
     print(f"k_rho(0): {krho_zero:#0.6g} M^-1 s^-1")
     print(f"k_rho(pmax): {krho_hot:#0.6g} M^-1 s^-1")
@@ -435,6 +494,8 @@ def main():
     return {
         "krho_zero": krho_zero,
         "krho_hot": krho_hot,
+        "no_power_R1_mean": no_power_R1_mean,
+        "no_power_R1_mean_error": no_power_R1_mean_error,
         "ksigma": ksigma,
         "phalf": phalf_value,
         "pmax": p_max,
