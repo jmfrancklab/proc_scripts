@@ -4,6 +4,7 @@ import pyspecdata as psp
 import sympy as sp
 import numpy as np
 import logging
+import warnings
 
 
 def fit_envelope(
@@ -15,6 +16,7 @@ def fit_envelope(
     plot_name="envelope",
     show_expanding_envelope=False,
     mult_two=False,
+    return_fallback=False,
     fl=None,
 ):
     """Fit the homogeneous Lorentzian linewidth of an FID decay.
@@ -40,6 +42,9 @@ def fit_envelope(
     mult_two : bool
         Restore a half-weighted zero-time point before fitting. Use this for
         data returned by :func:`fid_side_from_echo`.
+    return_fallback : bool
+        Return whether the expanding-envelope refinement was under-resolved
+        and the provisional least-squares linewidth was used.
     fl : figlist or None
         Optional diagnostic figure list.
 
@@ -47,6 +52,20 @@ def fit_envelope(
     =======
     homogeneous_linewidth : float
         Positive Lorentzian full width at half maximum, in Hz.
+        When the signal falls into the noise within two dwell times, this is
+        the provisional least-squares linewidth and a warning is emitted.
+    used_lsq_fallback : bool
+        Returned with ``homogeneous_linewidth`` only when
+        ``return_fallback`` is true.  Indicates that the provisional
+        least-squares linewidth was used.
+
+    Warns
+    =====
+    RuntimeWarning
+        If the signal above the fitted noise floor is too short to support the
+        expanding-envelope refinement.  The returned least-squares linewidth
+        can be used for processing diagnostics but is not a resolved physical
+        linewidth.
 
     Raises
     ======
@@ -100,6 +119,15 @@ def fit_envelope(
             envelope.eval() / new_guess["A"], lw=1.1, label="least squares fit"
         )
     lsq_lambda = new_guess["lambda_L"]
+    if (
+        not np.isscalar(lsq_lambda)
+        or not np.isfinite(lsq_lambda)
+        or lsq_lambda <= 0
+    ):
+        raise ValueError(
+            "fit_envelope did not return a finite positive linewidth"
+        )
+    lsq_lambda = float(lsq_lambda)
     lw_range = r_[min_l : new_guess["lambda_L"] : 50j]
     amount_over = np.zeros_like(lw_range)
     # where does A exp(-π λ t) decay to 2σ?
@@ -108,20 +136,49 @@ def fit_envelope(
     t_at_exp_end = (
         np.log(new_guess["A"] / 2 / new_guess["sigma"]) / pi / lsq_lambda
     )
-    for j, newL in enumerate(lw_range):
-        new_guess.update(lambda_L=newL)
-        envelope.set_guess(new_guess)
-        envelope.set_to_guess()
-        points_over = (
-            envelope[direct:(0, t_at_exp_end)]
-            - envelope.eval()[direct:(0, t_at_exp_end)]
-        )
-        points_over[lambda x: x < 0] = 0
-        points_over.run(lambda x: np.sqrt(abs(x) ** 2)).mean()
-        amount_over[j] = points_over.data.item()
+    source_dwell = abs(np.diff(envelope.getaxis(direct)[:2]).item())
+    expansion_is_resolved = (
+        np.isfinite(t_at_exp_end) and t_at_exp_end >= 2 * source_dwell
+    )
+    if expansion_is_resolved:
+        for j, newL in enumerate(lw_range):
+            new_guess.update(lambda_L=newL)
+            envelope.set_guess(new_guess)
+            envelope.set_to_guess()
+            points_over = (
+                envelope[direct:(0, t_at_exp_end)]
+                - envelope.eval()[direct:(0, t_at_exp_end)]
+            )
+            points_over[lambda x: x < 0] = 0
+            points_over.run(lambda x: np.sqrt(abs(x) ** 2)).mean()
+            amount_over[j] = points_over.data.item()
     # }}}
+    amount_over_max = amount_over.max()
+    if (
+        not expansion_is_resolved
+        or not np.isfinite(amount_over_max)
+        or amount_over_max <= 0
+    ):
+        # The expansion compares candidate envelopes only while the modeled
+        # signal exceeds 2σ.  Low-SNR data can leave fewer than two dwell
+        # times in that interval, making the expansion criterion undefined.
+        # Keep the finite least-squares result as a provisional processing
+        # width, but warn because it is not a resolved physical linewidth.
+        warnings.warn(
+            "fit_envelope could not resolve the expanding-envelope "
+            "criterion; using a provisional least-squares linewidth",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        if fl:
+            fl.next(plot_name)
+            fl.plot(L2G(lsq_lambda, criterion="energy")(s.fromaxis(direct)))
+            fl.pop_marker()
+        if return_fallback:
+            return lsq_lambda, True
+        return lsq_lambda
     lamb = "$\\lambda_L$"
-    env_expansion = psp.nddata(amount_over / amount_over.max(), [-1], [lamb])
+    env_expansion = psp.nddata(amount_over / amount_over_max, [-1], [lamb])
     env_expansion.setaxis(lamb, lw_range).set_units(lamb, "Hz")
     env_expansion.name("norm of points\noutside envelope")
     if fl and show_expanding_envelope:
@@ -167,7 +224,10 @@ def fit_envelope(
         raise ValueError(
             "fit_envelope did not return a finite positive linewidth"
         )
-    return float(homogeneous_linewidth)
+    homogeneous_linewidth = float(homogeneous_linewidth)
+    if return_fallback:
+        return homogeneous_linewidth, False
+    return homogeneous_linewidth
 
 
 def L2G(

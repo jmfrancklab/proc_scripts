@@ -11,7 +11,7 @@ import scipy.signal.windows as sci_win
 import logging
 import matplotlib.pyplot as plt
 from .simple_functions import select_pathway
-from .envelope import fit_envelope
+from .envelope import L2G, fit_envelope
 from itertools import cycle
 
 default_matplotlib_cycle = cycle(
@@ -462,7 +462,9 @@ def fid_from_echo(
     If explicit frequency bounds are supplied first, this function detects
     and stores ``echo_center`` before continuing.  The centered FID side is
     also passed to :func:`fit_envelope` to determine the homogeneous
-    Lorentzian linewidth independently of ``inh_bounds``.
+    Lorentzian linewidth independently of ``inh_bounds``.  The
+    ``homogeneous_linewidth_is_fallback`` property records when low SNR
+    permits only a provisional least-squares processing width.
 
     Parameters
     ==========
@@ -516,19 +518,12 @@ def fid_from_echo(
     d: nddata
         FID of properly sliced and phased signal
     """
-    if frq_center is None:
-        frq_center, half_range = det_inh_bounds(
-            d,
-            peak_lower_thresh,
-            fl=fl,
-            direct=direct,
-        )
-    elif d.get_prop("echo_center") is None:
+    if d.get_prop("echo_center") is None:
         d.set_prop(
             "echo_center",
             find_exponential_echo_center(d, direct=direct, fl=fl),
         )
-    homogeneous_linewidth = fit_envelope(
+    homogeneous_linewidth, homogeneous_linewidth_is_fallback = fit_envelope(
         select_pathway(
             fid_side_from_echo(
                 d,
@@ -540,9 +535,23 @@ def fid_from_echo(
         direct=direct,
         plot_name="homogeneous linewidth fit",
         mult_two=True,
+        return_fallback=True,
         fl=fl,
     )
     d.set_prop("homogeneous_linewidth", homogeneous_linewidth)
+    d.set_prop(
+        "homogeneous_linewidth_is_fallback",
+        homogeneous_linewidth_is_fallback,
+    )
+    if frq_center is None:
+        frq_center, half_range = det_inh_bounds(
+            d,
+            peak_lower_thresh,
+            direct=direct,
+            signal_pathway=signal_pathway,
+            apodization_linewidth=homogeneous_linewidth,
+            fl=fl,
+        )
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
         left_x = frq_center - slice_multiplier * half_range
@@ -713,6 +722,8 @@ def det_inh_bounds(
     smoothing_width=50.0,
     peak_lowest_thresh=0.03,
     echo_like=True,
+    signal_pathway=None,
+    apodization_linewidth=None,
     fl=None,
 ):
     """Determine the inhomogeneous frequency bounds for autoslicing.
@@ -720,9 +731,11 @@ def det_inh_bounds(
     The detector works on a copy, compensates any stored digital filter, and
     constructs an FID-side magnitude spectrum.  Broad baseline regions and
     three intensity thresholds distinguish the absorptive peak from noise,
-    isolated spikes, and nearby fragments.  For echo-like input, normalized
-    exponential correlation locates the center used to construct that FID
-    side.
+    isolated spikes, and nearby fragments.  An optional equal-energy L2G
+    apodized copy can identify the coarse signal region in low-SNR data; the
+    final bounds still come from the original, unapodized spectrum.  For
+    echo-like input, normalized exponential correlation locates the center
+    used to construct that FID side.
 
     Parameters
     ==========
@@ -749,6 +762,13 @@ def det_inh_bounds(
     echo_like : boolean (default True)
         Assume signal is echo-like, and we need to find a decent guess for the
         peak of the echo and then slice the FID.
+    signal_pathway : dict or None
+        Coherence-transfer pathway to select before peak detection.  This is
+        useful when other phase-cycle pathways contain artifacts.
+    apodization_linewidth : float or None
+        Positive Lorentzian linewidth, in Hz, used for equal-energy L2G
+        apodization of a detector copy.  This copy selects a coarse peak
+        region but never determines the returned bounds.
     fl : figlist (default None)
         If you want to see diagnostic plots, feed the figure list.
 
@@ -768,6 +788,14 @@ def det_inh_bounds(
     echo-like data, the validated exponential-correlation estimate is stored
     as ``echo_center`` rather than changing the return signature.
     """
+    if apodization_linewidth is not None and (
+        not np.isscalar(apodization_linewidth)
+        or not np.isfinite(apodization_linewidth)
+        or apodization_linewidth <= 0
+    ):
+        raise ValueError(
+            "apodization_linewidth must be a finite positive scalar"
+        )
     # {{{ autodetermine slice range
     if echo_like:
         echo_center = d.get_prop("echo_center")
@@ -804,31 +832,61 @@ def det_inh_bounds(
         freq_envelope.ift(direct)
         freq_envelope = freq_envelope[direct:(0, None)]
         freq_envelope[direct, 0] *= 0.5
+    if signal_pathway is not None:
+        freq_envelope = select_pathway(freq_envelope, signal_pathway)
+
+    apodized_envelope = None
+    if apodization_linewidth is not None:
+        # Equal-energy L2G apodization suppresses long-lived, narrow artifacts
+        # enough to locate the coarse signal region in low-SNR data.  It is
+        # applied only to this copy: the original spectrum below still sets
+        # the physical inhomogeneous bounds.
+        apodized_envelope = freq_envelope.C
+        apodized_envelope *= L2G(
+            apodization_linewidth,
+            criterion="energy",
+        )(apodized_envelope.fromaxis(direct))
+
+    def prepare_frequency_envelope(time_envelope):
+        """Return raw and smoothed, broadly baselined magnitude spectra."""
+        frequency_envelope = time_envelope.C.ft(direct)
+        frequency_envelope.mean_all_but([direct]).run(abs)
+        unprocessed_frequency_envelope = frequency_envelope.C
+        frequency_envelope.convolve(
+            direct,
+            smoothing_width,
+            enforce_causality=False,
+        )
+        spectral_width = 1 / frequency_envelope.get_ft_prop(direct, "dt")
+        # The broad outer quarters avoid biasing the baseline with the peak or
+        # a few isolated edge points.  Raw scalars preserve signal units.
+        frequency_envelope -= (
+            frequency_envelope[direct : tuple(-r_[0.5, 0.25] * spectral_width)]
+            .mean()
+            .data.item()
+            + frequency_envelope[
+                direct : tuple(r_[0.25, 0.5] * spectral_width)
+            ]
+            .mean()
+            .data.item()
+        ) / 2
+        return frequency_envelope, unprocessed_frequency_envelope
+
     # {{{ now that we have an estimate of the start point, take an FID
-    #    slice and move into the freq domain
-    freq_envelope.ft(direct)
-    freq_envelope.mean_all_but([direct]).run(abs)
-    # }}}
+    #    slice and move into the frequency domain
+    freq_envelope, unprocessed_frequency_envelope = prepare_frequency_envelope(
+        freq_envelope
+    )
     if fl is not None:
         fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False, label="signal energy")
-    freq_envelope.convolve(
-        direct,
-        smoothing_width,
-        enforce_causality=False,
-    )
-    spectral_width = 1 / freq_envelope.get_ft_prop(direct, "dt")
-    # The broad outer quarters avoid biasing the baseline with the peak or a
-    # few isolated edge points.  Use raw scalar data so unit-bearing signals
-    # retain their units during subtraction.
-    freq_envelope -= (
-        freq_envelope[direct : tuple(-r_[0.5, 0.25] * spectral_width)]
-        .mean()
-        .data.item()
-        + freq_envelope[direct : tuple(r_[0.25, 0.5] * spectral_width)]
-        .mean()
-        .data.item()
-    ) / 2
+        fl.plot(
+            unprocessed_frequency_envelope,
+            human_units=False,
+            label="signal energy",
+        )
+    if apodized_envelope is not None:
+        apodized_envelope, _ = prepare_frequency_envelope(apodized_envelope)
+    # }}}
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(
@@ -836,52 +894,118 @@ def det_inh_bounds(
             human_units=False,
             label="signal energy\nconv + baselined",
         )
-    narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
-    wide_ranges = freq_envelope.contiguous(
-        lambda x: x > peak_lower_thresh * x.data.max()
-    )
-    widest_ranges = freq_envelope.contiguous(
-        lambda x: x > peak_lowest_thresh * x.data.max()
-    )
 
     def filter_ranges(candidate_ranges, contained_ranges):
         """Keep candidates that contain at least one narrower range."""
-        return [
-            np.array(candidate)
-            for candidate in candidate_ranges
-            if any(
-                candidate[0] <= contained[0] and candidate[1] >= contained[1]
-                for contained in contained_ranges
-            )
-        ]
-
-    peakrange = filter_ranges(wide_ranges, narrow_ranges)
-    peakrange = filter_ranges(widest_ranges, peakrange)
-    if len(peakrange) == 0:
-        raise ValueError("could not identify an inhomogeneous peak range")
-    if any(thisrange[0] >= thisrange[1] for thisrange in peakrange):
-        raise ValueError(
-            "the detected peak range reaches or wraps the spectral boundary"
+        return sorted(
+            [
+                np.array(candidate)
+                for candidate in candidate_ranges
+                if any(
+                    candidate[0] <= contained[0]
+                    and candidate[1] >= contained[1]
+                    for contained in contained_ranges
+                )
+            ],
+            key=lambda candidate: candidate[0],
         )
-    if len(peakrange) > 1:
+
+    def find_peak_ranges(frequency_envelope, reference_range=None):
+        """Apply successively broader thresholds to candidate peaks."""
+        if reference_range is None:
+            reference_maximum = frequency_envelope.data.max()
+        else:
+            reference_maximum = frequency_envelope[
+                direct:reference_range
+            ].data.max()
+        narrow_ranges = frequency_envelope.contiguous(
+            lambda x: x > 0.5 * reference_maximum
+        )
+        wide_ranges = frequency_envelope.contiguous(
+            lambda x: x > peak_lower_thresh * reference_maximum
+        )
+        widest_ranges = frequency_envelope.contiguous(
+            lambda x: x > peak_lowest_thresh * reference_maximum
+        )
+        return filter_ranges(
+            widest_ranges,
+            filter_ranges(wide_ranges, narrow_ranges),
+        )
+
+    def merge_nearby_ranges(candidate_ranges):
+        """Merge fragments separated by less than the widest fragment."""
+        if any(thisrange[0] >= thisrange[1] for thisrange in candidate_ranges):
+            raise ValueError(
+                "the detected peak range reaches or wraps the spectral "
+                "boundary"
+            )
+        if len(candidate_ranges) < 2:
+            return candidate_ranges
         max_range_width = max(
-            [thisrange[1] - thisrange[0] for thisrange in peakrange]
+            thisrange[1] - thisrange[0] for thisrange in candidate_ranges
         )
         range_gaps = [
-            peakrange[j + 1][0] - peakrange[j][1]
-            for j in range(len(peakrange) - 1)
+            candidate_ranges[j + 1][0] - candidate_ranges[j][1]
+            for j in range(len(candidate_ranges) - 1)
         ]
-        # {{{ if the gaps are all smaller than the max peak that was found, we
-        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
         if any(np.array(range_gaps) > max_range_width):
+            return candidate_ranges
+        return [np.array([candidate_ranges[0][0], candidate_ranges[-1][1]])]
+
+    if apodized_envelope is not None:
+        coarse_ranges = merge_nearby_ranges(
+            find_peak_ranges(apodized_envelope)
+        )
+        if len(coarse_ranges) != 1:
             if fl is not None:
-                fl.next("debug filter ranges")
-                fl.plot(freq_envelope, human_units=False)
-                for thisrange in peakrange:
-                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
-            raise ValueError("finding more than one peak!")
-        else:
-            peakrange = [(peakrange[0][0], peakrange[-1][1])]
+                fl.next("equal-energy L2G peak detector")
+                fl.plot(apodized_envelope, human_units=False)
+            raise ValueError(
+                "equal-energy L2G apodization did not isolate one peak"
+            )
+        coarse_range = coarse_ranges[0]
+        # Set the original-data thresholds from within the coarse apodized
+        # region.  Otherwise a taller narrow artifact elsewhere can hide the
+        # desired low-SNR peak even though apodization located it correctly.
+        peakrange = find_peak_ranges(freq_envelope, coarse_range)
+        peakrange = [
+            thisrange
+            for thisrange in peakrange
+            if max(thisrange[0], coarse_range[0])
+            <= min(thisrange[1], coarse_range[1])
+        ]
+        if len(peakrange) > 1:
+            # A single coarse L2G peak supplies the evidence that low-SNR
+            # original-data ranges inside it are fragments of that peak.  Join
+            # only those overlapping ranges; peaks outside the coarse region
+            # remain excluded rather than being silently merged.
+            peakrange = [np.array([peakrange[0][0], peakrange[-1][1]])]
+        if fl is not None:
+            fl.next("equal-energy L2G peak detector")
+            fl.plot(
+                apodized_envelope,
+                human_units=False,
+                label="equal-energy L2G detector",
+            )
+            for bound in coarse_range:
+                axvline(bound, color="k", ls=":", alpha=0.5)
+    else:
+        peakrange = find_peak_ranges(freq_envelope)
+    if len(peakrange) == 0:
+        if apodized_envelope is not None:
+            raise ValueError(
+                "the original spectrum has no peak range overlapping the "
+                f"equal-energy L2G range {coarse_range}"
+            )
+        raise ValueError("could not identify an inhomogeneous peak range")
+    peakrange = merge_nearby_ranges(peakrange)
+    if len(peakrange) > 1:
+        if fl is not None:
+            fl.next("debug filter ranges")
+            fl.plot(freq_envelope, human_units=False)
+            for thisrange in peakrange:
+                fl.plot(freq_envelope[direct:thisrange], human_units=False)
+        raise ValueError("finding more than one peak!")
     if len(peakrange) != 1:
         raise ValueError("could not reduce the signal to one peak range")
     peakrange = peakrange[0]

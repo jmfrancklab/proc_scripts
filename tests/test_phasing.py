@@ -108,6 +108,45 @@ def test_det_inh_bounds_is_stable_with_noise_and_an_isolated_spike():
         )
 
 
+def test_equal_energy_detector_rejects_a_narrow_artifact():
+    desired_with_artifact = _synthetic_spectrum(
+        peaks=((100.0, 120.0, 1.0), (-2000.0, 5.0, 0.1))
+    )
+    original_data = desired_with_artifact.data.copy()
+
+    artifact_bounds = det_inh_bounds(
+        desired_with_artifact.C,
+        0.1,
+        echo_like=False,
+    )
+    detected = det_inh_bounds(
+        desired_with_artifact,
+        0.1,
+        echo_like=False,
+        apodization_linewidth=120.0,
+    )
+
+    artifact_slice = (
+        artifact_bounds[0] + np.array([-1, 1]) * artifact_bounds[1]
+    )
+    detected_slice = detected[0] + np.array([-1, 1]) * detected[1]
+    assert artifact_slice[0] <= -2000.0 <= artifact_slice[1]
+    assert not detected_slice[0] <= -2000.0 <= detected_slice[1]
+    assert detected_slice[0] <= 100.0 <= detected_slice[1]
+    np.testing.assert_allclose(desired_with_artifact.data, original_data)
+
+
+@pytest.mark.parametrize("linewidth", [0.0, -1.0, np.nan, np.inf])
+def test_det_inh_bounds_rejects_invalid_apodization_linewidth(linewidth):
+    with pytest.raises(ValueError, match="apodization_linewidth"):
+        det_inh_bounds(
+            _synthetic_spectrum(),
+            0.1,
+            echo_like=False,
+            apodization_linewidth=linewidth,
+        )
+
+
 def test_det_inh_bounds_merges_nearby_fragments(monkeypatch):
     spectrum = _synthetic_spectrum()
     ranges_by_threshold = iter(
@@ -395,11 +434,13 @@ def test_fit_envelope_recovers_homogeneous_linewidth(linewidth):
         points=4096,
     )
 
-    fitted_linewidth = fit_envelope(
+    fitted_linewidth, used_lsq_fallback = fit_envelope(
         fid_side_from_echo(echo, echo_center),
         mult_two=True,
+        return_fallback=True,
     )
 
+    assert not used_lsq_fallback
     assert fitted_linewidth == pytest.approx(linewidth, rel=0.1)
 
 
@@ -441,6 +482,28 @@ def test_fit_envelope_rejects_an_unusable_decay():
         fit_envelope(unusable_decay)
 
 
+def test_fit_envelope_marks_an_under_resolved_linewidth():
+    echo_center = 5.0125e-3
+    echo = _synthetic_spectrum(
+        peaks=((100.0, 120.0, 1.0),),
+        noise=0.4,
+        echo_center=echo_center,
+        points=4096,
+        seed=5,
+    )
+
+    with pytest.warns(RuntimeWarning, match="provisional least-squares"):
+        fitted_linewidth, used_lsq_fallback = fit_envelope(
+            fid_side_from_echo(echo, echo_center),
+            mult_two=True,
+            return_fallback=True,
+        )
+
+    assert used_lsq_fallback
+    assert np.isfinite(fitted_linewidth)
+    assert fitted_linewidth > 0
+
+
 def test_fid_from_echo_stores_homogeneous_linewidth():
     expected_linewidth = 120.0
     processed = fid_from_echo(
@@ -457,6 +520,7 @@ def test_fid_from_echo_stores_homogeneous_linewidth():
         expected_linewidth,
         rel=0.1,
     )
+    assert not processed.get_prop("homogeneous_linewidth_is_fallback")
 
 
 def test_ordinary_fid_bypasses_echo_center_detection(monkeypatch):
