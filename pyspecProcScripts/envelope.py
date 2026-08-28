@@ -1,10 +1,6 @@
 from numpy import r_, pi
 from matplotlib.pyplot import gca, cycler
 import pyspecdata as psp
-from scipy.optimize import leastsq, minimize, basinhopping
-from .phasing import hermitian_function_test, zeroth_order_ph
-from sympy import symbols
-from scipy.special import erf
 import sympy as sp
 import numpy as np
 import logging
@@ -15,14 +11,14 @@ def fit_envelope(
     min_l=10,
     threshold=0.10,
     full_width=8.434,
-    mult_two=False,
     direct="t2",
     plot_name="envelope",
     show_expanding_envelope=False,
+    mult_two=False,
     fl=None,
 ):
     assert not s.get_ft_prop(direct), "s *must* be in time domian"
-    envelope = abs(s[direct:(0, None)]).mean_all_but(direct)
+    envelope = abs(s[direct:(0, None)]).mean_all_but([direct])
     if mult_two:
         envelope[direct, 0] *= 2
     envelope = psp.lmfitdata(envelope)
@@ -80,9 +76,9 @@ def fit_envelope(
         points_over.run(lambda x: np.sqrt(abs(x) ** 2)).mean()
         amount_over[j] = points_over.item()
     # }}}
-    l = "$\\lambda_L$"
-    env_expansion = psp.nddata(amount_over / amount_over.max(), [-1], [l])
-    env_expansion.setaxis(l, lw_range).set_units(l, "Hz")
+    lamb = "$\\lambda_L$"
+    env_expansion = psp.nddata(amount_over / amount_over.max(), [-1], [lamb])
+    env_expansion.setaxis(lamb, lw_range).set_units(lamb, "Hz")
     env_expansion.name("norm of points\noutside envelope")
     if fl and show_expanding_envelope:
         fl.next("expanding envelope", figsize=r_[1, 0.3] * full_width)
@@ -90,7 +86,7 @@ def fit_envelope(
     norm_max = env_expansion.max().item().real
     norm_min = env_expansion.min().item().real
     opt_lambda = env_expansion.invinterp(
-        l, norm_min * (1 - threshold) + norm_max * threshold, kind="linear"
+        lamb, norm_min * (1 - threshold) + norm_max * threshold, kind="linear"
     )
     logging.debug(
         "opt_lambda",
@@ -102,7 +98,7 @@ def fit_envelope(
     )
     if fl and show_expanding_envelope:
         fl.plot(opt_lambda, "o")
-    new_guess.update(lambda_L=opt_lambda.getaxis(l).item().real)
+    new_guess.update(lambda_L=opt_lambda.getaxis(lamb).item().real)
     envelope.set_guess(new_guess)
     envelope.settoguess()
     if fl:
@@ -112,21 +108,11 @@ def fit_envelope(
         fl.plot(
             envelope.eval() / env_out["A"], lw=1.1, label=r"optimal envelope"
         )
-    t2 = envelope.fromaxis(direct)
     # lsq
-    lsq = np.exp(-pi * lsq_lambda * abs(t2))
     if fl:
         fl.plot(
             L2G(env_out["lambda_L"], criterion="energy")(s.fromaxis(direct))
         )
-        # {{{ reset x limits to focus on the decay better
-        my_xlims = list(gca().get_xlim())
-        if my_xlims[1] > env_out["lambda_L"] * 3:
-            my_xlims[1] = env_out["lambda_L"] * 3
-        if my_xlims[0] < -my_xlims[1]:
-            my_xlims[0] = -my_xlims[1]
-        gca().set_xlim(my_xlims)
-        # }}}
         fl.pop_marker()
     return env_out["lambda_L"]
 

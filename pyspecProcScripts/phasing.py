@@ -321,7 +321,7 @@ def fid_from_echo(
     # {{{ sign flip and average input for hermitian
     input_for_hermitian = select_pathway(d, signal_pathway).C
     signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
-    idx = abs(signflip).mean_all_but(direct).data.argmax()
+    idx = abs(signflip).mean_all_but([direct]).data.argmax()
     signflip = signflip[direct, idx]
     ph0 = zeroth_order_ph(signflip)
     signflip /= ph0
@@ -332,7 +332,7 @@ def fid_from_echo(
         fl.next("sign flipped for hermitian")
         input_for_hermitian.reorder(direct, first=False)
         fl.image(input_for_hermitian)
-    input_for_hermitian.mean_all_but(direct)
+    input_for_hermitian.mean_all_but([direct])
     # }}}
     best_shift = hermitian_function_test(
         input_for_hermitian,
@@ -385,7 +385,7 @@ def fid_from_echo(
                     abs(s_flipped - d_sigcoh[direct:(t_start, -t_start)]) ** 2
                 )
                 N_ratio = for_resid.data.size
-                for_resid.mean_all_but(direct).run(sqrt)
+                for_resid.mean_all_but([direct]).run(sqrt)
                 N_ratio /= for_resid.data.size  # the signal this
                 #                                  has been plotted
                 #                                  against is signal
@@ -408,14 +408,14 @@ def fid_from_echo(
                 # }}}
                 if test_offset == 0:
                     fl.plot(
-                        d_sigcoh.C.mean_all_but(direct).run(abs),
+                        d_sigcoh.C.mean_all_but([direct]).run(abs),
                         alpha=0.8,
                         human_units=False,
                         label="best shift%+e, abs of mean" % test_offset,
                     )
                     s_flipped.set_plot_color("r")
                     fl.plot(
-                        s_flipped.C.mean_all_but(direct).run(abs),
+                        s_flipped.C.mean_all_but([direct]).run(abs),
                         alpha=0.5,
                         human_units=False,
                         label="best shift%+e, abs of flipped mean"
@@ -520,7 +520,7 @@ def det_inh_bounds(
         # {{{ estimate the echo center by scrolling a filter that we think
         #     is matched across the data, and find where it gives max energy
         #     -- using fourier math
-        time_envelope = abs(freq_envelope.mean_all_but(direct))  # |s(t)|
+        time_envelope = abs(freq_envelope.mean_all_but([direct]))  # |s(t)|
         time_envelope[direct] -= time_envelope[direct][
             0
         ]  # just call the start of the time axis t=0
@@ -531,7 +531,7 @@ def det_inh_bounds(
         time_envelope.ft(
             direct,
             pad=time_envelope.shape[direct]
-            * 2,  # we need to fill with zeros in the time domain, so we're not looking at aliased overlap
+            * 2,  # zero-fill to prevent aliased overlap in the correlation
         ).ft_new_startpoint(
             direct, "time"
         )  # because we're going to want a symmetric ift
@@ -637,7 +637,7 @@ def det_inh_bounds(
     #    to limit oscillations
     freq_envelope[direct, 0] *= 0.5
     freq_envelope.ft(direct)
-    freq_envelope.mean_all_but(direct).run(abs)
+    freq_envelope.mean_all_but([direct]).run(abs)
     # }}}
     if fl is not None:
         fl.next("autoslicing!")
@@ -799,9 +799,7 @@ def hermitian_function_test(
     else:
         s_timedom = s.C
     s_ext = s_timedom.C
-    assert (
-        s_timedom.getaxis(direct)[0] == 0.0
-    ), """In order to
+    assert s_timedom.getaxis(direct)[0] == 0.0, """In order to
     calculate the signal energy term correctly, the
     signal must start at t=0  so set the start of the
     acquisition in the *non-aliased* time domain to 0 (something like
@@ -881,10 +879,10 @@ def hermitian_function_test(
             else:
                 fl.plot(s_ext)
         s_ext /= (
-            abs(s_ext).mean_all_but(direct).data.max()
+            abs(s_ext).mean_all_but([direct]).data.max()
         )  # normalize by the average echo peak (for plotting purposes)
         fl.next("power terms")
-        forplot = abs(s_ext).mean_all_but(direct)[direct:plot_bounds]
+        forplot = abs(s_ext).mean_all_but([direct])[direct:plot_bounds]
         forplot[direct] -= min_echo  # so zero is the
         #                             first part of the
         #                             echo after the
@@ -898,7 +896,7 @@ def hermitian_function_test(
     s_ext[direct, :-min_echo_idx] = s_ext[direct, min_echo_idx:]
     if fl is not None:
         fl.next("power terms")
-        forplot = abs(s_ext).mean_all_but(direct)[direct:plot_bounds]
+        forplot = abs(s_ext).mean_all_but([direct])[direct:plot_bounds]
         fl.plot(
             forplot,
             label="echo envelope",
@@ -910,7 +908,7 @@ def hermitian_function_test(
     s_energy = s_ext.C
     s_energy.run(lambda x: abs(x) ** 2)
     s_energy.integrate(direct, cumulative=True)
-    s_energy.mean_all_but(direct)
+    s_energy.mean_all_but([direct])
     t_dwos = s_energy.get_ft_prop(direct, "dt")
     normalization_term = 2 * t_dwos / (s_energy.fromaxis(direct) + t_dwos)
     s_energy *= normalization_term
@@ -923,7 +921,7 @@ def hermitian_function_test(
     s_correl.ft(direct)
     s_correl.run(lambda x: x**2)
     s_correl.ift(direct)
-    s_correl.mean_all_but(direct).run(abs)
+    s_correl.mean_all_but([direct]).run(abs)
     s_correl *= normalization_term
     # }}}
     # {{{ calculate the cost function and determine where the center of the
@@ -945,14 +943,16 @@ def hermitian_function_test(
     #             square root for a well-defined
     #             minimum -- it could be better to do
     #             this before averaging in the future
-    cost_min = cost_func.C.argmin(direct).item()
+    # argmin stores an axis coordinate in data but retains the signal units,
+    # so extract the underlying numerical coordinate directly.
+    cost_min = cost_func.C.argmin(direct).data.item()
     if fl is not None:
         forplot = s_energy / t_dwos
-        forplot.mean_all_but(direct)
+        forplot.mean_all_but([direct])
         forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(forplot[direct:plot_bounds], label="first energy term")
         forplot = s_correl / t_dwos
-        forplot.mean_all_but(direct)
+        forplot.mean_all_but([direct])
         forplot.setaxis(direct, lambda x: x / 2)
         fl.plot(forplot[direct:plot_bounds], label="correlation function")
         forplot = cost_func / sqrt(t_dwos)
@@ -968,7 +968,7 @@ def hermitian_function_test(
     if fl is not None:
         fl.plot(
             echo_peak / det_devisor(fl),
-            forplot[direct:echo_peak].item(),
+            forplot[direct:echo_peak].data.item(),
             "o",
             c="violet",
             alpha=0.3,
@@ -1012,7 +1012,8 @@ def hermitian_function_test(
         if fl is not None:
             fl.next("refinement")
             fl.plot(s_foropt, human_units=False)
-        s_foropt = s_foropt.argmin("echo shift").item()
+        # As above, this is an axis coordinate rather than signal data.
+        s_foropt = s_foropt.argmin("echo shift").data.item()
         if fl is not None:
             fl.next("refinement")
             axvline(x=s_foropt)

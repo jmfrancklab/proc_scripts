@@ -60,6 +60,6 @@ with psd.figlist_var() as fl:
     )
     # }}}
     s["indirect"] = orig_axis
-    s = prscr.convert_to_power(s, thisfile, exptype, fl=fl)
+    s = prscr.generate_coordinates_from_log(s, thisfile, exptype, fl=fl)
     fl.next("normalized $E(p)$")
     fl.plot(s, "o")

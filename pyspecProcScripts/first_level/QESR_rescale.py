@@ -171,7 +171,9 @@ def QESR_apply_scalefactor(d):
     calibcache.use_calibration(d.get_prop("calibration_name"))
     calibcache.use_diameter(d.get_prop("diameter_name"))
     # {{{ determine the signal denominator from the parameters of interest
+    logger.debug(strm("power is",d.get_prop("Power")))
     G_R = Q_(*d.get_prop("Gain"))
+    logger.debug(strm("ConvTime is",d.get_prop("ConvTime")))
     C_t = Q_(*d.get_prop("ConvTime"))
     power = Q_(*d.get_prop("Power"))
     B_m = Q_(*d.get_prop("ModAmp"))
@@ -184,6 +186,7 @@ def QESR_apply_scalefactor(d):
     )  # the first fraction on eq 2-17 -- in bruker E500 manual
     c_propfactor = Q_(calibcache.dint_propFactor, "m**2")
     dint_conversion = (c_propfactor / diameter**2).to("").magnitude
+    logging.debug(strm("power is",repr(power),"of type",type(power),repr(power.magnitude),type(power.magnitude)))
     signal_denom = (
         sqrt(power)
         * B_m

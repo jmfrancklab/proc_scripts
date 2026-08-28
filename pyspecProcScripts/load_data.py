@@ -14,6 +14,8 @@ import logging
 import numpy as np
 from numpy import r_
 import re
+from .simple_functions import logobj
+from .generate_coordinates_from_log import generate_coordinates_from_log
 
 
 # to use type s = load_data("nameoffile")
@@ -669,6 +671,63 @@ def proc_spincore_ODNP_v4(s, fl=None):
     return proc_spincore_generalproc_v1(s, fl=fl)
 
 
+def proc_spincore_withlog_v1(s, fl=None):
+    """This is the first version of code that automatically takes the log data
+    and uses it to construct a structured array indirect coordinate axis.
+
+    This should serve as a good "general processing" function for newer format
+    data where the log is saved as a property.
+
+    **However** note that this **requires** that the indirect axis is saved
+    with  a structured array giving the start_time and stop_times.
+    *All newer log-based pulse sequences should have an indirect axis with
+    these keys.*
+    If your data was not saved in that way, then you cannot use this as a
+    postproc.
+
+    Future TODO (leave for a future PR): we want to modify
+    generate_coordinates_from_log so that it preserves + carries forward all
+    the previous keys for the indirect axis.  E.g. currently, I believe we
+    throw out the start_time and stop_time, and there might be reasons to keep
+    those around.
+    Also, say we have a truly multi-dimensional experiment where we are
+    changing a pulse sequence delay, but also want to correlate the start and
+    stop with the log -- there, we would save with start, stop, and ppg delay
+    value, and we want to preserve the ppg delay value.
+    """
+    if s.get_prop("coherence_pathway") is None:
+        print(
+            "WARNING!! The data was not saved with a coherence pathway"
+            " property! You should fix this!"
+        )
+        result = input('Type "I will fix this" to confirm')
+        if result != "I will fix this":
+            raise ValueError("fix not confirmed!")
+        s.set_prop("coherence_pathway", {"ph1": 1})
+    thislog = s.get_prop("log")
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    s.set_prop("log", logobj.from_group(thislog))
+    return generate_coordinates_from_log(s, fl=fl)
+
+
+def proc_stability_test_legacy(s, fl=None):
+    s = proc_spincore_generalproc_v1(s, fl=fl)
+    old_axis = s["indirect"].copy()
+    # We generate fake experiments start stop times based on the time
+    # axis.
+    fake_axis = np.zeros(
+        len(old_axis), dtype=[("start_times", "f8"), ("stop_times", "f8")]
+    )
+    fake_dt = (
+        s.get_prop("acq_params").get("acq_time_ms", 1e3) * 1e-3
+        + s.get_prop("acq_params").get("repetition_us", 0) * 1e-6
+    )
+    fake_axis["start_times"] = old_axis["time"] - fake_dt
+    fake_axis["stop_times"] = old_axis["time"]
+    s.setaxis("indirect", fake_axis).set_units("indirect", None)
+    return s
+
+
 def hack_oldproc(s, direct="t2", fl=None):
     """this is for things that are so old that they don't even have
     acq_params set"""
@@ -765,11 +824,13 @@ def proc_DOSY_CPMG(s, fl=None):
     logging.debug(psd.strm(m.groups()))  # show the line that sets dwdel1
     # then look for de and depa
     logging.debug(
-        psd.strm([
-            (j, s.get_prop("acq")[j])
-            for j in s.get_prop("acq").keys()
-            if "de" in j.lower()
-        ])
+        psd.strm(
+            [
+                (j, s.get_prop("acq")[j])
+                for j in s.get_prop("acq").keys()
+                if "de" in j.lower()
+            ]
+        )
     )
     # I actually can't find depa
     # }}}
@@ -909,13 +970,21 @@ lookup_table = {
     #                                             meter powers
     "spincore_ODNP_v4": proc_spincore_ODNP_v4,
     "spincore_ODNP_v5": proc_spincore_ODNP_v4,
+    "spincore_ODNP_v6": proc_spincore_withlog_v1,
     "spincore_echo_v1": proc_spincore_echo_v1,
     "spincore_var_tau_v1": proc_var_tau,
     "spincore_generalproc_v1": proc_spincore_generalproc_v1,
     "square_wave_capture_v1": proc_capture,
     "DOSY_CPMG_v1": proc_DOSY_CPMG,
     "ESR_linewidth": proc_ESR,
+    "current_sweep_v1": proc_spincore_generalproc_v1,
+    "current_sweep_v2": proc_spincore_withlog_v1,
+    "stability_test_v1": proc_spincore_generalproc_v1,
+    "stability_test_v2": proc_spincore_generalproc_v1,
+    "stability_test_v3": proc_stability_test_legacy,
+    "stability_test_v4": proc_spincore_withlog_v1,
     "field_sweep_v1": proc_field_sweep_v1,
     "field_sweep_v2": proc_field_sweep_v2,
     "field_sweep_v4": hack_field_sweep_v4,
+    "field_sweep_v5": proc_spincore_withlog_v1,
 }
