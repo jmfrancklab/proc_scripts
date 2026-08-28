@@ -7,6 +7,7 @@ import pyspecProcScripts.phasing as phasing
 
 from pyspecProcScripts import (
     det_inh_bounds,
+    fid_side_from_echo,
     find_exponential_echo_center,
     zeroth_order_ph,
 )
@@ -296,6 +297,90 @@ def test_exponential_echo_center_rejects_nonfinite_input():
 
     with pytest.raises(ValueError, match="non-finite"):
         find_exponential_echo_center(echo)
+
+
+def test_fid_side_from_echo_centers_without_altering_the_source():
+    direct = "t2"
+    echo_center = 5.0125e-3
+    echo = _synthetic_spectrum(
+        echo_center=echo_center,
+        phase=0.7,
+    )
+    original_data = echo.data.copy()
+    original_axis = echo.getaxis(direct).copy()
+    original_units = echo.get_units()
+    original_axis_units = echo.get_units(direct)
+    original_ft_state = echo.get_ft_prop(direct)
+
+    fid_side = fid_side_from_echo(echo, echo_center)
+
+    unweighted_fid_side = echo.C.ift(direct)
+    unweighted_fid_side[direct] -= (
+        unweighted_fid_side.getaxis(direct)[0] + echo_center
+    )
+    unweighted_fid_side.register_axis({direct: 0})
+    unweighted_fid_side = unweighted_fid_side[direct:(0, None)]
+    assert fid_side.getaxis(direct)[0] == 0
+    assert not fid_side.get_ft_prop(direct)
+    assert fid_side.get_prop("echo_center") == echo_center
+    np.testing.assert_allclose(
+        fid_side[direct, 0].data * 2,
+        unweighted_fid_side[direct, 0].data,
+    )
+    np.testing.assert_allclose(
+        fid_side.data[1:],
+        unweighted_fid_side.data[1:],
+    )
+    np.testing.assert_allclose(echo.data, original_data)
+    np.testing.assert_allclose(echo.getaxis(direct), original_axis)
+    assert echo.get_units() == original_units
+    assert echo.get_units(direct) == original_axis_units
+    assert echo.get_ft_prop(direct) == original_ft_state
+
+    round_trip = fid_side.C.ft(direct).ift(direct)
+    np.testing.assert_allclose(round_trip.data, fid_side.data)
+    np.testing.assert_allclose(
+        round_trip.getaxis(direct),
+        fid_side.getaxis(direct),
+    )
+
+
+def test_fid_side_from_echo_compensates_stored_digital_filter():
+    echo_center = 5.0125e-3
+    unfiltered = _synthetic_spectrum(echo_center=echo_center)
+    filtered = unfiltered.C
+    digital_filter = np.exp(1j * 2 * np.pi * filtered.getaxis("t2") * 25e-6)
+    filtered.data /= digital_filter
+    filtered.set_prop("dig_filter", digital_filter)
+
+    expected = fid_side_from_echo(unfiltered, echo_center)
+    compensated = fid_side_from_echo(filtered, echo_center)
+
+    np.testing.assert_allclose(compensated.data, expected.data)
+    np.testing.assert_allclose(
+        compensated.getaxis("t2"),
+        expected.getaxis("t2"),
+    )
+    assert compensated.get_prop("dig_filter") is None
+    np.testing.assert_allclose(filtered.get_prop("dig_filter"), digital_filter)
+
+
+def test_det_inh_bounds_reuses_stored_echo_center(monkeypatch):
+    echo = _synthetic_spectrum(echo_center=5.0125e-3)
+    echo.set_prop("echo_center", 5.0125e-3)
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("echo-center detection should not be repeated")
+
+    monkeypatch.setattr(
+        phasing,
+        "find_exponential_echo_center",
+        fail_if_called,
+    )
+
+    detected = det_inh_bounds(echo, 0.1, echo_like=True)
+
+    assert np.all(np.isfinite(detected))
 
 
 def test_ordinary_fid_bypasses_echo_center_detection(monkeypatch):

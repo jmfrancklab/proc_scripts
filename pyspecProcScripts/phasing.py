@@ -378,6 +378,69 @@ def find_exponential_echo_center(
     return float(echo_center)
 
 
+# SINGLE_USE_EXCEPTION -- public API for shared linewidth processing
+def fid_side_from_echo(d, echo_center, direct="t2", fl=None):
+    """Return the centered, half-weighted FID side of an echo.
+
+    Digital-filter compensation and Fourier interpolation are applied to a
+    copy.  The returned signal begins at exactly zero and its zero-time point
+    is half weighted for a one-sided Fourier transform.  Pass ``mult_two=True``
+    to :func:`fit_envelope` when restoring that point for envelope fitting.
+
+    Parameters
+    ==========
+    d : nddata
+        Frequency-domain echo data. The input is not altered.
+    echo_center : float
+        Echo-center coordinate in seconds, measured from the beginning of the
+        acquired direct axis.
+    direct : str
+        Direct dimension containing the echo.
+    fl : figlist or None
+        Optional diagnostic figure list.
+
+    Returns
+    =======
+    fid_side : nddata
+        Time-domain decay beginning at the interpolated echo center.
+    """
+    if not np.isscalar(echo_center) or not np.isfinite(echo_center):
+        raise ValueError("echo_center must be a finite scalar")
+    if not d.get_ft_prop(direct):
+        raise ValueError("FID-side extraction requires frequency-domain data")
+
+    fid_side = d.C
+    digital_filter = fid_side.get_prop("dig_filter")
+    if digital_filter is not None:
+        fid_side *= digital_filter
+        fid_side.unset_prop("dig_filter")
+    fid_side.ift(direct)
+    acquired_time_axis = fid_side.getaxis(direct)
+    if acquired_time_axis.size < 2:
+        raise ValueError("FID-side extraction requires at least two points")
+    acquisition_time = acquired_time_axis[-1] - acquired_time_axis[0]
+    if not 0 < echo_center < acquisition_time:
+        raise ValueError("echo_center must lie inside the acquired time axis")
+
+    # Registering zero performs the required Fourier interpolation when the
+    # correlation estimate lies between source time points.
+    fid_side[direct] -= acquired_time_axis[0] + echo_center
+    fid_side.register_axis({direct: 0})
+    fid_side = fid_side[direct:(0, None)]
+    fid_side[direct, 0] *= 0.5
+    fid_side.set_prop("echo_center", float(echo_center))
+    if fl is not None:
+        centered_envelope = abs(fid_side).mean_all_but([direct])
+        centered_envelope[direct, 0] *= 2
+        fl.next("FID side from exponential echo center")
+        fl.plot(
+            centered_envelope,
+            human_units=False,
+            label="centered decay envelope",
+        )
+    return fid_side
+
+
 def fid_from_echo(
     d,
     signal_pathway,
@@ -688,15 +751,6 @@ def det_inh_bounds(
     as ``echo_center`` rather than changing the return signature.
     """
     # {{{ autodetermine slice range
-    freq_envelope = d.C
-    # {{{ if there was a digital filter applied,
-    #     get rid of it, so that the noise is
-    #     flat.
-    dig_filter = d.get_prop("dig_filter")
-    if dig_filter is not None:
-        freq_envelope *= dig_filter
-    # }}}
-    freq_envelope.ift(direct)
     if echo_like:
         echo_center = d.get_prop("echo_center")
         if echo_center is None:
@@ -707,31 +761,33 @@ def det_inh_bounds(
                 fl=fl,
             )
             d.set_prop("echo_center", echo_center)
-        if not np.isscalar(echo_center) or not np.isfinite(echo_center):
-            raise ValueError("echo_center must be a finite scalar")
-        source_time_axis = freq_envelope.getaxis(direct)
-        source_dwell = abs(np.diff(source_time_axis[:2]).item())
-        latest_center = (
-            source_time_axis[-1]
-            - source_time_axis[0]
-            - max(2 * source_dwell, 1 / (pi * inh_guess))
+        freq_envelope = fid_side_from_echo(
+            d,
+            echo_center,
+            direct=direct,
+            fl=fl,
         )
-        if not 0 < echo_center < latest_center:
+        fid_time_axis = freq_envelope.getaxis(direct)
+        source_dwell = abs(np.diff(fid_time_axis[:2]).item())
+        if fid_time_axis[-1] - fid_time_axis[0] <= max(
+            2 * source_dwell,
+            1 / (pi * inh_guess),
+        ):
             raise ValueError(
                 "echo_center must leave a usable decay inside the acquisition"
             )
-        # Center the working copy with Fourier interpolation so off-grid echo
-        # centers do not become quantized to the source dwell.
-        freq_envelope[direct] -= freq_envelope[direct][0]
-        freq_envelope[direct] -= echo_center
-        freq_envelope.register_axis({direct: 0})
+    else:
+        freq_envelope = d.C
+        # Undo the stored digital-filter correction so the time-domain noise
+        # is flat during ordinary-FID peak detection.
+        digital_filter = freq_envelope.get_prop("dig_filter")
+        if digital_filter is not None:
+            freq_envelope *= digital_filter
+        freq_envelope.ift(direct)
+        freq_envelope = freq_envelope[direct:(0, None)]
+        freq_envelope[direct, 0] *= 0.5
     # {{{ now that we have an estimate of the start point, take an FID
     #    slice and move into the freq domain
-    freq_envelope = freq_envelope[
-        direct:(0, None)
-    ]  # slice out rising echo estimate according to experimental tau in order
-    #    to limit oscillations
-    freq_envelope[direct, 0] *= 0.5
     freq_envelope.ft(direct)
     freq_envelope.mean_all_but([direct]).run(abs)
     # }}}

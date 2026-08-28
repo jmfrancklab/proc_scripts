@@ -20,6 +20,7 @@ _EXPORTS = {
         ".phasing",
         "find_exponential_echo_center",
     ),
+    "fid_side_from_echo": (".phasing", "fid_side_from_echo"),
     "find_peakrange": (".phasing", "find_peakrange"),
     "rough_table_of_integrals": (
         ".third_level.rough_table_of_integrals",
