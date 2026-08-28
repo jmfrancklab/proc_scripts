@@ -8,6 +8,8 @@ import pyspecProcScripts.phasing as phasing
 from pyspecProcScripts import (
     det_inh_bounds,
     fid_side_from_echo,
+    fid_from_echo,
+    fit_envelope,
     find_exponential_echo_center,
     zeroth_order_ph,
 )
@@ -381,6 +383,80 @@ def test_det_inh_bounds_reuses_stored_echo_center(monkeypatch):
     detected = det_inh_bounds(echo, 0.1, echo_like=True)
 
     assert np.all(np.isfinite(detected))
+
+
+@pytest.mark.parametrize("linewidth", [40.0, 80.0, 120.0, 250.0, 500.0])
+def test_fit_envelope_recovers_homogeneous_linewidth(linewidth):
+    echo_center = 5.0125e-3
+    echo = _synthetic_spectrum(
+        peaks=((100.0, linewidth, 1.0),),
+        noise=2e-3,
+        echo_center=echo_center,
+        points=4096,
+    )
+
+    fitted_linewidth = fit_envelope(
+        fid_side_from_echo(echo, echo_center),
+        mult_two=True,
+    )
+
+    assert fitted_linewidth == pytest.approx(linewidth, rel=0.1)
+
+
+@pytest.mark.parametrize("frequency_spread", [0.0, 500.0, 1500.0])
+def test_homogeneous_fit_is_independent_of_frequency_spread(frequency_spread):
+    direct = "t2"
+    echo_center = 5.0125e-3
+    homogeneous_linewidth = 120.0
+    time_axis = np.arange(4096) * 25e-6
+    component_frequencies = 100.0 + frequency_spread * np.r_[-1, 0, 1]
+    signal = np.exp(
+        1j * 2 * np.pi * component_frequencies[:, None] * time_axis[None, :]
+        - np.pi * homogeneous_linewidth * abs(time_axis[None, :] - echo_center)
+    )
+    echo = (
+        psd.nddata(signal, ["inh_component", direct])
+        .setaxis("inh_component", component_frequencies)
+        .setaxis(direct, time_axis)
+        .set_units(direct, "s")
+        .ft(direct, shift=True)
+    )
+
+    fitted_linewidth = fit_envelope(
+        fid_side_from_echo(echo, echo_center),
+        mult_two=True,
+    )
+
+    assert fitted_linewidth == pytest.approx(homogeneous_linewidth, rel=0.1)
+
+
+def test_fit_envelope_rejects_an_unusable_decay():
+    unusable_decay = (
+        psd.nddata(np.zeros(20), "t2")
+        .setaxis("t2", np.arange(20) * 25e-6)
+        .set_units("t2", "s")
+    )
+
+    with pytest.raises(ValueError, match="finite nonzero decay"):
+        fit_envelope(unusable_decay)
+
+
+def test_fid_from_echo_stores_homogeneous_linewidth():
+    expected_linewidth = 120.0
+    processed = fid_from_echo(
+        _synthetic_spectrum(
+            peaks=((100.0, expected_linewidth, 1.0),),
+            noise=2e-3,
+            echo_center=5.0125e-3,
+            points=4096,
+        ),
+        {},
+    )
+
+    assert processed.get_prop("homogeneous_linewidth") == pytest.approx(
+        expected_linewidth,
+        rel=0.1,
+    )
 
 
 def test_ordinary_fid_bypasses_echo_center_detection(monkeypatch):

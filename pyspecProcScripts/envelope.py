@@ -17,10 +17,54 @@ def fit_envelope(
     mult_two=False,
     fl=None,
 ):
-    assert not s.get_ft_prop(direct), "s *must* be in time domian"
+    """Fit the homogeneous Lorentzian linewidth of an FID decay.
+
+    Parameters
+    ==========
+    s : nddata
+        Time-domain FID-side signal.
+    min_l : float
+        Smallest linewidth, in Hz, considered by the expanding-envelope
+        refinement.
+    threshold : float
+        Fraction of the expanding-envelope range used to select the refined
+        linewidth.
+    full_width : float
+        Figure width used for the optional expanding-envelope diagnostic.
+    direct : str
+        Direct time dimension.
+    plot_name : str
+        Figure name for the envelope-fit diagnostic.
+    show_expanding_envelope : bool
+        Plot the expanding-envelope refinement when diagnostics are enabled.
+    mult_two : bool
+        Restore a half-weighted zero-time point before fitting. Use this for
+        data returned by :func:`fid_side_from_echo`.
+    fl : figlist or None
+        Optional diagnostic figure list.
+
+    Returns
+    =======
+    homogeneous_linewidth : float
+        Positive Lorentzian full width at half maximum, in Hz.
+
+    Raises
+    ======
+    ValueError
+        If the input is not a finite time-domain decay or the fit does not
+        return a finite positive linewidth.
+    """
+    if s.get_ft_prop(direct):
+        raise ValueError("fit_envelope requires time-domain data")
     envelope = abs(s[direct:(0, None)]).mean_all_but([direct])
     if mult_two:
         envelope[direct, 0] *= 2
+    if (
+        envelope.data.size < 3
+        or not np.all(np.isfinite(envelope.data))
+        or envelope.data.max() <= 0
+    ):
+        raise ValueError("fit_envelope requires a finite nonzero decay")
     envelope = psp.lmfitdata(envelope)
     # {{{ copy/paste code for envelope
     A, lL, sigma, t = sp.symbols("A lambda_L sigma t2")
@@ -34,7 +78,7 @@ def fit_envelope(
         lambda_L=1 / 10e-3 / pi,
     )
     if fl:
-        envelope.settoguess()
+        envelope.set_to_guess()
         orig_guess = envelope.eval()
     envelope.fit()
     new_guess = envelope.output()
@@ -67,14 +111,14 @@ def fit_envelope(
     for j, newL in enumerate(lw_range):
         new_guess.update(lambda_L=newL)
         envelope.set_guess(new_guess)
-        envelope.settoguess()
+        envelope.set_to_guess()
         points_over = (
             envelope[direct:(0, t_at_exp_end)]
             - envelope.eval()[direct:(0, t_at_exp_end)]
         )
         points_over[lambda x: x < 0] = 0
         points_over.run(lambda x: np.sqrt(abs(x) ** 2)).mean()
-        amount_over[j] = points_over.item()
+        amount_over[j] = points_over.data.item()
     # }}}
     lamb = "$\\lambda_L$"
     env_expansion = psp.nddata(amount_over / amount_over.max(), [-1], [lamb])
@@ -100,7 +144,7 @@ def fit_envelope(
         fl.plot(opt_lambda, "o")
     new_guess.update(lambda_L=opt_lambda.getaxis(lamb).item().real)
     envelope.set_guess(new_guess)
-    envelope.settoguess()
+    envelope.set_to_guess()
     if fl:
         fl.next(plot_name)
     env_out = envelope.output()
@@ -114,7 +158,16 @@ def fit_envelope(
             L2G(env_out["lambda_L"], criterion="energy")(s.fromaxis(direct))
         )
         fl.pop_marker()
-    return env_out["lambda_L"]
+    homogeneous_linewidth = env_out["lambda_L"]
+    if (
+        not np.isscalar(homogeneous_linewidth)
+        or not np.isfinite(homogeneous_linewidth)
+        or homogeneous_linewidth <= 0
+    ):
+        raise ValueError(
+            "fit_envelope did not return a finite positive linewidth"
+        )
+    return float(homogeneous_linewidth)
 
 
 def L2G(

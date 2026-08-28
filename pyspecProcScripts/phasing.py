@@ -11,6 +11,7 @@ import scipy.signal.windows as sci_win
 import logging
 import matplotlib.pyplot as plt
 from .simple_functions import select_pathway
+from .envelope import fit_envelope
 from itertools import cycle
 
 default_matplotlib_cycle = cycle(
@@ -459,7 +460,9 @@ def fid_from_echo(
 
     Echo-center detection is reused from ``det_inh_bounds`` when available.
     If explicit frequency bounds are supplied first, this function detects
-    and stores ``echo_center`` before continuing.
+    and stores ``echo_center`` before continuing.  The centered FID side is
+    also passed to :func:`fit_envelope` to determine the homogeneous
+    Lorentzian linewidth independently of ``inh_bounds``.
 
     Parameters
     ==========
@@ -525,6 +528,21 @@ def fid_from_echo(
             "echo_center",
             find_exponential_echo_center(d, direct=direct, fl=fl),
         )
+    homogeneous_linewidth = fit_envelope(
+        select_pathway(
+            fid_side_from_echo(
+                d,
+                d.get_prop("echo_center"),
+                direct=direct,
+            ),
+            signal_pathway,
+        ),
+        direct=direct,
+        plot_name="homogeneous linewidth fit",
+        mult_two=True,
+        fl=fl,
+    )
+    d.set_prop("homogeneous_linewidth", homogeneous_linewidth)
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
         left_x = frq_center - slice_multiplier * half_range
