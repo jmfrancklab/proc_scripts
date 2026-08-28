@@ -16,6 +16,10 @@ _EXPORTS = {
     "determine_sign": (".phasing", "determine_sign"),
     "fid_from_echo": (".phasing", "fid_from_echo"),
     "det_inh_bounds": (".phasing", "det_inh_bounds"),
+    "find_exponential_echo_center": (
+        ".phasing",
+        "find_exponential_echo_center",
+    ),
     "find_peakrange": (".phasing", "find_peakrange"),
     "rough_table_of_integrals": (
         ".third_level.rough_table_of_integrals",

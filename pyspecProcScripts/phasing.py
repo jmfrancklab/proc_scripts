@@ -217,6 +217,167 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
+def find_exponential_echo_center(
+    d,
+    direct="t2",
+    decay_rate=250.0,
+    minimum_overlap=0.01,
+    fl=None,
+):
+    """Locate an echo by normalized symmetric-exponential correlation.
+
+    Normalization by the square root of the template overlap energy prevents
+    shifts with little signal overlap from appearing artificially favorable.
+    The search is restricted to the acquired interval while retaining at
+    least one exponential decay time and two source points after the candidate
+    echo center.
+
+    Parameters
+    ==========
+    d : nddata
+        Frequency-domain data. The numerical data and transform metadata are
+        not altered.
+    direct : str
+        Direct dimension containing the echo.
+    decay_rate : float
+        Exponential decay rate in Hz used for the symmetric template.
+    minimum_overlap : float
+        Minimum overlap energy as a fraction of its maximum.
+    fl : figlist or None
+        Optional diagnostic figure list.
+
+    Returns
+    =======
+    echo_center : float
+        Echo-center coordinate in seconds.
+
+    Raises
+    ======
+    ValueError
+        If the inputs do not define a finite interior search interval or the
+        normalized correlation has no interior maximum.
+    """
+    if not np.isfinite(decay_rate) or decay_rate <= 0:
+        raise ValueError("decay_rate must be finite and positive")
+    if not 0 < minimum_overlap < 1:
+        raise ValueError("minimum_overlap must lie strictly between 0 and 1")
+    if not d.get_ft_prop(direct):
+        raise ValueError(
+            "echo-center detection requires frequency-domain data"
+        )
+
+    time_envelope = d.C
+    digital_filter = d.get_prop("dig_filter")
+    if digital_filter is not None:
+        time_envelope *= digital_filter
+    time_envelope.ift(direct)
+    source_time_axis = time_envelope.getaxis(direct)
+    if source_time_axis.size < 4 or not np.all(np.isfinite(source_time_axis)):
+        raise ValueError("echo-center detection requires a finite time axis")
+    source_dwell = abs(np.diff(source_time_axis[:2]).item())
+    acquisition_time = source_time_axis[-1] - source_time_axis[0]
+    minimum_decay_time = max(2 * source_dwell, 1 / (pi * decay_rate))
+    if acquisition_time <= minimum_decay_time:
+        raise ValueError(
+            "the acquisition is too short to retain a usable echo decay"
+        )
+
+    time_envelope.mean_all_but([direct]).run(abs)
+    time_envelope[direct] -= source_time_axis[0]
+    envelope_maximum = time_envelope.data.max()
+    if not np.isfinite(envelope_maximum) or envelope_maximum <= 0:
+        raise ValueError("the time-domain envelope is empty or non-finite")
+    time_envelope /= envelope_maximum
+    if fl is not None:
+        fl.next("peak finder, time domain correlation")
+        fl.plot(time_envelope, color="k", alpha=0.1, label="signal envelope")
+
+    # Zero filling before constructing the symmetric axis prevents circular
+    # overlap between the beginning and end of the acquired signal.
+    time_envelope.ft(direct, pad=time_envelope.shape[direct] * 2)
+    time_envelope.ft_new_startpoint(direct, "time").ift(direct, shift=True)
+    exponential = np.exp(
+        -abs(time_envelope.fromaxis(direct)) * pi * decay_rate
+    )
+    exponential_squared = exponential**2
+    acquired_side = exponential.copy(data=False)
+    acquired_side.data = np.zeros_like(exponential.data)
+    acquired_side[direct:(0, None)] = 1
+    acquired_side[direct:0] = 0.5
+    if fl is not None:
+        fl.next("peak finder, time domain", legend=True)
+        fl.plot(time_envelope, label="signal envelope")
+        fl.plot(exponential, label="symmetric exponential")
+        fl.plot(acquired_side, label="acquired side")
+
+    time_envelope.ft(direct)
+    exponential.ft(direct).run(np.conj)
+    exponential_squared.ft(direct).run(np.conj)
+    acquired_side.ft(direct)
+    correlation = exponential * time_envelope
+    overlap_energy = exponential_squared * acquired_side
+    correlation.ift(direct, pad=correlation.shape[direct] * 20)
+    overlap_energy.ift(direct, pad=overlap_energy.shape[direct] * 20)
+
+    correlation_data = abs(correlation.data)
+    overlap_data = abs(overlap_energy.data)
+    overlap_maximum = overlap_data.max()
+    if not np.isfinite(overlap_maximum) or overlap_maximum <= 0:
+        raise ValueError("the exponential correlation has no usable overlap")
+    correlation_axis = correlation.getaxis(direct)
+    valid_search = (
+        (correlation_axis >= 0)
+        & (correlation_axis <= acquisition_time - minimum_decay_time)
+        & (overlap_data > minimum_overlap * overlap_maximum)
+    )
+    valid_indices = np.flatnonzero(valid_search)
+    if valid_indices.size < 3:
+        raise ValueError("no valid echo-center search interval remains")
+    # Normalize by the template's L2 norm.  Dividing by the overlap energy
+    # itself biases broad echoes toward the acquisition boundary.
+    correlation_ratio = correlation_data[valid_indices] / np.sqrt(
+        overlap_data[valid_indices]
+    )
+    if not np.all(np.isfinite(correlation_ratio)):
+        raise ValueError("the normalized echo correlation is non-finite")
+
+    maximum_position = np.argmax(correlation_ratio)
+    if maximum_position == 0 or maximum_position == valid_indices.size - 1:
+        raise ValueError(
+            "the echo-correlation maximum lies on a search boundary"
+        )
+    maximum_index = valid_indices[maximum_position]
+    if (
+        not valid_search[maximum_index - 1]
+        or not valid_search[maximum_index + 1]
+    ):
+        raise ValueError(
+            "the echo-correlation maximum borders an invalid range"
+        )
+    # Use the raw array index and then look up its axis coordinate.  nddata
+    # argmax data can otherwise retain the signal's physical units.
+    echo_center = correlation_axis[maximum_index]
+
+    if fl is not None:
+        normalized_correlation = correlation.C
+        normalized_correlation.data = correlation_data / correlation_data.max()
+        normalized_overlap = overlap_energy.C
+        normalized_overlap.data = overlap_data / overlap_maximum
+        normalized_ratio = correlation.C
+        normalized_ratio.data = np.full_like(correlation_data, np.nan)
+        normalized_ratio.data[valid_indices] = (
+            correlation_ratio / correlation_ratio.max()
+        )
+        fl.next("peak finder, time domain correlation")
+        fl.plot(normalized_correlation, label="correlation")
+        fl.plot(normalized_overlap, label="overlap energy")
+        fl.plot(normalized_ratio, label="normalized ratio")
+        time_divisor = det_devisor(fl)
+        plt.gca().axvline(echo_center / time_divisor, color="r", ls=":")
+
+    return float(echo_center)
+
+
 def fid_from_echo(
     d,
     signal_pathway,
@@ -231,7 +392,11 @@ def fid_from_echo(
     frq_center=None,
     half_range=None,
 ):
-    """
+    """Return a Hermitian-phased FID-side signal from an echo.
+
+    Echo-center detection is reused from ``det_inh_bounds`` when available.
+    If explicit frequency bounds are supplied first, this function detects
+    and stores ``echo_center`` before continuing.
 
     Parameters
     ==========
@@ -291,6 +456,11 @@ def fid_from_echo(
             peak_lower_thresh,
             fl=fl,
             direct=direct,
+        )
+    elif d.get_prop("echo_center") is None:
+        d.set_prop(
+            "echo_center",
+            find_exponential_echo_center(d, direct=direct, fl=fl),
         )
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
@@ -469,9 +639,9 @@ def det_inh_bounds(
     The detector works on a copy, compensates any stored digital filter, and
     constructs an FID-side magnitude spectrum.  Broad baseline regions and
     three intensity thresholds distinguish the absorptive peak from noise,
-    isolated spikes, and nearby fragments.  For echo-like input, the current
-    exponential-correlation estimate is used to center that FID side.  Echo
-    processing validates and refines this provisional center separately.
+    isolated spikes, and nearby fragments.  For echo-like input, normalized
+    exponential correlation locates the center used to construct that FID
+    side.
 
     Parameters
     ==========
@@ -514,8 +684,8 @@ def det_inh_bounds(
     Notes
     =====
     The ascending bounds are also stored as the ``inh_bounds`` property.  For
-    echo-like data, the provisional exponential-correlation estimate is
-    stored as ``echo_center`` rather than changing the return signature.
+    echo-like data, the validated exponential-correlation estimate is stored
+    as ``echo_center`` rather than changing the return signature.
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
@@ -528,135 +698,33 @@ def det_inh_bounds(
     # }}}
     freq_envelope.ift(direct)
     if echo_like:
-        # {{{ estimate the echo center by scrolling a filter that we think
-        #     is matched across the data, and find where it gives max energy
-        #     -- using fourier math
-        time_envelope = abs(freq_envelope.mean_all_but([direct]))  # |s(t)|
-        time_envelope[direct] -= time_envelope[direct][
-            0
-        ]  # just call the start of the time axis t=0
-        time_envelope /= abs(time_envelope).max()
-        view_range_time = (-2 / inh_guess, 100e-3)
-        if fl is not None:
-            fl.next("peak finder, time domain correlation")
-            fl.plot(
-                time_envelope[direct:view_range_time],
-                color="k",
-                alpha=0.1,
+        echo_center = d.get_prop("echo_center")
+        if echo_center is None:
+            echo_center = find_exponential_echo_center(
+                d,
+                direct=direct,
+                decay_rate=inh_guess,
+                fl=fl,
             )
-        time_envelope.ft(
-            direct,
-            pad=time_envelope.shape[direct]
-            * 2,  # zero-fill to prevent aliased overlap in the correlation
-        ).ft_new_startpoint(
-            direct, "time"
-        )  # because we're going to want a symmetric ift
-        time_envelope.ift(direct, shift=True)
-        if fl is not None:
-            fl.next("peak finder, time domain", legend=True)
-            fl.plot(time_envelope, label="signal envelope")
-        # {{{ construct exp and hat in time domain
-        exp_decay = np.exp(
-            -abs(time_envelope.fromaxis(direct)) * pi * inh_guess
+            d.set_prop("echo_center", echo_center)
+        if not np.isscalar(echo_center) or not np.isfinite(echo_center):
+            raise ValueError("echo_center must be a finite scalar")
+        source_time_axis = freq_envelope.getaxis(direct)
+        source_dwell = abs(np.diff(source_time_axis[:2]).item())
+        latest_center = (
+            source_time_axis[-1]
+            - source_time_axis[0]
+            - max(2 * source_dwell, 1 / (pi * inh_guess))
         )
-        exp_decay_sq = exp_decay**2
-        hat_func = exp_decay.copy(data=False)
-        hat_func.data = np.zeros_like(exp_decay.data)
-        hat_func[direct:(0, None)] = 1
-        hat_func[direct:0] = 0.5
-        if fl is not None:
-            fl.plot(exp_decay, label="exp func (based on inh_guess)")
-            fl.push_marker()
-            fl.next("peak finder, time domain correlation")
-            fl.plot(
-                exp_decay[direct:view_range_time],
-                label="exp func (based on inh_guess)",
-            )
-            fl.pop_marker()
-            fl.plot(hat_func, label="hat function")
-        # }}}
-        if fl is not None:
-            fl.next("peak finder, freq domain", legend=True)
-        # {{{ prepare for correlation calculation
-        time_envelope.ft(direct)
-        exp_decay.ft(direct)
-        exp_decay_sq.ft(direct)
-        hat_func.ft(direct)
-        exp_decay.run(np.conj)  # below, only e comes first in correlations,
-        #                        and first one is the one starred in f-domain
-        exp_decay_sq.run(np.conj)
-        # }}}
-        if fl is not None:
-            frequency_view = (-5 * inh_guess, 5 * inh_guess)
-            fl.plot(
-                abs(time_envelope[direct:frequency_view]),
-                label="signal envelope",
-            )
-            fl.plot(exp_decay[direct:frequency_view], label="exp decay")
-        thiscorrel = (
-            exp_decay * time_envelope
-        )  # FT(e(t)★|s(t)|) ← sqrt energy of overlap. In correlation, first
-        #    function is shifted to the right
-        energy_denom = (
-            exp_decay_sq * hat_func
-        )  # FT(e²(t)★h(t)) ← sqrt energy possible: comes from e overlapped
-        #    with e, but cut off at t=0
-        thiscorrel.ift(
-            direct, pad=thiscorrel.shape[direct] * 20
-        )  # we want high resolution
-        energy_denom.ift(
-            direct, pad=energy_denom.shape[direct] * 20
-        )  # we want high resolution
-        # possible energy needs to be large enough
-        correl_range = energy_denom.contiguous(lambda x: x > 0.01 * x.max())[0]
-        correl_range[0] = 0  # doesn't make sense to have echo to left
-        thiscorrel = thiscorrel[direct:correl_range]
-        energy_denom = energy_denom[direct:correl_range]
-        ratio = thiscorrel / energy_denom
-        # {{{ position of max not affected by normalizing both, but plot is
-        #     nicer!
-        thiscorrel /= abs(thiscorrel).max()
-        energy_denom /= abs(energy_denom).max()
-        ratio /= abs(ratio).max()
-        # }}}
-        if fl is not None:
-            fl.next("peak finder, time domain correlation")
-            fl.plot(thiscorrel[direct:view_range_time], label="correl")
-            fl.plot(energy_denom[direct:view_range_time], label="denom")
-            fl.plot(ratio[direct:view_range_time], label="ratio")
-        # }}}
-        echo_max = ratio[direct:view_range_time].argmax(direct).data.item()
-        d.set_prop("echo_center", echo_max)
-        # {{{ use this to set the xlims for the plots
-        right_lim = 2 / inh_guess
-        if echo_max > 0.5e-3:
-            right_lim += echo_max
-        else:
+        if not 0 < echo_center < latest_center:
             raise ValueError(
-                "Your inh_guess is set too narrow, and I'm not able to find an"
-                " echo max that's longer than 0.5 ms"
+                "echo_center must leave a usable decay inside the acquisition"
             )
-        if fl is not None:
-            time_divisor = det_devisor(fl)
-            right_lim /= time_divisor
-            left_lim = -2 / inh_guess / time_divisor
-            for figure_name in [
-                "peak finder, time domain correlation",
-                "peak finder, time domain",
-            ]:
-                fl.next(figure_name)
-                plt.gca().set_xlim(left_lim, right_lim)
-                plt.gca().axvline(
-                    echo_max / time_divisor,
-                    color="r",
-                    ls=":",
-                )
-        # }}}
-        # {{{ actually center at 0 based on above
+        # Center the working copy with Fourier interpolation so off-grid echo
+        # centers do not become quantized to the source dwell.
         freq_envelope[direct] -= freq_envelope[direct][0]
-        freq_envelope[direct] -= echo_max  # so that max echo occurs at 0
+        freq_envelope[direct] -= echo_center
         freq_envelope.register_axis({direct: 0})
-        # }}}
     # {{{ now that we have an estimate of the start point, take an FID
     #    slice and move into the freq domain
     freq_envelope = freq_envelope[

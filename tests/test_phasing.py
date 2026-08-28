@@ -3,19 +3,27 @@ import numpy as np
 import pytest
 
 import pyspecdata as psd
+import pyspecProcScripts.phasing as phasing
 
-from pyspecProcScripts import det_inh_bounds, zeroth_order_ph
+from pyspecProcScripts import (
+    det_inh_bounds,
+    find_exponential_echo_center,
+    zeroth_order_ph,
+)
 
 
 def _synthetic_spectrum(
     peaks=((100.0, 70.0, 1.0),),
     noise=0.0,
     echo_center=None,
+    phase=0.0,
+    points=2048,
+    dwell_time=25e-6,
     seed=1,
 ):
     """Return a frequency-domain synthetic FID or echo."""
     direct = "t2"
-    time_axis = np.arange(2048) * 25e-6
+    time_axis = np.arange(points) * dwell_time
     if echo_center is None:
         decay_time = time_axis
     else:
@@ -23,7 +31,7 @@ def _synthetic_spectrum(
     signal = sum(
         amplitude
         * np.exp(
-            1j * 2 * np.pi * frequency * time_axis
+            1j * (2 * np.pi * frequency * time_axis + phase)
             - np.pi * linewidth * decay_time
         )
         for frequency, linewidth, amplitude in peaks
@@ -171,7 +179,8 @@ def test_det_inh_bounds_plotting_does_not_change_bounds():
 
 
 def test_det_inh_bounds_echo_uses_consistent_return_signature():
-    echo = _synthetic_spectrum(echo_center=5e-3)
+    expected_echo_center = 5.0125e-3
+    echo = _synthetic_spectrum(echo_center=expected_echo_center)
     echo_with_plotting = echo.C
 
     detected = det_inh_bounds(echo, 0.1, echo_like=True, fl=None)
@@ -188,11 +197,124 @@ def test_det_inh_bounds_echo_uses_consistent_return_signature():
     assert np.all(np.isfinite(detected))
     assert echo.get_prop("echo_center") is not None
     assert np.isfinite(echo.get_prop("echo_center"))
+    assert abs(
+        echo.get_prop("echo_center") - expected_echo_center
+    ) <= echo.get_ft_prop("t2", "dt")
     np.testing.assert_allclose(plotted, detected)
     np.testing.assert_allclose(
         echo_with_plotting.get_prop("echo_center"),
         echo.get_prop("echo_center"),
     )
+
+
+@pytest.mark.parametrize(
+    "echo_center, linewidth, phase, noise, points",
+    [
+        (5.0125e-3, 40.0, 0.7, 0.0, 2048),
+        (7.3375e-3, 100.0, -1.1, 2e-3, 2048),
+        (10.0125e-3, 250.0, 2.0, 5e-3, 4096),
+        (4.9875e-3, 500.0, -0.4, 2e-3, 1024),
+    ],
+)
+def test_exponential_echo_center_accuracy(
+    echo_center,
+    linewidth,
+    phase,
+    noise,
+    points,
+):
+    echo = _synthetic_spectrum(
+        peaks=((100.0, linewidth, 1.0),),
+        noise=noise,
+        echo_center=echo_center,
+        phase=phase,
+        points=points,
+    )
+
+    detected_center = find_exponential_echo_center(
+        echo,
+        decay_rate=linewidth,
+    )
+
+    assert abs(detected_center - echo_center) <= echo.get_ft_prop("t2", "dt")
+
+
+def test_exponential_echo_center_preserves_input():
+    echo = _synthetic_spectrum(echo_center=5.0125e-3)
+    original_data = echo.data.copy()
+    original_axis = echo.getaxis("t2").copy()
+    original_ft_state = echo.get_ft_prop("t2")
+
+    find_exponential_echo_center(echo)
+
+    np.testing.assert_allclose(echo.data, original_data)
+    np.testing.assert_allclose(echo.getaxis("t2"), original_axis)
+    assert echo.get_ft_prop("t2") == original_ft_state
+
+
+@pytest.mark.parametrize(
+    "echo, decay_rate, error",
+    [
+        (
+            _synthetic_spectrum(
+                peaks=((100.0, 250.0, 1.0),),
+                echo_center=50e-3,
+            ),
+            250.0,
+            "boundary",
+        ),
+        (
+            _synthetic_spectrum(echo_center=0.1e-3, points=8),
+            40.0,
+            "too short",
+        ),
+    ],
+)
+def test_exponential_echo_center_rejects_invalid_searches(
+    echo,
+    decay_rate,
+    error,
+):
+    with pytest.raises(ValueError, match=error):
+        find_exponential_echo_center(
+            echo,
+            decay_rate=decay_rate,
+        )
+
+
+def test_exponential_echo_center_rejects_insufficient_overlap():
+    with pytest.raises(ValueError, match="no valid.*search interval"):
+        find_exponential_echo_center(
+            _synthetic_spectrum(echo_center=5e-3),
+            minimum_overlap=1 - 1e-12,
+        )
+
+
+def test_exponential_echo_center_rejects_nonfinite_input():
+    echo = _synthetic_spectrum(echo_center=5e-3)
+    echo.data[0] = np.nan
+
+    with pytest.raises(ValueError, match="non-finite"):
+        find_exponential_echo_center(echo)
+
+
+def test_ordinary_fid_bypasses_echo_center_detection(monkeypatch):
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("echo-center detection should not be called")
+
+    monkeypatch.setattr(
+        phasing,
+        "find_exponential_echo_center",
+        fail_if_called,
+    )
+
+    detected = det_inh_bounds(
+        _synthetic_spectrum(),
+        0.1,
+        echo_like=False,
+    )
+
+    assert np.all(np.isfinite(detected))
 
 
 def test_zeroth_order_phase_weights_signal_amplitude_by_default():
