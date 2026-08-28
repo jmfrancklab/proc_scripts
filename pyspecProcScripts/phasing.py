@@ -50,6 +50,10 @@ def zeroth_order_ph(d, fl=None, weighted=True):
         set this to your figlist object.
         It will add a plot called "check covariance
         test"
+    weighted : bool
+        Weight points by their magnitude so noise and weak background points
+        do not dominate the phase estimate. Set to False to recover the
+        unweighted covariance calculation.
 
     Returns
     =======
@@ -282,7 +286,7 @@ def fid_from_echo(
         FID of properly sliced and phased signal
     """
     if frq_center is None:
-        frq_center, half_range, echo_max = det_inh_bounds(
+        frq_center, half_range = det_inh_bounds(
             d,
             peak_lower_thresh,
             fl=fl,
@@ -455,14 +459,19 @@ def det_inh_bounds(
     peak_lower_thresh,
     direct="t2",
     inh_guess=250.0,
-    hom_guess=30.0,
+    smoothing_width=50.0,
+    peak_lowest_thresh=0.03,
     echo_like=True,
     fl=None,
 ):
-    """find the range of frequencies over which the signal occurs, so that we
-    can autoslice.
-    Always assume that the signal is symmetric about zero and confined to the
-    central 1/2 of the spectrum.
+    """Determine the inhomogeneous frequency bounds for autoslicing.
+
+    The detector works on a copy, compensates any stored digital filter, and
+    constructs an FID-side magnitude spectrum.  Broad baseline regions and
+    three intensity thresholds distinguish the absorptive peak from noise,
+    isolated spikes, and nearby fragments.  For echo-like input, the current
+    exponential-correlation estimate is used to center that FID side.  Echo
+    processing validates and refines this provisional center separately.
 
     Parameters
     ==========
@@ -480,9 +489,12 @@ def det_inh_bounds(
     inh_guess: float
         Guess the extent of the signal, in Hz.
         This is used to help find the echo center.
-    hom_guess: float
-        Guess the homogeneous width of the signal, in Hz.
-        This is used to smooth the signal.
+    smoothing_width : float
+        Frequency-domain convolution width, in Hz, used only to stabilize
+        contiguous-range detection.
+    peak_lowest_thresh : float
+        Lowest fraction of the signal maximum used to extend the bounds and
+        connect nearby fragments belonging to the same peak.
     echo_like : boolean (default True)
         Assume signal is echo-like, and we need to find a decent guess for the
         peak of the echo and then slice the FID.
@@ -499,12 +511,11 @@ def det_inh_bounds(
 
         >>> newslice = r_[-expansino,expansion]*half_range+frq_center
 
-    echo_max : float
-        Maximum of the echo, in seconds,
-        determined from finding the correlation between a symmetric
-        decaying exp and the signal.
-
-        Only returned if `echo_like`
+    Notes
+    =====
+    The ascending bounds are also stored as the ``inh_bounds`` property.  For
+    echo-like data, the provisional exponential-correlation estimate is
+    stored as ``echo_center`` rather than changing the return signature.
     """
     # {{{ autodetermine slice range
     freq_envelope = d.C
@@ -525,9 +536,14 @@ def det_inh_bounds(
             0
         ]  # just call the start of the time axis t=0
         time_envelope /= abs(time_envelope).max()
-        fl.next("peak finder, time domain correlation")
         view_range_time = (-2 / inh_guess, 100e-3)
-        fl.plot(time_envelope[direct:view_range_time], color="k", alpha=0.1)
+        if fl is not None:
+            fl.next("peak finder, time domain correlation")
+            fl.plot(
+                time_envelope[direct:view_range_time],
+                color="k",
+                alpha=0.1,
+            )
         time_envelope.ft(
             direct,
             pad=time_envelope.shape[direct]
@@ -535,9 +551,10 @@ def det_inh_bounds(
         ).ft_new_startpoint(
             direct, "time"
         )  # because we're going to want a symmetric ift
-        fl.next("peak finder, time domain", legend=True)
         time_envelope.ift(direct, shift=True)
-        fl.plot(time_envelope, label="signal envelope")
+        if fl is not None:
+            fl.next("peak finder, time domain", legend=True)
+            fl.plot(time_envelope, label="signal envelope")
         # {{{ construct exp and hat in time domain
         exp_decay = np.exp(
             -abs(time_envelope.fromaxis(direct)) * pi * inh_guess
@@ -547,17 +564,19 @@ def det_inh_bounds(
         hat_func.data = np.zeros_like(exp_decay.data)
         hat_func[direct:(0, None)] = 1
         hat_func[direct:0] = 0.5
-        fl.plot(exp_decay, label="exp func (based on inh_guess)")
-        fl.push_marker()
-        fl.next("peak finder, time domain correlation")
-        fl.plot(
-            exp_decay[direct:view_range_time],
-            label="exp func (based on inh_guess)",
-        )
-        fl.pop_marker()
-        fl.plot(hat_func, label="hat function")
+        if fl is not None:
+            fl.plot(exp_decay, label="exp func (based on inh_guess)")
+            fl.push_marker()
+            fl.next("peak finder, time domain correlation")
+            fl.plot(
+                exp_decay[direct:view_range_time],
+                label="exp func (based on inh_guess)",
+            )
+            fl.pop_marker()
+            fl.plot(hat_func, label="hat function")
         # }}}
-        fl.next("peak finder, freq domain", legend=True)
+        if fl is not None:
+            fl.next("peak finder, freq domain", legend=True)
         # {{{ prepare for correlation calculation
         time_envelope.ft(direct)
         exp_decay.ft(direct)
@@ -567,11 +586,13 @@ def det_inh_bounds(
         #                        and first one is the one starred in f-domain
         exp_decay_sq.run(np.conj)
         # }}}
-        fdomain_view = (-5 * inh_guess, 5 * inh_guess)
-        fl.plot(
-            abs(time_envelope[direct:fdomain_view]), label="signal envelope"
-        )
-        fl.plot(exp_decay[direct:fdomain_view], label="exp decay")
+        if fl is not None:
+            frequency_view = (-5 * inh_guess, 5 * inh_guess)
+            fl.plot(
+                abs(time_envelope[direct:frequency_view]),
+                label="signal envelope",
+            )
+            fl.plot(exp_decay[direct:frequency_view], label="exp decay")
         thiscorrel = (
             exp_decay * time_envelope
         )  # FT(e(t)★|s(t)|) ← sqrt energy of overlap. In correlation, first
@@ -580,14 +601,12 @@ def det_inh_bounds(
             exp_decay_sq * hat_func
         )  # FT(e²(t)★h(t)) ← sqrt energy possible: comes from e overlapped
         #    with e, but cut off at t=0
-        fl.next("peak finder, time domain")
         thiscorrel.ift(
             direct, pad=thiscorrel.shape[direct] * 20
         )  # we want high resolution
         energy_denom.ift(
             direct, pad=energy_denom.shape[direct] * 20
         )  # we want high resolution
-        fl.next("peak finder, time domain correlation")
         # possible energy needs to be large enough
         correl_range = energy_denom.contiguous(lambda x: x > 0.01 * x.max())[0]
         correl_range[0] = 0  # doesn't make sense to have echo to left
@@ -600,11 +619,14 @@ def det_inh_bounds(
         energy_denom /= abs(energy_denom).max()
         ratio /= abs(ratio).max()
         # }}}
-        fl.plot(thiscorrel[direct:view_range_time], label="correl")
-        fl.plot(energy_denom[direct:view_range_time], label="denom")
-        fl.plot(ratio[direct:view_range_time], label="ratio")
+        if fl is not None:
+            fl.next("peak finder, time domain correlation")
+            fl.plot(thiscorrel[direct:view_range_time], label="correl")
+            fl.plot(energy_denom[direct:view_range_time], label="denom")
+            fl.plot(ratio[direct:view_range_time], label="ratio")
         # }}}
-        echo_max = ratio[direct:view_range_time].argmax(direct).item()
+        echo_max = ratio[direct:view_range_time].argmax(direct).data.item()
+        d.set_prop("echo_center", echo_max)
         # {{{ use this to set the xlims for the plots
         right_lim = 2 / inh_guess
         if echo_max > 0.5e-3:
@@ -614,15 +636,21 @@ def det_inh_bounds(
                 "Your inh_guess is set too narrow, and I'm not able to find an"
                 " echo max that's longer than 0.5 ms"
             )
-        right_lim /= fl.div_units("s")
-        left_lim = -2 / inh_guess / fl.div_units("s")
-        for j in [
-            "peak finder, time domain correlation",
-            "peak finder, time domain",
-        ]:
-            fl.next(j)
-            plt.gca().set_xlim(left_lim, right_lim)
-            plt.gca().axvline(echo_max / fl.div_units("s"), color="r", ls=":")
+        if fl is not None:
+            time_divisor = det_devisor(fl)
+            right_lim /= time_divisor
+            left_lim = -2 / inh_guess / time_divisor
+            for figure_name in [
+                "peak finder, time domain correlation",
+                "peak finder, time domain",
+            ]:
+                fl.next(figure_name)
+                plt.gca().set_xlim(left_lim, right_lim)
+                plt.gca().axvline(
+                    echo_max / time_divisor,
+                    color="r",
+                    ls=":",
+                )
         # }}}
         # {{{ actually center at 0 based on above
         freq_envelope[direct] -= freq_envelope[direct][0]
@@ -644,14 +672,20 @@ def det_inh_bounds(
         fl.plot(freq_envelope, human_units=False, label="signal energy")
     freq_envelope.convolve(
         direct,
-        hom_guess,
+        smoothing_width,
         enforce_causality=False,
     )
-    SW = 1 / freq_envelope.get_ft_prop(direct, "dt")
-    # baseline using the left and right quarter
+    spectral_width = 1 / freq_envelope.get_ft_prop(direct, "dt")
+    # The broad outer quarters avoid biasing the baseline with the peak or a
+    # few isolated edge points.  Use raw scalar data so unit-bearing signals
+    # retain their units during subtraction.
     freq_envelope -= (
-        freq_envelope[direct : tuple(-r_[0.5, 0.25] * SW)].mean().item()
-        + freq_envelope[direct : tuple(r_[0.25, 0.5] * SW)].mean().item()
+        freq_envelope[direct : tuple(-r_[0.5, 0.25] * spectral_width)]
+        .mean()
+        .data.item()
+        + freq_envelope[direct : tuple(r_[0.25, 0.5] * spectral_width)]
+        .mean()
+        .data.item()
     ) / 2
     if fl is not None:
         fl.next("autoslicing!")
@@ -664,17 +698,29 @@ def det_inh_bounds(
     wide_ranges = freq_envelope.contiguous(
         lambda x: x > peak_lower_thresh * x.data.max()
     )
+    widest_ranges = freq_envelope.contiguous(
+        lambda x: x > peak_lowest_thresh * x.data.max()
+    )
 
-    def filter_ranges(B, A):
-        """where A and B are lists of ranges (given as tuple pairs), filter B
-        to only return ranges that include ranges given in A"""
+    def filter_ranges(candidate_ranges, contained_ranges):
+        """Keep candidates that contain at least one narrower range."""
         return [
-            np.array(b)
-            for b in B
-            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
+            np.array(candidate)
+            for candidate in candidate_ranges
+            if any(
+                candidate[0] <= contained[0] and candidate[1] >= contained[1]
+                for contained in contained_ranges
+            )
         ]
 
-    peakrange = filter_ranges(wide_ranges, peakrange)
+    peakrange = filter_ranges(wide_ranges, narrow_ranges)
+    peakrange = filter_ranges(widest_ranges, peakrange)
+    if len(peakrange) == 0:
+        raise ValueError("could not identify an inhomogeneous peak range")
+    if any(thisrange[0] >= thisrange[1] for thisrange in peakrange):
+        raise ValueError(
+            "the detected peak range reaches or wraps the spectral boundary"
+        )
     if len(peakrange) > 1:
         max_range_width = max(
             [thisrange[1] - thisrange[0] for thisrange in peakrange]
@@ -694,13 +740,16 @@ def det_inh_bounds(
             raise ValueError("finding more than one peak!")
         else:
             peakrange = [(peakrange[0][0], peakrange[-1][1])]
-    assert len(peakrange) == 1
+    if len(peakrange) != 1:
+        raise ValueError("could not reduce the signal to one peak range")
     peakrange = peakrange[0]
+    if peakrange[0] >= peakrange[1]:
+        raise ValueError(
+            "the merged peak range reaches or wraps the spectral boundary"
+        )
     # }}}
     frq_center = np.mean(peakrange).item()
-    # contract the full width by the convolution width (b/c we broadened
-    # the peak by hom_guess above when we convolved
-    half_range = (np.diff(peakrange).item() - hom_guess) / 2
+    half_range = np.diff(peakrange).item() / 2
     d.set_prop("inh_bounds", frq_center + r_[-1, 1] * half_range)
     if fl is not None:
         fl.next("autoslicing!")
@@ -710,19 +759,16 @@ def det_inh_bounds(
             color="k",
             ls=":",
             alpha=0.25,
-            label=f"{peak_lower_thresh*100:g}% threshold",
+            label=f"{peak_lowest_thresh*100:g}% threshold",
         )
         axvline(
             x=frq_center + half_range,
             color="k",
             ls=":",
             alpha=0.25,
-            label=f"{peak_lower_thresh*100:g}% threshold",
+            label=f"{peak_lowest_thresh*100:g}% threshold",
         )
-    if echo_like:
-        return frq_center, half_range, echo_max
-    else:
-        return frq_center, half_range
+    return frq_center, half_range
 
 
 def hermitian_function_test(

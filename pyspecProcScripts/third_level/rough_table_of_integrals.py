@@ -64,8 +64,8 @@ def rough_table_of_integrals(
         Name of direct dimension.
     expansion : float (default 2)
         Expand inh_bounds about its center by this much.
-    peak_lower_thresh: float
-        passed to :func:`det_inh_bounds`
+    peak_lowest_thresh : float
+        Lowest threshold passed to :func:`det_inh_bounds`.
     inc_plot_color: boolean
         assume that we are processing multiple datasets, and want to increment
         the color counter with every run of this function.
@@ -81,8 +81,11 @@ def rough_table_of_integrals(
         you want to add a fit!
     """
     if signal_range is None:
-        center_of_range, half_range, echo_max = det_inh_bounds(
-            s, peak_lowest_thresh, fl=fl, direct=direct,
+        center_of_range, half_range = det_inh_bounds(
+            s,
+            peak_lowest_thresh,
+            fl=fl,
+            direct=direct,
         )
         signal_range = s.get_prop("inh_bounds")
     else:
