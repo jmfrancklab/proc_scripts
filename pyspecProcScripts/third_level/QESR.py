@@ -239,7 +239,9 @@ def QESR(
         d_abs, alpha=0.5, label=f"{label}, ${final_conc:g~L}$", ax=ax_dblint
     )
     gridandtick(ax_dblint)
-    ax_dblint.legend(loc="lower left", bbox_to_anchor=[0.98, -0.1])
+    ax_dblint.legend(
+        loc="upper left", bbox_to_anchor=(1.05, 1), borderaxespad=0.0
+    )
     if pickle_file is not None:
         pickle_vars[label] = final_conc
         with open(pickle_file, "wb") as fp:
