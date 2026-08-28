@@ -506,9 +506,11 @@ def find_peakrange(
     )
     SW = 1 / freq_envelope.get_ft_prop(direct, "dt")
     # baseline using the left and right quarter
+    # The baseline already shares the envelope units.  Extract its numeric
+    # value because nddata.item() returns a Pint quantity when data has units.
     freq_envelope -= (
-        freq_envelope[direct : tuple(-r_[0.5, 0.25] * SW)].mean().item()
-        + freq_envelope[direct : tuple(r_[0.25, 0.5] * SW)].mean().item()
+        freq_envelope[direct : tuple(-r_[0.5, 0.25] * SW)].mean().data.item()
+        + freq_envelope[direct : tuple(r_[0.25, 0.5] * SW)].mean().data.item()
     ) / 2
     if fl is not None:
         fl.next("autoslicing!")
@@ -801,7 +803,10 @@ def hermitian_function_test(
     #             square root for a well-defined
     #             minimum -- it could be better to do
     #             this before averaging in the future
-    cost_min = cost_func.C.argmin(direct).item()
+    # Read the timing coordinate from the axis.  The default argmin output
+    # retains signal units, which do not describe an echo time.
+    cost_min_idx = cost_func.C.argmin(direct, raw_index=True).item()
+    cost_min = cost_func.getaxis(direct)[cost_min_idx]
     if fl is not None:
         forplot = s_energy / t_dwos
         forplot.mean_all_but(direct)
@@ -824,7 +829,7 @@ def hermitian_function_test(
     if fl is not None:
         fl.plot(
             echo_peak / det_devisor(fl),
-            forplot[direct:echo_peak].item(),
+            forplot[direct, cost_min_idx].data.item(),
             "o",
             c="violet",
             alpha=0.3,
