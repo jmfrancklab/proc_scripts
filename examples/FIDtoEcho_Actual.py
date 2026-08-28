@@ -34,7 +34,6 @@ with psd.figlist_var(file_name="tempdata220922final.pdf") as fl:
             lookup=lookup_table,
             expno=nodename,
             zenodo="21252663",
-            zenodo_draft=True,
         )  # returns signal with t=0 set approximately correctly
         fl.basename = nodename
         d = pypcs.fid_from_echo(d, signal_pathway, fl=fl)

@@ -46,7 +46,6 @@ s = psd.find_file(
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
     zenodo="21252663",
-    zenodo_draft=True,
 )
 with psd.figlist_var() as fl:
     frq_center, frq_half = prscr.find_peakrange(

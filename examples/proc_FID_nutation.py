@@ -42,7 +42,6 @@ s = psd.find_file(
     expno=sys.argv[1],
     lookup=prscr.lookup_table,
     zenodo="21252663",
-    zenodo_draft=True,
 )
 print("using postproc type", s.get_prop("postproc_type"))
 with psd.figlist_var() as fl:
