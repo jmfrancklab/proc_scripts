@@ -454,16 +454,15 @@ def fid_from_echo(
     peak_lower_thresh=0.1,
     show_hermitian_sign_flipped=False,
     show_shifted_residuals=False,
-    frq_center=None,
-    half_range=None,
+    inh_bounds=None,
 ):
     """Return a Hermitian-phased FID-side signal from an echo.
 
-    Echo-center detection is reused from ``det_inh_bounds`` when available.
-    If explicit frequency bounds are supplied first, this function detects
-    and stores ``echo_center`` before continuing.  The centered FID side is
-    also passed to :func:`fit_envelope` to determine the homogeneous
-    Lorentzian linewidth independently of ``inh_bounds``.  The
+    Explicit ``inh_bounds`` take precedence over a stored property; when
+    neither exists, :func:`det_inh_bounds` determines them automatically.
+    Echo-center detection is reused when available.  The centered FID side is
+    passed to :func:`fit_envelope` to determine the homogeneous Lorentzian
+    linewidth independently of ``inh_bounds``.  The
     ``homogeneous_linewidth_is_fallback`` property records when low SNR
     permits only a provisional least-squares processing width.  The narrow
     ``inh_bounds`` remain the integration region, while ``processing_bounds``
@@ -471,18 +470,20 @@ def fid_from_echo(
 
     Parameters
     ==========
-    signal_pathway: dict
+    d : nddata
+        Echo-like data in the frequency and coherence-transfer domains.
+    signal_pathway : dict
         coherence transfer pathway that correspond to the signal
-    fl: figlist or None (default)
+    fl : figlist or None (default)
         If you want the diagnostic plots (showing the distribution of the
         data in the complex plane), set this to your figlist object.
-    add_rising: boolean
+    add_rising : boolean
         Take the first part of the echo (that which rises to the maximum)
         and add the decaying (FID like) part. This increases the SNR of
         the early points of the signal.
-    direct: string
+    direct : string
         Name of the direct dimension
-    exclude_rising: int
+    exclude_rising : int
         In general it is assumed that the first few points of signal
         might be messed up due to dead time or other issues (assuming a
         tau of 0).  This option allows us to add a rising edge to the
@@ -495,27 +496,19 @@ def fid_from_echo(
     max_alignment_shift : float
         Largest anticipated correlation-alignment shift, in Hz.  This and one
         frequency bin are added to each side of the processing bounds.
-    peak_lower_thresh: float
+    peak_lower_thresh : float
         Fraction of the signal intensity used in calculating the
         frequency slice. The smaller the value, the wider the slice.
-    show_hermitian_sign_flipped: boolean
+    show_hermitian_sign_flipped : boolean
         Diagnostic in checking the sign of the signal prior to the
         hermitian phase correction
-    show_shifted_residuals: boolean
+    show_shifted_residuals : boolean
         Diagnostic in analyzing the residuals after the hermitian phase
         correction.
-    frq_center: float (default None)
-        The center of the peak.
-        This only exists so that we don't end up calling
-        `det_inh_bounds` redundantly,
-        and it should come from a previous call to `det_inh_bounds` if
-        it's used.
-    half_range: float (default None)
-        The half-width of the peak.
-        This only exists so that we don't end up calling
-        `det_inh_bounds` redundantly,
-        and it should come from a previous call to `det_inh_bounds` if
-        it's used.
+    inh_bounds : array-like or None
+        Two ascending frequency bounds for the narrow absorptive peak.  An
+        explicit value takes precedence over an existing ``inh_bounds``
+        property.  If both are absent, determine the bounds automatically.
 
     Returns
     =======
@@ -540,8 +533,26 @@ def fid_from_echo(
         raise ValueError(
             "max_alignment_shift must be a finite nonnegative scalar"
         )
-    if (frq_center is None) != (half_range is None):
-        raise ValueError("frq_center and half_range must be supplied together")
+    if inh_bounds is None:
+        inh_bounds = d.get_prop("inh_bounds")
+    available_bounds = np.sort(d.getaxis(direct)[[0, -1]])
+    if inh_bounds is not None:
+        inh_bounds = np.asarray(inh_bounds, dtype=float)
+        if inh_bounds.shape != (2,):
+            raise ValueError("inh_bounds must contain exactly two values")
+        if not np.all(np.isfinite(inh_bounds)):
+            raise ValueError("inh_bounds must contain finite values")
+        if inh_bounds[0] >= inh_bounds[1]:
+            raise ValueError("inh_bounds must be strictly ascending")
+        if (
+            inh_bounds[0] < available_bounds[0]
+            or inh_bounds[1] > available_bounds[1]
+        ):
+            raise ValueError(
+                f"inh_bounds {inh_bounds.tolist()} must lie within the "
+                f"available spectral bounds {available_bounds.tolist()}"
+            )
+        d.set_prop("inh_bounds", inh_bounds.copy())
     if d.get_prop("echo_center") is None:
         d.set_prop(
             "echo_center",
@@ -567,8 +578,8 @@ def fid_from_echo(
         "homogeneous_linewidth_is_fallback",
         homogeneous_linewidth_is_fallback,
     )
-    if frq_center is None:
-        frq_center, half_range = det_inh_bounds(
+    if inh_bounds is None:
+        det_inh_bounds(
             d,
             peak_lower_thresh,
             direct=direct,
@@ -576,19 +587,7 @@ def fid_from_echo(
             apodization_linewidth=homogeneous_linewidth,
             fl=fl,
         )
-    elif (
-        not np.isscalar(frq_center)
-        or not np.isfinite(frq_center)
-        or not np.isscalar(half_range)
-        or not np.isfinite(half_range)
-        or half_range <= 0
-    ):
-        raise ValueError(
-            "frq_center and half_range must be finite, with a positive "
-            "half_range"
-        )
-    else:
-        d.set_prop("inh_bounds", frq_center + r_[-1, 1] * half_range)
+        inh_bounds = np.asarray(d.get_prop("inh_bounds"), dtype=float)
 
     # For a causal Lorentzian with FWHM λ, the normalized magnitude of the
     # dispersive component is 2 λ |Δν| / (λ² + 4 Δν²).  Use its outer root so
@@ -599,14 +598,10 @@ def fid_from_echo(
         / (4 * dispersive_tail_cutoff)
     )
     frequency_bin = abs(d.get_ft_prop(direct, "df"))
-    processing_bounds = np.asarray(
-        d.get_prop("inh_bounds"),
-        dtype=float,
-    ).copy()
+    processing_bounds = inh_bounds.copy()
     processing_bounds += r_[-1, 1] * (
         dispersive_tail_extent + max_alignment_shift + frequency_bin
     )
-    available_bounds = np.sort(d.getaxis(direct)[[0, -1]])
     if (
         processing_bounds[0] < available_bounds[0]
         or processing_bounds[1] > available_bounds[1]

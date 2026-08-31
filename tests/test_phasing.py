@@ -566,6 +566,67 @@ def test_fid_from_echo_stores_homogeneous_linewidth():
         rel=0.1,
     )
     assert not processed.get_prop("homogeneous_linewidth_is_fallback")
+    assert np.asarray(processed.get_prop("inh_bounds")).shape == (2,)
+    assert (
+        processed.get_prop("inh_bounds")[0]
+        < processed.get_prop("inh_bounds")[1]
+    )
+    assert np.isscalar(processed.get_prop("echo_center"))
+    assert np.isscalar(processed.get_prop("homogeneous_linewidth"))
+
+
+@pytest.mark.parametrize("bounds_source", ["argument", "property"])
+def test_fid_from_echo_reuses_valid_inhomogeneous_bounds(
+    bounds_source,
+    monkeypatch,
+):
+    echo = _synthetic_spectrum(
+        peaks=((100.0, 120.0, 1.0),),
+        noise=2e-3,
+        echo_center=5.0125e-3,
+        points=4096,
+    )
+    expected_bounds = np.array([-400.0, 600.0])
+    kwargs = {}
+    if bounds_source == "argument":
+        echo.set_prop("inh_bounds", np.array([-200.0, 400.0]))
+        kwargs["inh_bounds"] = expected_bounds
+    else:
+        echo.set_prop("inh_bounds", expected_bounds)
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("inhomogeneous bounds should not be redetected")
+
+    monkeypatch.setattr(phasing, "det_inh_bounds", fail_if_called)
+
+    processed = fid_from_echo(echo, {}, **kwargs)
+
+    np.testing.assert_allclose(
+        processed.get_prop("inh_bounds"),
+        expected_bounds,
+    )
+
+
+@pytest.mark.parametrize(
+    "inh_bounds, error",
+    [
+        ([100.0], "exactly two"),
+        ([100.0, 100.0], "strictly ascending"),
+        ([100.0, -100.0], "strictly ascending"),
+        ([np.nan, 100.0], "finite"),
+        ([-30e3, 100.0], "available spectral"),
+    ],
+)
+def test_fid_from_echo_rejects_invalid_inhomogeneous_bounds(
+    inh_bounds,
+    error,
+):
+    with pytest.raises(ValueError, match=error):
+        fid_from_echo(
+            _synthetic_spectrum(echo_center=5.0125e-3),
+            {},
+            inh_bounds=inh_bounds,
+        )
 
 
 @pytest.mark.parametrize(
@@ -649,12 +710,16 @@ def test_fid_from_echo_rejects_insufficient_spectral_bandwidth():
         )
 
 
-def test_fid_from_echo_rejects_slice_multiplier():
-    with pytest.raises(TypeError, match="slice_multiplier"):
+@pytest.mark.parametrize(
+    "obsolete_keyword",
+    ["frq_center", "frq_half", "half_range", "slice_multiplier"],
+)
+def test_fid_from_echo_rejects_obsolete_bounds_keywords(obsolete_keyword):
+    with pytest.raises(TypeError, match=obsolete_keyword):
         fid_from_echo(
             _synthetic_spectrum(echo_center=5.0125e-3),
             {},
-            slice_multiplier=20,
+            **{obsolete_keyword: 20},
         )
 
 
