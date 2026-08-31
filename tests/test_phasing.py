@@ -523,6 +523,96 @@ def test_fid_from_echo_stores_homogeneous_linewidth():
     assert not processed.get_prop("homogeneous_linewidth_is_fallback")
 
 
+@pytest.mark.parametrize(
+    "tail_cutoff, max_alignment_shift",
+    [(0.1, 0.0), (0.05, 100.0), (0.03, 250.0)],
+)
+def test_fid_from_echo_derives_linewidth_aware_bounds(
+    tail_cutoff,
+    max_alignment_shift,
+):
+    echo = _synthetic_spectrum(
+        peaks=((100.0, 120.0, 1.0),),
+        noise=2e-3,
+        echo_center=5.0125e-3,
+        points=4096,
+    )
+    frequency_bin = abs(echo.get_ft_prop("t2", "df"))
+    processed = fid_from_echo(
+        echo,
+        {},
+        dispersive_tail_cutoff=tail_cutoff,
+        max_alignment_shift=max_alignment_shift,
+    )
+
+    homogeneous_linewidth = processed.get_prop("homogeneous_linewidth")
+    expected_tail_extent = (
+        homogeneous_linewidth
+        * (1 + np.sqrt(1 - 4 * tail_cutoff**2))
+        / (4 * tail_cutoff)
+    )
+    inhomogeneous_bounds = processed.get_prop("inh_bounds")
+    processing_bounds = processed.get_prop("processing_bounds")
+    expected_bounds = inhomogeneous_bounds + np.array([-1, 1]) * (
+        expected_tail_extent + max_alignment_shift + frequency_bin
+    )
+
+    np.testing.assert_allclose(
+        processing_bounds,
+        expected_bounds,
+    )
+    assert processed.get_prop("dispersive_tail_cutoff") == tail_cutoff
+    assert processed.get_prop("max_alignment_shift") == max_alignment_shift
+    assert processing_bounds[0] < inhomogeneous_bounds[0]
+    assert processing_bounds[1] > inhomogeneous_bounds[1]
+
+
+@pytest.mark.parametrize(
+    "keyword, value",
+    [
+        ("dispersive_tail_cutoff", 0.0),
+        ("dispersive_tail_cutoff", 0.5),
+        ("dispersive_tail_cutoff", np.nan),
+        ("dispersive_tail_cutoff", np.inf),
+        ("max_alignment_shift", -1.0),
+        ("max_alignment_shift", np.nan),
+        ("max_alignment_shift", np.inf),
+    ],
+)
+def test_fid_from_echo_rejects_invalid_linewidth_bounds_options(
+    keyword,
+    value,
+):
+    with pytest.raises(ValueError, match=keyword):
+        fid_from_echo(
+            _synthetic_spectrum(echo_center=5.0125e-3),
+            {},
+            **{keyword: value},
+        )
+
+
+def test_fid_from_echo_rejects_insufficient_spectral_bandwidth():
+    with pytest.raises(ValueError, match="exceed.*available spectral"):
+        fid_from_echo(
+            _synthetic_spectrum(
+                peaks=((100.0, 120.0, 1.0),),
+                echo_center=5.0125e-3,
+                points=4096,
+            ),
+            {},
+            max_alignment_shift=20e3,
+        )
+
+
+def test_fid_from_echo_rejects_slice_multiplier():
+    with pytest.raises(TypeError, match="slice_multiplier"):
+        fid_from_echo(
+            _synthetic_spectrum(echo_center=5.0125e-3),
+            {},
+            slice_multiplier=20,
+        )
+
+
 def test_ordinary_fid_bypasses_echo_center_detection(monkeypatch):
     def fail_if_called(*args, **kwargs):
         raise AssertionError("echo-center detection should not be called")

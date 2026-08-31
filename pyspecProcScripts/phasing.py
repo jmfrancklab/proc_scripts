@@ -449,7 +449,8 @@ def fid_from_echo(
     add_rising=False,
     direct="t2",
     exclude_rising=3,
-    slice_multiplier=20,
+    dispersive_tail_cutoff=0.05,
+    max_alignment_shift=100.0,
     peak_lower_thresh=0.1,
     show_hermitian_sign_flipped=False,
     show_shifted_residuals=False,
@@ -464,7 +465,9 @@ def fid_from_echo(
     also passed to :func:`fit_envelope` to determine the homogeneous
     Lorentzian linewidth independently of ``inh_bounds``.  The
     ``homogeneous_linewidth_is_fallback`` property records when low SNR
-    permits only a provisional least-squares processing width.
+    permits only a provisional least-squares processing width.  The narrow
+    ``inh_bounds`` remain the integration region, while ``processing_bounds``
+    include the modeled homogeneous dispersive tail and an alignment buffer.
 
     Parameters
     ==========
@@ -485,12 +488,13 @@ def fid_from_echo(
         tau of 0).  This option allows us to add a rising edge to the
         echo and exclude the first few points of the signal. Note, to use
         this, add_rising must be True.
-    slice_multiplier: int
-        The calculated frequency slice is calculated by taking the center
-        frequency and extending out to values that are included in the
-        peak times this multiplier. Therefore the larger this value the
-        larger the frequency slice. Increasing this value might serve
-        useful in the case of noisy spectra.
+    dispersive_tail_cutoff : float
+        Fraction of the absorptive maximum allowed at the outer edge of the
+        modeled homogeneous dispersive tail.  The default 5% cutoff completed
+        all validated real datasets while retaining sufficient bandwidth.
+    max_alignment_shift : float
+        Largest anticipated correlation-alignment shift, in Hz.  This and one
+        frequency bin are added to each side of the processing bounds.
     peak_lower_thresh: float
         Fraction of the signal intensity used in calculating the
         frequency slice. The smaller the value, the wider the slice.
@@ -516,8 +520,28 @@ def fid_from_echo(
     Returns
     =======
     d: nddata
-        FID of properly sliced and phased signal
+        FID of properly sliced and phased signal.  ``inh_bounds`` stores the
+        narrow integration region and ``processing_bounds`` stores the broad
+        linewidth-aware region used for Hermitian phasing.
     """
+    if (
+        not np.isscalar(dispersive_tail_cutoff)
+        or not np.isfinite(dispersive_tail_cutoff)
+        or not 0 < dispersive_tail_cutoff < 0.5
+    ):
+        raise ValueError(
+            "dispersive_tail_cutoff must be finite and between 0 and 0.5"
+        )
+    if (
+        not np.isscalar(max_alignment_shift)
+        or not np.isfinite(max_alignment_shift)
+        or max_alignment_shift < 0
+    ):
+        raise ValueError(
+            "max_alignment_shift must be a finite nonnegative scalar"
+        )
+    if (frq_center is None) != (half_range is None):
+        raise ValueError("frq_center and half_range must be supplied together")
     if d.get_prop("echo_center") is None:
         d.set_prop(
             "echo_center",
@@ -552,29 +576,68 @@ def fid_from_echo(
             apodization_linewidth=homogeneous_linewidth,
             fl=fl,
         )
+    elif (
+        not np.isscalar(frq_center)
+        or not np.isfinite(frq_center)
+        or not np.isscalar(half_range)
+        or not np.isfinite(half_range)
+        or half_range <= 0
+    ):
+        raise ValueError(
+            "frq_center and half_range must be finite, with a positive "
+            "half_range"
+        )
+    else:
+        d.set_prop("inh_bounds", frq_center + r_[-1, 1] * half_range)
+
+    # For a causal Lorentzian with FWHM λ, the normalized magnitude of the
+    # dispersive component is 2 λ |Δν| / (λ² + 4 Δν²).  Use its outer root so
+    # both long tails fall below the requested cutoff before the slice edge.
+    dispersive_tail_extent = (
+        homogeneous_linewidth
+        * (1 + np.sqrt(1 - 4 * dispersive_tail_cutoff**2))
+        / (4 * dispersive_tail_cutoff)
+    )
+    frequency_bin = abs(d.get_ft_prop(direct, "df"))
+    processing_bounds = np.asarray(
+        d.get_prop("inh_bounds"),
+        dtype=float,
+    ).copy()
+    processing_bounds += r_[-1, 1] * (
+        dispersive_tail_extent + max_alignment_shift + frequency_bin
+    )
+    available_bounds = np.sort(d.getaxis(direct)[[0, -1]])
+    if (
+        processing_bounds[0] < available_bounds[0]
+        or processing_bounds[1] > available_bounds[1]
+    ):
+        raise ValueError(
+            "linewidth-aware processing bounds "
+            f"{processing_bounds.tolist()} exceed the available spectral "
+            f"bounds {available_bounds.tolist()}"
+        )
+    d.set_prop("processing_bounds", processing_bounds)
+    d.set_prop("dispersive_tail_cutoff", float(dispersive_tail_cutoff))
+    d.set_prop("max_alignment_shift", float(max_alignment_shift))
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
-        left_x = frq_center - slice_multiplier * half_range
         axvline(
-            x=left_x,
+            x=processing_bounds[0],
             color="k",
             ls="--",
             alpha=0.5,
-            label=f"final slice ({left_x})",
+            label=f"linewidth-aware slice ({processing_bounds[0]})",
         )
-        right_x = frq_center + slice_multiplier * half_range
         axvline(
-            x=frq_center + slice_multiplier * half_range,
+            x=processing_bounds[1],
             color="k",
             ls="--",
             alpha=0.5,
-            label=f"final slice ({right_x})",
+            label=f"linewidth-aware slice ({processing_bounds[1]})",
         )
         legend()
-    slice_range = r_[-1, 1] * slice_multiplier * half_range + frq_center
-    reduced_slice_range = r_[-1, 1] * 2 * half_range + frq_center
     # }}}
-    d = d[direct:slice_range]
+    d = d[direct:processing_bounds]
     d.ift(direct)
     # {{{ apply phasing, and check the residual
     d[direct] -= d.getaxis(direct)[0]
@@ -584,7 +647,7 @@ def fid_from_echo(
         thebasename = ""
     # {{{ sign flip and average input for hermitian
     input_for_hermitian = select_pathway(d, signal_pathway).C
-    signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
+    signflip = input_for_hermitian.C.ft(direct)
     idx = abs(signflip).mean_all_but([direct]).data.argmax()
     signflip = signflip[direct, idx]
     ph0 = zeroth_order_ph(signflip)
