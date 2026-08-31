@@ -74,7 +74,10 @@ def test_det_inh_bounds_matches_threshold_and_preserves_input():
     )
 
     frequency_step = abs(spectrum.get_ft_prop(direct, "df"))
-    expected_half_width = linewidth / 2 * np.sqrt(0.03**-2 - 1)
+    # exp(-R t) adds R/pi to the Lorentzian FWHM.  Here R is the
+    # acquisition-length conditioning rate, df/5.
+    conditioned_linewidth = linewidth + frequency_step / (5 * np.pi)
+    expected_half_width = conditioned_linewidth / 2 * np.sqrt(0.03**-2 - 1)
     assert abs(detected_center - center_frequency) <= frequency_step
     assert abs(detected_half_width - expected_half_width) <= frequency_step
     np.testing.assert_allclose(
@@ -86,6 +89,48 @@ def test_det_inh_bounds_matches_threshold_and_preserves_input():
     assert spectrum.get_units() == original_units
     assert spectrum.get_units(direct) == original_axis_units
     assert spectrum.get_ft_prop(direct) == original_ft_state
+
+
+def test_det_inh_bounds_applies_acquisition_conditioning_once(monkeypatch):
+    direct = "t2"
+    spectrum = _synthetic_spectrum()
+    expected_time_envelope = spectrum.C.ift(direct)[direct:(0, None)]
+    expected_time_envelope[direct, 0] *= 0.5
+    expected_rate = abs(spectrum.get_ft_prop(direct, "df")) / 5
+    expected_time_envelope *= np.exp(
+        -abs(expected_time_envelope.fromaxis(direct)) * expected_rate
+    )
+    original_data = spectrum.data.copy()
+    original_ft = psd.nddata.ft
+    conditioned_envelopes = []
+
+    def capture_conditioned_envelope(data, *args, **kwargs):
+        if not conditioned_envelopes and not data.get_ft_prop(direct):
+            conditioned_envelopes.append(data.data.copy())
+        return original_ft(data, *args, **kwargs)
+
+    monkeypatch.setattr(psd.nddata, "ft", capture_conditioned_envelope)
+
+    first_bounds = det_inh_bounds(spectrum, 0.1, echo_like=False)
+
+    np.testing.assert_allclose(
+        conditioned_envelopes[0],
+        expected_time_envelope.data,
+    )
+    assert spectrum.get_prop("alignment_conditioning_rate") == pytest.approx(
+        expected_rate
+    )
+    np.testing.assert_allclose(spectrum.data, original_data)
+
+    conditioned_envelopes.clear()
+    second_bounds = det_inh_bounds(spectrum, 0.1, echo_like=False)
+
+    np.testing.assert_allclose(second_bounds, first_bounds)
+    np.testing.assert_allclose(
+        conditioned_envelopes[0],
+        expected_time_envelope.data,
+    )
+    np.testing.assert_allclose(spectrum.data, original_data)
 
 
 def test_det_inh_bounds_is_stable_with_noise_and_an_isolated_spike():

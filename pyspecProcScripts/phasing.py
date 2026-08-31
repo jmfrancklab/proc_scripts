@@ -792,13 +792,15 @@ def det_inh_bounds(
     """Determine the inhomogeneous frequency bounds for autoslicing.
 
     The detector works on a copy, compensates any stored digital filter, and
-    constructs an FID-side magnitude spectrum.  Broad baseline regions and
-    three intensity thresholds distinguish the absorptive peak from noise,
-    isolated spikes, and nearby fragments.  An optional equal-energy L2G
-    apodized copy can identify the coarse signal region in low-SNR data; the
-    final bounds still come from the original, unapodized spectrum.  For
-    echo-like input, normalized exponential correlation locates the center
-    used to construct that FID side.
+    constructs an FID-side magnitude spectrum.  A small acquisition-length
+    apodization conditions only the peak-detection copy so narrow peaks are
+    represented by more frequency points.  Broad baseline regions and three
+    intensity thresholds distinguish the absorptive peak from noise, isolated
+    spikes, and nearby fragments.  An optional equal-energy L2G apodized copy
+    can identify the coarse signal region in low-SNR data; the final bounds
+    still come from the original spectrum with only the acquisition-length
+    conditioning applied.  For echo-like input, normalized exponential
+    correlation locates the center used to construct that FID side.
 
     Parameters
     ==========
@@ -847,7 +849,8 @@ def det_inh_bounds(
 
     Notes
     =====
-    The ascending bounds are also stored as the ``inh_bounds`` property.  For
+    The ascending bounds are also stored as the ``inh_bounds`` property.
+    ``alignment_conditioning_rate`` records the conditioning rate in Hz.  For
     echo-like data, the validated exponential-correlation estimate is stored
     as ``echo_center`` rather than changing the return signature.
     """
@@ -897,6 +900,29 @@ def det_inh_bounds(
         freq_envelope[direct, 0] *= 0.5
     if signal_pathway is not None:
         freq_envelope = select_pathway(freq_envelope, signal_pathway)
+
+    frequency_step = freq_envelope.get_ft_prop(direct, "df")
+    if (
+        not np.isscalar(frequency_step)
+        or not np.isfinite(frequency_step)
+        or frequency_step == 0
+    ):
+        raise ValueError(
+            "frequency-step transform metadata are required for alignment "
+            "conditioning"
+        )
+    acquisition_time = 1 / abs(frequency_step)
+    alignment_conditioning_rate = 1 / (5 * acquisition_time)
+    # Apply the small acquisition-length apodization only to the detector
+    # copy.  The decay used for homogeneous-linewidth fitting and the data
+    # returned for alignment and integration therefore remain unconditioned.
+    freq_envelope *= np.exp(
+        -abs(freq_envelope.fromaxis(direct)) * alignment_conditioning_rate
+    )
+    d.set_prop(
+        "alignment_conditioning_rate",
+        alignment_conditioning_rate,
+    )
 
     apodized_envelope = None
     if apodization_linewidth is not None:
