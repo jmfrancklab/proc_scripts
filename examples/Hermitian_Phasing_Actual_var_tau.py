@@ -26,12 +26,13 @@ t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
 f_range = (-400, 400)
 filename = "201113_TEMPOL_capillary_probe_var_tau_1"
 signal_pathway = {"ph1": 1, "ph2": 0}
+
 with figlist_var() as fl:
     for nodename, file_location, postproc, label in [
         (
             "var_tau",
             "ODNP_NMR_comp/test_equipment/var_tau",
-            "spincore_var_tau_v1",
+            "spincore_var_tau_v2",
             "tau is 1 ms",
         ),
     ]:
@@ -42,6 +43,7 @@ with figlist_var() as fl:
             postproc=postproc,
             lookup=lookup_table,
         )
+        data.set_prop("coherence_pathway", signal_pathway)
         data = data["tau", :-7]
         tau_list = list(data.getaxis("tau"))
         data.reorder(["ph1", "ph2", "tau", "t2"])
@@ -59,7 +61,7 @@ with figlist_var() as fl:
             this_data.ift("t2")
             fl.basename = "%0.1f ms" % (programmed_tau / 1e-3)
             best_shift = hermitian_function_test(
-                select_pathway(this_data, signal_pathway),
+                select_pathway(this_data),
                 aliasing_slop=alias_slop,
                 fl=fl,
             )

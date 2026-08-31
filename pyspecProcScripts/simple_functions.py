@@ -199,7 +199,8 @@ def select_pathway(*args, **kwargs):
     r"""select a particular CT pathway from the signal `s`
 
     Arguments are *either* ``pathway`` -- a dict of key/value pairs indicating
-    the pathway **or** the same set of key/value pairs, just passed as a dict.
+    the pathway, the same set of key/value pairs passed as kwargs, or
+    omitted to use ``s.get_prop("coherence_pathway")``.
 
     Parameters
     ==========
@@ -212,6 +213,14 @@ def select_pathway(*args, **kwargs):
     """
     if len(args) == 2 and len(kwargs) == 0:
         s, pathway = args
+    elif len(args) == 1 and len(kwargs) == 0:
+        s = args[0]
+        pathway = s.get_prop("coherence_pathway")
+        if pathway is None:
+            raise ValueError(
+                "no pathway was passed and the data has no "
+                "coherence_pathway property"
+            )
     elif len(args) == 1 and len(kwargs) > 0 and len(kwargs) % 2 == 0:
         s = args[0]
         pathway = kwargs
@@ -221,6 +230,17 @@ def select_pathway(*args, **kwargs):
     for k, v in pathway.items():
         retval = retval[k, v]
     return retval
+
+
+def order_dims_for_display(s, direct="t2"):
+    """Reorder dimensions for display: ph* first (sorted), then non-ph/non-direct
+    dims sorted smallest-first (outermost), then direct last."""
+    ph_dims = sorted(d for d in s.dimlabels if d.startswith("ph"))
+    middle_dims = sorted(
+        (d for d in s.dimlabels if not d.startswith("ph") and d != direct),
+        key=lambda d: s.shape[d],
+    )
+    return s.reorder(ph_dims + middle_dims + [direct])
 
 
 def find_apparent_anal_freq(s):

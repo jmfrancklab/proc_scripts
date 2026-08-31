@@ -56,7 +56,7 @@ with figlist_var() as fl:
         (
             (
                 23
-                * (1 - (32 * power / (0.25 + power)) * 150e-6 * 659.33)
+                * (1 - (3.2 * power / (0.25 + power)) * 150e-6 * 659.33)
                 * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
             ),
             [
@@ -79,12 +79,28 @@ with figlist_var() as fl:
         # {{{ make data unitary again
         data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
         # }}}
-        data_int, data = generate_integrals(
-            s=data,
+        zero_pathway = {j: 0 for j in signal_pathway}
+        excluded_pathways = [signal_pathway]
+        if zero_pathway != signal_pathway:
+            excluded_pathways.append(zero_pathway)
+        if clock_correction and "nScans" in data.dimlabels:
+            data = clock_correct(data, indirect=indirect, fl=fl)
+        data = data["t2":f_range]
+        # Git history: d9a49fe1 deleted
+        # pyspecProcScripts.generate_integrals with the note that
+        # rough_table_of_integrals had taken over the full correction
+        # workflow.
+        # This example only needs the final integration with propagated
+        # frequency-domain error, so call that lower-level helper
+        # directly.
+        # The old helper also carried the clock-correction option, so
+        # keep that hook above for data with an nScans axis.
+        data_int = frequency_domain_integral(
+            data,
             signal_pathway=signal_pathway,
-            searchstr=label,
-            f_range=f_range,
+            excluded_pathways=excluded_pathways,
             indirect=indirect,
-            clock_correction=clock_correction,
             fl=fl,
         )
+        fl.next(f"{label} integrals")
+        fl.plot(data_int, ".", capsize=6)

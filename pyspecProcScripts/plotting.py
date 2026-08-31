@@ -66,7 +66,7 @@ class fl_mod(figlist_var):
         f: fitdata
             data (a fitting instance), on which `f.fit()` has already been run
         guess: None or nddata
-            The result of `s.settoguess();s.eval(100)` where 100 can be
+            The result of `s.set_to_guess();s.eval(100)` where 100 can be
             any integer.
             Used to display the guess on the plot as well.
         name: str

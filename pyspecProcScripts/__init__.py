@@ -52,6 +52,7 @@ _EXPORTS = {
     "correl_align": (".correlation_alignment", "correl_align"),
     "select_pathway": (".simple_functions", "select_pathway"),
     "logobj": (".simple_functions", "logobj"),
+    "order_dims_for_display": (".simple_functions", "order_dims_for_display"),
     "find_apparent_anal_freq": (
         ".simple_functions",
         "find_apparent_anal_freq",
