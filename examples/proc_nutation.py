@@ -38,7 +38,6 @@ if (
         "ODNP_NMR_comp/nutation",
     ]
 
-slice_expansion = 5
 assert len(sys.argv) == 4
 s = psd.find_file(
     sys.argv[2],
@@ -49,8 +48,10 @@ s = psd.find_file(
 with psd.figlist_var() as fl:
     fl.next("raw data")
     fl.DCCT(s)
-    frq_center, frq_half = prscr.find_peakrange(s, fl=fl)
-    signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
+    frq_center, frq_half = prscr.det_inh_bounds(s, 0.1, fl=fl)
+    # Preserve the established integration range without pre-slicing the data
+    # needed for linewidth-aware echo processing.
+    signal_range = tuple(5 * r_[-1, 1] * frq_half + frq_center)
     if "nScans" in s.dimlabels:
         s.mean("nScans")
     s.set_plot_color(
