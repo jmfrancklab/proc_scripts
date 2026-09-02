@@ -1,31 +1,33 @@
-"""
+r"""
 Phasing and Timing Correction With Fake Data
 ============================================
 
-Take fake data with a relatively symmetric echo 
+Take fake data with a relatively symmetric echo
 (:math:`T_2^*=1/50\pi`, echo time of 10 ms),
 and demonstrate how we can automatically find the zeroth order phase and the
 center of the echo in order to get data that's purely real in the frequency
 domain.
 """
 
-from pyspecdata import *
-from pyspecProcScripts import *
-from pylab import *
-import sympy as s
 from collections import OrderedDict
-from numpy.random import normal, seed
 
-init_logging(level="debug")
+import matplotlib.pyplot as plt
+import numpy as np
+import pyspecdata as psd
+import pyspecProcScripts as pypcs
+import sympy as s
 
-seed(2021)
-rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
+psd.init_logging(level="debug")
+
+np.random.seed(2021)
+plt.rcParams["image.aspect"] = "auto"  # needed for sphinx gallery
 
 # sphinx_gallery_thumbnail_number = 1
-t2, td, vd, power, ph1, ph2 = s.symbols("t2 td vd power ph1 ph2")
-echo_time = 10e-3
-f_range = (-400, 400)
-with figlist_var() as fl:
+t2, vd, power = s.symbols("t2 vd power")
+# The fine sampling leaves enough acquired spectral width for the modeled
+# dispersive tails, so this example does not need an artificial early slice.
+synthetic_time_axis = np.r_[0:0.2:4096j] - 10e-3
+with psd.figlist_var() as fl:
     for expression, orderedDict, signal_pathway, indirect, label in [
         (
             (
@@ -34,10 +36,10 @@ with figlist_var() as fl:
                 * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
             ),
             [
-                ("vd", nddata(r_[0:1:40j], "vd")),
-                ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                ("ph2", nddata(r_[0, 2] / 4.0, "ph2")),
-                ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+                ("vd", psd.nddata(np.r_[0:1:40j], "vd")),
+                ("ph1", psd.nddata(np.r_[0:4] / 4.0, "ph1")),
+                ("ph2", psd.nddata(np.r_[0, 2] / 4.0, "ph2")),
+                ("t2", psd.nddata(synthetic_time_axis, "t2")),
             ],
             {"ph1": 0, "ph2": 1},
             "vd",
@@ -50,9 +52,9 @@ with figlist_var() as fl:
                 * s.exp(+1j * 2 * s.pi * 100 * t2 - abs(t2) * 50 * s.pi)
             ),
             [
-                ("power", nddata(r_[0:4:25j], "power")),
-                ("ph1", nddata(r_[0:4] / 4.0, "ph1")),
-                ("t2", nddata(r_[0:0.2:256j] - echo_time, "t2")),
+                ("power", psd.nddata(np.r_[0:4:25j], "power")),
+                ("ph1", psd.nddata(np.r_[0:4] / 4.0, "ph1")),
+                ("t2", psd.nddata(synthetic_time_axis, "t2")),
             ],
             {"ph1": 1},
             "power",
@@ -60,36 +62,45 @@ with figlist_var() as fl:
         ),
     ]:
         fl.basename = "(%s)" % label
-        fig, ax_list = subplots(1, 4, figsize=(7, 7))
+        fig, ax_list = plt.subplots(1, 3, figsize=(7, 7))
         fig.suptitle(fl.basename)
         fl.next("Data processing", fig=fig)
-        data = fake_data(expression, OrderedDict(orderedDict), signal_pathway)
+        data = psd.fake_data(
+            expression,
+            OrderedDict(orderedDict),
+            signal_pathway,
+        )
         data.reorder([indirect, "t2"], first=False)
         data.ft("t2")
-        data /= sqrt(ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
+        data /= np.sqrt(psd.ndshape(data)["t2"]) * data.get_ft_prop("t2", "dt")
         fl.image(data, ax=ax_list[0])
         ax_list[0].set_title("Raw Data")
-        data = data["t2":f_range]
-        data.ift("t2")
-        data /= zeroth_order_ph(select_pathway(data, signal_pathway), fl=fl)
-        fl.image(data, ax=ax_list[1], human_units=False)
-        ax_list[1].set_title("Zeroth Order \n Phase Corrected")
-        fl.basename = "(%s)" % label
-        data["t2"] -= data["t2"][0]  # to run the hermitian test, we
-        #                              need to feed an axis that starts
-        #                              with zero → Typically,
-        #                              we use fid_from_echo, which does
-        #                              this for us. But, since we are
-        #                              using hermitian_function_test
-        #                              by itself here, we need to do it.
-        best_shift = hermitian_function_test(
-            select_pathway(data.C.mean(indirect), signal_pathway), fl=fl
+        # Keep the full acquired bandwidth so the homogeneous-linewidth fit
+        # can determine how far the dispersive tails extend before slicing.
+        data = pypcs.fid_from_echo(
+            data,
+            signal_pathway,
+            max_alignment_shift=0,
+            fl=fl,
         )
-        data.setaxis("t2", lambda x: x - best_shift).register_axis({"t2": 0})
-        data.ft("t2")
-        fl.image(data, ax=ax_list[2])
-        ax_list[2].set_title("Hermitian Test (ν)")
+        print(
+            label,
+            "echo center:",
+            data.get_prop("echo_center"),
+            "inhomogeneous bounds:",
+            data.get_prop("inh_bounds"),
+            "homogeneous linewidth:",
+            data.get_prop("homogeneous_linewidth"),
+            "fallback:",
+            data.get_prop("homogeneous_linewidth_is_fallback"),
+            "conditioning rate:",
+            data.get_prop("alignment_conditioning_rate"),
+            "processing bounds:",
+            data.get_prop("processing_bounds"),
+        )
+        fl.image(data, ax=ax_list[1], human_units=False)
+        ax_list[1].set_title("Phased and centered (ν)")
         data.ift("t2")
-        fl.image(data, ax=ax_list[3], human_units=False)
-        ax_list[3].set_title("Hermitian Test (t)")
+        fl.image(data, ax=ax_list[2], human_units=False)
+        ax_list[2].set_title("Phased and centered (t)")
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
