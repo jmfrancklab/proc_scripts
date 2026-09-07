@@ -1,23 +1,25 @@
 r"""Sampling convergence of the cumulant RMS
 ===========================================
 
-The cumulant RMS is a dimensionless path-dependent diagnostic.  For a
-sequence of spectra it adds the distances between adjacent normalized
-spectra, so a finite data set measures the path using straight chords.  As
-the same spectral transition is sampled more densely, that discrete sum
+The cumulant RMS is a dimensionless path-dependent diagnostic.
+For a sequence of spectra it adds the distances between adjacent normalized
+spectra, so a finite data set measures the path using straight chords.
+As the same spectral transition is sampled more densely, that discrete sum
 converges toward the continuous path length.
 
 Here, two outer Gaussian-derivative lines move inward while a central line
-remains fixed.  The ``linewidth`` below is the Gaussian standard deviation
-:math:`\sigma`; each moving line travels :math:`3.1\sigma`.  Thus its final
-Gaussian envelope at its original center is only
+remains fixed.
+The ``linewidth`` below is the Gaussian standard deviation :math:`\sigma`; each
+moving line travels :math:`3.1\sigma`.
+Thus its final Gaussian envelope at its original center is only
 :math:`\exp(-3.1^2/2)\simeq 0.008`, making the initial and final profiles
-effectively non-overlapping.  Every sampling count includes both endpoints
-of exactly the same motion.
+effectively non-overlapping.
+Every sampling count includes both endpoints of exactly the same motion.
 
 The five-spectrum estimate is deliberately very coarse and underestimates
-the dense result by about 5--6 percent.  This is a discretization effect, not
-a change in physical units with the number of samples.
+the dense result by about 5--6 percent.
+This is a discretization effect, not a change in physical units with the number
+of samples.
 """
 
 import matplotlib.pyplot as plt
@@ -88,35 +90,30 @@ axes[0].set(
     ylabel="derivative signal (a.u.)",
     title="Five-spectra transition",
 )
-# TODO ☐:  do NOT mess with font or marker or linewidth sizes, in general.  Complicates code and make appearance nonstandard!
-axes[0].legend(fontsize="small")
+axes[0].legend()
 
-count_colors = plt.get_cmap("viridis")(
-    np.linspace(0.05, 0.9, len(sampling_counts))
-)
-for count, color in zip(sampling_counts, count_colors):
+for count in sampling_counts:
     motion = transitions[count][0]
-    axes[1].plot(
+    line = axes[1].plot(
         motion,
         plot_cumulants[count],
-        "o-",
+        "-" if count > 20 else "o-",
         alpha=0.5,
-        # TODO ☐:  do not use a manual color cycle -- stay with matoplotlab default.  Match bar color to line color using the get_plot_color, etc, from pyspec!
-        color=color,
         label=f"{count}",
-    )
+    )[0]
+    cumulants[count].set_plot_color(line.get_color())
 axes[1].set(
     xlabel="motion parameter $u$",
     ylabel="cumulant RMS",
     title="Convergence along the path",
 )
-axes[1].legend(title="spectra", fontsize="small")
+axes[1].legend(title="spectra")
 
 terminal_cumulants = [plot_cumulants[count][-1] for count in sampling_counts]
 axes[2].bar(
     [str(count) for count in sampling_counts],
     terminal_cumulants,
-    color=count_colors,
+    color=[cumulants[count].get_plot_color() for count in sampling_counts],
 )
 axes[2].set(
     xlabel="number of spectra",
