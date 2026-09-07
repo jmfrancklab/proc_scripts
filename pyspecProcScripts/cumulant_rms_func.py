@@ -40,6 +40,17 @@ def cumulant_rms(d, indirect_dim, direct_dim="$B_0$"):
 
       C_i = \sum_{k=1}^{i}\Delta_k.
 
+    For a continuously varying spectrum, the corresponding quantity is the
+    path length traced by the normalized spectrum.  This discrete sum
+    converges toward that sampling-independent path length as the indirect
+    axis is sampled more densely.  Very coarse sampling replaces curved
+    portions of the path by chords and can therefore underestimate its
+    length.  In particular, the intentionally coarse five-spectrum case in
+    :ref:`sphx_glr_auto_examples_cumulant_sampling.py` is about 5--6 percent
+    below the densely sampled result.  This is sampling discretization, not a
+    dependence of the physical units on the number of spectra: the cumulant
+    remains dimensionless.
+
     The discrete implementation uses ``np.diff`` along ``indirect_dim``.
     The common field-axis scale factor cancels, so both integrals use a mean.
     """
