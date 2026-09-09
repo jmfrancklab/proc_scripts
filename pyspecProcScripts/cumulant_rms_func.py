@@ -51,6 +51,11 @@ def cumulant_rms(d, indirect_dim, direct_dim="$B_0$"):
     dependence of the physical units on the number of spectra: the cumulant
     remains dimensionless.
 
+    Along ``direct_dim``, the cumulant is also invariant to the number of
+    field-axis points.
+    See
+    :ref:`sphx_glr_auto_examples_cumulant_field_sampling.py`.
+
     The discrete implementation uses ``np.diff`` along ``indirect_dim``.
     The common field-axis scale factor cancels, so both integrals use a mean.
     """

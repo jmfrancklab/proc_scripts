@@ -59,3 +59,49 @@ def test_cumulant_rms_converges_with_transition_sampling():
     assert 0.05 <= five_spectrum_deficit <= 0.07
     assert abs(terminal[20] - dense) / dense < 0.01
     assert abs(terminal[100] - dense) / dense < 0.001
+
+
+FIELD_HALF_RANGE = 12.0  # matches FIELD = linspace(-12, 12, ...) above
+# points per linewidth: half / base / double / quadruple of a realistic
+# minimum acquisition density (nobody acquires below ~5 pts/linewidth)
+FIELD_POINTS_PER_LINEWIDTH = (5, 10, 20, 40)
+FIXED_MOTION_COUNT = 100  # dense enough that indirect-dim discretization is not a confound
+
+
+def spectral_transition_field_sampling(field_count, motion_count=FIXED_MOTION_COUNT):
+    """Same three-line transition as ``spectral_transition``, but with a
+    fixed motion sampling and a variable number of field-axis points."""
+    motion = np.linspace(0.0, 1.0, motion_count)
+    field = np.linspace(-FIELD_HALF_RANGE, FIELD_HALF_RANGE, field_count)
+    spectra = np.array(
+        [
+            gaussian_derivative(field, -6.0 * LINEWIDTH + TRAVEL * value)
+            + gaussian_derivative(field, 0.0)
+            + gaussian_derivative(field, 6.0 * LINEWIDTH - TRAVEL * value)
+            for value in motion
+        ]
+    )
+    data = nddata(spectra, ["motion", "$B_0$"])
+    data.setaxis("motion", motion).setaxis("$B_0$", field)
+    return data
+
+
+def test_cumulant_rms_invariant_to_field_sampling():
+    field_counts = [
+        int(round(ppl * 2 * FIELD_HALF_RANGE))
+        for ppl in FIELD_POINTS_PER_LINEWIDTH
+    ]
+    terminal = {
+        count: cumulant_rms(
+            spectral_transition_field_sampling(count), "motion"
+        ).data[-1]
+        for count in field_counts
+    }
+    values = np.array([terminal[count] for count in field_counts])
+    assert np.all(np.isfinite(values))
+    # Halving/doubling/quadrupling the field-axis point count -- all
+    # comfortably above the ~5-points-per-linewidth floor of a real
+    # acquisition -- changes the terminal cumulant only at the level of
+    # floating-point noise (see cumulant_rms_func.py for why this differs
+    # from the indirect-dimension convergence test above).
+    np.testing.assert_allclose(values, values[0], rtol=1e-8, atol=1e-10)
