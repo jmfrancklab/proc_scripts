@@ -36,13 +36,8 @@ with psd.figlist_var() as fl:
                 "What the heck type of postproc type is that!!"
                 f" ({postproc_type})"
             )
-        frq_center, frq_half = prscr.find_peakrange(
-            s, direct="t2", peak_lower_thresh=0.05
-        )
-        frq_range = (
-            frq_center - frq_half,
-            frq_center + frq_half,
-        )
+        prscr.det_inh_bounds(s, 0.05, direct="t2")
+        frq_range = tuple(s.get_prop("inh_bounds"))
         if s.get_prop("log") is None:
             s = prscr.attach_log_data_from_file(s, filename, exp_type)
         # {{{ gen coords if old data

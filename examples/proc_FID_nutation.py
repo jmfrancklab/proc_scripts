@@ -23,7 +23,10 @@ import sympy as sp
 import sys, os
 from numpy import r_
 
-if "SPHINX_GALLERY_RUNNING" in os.environ and os.environ['SPHINX_GALLERY_RUNNING'] == 'True':
+if (
+    "SPHINX_GALLERY_RUNNING" in os.environ
+    and os.environ["SPHINX_GALLERY_RUNNING"] == "True"
+):
     sys.argv = [
         sys.argv[0],
         "FID_nutation_1",
@@ -31,7 +34,6 @@ if "SPHINX_GALLERY_RUNNING" in os.environ and os.environ['SPHINX_GALLERY_RUNNING
         "ODNP_NMR_comp/nutation",
     ]
 
-slice_expansion = 5
 assert len(sys.argv) == 4, "intended to be called with file info at cmdline"
 s = psd.find_file(
     sys.argv[2],
@@ -41,8 +43,12 @@ s = psd.find_file(
 )
 print("using postproc type", s.get_prop("postproc_type"))
 with psd.figlist_var() as fl:
-    frq_center, frq_half = prscr.find_peakrange(s, fl=fl)
-    signal_range = tuple(slice_expansion * r_[-1, 1] * frq_half + frq_center)
+    frq_center, half_bounds = prscr.det_inh_bounds(
+        s, 0.1, fl=fl, echo_like=False
+    )
+    # Preserve the established integration range without using it to truncate
+    # any later echo-processing or alignment data.
+    signal_range = tuple(5 * r_[-1, 1] * half_bounds + frq_center)
     if "nScans" in s.dimlabels:
         s.mean("nScans")
     s.set_plot_color(
