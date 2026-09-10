@@ -9,7 +9,10 @@ def _masked_mean_multi(x, axis=None):
     assert axis is not None
 
     def masked_mean(x):
-        return np.mean(x[np.isfinite(x)])
+        x_masked = x[np.isfinite(x)]
+        if len(x_masked) == 0:
+            return np.nan
+        return np.mean(x_masked)
 
     return np.apply_along_axis(masked_mean, axis, x)
 
@@ -23,6 +26,8 @@ def _masked_var_multi(x, axis=None):
 
     def masked_var(x):
         x_masked = x[np.isfinite(x)]
+        if len(x_masked) < 2:
+            return np.nan
         if np.iscomplexobj(x):
             # we can convince ourselves that the following is true by running
             # sqrt(var(normal(size=10000).view(complex128), ddof=1)/2)
@@ -54,6 +59,7 @@ def calc_masked_variance(
     direct="t2",
     indirect="vd",
     fl=None,
+    require_unitary=True,
 ):
     """Calculates the variance for the given signal.
 
@@ -79,6 +85,12 @@ def calc_masked_variance(
         Direct axis.
     indirect : str or list of str
         Indirect axis.
+    require_unitary : bool
+        If true, require phase-cycling dimensions to have been Fourier
+        transformed with unitary normalization before averaging variance across
+        coherence pathways.  Set false for legacy/postprocessed data where the
+        variance is being estimated empirically in the already-scaled
+        coherence domain.
 
     Returns
     =======
@@ -133,9 +145,10 @@ def calc_masked_variance(
     # {{{ Average over remaining (non-excluded) ct pathways
     for j in set(s.dimlabels) - set([direct] + indirect):
         if "ph" in j:
-            assert s.get_ft_prop(
-                j, "unitary"
-            ), "all phase cycling FTs must be unitary!"
+            if require_unitary:
+                assert s.get_ft_prop(
+                    j, "unitary"
+                ), "all phase cycling FTs must be unitary!"
         collected_variance.run(_masked_mean_multi, j)
     # }}}
     return collected_variance
