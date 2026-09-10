@@ -280,20 +280,52 @@ def correl_align(
         #     Δφ_n by an increasing amount, so it looks like this
         #
         #     Δφ_n →
-        # φ_k 0 4 3 2
-        #  ↓  1 0 4 3
-        #     2 1 0 4
+        # φ_k 0 3 2 1
+        #  ↓  1 0 3 2
+        #     2 1 0 3
         #     3 2 1 0
         for phname, phlen in ph_len.items():
-            for ph_index in range(phlen):
-                s_leftbracket[
-                    "Delta%s" % phname.capitalize(), ph_index
-                ] = s_leftbracket[
-                    "Delta%s" % phname.capitalize(), ph_index
-                ].run(
-                    lambda x, axis=None: np.roll(x, ph_index, axis=axis),
-                    phname,
+            # The Delta axis was created above with a deterministic name
+            # derived from this phase axis.  Reconstructing that label here is
+            # only a lookup of the matching axis, not another creation step.
+            # Each pass handles one phase/Delta axis pair as a block: it uses
+            # this phase axis to fill its own Delta axis with cyclic shifts.
+            # The loop is therefore over axis pairs, not over matched element
+            # positions inside the two dimensions.
+            Delta_name = "Delta%s" % phname.capitalize()
+            Delta_axn = s_leftbracket.axn(Delta_name)
+            if s_leftbracket.shape[Delta_name] != phlen:
+                raise ValueError(
+                    f"{phname} and {Delta_name} must have the same length"
                 )
+            ph_idx_array = np.arange(phlen)[:, None]
+            Delta_idx_array = np.arange(phlen)[None, :]
+            roll_idx_array = (  # phase - Delta; modulo wraps to [0, phlen)
+                ph_idx_array - Delta_idx_array
+            ) % phlen
+            # Move this phase axis and its Delta axis to the front so this
+            # one pair is temporarily ordered as data[phase, Delta, ...].
+            # Because the Delta axis was made by replication, all Delta
+            # columns are identical at this point; column 0 is the original
+            # phase series.  Indexing that series with roll_idx_array builds
+            # the complete phase/Delta table in one vectorized gather:
+            #
+            #     output phase i, Delta j <- source phase (i - j) mod phlen
+            #
+            # The final moveaxis puts the phase and Delta axes back where
+            # nddata expects them.  The trailing "..." dimensions are not part
+            # of the roll; NumPy carries them through unchanged for every
+            # selected phase/Delta entry.
+            s_leftbracket.run(
+                lambda data, axis: np.moveaxis(
+                    np.moveaxis(data, [axis, Delta_axn], [0, 1])[:, 0][
+                        roll_idx_array
+                    ],
+                    [0, 1],
+                    [axis, Delta_axn],
+                ),
+                phname,
+            )
         # }}}
         # {{{ this applies the Fourier transform from Δφ to Δpₗ
         #     that is found inside the left square bracket of eq. 29.
@@ -358,19 +390,19 @@ def correl_align(
                 )
         # Find optimal f shift based on max of correlation function
         if max_shift is not None:
-            delta_f_shift = (
+            Delta_f_shift = (
                 correl[direct:(-max_shift, max_shift)]
                 .run(np.real)
                 .argmax(direct)
             )
         else:
-            delta_f_shift = correl.run(np.real).argmax(direct)
+            Delta_f_shift = correl.run(np.real).argmax(direct)
         # Take s_jk, which is data that is unmasked, but which has all of the
         # shifts from all the previous iterations applied, and apply the shift
         # for this iteration
-        s_jk *= np.exp(-1j * 2 * np.pi * delta_f_shift * s_jk.fromaxis(direct))
+        s_jk *= np.exp(-1j * 2 * np.pi * Delta_f_shift * s_jk.fromaxis(direct))
         # we need to accumulate the total shift
-        f_shift += delta_f_shift
+        f_shift += Delta_f_shift
         # move back into the frequency and CT domains to analyze the
         # result
         s_jk.ft(direct).ft(phcycdims)
@@ -391,8 +423,7 @@ def correl_align(
         # {{{ Calculate energy difference from last shift to see if
         #     there is any further gain to keep reiterating
         E_of_avg = (
-            smoosh_or_rename(phcycdims, s_leftbracket.C)
-            * coh_mask
+            smoosh_or_rename(phcycdims, s_leftbracket.C) * coh_mask
         ).sum("repeats").run(lambda x: abs(x) ** 2).data.sum().item() / N**2
         energy_vals.append(E_of_avg / sig_energy)
         logging.debug(
