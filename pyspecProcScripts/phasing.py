@@ -1,4 +1,5 @@
 """This module includes routines for phasing NMR spectra."""
+
 from pyspecdata import nddata, ndshape, strm
 from matplotlib.patches import Ellipse
 from scipy.optimize import minimize
@@ -10,6 +11,7 @@ import scipy.signal.windows as sci_win
 import logging
 import matplotlib.pyplot as plt
 from .simple_functions import select_pathway
+from .envelope import L2G, fit_envelope
 from itertools import cycle
 
 default_matplotlib_cycle = cycle(
@@ -32,7 +34,7 @@ def det_devisor(fl):
     return divisor
 
 
-def zeroth_order_ph(d, fl=None):
+def zeroth_order_ph(d, fl=None, weighted=True):
     r"""determine the moment of inertial of the datapoints
     in complex plane, and use to phase the
     zeroth-order even if the data is both negative
@@ -49,6 +51,10 @@ def zeroth_order_ph(d, fl=None):
         set this to your figlist object.
         It will add a plot called "check covariance
         test"
+    weighted : bool
+        Weight points by their magnitude so noise and weak background points
+        do not dominate the phase estimate. Set to False to recover the
+        unweighted covariance calculation.
 
     Returns
     =======
@@ -58,8 +64,13 @@ def zeroth_order_ph(d, fl=None):
         To correct the zeroth order phase of the data,
         divide by ``retval``.
     """
-    realvector = d.data.real.ravel()
-    imvector = d.data.imag.ravel()
+    if weighted:
+        weights = abs(d.data.ravel())
+        weights /= sum(weights)
+    else:
+        weights = 1
+    realvector = d.data.real.ravel() * weights
+    imvector = d.data.imag.ravel() * weights
     R2 = np.mean(realvector**2)
     I2 = np.mean(imvector**2)
     C = np.mean(
@@ -88,8 +99,8 @@ def zeroth_order_ph(d, fl=None):
         d_forplot = d.C
         fl.next("check covariance test")
         fl.plot(
-            d_forplot.data.ravel().real,
-            d_forplot.data.ravel().imag,
+            d_forplot.data.ravel().real * weights,
+            d_forplot.data.ravel().imag * weights,
             ".",
             alpha=0.25,
             label="before",
@@ -98,8 +109,8 @@ def zeroth_order_ph(d, fl=None):
         plt.ylabel("imag")
         d_forplot /= np.exp(1j * ph0)
         fl.plot(
-            d_forplot.data.ravel().real,
-            d_forplot.data.ravel().imag,
+            d_forplot.data.ravel().real * weights,
+            d_forplot.data.ravel().imag * weights,
             ".",
             alpha=0.25,
             label="after",
@@ -207,6 +218,230 @@ def ph1_real_Abs(s, dw, ph1_sel=0, ph2_sel=1, fl=None):
     # }}}
 
 
+def find_exponential_echo_center(
+    d,
+    direct="t2",
+    decay_rate=250.0,
+    minimum_overlap=0.01,
+    fl=None,
+):
+    """Locate an echo by normalized symmetric-exponential correlation.
+
+    Normalization by the square root of the template overlap energy prevents
+    shifts with little signal overlap from appearing artificially favorable.
+    The search is restricted to the acquired interval while retaining at
+    least one exponential decay time and two source points after the candidate
+    echo center.
+
+    Parameters
+    ==========
+    d : nddata
+        Frequency-domain data. The numerical data and transform metadata are
+        not altered.
+    direct : str
+        Direct dimension containing the echo.
+    decay_rate : float
+        Exponential decay rate in Hz used for the symmetric template.
+    minimum_overlap : float
+        Minimum overlap energy as a fraction of its maximum.
+    fl : figlist or None
+        Optional diagnostic figure list.
+
+    Returns
+    =======
+    echo_center : float
+        Echo-center coordinate in seconds.
+
+    Raises
+    ======
+    ValueError
+        If the inputs do not define a finite interior search interval or the
+        normalized correlation has no interior maximum.
+    """
+    if not np.isfinite(decay_rate) or decay_rate <= 0:
+        raise ValueError("decay_rate must be finite and positive")
+    if not 0 < minimum_overlap < 1:
+        raise ValueError("minimum_overlap must lie strictly between 0 and 1")
+    if not d.get_ft_prop(direct):
+        raise ValueError(
+            "echo-center detection requires frequency-domain data"
+        )
+
+    time_envelope = d.C
+    digital_filter = d.get_prop("dig_filter")
+    if digital_filter is not None:
+        time_envelope *= digital_filter
+    time_envelope.ift(direct)
+    source_time_axis = time_envelope.getaxis(direct)
+    if source_time_axis.size < 4 or not np.all(np.isfinite(source_time_axis)):
+        raise ValueError("echo-center detection requires a finite time axis")
+    source_dwell = abs(np.diff(source_time_axis[:2]).item())
+    acquisition_time = source_time_axis[-1] - source_time_axis[0]
+    minimum_decay_time = max(2 * source_dwell, 1 / (pi * decay_rate))
+    if acquisition_time <= minimum_decay_time:
+        raise ValueError(
+            "the acquisition is too short to retain a usable echo decay"
+        )
+
+    time_envelope.mean_all_but([direct]).run(abs)
+    time_envelope[direct] -= source_time_axis[0]
+    envelope_maximum = time_envelope.data.max()
+    if not np.isfinite(envelope_maximum) or envelope_maximum <= 0:
+        raise ValueError("the time-domain envelope is empty or non-finite")
+    time_envelope /= envelope_maximum
+    if fl is not None:
+        fl.next("peak finder, time domain correlation")
+        fl.plot(time_envelope, color="k", alpha=0.1, label="signal envelope")
+
+    # Zero filling before constructing the symmetric axis prevents circular
+    # overlap between the beginning and end of the acquired signal.
+    time_envelope.ft(direct, pad=time_envelope.shape[direct] * 2)
+    time_envelope.ft_new_startpoint(direct, "time").ift(direct, shift=True)
+    exponential = np.exp(
+        -abs(time_envelope.fromaxis(direct)) * pi * decay_rate
+    )
+    exponential_squared = exponential**2
+    acquired_side = exponential.copy(data=False)
+    acquired_side.data = np.zeros_like(exponential.data)
+    acquired_side[direct:(0, None)] = 1
+    acquired_side[direct:0] = 0.5
+    if fl is not None:
+        fl.next("peak finder, time domain", legend=True)
+        fl.plot(time_envelope, label="signal envelope")
+        fl.plot(exponential, label="symmetric exponential")
+        fl.plot(acquired_side, label="acquired side")
+
+    time_envelope.ft(direct)
+    exponential.ft(direct).run(np.conj)
+    exponential_squared.ft(direct).run(np.conj)
+    acquired_side.ft(direct)
+    correlation = exponential * time_envelope
+    overlap_energy = exponential_squared * acquired_side
+    correlation.ift(direct, pad=correlation.shape[direct] * 20)
+    overlap_energy.ift(direct, pad=overlap_energy.shape[direct] * 20)
+
+    correlation_data = abs(correlation.data)
+    overlap_data = abs(overlap_energy.data)
+    overlap_maximum = overlap_data.max()
+    if not np.isfinite(overlap_maximum) or overlap_maximum <= 0:
+        raise ValueError("the exponential correlation has no usable overlap")
+    correlation_axis = correlation.getaxis(direct)
+    valid_search = (
+        (correlation_axis >= 0)
+        & (correlation_axis <= acquisition_time - minimum_decay_time)
+        & (overlap_data > minimum_overlap * overlap_maximum)
+    )
+    valid_indices = np.flatnonzero(valid_search)
+    if valid_indices.size < 3:
+        raise ValueError("no valid echo-center search interval remains")
+    # Normalize by the template's L2 norm.  Dividing by the overlap energy
+    # itself biases broad echoes toward the acquisition boundary.
+    correlation_ratio = correlation_data[valid_indices] / np.sqrt(
+        overlap_data[valid_indices]
+    )
+    if not np.all(np.isfinite(correlation_ratio)):
+        raise ValueError("the normalized echo correlation is non-finite")
+
+    maximum_position = np.argmax(correlation_ratio)
+    if maximum_position == 0 or maximum_position == valid_indices.size - 1:
+        raise ValueError(
+            "the echo-correlation maximum lies on a search boundary"
+        )
+    maximum_index = valid_indices[maximum_position]
+    if (
+        not valid_search[maximum_index - 1]
+        or not valid_search[maximum_index + 1]
+    ):
+        raise ValueError(
+            "the echo-correlation maximum borders an invalid range"
+        )
+    # Use the raw array index and then look up its axis coordinate.  nddata
+    # argmax data can otherwise retain the signal's physical units.
+    echo_center = correlation_axis[maximum_index]
+
+    if fl is not None:
+        normalized_correlation = correlation.C
+        normalized_correlation.data = correlation_data / correlation_data.max()
+        normalized_overlap = overlap_energy.C
+        normalized_overlap.data = overlap_data / overlap_maximum
+        normalized_ratio = correlation.C
+        normalized_ratio.data = np.full_like(correlation_data, np.nan)
+        normalized_ratio.data[valid_indices] = (
+            correlation_ratio / correlation_ratio.max()
+        )
+        fl.next("peak finder, time domain correlation")
+        fl.plot(normalized_correlation, label="correlation")
+        fl.plot(normalized_overlap, label="overlap energy")
+        fl.plot(normalized_ratio, label="normalized ratio")
+        time_divisor = det_devisor(fl)
+        plt.gca().axvline(echo_center / time_divisor, color="r", ls=":")
+
+    return float(echo_center)
+
+
+# SINGLE_USE_EXCEPTION -- public API for shared linewidth processing
+def fid_side_from_echo(d, echo_center, direct="t2", fl=None):
+    """Return the centered, half-weighted FID side of an echo.
+
+    Digital-filter compensation and Fourier interpolation are applied to a
+    copy.  The returned signal begins at exactly zero and its zero-time point
+    is half weighted for a one-sided Fourier transform.  Pass ``mult_two=True``
+    to :func:`fit_envelope` when restoring that point for envelope fitting.
+
+    Parameters
+    ==========
+    d : nddata
+        Frequency-domain echo data. The input is not altered.
+    echo_center : float
+        Echo-center coordinate in seconds, measured from the beginning of the
+        acquired direct axis.
+    direct : str
+        Direct dimension containing the echo.
+    fl : figlist or None
+        Optional diagnostic figure list.
+
+    Returns
+    =======
+    fid_side : nddata
+        Time-domain decay beginning at the interpolated echo center.
+    """
+    if not np.isscalar(echo_center) or not np.isfinite(echo_center):
+        raise ValueError("echo_center must be a finite scalar")
+    if not d.get_ft_prop(direct):
+        raise ValueError("FID-side extraction requires frequency-domain data")
+
+    fid_side = d.C
+    digital_filter = fid_side.get_prop("dig_filter")
+    if digital_filter is not None:
+        fid_side *= digital_filter
+        fid_side.unset_prop("dig_filter")
+    fid_side.ift(direct)
+    acquired_time_axis = fid_side.getaxis(direct)
+    if acquired_time_axis.size < 2:
+        raise ValueError("FID-side extraction requires at least two points")
+    acquisition_time = acquired_time_axis[-1] - acquired_time_axis[0]
+    if not 0 < echo_center < acquisition_time:
+        raise ValueError("echo_center must lie inside the acquired time axis")
+
+    # Registering zero performs the required Fourier interpolation when the
+    # correlation estimate lies between source time points.
+    fid_side[direct] -= acquired_time_axis[0] + echo_center
+    fid_side.register_axis({direct: 0})
+    fid_side = fid_side[direct:(0, None)]
+    fid_side[direct, 0] *= 0.5
+    fid_side.set_prop("echo_center", float(echo_center))
+    if fl is not None:
+        centered_envelope = abs(fid_side).mean_all_but([direct])
+        centered_envelope[direct, 0] *= 2
+        fl.next("FID side from exponential echo center")
+        fl.plot(
+            centered_envelope,
+            human_units=False,
+            label="centered decay envelope",
+        )
+    return fid_side
+
+
 def fid_from_echo(
     d,
     signal_pathway,
@@ -214,107 +449,190 @@ def fid_from_echo(
     add_rising=False,
     direct="t2",
     exclude_rising=3,
-    slice_multiplier=20,
+    dispersive_tail_cutoff=0.05,
+    max_alignment_shift=100.0,
     peak_lower_thresh=0.1,
     show_hermitian_sign_flipped=False,
     show_shifted_residuals=False,
-    frq_center=None,
-    frq_half=None,
+    inh_bounds=None,
 ):
-    """
+    """Return a Hermitian-phased FID-side signal from an echo.
+
+    Explicit ``inh_bounds`` take precedence over a stored property; when
+    neither exists, :func:`det_inh_bounds` determines them automatically.
+    Echo-center detection is reused when available.  The centered FID side is
+    passed to :func:`fit_envelope` to determine the homogeneous Lorentzian
+    linewidth independently of ``inh_bounds``.  The
+    ``homogeneous_linewidth_is_fallback`` property records when low SNR
+    permits only a provisional least-squares processing width.  The narrow
+    ``inh_bounds`` remain the integration region, while ``processing_bounds``
+    include the modeled homogeneous dispersive tail and an alignment buffer.
 
     Parameters
     ==========
-    signal_pathway: dict
+    d : nddata
+        Echo-like data in the frequency and coherence-transfer domains.
+    signal_pathway : dict
         coherence transfer pathway that correspond to the signal
-    fl: figlist or None (default)
+    fl : figlist or None (default)
         If you want the diagnostic plots (showing the distribution of the
         data in the complex plane), set this to your figlist object.
-    add_rising: boolean
+    add_rising : boolean
         Take the first part of the echo (that which rises to the maximum)
         and add the decaying (FID like) part. This increases the SNR of
         the early points of the signal.
-    direct: string
+    direct : string
         Name of the direct dimension
-    exclude_rising: int
+    exclude_rising : int
         In general it is assumed that the first few points of signal
         might be messed up due to dead time or other issues (assuming a
         tau of 0).  This option allows us to add a rising edge to the
         echo and exclude the first few points of the signal. Note, to use
         this, add_rising must be True.
-    slice_multiplier: int
-        The calculated frequency slice is calculated by taking the center
-        frequency and extending out to values that are included in the
-        peak times this multiplier. Therefore the larger this value the
-        larger the frequency slice. Increasing this value might serve
-        useful in the case of noisy spectra.
-    peak_lower_thresh: float
+    dispersive_tail_cutoff : float
+        Fraction of the absorptive maximum allowed at the outer edge of the
+        modeled homogeneous dispersive tail.  The default 5% cutoff completed
+        all validated real datasets while retaining sufficient bandwidth.
+    max_alignment_shift : float
+        Largest anticipated correlation-alignment shift, in Hz.  This and one
+        frequency bin are added to each side of the processing bounds.
+    peak_lower_thresh : float
         Fraction of the signal intensity used in calculating the
         frequency slice. The smaller the value, the wider the slice.
-    show_hermitian_sign_flipped: boolean
+    show_hermitian_sign_flipped : boolean
         Diagnostic in checking the sign of the signal prior to the
         hermitian phase correction
-    show_shifted_residuals: boolean
+    show_shifted_residuals : boolean
         Diagnostic in analyzing the residuals after the hermitian phase
         correction.
-    frq_center: float (default None)
-        The center of the peak.
-        This only exists so that we don't end up calling
-        `find_peakrange` redundantly,
-        and it should come from a previous call to `find_peakrange` if
-        it's used.
-    frq_half: float (default None)
-        The half-width of the peak.
-        This only exists so that we don't end up calling
-        `find_peakrange` redundantly,
-        and it should come from a previous call to `find_peakrange` if
-        it's used.
+    inh_bounds : array-like or None
+        Two ascending frequency bounds for the narrow absorptive peak.  An
+        explicit value takes precedence over an existing ``inh_bounds``
+        property.  If both are absent, determine the bounds automatically.
 
     Returns
     =======
     d: nddata
-        FID of properly sliced and phased signal
+        FID of properly sliced and phased signal.  ``inh_bounds`` stores the
+        narrow integration region and ``processing_bounds`` stores the broad
+        linewidth-aware region used for Hermitian phasing.
     """
-    if frq_center is None:
-        frq_center, frq_half = find_peakrange(
-            d, fl=fl, direct=direct, peak_lower_thresh=peak_lower_thresh
+    if (
+        not np.isscalar(dispersive_tail_cutoff)
+        or not np.isfinite(dispersive_tail_cutoff)
+        or not 0 < dispersive_tail_cutoff < 0.5
+    ):
+        raise ValueError(
+            "dispersive_tail_cutoff must be finite and between 0 and 0.5"
         )
+    if (
+        not np.isscalar(max_alignment_shift)
+        or not np.isfinite(max_alignment_shift)
+        or max_alignment_shift < 0
+    ):
+        raise ValueError(
+            "max_alignment_shift must be a finite nonnegative scalar"
+        )
+    if inh_bounds is None:
+        inh_bounds = d.get_prop("inh_bounds")
+    available_bounds = np.sort(d.getaxis(direct)[[0, -1]])
+    if inh_bounds is not None:
+        inh_bounds = np.asarray(inh_bounds, dtype=float)
+        if inh_bounds.shape != (2,):
+            raise ValueError("inh_bounds must contain exactly two values")
+        if not np.all(np.isfinite(inh_bounds)):
+            raise ValueError("inh_bounds must contain finite values")
+        if inh_bounds[0] >= inh_bounds[1]:
+            raise ValueError("inh_bounds must be strictly ascending")
+        if (
+            inh_bounds[0] < available_bounds[0]
+            or inh_bounds[1] > available_bounds[1]
+        ):
+            raise ValueError(
+                f"inh_bounds {inh_bounds.tolist()} must lie within the "
+                f"available spectral bounds {available_bounds.tolist()}"
+            )
+        d.set_prop("inh_bounds", inh_bounds.copy())
+    if d.get_prop("echo_center") is None:
+        d.set_prop(
+            "echo_center",
+            find_exponential_echo_center(d, direct=direct, fl=fl),
+        )
+    homogeneous_linewidth, homogeneous_linewidth_is_fallback = fit_envelope(
+        select_pathway(
+            fid_side_from_echo(
+                d,
+                d.get_prop("echo_center"),
+                direct=direct,
+            ),
+            signal_pathway,
+        ),
+        direct=direct,
+        plot_name="homogeneous linewidth fit",
+        mult_two=True,
+        return_fallback=True,
+        fl=fl,
+    )
+    d.set_prop("homogeneous_linewidth", homogeneous_linewidth)
+    d.set_prop(
+        "homogeneous_linewidth_is_fallback",
+        homogeneous_linewidth_is_fallback,
+    )
+    if inh_bounds is None:
+        det_inh_bounds(
+            d,
+            peak_lower_thresh,
+            direct=direct,
+            signal_pathway=signal_pathway,
+            apodization_linewidth=homogeneous_linewidth,
+            fl=fl,
+        )
+        inh_bounds = np.asarray(d.get_prop("inh_bounds"), dtype=float)
+
+    # For a causal Lorentzian with FWHM λ, the normalized magnitude of the
+    # dispersive component is 2 λ |Δν| / (λ² + 4 Δν²).  Use its outer root so
+    # both long tails fall below the requested cutoff before the slice edge.
+    dispersive_tail_extent = (
+        homogeneous_linewidth
+        * (1 + np.sqrt(1 - 4 * dispersive_tail_cutoff**2))
+        / (4 * dispersive_tail_cutoff)
+    )
+    frequency_bin = abs(d.get_ft_prop(direct, "df"))
+    processing_bounds = inh_bounds.copy()
+    processing_bounds += r_[-1, 1] * (
+        dispersive_tail_extent + max_alignment_shift + frequency_bin
+    )
+    if (
+        processing_bounds[0] < available_bounds[0]
+        or processing_bounds[1] > available_bounds[1]
+    ):
+        raise ValueError(
+            "linewidth-aware processing bounds "
+            f"{processing_bounds.tolist()} exceed the available spectral "
+            f"bounds {available_bounds.tolist()}"
+        )
+    d.set_prop("processing_bounds", processing_bounds)
+    d.set_prop("dispersive_tail_cutoff", float(dispersive_tail_cutoff))
+    d.set_prop("max_alignment_shift", float(max_alignment_shift))
     if fl is not None and "autoslicing!" in fl:
         fl.next("autoslicing!")
-        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
         axvline(
-            x=frq_center - frq_half,
-            color="k",
-            ls=":",
-            alpha=0.25,
-            label="half width",
-        )
-        axvline(
-            x=frq_center + frq_half,
-            color="k",
-            ls=":",
-            alpha=0.25,
-            label="half width",
-        )
-        axvline(
-            x=frq_center - slice_multiplier * frq_half,
+            x=processing_bounds[0],
             color="k",
             ls="--",
             alpha=0.5,
-            label="final slice",
+            label=f"linewidth-aware slice ({processing_bounds[0]})",
         )
         axvline(
-            x=frq_center + slice_multiplier * frq_half,
+            x=processing_bounds[1],
             color="k",
             ls="--",
             alpha=0.5,
-            label="final slice",
+            label=f"linewidth-aware slice ({processing_bounds[1]})",
         )
         legend()
-    slice_range = r_[-1, 1] * slice_multiplier * frq_half + frq_center
-    reduced_slice_range = r_[-1, 1] * 2 * frq_half + frq_center
     # }}}
-    d = d[direct:slice_range]
+    d = d[direct:processing_bounds]
     d.ift(direct)
     # {{{ apply phasing, and check the residual
     d[direct] -= d.getaxis(direct)[0]
@@ -324,7 +642,7 @@ def fid_from_echo(
         thebasename = ""
     # {{{ sign flip and average input for hermitian
     input_for_hermitian = select_pathway(d, signal_pathway).C
-    signflip = input_for_hermitian.C.ft(direct)[direct:reduced_slice_range]
+    signflip = input_for_hermitian.C.ft(direct)
     idx = abs(signflip).mean_all_but([direct]).data.argmax()
     signflip = signflip[direct, idx]
     ph0 = zeroth_order_ph(signflip)
@@ -447,9 +765,37 @@ def fid_from_echo(
     return d
 
 
-def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
-    """find the range of frequencies over which the signal occurs, so that we
-    can autoslice
+def find_peakrange(*args, **kwargs):
+    raise ValueError(
+        "find_peakrange is obsolete now. Use det_inh_bounds (which has"
+        " slightly different options) instead!"
+    )
+
+
+def det_inh_bounds(
+    d,
+    peak_lower_thresh,
+    direct="t2",
+    inh_guess=250.0,
+    smoothing_width=50.0,
+    peak_lowest_thresh=0.03,
+    echo_like=True,
+    signal_pathway=None,
+    apodization_linewidth=None,
+    fl=None,
+):
+    """Determine the inhomogeneous frequency bounds for autoslicing.
+
+    The detector works on a copy, compensates any stored digital filter, and
+    constructs an FID-side magnitude spectrum.  A small acquisition-length
+    apodization conditions only the peak-detection copy so narrow peaks are
+    represented by more frequency points.  Broad baseline regions and three
+    intensity thresholds distinguish the absorptive peak from noise, isolated
+    spikes, and nearby fragments.  An optional equal-energy L2G apodized copy
+    can identify the coarse signal region in low-SNR data; the final bounds
+    still come from the original spectrum with only the acquisition-length
+    conditioning applied.  For echo-like input, normalized exponential
+    correlation locates the center used to construct that FID side.
 
     Parameters
     ==========
@@ -460,6 +806,29 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     peak_lower_thresh: float
         Fraction of the signal intensity used in calculating the
         frequency slice. The smaller the value, the wider the slice.
+
+        This is not a keyword argument b/c whatever is calling this needs
+        to know what was used for peak_lower_thresh, so that it knows
+        how far to push out the bounds of interest.
+    inh_guess: float
+        Guess the extent of the signal, in Hz.
+        This is used to help find the echo center.
+    smoothing_width : float
+        Frequency-domain convolution width, in Hz, used only to stabilize
+        contiguous-range detection.
+    peak_lowest_thresh : float
+        Lowest fraction of the signal maximum used to extend the bounds and
+        connect nearby fragments belonging to the same peak.
+    echo_like : boolean (default True)
+        Assume signal is echo-like, and we need to find a decent guess for the
+        peak of the echo and then slice the FID.
+    signal_pathway : dict or None
+        Coherence-transfer pathway to select before peak detection.  This is
+        useful when other phase-cycle pathways contain artifacts.
+    apodization_linewidth : float or None
+        Positive Lorentzian linewidth, in Hz, used for equal-energy L2G
+        apodization of a detector copy.  This copy selects a coarse peak
+        region but never determines the returned bounds.
     fl : figlist (default None)
         If you want to see diagnostic plots, feed the figure list.
 
@@ -467,32 +836,141 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
     =======
     frq_center : float
         The midpoint of the frequency slice.
-    frq_half : float
+    half_range : float
         Half the width of the frequency slice.
         Given in this way, so you can easily do
-        >>> newslice = r_[-expansino,expansion]*frq_half+frq_center
+
+        >>> newslice = r_[-expansino,expansion]*half_range+frq_center
+
+    Notes
+    =====
+    The ascending bounds are also stored as the ``inh_bounds`` property.
+    ``alignment_conditioning_rate`` records the conditioning rate in Hz.  For
+    echo-like data, the validated exponential-correlation estimate is stored
+    as ``echo_center`` rather than changing the return signature.
     """
+    if apodization_linewidth is not None and (
+        not np.isscalar(apodization_linewidth)
+        or not np.isfinite(apodization_linewidth)
+        or apodization_linewidth <= 0
+    ):
+        raise ValueError(
+            "apodization_linewidth must be a finite positive scalar"
+        )
     # {{{ autodetermine slice range
-    freq_envelope = d.C
-    freq_envelope.ift(direct)
-    freq_envelope = freq_envelope[
-        direct:(0, None)
-    ]  # slice out rising echo estimate according to experimental tau in order
-    #   to limit oscillations
-    freq_envelope.ft(direct)
-    freq_envelope.mean_all_but([direct]).run(abs)
+    if echo_like:
+        echo_center = d.get_prop("echo_center")
+        if echo_center is None:
+            echo_center = find_exponential_echo_center(
+                d,
+                direct=direct,
+                decay_rate=inh_guess,
+                fl=fl,
+            )
+            d.set_prop("echo_center", echo_center)
+        freq_envelope = fid_side_from_echo(
+            d,
+            echo_center,
+            direct=direct,
+            fl=fl,
+        )
+        fid_time_axis = freq_envelope.getaxis(direct)
+        source_dwell = abs(np.diff(fid_time_axis[:2]).item())
+        if fid_time_axis[-1] - fid_time_axis[0] <= max(
+            2 * source_dwell,
+            1 / (pi * inh_guess),
+        ):
+            raise ValueError(
+                "echo_center must leave a usable decay inside the acquisition"
+            )
+    else:
+        freq_envelope = d.C
+        # Undo the stored digital-filter correction so the time-domain noise
+        # is flat during ordinary-FID peak detection.
+        digital_filter = freq_envelope.get_prop("dig_filter")
+        if digital_filter is not None:
+            freq_envelope *= digital_filter
+        freq_envelope.ift(direct)
+        freq_envelope = freq_envelope[direct:(0, None)]
+        freq_envelope[direct, 0] *= 0.5
+    if signal_pathway is not None:
+        freq_envelope = select_pathway(freq_envelope, signal_pathway)
+
+    frequency_step = freq_envelope.get_ft_prop(direct, "df")
+    if (
+        not np.isscalar(frequency_step)
+        or not np.isfinite(frequency_step)
+        or frequency_step == 0
+    ):
+        raise ValueError(
+            "frequency-step transform metadata are required for alignment "
+            "conditioning"
+        )
+    acquisition_time = 1 / abs(frequency_step)
+    alignment_conditioning_rate = 1 / (5 * acquisition_time)
+    # Apply the small acquisition-length apodization only to the detector
+    # copy.  The decay used for homogeneous-linewidth fitting and the data
+    # returned for alignment and integration therefore remain unconditioned.
+    freq_envelope *= np.exp(
+        -abs(freq_envelope.fromaxis(direct)) * alignment_conditioning_rate
+    )
+    d.set_prop(
+        "alignment_conditioning_rate",
+        alignment_conditioning_rate,
+    )
+
+    apodized_envelope = None
+    if apodization_linewidth is not None:
+        # Equal-energy L2G apodization suppresses long-lived, narrow artifacts
+        # enough to locate the coarse signal region in low-SNR data.  It is
+        # applied only to this copy: the original spectrum below still sets
+        # the physical inhomogeneous bounds.
+        apodized_envelope = freq_envelope.C
+        apodized_envelope *= L2G(
+            apodization_linewidth,
+            criterion="energy",
+        )(apodized_envelope.fromaxis(direct))
+
+    def prepare_frequency_envelope(time_envelope):
+        """Return raw and smoothed, broadly baselined magnitude spectra."""
+        frequency_envelope = time_envelope.C.ft(direct)
+        frequency_envelope.mean_all_but([direct]).run(abs)
+        unprocessed_frequency_envelope = frequency_envelope.C
+        frequency_envelope.convolve(
+            direct,
+            smoothing_width,
+            enforce_causality=False,
+        )
+        spectral_width = 1 / frequency_envelope.get_ft_prop(direct, "dt")
+        # The broad outer quarters avoid biasing the baseline with the peak or
+        # a few isolated edge points.  Raw scalars preserve signal units.
+        frequency_envelope -= (
+            frequency_envelope[direct : tuple(-r_[0.5, 0.25] * spectral_width)]
+            .mean()
+            .data.item()
+            + frequency_envelope[
+                direct : tuple(r_[0.25, 0.5] * spectral_width)
+            ]
+            .mean()
+            .data.item()
+        ) / 2
+        return frequency_envelope, unprocessed_frequency_envelope
+
+    # {{{ now that we have an estimate of the start point, take an FID
+    #    slice and move into the frequency domain
+    freq_envelope, unprocessed_frequency_envelope = prepare_frequency_envelope(
+        freq_envelope
+    )
     if fl is not None:
         fl.next("autoslicing!")
-        fl.plot(freq_envelope, human_units=False, label="signal energy")
-    freq_envelope.convolve(
-        direct,
-        freq_envelope.get_ft_prop(direct, "df") * 5,
-        enforce_causality=False,
-    )
-    baseline = (
-        freq_envelope[direct, -1] + freq_envelope[direct, 0]
-    ) / 2
-    freq_envelope -= baseline
+        fl.plot(
+            unprocessed_frequency_envelope,
+            human_units=False,
+            label="signal energy",
+        )
+    if apodized_envelope is not None:
+        apodized_envelope, _ = prepare_frequency_envelope(apodized_envelope)
+    # }}}
     if fl is not None:
         fl.next("autoslicing!")
         fl.plot(
@@ -500,47 +978,147 @@ def find_peakrange(d, direct="t2", peak_lower_thresh=0.1, fl=None):
             human_units=False,
             label="signal energy\nconv + baselined",
         )
-    narrow_ranges = freq_envelope.contiguous(lambda x: x > 0.5 * x.data.max())
-    wide_ranges = freq_envelope.contiguous(
-        lambda x: x > peak_lower_thresh * x.data.max()
-    )
 
-    def filter_ranges(B, A):
-        """where A and B are lists of ranges (given as tuple pairs), filter B
-        to only return ranges that include ranges given in A"""
-        return [
-            np.array(b)
-            for b in B
-            if any(b[0] <= a[0] and b[1] >= a[1] for a in A)
-        ]
+    def filter_ranges(candidate_ranges, contained_ranges):
+        """Keep candidates that contain at least one narrower range."""
+        return sorted(
+            [
+                np.array(candidate)
+                for candidate in candidate_ranges
+                if any(
+                    candidate[0] <= contained[0]
+                    and candidate[1] >= contained[1]
+                    for contained in contained_ranges
+                )
+            ],
+            key=lambda candidate: candidate[0],
+        )
 
-    peakrange = filter_ranges(wide_ranges, narrow_ranges)
-    if len(peakrange) > 1:
+    def find_peak_ranges(frequency_envelope, reference_range=None):
+        """Apply successively broader thresholds to candidate peaks."""
+        if reference_range is None:
+            reference_maximum = frequency_envelope.data.max()
+        else:
+            reference_maximum = frequency_envelope[
+                direct:reference_range
+            ].data.max()
+        narrow_ranges = frequency_envelope.contiguous(
+            lambda x: x > 0.5 * reference_maximum
+        )
+        wide_ranges = frequency_envelope.contiguous(
+            lambda x: x > peak_lower_thresh * reference_maximum
+        )
+        widest_ranges = frequency_envelope.contiguous(
+            lambda x: x > peak_lowest_thresh * reference_maximum
+        )
+        return filter_ranges(
+            widest_ranges,
+            filter_ranges(wide_ranges, narrow_ranges),
+        )
+
+    def merge_nearby_ranges(candidate_ranges):
+        """Merge fragments separated by less than the widest fragment."""
+        if any(thisrange[0] >= thisrange[1] for thisrange in candidate_ranges):
+            raise ValueError(
+                "the detected peak range reaches or wraps the spectral "
+                "boundary"
+            )
+        if len(candidate_ranges) < 2:
+            return candidate_ranges
         max_range_width = max(
-            [thisrange[1] - thisrange[0] for thisrange in peakrange]
+            thisrange[1] - thisrange[0] for thisrange in candidate_ranges
         )
         range_gaps = [
-            peakrange[j + 1][0] - peakrange[j][1]
-            for j in range(len(peakrange) - 1)
+            candidate_ranges[j + 1][0] - candidate_ranges[j][1]
+            for j in range(len(candidate_ranges) - 1)
         ]
-        # {{{ if the gaps are all smaller than the max peak that was found, we
-        #     just have "breaks" in the peak, so merge them.  Otherwise, fail.
         if any(np.array(range_gaps) > max_range_width):
+            return candidate_ranges
+        return [np.array([candidate_ranges[0][0], candidate_ranges[-1][1]])]
+
+    if apodized_envelope is not None:
+        coarse_ranges = merge_nearby_ranges(
+            find_peak_ranges(apodized_envelope)
+        )
+        if len(coarse_ranges) != 1:
             if fl is not None:
-                fl.next("debug filter ranges")
-                fl.plot(freq_envelope, human_units=False)
-                for thisrange in peakrange:
-                    fl.plot(freq_envelope[direct:thisrange], human_units=False)
-            raise ValueError("finding more than one peak!")
-        else:
-            peakrange = [(peakrange[0][0], peakrange[-1][1])]
-    assert len(peakrange) == 1
+                fl.next("equal-energy L2G peak detector")
+                fl.plot(apodized_envelope, human_units=False)
+            raise ValueError(
+                "equal-energy L2G apodization did not isolate one peak"
+            )
+        coarse_range = coarse_ranges[0]
+        # Set the original-data thresholds from within the coarse apodized
+        # region.  Otherwise a taller narrow artifact elsewhere can hide the
+        # desired low-SNR peak even though apodization located it correctly.
+        peakrange = find_peak_ranges(freq_envelope, coarse_range)
+        peakrange = [
+            thisrange
+            for thisrange in peakrange
+            if max(thisrange[0], coarse_range[0])
+            <= min(thisrange[1], coarse_range[1])
+        ]
+        if len(peakrange) > 1:
+            # A single coarse L2G peak supplies the evidence that low-SNR
+            # original-data ranges inside it are fragments of that peak.  Join
+            # only those overlapping ranges; peaks outside the coarse region
+            # remain excluded rather than being silently merged.
+            peakrange = [np.array([peakrange[0][0], peakrange[-1][1]])]
+        if fl is not None:
+            fl.next("equal-energy L2G peak detector")
+            fl.plot(
+                apodized_envelope,
+                human_units=False,
+                label="equal-energy L2G detector",
+            )
+            for bound in coarse_range:
+                axvline(bound, color="k", ls=":", alpha=0.5)
+    else:
+        peakrange = find_peak_ranges(freq_envelope)
+    if len(peakrange) == 0:
+        if apodized_envelope is not None:
+            raise ValueError(
+                "the original spectrum has no peak range overlapping the "
+                f"equal-energy L2G range {coarse_range}"
+            )
+        raise ValueError("could not identify an inhomogeneous peak range")
+    peakrange = merge_nearby_ranges(peakrange)
+    if len(peakrange) > 1:
+        if fl is not None:
+            fl.next("debug filter ranges")
+            fl.plot(freq_envelope, human_units=False)
+            for thisrange in peakrange:
+                fl.plot(freq_envelope[direct:thisrange], human_units=False)
+        raise ValueError("finding more than one peak!")
+    if len(peakrange) != 1:
+        raise ValueError("could not reduce the signal to one peak range")
     peakrange = peakrange[0]
+    if peakrange[0] >= peakrange[1]:
+        raise ValueError(
+            "the merged peak range reaches or wraps the spectral boundary"
+        )
     # }}}
     frq_center = np.mean(peakrange).item()
-    frq_half = np.diff(peakrange).item() / 2
-    d.set_prop("peakrange", peakrange)
-    return frq_center, frq_half
+    half_range = np.diff(peakrange).item() / 2
+    d.set_prop("inh_bounds", frq_center + r_[-1, 1] * half_range)
+    if fl is not None:
+        fl.next("autoslicing!")
+        axvline(x=frq_center, color="k", alpha=0.5, label="center frq")
+        axvline(
+            x=frq_center - half_range,
+            color="k",
+            ls=":",
+            alpha=0.25,
+            label=f"{peak_lowest_thresh*100:g}% threshold",
+        )
+        axvline(
+            x=frq_center + half_range,
+            color="k",
+            ls=":",
+            alpha=0.25,
+            label=f"{peak_lowest_thresh*100:g}% threshold",
+        )
+    return frq_center, half_range
 
 
 def hermitian_function_test(
@@ -617,9 +1195,7 @@ def hermitian_function_test(
     else:
         s_timedom = s.C
     s_ext = s_timedom.C
-    assert (
-        s_timedom.getaxis(direct)[0] == 0.0
-    ), """In order to
+    assert s_timedom.getaxis(direct)[0] == 0.0, """In order to
     calculate the signal energy term correctly, the
     signal must start at t=0  so set the start of the
     acquisition in the *non-aliased* time domain to 0 (something like
@@ -656,9 +1232,9 @@ def hermitian_function_test(
             )
         ),
     )
-    s_ext[
-        direct : (orig_bounds[-1], None)
-    ] = 0  # explicitly zero, in case there are aliased negative times!
+    s_ext[direct : (orig_bounds[-1], None)] = (
+        0  # explicitly zero, in case there are aliased negative times!
+    )
     # }}}
     # {{{ now I need to throw out the initial, aliased
     #     portion of the signal -- do this manually by
@@ -668,8 +1244,28 @@ def hermitian_function_test(
     #     out
     t_dwos = s_ext.get_ft_prop(direct, "dt")  # oversampled dwell
     min_echo = aliasing_slop * t_dw
+    logging.debug(
+        strm(
+            "aliasing slop is",
+            aliasing_slop,
+            "t_dw is",
+            t_dw,
+            "(SW of",
+            1 / t_dw / 1e3,
+            "kHz) min echo is",
+            min_echo,
+        )
+    )
     min_echo_idx = int(min_echo / t_dwos + 0.5)
     min_echo = min_echo_idx * t_dwos
+    logging.debug(
+        strm(
+            "t_dwos is",
+            t_dwos,
+            "and rounding to the nearest oversampled dwell, min echo is",
+            min_echo,
+        )
+    )
     if fl is not None:
         fl.push_marker()
         if show_extended:
